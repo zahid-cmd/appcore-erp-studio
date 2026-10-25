@@ -18,6 +18,21 @@ export interface BrandManagement
     // Saved image path from the server ('' when none).
     // The image itself is uploaded / deleted separately.
     BrandImagePath?: string;
+
+    // Supplier Profiles → SupplierCode (Supply Type Motor Bikes;
+    // '' = none) and its display name
+    MotorBikesSupplierCode?: string;
+
+    MotorBikesSupplierName?: string;
+
+    // Brand ledgers (created by the server on save)
+    OfferAdjustmentLedgerCode?: string;
+
+    OfferAdjustmentLedgerName?: string;
+
+    EmiClaimLedgerCode?: string;
+
+    EmiClaimLedgerName?: string;
 }
 
 
@@ -34,6 +49,8 @@ export interface CreateBrandManagement
     Remarks: string;
 
     Status: boolean;
+
+    MotorBikesSupplierCode: string;
 }
 
 
@@ -52,14 +69,43 @@ export interface UpdateBrandManagement
     Remarks: string;
 
     Status: boolean;
+
+    MotorBikesSupplierCode: string;
 }
 
 
 //===============================================================
-// Brand Management Defaults (next code for a new brand)
+// Brand Management Defaults : next code, Motor Bikes suppliers,
+// brand ledger sub groups with their next codes (preview only)
 //===============================================================
+
+export interface BrandSupplierOption
+{
+    SupplierCode: string;
+
+    DisplayName: string;
+
+    IsActive: boolean;
+}
 
 export interface BrandManagementDefaults
 {
     Code: string;
+
+    MotorBikesSuppliers: BrandSupplierOption[];
+
+    OfferAdjustmentSubGroupCode: string;
+
+    OfferAdjustmentSubGroupName: string;
+
+    NextOfferAdjustmentLedgerCode: string;
+
+    EmiClaimSubGroupCode: string;
+
+    EmiClaimSubGroupName: string;
+
+    NextEmiClaimLedgerCode: string;
+
+    // Why a ledger sub group cannot be used ('' = fine)
+    LedgerMessage: string;
 }

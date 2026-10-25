@@ -74,6 +74,10 @@ export interface SlipPrintModel
     // 'Authorised Signature'
     signature: string;
 
+    // Optional second signature to its left ("Receiver's
+    // Signature" on the Payment Slip); '' / missing = none
+    receiverSignature?: string;
+
     // Bottom left ("Branch · Printed …"); '' = hidden (switch)
     stamp: string;
 

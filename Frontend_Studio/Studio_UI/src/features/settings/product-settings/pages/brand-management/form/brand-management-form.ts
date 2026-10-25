@@ -127,6 +127,12 @@ import
 }
 from '../../../../../../shared/components/controls/image-hub/image-hub';
 
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
 
 //===============================================================
 // Utilities
@@ -237,6 +243,8 @@ from '../../../services/brand-management.service';
         TextareaComponent,
 
         DropdownComponent,
+
+        SearchDropdownComponent,
 
         ImageHubComponent,
 
@@ -434,8 +442,30 @@ implements OnInit, OnDestroy
 
         Status:true,
 
-        BrandImagePath:''
+        BrandImagePath:'',
+
+        MotorBikesSupplierCode:''
     };
+
+
+    //===========================================================
+    // Defaults : Motor Bikes suppliers and the brand ledger sub
+    // groups with their next codes (preview)
+    //===========================================================
+
+    defaults:
+        BrandManagementDefaults | null =
+        null;
+
+    // Motor Bikes Supplier dropdown : active suppliers + the
+    // brand's saved one (even if inactive)
+    supplierItems:
+        any[] =
+        [];
+
+    // The supplier the brand had when it was loaded
+    private savedSupplierCode =
+        '';
 
 
 
@@ -648,6 +678,10 @@ implements OnInit, OnDestroy
             this.loadEntity();
 
 
+            // Suppliers and ledger sub groups (the code is kept)
+            this.loadDefaults();
+
+
             return;
         }
 
@@ -722,8 +756,13 @@ implements OnInit, OnDestroy
 
             Status:true,
 
-            BrandImagePath:''
+            BrandImagePath:'',
+
+            MotorBikesSupplierCode:''
         };
+
+        this.savedSupplierCode =
+            '';
 
 
         this.resetImageState(
@@ -756,11 +795,18 @@ implements OnInit, OnDestroy
                         BrandManagementDefaults
                 ): void =>
                 {
+                    this.defaults =
+                        defaults;
+
+                    this.buildSupplierItems();
+
                     if
                     (
                         this.mode !== 'add'
                     )
                     {
+                        this.cdr.detectChanges();
+
                         return;
                     }
 
@@ -851,8 +897,31 @@ implements OnInit, OnDestroy
                             Boolean(response?.Status ?? response?.status ?? true),
 
                         BrandImagePath:
-                            response?.BrandImagePath ?? response?.brandImagePath ?? ''
+                            response?.BrandImagePath ?? response?.brandImagePath ?? '',
+
+                        MotorBikesSupplierCode:
+                            response?.MotorBikesSupplierCode ?? response?.motorBikesSupplierCode ?? '',
+
+                        MotorBikesSupplierName:
+                            response?.MotorBikesSupplierName ?? response?.motorBikesSupplierName ?? '',
+
+                        OfferAdjustmentLedgerCode:
+                            response?.OfferAdjustmentLedgerCode ?? response?.offerAdjustmentLedgerCode ?? '',
+
+                        OfferAdjustmentLedgerName:
+                            response?.OfferAdjustmentLedgerName ?? response?.offerAdjustmentLedgerName ?? '',
+
+                        EmiClaimLedgerCode:
+                            response?.EmiClaimLedgerCode ?? response?.emiClaimLedgerCode ?? '',
+
+                        EmiClaimLedgerName:
+                            response?.EmiClaimLedgerName ?? response?.emiClaimLedgerName ?? ''
                     };
+
+                    this.savedSupplierCode =
+                        this.entity.MotorBikesSupplierCode ?? '';
+
+                    this.buildSupplierItems();
 
 
                     this.resetImageState(
@@ -1522,7 +1591,10 @@ implements OnInit, OnDestroy
                 this.entity.Remarks?.trim() ?? '',
 
             Status:
-                this.entity.Status
+                this.entity.Status,
+
+            MotorBikesSupplierCode:
+                this.entity.MotorBikesSupplierCode ?? ''
         };
 
 
@@ -1640,7 +1712,10 @@ implements OnInit, OnDestroy
                 this.entity.Remarks?.trim() ?? '',
 
             Status:
-                this.entity.Status
+                this.entity.Status,
+
+            MotorBikesSupplierCode:
+                this.entity.MotorBikesSupplierCode ?? ''
         };
 
 
@@ -2028,6 +2103,168 @@ implements OnInit, OnDestroy
     //===========================================================
     // Value Changed
     //===========================================================
+
+    //===========================================================
+    // Motor Bikes Supplier
+    //===========================================================
+
+    private buildSupplierItems():
+        void
+    {
+        const saved =
+            this.savedSupplierCode;
+
+        const items =
+            (this.defaults?.MotorBikesSuppliers ?? [])
+                .filter
+                (
+                    item =>
+                        item.IsActive
+                        ||
+                        item.SupplierCode === saved
+                )
+                .map
+                (
+                    item =>
+                    ({
+                        label:
+                            item.IsActive
+                                ? item.DisplayName
+                                : `${item.DisplayName} (inactive)`,
+
+                        value:
+                            item.SupplierCode
+                    })
+                );
+
+        // Saved supplier no longer listed (deleted / moved off
+        // Motor Bikes) : still shown so the record reads right
+        if
+        (
+            saved
+            &&
+            !items.some(item => item.value === saved)
+        )
+        {
+            items.unshift
+            ({
+                label:
+                    this.entity.MotorBikesSupplierName || saved,
+
+                value:
+                    saved
+            });
+        }
+
+        this.supplierItems =
+            items;
+    }
+
+    onSupplierChange
+    (
+        value?:
+            any
+    ):
+        void
+    {
+        const raw =
+            value
+            &&
+            typeof value === 'object'
+            &&
+            'value' in value
+                ? value.value
+                : value;
+
+        this.entity.MotorBikesSupplierCode =
+            raw == null
+                ? ''
+                : String(raw);
+
+        this.onValueChange();
+    }
+
+
+    //===========================================================
+    // Brand Ledgers (read only)
+    //
+    // Saved ledger code, else the next code a save will create;
+    // name = "<Sub Group Name> - <Brand Name>" as typed.
+    //===========================================================
+
+    private ledgerName
+    (
+        subGroupName:
+            string | undefined,
+        savedName:
+            string | undefined
+    ):
+        string
+    {
+        const brand =
+            (this.entity.BrandName ?? '')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+        const subGroup =
+            (subGroupName ?? '').trim();
+
+        if
+        (
+            !brand
+            ||
+            !subGroup
+        )
+        {
+            return savedName ?? '';
+        }
+
+        return `${subGroup} - ${brand}`;
+    }
+
+    get offerLedgerCode():
+        string
+    {
+        return this.entity.OfferAdjustmentLedgerCode
+            ||
+            this.defaults?.NextOfferAdjustmentLedgerCode
+            ||
+            '';
+    }
+
+    get offerLedgerName():
+        string
+    {
+        return this.ledgerName(
+            this.defaults?.OfferAdjustmentSubGroupName,
+            this.entity.OfferAdjustmentLedgerName);
+    }
+
+    get emiClaimLedgerCode():
+        string
+    {
+        return this.entity.EmiClaimLedgerCode
+            ||
+            this.defaults?.NextEmiClaimLedgerCode
+            ||
+            '';
+    }
+
+    get emiClaimLedgerName():
+        string
+    {
+        return this.ledgerName(
+            this.defaults?.EmiClaimSubGroupName,
+            this.entity.EmiClaimLedgerName);
+    }
+
+    // Shown under the ledgers when a sub group is missing
+    get ledgerMessage():
+        string
+    {
+        return this.defaults?.LedgerMessage ?? '';
+    }
+
 
     onValueChange():
         void

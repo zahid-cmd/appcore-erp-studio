@@ -385,6 +385,12 @@ implements OnInit, OnDestroy
         =
         [];
 
+    // Motor Bikes / Spare Parts / Accessories / General
+    supplyTypeItems:
+        any[]
+        =
+        [];
+
     brandItems:
         any[]
         =
@@ -492,6 +498,7 @@ implements OnInit, OnDestroy
             SupplierId:0,
             SupplierCode:'',
             SupplierType:type,
+            SupplyType:'',
             SupplierName:'',
             DisplayName:'',
             BrandManagementId:null,
@@ -656,6 +663,23 @@ implements OnInit, OnDestroy
                     this.brands =
                         response.Brands ?? [];
 
+                    this.supplyTypeItems =
+                        (
+                            response.SupplyTypes?.length
+                                ? response.SupplyTypes
+                                : ['Motor Bikes', 'Spare Parts', 'Accessories', 'General']
+                        )
+                        .map(
+                            type =>
+                            ({
+                                label:
+                                    type,
+
+                                value:
+                                    type
+                            })
+                        );
+
                     this.supplierTypeItems =
                         (response.SupplierTypes ?? []).map(
                             type =>
@@ -811,6 +835,21 @@ implements OnInit, OnDestroy
         this.onValueChange();
     }
 
+    onSupplyTypeChange
+    (
+        value?:
+            any
+    ):
+        void
+    {
+        this.entity.SupplyType =
+            String(this.unwrapValue(value) ?? '');
+
+        this.refreshDisplayName();
+
+        this.onValueChange();
+    }
+
     onBrandChange
     (
         value?:
@@ -832,8 +871,8 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Display Name : "<SUPPLIER NAME> - <BRAND> - <PHONE 1>"
-    // (brand part only when a brand is selected)
+    // Display Name : "<SUPPLIER NAME> - <BRAND> - <SUPPLY TYPE> -
+    // <PHONE 1>" (brand part only when a brand is selected)
     //===========================================================
 
     private cleanText
@@ -882,7 +921,12 @@ implements OnInit, OnDestroy
         this.entity.DisplayName =
             !name
                 ? ''
-                : [name, brand, this.entity.Phone1]
+                : [
+                    name,
+                    brand,
+                    this.cleanText(this.entity.SupplyType).toUpperCase(),
+                    this.entity.Phone1
+                  ]
                     .filter(part => !!part)
                     .join(' - ');
 
@@ -1222,6 +1266,12 @@ implements OnInit, OnDestroy
             },
             {
                 failed:
+                    !this.entity.SupplyType,
+                message:
+                    'Supply Type is required.'
+            },
+            {
+                failed:
                     !this.cleanText(this.entity.SupplierName),
                 message:
                     'Supplier Name is required.'
@@ -1339,6 +1389,9 @@ implements OnInit, OnDestroy
 
             SupplierType:
                 this.entity.SupplierType,
+
+            SupplyType:
+                this.entity.SupplyType,
 
             SupplierName:
                 this.cleanText(this.entity.SupplierName),

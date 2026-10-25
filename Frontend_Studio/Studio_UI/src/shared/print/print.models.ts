@@ -188,6 +188,10 @@ export interface PrintDocumentDef<T = any>
 
     render(data: T, kit: PrintKit): string;
 
+    // Optional : false hides the document for this record (e.g. a
+    // check with no deposit slip yet). Missing = always shown.
+    available?(data: T): boolean;
+
     // Extra CSS of this template (prefix its classes)
     css?: string;
 

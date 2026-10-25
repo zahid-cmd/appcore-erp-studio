@@ -1,0 +1,900 @@
+<div class="vmd">
+
+
+    <!-- =========================================================
+         ROW 1 : Voucher Information | Detail Narration
+         ROW 2 : Transfer From + Transfer To | Transaction Summary
+         Look : voucher-master-data.css (shared) + transfer-entry.css
+    ========================================================== -->
+
+
+    <div class="vmd-info">
+
+        <!-- =====================================================
+             1. VOUCHER INFORMATION
+        ====================================================== -->
+
+        <div class="vmd-card">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-file-invoice"></i>
+
+                <span>Voucher Information</span>
+
+                <span class="vit-chip" [title]="transferType">{{ transferType }}</span>
+
+            </div>
+
+            <div class="vmd-grid vmd-grid-2 vit-grid">
+
+                <app-textbox
+
+                    class="vmd-voucher-no"
+
+                    label="Voucher No"
+
+                    placeholder="Assigned on save"
+
+                    [value]="voucherNo"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+                <app-datepicker
+
+                    label="Voucher Date"
+
+                    [required]="true"
+
+                    [value]="$any(voucherDateValue)"
+
+                    [minDate]="minDate"
+
+                    [maxDate]="maxDate"
+
+                    (valueChange)="onDateChange($event)"
+
+                    [disabled]="readonly">
+
+                </app-datepicker>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="vmd-narr">
+
+        <!-- =====================================================
+             DETAIL NARRATION (required)
+        ====================================================== -->
+
+        <div class="vmd-card">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-align-left"></i>
+
+                <span>Detail Narration <b class="vmd-req">*</b></span>
+
+            </div>
+
+            <div class="vmd-narration">
+
+                <app-textbox
+
+                    placeholder="Enter detailed narration (required)"
+
+                    textCase="none"
+
+                    [required]="true"
+
+                    [maxLength]="500"
+
+                    [value]="data.Narration"
+
+                    (valueChange)="onNarrationChange($event)"
+
+                    [readonly]="readonly">
+
+                </app-textbox>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         LEFT : Transfer From (credit, entered first), Transfer To
+         (debit); scrolls when the From card grows (cheque / charge)
+    ========================================================== -->
+
+    <div class="vmd-col vmd-entry-col tre-entry appcore-scrollbar">
+
+        <!-- =====================================================
+             TRANSFER FROM (CREDIT)
+        ====================================================== -->
+
+        <div
+
+            class="vmd-card"
+
+            [class.vmd-locked]="!canAddFrom">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-arrow-right-from-bracket"></i>
+
+                <span>Transfer From</span>
+
+                <span class="vmd-side vmd-side-credit">Credit</span>
+
+                <!-- Hint (grey / amber) or error (red); full text on hover -->
+
+                @if (from.error)
+                {
+                    <span
+
+                        class="vit-note vit-note-error"
+
+                        [title]="from.error">
+
+                        <i class="fas fa-circle-exclamation"></i>
+
+                        <span>{{ from.error }}</span>
+
+                    </span>
+                }
+                @else if (fromHint && !readonly)
+                {
+                    <span
+
+                        class="vit-note"
+
+                        [class.vit-note-warn]="fromHintWarn"
+
+                        [title]="fromHint">
+
+                        <i [class]="fromHintWarn ? 'fas fa-triangle-exclamation' : 'fas fa-circle-info'"></i>
+
+                        <span>{{ fromHint }}</span>
+
+                    </span>
+                }
+
+            </div>
+
+            <!-- Row 1 : Account Type | Sub-Group
+                 Row 2 : Account | Amount
+                 Row 3 : Bank : Method | Reference / Cheque No
+                         MFS  : Transaction ID | Charge
+                 Row 4 : Bank : Cheque Date | Charge  (or Charge)
+                 Last  : Short Notes (full width) -->
+
+            <div class="vmd-grid vmd-grid-2">
+
+                <app-dropdown
+
+                    label="Account Type"
+
+                    placeholder="Cash / Bank / MFS"
+
+                    [items]="typeItems"
+
+                    [value]="from.type || null"
+
+                    (valueChange)="onTypeChange('From', $event)"
+
+                    [disabled]="!canAddFrom"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+                <app-search-dropdown
+
+                    label="Account Sub-Group"
+
+                    placeholder="Select"
+
+                    [items]="from.subGroupItems"
+
+                    [value]="from.subGroup || null"
+
+                    (valueChange)="onSubGroupChange('From', $event)"
+
+                    [disabled]="!canAddFrom || !from.type"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-search-dropdown
+
+                    label="Account"
+
+                    placeholder="Select"
+
+                    [items]="from.ledgerItems"
+
+                    [value]="from.ledger || null"
+
+                    (valueChange)="onLedgerChange('From', $event)"
+
+                    [disabled]="!canAddFrom || !from.subGroup"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-textbox
+
+                    label="Amount"
+
+                    placeholder="0.00"
+
+                    inputMode="decimal"
+
+                    [value]="from.amountText"
+
+                    (valueChange)="onAmountText('From', $event)"
+
+                    (enterPressed)="add('From')"
+
+                    [disabled]="!canAddFrom"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                @if (from.type === 'Bank')
+                {
+                    <app-dropdown
+
+                        label="Method"
+
+                        [items]="methodItems"
+
+                        [value]="fromMethod"
+
+                        (valueChange)="onMethodChange($event)"
+
+                        [disabled]="!canAddFrom"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+                    @if (fromMethod === 'Cheque')
+                    {
+                        <app-textbox
+
+                            label="Cheque No"
+
+                            placeholder="Cheque number"
+
+                            [value]="fromCheckNo"
+
+                            (valueChange)="onCheckNo($event)"
+
+                            [disabled]="!canAddFrom"
+
+                            [required]="true">
+
+                        </app-textbox>
+
+                        <app-datepicker
+
+                            label="Cheque Date"
+
+                            [value]="$any(fromCheckDate)"
+
+                            (valueChange)="onCheckDate($event)"
+
+                            [disabled]="!canAddFrom"
+
+                            [required]="true">
+
+                        </app-datepicker>
+                    }
+                    @else
+                    {
+                        <app-textbox
+
+                            label="Reference"
+
+                            placeholder="Optional (NPSB / RTGS ref)"
+
+                            [value]="fromReference"
+
+                            (valueChange)="onReference($event)"
+
+                            [disabled]="!canAddFrom">
+
+                        </app-textbox>
+                    }
+                }
+
+                @if (from.type === 'MFS')
+                {
+                    <app-textbox
+
+                        label="Transaction ID"
+
+                        placeholder="MFS transaction id"
+
+                        [value]="fromReference"
+
+                        (valueChange)="onReference($event)"
+
+                        [disabled]="!canAddFrom"
+
+                        [required]="true">
+
+                    </app-textbox>
+                }
+
+                @if (from.type === 'Bank' || from.type === 'MFS')
+                {
+                    <app-textbox
+
+                        label="Charge (company pays)"
+
+                        placeholder="0.00"
+
+                        inputMode="decimal"
+
+                        [value]="fromChargeText"
+
+                        (valueChange)="onChargeText($event)"
+
+                        [disabled]="!canAddFrom">
+
+                    </app-textbox>
+                }
+
+                <app-textbox
+
+                    label="Short Notes"
+
+                    placeholder="Optional"
+
+                    [value]="from.notes"
+
+                    (valueChange)="onNotes('From', $event)"
+
+                    (enterPressed)="add('From')"
+
+                    [disabled]="!canAddFrom">
+
+                </app-textbox>
+
+                <div class="vit-add-cell">
+
+                    <button
+
+                        type="button"
+
+                        class="vit-add"
+
+                        [disabled]="!canAddFrom || loading"
+
+                        (click)="add('From')">
+
+                        <i class="fas fa-plus"></i>
+
+                        Add
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             TRANSFER TO (DEBIT)
+        ====================================================== -->
+
+        <div
+
+            class="vmd-card"
+
+            [class.vmd-locked]="!canAddTo">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-arrow-right-to-bracket"></i>
+
+                <span>Transfer To</span>
+
+                <span class="vmd-side vmd-side-debit">Debit</span>
+
+                <!-- Hint (grey / amber) or error (red); full text on hover -->
+
+                @if (to.error)
+                {
+                    <span
+
+                        class="vit-note vit-note-error"
+
+                        [title]="to.error">
+
+                        <i class="fas fa-circle-exclamation"></i>
+
+                        <span>{{ to.error }}</span>
+
+                    </span>
+                }
+                @else if (toHint && !readonly)
+                {
+                    <span
+
+                        class="vit-note"
+
+                        [class.vit-note-warn]="toHintWarn"
+
+                        [title]="toHint">
+
+                        <i [class]="toHintWarn ? 'fas fa-triangle-exclamation' : 'fas fa-circle-info'"></i>
+
+                        <span>{{ toHint }}</span>
+
+                    </span>
+                }
+
+            </div>
+
+            <div class="vmd-grid vmd-grid-2">
+
+                <app-dropdown
+
+                    label="Account Type"
+
+                    placeholder="Cash / Bank / MFS"
+
+                    [items]="typeItems"
+
+                    [value]="to.type || null"
+
+                    (valueChange)="onTypeChange('To', $event)"
+
+                    [disabled]="!canAddTo"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+                <app-search-dropdown
+
+                    label="Account Sub-Group"
+
+                    placeholder="Select"
+
+                    [items]="to.subGroupItems"
+
+                    [value]="to.subGroup || null"
+
+                    (valueChange)="onSubGroupChange('To', $event)"
+
+                    [disabled]="!canAddTo || !to.type"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-search-dropdown
+
+                    label="Account (any branch)"
+
+                    placeholder="Select"
+
+                    [items]="to.ledgerItems"
+
+                    [value]="to.ledger || null"
+
+                    (valueChange)="onLedgerChange('To', $event)"
+
+                    [disabled]="!canAddTo || !to.subGroup"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-textbox
+
+                    label="Amount"
+
+                    placeholder="0.00"
+
+                    inputMode="decimal"
+
+                    [value]="to.amountText"
+
+                    (valueChange)="onAmountText('To', $event)"
+
+                    (enterPressed)="add('To')"
+
+                    [readonly]="toAmountLocked"
+
+                    [disabled]="!canAddTo"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Short Notes"
+
+                    placeholder="Optional"
+
+                    [value]="to.notes"
+
+                    (valueChange)="onNotes('To', $event)"
+
+                    (enterPressed)="add('To')"
+
+                    [disabled]="!canAddTo">
+
+                </app-textbox>
+
+                <div class="vit-add-cell">
+
+                    <button
+
+                        type="button"
+
+                        class="vit-add"
+
+                        [disabled]="!canAddTo || loading"
+
+                        (click)="add('To')">
+
+                        <i class="fas fa-plus"></i>
+
+                        Add
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         RIGHT : Transaction Summary (debits first : To, charge
+         expense | From, charge)
+    ========================================================== -->
+
+    <div class="vmd-summary-slot">
+
+        <div class="vmd-card vmd-summary">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-list-check"></i>
+
+                <span>Transaction Summary</span>
+
+                @if (maxLines > 0)
+                {
+                    <span
+
+                        class="vmd-count vmd-lines"
+
+                        [class.vmd-lines-full]="atMaxLines"
+
+                        title="Lines entered / maximum per transfer (System Configuration)">
+
+                        {{ lineCount }} / {{ maxLines }} lines
+
+                    </span>
+                }
+
+                <span
+
+                    class="vmd-count"
+
+                    [class.vmd-count-after]="maxLines > 0">
+
+                    {{ lineCount }}
+
+                </span>
+
+            </div>
+
+            <div class="vmd-table-scroll appcore-scrollbar">
+
+                <table class="vmd-table">
+
+                    <colgroup>
+
+                        <col class="vmd-col-sl">
+
+                        <col>
+
+                        <col class="vmd-col-notes">
+
+                        <col class="vmd-col-num">
+
+                        <col class="vmd-col-num">
+
+                        <col class="vmd-col-action">
+
+                    </colgroup>
+
+                    <thead>
+
+                        <tr>
+
+                            <th class="vmd-sl">SL</th>
+
+                            <th>Particulars</th>
+
+                            <th>Short Notes</th>
+
+                            <th class="vmd-num">Debit</th>
+
+                            <th class="vmd-num">Credit</th>
+
+                            <th class="vmd-action">Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <!-- To rows (debit) -->
+
+                        @for (line of toLines; track line.LedgerCode)
+                        {
+                            <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: line }"></ng-container>
+                        }
+
+                        <!-- Charge expense (debit) -->
+
+                        @for (row of chargeRows; track row.LedgerCode)
+                        {
+                            <tr class="vmd-charge-row">
+
+                                <td class="vmd-sl"></td>
+
+                                <td>
+
+                                    <div class="vmd-ledger">{{ row.LedgerName }} || {{ row.LedgerCode }}</div>
+
+                                    <div class="vmd-sub">{{ row.Subtitle }}</div>
+
+                                </td>
+
+                                <td class="vmd-notes">Charge</td>
+
+                                <td class="vmd-num">{{ money(row.Amount) }}</td>
+
+                                <td class="vmd-num vmd-muted">-</td>
+
+                                <td class="vmd-action">
+
+                                    <i
+
+                                        class="fas fa-gears vmd-auto"
+
+                                        title="Added by the system from the From row charge"></i>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                        <!-- From rows (credit) -->
+
+                        @for (line of fromLines; track line.LedgerCode)
+                        {
+                            <ng-container *ngTemplateOutlet="rowTpl; context: { $implicit: line }"></ng-container>
+                        }
+
+                        <!-- The charge leaves the From account too (credit) -->
+
+                        @for (line of fromLines; track line.LedgerCode)
+                        {
+                            @if (line.ChargeAmount > 0)
+                            {
+                                <tr class="vmd-charge-row">
+
+                                    <td class="vmd-sl"></td>
+
+                                    <td>
+
+                                        <div class="vmd-ledger">{{ line.LedgerName }} || {{ line.LedgerCode }}</div>
+
+                                        <div class="vmd-sub">{{ line.AccountType }} charge · paid by the company</div>
+
+                                    </td>
+
+                                    <td class="vmd-notes">Charge</td>
+
+                                    <td class="vmd-num vmd-muted">-</td>
+
+                                    <td class="vmd-num">{{ money(line.ChargeAmount) }}</td>
+
+                                    <td class="vmd-action">
+
+                                        <i
+
+                                            class="fas fa-gears vmd-auto"
+
+                                            title="Added by the system from the From row charge"></i>
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                        @if (lineCount === 0)
+                        {
+                            <tr>
+
+                                <td
+
+                                    colspan="6"
+
+                                    class="vmd-empty">
+
+                                    No entry yet. Start with the Transfer From account.
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                    <ng-template
+
+                        #rowTpl
+
+                        let-line>
+
+                        <tr>
+
+                            <td class="vmd-sl">{{ serial(line) }}</td>
+
+                            <td>
+
+                                <div class="vmd-ledger">{{ line.LedgerName }} || {{ line.LedgerCode }}</div>
+
+                                @if (lineDetails(line))
+                                {
+                                    <div class="vmd-sub">{{ lineDetails(line) }}</div>
+                                }
+
+                            </td>
+
+                            <td class="vmd-notes">{{ line.ShortNotes }}</td>
+
+                            <td class="vmd-num" [class.vmd-muted]="line.Side !== 'To'">{{ line.Side === 'To' ? money(line.Amount) : '-' }}</td>
+
+                            <td class="vmd-num" [class.vmd-muted]="line.Side !== 'From'">{{ line.Side === 'From' ? money(line.Amount) : '-' }}</td>
+
+                            <td class="vmd-action">
+
+                                @if (!readonly)
+                                {
+                                    <button
+
+                                        type="button"
+
+                                        class="vmd-remove"
+
+                                        [disabled]="!canRemove(line)"
+
+                                        [title]="canRemove(line) ? 'Remove' : 'Remove the Transfer To rows first'"
+
+                                        [attr.aria-label]="'Remove ' + line.LedgerName"
+
+                                        (click)="remove(line)">
+
+                                        <i class="fas fa-xmark"></i>
+
+                                    </button>
+                                }
+
+                            </td>
+
+                        </tr>
+
+                    </ng-template>
+
+                </table>
+
+            </div>
+
+            <table class="vmd-table vmd-table-foot">
+
+                <colgroup>
+
+                    <col class="vmd-col-sl">
+
+                    <col>
+
+                    <col class="vmd-col-notes">
+
+                    <col class="vmd-col-num">
+
+                    <col class="vmd-col-num">
+
+                    <col class="vmd-col-action">
+
+                </colgroup>
+
+                <tbody>
+
+                    <tr class="vmd-total">
+
+                        <td colspan="3">Total</td>
+
+                        <td class="vmd-num">{{ money(gridDebit) }}</td>
+
+                        <td class="vmd-num">{{ money(gridCredit) }}</td>
+
+                        <td></td>
+
+                    </tr>
+
+                    <tr
+
+                        class="vmd-balance"
+
+                        [class.vmd-balance-ok]="balance === 0 && lineCount > 0">
+
+                        <td colspan="3">Balance Remaining</td>
+
+                        <td
+
+                            colspan="2"
+
+                            class="vmd-num">
+
+                            {{ money(balance) }}
+
+                        </td>
+
+                        <td></td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+            @if (lookupError)
+            {
+                <div class="vmd-error">
+
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    {{ lookupError }}
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>

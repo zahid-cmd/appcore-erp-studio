@@ -435,44 +435,45 @@ implements OnInit, OnDestroy
         {
             header:'EMI Account Name',
             field:'EmiAccountName',
-            width:'280px',
+            width:'300px',
             align:'left'
         },
         {
             header:'Platform',
             field:'Platform',
-            width:'220px',
+            width:'90px',
             align:'center'
         },
         {
             header:'Linked Bank Account',
-            field:'LinkedBankAccount',
+            field:'LinkedBankAccountName',
+            width:'280px',
             align:'left'
         },
         {
             header:'Collection',
             field:'CollectionAccountText',
-            width:'180px',
+            width:'110px',
             align:'center'
         },
         {
             header:'Branch',
             field:'Branch',
-            width:'200px',
+            width:'140px',
             align:'left'
         },
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'150px',
+            width:'100px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'120px',
+            width:'80px',
             align:'center'
         }
     ];
@@ -849,7 +850,7 @@ implements OnInit, OnDestroy
                             item.EmiAccountCode,
                             item.EmiAccountName,
                             item.Platform,
-                            item.LinkedBankAccount,
+                            item.LinkedBankAccountName,
                             item.Branch,
                             item.CollectionAccountText,
                             item.Remarks,

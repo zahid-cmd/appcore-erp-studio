@@ -72,8 +72,15 @@ export interface ListTableColumn
   field: string;
   width?: string;
   align?: ListTableAlign;
+  // Rows only (the header keeps align); missing = align
+  cellAlign?: ListTableAlign;
   type?: ListTableColumnType;
   sortable?: boolean;
+  // Text cells : a small pill after the value when row[flagField]
+  // is true (e.g. 'Edited'); its tooltip is row[flagTitleField]
+  flagField?: string;
+  flagText?: string;
+  flagTitleField?: string;
 }
 
 
@@ -86,6 +93,42 @@ export interface ListTableActions
   view?: boolean;
   edit?: boolean;
   delete?: boolean;
+}
+
+
+//===============================================================
+// ROW ACTIONS (optional, page specific)
+//
+// Extra buttons in the Actions column, before View / Edit /
+// Delete. The page decides per row with visible(); a click
+// emits (rowAction) with { key, row }.
+//
+//   [rowActions]="[{ key:'print', icon:'fas fa-print',
+//                    title:'Print Preview', tone:'primary' }]"
+//   (rowAction)="onRowAction($event)"
+//
+// Pages without rowActions are unchanged.
+//===============================================================
+
+export type ListTableRowActionTone =
+  | 'default'
+  | 'primary'
+  | 'success'
+  | 'danger';
+
+export interface ListTableRowAction
+{
+  key: string;
+  icon: string;
+  title: string;
+  tone?: ListTableRowActionTone;
+  visible?: (row: any) => boolean;
+}
+
+export interface ListTableRowActionEvent
+{
+  key: string;
+  row: any;
 }
 
 
@@ -591,6 +634,42 @@ private readonly navigationContextSubscription =
 
 
   /* =====================================================
+     ROW ACTIONS (optional)
+  ====================================================== */
+
+  @Input()
+  rowActions: ListTableRowAction[] = [];
+
+  @Output()
+  rowAction =
+    new EventEmitter<ListTableRowActionEvent>();
+
+  isRowActionVisible(
+    action: ListTableRowAction,
+    row: any
+  ):
+    boolean
+  {
+    return !action.visible || action.visible(row);
+  }
+
+  onRowActionClick(
+    action: ListTableRowAction,
+    row: any,
+    event: MouseEvent
+  ):
+    void
+  {
+    event.stopPropagation();
+
+    this.rowAction.emit({
+      key: action.key,
+      row
+    });
+  }
+
+
+  /* =====================================================
      CHANGES
   ====================================================== */
 
@@ -762,6 +841,33 @@ private readonly navigationContextSubscription =
 
 
   /* =====================================================
+     CELL FLAG (optional pill after a text value)
+  ====================================================== */
+
+  hasFlag(
+    row: any,
+    column: ListTableColumn
+  ):
+    boolean
+  {
+    return !!column.flagField
+      && !!row?.[column.flagField];
+  }
+
+
+  getFlagTitle(
+    row: any,
+    column: ListTableColumn
+  ):
+    string | null
+  {
+    return column.flagTitleField
+      ? String(row?.[column.flagTitleField] ?? '') || null
+      : null;
+  }
+
+
+  /* =====================================================
      IMAGE VALUE
 
      'image' columns : the row field holds a full image URL.
@@ -841,11 +947,14 @@ private readonly navigationContextSubscription =
   ):
     string
   {
+    // "Settled · Auto" → settled (the part before " · ")
     const value =
       this.getStatusValue(
         row,
         column
       )
+      .split(' · ')[0]
+      .trim()
       .toLowerCase();
 
     switch (
@@ -874,6 +983,29 @@ private readonly navigationContextSubscription =
         return 'draft';
 
       case 'approved':
+        return 'approved';
+
+      // Checks : Pending → Deposited → Cleared / Dishonoured, Void
+      case 'deposited':
+        return 'approved';
+
+      case 'cleared':
+        return 'active';
+
+      case 'dishonoured':
+        return 'inactive';
+
+      case 'void':
+        return 'neutral';
+
+      // MFS : Pending → Settled / Rejected; Direct (personal)
+      case 'settled':
+        return 'active';
+
+      case 'rejected':
+        return 'inactive';
+
+      case 'direct':
         return 'approved';
 
       case 'not applicable':

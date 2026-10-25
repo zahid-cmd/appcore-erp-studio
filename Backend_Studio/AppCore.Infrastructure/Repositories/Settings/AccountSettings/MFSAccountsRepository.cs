@@ -166,6 +166,25 @@ public class MFSAccountsRepository : IMFSAccountsRepository
                         LinkedBankAccount =
                             x.LinkedBankAccount,
 
+                        // Linked bank account is stored by code
+                        LinkedBankAccountName =
+                            _context
+                                .Set<BankAccountsEntity>()
+                                .Where
+                                (
+                                    b =>
+                                        b.BankAccountCode ==
+                                        x.LinkedBankAccount
+                                )
+                                .Select
+                                (
+                                    b =>
+                                        b.DisplayName
+                                )
+                                .FirstOrDefault()
+                            ??
+                            string.Empty,
+
                         Branch =
                             x.Branch,
 
@@ -527,8 +546,11 @@ public class MFSAccountsRepository : IMFSAccountsRepository
     // Normalize & Validate Input
     //
     // Personal : Linked Bank Account = "" , MFS Charges = 0
-    // Merchant : Linked Bank Account required (must exist in
-    //            Bank Accounts) , MFS Charges > 0 and <= 100
+    // Merchant : Linked Bank Account required, stored as the
+    //            BANK ACCOUNT CODE (must exist in Bank Accounts),
+    //            MFS Charges > 0 and <= 100
+    //            (a display name sent by an older screen is turned
+    //            into its code)
     // Display Name = "<MFS ACCOUNT NAME> - <MFS ACCOUNT NUMBER>"
     // Same provider + number may not exist twice.
     //===========================================================
@@ -675,27 +697,56 @@ public class MFSAccountsRepository : IMFSAccountsRepository
                     "Linked Bank Account is required for Merchant accounts.");
             }
 
-            bool bankExists =
+            // By code; a display name (older screen / older row)
+            // is accepted once and replaced by its code
+            string? bankCode =
                 await _context
                     .Set<BankAccountsEntity>()
                     .AsNoTracking()
-                    .AnyAsync
+                    .Where
+                    (
+                        x =>
+                            !x.IsDeleted
+                            &&
+                            x.BankAccountCode ==
+                            linkedBank
+                    )
+                    .Select
+                    (
+                        x =>
+                            x.BankAccountCode
+                    )
+                    .FirstOrDefaultAsync()
+                ??
+                await _context
+                    .Set<BankAccountsEntity>()
+                    .AsNoTracking()
+                    .Where
                     (
                         x =>
                             !x.IsDeleted
                             &&
                             x.DisplayName ==
                             linkedBank
-                    );
+                    )
+                    .Select
+                    (
+                        x =>
+                            x.BankAccountCode
+                    )
+                    .FirstOrDefaultAsync();
 
             if
             (
-                !bankExists
+                string.IsNullOrWhiteSpace(bankCode)
             )
             {
                 throw new InvalidOperationException(
                     $"Linked Bank Account '{linkedBank}' was not found in Bank Accounts.");
             }
+
+            linkedBank =
+                bankCode;
 
             charges =
                 Math.Round(

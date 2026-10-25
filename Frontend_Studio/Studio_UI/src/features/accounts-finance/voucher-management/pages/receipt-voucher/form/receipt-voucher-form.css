@@ -2,6 +2,9 @@
   Receipt Voucher Form
 ===============================================================*/
 
+/* Shared controls two sizes larger (voucher pages) */
+@import '../../../../../../shared/styles/voucher-page.css';
+
 
 /*---------------------------------------------------------------
   Fixed page height
@@ -76,13 +79,12 @@
 
 .rv-loading
 {
+    /* AppCore orbit loader, centred in the body */
+    flex: 1 1 auto;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 40px;
     justify-content: center;
-    color: #64748b;
-    font-size: 13px;
+    min-height: 260px;
 }
 
 
@@ -286,7 +288,7 @@
     gap: 12px;
     padding: 10px 14px;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
 }
 
@@ -376,7 +378,7 @@
     border-radius: 12px;
     background: linear-gradient(135deg, #991b1b, #ef4444);
     color: #ffffff;
-    font-size: 18px;
+    font-size: 20px;
     box-shadow: 0 6px 14px -6px rgba(220, 38, 38, 0.7);
 }
 
@@ -391,13 +393,13 @@
 
 .rv-cx-title strong
 {
-    font-size: 17px;
+    font-size: 19px;
     color: #1e293b;
 }
 
 .rv-cx-title span
 {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: #991b1b;
 }
@@ -437,13 +439,13 @@
 
 .rv-cx-summary span
 {
-    font-size: 11.5px;
+    font-size: 13.5px;
     color: #64748b;
 }
 
 .rv-cx-summary strong
 {
-    font-size: 14px;
+    font-size: 16px;
     color: #1e293b;
     white-space: nowrap;
     overflow: hidden;
@@ -470,7 +472,7 @@
     border: 1px solid #fde68a;
     border-radius: 10px;
     background: #fffbeb;
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1.45;
     color: #92400e;
 }
@@ -529,8 +531,8 @@
     padding: 7px 14px;
     border-radius: 8px;
     border: 1px solid transparent;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 500;
     cursor: pointer;
 }
 
@@ -601,7 +603,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 1180px;
+    max-width: 1240px;
     max-height: calc(100vh - 40px);
     overflow: hidden;
     border-radius: 18px;
@@ -638,7 +640,7 @@
     border-radius: 11px;
     background: linear-gradient(135deg, #1e3a8a, #2563eb);
     color: #ffffff;
-    font-size: 17px;
+    font-size: 19px;
     box-shadow: 0 6px 14px -6px rgba(37, 99, 235, 0.7);
 }
 
@@ -652,13 +654,14 @@
 
 .rv-modal-title strong
 {
-    font-size: 16px;
+    font-size: 18px;
     color: #1e293b;
+    font-weight: 600;
 }
 
 .rv-modal-title span
 {
-    font-size: 12.5px;
+    font-size: 14.5px;
     color: #64748b;
 }
 
@@ -676,8 +679,8 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 12.5px;
-    font-weight: 600;
+    font-size: 14.5px;
+    font-weight: 500;
     color: #1e3a8a;
 }
 
@@ -721,7 +724,7 @@
     border-radius: 10px;
     background: #ffffff;
     color: #475569;
-    font-size: 16px;
+    font-size: 18px;
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
 }
@@ -776,7 +779,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
     color: #475569;
 }
@@ -827,12 +830,12 @@
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .rv-modal-title strong
 {
-    font-size: 17px;
+    font-size: 19px;
     color: #1e293b;
 }
 

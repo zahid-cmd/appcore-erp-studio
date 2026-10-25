@@ -3,9 +3,8 @@
 
     <!-- =========================================================
          TOOLBAR (AppCore blue)
-           left   : thumbnails, title
-           center : document choice, pages, zoom
-           right  : Refresh, Excel, PDF, Print, Close
+           left  : thumbnails, title
+           right : document choice, Refresh, Excel, PDF, Print, Close
     ========================================================== -->
 
     <header class="pv-bar">
@@ -19,7 +18,7 @@
 
                 type="button"
 
-                class="pv-icon-btn"
+                class="pv-icon-btn pv-icon-btn-boxed"
 
                 [class.pv-on]="thumbsOpen"
 
@@ -30,6 +29,12 @@
                 <i class="fas fa-table-columns"></i>
 
             </button>
+
+            <div class="pv-doc-icon">
+
+                <i class="fas fa-file-invoice"></i>
+
+            </div>
 
             <div class="pv-name">
 
@@ -42,9 +47,9 @@
         </div>
 
 
-        <!-- CENTER : document choice, pages, zoom -->
+        <!-- RIGHT : document choice, actions -->
 
-        <div class="pv-bar-center">
+        <div class="pv-bar-right">
 
             @if (documents.length > 1)
             {
@@ -65,113 +70,7 @@
                 </app-search-dropdown>
             }
 
-            @if (documents.length > 1)
-            {
-                <span class="pv-sep"></span>
-            }
-
-            <div class="pv-group">
-
-                <button type="button" class="pv-icon-btn" title="First page" [disabled]="!ready || currentPage <= 1" (click)="first()">
-                    <i class="fas fa-angles-left"></i>
-                </button>
-
-                <button type="button" class="pv-icon-btn" title="Previous page" [disabled]="!ready || currentPage <= 1" (click)="previous()">
-                    <i class="fas fa-angle-left"></i>
-                </button>
-
-                <span class="pv-page-box">
-
-                    <input
-
-                        type="text"
-
-                        inputmode="numeric"
-
-                        aria-label="Page"
-
-                        [value]="pageInput"
-
-                        [disabled]="!ready"
-
-                        (input)="onPageInput($event)"
-
-                        (keydown.enter)="commitPageInput()"
-
-                        (blur)="commitPageInput()">
-
-                    <span>/ {{ pageCount }}</span>
-
-                </span>
-
-                <button type="button" class="pv-icon-btn" title="Next page" [disabled]="!ready || currentPage >= pageCount" (click)="next()">
-                    <i class="fas fa-angle-right"></i>
-                </button>
-
-                <button type="button" class="pv-icon-btn" title="Last page" [disabled]="!ready || currentPage >= pageCount" (click)="last()">
-                    <i class="fas fa-angles-right"></i>
-                </button>
-
-            </div>
-
-            <span class="pv-sep"></span>
-
-            <div class="pv-group">
-
-                <button type="button" class="pv-icon-btn" title="Zoom out" [disabled]="!ready" (click)="zoomOut()">
-                    <i class="fas fa-magnifying-glass-minus"></i>
-                </button>
-
-                <select
-
-                    class="pv-zoom"
-
-                    aria-label="Zoom"
-
-                    [disabled]="!ready"
-
-                    [value]="zoomSelectValue"
-
-                    (change)="onZoomSelect($event)">
-
-                    <option value="fit-width">Fit width</option>
-
-                    <option value="fit-page">Fit page</option>
-
-                    @if (zoomMode === 'custom' && !zoomIsStep)
-                    {
-                        <option [value]="'' + zoom">{{ zoom }}%</option>
-                    }
-
-                    @for (step of zoomSteps; track step)
-                    {
-                        <option [value]="'' + step">{{ step }}%</option>
-                    }
-
-                </select>
-
-                <button type="button" class="pv-icon-btn" title="Zoom in" [disabled]="!ready" (click)="zoomIn()">
-                    <i class="fas fa-magnifying-glass-plus"></i>
-                </button>
-
-                <button type="button" class="pv-icon-btn" title="Fit width" [class.pv-on]="zoomMode === 'fit-width'" [disabled]="!ready" (click)="fitWidth()">
-                    <i class="fas fa-arrows-left-right"></i>
-                </button>
-
-                <button type="button" class="pv-icon-btn" title="Fit page" [class.pv-on]="zoomMode === 'fit-page'" [disabled]="!ready" (click)="fitPage()">
-                    <i class="fas fa-expand"></i>
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- RIGHT : actions -->
-
-        <div class="pv-bar-right">
-
-            <button type="button" class="pv-icon-btn" title="Refresh (reload the live data)" [disabled]="loading || !!busy" (click)="refresh()">
+            <button type="button" class="pv-icon-btn pv-icon-btn-boxed" title="Refresh (reload the live data)" [disabled]="loading || !!busy" (click)="refresh()">
                 <i class="fas fa-rotate-right"></i>
             </button>
 
@@ -203,16 +102,27 @@
 
 
     <!-- =========================================================
-         BODY : thumbnails | pages
+         BODY : thumbnails | pages + page / zoom bar
     ========================================================== -->
 
     <div class="pv-main">
+
+
+        <!-- THUMBNAILS -->
 
         <aside
 
             class="pv-thumbs"
 
             [class.pv-thumbs-closed]="!thumbsOpen">
+
+            <div class="pv-thumbs-head">
+
+                <span>Pages</span>
+
+                <span class="pv-thumbs-count">{{ pageCount }}</span>
+
+            </div>
 
             <iframe
 
@@ -226,69 +136,187 @@
 
         </aside>
 
-        <div
 
-            #stage
+        <!-- PAGES -->
 
-            class="pv-stage">
+        <div class="pv-viewport">
 
-            <iframe
+            <div
 
-                #frame
+                #stage
 
-                class="pv-frame"
+                class="pv-stage">
 
-                [class.pv-hidden]="loading || !!error"
+                <iframe
 
-                title="Print preview">
+                    #frame
 
-            </iframe>
+                    class="pv-frame"
 
-            @if (loading)
-            {
-                <div class="pv-state">
+                    [class.pv-hidden]="loading || !!error"
 
-                    <i class="fas fa-spinner fa-spin"></i>
+                    title="Print preview">
 
-                    Preparing the preview...
+                </iframe>
+
+                @if (loading)
+                {
+                    <div class="pv-state">
+
+                        <i class="fas fa-spinner fa-spin"></i>
+
+                        Preparing the preview...
+
+                    </div>
+                }
+
+                @if (error)
+                {
+                    <div class="pv-state pv-state-error">
+
+                        <i class="fas fa-circle-exclamation"></i>
+
+                        <span>{{ error }}</span>
+
+                        <button type="button" class="pv-btn" (click)="refresh()">
+
+                            <i class="fas fa-rotate-right"></i>
+
+                            Try again
+
+                        </button>
+
+                    </div>
+                }
+
+                @if (busy)
+                {
+                    <div class="pv-busy">
+
+                        <i class="fas fa-spinner fa-spin"></i>
+
+                        {{ busy }}
+
+                    </div>
+                }
+
+                @if (notice)
+                {
+                    <div class="pv-notice">{{ notice }}</div>
+                }
+
+
+                <!-- PAGE / ZOOM BAR (floats over the pages) -->
+
+                <div class="pv-dock-row">
+
+                    <div class="pv-dock">
+
+                        <div class="pv-group">
+
+                            <button type="button" class="pv-icon-btn" title="First page" [disabled]="!ready || currentPage <= 1" (click)="first()">
+                                <i class="fas fa-angles-left"></i>
+                            </button>
+
+                            <button type="button" class="pv-icon-btn" title="Previous page" [disabled]="!ready || currentPage <= 1" (click)="previous()">
+                                <i class="fas fa-angle-left"></i>
+                            </button>
+
+                            <span class="pv-page-box">
+
+                                <input
+
+                                    type="text"
+
+                                    inputmode="numeric"
+
+                                    aria-label="Page"
+
+                                    [value]="pageInput"
+
+                                    [disabled]="!ready"
+
+                                    (input)="onPageInput($event)"
+
+                                    (keydown.enter)="commitPageInput()"
+
+                                    (blur)="commitPageInput()">
+
+                                <span>/ {{ pageCount }}</span>
+
+                            </span>
+
+                            <button type="button" class="pv-icon-btn" title="Next page" [disabled]="!ready || currentPage >= pageCount" (click)="next()">
+                                <i class="fas fa-angle-right"></i>
+                            </button>
+
+                            <button type="button" class="pv-icon-btn" title="Last page" [disabled]="!ready || currentPage >= pageCount" (click)="last()">
+                                <i class="fas fa-angles-right"></i>
+                            </button>
+
+                        </div>
+
+                        <span class="pv-sep"></span>
+
+                        <div class="pv-group">
+
+                            <button type="button" class="pv-icon-btn" title="Zoom out" [disabled]="!ready" (click)="zoomOut()">
+                                <i class="fas fa-magnifying-glass-minus"></i>
+                            </button>
+
+                            <select
+
+                                class="pv-zoom"
+
+                                aria-label="Zoom"
+
+                                [disabled]="!ready"
+
+                                [value]="zoomSelectValue"
+
+                                (change)="onZoomSelect($event)">
+
+                                <option value="fit-width">Fit width</option>
+
+                                <option value="fit-page">Fit page</option>
+
+                                @if (zoomMode === 'custom' && !zoomIsStep)
+                                {
+                                    <option [value]="'' + zoom">{{ zoom }}%</option>
+                                }
+
+                                @for (step of zoomSteps; track step)
+                                {
+                                    <option [value]="'' + step">{{ step }}%</option>
+                                }
+
+                            </select>
+
+                            <button type="button" class="pv-icon-btn" title="Zoom in" [disabled]="!ready" (click)="zoomIn()">
+                                <i class="fas fa-magnifying-glass-plus"></i>
+                            </button>
+
+                        </div>
+
+                        <span class="pv-sep"></span>
+
+                        <div class="pv-group">
+
+                            <button type="button" class="pv-icon-btn" title="Fit width" [class.pv-on]="zoomMode === 'fit-width'" [disabled]="!ready" (click)="fitWidth()">
+                                <i class="fas fa-arrows-left-right"></i>
+                            </button>
+
+                            <button type="button" class="pv-icon-btn" title="Fit page" [class.pv-on]="zoomMode === 'fit-page'" [disabled]="!ready" (click)="fitPage()">
+                                <i class="fas fa-expand"></i>
+                            </button>
+
+                        </div>
+
+                    </div>
 
                 </div>
-            }
 
-            @if (error)
-            {
-                <div class="pv-state pv-state-error">
-
-                    <i class="fas fa-circle-exclamation"></i>
-
-                    <span>{{ error }}</span>
-
-                    <button type="button" class="pv-btn" (click)="refresh()">
-
-                        <i class="fas fa-rotate-right"></i>
-
-                        Try again
-
-                    </button>
-
-                </div>
-            }
-
-            @if (busy)
-            {
-                <div class="pv-busy">
-
-                    <i class="fas fa-spinner fa-spin"></i>
-
-                    {{ busy }}
-
-                </div>
-            }
-
-            @if (notice)
-            {
-                <div class="pv-notice">{{ notice }}</div>
-            }
+            </div>
 
         </div>
 

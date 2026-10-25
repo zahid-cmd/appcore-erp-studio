@@ -118,6 +118,9 @@ export class SupplierProfilesService
             SupplierType:
                 text('SupplierType'),
 
+            SupplyType:
+                text('SupplyType'),
+
             SupplierName:
                 text('SupplierName'),
 
@@ -240,6 +243,12 @@ export class SupplierProfilesService
 
                             SupplierTypes:
                                 (this.pick(response, 'SupplierTypes') ?? []).map(
+                                    (item: any) =>
+                                        String(item ?? '')
+                                ),
+
+                            SupplyTypes:
+                                (this.pick(response, 'SupplyTypes') ?? []).map(
                                     (item: any) =>
                                         String(item ?? '')
                                 ),

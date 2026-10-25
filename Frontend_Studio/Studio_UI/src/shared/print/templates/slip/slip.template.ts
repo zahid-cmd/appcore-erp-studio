@@ -7,7 +7,10 @@
 // logo | company (left), QR (right). One title block : title
 // ribbon (top row), number (left) / date (right) (bottom row).
 // Then the wording ("Received with thanks from … vide …"), the
-// amount box, signature and footer.
+// amount box, signature(s) and footer.
+//
+// Watermark (CANCELLED / REVERSED) : one per half, centred on its
+// card, under the content (not one across the whole sheet).
 //
 // Styles : slip.styles.ts · Model : slip-print.model.ts
 //===============================================================
@@ -36,11 +39,6 @@ export function slipDocumentHtml
 ):
     string
 {
-    const watermark =
-        document.watermark
-            ? `<div class="pv-watermark">${kit.escape(document.watermark)}</div>`
-            : '';
-
     return document.slips
         .map
         (
@@ -48,11 +46,10 @@ export function slipDocumentHtml
             {
                 const halves =
                     document.copies
-                        .map(copy => slipHalfHtml(slip, copy, kit))
+                        .map(copy => slipHalfHtml(slip, copy, document.watermark ?? '', kit))
                         .join('\n<div class="sl-cut"><span>&#9986; cut here</span></div>\n');
 
                 return `<section class="pv-page sl-sheet">
-${watermark}
 ${halves}
 </section>`;
             }
@@ -66,6 +63,8 @@ function slipHalfHtml
         SlipPrintModel,
     copy:
         string,
+    watermark:
+        string,
     kit:
         PrintKit
 ):
@@ -73,6 +72,11 @@ function slipHalfHtml
 {
     const e =
         kit.escape;
+
+    const mark =
+        watermark
+            ? `<div class="sl-mark">${e(watermark)}</div>`
+            : '';
 
     const qr =
         slip.qr
@@ -86,6 +90,7 @@ function slipHalfHtml
 
     return `<div class="sl-half">
 <div class="sl-frame"></div>
+${mark}
 <div class="sl-spine"><span>${e(copy)}</span></div>
 <div class="sl-top">
   ${companyBlock(slip, kit)}
@@ -104,7 +109,7 @@ function slipHalfHtml
 <div class="sl-bottom">
   <div class="sl-amount"><span>Tk</span><b>${kit.money(slip.amount)}</b></div>
   <div class="sl-note">${e(slip.note)}</div>
-  <div class="sl-sign"><div>${e(slip.signature)}</div></div>
+  <div class="sl-signs">${slip.receiverSignature ? `<div class="sl-sign"><div>${e(slip.receiverSignature)}</div></div>` : ''}<div class="sl-sign"><div>${e(slip.signature)}</div></div></div>
 </div>
 <div class="sl-foot"><span>${e(slip.stamp)}</span><span class="sl-valid">${e(slip.footnote)}</span></div>
 </div>`;

@@ -20,6 +20,11 @@ public interface IReceiptVoucherRepository
     Task<ReceiptVoucherDto?> GetByIdAsync(
         long id);
 
+    // Next voucher number preview (Add form)
+    Task<ReceiptVoucherDefaultsDto> GetDefaultsAsync(
+        long branchId,
+        DateOnly voucherDate);
+
 
     //===========================================================
     // Draft

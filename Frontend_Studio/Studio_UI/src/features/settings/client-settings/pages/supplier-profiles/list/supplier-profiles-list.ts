@@ -346,6 +346,24 @@ implements OnInit, OnDestroy
         null;
 
     //===========================================================
+    // Supply Type Filter
+    //===========================================================
+
+    readonly supplyTypeFilterItems:
+        any[] =
+    [
+        { label:'All Supply Types', value:null },
+        { label:'Motor Bikes', value:'Motor Bikes' },
+        { label:'Spare Parts', value:'Spare Parts' },
+        { label:'Accessories', value:'Accessories' },
+        { label:'General', value:'General' }
+    ];
+
+    selectedSupplyType:
+        string | null =
+        null;
+
+    //===========================================================
     // Progress Dialog Settings
     //===========================================================
 
@@ -449,6 +467,12 @@ implements OnInit, OnDestroy
             header:'Type',
             field:'SupplierType',
             width:'150px',
+            align:'center'
+        },
+        {
+            header:'Supply Type',
+            field:'SupplyType',
+            width:'130px',
             align:'center'
         },
         {
@@ -844,6 +868,13 @@ implements OnInit, OnDestroy
                             ||
                             Number(item.BrandManagementId) ===
                             this.selectedBrandId
+                        )
+                        &&
+                        (
+                            this.selectedSupplyType === null
+                            ||
+                            item.SupplyType ===
+                            this.selectedSupplyType
                         );
 
                     const statusMatch =
@@ -857,6 +888,7 @@ implements OnInit, OnDestroy
                             item.SupplierCode,
                             item.SupplierName,
                             item.SupplierType,
+                            item.SupplyType,
                             item.ContactPerson,
                             item.Phone1,
                             item.Phone2,
@@ -924,6 +956,25 @@ implements OnInit, OnDestroy
             value
             ??
             '';
+
+        this.applyFilters();
+    }
+
+    //===========================================================
+    // Supply Type Filter Change
+    //===========================================================
+
+    onSupplyTypeFilterChange
+    (
+        value:
+            string | null
+    ):
+        void
+    {
+        this.selectedSupplyType =
+            value
+                ? String(value)
+                : null;
 
         this.applyFilters();
     }
@@ -1122,6 +1173,9 @@ implements OnInit, OnDestroy
             null;
 
         this.selectedBrandId =
+            null;
+
+        this.selectedSupplyType =
             null;
 
         this.currentPage =

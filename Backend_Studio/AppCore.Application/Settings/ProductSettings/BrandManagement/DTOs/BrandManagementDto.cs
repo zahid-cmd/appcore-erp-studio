@@ -25,6 +25,28 @@ public class BrandManagementDto
 
 
     //===========================================================
+    // Motor Bikes Supplier (by code) and its display name
+    //===========================================================
+
+    public string MotorBikesSupplierCode { get; set; } = string.Empty;
+
+    public string MotorBikesSupplierName { get; set; } = string.Empty;
+
+
+    //===========================================================
+    // Brand Ledgers
+    //===========================================================
+
+    public string OfferAdjustmentLedgerCode { get; set; } = string.Empty;
+
+    public string OfferAdjustmentLedgerName { get; set; } = string.Empty;
+
+    public string EmiClaimLedgerCode { get; set; } = string.Empty;
+
+    public string EmiClaimLedgerName { get; set; } = string.Empty;
+
+
+    //===========================================================
     // Soft Delete
     //===========================================================
 

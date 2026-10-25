@@ -67,6 +67,17 @@ public class SupplierProfilesDefaultsDto
 
 
     //===========================================================
+    // Supply Types (fixed)
+    //===========================================================
+
+    public List<string> SupplyTypes
+    {
+        get;
+        set;
+    } = new();
+
+
+    //===========================================================
     // Brands (live; inactive ones only for records that use them)
     //===========================================================
 

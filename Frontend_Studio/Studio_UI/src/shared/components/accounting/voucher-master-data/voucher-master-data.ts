@@ -76,6 +76,8 @@ import
     VoucherEntryData,
     VoucherChargeRow,
     CHARGE_RECOVERY_LEDGERS,
+    CHARGE_EXPENSE_LEDGERS,
+    VOUCHER_MODES,
     emptyDebitLine,
     emptyVoucherEntry,
     needsDetails,
@@ -113,17 +115,6 @@ const MODE_LEDGER_TYPES:
     EMI:'EMI'
 };
 
-const RECEIPT_MODES:
-    PaymentMode[] =
-[
-    'Cash',
-    'Bank',
-    'Check',
-    'MFS',
-    'POS',
-    'EMI'
-];
-
 const CREDIT_LEDGER_TYPES:
     CreditLedgerType[] =
 [
@@ -158,7 +149,16 @@ interface CreditOption
 //===============================================================
 // Component
 //
-// Voucher Master Data (Receipt Voucher)
+// Voucher Master Data (Receipt Voucher / Payment Voucher)
+//
+// [mode] decides the sides :
+//   receipt : money (Receipt Mode) = DEBIT, entered first;
+//             accounts (Account Details) = CREDIT
+//   payment : accounts (Pay To) = DEBIT, entered first;
+//             money (Payment Mode) = CREDIT
+// Inside the component data.Debits are always the money rows and
+// data.Credits the account rows; the page maps them to its own
+// debit / credit tables.
 //
 //   LEFT
 //     1. Voucher Information : Voucher Date, Voucher No (preview)
@@ -225,10 +225,50 @@ implements OnInit
     // Inputs
     //===========================================================
 
+    // receipt / payment : sides, modes, money accounts, wording
     @Input()
-    mode:
+    set mode
+    (
+        value:
+            VoucherMode
+    )
+    {
+        this._mode =
+            value === 'payment'
+                ? 'payment'
+                : 'receipt';
+
+        this.modeList =
+            VOUCHER_MODES[this._mode];
+
+        this.modeItems =
+            this.modeList.map
+            (
+                item =>
+                ({
+                    label:item,
+                    value:item
+                })
+            );
+
+        this.buildDebitSubGroupItems();
+    }
+
+    get mode():
+        VoucherMode
+    {
+        return this._mode;
+    }
+
+    private _mode:
         VoucherMode =
         'receipt';
+
+    get isPayment():
+        boolean
+    {
+        return this._mode === 'payment';
+    }
 
     @Input()
     readonly:
@@ -248,6 +288,18 @@ implements OnInit
     maxLines:
         number =
         0;
+
+    // Settings "Back Dated / Post Dated Entry" : earliest and
+    // latest voucher date (null = no limit)
+    @Input()
+    minDate:
+        Date | null =
+        null;
+
+    @Input()
+    maxDate:
+        Date | null =
+        null;
 
     // Preview before saving / the saved number after
     @Input()
@@ -409,9 +461,13 @@ implements OnInit
     // Debit draft (Receipt Mode)
     //===========================================================
 
-    readonly modeItems:
+    private modeList:
+        PaymentMode[] =
+        VOUCHER_MODES.receipt;
+
+    modeItems:
         SelectItem[] =
-        RECEIPT_MODES.map
+        VOUCHER_MODES.receipt.map
         (
             mode =>
             ({
@@ -419,6 +475,12 @@ implements OnInit
                 value:mode
             })
         );
+
+    // Payment Voucher : the money amount follows the balance until
+    // the user types one
+    private debitAmountTouched:
+        boolean =
+        false;
 
     debitMode:
         PaymentMode | '' =
@@ -740,8 +802,16 @@ implements OnInit
 
     //===========================================================
     // Totals / rules
+    //
+    // "First" side = entered first (receipt : money, payment :
+    // accounts); "second" side = the other one.
+    //   • 2+ first rows → ONE second row, equal to the balance
+    //   • 1 first row   → several second rows, up to the balance
+    //   • once a second row exists the first side is locked
+    //   • balance 0 → both + Add buttons are blocked
     //===========================================================
 
+    // Money rows total
     get totalDebit():
         number
     {
@@ -755,6 +825,7 @@ implements OnInit
         );
     }
 
+    // Account rows total
     get totalCredit():
         number
     {
@@ -768,16 +839,66 @@ implements OnInit
         );
     }
 
-    // Debit − Credit
+    private get firstCount():
+        number
+    {
+        return this.isPayment
+            ? this.data.Credits.length
+            : this.data.Debits.length;
+    }
+
+    private get secondCount():
+        number
+    {
+        return this.isPayment
+            ? this.data.Debits.length
+            : this.data.Credits.length;
+    }
+
+    // First side − second side (left to enter on the second side)
     get balance():
         number
     {
         return roundMoney(
-            this.totalDebit - this.totalCredit
+            this.isPayment
+                ? this.totalCredit - this.totalDebit
+                : this.totalDebit - this.totalCredit
         );
     }
 
-    // Debit first; once a credit is added the debits are locked
+    // Wording of the two sides
+    get moneyLabel():
+        string
+    {
+        return this.isPayment
+            ? 'Payment Mode'
+            : 'Receipt Mode';
+    }
+
+    get accountLabel():
+        string
+    {
+        return this.isPayment
+            ? 'Pay To'
+            : 'Account Details';
+    }
+
+    private get firstName():
+        string
+    {
+        return this.isPayment
+            ? 'pay-to account (debit)'
+            : 'receipt mode (debit)';
+    }
+
+    private get secondName():
+        string
+    {
+        return this.isPayment
+            ? 'payment mode (credit)'
+            : 'account (credit)';
+    }
+
     // Debit + credit rows entered
     get lineCount():
         number
@@ -811,33 +932,32 @@ implements OnInit
             : Number.POSITIVE_INFINITY;
     }
 
-    // Debits are entered first, so the last free line is kept
-    // for the credit : no debit may take it
-    get debitLineKeptForCredit():
+    // The first side is entered first, so the last free line is
+    // kept for the second side
+    private get firstLineKeptForSecond():
         boolean
     {
         return this.maxLines > 0
             &&
-            this.data.Credits.length === 0
+            this.secondCount === 0
             &&
             this.linesLeft <= 1;
     }
 
-    // The next debit is the last one that fits (one line stays
-    // for the credit)
-    get nextDebitIsLast():
+    // The next first-side row is the last one that fits
+    private get nextFirstIsLast():
         boolean
     {
         return this.maxLines > 0
             &&
-            this.data.Credits.length === 0
+            this.secondCount === 0
             &&
             this.linesLeft === 2;
     }
 
-    // The next credit takes the last free line : it must clear
-    // the whole balance, or the voucher could never balance
-    get nextCreditIsLast():
+    // The next second-side row takes the last free line : it must
+    // clear the whole balance
+    private get nextSecondIsLast():
         boolean
     {
         return this.maxLines > 0
@@ -847,48 +967,19 @@ implements OnInit
             this.balance > 0;
     }
 
-    // Amber footer when a line limit warning is shown
-    get debitHintWarn():
-        boolean
-    {
-        return this.nextDebitIsLast
-            ||
-            this.debitLineKeptForCredit
-            ||
-            (this.atMaxLines && this.data.Credits.length === 0);
-    }
-
-    get creditHintWarn():
-        boolean
-    {
-        return this.nextCreditIsLast
-            ||
-            (this.atMaxLines && this.balance > 0);
-    }
-
-    get canAddDebit():
+    private get canAddFirst():
         boolean
     {
         return !this.readonly
             &&
-            this.data.Credits.length === 0
+            this.secondCount === 0
             &&
             !this.atMaxLines
             &&
-            !this.debitLineKeptForCredit;
+            !this.firstLineKeptForSecond;
     }
 
-    // Several debits → a single credit; the last free line → the
-    // full balance
-    get creditAmountLocked():
-        boolean
-    {
-        return this.data.Debits.length >= 2
-            ||
-            this.nextCreditIsLast;
-    }
-
-    get canAddCredit():
+    private get canAddSecond():
         boolean
     {
         return !this.readonly
@@ -897,30 +988,94 @@ implements OnInit
             &&
             this.balance > 0
             &&
+            this.firstCount > 0
+            &&
             !(
-                this.data.Debits.length >= 2
+                this.firstCount >= 2
                 &&
-                this.data.Credits.length >= 1
+                this.secondCount >= 1
             );
     }
 
-    get ledgerTypeLocked():
+    // Several first rows → a single second row; the last free
+    // line → the full balance
+    private get secondAmountLocked():
         boolean
     {
-        return this.readonly
+        return this.firstCount >= 2
             ||
-            this.data.Credits.length > 0;
+            this.nextSecondIsLast;
     }
 
-    get creditHint():
+    private get firstHintWarn():
+        boolean
+    {
+        return this.nextFirstIsLast
+            ||
+            this.firstLineKeptForSecond
+            ||
+            (this.atMaxLines && this.secondCount === 0);
+    }
+
+    private get secondHintWarn():
+        boolean
+    {
+        return this.nextSecondIsLast
+            ||
+            (this.atMaxLines && this.balance > 0);
+    }
+
+    private get firstHint():
         string
     {
         if
         (
-            this.data.Debits.length === 0
+            this.atMaxLines
+            &&
+            this.secondCount === 0
         )
         {
-            return 'Add the receipt mode (debit) first.';
+            return `${this.maxLinesHint} The ${this.secondName} is still pending : remove a row.`;
+        }
+
+        if
+        (
+            this.firstLineKeptForSecond
+        )
+        {
+            return `Line ${this.maxLines} of ${this.maxLines} is kept for the ${this.secondName} : no more rows here.`;
+        }
+
+        if
+        (
+            this.nextFirstIsLast
+        )
+        {
+            return `Next row is the last one here (line ${this.maxLines - 1} of ${this.maxLines}); line ${this.maxLines} is kept for the ${this.secondName}.`;
+        }
+
+        if
+        (
+            this.secondCount > 0
+        )
+        {
+            return this.isPayment
+                ? 'Locked : remove the payment rows to change the pay-to accounts.'
+                : 'Locked : remove the credits to change the receipt modes.';
+        }
+
+        return '';
+    }
+
+    private get secondHint():
+        string
+    {
+        if
+        (
+            this.firstCount === 0
+        )
+        {
+            return `Add the ${this.firstName} first.`;
         }
 
         if
@@ -935,10 +1090,10 @@ implements OnInit
 
         if
         (
-            this.nextCreditIsLast
+            this.nextSecondIsLast
         )
         {
-            return `Last line (${this.maxLines} of ${this.maxLines}) : this credit takes the full balance ${this.money(this.balance)}.`;
+            return `Last line (${this.maxLines} of ${this.maxLines}) : this row takes the full balance ${this.money(this.balance)}.`;
         }
 
         if
@@ -946,24 +1101,122 @@ implements OnInit
             this.balance <= 0
         )
         {
-            return 'Balanced : nothing left to credit.';
+            return this.isPayment
+                ? 'Balanced : nothing left to pay.'
+                : 'Balanced : nothing left to credit.';
         }
 
         if
         (
-            this.data.Debits.length >= 2
+            this.firstCount >= 2
         )
         {
-            return this.data.Credits.length === 0
-                ? 'Several debits : one credit for the full balance.'
-                : 'Several debits allow only one credit.';
+            return this.secondCount === 0
+                ? `Several debits : one ${this.secondName} for the full balance.`
+                : `Several debits allow only one ${this.secondName}.`;
         }
 
-        return `Up to ${this.money(this.balance)} left to credit.`;
+        return this.isPayment
+            ? `Up to ${this.money(this.balance)} left to pay.`
+            : `Up to ${this.money(this.balance)} left to credit.`;
     }
 
-    // One receipt mode per voucher (multi mode OFF) : fixed by
-    // the first debit
+    //-----------------------------------------------------------
+    // Money side (data.Debits)
+    //-----------------------------------------------------------
+
+    get canAddDebit():
+        boolean
+    {
+        return this.isPayment
+            ? this.canAddSecond
+            : this.canAddFirst;
+    }
+
+    // Payment Voucher : several pay-to rows → one payment row for
+    // the full balance
+    get debitAmountLocked():
+        boolean
+    {
+        return this.isPayment
+            &&
+            this.secondAmountLocked;
+    }
+
+    get debitHintWarn():
+        boolean
+    {
+        return this.isPayment
+            ? this.secondHintWarn
+            : this.firstHintWarn;
+    }
+
+    // Money rows can be removed while no account row depends on
+    // them (receipt); always on the second side (payment)
+    get debitRemoveLocked():
+        boolean
+    {
+        return !this.isPayment
+            &&
+            this.data.Credits.length > 0;
+    }
+
+    //-----------------------------------------------------------
+    // Account side (data.Credits)
+    //-----------------------------------------------------------
+
+    get canAddCredit():
+        boolean
+    {
+        return this.isPayment
+            ? this.canAddFirst
+            : this.canAddSecond;
+    }
+
+    // Receipt Voucher : several receipt modes → one account row for
+    // the full balance
+    get creditAmountLocked():
+        boolean
+    {
+        return !this.isPayment
+            &&
+            this.secondAmountLocked;
+    }
+
+    get creditHintWarn():
+        boolean
+    {
+        return this.isPayment
+            ? this.firstHintWarn
+            : this.secondHintWarn;
+    }
+
+    get creditRemoveLocked():
+        boolean
+    {
+        return this.isPayment
+            &&
+            this.data.Debits.length > 0;
+    }
+
+    get ledgerTypeLocked():
+        boolean
+    {
+        return this.readonly
+            ||
+            this.data.Credits.length > 0;
+    }
+
+    get creditHint():
+        string
+    {
+        return this.isPayment
+            ? this.firstHint
+            : this.secondHint;
+    }
+
+    // One mode per voucher (multi mode OFF) : fixed by the first
+    // money row
     get modeLocked():
         boolean
     {
@@ -975,42 +1228,21 @@ implements OnInit
     get debitHint():
         string
     {
-        if
-        (
-            this.atMaxLines
-            &&
-            this.data.Credits.length === 0
-        )
-        {
-            return `${this.maxLinesHint} The credit is still pending : remove a debit row.`;
-        }
+        const side =
+            this.isPayment
+                ? this.secondHint
+                : this.firstHint;
 
         if
         (
-            this.debitLineKeptForCredit
+            side
         )
         {
-            return `Line ${this.maxLines} of ${this.maxLines} is kept for the credit : no more debits.`;
-        }
-
-        if
-        (
-            this.nextDebitIsLast
-        )
-        {
-            return `Next debit is the last one (line ${this.maxLines - 1} of ${this.maxLines}); line ${this.maxLines} is kept for the credit.`;
-        }
-
-        if
-        (
-            this.data.Credits.length > 0
-        )
-        {
-            return 'Locked : remove the credits to change the receipt modes.';
+            return side;
         }
 
         return this.modeLocked
-            ? `One receipt mode per voucher : only ${this.data.Debits[0].Mode} rows can be added. Remove them to change the mode.`
+            ? `One ${this.moneyLabel.toLowerCase()} per voucher : only ${this.data.Debits[0].Mode} rows can be added. Remove them to change the mode.`
             : '';
     }
 
@@ -1027,18 +1259,18 @@ implements OnInit
 
         if
         (
-            this.data.Debits.length === 0
+            this.firstCount === 0
         )
         {
-            return 'Add at least one receipt mode (debit).';
+            return `Add at least one ${this.firstName}.`;
         }
 
         if
         (
-            this.data.Credits.length === 0
+            this.secondCount === 0
         )
         {
-            return 'Add at least one account (credit).';
+            return `Add at least one ${this.secondName}.`;
         }
 
         if
@@ -1047,6 +1279,15 @@ implements OnInit
         )
         {
             return `Balance remaining ${this.money(this.balance)} : debit and credit must be equal.`;
+        }
+
+        // Detail Narration is required on every voucher
+        if
+        (
+            !(this.data.Narration ?? '').trim()
+        )
+        {
+            return 'Detail Narration is required.';
         }
 
         return '';
@@ -1133,11 +1374,16 @@ implements OnInit
         (
             ledger =>
             {
+                // Receipt : Collection = Yes; Payment : Payment = Yes
                 if
                 (
                     ledger.LedgerType !== type
                     ||
-                    !ledger.CollectionAccount
+                    !(
+                        this.isPayment
+                            ? ledger.PaymentAccount
+                            : ledger.CollectionAccount
+                    )
                 )
                 {
                     return false;
@@ -1291,7 +1537,7 @@ implements OnInit
         }
 
         this.debitMode =
-            RECEIPT_MODES.includes(value)
+            this.modeList.includes(value)
                 ? value as PaymentMode
                 : '';
 
@@ -1350,6 +1596,9 @@ implements OnInit
         this.debitAmountText =
             String(input ?? '');
 
+        this.debitAmountTouched =
+            true;
+
         this.debitError =
             '';
     }
@@ -1377,9 +1626,11 @@ implements OnInit
         }
 
         const amount =
-            roundMoney(
-                parseMoney(this.debitAmountText)
-            );
+            this.debitAmountLocked
+                ? this.balance
+                : roundMoney(
+                    parseMoney(this.debitAmountText)
+                );
 
         const ledger =
             this.findLedger(
@@ -1392,7 +1643,7 @@ implements OnInit
         )
         {
             this.debitError =
-                'Receipt Mode is required.';
+                `${this.moneyLabel} is required.`;
 
             return;
         }
@@ -1426,6 +1677,35 @@ implements OnInit
         {
             this.debitError =
                 'Amount must be more than 0.';
+
+            return;
+        }
+
+        // Payment Voucher : the money side follows the pay-to total
+        if
+        (
+            this.isPayment
+            &&
+            amount > this.balance
+        )
+        {
+            this.debitError =
+                `Amount cannot be more than the balance ${this.money(this.balance)}.`;
+
+            return;
+        }
+
+        if
+        (
+            this.isPayment
+            &&
+            this.nextSecondIsLast
+            &&
+            amount !== this.balance
+        )
+        {
+            this.debitError =
+                `Last line : the amount must be the full balance ${this.money(this.balance)}.`;
 
             return;
         }
@@ -1475,6 +1755,12 @@ implements OnInit
             ChargeBorneBy:
                 needsDetails(this.debitMode) && this.debitMode !== 'Check'
                     ? 'Company'
+                    : '',
+
+            // Payment check : drawn on our own bank (the ledger)
+            CheckBank:
+                this.isPayment && this.debitMode === 'Check'
+                    ? ledger.LedgerName
                     : ''
         };
 
@@ -1492,6 +1778,9 @@ implements OnInit
 
         this.debitAmountText =
             '';
+
+        this.debitAmountTouched =
+            false;
 
         this.debitNotes =
             '';
@@ -1521,7 +1810,7 @@ implements OnInit
 
         if
         (
-            this.data.Credits.length > 0
+            this.debitRemoveLocked
         )
         {
             this.debitError =
@@ -1555,6 +1844,24 @@ implements OnInit
                 this.data.Debits[this.data.Debits.length - 1].Mode;
 
             this.buildDebitSubGroupItems();
+        }
+        else
+        {
+            // Empty voucher (Add / Clear) : nothing pre-selected
+            this.debitMode =
+                '';
+
+            this.debitSubGroup =
+                '';
+
+            this.debitLedger =
+                '';
+
+            this.debitSubGroupItems =
+                [];
+
+            this.debitLedgerItems =
+                [];
         }
 
         this.debitAmountText =
@@ -1921,6 +2228,34 @@ implements OnInit
     private followBalance():
         void
     {
+        const text =
+            this.balance > 0
+                ? this.balance.toFixed(2)
+                : '';
+
+        // Payment Voucher : the money side is the second side
+        if
+        (
+            this.isPayment
+        )
+        {
+            if
+            (
+                this.debitAmountLocked
+                ||
+                !this.debitAmountTouched
+            )
+            {
+                this.debitAmountText =
+                    text;
+
+                this.debitAmountTouched =
+                    false;
+            }
+
+            return;
+        }
+
         if
         (
             this.creditAmountLocked
@@ -1929,9 +2264,7 @@ implements OnInit
         )
         {
             this.creditAmountText =
-                this.balance > 0
-                    ? this.balance.toFixed(2)
-                    : '';
+                text;
 
             this.creditAmountTouched =
                 false;
@@ -2009,6 +2342,8 @@ implements OnInit
 
         if
         (
+            !this.isPayment
+            &&
             amount > this.balance
         )
         {
@@ -2020,7 +2355,9 @@ implements OnInit
 
         if
         (
-            this.nextCreditIsLast
+            !this.isPayment
+            &&
+            this.nextSecondIsLast
             &&
             amount !== this.balance
         )
@@ -2096,6 +2433,17 @@ implements OnInit
             this.readonly
         )
         {
+            return;
+        }
+
+        if
+        (
+            this.creditRemoveLocked
+        )
+        {
+            this.creditError =
+                'Remove the payment rows first, then change the pay-to accounts.';
+
             return;
         }
 
@@ -2263,30 +2611,38 @@ implements OnInit
         return `${String(date.getDate()).padStart(2, '0')}-${months[date.getMonth()]}-${date.getFullYear()}`;
     }
 
-    // Customer-borne charges : added on posting, not counted here
-    get customerCharges():
+    // Charges posted with the voucher :
+    //   receipt : the customer pays on top (Dr money, Cr recovery)
+    //   payment : the company pays (Dr charge expense, Cr money)
+    get postedCharges():
         VoucherDebitLine[]
     {
+        const payer =
+            this.isPayment
+                ? 'Company'
+                : 'Customer';
+
         return this.data.Debits.filter
         (
             line =>
-                line.ChargeBorneBy === 'Customer'
+                line.ChargeBorneBy === payer
                 &&
                 line.ChargeAmount > 0
         );
     }
 
-    //===========================================================
-    // Charge rows in the main grid (charge the customer pays on
-    // top; posted with the voucher)
-    //   Dr the same money account : the charge
-    //   Cr <Mode> Charges Recovery : the charges of that mode
-    //===========================================================
+    // Kept for older bindings
+    get customerCharges():
+        VoucherDebitLine[]
+    {
+        return this.postedCharges;
+    }
 
-    get chargeDebitRows():
+    // One row per money line (the same money account)
+    private get chargeMoneyRows():
         VoucherChargeRow[]
     {
-        return this.customerCharges.map
+        return this.postedCharges.map
         (
             line =>
             ({
@@ -2297,7 +2653,9 @@ implements OnInit
                     line.LedgerName,
 
                 Subtitle:
-                    `${line.Mode} charge · paid by customer`,
+                    this.isPayment
+                        ? `${line.Mode} charge · paid by the company`
+                        : `${line.Mode} charge · paid by customer`,
 
                 Amount:
                     roundMoney(line.ChargeAmount)
@@ -2305,7 +2663,9 @@ implements OnInit
         );
     }
 
-    get chargeCreditRows():
+    // One row per mode : recovery income (receipt) / charge
+    // expense (payment)
+    private get chargeLedgerRows():
         VoucherChargeRow[]
     {
         const byMode =
@@ -2313,7 +2673,7 @@ implements OnInit
 
         for
         (
-            const line of this.customerCharges
+            const line of this.postedCharges
         )
         {
             byMode.set(
@@ -2324,12 +2684,17 @@ implements OnInit
             );
         }
 
+        const codes =
+            this.isPayment
+                ? CHARGE_EXPENSE_LEDGERS
+                : CHARGE_RECOVERY_LEDGERS;
+
         return [...byMode.entries()].map
         (
             ([mode, amount]) =>
             {
                 const code =
-                    CHARGE_RECOVERY_LEDGERS[mode] ?? '';
+                    codes[mode] ?? '';
 
                 const ledger =
                     this.findLedger(code);
@@ -2339,10 +2704,14 @@ implements OnInit
                         code,
 
                     LedgerName:
-                        ledger?.LedgerName || `${mode} Charges Recovery`,
+                        ledger?.LedgerName
+                        ||
+                        (this.isPayment ? `${mode} Charges` : `${mode} Charges Recovery`),
 
                     Subtitle:
-                        ledger?.SubGroupName || 'Charges recovery',
+                        ledger?.SubGroupName
+                        ||
+                        (this.isPayment ? 'Charge expense' : 'Charges recovery'),
 
                     Amount:
                         amount
@@ -2351,11 +2720,29 @@ implements OnInit
         );
     }
 
+    // Debit-side charge rows : money (receipt) / expense (payment)
+    get chargeDebitRows():
+        VoucherChargeRow[]
+    {
+        return this.isPayment
+            ? this.chargeLedgerRows
+            : this.chargeMoneyRows;
+    }
+
+    // Credit-side charge rows : recovery (receipt) / money (payment)
+    get chargeCreditRows():
+        VoucherChargeRow[]
+    {
+        return this.isPayment
+            ? this.chargeMoneyRows
+            : this.chargeLedgerRows;
+    }
+
     get chargeTotal():
         number
     {
         return roundMoney(
-            this.customerCharges.reduce
+            this.postedCharges.reduce
             (
                 (sum, line) =>
                     sum + (Number(line.ChargeAmount) || 0),
@@ -2369,7 +2756,9 @@ implements OnInit
         number
     {
         return roundMoney(
-            this.totalDebit + this.chargeTotal
+            (this.isPayment ? this.totalCredit : this.totalDebit)
+            +
+            this.chargeTotal
         );
     }
 
@@ -2377,11 +2766,39 @@ implements OnInit
         number
     {
         return roundMoney(
-            this.totalCredit + this.chargeTotal
+            (this.isPayment ? this.totalDebit : this.totalCredit)
+            +
+            this.chargeTotal
         );
     }
 
-    // Serial No. of a credit row (debits are 1 … n, credits follow)
+    // Serial No. : the debit side's rows first (1 … n), then the
+    // credit side's
+    moneySerial
+    (
+        index:
+            number
+    ):
+        number
+    {
+        return this.isPayment
+            ? this.data.Credits.length + index + 1
+            : index + 1;
+    }
+
+    partySerial
+    (
+        index:
+            number
+    ):
+        number
+    {
+        return this.isPayment
+            ? index + 1
+            : this.data.Debits.length + index + 1;
+    }
+
+    // Serial No. of a credit row (kept for older bindings)
     creditSerial
     (
         index:
@@ -2389,7 +2806,7 @@ implements OnInit
     ):
         number
     {
-        return this.data.Debits.length + index + 1;
+        return this.partySerial(index);
     }
 
     get gridRowCount():

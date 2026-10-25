@@ -6,158 +6,142 @@ namespace AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation;
 
 
 //===============================================================
-// PosReconciliations
+// POS Reconciliations (one row per Receipt Voucher POS line)
+//
+// The card transaction lives on the Receipt Voucher
+// (ReceiptVoucherPayments, Mode POS). This row is created on the
+// first action and keeps where the transaction stands.
+//
+// The POS account is a transit ledger linked (by code) to a bank
+// account. Settlement moves the money from the POS account to that
+// bank; one batch / one RRV per linked bank account.
+//
+//   Pending → Settled | Rejected   (Undo : back to Pending)
+//
+// Settle (RRV) : Dr linked Bank (net) + Dr POS Charges (charges) /
+//                Cr POS account (gross)
+// Reject (RRV) : Dr customer (the RV party lines) [+ Dr POS
+//                Charges Recovery when the customer paid the
+//                charge] / Cr POS account (gross)
 //===============================================================
 
 public class PosReconciliations
 {
-    //===========================================================
-    // Primary Key
-    //===========================================================
-
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long PosReconciliationId { get; set; }
 
 
     //===========================================================
-    // Code
+    // The transaction (copied from its voucher on the first action)
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    // RV
+    public string SourceVoucherType { get; set; } = string.Empty;
 
+    public long SourceVoucherId { get; set; }
 
-    //===========================================================
-    // Name
-    //===========================================================
+    public string SourceVoucherNo { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    // ReceiptVoucherPaymentId
+    public long SourcePaymentId { get; set; }
 
+    // Receipt Voucher date
+    public DateOnly ReceiptDate { get; set; }
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    public long BranchId { get; set; }
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public string BranchName { get; set; } = string.Empty;
 
+    // Received From
+    public string PartyName { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
+    // POS account (ledger code = POSAccountCode)
+    public string AccountCode { get; set; } = string.Empty;
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string AccountName { get; set; } = string.Empty;
 
+    public string CardName { get; set; } = string.Empty;
 
-    //===========================================================
-    // Status
-    //===========================================================
+    // Approval / last 4
+    public string TransactionRef { get; set; } = string.Empty;
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    // Received against the party lines
+    public decimal Amount { get; set; }
+
+    // Charge the customer paid on top (0 when the company bears it)
+    public decimal CustomerCharge { get; set; }
+
+    // What landed in the POS account = Amount + CustomerCharge
+    public decimal GrossAmount { get; set; }
+
+    // The card charge saved on the Receipt Voucher at the sale
+    public decimal SaleChargePercent { get; set; }
+
+    public decimal SaleChargeAmount { get; set; }
 
 
     //===========================================================
-    // Remarks
+    // State
     //===========================================================
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    // Pending / Settled / Rejected
+    public string Status { get; set; } = "Pending";
 
+    // Settlement
+    public DateOnly? SettledDate { get; set; }
 
-    //===========================================================
-    // Active
-    //===========================================================
+    public long? SettlementVoucherId { get; set; }
 
-    public bool IsActive
-    {
-        get;
-        set;
-    }
+    public string SettlementVoucherNo { get; set; } = string.Empty;
 
+    public string BankLedgerCode { get; set; } = string.Empty;
 
-    //===========================================================
-    // Deleted
-    //===========================================================
+    public string BankLedgerName { get; set; } = string.Empty;
 
-    public bool IsDeleted
-    {
-        get;
-        set;
-    }
+    public decimal FeePercent { get; set; }
 
+    // Bank charges taken at settlement
+    public decimal Fee { get; set; }
 
-    //===========================================================
-    // Created By
-    //===========================================================
+    // Charge audit : the system charge (the RV line's charge),
+    // whether the user changed it, and why
+    public decimal StandardFee { get; set; }
 
-    public long CreatedBy
-    {
-        get;
-        set;
-    }
+    public bool FeeEdited { get; set; }
 
+    public string FeeReason { get; set; } = string.Empty;
 
-    //===========================================================
-    // Created Date
-    //===========================================================
+    // GrossAmount - Fee (into the bank)
+    public decimal NetAmount { get; set; }
 
-    public DateTime CreatedDate
-    {
-        get;
-        set;
-    }
+    // Settled by the nightly Auto Settlement
+    public bool IsAuto { get; set; }
+
+    // An auto settlement was undone : the nightly job leaves this
+    // line alone (settle it by hand)
+    public bool SkipAuto { get; set; }
+
+    // Reject
+    public DateOnly? RejectDate { get; set; }
+
+    public string RejectReason { get; set; } = string.Empty;
+
+    public long? RejectVoucherId { get; set; }
+
+    public string RejectVoucherNo { get; set; } = string.Empty;
+
+    // Short notes of the last settle / reject
+    public string ShortNotes { get; set; } = string.Empty;
 
 
     //===========================================================
-    // Modified By
+    // Audit
     //===========================================================
 
-    public long? ModifiedBy
-    {
-        get;
-        set;
-    }
+    public long CreatedBy { get; set; }
 
+    public DateTime CreatedDate { get; set; }
 
-    //===========================================================
-    // Modified Date
-    //===========================================================
+    public long? ModifiedBy { get; set; }
 
-    public DateTime? ModifiedDate
-    {
-        get;
-        set;
-    }
+    public DateTime? ModifiedDate { get; set; }
 }

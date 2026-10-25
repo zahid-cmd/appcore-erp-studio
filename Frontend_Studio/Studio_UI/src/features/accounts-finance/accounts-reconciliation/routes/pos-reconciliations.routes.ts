@@ -11,6 +11,8 @@ from '@angular/router';
 
 //===============================================================
 // Submenu Routes
+//
+// List of card receipts + the POS Settlement Center (full page).
 //===============================================================
 
 export const PosReconciliationsRoutes:
@@ -40,7 +42,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'POS Reconciliations'
+            breadcrumb:'POS Reconciliation'
         },
 
         loadComponent:() =>
@@ -55,70 +57,24 @@ Routes =
 
 
     //===========================================================
-    // Add
+    // POS Settlement Center (settle / reject)
     //===========================================================
 
     {
-        path:'add',
+        path:'center',
 
         data:
         {
-            breadcrumb:'Add POS Reconciliations'
+            breadcrumb:'POS Settlement Center'
         },
 
         loadComponent:() =>
             import(
-                '../pages/pos-reconciliations/form/pos-reconciliations-form'
+                '../pages/pos-reconciliations/center/pos-settlement-center'
             )
             .then(
                 m =>
-                    m.PosReconciliationsForm
-            )
-    },
-
-
-    //===========================================================
-    // Edit
-    //===========================================================
-
-    {
-        path:'edit/:id',
-
-        data:
-        {
-            breadcrumb:'Edit POS Reconciliations'
-        },
-
-        loadComponent:() =>
-            import(
-                '../pages/pos-reconciliations/form/pos-reconciliations-form'
-            )
-            .then(
-                m =>
-                    m.PosReconciliationsForm
-            )
-    },
-
-
-    //===========================================================
-    // View
-    //===========================================================
-
-    {
-        path:'view/:id',
-
-        data:
-        {
-            breadcrumb:'View POS Reconciliations'
-        },
-
-        loadComponent:() =>
-            import(
-                '../pages/pos-reconciliations/form/pos-reconciliations-form'
-            )
-            .then(
-                m =>
-                    m.PosReconciliationsForm
+                    m.PosSettlementCenter
             )
     }
 

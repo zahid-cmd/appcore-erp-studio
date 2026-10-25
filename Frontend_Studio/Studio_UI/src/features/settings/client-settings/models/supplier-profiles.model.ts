@@ -16,11 +16,15 @@ export interface Supplier
     SupplierType:
         string;
 
+    // Motor Bikes / Spare Parts / Accessories / General
+    SupplyType:
+        string;
+
     // CAPITAL LETTERS
     SupplierName:
         string;
 
-    // "<SUPPLIER NAME> - <BRAND> - <PHONE 1>" (brand part only when set)
+    // "<SUPPLIER NAME> - <BRAND> - <SUPPLY TYPE> - <PHONE 1>" (brand part only when set)
     DisplayName:
         string;
 
@@ -94,11 +98,15 @@ export interface CreateSupplier
     SupplierType:
         string;
 
+    // Motor Bikes / Spare Parts / Accessories / General
+    SupplyType:
+        string;
+
     // CAPITAL LETTERS
     SupplierName:
         string;
 
-    // "<SUPPLIER NAME> - <BRAND> - <PHONE 1>" (brand part only when set)
+    // "<SUPPLIER NAME> - <BRAND> - <SUPPLY TYPE> - <PHONE 1>" (brand part only when set)
     DisplayName:
         string;
 
@@ -200,6 +208,9 @@ export interface SupplierProfilesDefaults
         string;
 
     SupplierTypes:
+        string[];
+
+    SupplyTypes:
         string[];
 
     Brands:

@@ -1,0 +1,1229 @@
+/*===============================================================
+  Check Clearing Center (modal)
+  Frame : the house modal (header gradient, progress, footer).
+  Body  : its own look : Check Tray (cheque slips) | stat ribbon,
+          cheque preview with its fields, Posting card.
+===============================================================*/
+
+/*---------------------------------------------------------------
+  Frame
+---------------------------------------------------------------*/
+
+.cc-backdrop
+{
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+    animation: cc-fade-in 0.2s ease-out;
+}
+
+.cc-modal
+{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1240px;
+    height: min(800px, calc(100vh - 40px));
+    overflow: hidden;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
+    box-shadow:
+        0 30px 70px -24px rgba(15, 23, 42, 0.55),
+        0 2px 8px rgba(15, 23, 42, 0.08);
+    animation: cc-modal-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+
+/* Header : light gradient + accent line (blue / teal / red) */
+
+.cc-head
+{
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #c9d7ee;
+    background: linear-gradient(120deg, #bcd2ff 0%, #d5e3ff 45%, #e2e8f0 100%);
+}
+
+.cc-head::before
+{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1e3a8a, #3b82f6 55%, #94a3b8);
+}
+
+.cc-deposit .cc-head
+{
+    border-bottom-color: #b9e3dc;
+    background: linear-gradient(120deg, #b6ece2 0%, #d6f3ee 45%, #e2e8f0 100%);
+}
+
+.cc-deposit .cc-head::before
+{
+    background: linear-gradient(90deg, #0f766e, #14b8a6 55%, #94a3b8);
+}
+
+.cc-dishonour .cc-head
+{
+    border-bottom-color: #f1d5d5;
+    background: linear-gradient(120deg, #fde2e2 0%, #fdf0f0 45%, #f1f5f9 100%);
+}
+
+.cc-dishonour .cc-head::before
+{
+    background: linear-gradient(90deg, #991b1b, #ef4444 55%, #94a3b8);
+}
+
+.cc-icon
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    font-size: 20px;
+    box-shadow: 0 6px 14px -6px rgba(37, 99, 235, 0.7);
+}
+
+.cc-deposit .cc-icon
+{
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
+    box-shadow: 0 6px 14px -6px rgba(20, 184, 166, 0.7);
+}
+
+.cc-dishonour .cc-icon
+{
+    background: linear-gradient(135deg, #991b1b, #ef4444);
+    box-shadow: 0 6px 14px -6px rgba(220, 38, 38, 0.7);
+}
+
+.cc-title
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.cc-title strong
+{
+    font-size: 19px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.cc-title span
+{
+    font-size: 14.5px;
+    color: #475569;
+}
+
+/* Mode : chip or Clearing | Dishonour switch */
+
+.cc-mode-chip
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #cbd5e1;
+    color: #1e3a8a;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.cc-deposit .cc-mode-chip
+{
+    color: #0f766e;
+}
+
+.cc-switch
+{
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+/* Off : plain, muted */
+.cc-switch button
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: #64748b;
+    font-size: 14.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cc-switch button:hover:not(.cc-switch-on):not(:disabled)
+{
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+/* On : solid colour, white text (blue = Clearing, red = Dishonour) */
+.cc-switch button.cc-switch-on
+{
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 4px 10px -4px rgba(37, 99, 235, 0.7);
+    cursor: default;
+}
+
+.cc-dishonour .cc-switch button.cc-switch-on
+{
+    background: linear-gradient(135deg, #991b1b, #ef4444);
+    color: #ffffff;
+    box-shadow: 0 4px 10px -4px rgba(220, 38, 38, 0.7);
+}
+
+/* Progress : checks ready */
+
+.cc-progress
+{
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 190px;
+}
+
+.cc-progress-text
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #1e3a8a;
+}
+
+.cc-progress-track
+{
+    display: block;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.35);
+    overflow: hidden;
+}
+
+.cc-progress-bar
+{
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2563eb, #60a5fa);
+    transition: width 0.4s ease, background 0.3s ease;
+}
+
+.cc-progress-done .cc-progress-text
+{
+    color: #166534;
+}
+
+.cc-progress-done .cc-progress-bar
+{
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+.cc-x
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin-left: 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #475569;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
+}
+
+.cc-x:hover
+{
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #dc2626;
+    transform: rotate(90deg);
+}
+
+/* No progress shown : the close button still sits on the right */
+.cc-head > .cc-x:nth-last-child(1)
+{
+    margin-left: auto;
+}
+
+.cc-progress + .cc-x
+{
+    margin-left: 4px;
+}
+
+
+/* Body */
+
+.cc-body
+{
+    /* No scrolling : the tray and the right column share the
+       full body height (the tray's slips scroll inside it) */
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    padding: 14px 18px;
+}
+
+.cc-empty-state
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/* Check Tray (left) | right section. The tray is as tall as the
+   right section; its slips scroll inside. */
+.cc-grid
+{
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: 420px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 16px;
+    min-height: 0;
+}
+
+/* Same height as the tray; the cheque card takes what is left */
+.cc-right
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    min-height: 0;
+}
+
+.cc-right > *
+{
+    flex: 0 0 auto;
+}
+
+.cc-right > .cc-cheque-card
+{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 0;
+}
+
+
+/*---------------------------------------------------------------
+  Check Tray : a dark-edged tray holding cheque slips
+---------------------------------------------------------------*/
+
+.cc-tray
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #eef2f9 0%, #e7edf6 100%);
+    border: 1px solid #d6dfec;
+    box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+.cc-tray-head
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #d6dfec;
+}
+
+.cc-tray-title
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #334155;
+}
+
+.cc-tray-count
+{
+    min-width: 24px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 6px;
+    background: #1e293b;
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 22px;
+    text-align: center;
+}
+
+.cc-link
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    border: 0;
+    background: none;
+    color: #64748b;
+    font-size: 13.5px;
+    cursor: pointer;
+}
+
+.cc-link:hover:not(:disabled)
+{
+    color: #dc2626;
+}
+
+.cc-tray-frame
+{
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.cc-tray-list
+{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.cc-tray-list > *
+{
+    flex: 0 0 auto;
+}
+
+/* A slip : state edge on the left, number + party | amount + state */
+.cc-slip
+{
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 10px 11px 18px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #dbe3ef;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.cc-slip::before
+{
+    content: '';
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 6px;
+    width: 5px;
+    border-radius: 4px;
+    background: #22c55e;
+}
+
+.cc-slip-todo::before
+{
+    background: #f59e0b;
+}
+
+.cc-slip:hover
+{
+    transform: translateX(2px);
+    box-shadow: 0 6px 14px -10px rgba(15, 23, 42, 0.5);
+}
+
+.cc-slip-active
+{
+    background: #f5f8ff;
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.18), 0 6px 14px -10px rgba(15, 23, 42, 0.5);
+}
+
+.cc-deposit .cc-slip-active
+{
+    border-color: #0f766e;
+    box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.18);
+}
+
+.cc-dishonour .cc-slip-active
+{
+    border-color: #b91c1c;
+    box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.16);
+}
+
+.cc-slip-main
+{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    line-height: 1.35;
+}
+
+.cc-slip-no
+{
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.cc-slip-meta
+{
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Party : up to two lines, then … */
+.cc-slip-party
+{
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+.cc-slip-party
+{
+    font-size: 15px;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.cc-slip-meta
+{
+    font-size: 13.5px;
+    color: #475569;
+}
+
+.cc-slip-side
+{
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.cc-slip-amount
+{
+    font-size: 17px;
+    font-weight: 700;
+    color: #0b2a5b;
+    font-variant-numeric: tabular-nums;
+}
+
+.cc-slip-state
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #dcfce7;
+    font-size: 13px;
+    font-weight: 600;
+    color: #166534;
+    white-space: nowrap;
+}
+
+.cc-slip-state-todo
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.cc-slip-x
+{
+    flex: 0 0 auto;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.cc-slip-x:hover:not(:disabled)
+{
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+
+/*---------------------------------------------------------------
+  Stat ribbon : one bar, four segments, words underneath
+---------------------------------------------------------------*/
+
+.cc-ribbon
+{
+    border: 1px solid #c7d5f0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.cc-ribbon-stats
+{
+    display: grid;
+    grid-template-columns: 0.7fr 1.3fr 1fr 1fr;
+}
+
+.cc-ribbon-stats > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 9px 14px;
+    border-right: 1px solid #e2e8f0;
+}
+
+.cc-ribbon-stats > div:last-child
+{
+    border-right: 0;
+}
+
+.cc-ribbon-stats span
+{
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cc-ribbon-stats b
+{
+    font-size: 16.5px;
+    font-weight: 700;
+    color: #1e293b;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cc-ribbon-main
+{
+    background: linear-gradient(120deg, #e8effc 0%, #f3f7fe 100%);
+}
+
+.cc-ribbon-main b
+{
+    color: #0b2a5b;
+    font-size: 18px;
+}
+
+.cc-deposit .cc-ribbon
+{
+    border-color: #b9e3dc;
+}
+
+.cc-deposit .cc-ribbon-main
+{
+    background: linear-gradient(120deg, #dcf5f0 0%, #f0fbf9 100%);
+}
+
+.cc-dishonour .cc-ribbon
+{
+    border-color: #f5c9c9;
+}
+
+.cc-dishonour .cc-ribbon-main
+{
+    background: linear-gradient(120deg, #fde8e8 0%, #fff5f5 100%);
+}
+
+.cc-ribbon-words
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-top: 1px dashed #dbe4f3;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 14.5px;
+    font-style: italic;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cc-ribbon-words i
+{
+    font-style: normal;
+    color: #64748b;
+}
+
+
+/*---------------------------------------------------------------
+  Cheque preview card : the selected check drawn as a cheque,
+  with its fields underneath
+---------------------------------------------------------------*/
+
+.cc-cheque-card
+{
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.cc-fade
+{
+    animation: cc-card-in 0.22s ease-out;
+}
+
+@keyframes cc-card-in
+{
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+}
+
+.cc-cheque
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px;
+    padding: 12px 16px 10px;
+    border: 1px solid #d9cfb8;
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 92% 18%, rgba(30, 58, 138, 0.06) 0, transparent 40%),
+        repeating-linear-gradient(
+            -45deg,
+            rgba(203, 190, 160, 0.10) 0,
+            rgba(203, 190, 160, 0.10) 2px,
+            transparent 2px,
+            transparent 7px),
+        #fbf7ee;
+}
+
+.cc-cheque small
+{
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a7a55;
+}
+
+.cc-cheque-top
+{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cc-cheque-bank
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #3f3420;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cc-cheque-date
+{
+    flex: 0 0 auto;
+    padding: 4px 10px;
+    border: 1px solid #d9cfb8;
+    border-radius: 6px;
+    background: #ffffff;
+    font-family: 'Courier New', ui-monospace, monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    text-align: right;
+}
+
+.cc-cheque-pay
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #cbbd99;
+}
+
+.cc-cheque-pay span
+{
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 17px;
+    font-style: italic;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cc-cheque-amount-line
+{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.cc-cheque-words
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 14px;
+    font-style: italic;
+    color: #3f3420;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cc-cheque-amount
+{
+    flex: 0 0 auto;
+    padding: 6px 12px;
+    border: 2px solid #3f3420;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 17px;
+    font-weight: 800;
+    color: #0b2a5b;
+    font-variant-numeric: tabular-nums;
+}
+
+.cc-cheque-bottom
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cc-micr
+{
+    font-family: 'Courier New', ui-monospace, monospace;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: #1e293b;
+}
+
+.cc-cheque-ref
+{
+    min-width: 0;
+    font-size: 12.5px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Fields : two even columns */
+.cc-fields
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+    padding: 0 14px 12px;
+}
+
+/* Clearing : the single Bank Charge field at half width */
+.cc-cheque-card .cc-fields
+{
+    padding-top: 2px;
+}
+
+.cc-span-2
+{
+    grid-column: 1 / -1;
+}
+
+.cc-card-bar
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 14px 14px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #f0fdf4;
+    font-size: 14.5px;
+    color: #166534;
+}
+
+.cc-card-bar > span
+{
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.cc-card-bar-issue
+{
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+
+/*---------------------------------------------------------------
+  Posting : date + bank / narration for all checks
+---------------------------------------------------------------*/
+
+.cc-posting
+{
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #1e3a8a;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.cc-deposit .cc-posting
+{
+    border-left-color: #0f766e;
+}
+
+.cc-dishonour .cc-posting
+{
+    border-left-color: #b91c1c;
+}
+
+.cc-posting-head
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.cc-posting-head i
+{
+    color: #64748b;
+}
+
+.cc-posting-head small
+{
+    margin-left: auto;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: #64748b;
+}
+
+/* Clearing : one RRV / RRP per bank account */
+.cc-banks
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 14px 12px;
+}
+
+.cc-bank-chip
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 4px 10px;
+    border: 1px dashed #c7d2fe;
+    border-radius: 999px;
+    background: #f8faff;
+    color: #1e3a8a;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dropdown / calendar lists open in the CDK overlay; the host left
+   in the page takes no space */
+:host ::ng-deep .cc-common app-overlay
+{
+    display: block;
+    height: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+}
+
+:host ::ng-deep .cc-fields > app-textbox,
+:host ::ng-deep .cc-fields > app-datepicker,
+:host ::ng-deep .cc-fields > app-search-dropdown
+{
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+
+/* Footer */
+
+.cc-foot
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: linear-gradient(120deg, #f8fafc 0%, #f1f5fb 55%, #eef2f7 100%);
+}
+
+.cc-note
+{
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.cc-note-ok
+{
+    color: #166534;
+}
+
+.cc-note-warn
+{
+    color: #9a3412;
+}
+
+.cc-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.cc-btn:disabled
+{
+    opacity: 0.55;
+    cursor: default;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.cc-btn-light
+{
+    border-color: #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+}
+
+.cc-btn-light:hover:not(:disabled)
+{
+    background: #f1f5f9;
+}
+
+.cc-btn-sm
+{
+    padding: 5px 12px;
+    font-size: 14px;
+}
+
+.cc-btn-primary
+{
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.55);
+}
+
+.cc-btn-primary:hover:not(:disabled)
+{
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -6px rgba(37, 99, 235, 0.6);
+}
+
+.cc-deposit .cc-btn-primary
+{
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
+    box-shadow: 0 4px 12px -4px rgba(20, 184, 166, 0.55);
+}
+
+.cc-btn-danger
+{
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.cc-btn-danger:hover:not(:disabled)
+{
+    background: #b91c1c;
+}
+
+@keyframes cc-fade-in
+{
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes cc-modal-in
+{
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 1100px)
+{
+    .cc-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cc-body
+    {
+        overflow-y: auto;
+    }
+
+    .cc-grid
+    {
+        grid-template-rows: auto;
+    }
+
+    .cc-tray
+    {
+        min-height: 0;
+    }
+
+    .cc-tray-list
+    {
+        position: static;
+        overflow: visible;
+    }
+
+    .cc-ribbon-stats
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px)
+{
+    .cc-head
+    {
+        flex-wrap: wrap;
+    }
+
+    .cc-progress
+    {
+        order: 3;
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+
+
+
+/* Very short screens : allow the body to scroll rather than cut */
+@media (max-height: 620px)
+{
+    .cc-body
+    {
+        overflow-y: auto;
+    }
+
+    .cc-grid
+    {
+        grid-template-rows: auto;
+    }
+}

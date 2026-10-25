@@ -156,11 +156,23 @@
 
         @if (loading)
         {
+            <!-- AppCore standard loader -->
+
             <div class="rv-loading">
 
-                <i class="fas fa-spinner fa-spin"></i>
+                <app-orbit-loader
 
-                Loading receipt voucher...
+                    title="Loading Receipt Voucher"
+
+                    message="Please wait while the voucher is being loaded."
+
+                    size="medium"
+
+                    [showMessage]="true"
+
+                    [overlay]="false">
+
+                </app-orbit-loader>
 
             </div>
         }
@@ -220,6 +232,10 @@
                 [multiMode]="multiMode"
 
                 [maxLines]="maxLines"
+
+                [minDate]="minVoucherDate"
+
+                [maxDate]="maxVoucherDate"
 
                 [voucherNo]="voucherNoText"
 

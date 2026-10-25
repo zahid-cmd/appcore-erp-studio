@@ -48,6 +48,31 @@ public class BrandManagement
 
 
     //===========================================================
+    // Motor Bikes Supplier (optional) : Supplier Profiles →
+    // SupplierCode of a supplier with Supply Type Motor Bikes.
+    // EMI reimbursement claims of this brand go to it.
+    //===========================================================
+
+    public string MotorBikesSupplierCode { get; set; } = string.Empty;
+
+
+    //===========================================================
+    // Brand Ledgers (created by the brand, found by sub group
+    // CODE; named "<Sub Group Name> - <Brand Name>")
+    //   SUB-002-002-008  Offer Adjustment Account
+    //   SUB-002-002-009  EMI Claim Receivable
+    //===========================================================
+
+    public string OfferAdjustmentLedgerCode { get; set; } = string.Empty;
+
+    public string OfferAdjustmentLedgerName { get; set; } = string.Empty;
+
+    public string EmiClaimLedgerCode { get; set; } = string.Empty;
+
+    public string EmiClaimLedgerName { get; set; } = string.Empty;
+
+
+    //===========================================================
     // Status
     //===========================================================
 

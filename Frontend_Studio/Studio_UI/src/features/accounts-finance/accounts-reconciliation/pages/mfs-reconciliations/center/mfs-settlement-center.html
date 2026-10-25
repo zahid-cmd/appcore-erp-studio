@@ -1,0 +1,821 @@
+<div
+    class="app-form-page ccc-page"
+    [class.mfc-settle]="settle"
+    [class.mfc-reject]="!settle">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="MFS Settlement Center"
+        subtitle="Settle or reject MFS receipts of one wallet in a batch"
+        icon="fas fa-money-bill-transfer">
+
+        <div pageHeaderCenter>
+
+            <div class="ccc-ribbon">
+
+                <div class="ccc-rchip">
+
+                    <span class="ccc-rchip-icon ccc-rchip-icon-branch">
+
+                        <i class="fas fa-building"></i>
+
+                    </span>
+
+                    <span class="ccc-rchip-text">
+
+                        <span class="ccc-rchip-label">Branch</span>
+
+                        <strong>{{ headerBranch || 'Not set' }}</strong>
+
+                    </span>
+
+                </div>
+
+                <span class="ccc-ribbon-sep"></span>
+
+                <div
+                    class="ccc-rchip"
+                    [class.ccc-rchip-error]="!!headerYearError"
+                    [title]="headerYearError">
+
+                    <span class="ccc-rchip-icon ccc-rchip-icon-year">
+
+                        <i class="fas fa-calendar-days"></i>
+
+                    </span>
+
+                    <span class="ccc-rchip-text">
+
+                        <span class="ccc-rchip-label">Financial Year</span>
+
+                        <strong>{{ headerYear || (voucherNoLoading ? 'Loading…' : 'Not open') }}</strong>
+
+                    </span>
+
+                </div>
+
+                <span class="ccc-ribbon-sep"></span>
+
+                <div class="ccc-rstate">
+
+                    <span class="ccc-mode-pill">
+
+                        MFS · {{ settle ? 'Settlement' : 'Rejection' }}
+
+                    </span>
+
+                    <span class="ccc-rcount">
+
+                        {{ selected.length }} selected · Tk {{ money(totalAmount) }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveText"
+            [command1Icon]="saveIcon"
+            [command1Title]="saveTitle"
+            (command1Click)="onSave()"
+            command2Text="Clear"
+            command2Icon="fas fa-eraser"
+            command2Title="Reset the form"
+            (command2Click)="onClear()"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-arrow-left"
+            rightCommandTitle="Back to the MFS list"
+            (rightCommandClick)="onBack()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : tab · ribbon (maximized) · mode
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab">
+
+        </app-control-tabs>
+
+        <!-- Floating ribbon : Voucher Information while Available
+             is maximized (click to restore) -->
+
+        <div
+            pageToolbarLeft
+            class="ccc-float-wrap">
+
+            @if (availableMax)
+            {
+                <button
+                    type="button"
+                    class="ccc-float"
+                    title="Restore Voucher Information"
+                    (click)="toggleAvailableMax()">
+
+                    <span class="ccc-float-item ccc-float-no">
+
+                        <i class="fas fa-file-invoice"></i>
+
+                        {{ voucherNo || (voucherNoLoading ? 'Loading…' : 'No number') }}
+
+                    </span>
+
+                    <span class="ccc-float-item">
+
+                        <i class="far fa-calendar"></i>
+
+                        {{ ribbonDate }}
+
+                    </span>
+
+                    <span class="ccc-float-item ccc-float-bank" [title]="ribbonWallet">
+
+                        <i class="fas fa-mobile-screen-button"></i>
+
+                        {{ ribbonWallet }}
+
+                    </span>
+
+                    @if (ribbonBank)
+                    {
+                        <span class="ccc-float-item ccc-float-bank" [title]="ribbonBank">
+
+                            <i class="fas fa-building-columns"></i>
+
+                            {{ ribbonBank }}
+
+                        </span>
+                    }
+
+                    @if (ribbonNarration)
+                    {
+                        <span class="ccc-float-item ccc-float-note" [title]="ribbonNarration">
+
+                            <i class="fas fa-align-left"></i>
+
+                            {{ ribbonNarration }}
+
+                        </span>
+                    }
+
+                    <span class="ccc-float-restore">
+
+                        <i class="fas fa-down-left-and-up-right-to-center"></i>
+
+                    </span>
+
+                </button>
+            }
+
+        </div>
+
+        <div
+            pageToolbarRight
+            class="ccc-modes"
+            role="tablist"
+            aria-label="Mode">
+
+            @for (item of modes; track item.id)
+            {
+                <button
+                    type="button"
+                    role="tab"
+                    [attr.aria-selected]="mode === item.id"
+                    [class]="'ccc-mode mfc-mode-' + item.id + (mode === item.id ? ' ccc-mode-on' : '')"
+                    [disabled]="busy"
+                    (click)="setMode(item.id)">
+
+                    <i [class]="item.icon"></i>
+
+                    {{ item.label }}
+
+                </button>
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         BODY : left (voucher · narration · available) | right (cart)
+    ====================================================== -->
+
+    <div class="ccc-body">
+
+        <!-- =================================================
+             LEFT
+        ================================================== -->
+
+        <div class="ccc-left" [class.ccc-left-max]="availableMax">
+
+            <!-- ============ VOUCHER INFORMATION ============ -->
+
+            <section class="ccc-card ccc-info">
+
+                <div class="ccc-card-header">
+
+                    <i class="fas fa-file-invoice"></i>
+
+                    <span>Voucher Information</span>
+
+                    <span class="ccc-header-note" title="The number is confirmed on save">
+
+                        Creates : <b>{{ createsText }}</b>
+
+                        @if (voucherNoExtra > 0)
+                        {
+                            · first no. shown
+                        }
+
+                    </span>
+
+                </div>
+
+                <div class="ccc-info-grid">
+
+                    <app-textbox
+                        label="Voucher No"
+                        [placeholder]="voucherNoLoading ? 'Loading…' : (voucherNoNote || 'Assigned on save')"
+                        [value]="voucherNo"
+                        [readonly]="true"
+                        [class.ccc-vno-warn]="!voucherNo && !voucherNoLoading"
+                        [title]="voucherNo ? 'Next number · confirmed on save' : voucherNoNote">
+
+                    </app-textbox>
+
+                    <app-datepicker
+                        [label]="dateLabel"
+                        [required]="true"
+                        [value]="$any(date)"
+                        [minDate]="minDate"
+                        [maxDate]="maxDate"
+                        (valueChange)="onDate($event)"
+                        [disabled]="busy">
+
+                    </app-datepicker>
+
+                    <app-search-dropdown
+                        label="MFS Wallet"
+                        placeholder="Select wallet"
+                        [items]="walletItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="walletCode"
+                        [required]="true"
+                        [disabled]="busy"
+                        (valueChange)="onWallet($event)">
+
+                    </app-search-dropdown>
+
+                </div>
+
+                <!-- Settles Into (read only) : the wallet's linked bank
+                     (settle) / the wallet type (reject) -->
+
+                <div
+                    class="mfc-into"
+                    [class.mfc-into-warn]="settle && !!wallet?.BankMessage"
+                    [title]="settle ? (wallet?.BankMessage || 'The linked bank account of the wallet (MFS Accounts)') : 'Personal : landed at once · Merchant : waits for settlement'">
+
+                    @if (settle)
+                    {
+                        <i class="fas fa-building-columns"></i>
+
+                        <span class="mfc-into-label">Settles Into</span>
+
+                        <span class="mfc-into-value">{{ settlesInto || settlesIntoNote || '—' }}</span>
+                    }
+                    @else
+                    {
+                        <i class="fas fa-mobile-screen-button"></i>
+
+                        <span class="mfc-into-label">Wallet Type</span>
+
+                        <span class="mfc-into-value">{{ wallet?.AccountType || 'Select the wallet' }}</span>
+                    }
+
+                </div>
+
+            </section>
+
+            <!-- ============ NARRATION / REASON ============ -->
+
+            <section class="ccc-card ccc-narration">
+
+                <div class="ccc-card-header">
+
+                    <i [class]="settle ? 'fas fa-align-left' : 'fas fa-ban'"></i>
+
+                    <span>{{ settle ? 'Detail Narration' : 'Reject Reason' }}</span>
+
+                    <span class="ccc-required">*</span>
+
+                </div>
+
+                <div class="ccc-narration-body">
+
+                    @if (settle)
+                    {
+                        <app-textbox
+                            placeholder="e.g. bKash merchant settlement for 23-25 Oct (required)"
+                            textCase="none"
+                            [required]="true"
+                            [maxLength]="500"
+                            [value]="narration"
+                            (valueChange)="onNarration($event)"
+                            [disabled]="busy">
+
+                        </app-textbox>
+                    }
+                    @else
+                    {
+                        <app-textbox
+                            placeholder="e.g. Wrong entry / transaction failed (applies to all)"
+                            textCase="none"
+                            [required]="true"
+                            [maxLength]="500"
+                            [value]="reason"
+                            (valueChange)="onReason($event)"
+                            [disabled]="busy">
+
+                        </app-textbox>
+                    }
+
+                </div>
+
+            </section>
+
+            <!-- ============ AVAILABLE ============ -->
+
+            <section class="ccc-card ccc-available">
+
+                <div class="ccc-card-header">
+
+                    <i class="fas fa-inbox"></i>
+
+                    <span>Available Transactions</span>
+
+                    <span class="ccc-count">{{ available.length }}</span>
+
+                    <button
+                        type="button"
+                        class="ccc-link"
+                        [disabled]="busy || !canAddAll"
+                        (click)="addAllShown()">
+
+                        <i class="fas fa-angles-right"></i>
+
+                        Add all shown
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="ccc-max"
+                        [title]="availableMax ? 'Restore' : 'Maximize'"
+                        [attr.aria-pressed]="availableMax"
+                        (click)="toggleAvailableMax()">
+
+                        <i [class]="availableMax ? 'fas fa-down-left-and-up-right-to-center' : 'fas fa-up-right-and-down-left-from-center'"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="ccc-filters mfc-filters">
+
+                    <app-textbox
+                        class="ccc-search"
+                        placeholder="Search txn id, party, voucher..."
+                        textCase="none"
+                        [value]="searchText"
+                        (valueChange)="onSearch($event)">
+
+                    </app-textbox>
+
+                    <div class="mfc-upto">
+
+                        <app-datepicker
+                            placeholder="Received up to"
+                            [value]="$any(uptoDate)"
+                            [maxDate]="maxDate"
+                            (valueChange)="onUptoDate($event)">
+
+                        </app-datepicker>
+
+                        @if (uptoDate)
+                        {
+                            <button
+                                type="button"
+                                class="mfc-upto-x"
+                                title="Show every date"
+                                (click)="clearUptoDate()">
+
+                                <i class="fas fa-xmark"></i>
+
+                            </button>
+                        }
+
+                    </div>
+
+                    <app-search-dropdown
+                        class="ccc-branch"
+                        placeholder="All Branches"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="branchFilter"
+                        (valueChange)="onBranchFilter($event)">
+
+                    </app-search-dropdown>
+
+                </div>
+
+                <div class="ccc-scroll appcore-scrollbar">
+
+                    @if (loading)
+                    {
+                        <div class="ccc-state">
+
+                            <i class="fas fa-spinner fa-spin"></i>
+
+                            Loading transactions...
+
+                        </div>
+                    }
+                    @else if (loadFailed)
+                    {
+                        <app-empty-state
+                            icon="fas fa-triangle-exclamation"
+                            title="Unable to Load Transactions"
+                            subtitle="Check your connection and try again."
+                            actionText="Try Again"
+                            [showAction]="true"
+                            (action)="loadTxns()">
+
+                        </app-empty-state>
+                    }
+                    @else
+                    {
+                        <div class="ccc-cards">
+
+                            @for (txn of available; track txn.PaymentId)
+                            {
+                                <div
+                                    class="ccc-check mfc-txn"
+                                    role="button"
+                                    tabindex="0"
+                                    [class.ccc-check-off]="!!addBlock(txn)"
+                                    [title]="addBlock(txn) || (txn.SourceVoucherNo + ' · ' + txn.WalletName + ' · Click to add')"
+                                    (click)="add(txn)"
+                                    (keydown.enter)="add(txn)">
+
+                                    <span class="ccc-check-no">{{ txn.TransactionRef || '—' }}</span>
+
+                                    <span class="ccc-check-party">
+
+                                        {{ txn.PartyName }}
+
+                                        @if (txn.Status === 'Direct')
+                                        {
+                                            <span class="ccc-tag mfc-tag-direct">Personal</span>
+                                        }
+
+                                        @if (settle && txn.DueDate)
+                                        {
+                                            <span class="ccc-tag mfc-tag-auto" title="Auto Settlement due date">Auto {{ txn.DueDateText }}</span>
+                                        }
+
+                                    </span>
+
+                                    <span class="ccc-check-date">{{ txn.ReceiptDateText }}</span>
+
+                                    <span class="ccc-check-amount">{{ txn.AmountText }}</span>
+
+                                    <button
+                                        type="button"
+                                        class="ccc-add"
+                                        title="Add"
+                                        [disabled]="busy || !!addBlock(txn)"
+                                        (click)="$event.stopPropagation(); add(txn)">
+
+                                        <i class="fas fa-plus"></i>
+
+                                    </button>
+
+                                </div>
+                            }
+                            @empty
+                            {
+                                <app-empty-state
+                                    icon="fas fa-mobile-screen-button"
+                                    title="No Transactions Here"
+                                    [subtitle]="settle
+                                        ? 'Pending Merchant wallet receipts appear here.'
+                                        : 'Pending and Direct (Personal wallet) receipts appear here.'"
+                                    [showAction]="false">
+
+                                </app-empty-state>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+
+            </section>
+
+        </div>
+
+        <!-- =================================================
+             RIGHT : CART (full height)
+        ================================================== -->
+
+        <section class="ccc-card ccc-selected">
+
+            <div class="ccc-card-header">
+
+                <i class="fas fa-list-check"></i>
+
+                <span>Selected Transactions</span>
+
+                <span class="ccc-count">{{ selected.length }}</span>
+
+                <button
+                    type="button"
+                    class="ccc-link ccc-link-danger"
+                    [disabled]="busy || selected.length === 0"
+                    (click)="removeAll()">
+
+                    <i class="fas fa-trash-can"></i>
+
+                    Remove all
+
+                </button>
+
+            </div>
+
+            <div class="ccc-scroll appcore-scrollbar">
+
+                @if (selected.length === 0)
+                {
+                    <app-empty-state
+                        icon="fas fa-hand-pointer"
+                        title="Nothing Selected"
+                        subtitle="Click a transaction on the left, or Add, to bring it here."
+                        [showAction]="false">
+
+                    </app-empty-state>
+                }
+                @else
+                {
+                    <table class="ccc-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th class="ccc-c ccc-col-sl">SL</th>
+
+                                <th class="mfc-col-txn">Txn ID · Voucher</th>
+
+                                <th>Received From</th>
+
+                                <th class="ccc-r">Amount</th>
+
+                                @if (settle)
+                                {
+                                    <th class="ccc-r mfc-col-pct">Charges %</th>
+
+                                    <th class="ccc-col-money">Charges</th>
+
+                                    <th class="ccc-r mfc-col-net">Net Amount</th>
+                                }
+
+                                <th class="ccc-col-notes">Short Notes</th>
+
+                                <th class="ccc-c ccc-col-x"></th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @for (line of selected; track line.txn.PaymentId; let i = $index)
+                            {
+                                <tr>
+
+                                    <td class="ccc-c ccc-sl">{{ i + 1 }}</td>
+
+                                    <td>
+
+                                        <div class="ccc-main">{{ line.txn.TransactionRef || '—' }}</div>
+
+                                        <div class="ccc-sub" [title]="line.txn.BranchName">{{ line.txn.SourceVoucherNo }}</div>
+
+                                    </td>
+
+                                    <td>
+
+                                        <div class="ccc-main ccc-clip" [title]="line.txn.PartyName">{{ line.txn.PartyName }}</div>
+
+                                        <div class="ccc-sub">
+
+                                            {{ line.txn.ReceiptDateText }}
+
+                                            @if (line.txn.CustomerCharge > 0)
+                                            {
+                                                · incl. charge {{ money(line.txn.CustomerCharge) }}
+                                            }
+
+                                        </div>
+
+                                    </td>
+
+                                    <td class="ccc-r ccc-amount">{{ line.txn.AmountText }}</td>
+
+                                    @if (settle)
+                                    {
+                                        <td class="ccc-r mfc-pct">{{ lineFeePercent(line) }}</td>
+
+                                        <td>
+
+                                            @if (editFee)
+                                            {
+                                                <app-textbox
+                                                    class="ccc-input ccc-input-money"
+                                                    placeholder="0.00"
+                                                    inputMode="decimal"
+                                                    [value]="line.fee"
+                                                    (valueChange)="onLine(line, 'fee', $event)"
+                                                    [disabled]="busy">
+
+                                                </app-textbox>
+
+                                                @if (isFeeEdited(line))
+                                                {
+                                                    <!-- Charge audit : the system charge -->
+                                                    <div
+                                                        class="mfc-std"
+                                                        title="System charge">
+
+                                                        Std {{ money(autoFee(line.txn)) }}
+
+                                                    </div>
+                                                }
+                                            }
+                                            @else
+                                            {
+                                                <!-- Read only : the wallet's MFS Charges % -->
+                                                <app-textbox
+                                                    class="ccc-input ccc-input-money ccc-input-ro"
+                                                    placeholder="0.00"
+                                                    [value]="money(lineFee(line))"
+                                                    [readonly]="true"
+                                                    title="The wallet's MFS Charges % (Edit Charges is OFF)">
+
+                                                </app-textbox>
+                                            }
+
+                                        </td>
+
+                                        <td class="ccc-r ccc-amount">{{ money(lineNet(line)) }}</td>
+                                    }
+
+                                    <td>
+
+                                        <app-textbox
+                                            class="ccc-input"
+                                            placeholder="Optional"
+                                            textCase="none"
+                                            [maxLength]="250"
+                                            [value]="line.notes"
+                                            (valueChange)="onLine(line, 'notes', $event)"
+                                            [disabled]="busy">
+
+                                        </app-textbox>
+
+                                        @if (isFeeEdited(line))
+                                        {
+                                            <!-- Charge audit : why the charges were changed -->
+                                            <app-textbox
+                                                class="ccc-input mfc-reason"
+                                                placeholder="Why changed? (required)"
+                                                textCase="none"
+                                                [maxLength]="250"
+                                                [value]="line.feeReason"
+                                                (valueChange)="onLine(line, 'feeReason', $event)"
+                                                [disabled]="busy">
+
+                                            </app-textbox>
+                                        }
+
+                                    </td>
+
+                                    <td class="ccc-c">
+
+                                        <button
+                                            type="button"
+                                            class="ccc-remove"
+                                            title="Remove"
+                                            [disabled]="busy"
+                                            (click)="remove(line)">
+
+                                            <i class="fas fa-xmark"></i>
+
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                            <!-- Takes the free height : keeps the total row at the bottom -->
+                            <tr class="ccc-fill" aria-hidden="true">
+
+                                <td [attr.colspan]="settle ? 9 : 6"></td>
+
+                            </tr>
+
+                        </tbody>
+
+                        <tfoot>
+
+                            <tr>
+
+                                <td colspan="3">Total</td>
+
+                                <td class="ccc-r">{{ money(totalAmount) }}</td>
+
+                                @if (settle)
+                                {
+                                    <td></td>
+
+                                    <td class="ccc-r">{{ money(totalFees) }}</td>
+
+                                    <td class="ccc-r">{{ money(totalNet) }}</td>
+                                }
+
+                                <td colspan="2"></td>
+
+                            </tr>
+
+                        </tfoot>
+
+                    </table>
+                }
+
+            </div>
+
+            <!-- Footer : status -->
+
+            <div
+                class="ccc-status"
+                [class.ccc-status-ok]="!issue"
+                [class.ccc-status-warn]="!!issue">
+
+                @if (issue)
+                {
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    {{ issue }}
+                }
+                @else
+                {
+                    <i class="fas fa-circle-check"></i>
+
+                    Ready : {{ selected.length }} transaction(s). Click {{ saveText }} at the top to post.
+                }
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

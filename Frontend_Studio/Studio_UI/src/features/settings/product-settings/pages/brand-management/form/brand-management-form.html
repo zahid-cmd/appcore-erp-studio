@@ -125,37 +125,104 @@
 
                 </app-textbox>
 
+
+                <!-- Motor Bikes Supplier (optional; Supply Type Motor
+                     Bikes) : EMI reimbursement claims go to it -->
+
+                <app-search-dropdown
+
+                    label="Motor Bikes Supplier"
+
+                    placeholder="Optional"
+
+                    [items]="supplierItems"
+
+                    [value]="entity.MotorBikesSupplierCode"
+
+                    (valueChange)="onSupplierChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-search-dropdown>
+
             </app-form-section>
 
 
             <!-- =============================================
-                 SECTION 02 : STATUS
+                 SECTION 02 : BRAND LEDGERS (read only)
+                 Created on save when missing; an existing one
+                 only follows the brand's name and status.
             ============================================== -->
 
             <app-form-section
 
-                title="Status"
+                title="Brand Ledgers"
 
-                icon="fas fa-sliders">
+                icon="fas fa-book">
 
 
-                <!-- Status -->
+                <app-textbox
 
-                <app-dropdown
+                    label="Offer Adjustment Ledger Code"
 
-                    label="Status"
+                    placeholder="Created on save"
 
-                    [items]="statusItems"
+                    [value]="offerLedgerCode"
 
-                    [(value)]="entity.Status"
+                    [readonly]="true">
 
-                    (valueChange)="onValueChange()"
+                </app-textbox>
 
-                    [disabled]="isViewMode"
 
-                    [required]="true">
+                <app-textbox
 
-                </app-dropdown>
+                    label="Offer Adjustment Ledger Name"
+
+                    placeholder="Follows the brand name"
+
+                    [value]="offerLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="EMI Claim Receivable Ledger Code"
+
+                    placeholder="Created on save"
+
+                    [value]="emiClaimLedgerCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="EMI Claim Receivable Ledger Name"
+
+                    placeholder="Follows the brand name"
+
+                    [value]="emiClaimLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                @if (ledgerMessage)
+                {
+                    <div class="brand-ledger-note">
+
+                        <i class="fas fa-circle-exclamation"></i>
+
+                        {{ ledgerMessage }}
+
+                    </div>
+                }
 
             </app-form-section>
 
@@ -195,14 +262,33 @@
 
 
             <!-- =============================================
-                 SECTION 04 : DESCRIPTION
+                 SECTION 04 : STATUS & DESCRIPTION
             ============================================== -->
 
             <app-form-section
 
-                title="Description"
+                title="Status & Description"
 
-                icon="fas fa-align-left">
+                icon="fas fa-sliders">
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.Status"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
 
 
                 <!-- Remarks -->

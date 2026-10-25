@@ -10,6 +10,7 @@
             *ngIf="isCommand1Visible()"
             type="button"
             class="command-button"
+            [appTooltip]="command1Title || command1Text"
             (click)="onCommand1Click()">
 
             <i [class]="command1Icon"></i>
@@ -23,6 +24,7 @@
             *ngIf="isCommand2Visible()"
             type="button"
             class="command-button"
+            [appTooltip]="command2Title || command2Text"
             (click)="onCommand2Click()">
 
             <i [class]="command2Icon"></i>
@@ -36,6 +38,7 @@
             *ngIf="isCommand3Visible()"
             type="button"
             class="command-button"
+            [appTooltip]="command3Title || command3Text"
             (click)="onCommand3Click()">
 
             <i [class]="command3Icon"></i>
@@ -72,6 +75,8 @@
             *ngIf="isRightCommandVisible()"
             type="button"
             class="command-icon-button"
+            [appTooltip]="rightCommandTitle"
+            [attr.aria-label]="rightCommandTitle || null"
             (click)="onRightCommandClick()">
 
             <i [class]="rightCommandIcon"></i>

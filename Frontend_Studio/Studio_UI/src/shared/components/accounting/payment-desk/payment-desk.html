@@ -21,7 +21,7 @@
 
             <i class="fas fa-list-ul"></i>
 
-            <span>Receipt Rows</span>
+            <span>{{ isPayment ? 'Payment Rows' : 'Receipt Rows' }}</span>
 
             <span class="pd-count">{{ detailIndexes.length }}</span>
 
@@ -109,7 +109,7 @@
             {
                 <div class="pd-empty">
 
-                    No check / MFS / POS / EMI row. Nothing to complete here.
+                    {{ isPayment ? 'No check / MFS row.' : 'No check / MFS / POS / EMI row.' }} Nothing to complete here.
 
                 </div>
             }
@@ -132,7 +132,7 @@
 
         <div class="pd-summary-item">
 
-            <span>Total Received</span>
+            <span>{{ isPayment ? 'Total Paid' : 'Total Received' }}</span>
 
             <strong>{{ money(totalReceived) }}</strong>
 
@@ -140,7 +140,7 @@
 
         <div class="pd-summary-item">
 
-            <span>Customer Charges (on top)</span>
+            <span>{{ isPayment ? 'Company Charges (on top)' : 'Customer Charges (on top)' }}</span>
 
             <strong>{{ money(customerCharges) }}</strong>
 
@@ -148,7 +148,7 @@
 
         <div class="pd-summary-item pd-summary-main">
 
-            <span>Total Collected</span>
+            <span>{{ isPayment ? 'Total Out' : 'Total Collected' }}</span>
 
             <strong>{{ money(totalCollected) }}</strong>
 
@@ -156,7 +156,7 @@
 
         <div class="pd-summary-item">
 
-            <span>Checks Awaiting Reconciliation</span>
+            <span>{{ isPayment ? 'Checks Issued (to clear)' : 'Checks Awaiting Reconciliation' }}</span>
 
             <strong>{{ pendingChecks.length }} · {{ money(pendingCheckAmount) }}</strong>
 
@@ -211,7 +211,7 @@
 
                     <div>
 
-                        <span>{{ row.Mode === 'Check' ? 'Deposited Bank' : 'Account' }}</span>
+                        <span>{{ row.Mode === 'Check' ? (isPayment ? 'Drawn On (our bank)' : 'Deposited Bank') : 'Account' }}</span>
 
                         <strong>{{ row.LedgerName }}</strong>
 
@@ -264,6 +264,8 @@
 
                         </app-datepicker>
 
+                        @if (!isPayment)
+                        {
                         <app-search-dropdown
 
                                                     label="Issuing Bank"
@@ -281,6 +283,25 @@
                             [required]="true">
 
                         </app-search-dropdown>
+                        }
+                        @else
+                        {
+                        <app-textbox
+
+                            label="Pay To (name on check)"
+
+                            placeholder="Optional : payee name"
+
+                            textCase="none"
+
+                            [value]="row.PayeeName || ''"
+
+                            (valueChange)="onPayeeName($event)"
+
+                            [disabled]="readonly">
+
+                        </app-textbox>
+                        }
                     }
 
 
@@ -314,9 +335,11 @@
                     {
                         <app-textbox
 
-                                                    [label]="row.Mode === 'MFS' ? 'Transaction ID' : 'Approval Code / Last 4'"
+                            [label]="row.Mode === 'MFS' ? 'Transaction ID' : 'Card Number (Last Four Digits)'"
 
-                            [placeholder]="row.Mode === 'MFS' ? 'MFS transaction ID' : 'Optional'"
+                            [placeholder]="row.Mode === 'MFS' ? 'MFS transaction ID' : 'e.g. 4821'"
+
+                            [maxLength]="row.Mode === 'POS' ? 4 : 100"
 
                             [value]="row.TransactionRef"
 
@@ -326,13 +349,34 @@
 
                             [disabled]="readonly"
 
-                            [required]="row.Mode === 'MFS'">
+                            [required]="true">
 
                         </app-textbox>
 
                         @if (row.Mode === 'MFS')
                         {
-                            <span class="pd-spacer"></span>
+                            @if (isPayment)
+                            {
+                                <app-textbox
+
+                                    label="Payee Wallet No"
+
+                                    placeholder="Optional"
+
+                                    inputMode="numeric"
+
+                                    [value]="row.PayeeAccount || ''"
+
+                                    (valueChange)="onPayeeAccount($event)"
+
+                                    [disabled]="readonly">
+
+                                </app-textbox>
+                            }
+                            @else
+                            {
+                                <span class="pd-spacer"></span>
+                            }
                         }
                     }
 
@@ -494,7 +538,7 @@
                         {
                             <i class="fas fa-circle-info"></i>
 
-                            Check these details against the slip / receipt, then verify.
+                            {{ isPayment ? 'Check these details against the check / MFS statement, then verify.' : 'Check these details against the slip / receipt, then verify.' }}
                         }
 
                     </span>

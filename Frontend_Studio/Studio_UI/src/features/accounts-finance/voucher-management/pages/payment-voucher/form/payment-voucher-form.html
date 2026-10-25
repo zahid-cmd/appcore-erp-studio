@@ -1,38 +1,142 @@
 <div class="app-form-page">
 
+
     <!-- =====================================================
-         PAGE HEADER
+         SECTION 01 : PAGE HEADER
+         Center : Branch + Financial Year, status, step
+         Right  : commands (at most 3) + back to list
+           Add          : Next | Save*, Clear  (step 2 : Save, Back, Clear)
+           Edit (Draft) : Next | Update*, Approve, Clear
+                          (step 2 : Update, Back, Approve)
+           View Draft   : Edit, Approve, Next / Back
+           Approved     : Post, Return to Draft, Next / Back
+           Posted       : Cancel Voucher, Next / Back
+         * Save when every row is Cash / Bank; otherwise on step 2
     ====================================================== -->
 
     <app-page-header
 
-        icon="fas fa-list"
+        icon="fas fa-file-invoice-dollar"
 
         [title]="pageTitle"
 
-        subtitle="Manage paymentvouchers">
+        subtitle="Money paid : Draft → Approved → Posted">
+
+        <div
+
+            pageHeaderCenter
+
+            class="pvf-center">
+
+          <div class="pvf-ribbon">
+
+            <div class="pvf-chip">
+
+                <span class="pvf-chip-icon pvf-chip-icon-branch">
+
+                    <i class="fas fa-building"></i>
+
+                </span>
+
+                <span class="pvf-chip-text">
+
+                    <span class="pvf-chip-label">Branch</span>
+
+                    <strong>{{ branchName || 'Not set' }}</strong>
+
+                </span>
+
+            </div>
+
+            <span class="pvf-ribbon-sep"></span>
+
+            <div
+
+                class="pvf-chip"
+
+                [class.pvf-chip-error]="!!periodError && isEditable"
+
+                [title]="periodError">
+
+                <span class="pvf-chip-icon pvf-chip-icon-year">
+
+                    <i class="fas fa-calendar-days"></i>
+
+                </span>
+
+                <span class="pvf-chip-text">
+
+                    <span class="pvf-chip-label">Financial Year</span>
+
+                    <strong>{{ financialYearText }}</strong>
+
+                </span>
+
+            </div>
+
+            <span class="pvf-ribbon-sep"></span>
+
+            <div class="pvf-state">
+
+                <span [class]="statusClass">
+
+                    {{ voucher ? status : 'New Draft' }}
+
+                </span>
+
+                @if (needsDesk)
+                {
+                    <span class="pvf-steps">
+
+                        Step {{ step }} of 2 · {{ step === 1 ? 'Entry' : 'Payment Desk' }}
+
+                    </span>
+                }
+
+                @if (hasChanges && isEditable)
+                {
+                    <span class="pvf-unsaved">
+
+                        <i class="fas fa-circle"></i>
+
+                        Unsaved
+
+                    </span>
+                }
+
+            </div>
+
+          </div>
+
+        </div>
 
         <app-command-center
 
             pageHeaderRight
 
-            [command1Text]="saveButtonText"
+            [command1Text]="command1.text"
 
-            command1Icon="fas fa-floppy-disk"
+            [command1Icon]="command1.icon"
 
-            (command1Click)="onSave()"
+            [command1Visible]="!!command1.command"
 
-            [command1Visible]="!isViewMode"
+            (command1Click)="onCommand(0)"
 
-            command2Text="Clear"
+            [command2Text]="command2.text"
 
-            command2Icon="fas fa-broom"
+            [command2Icon]="command2.icon"
 
-            (command2Click)="onClear()"
+            [command2Visible]="!!command2.command"
 
-            [command2Visible]="!isViewMode"
+            (command2Click)="onCommand(1)"
 
-            [command3Visible]="false"
+            [command3Text]="command3.text"
+
+            [command3Icon]="command3.icon"
+
+            [command3Visible]="!!command3.command"
+
+            (command3Click)="onCommand(2)"
 
             rightCommandIcon="fas fa-arrow-left"
 
@@ -45,229 +149,531 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR
+         SECTION 02 : BODY (full available height, scrolls)
     ====================================================== -->
 
-    <app-page-toolbar>
+    <div class="pvf-body">
 
-        <app-control-tabs
+        @if (loading)
+        {
+            <!-- AppCore standard loader -->
 
-            pageToolbarLeft
+            <div class="pvf-loading">
 
-            [tabs]="tabs"
+                <app-orbit-loader
 
-            [(selectedTab)]="selectedTab">
+                    title="Loading Payment Voucher"
 
-        </app-control-tabs>
+                    message="Please wait while the voucher is being loaded."
 
-    </app-page-toolbar>
+                    size="medium"
+
+                    [showMessage]="true"
+
+                    [overlay]="false">
+
+                </app-orbit-loader>
+
+            </div>
+        }
+        @else
+        {
+
+            <!-- Period problem (Add / Edit) -->
+
+            @if (periodError && isEditable)
+            {
+                <div class="pvf-banner pvf-banner-warn">
+
+                    <i class="fas fa-triangle-exclamation"></i>
+
+                    <span>{{ periodError }}</span>
+
+                </div>
+            }
+
+
+            <!-- Cancelled -->
+
+            @if (status === 'Cancelled' && voucher)
+            {
+                <div class="pvf-banner pvf-banner-cancelled">
+
+                    <i class="fas fa-ban"></i>
+
+                    <span>
+
+                        <strong>Cancelled</strong>
+
+                        on {{ displayDate(voucher.CancelDate) }}
+
+                        @if (voucher.CancelReason)
+                        {
+                            : {{ voucher.CancelReason }}
+                        }
+
+                    </span>
+
+                </div>
+            }
+
+
+            <!-- =============================================
+                 STEP 1 : VOUCHER MASTER DATA (always shown; the
+                 Payment Desk opens over it as a modal)
+            ============================================== -->
+
+            <app-voucher-master-data
+
+                mode="payment"
+
+                [readonly]="isReadonly"
+
+                [multiMode]="multiMode"
+
+                [maxLines]="maxLines"
+
+                [minDate]="minVoucherDate"
+
+                [maxDate]="maxVoucherDate"
+
+                [voucherNo]="voucherNoText"
+
+                [branchName]="branchName"
+
+                [value]="entryInput"
+
+                (valueChange)="onEntryChange($event)"
+
+                (totalChange)="onTotalChange($event)"
+
+                (validChange)="onMasterValidChange($event)">
+
+            </app-voucher-master-data>
+
+
+
+        }
+
+    </div>
 
 
 
     <!-- =====================================================
-         PAGE CANVAS
+         PAYMENT DESK MODAL (step 2)
+         Header : title, verified progress, X (close)
+         Body   : app-payment-desk
+         Footer : status note, Close, Okay
+           Okay  : keep the details, back to step 1
+           Close : leave without the changes made here (asks
+                   first when something changed)
     ====================================================== -->
 
-    <app-page-canvas>
+    @if (step === 2)
+    {
+        <div class="pvf-modal-backdrop">
 
-        <app-form-grid
+            <div
 
-            canvasBody
+                class="pvf-modal"
 
-            [columns]="4">
+                role="dialog"
 
+                aria-modal="true"
 
-            <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
-            ============================================== -->
+                aria-labelledby="pvf-desk-title">
 
-            <app-form-section
 
-                title="General Information"
+                <!-- Header -->
 
-                icon="fas fa-circle-info">
+                <div class="pvf-modal-head">
 
+                    <span class="pvf-modal-icon">
 
-                <!-- Code -->
+                        <i class="fas fa-cash-register"></i>
 
-                <app-textbox
+                    </span>
 
-                    label="Code"
+                    <div class="pvf-modal-title">
 
-                    placeholder="Auto generated"
+                        <strong id="pvf-desk-title">Payment Desk</strong>
 
-                    [(value)]="entity.code"
+                        <span>Fill each row's details, press Verify Row, then Okay.</span>
 
-                    [readonly]="true"
+                    </div>
 
-                    [required]="true">
+                    <div
 
-                </app-textbox>
+                        class="pvf-modal-progress"
 
+                        [class.pvf-modal-progress-done]="deskAllVerified">
 
+                        <span class="pvf-modal-progress-text">
 
-                <!-- Name -->
+                            <i [class]="deskAllVerified ? 'fas fa-circle-check' : 'fas fa-list-check'"></i>
 
-                <app-textbox
+                            {{ deskVerifiedCount }} / {{ deskRowCount }} verified
 
-                    label="Name"
+                        </span>
 
-                    placeholder="Enter name"
+                        <span class="pvf-progress-track">
 
-                    [(value)]="entity.name"
+                            <span
 
-                    (valueChange)="onValueChange()"
+                                class="pvf-progress-bar"
 
-                    [disabled]="isViewMode"
+                                [style.width.%]="deskProgress">
 
-                    [required]="true">
+                            </span>
 
-                </app-textbox>
+                        </span>
 
+                    </div>
 
-            </app-form-section>
+                    <button
 
+                        type="button"
 
+                        class="pvf-modal-x"
 
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
+                        title="Close"
 
-            <app-form-section
+                        aria-label="Close"
 
-                title="Sample Information"
+                        (click)="onDeskClose()">
 
-                icon="fas fa-layer-group">
+                        <i class="fas fa-xmark"></i>
 
+                    </button>
 
-                <!-- Sample Search Dropdown -->
+                </div>
 
-                <app-search-dropdown
 
-                    label="Sample Search Dropdown"
+                <!-- Body -->
 
-                    [items]="items"
+                <div class="pvf-modal-body appcore-scrollbar">
 
-                    labelField="text"
+                    <app-payment-desk
 
-                    valueField="value"
+                        kind="payment"
 
-                    [(value)]="entity.sampleSearchDropdownId"
+                        [readonly]="isReadonly"
 
-                    (valueChange)="onValueChange()"
+                        [lines]="deskInput"
 
-                    [disabled]="isViewMode">
+                        (linesChange)="onDeskChange($event)"
 
-                </app-search-dropdown>
+                        (validChange)="onDeskValidChange($event)">
 
+                    </app-payment-desk>
 
+                </div>
 
-                <!-- Sample Field -->
 
-                <app-textbox
+                <!-- Footer -->
 
-                    label="Sample Field"
+                <div
 
-                    placeholder="Enter sample value"
+                    class="pvf-modal-foot"
 
-                    [(value)]="entity.sampleField"
+                    [class.pvf-modal-foot-confirm]="deskConfirmClose">
 
-                    (valueChange)="onValueChange()"
+                    @if (deskConfirmClose)
+                    {
+                        <span class="pvf-modal-note pvf-modal-note-warn">
 
-                    [disabled]="isViewMode">
+                            <i class="fas fa-triangle-exclamation"></i>
 
-                </app-textbox>
+                            Discard the changes made in the Payment Desk?
 
+                        </span>
 
-            </app-form-section>
+                        <button
 
+                            type="button"
 
+                            class="pvf-btn pvf-btn-light"
 
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
+                            (click)="onDeskKeepEditing()">
 
-            <app-form-section
+                            <i class="fas fa-pen"></i>
 
-                title="Status Information"
+                            Keep Editing
 
-                icon="fas fa-toggle-on">
+                        </button>
 
+                        <button
 
-                <!-- Status -->
+                            type="button"
 
-                <app-dropdown
+                            class="pvf-btn pvf-btn-danger"
 
-                    label="Status"
+                            (click)="onDeskDiscard()">
 
-                    [items]="statusItems"
+                            <i class="fas fa-trash-can"></i>
 
-                    labelField="text"
+                            Discard
 
-                    valueField="value"
+                        </button>
+                    }
+                    @else
+                    {
+                        <span
 
-                    [(value)]="entity.status"
+                            class="pvf-modal-note"
 
-                    (valueChange)="onValueChange()"
+                            [class.pvf-modal-note-ok]="deskAllVerified && isEditable">
 
-                    [disabled]="isViewMode"
+                            <i [class]="deskAllVerified && isEditable ? 'fas fa-circle-check' : 'fas fa-circle-info'"></i>
 
-                    [required]="true">
+                            {{ deskFooterNote }}
 
-                </app-dropdown>
+                        </span>
 
+                        <button
 
-            </app-form-section>
+                            type="button"
 
+                            class="pvf-btn pvf-btn-light"
 
+                            (click)="onDeskClose()">
 
-            <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
-            ============================================== -->
+                            <i class="fas fa-xmark"></i>
 
-            <app-form-section
+                            Close
 
-                title="Additional Information"
+                        </button>
 
-                icon="fas fa-clipboard">
+                        @if (isEditable)
+                        {
+                            <button
 
+                                type="button"
 
-                <!-- Remarks -->
+                                class="pvf-btn pvf-btn-primary"
 
-                <app-textarea
+                                (click)="onBack()">
 
-                    label="Remarks"
+                                <i class="fas fa-check"></i>
 
-                    placeholder="Enter remarks"
+                                Okay
 
-                    [(value)]="entity.remarks"
+                            </button>
+                        }
+                    }
 
-                    (valueChange)="onValueChange()"
+                </div>
 
-                    [disabled]="isViewMode">
+            </div>
 
-                </app-textarea>
+        </div>
+    }
 
 
-            </app-form-section>
 
+    <!-- =====================================================
+         CANCEL VOUCHER MODAL (Posted)
+           Header : icon, title, voucher no, X
+           Body   : voucher summary, warning, Cancel Date, Reason
+           Footer : Keep Voucher, Cancel Voucher
+    ====================================================== -->
 
-        </app-form-grid>
+    @if (cancelOpened)
+    {
+        <div class="pvf-overlay">
 
-    </app-page-canvas>
+            <div
+
+                class="pvf-cx"
+
+                role="dialog"
+
+                aria-modal="true"
+
+                aria-labelledby="pvf-cx-title">
+
+
+                <!-- Header -->
+
+                <div class="pvf-cx-head">
+
+                    <span class="pvf-cx-icon">
+
+                        <i class="fas fa-ban"></i>
+
+                    </span>
+
+                    <div class="pvf-cx-title">
+
+                        <strong id="pvf-cx-title">Cancel Voucher</strong>
+
+                        <span>{{ voucher?.VoucherNo }}</span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="pvf-modal-x"
+
+                        title="Close"
+
+                        aria-label="Close"
+
+                        (click)="closeCancel()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Body -->
+
+                <div class="pvf-cx-body">
+
+                    <div class="pvf-cx-summary">
+
+                        <div>
+
+                            <span>Voucher Date</span>
+
+                            <strong>{{ displayDate(voucher?.VoucherDate) }}</strong>
+
+                        </div>
+
+                        <div>
+
+                            <span>Paid To</span>
+
+                            <strong [title]="voucher?.PartyName || ''">{{ voucher?.PartyName || '—' }}</strong>
+
+                        </div>
+
+                        <div class="pvf-cx-amount">
+
+                            <span>Amount</span>
+
+                            <strong>{{ money(voucher?.TotalAmount ?? 0) }}</strong>
+
+                        </div>
+
+                    </div>
+
+                    <div class="pvf-cx-warn">
+
+                        <i class="fas fa-triangle-exclamation"></i>
+
+                        <span>
+
+                            A reversing entry is posted on the cancel date and the
+                            voucher becomes <b>Cancelled</b>. This cannot be undone.
+                            Not allowed when a check is already cleared.
+
+                        </span>
+
+                    </div>
+
+                    <div class="pvf-cx-fields">
+
+                        <app-datepicker
+
+                            class="pvf-cx-date"
+
+                            label="Cancel Date"
+
+                            [required]="true"
+
+                            [value]="$any(cancelDateValue)"
+
+                            (valueChange)="onCancelDateChange($event)">
+
+                        </app-datepicker>
+
+                        <app-textarea
+
+                            class="pvf-cx-reason"
+
+                            label="Reason"
+
+                            placeholder="Why is this voucher cancelled?"
+
+                            [required]="true"
+
+                            [rows]="4"
+
+                            [maxLength]="500"
+
+                            [value]="cancelReason"
+
+                            (valueChange)="onCancelReasonChange($event)">
+
+                        </app-textarea>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Footer -->
+
+                <div class="pvf-modal-foot">
+
+                    <span class="pvf-modal-note">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        Date and reason are required.
+
+                    </span>
+
+                    <button
+
+                        type="button"
+
+                        class="pvf-btn pvf-btn-light"
+
+                        (click)="closeCancel()">
+
+                        <i class="fas fa-arrow-left"></i>
+
+                        Keep Voucher
+
+                    </button>
+
+                    <button
+
+                        type="button"
+
+                        class="pvf-btn pvf-btn-danger"
+
+                        (click)="confirmCancel()">
+
+                        <i class="fas fa-ban"></i>
+
+                        Cancel Voucher
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
 
 </div>
 
 
 
-<!-- =====================================================
+<!-- =========================================================
      UTILITIES
-====================================================== -->
+========================================================== -->
 
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

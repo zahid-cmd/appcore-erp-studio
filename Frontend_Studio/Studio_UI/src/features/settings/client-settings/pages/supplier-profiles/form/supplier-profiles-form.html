@@ -125,6 +125,26 @@
                 </app-dropdown>
 
 
+                <!-- What this supplier code supplies (one company may
+                     have one code per Supply Type) -->
+
+                <app-dropdown
+
+                    label="Supply Type"
+
+                    [items]="supplyTypeItems"
+
+                    [value]="entity.SupplyType"
+
+                    (valueChange)="onSupplyTypeChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
                 <app-textbox
 
                     label="Supplier Name"
@@ -410,13 +430,13 @@
 
                 </app-textbox>
 
-                <!-- Display Name : "<SUPPLIER NAME> - <BRAND> - <PHONE 1>" -->
+                <!-- Display Name : "<SUPPLIER NAME> - <BRAND> - <SUPPLY TYPE> - <PHONE 1>" -->
 
                 <app-textbox
 
                     label="Display Name"
 
-                    placeholder="Follows the name, brand and Phone 1"
+                    placeholder="Follows the name, brand, supply type and Phone 1"
 
                     [(value)]="entity.DisplayName"
 

@@ -47,13 +47,19 @@ namespace AppCore.Infrastructure.Configurations.Settings.ClientSettings;
 // Supplier Name, Contact Person and Address are stored in CAPITAL
 // LETTERS.
 //
-// Display Name : "<SUPPLIER NAME> - <BRAND> - <PHONE 1>", the brand
-// part only when a brand is set. Shown everywhere and used as the
-// name of the supplier's payable ledger. Brand renames are
-// followed on read.
+// Supply Type : Motor Bikes / Spare Parts / Accessories / General
+// (what this supplier CODE supplies). One company may have one
+// code per Supply Type (2026-10-26).
 //
-// Phone 1 : 11 digits starting 01, digits only, unique among live
-// suppliers. BIN / TIN : digits only, unique when given.
+// Display Name : "<SUPPLIER NAME> - <BRAND> - <SUPPLY TYPE> -
+// <PHONE 1>", the brand part only when a brand is set. Shown
+// everywhere and used as the name of the supplier's payable
+// ledger. Brand renames are followed on read.
+//
+// Phone 1 : 11 digits starting 01, digits only. BIN / TIN : digits
+// only. Each is unique among live suppliers of the SAME Supply
+// Type (the same company keeps its phone / BIN / TIN on each of
+// its codes).
 //
 // Ledger : every supplier owns one payable General Ledger
 // GLR-ccc-ggg-sss-nnnnn under SUB-003-002-001 Liability For
@@ -76,6 +82,16 @@ public class SupplierProfilesRepository :
         "Brand Distributor",
         "Local Vendor",
         "Service Provider"
+    };
+
+    // Supply Types (fixed) : what a supplier code supplies;
+    // matches Product Category's types + General (mixed)
+    public static readonly string[] SupplyTypes =
+    {
+        "Motor Bikes",
+        "Spare Parts",
+        "Accessories",
+        "General"
     };
 
     private const string CodePrefix =
@@ -141,6 +157,7 @@ public class SupplierProfilesRepository :
                         SupplierId = x.SupplierId,
                         SupplierCode = x.SupplierCode,
                         SupplierType = x.SupplierType,
+                        SupplyType = x.SupplyType,
                         SupplierName = x.SupplierName,
                         DisplayName = x.DisplayName,
                         BrandManagementId = x.BrandManagementId,
@@ -240,6 +257,9 @@ public class SupplierProfilesRepository :
                 SupplierTypes =
                     SupplierTypes.ToList(),
 
+                SupplyTypes =
+                    SupplyTypes.ToList(),
+
                 Brands =
                     await _context
                         .Set<BrandManagementEntity>()
@@ -314,12 +334,13 @@ public class SupplierProfilesRepository :
     }
 
 
-    // "<SUPPLIER NAME> - <BRAND> - <PHONE 1>" (no brand part when
-    // the supplier has no brand)
+    // "<SUPPLIER NAME> - <BRAND> - <SUPPLY TYPE> - <PHONE 1>" (no
+    // brand part when the supplier has no brand)
     private static string BuildDisplayName
     (
         string supplierName,
         string brandName,
+        string supplyType,
         string phone1
     )
     {
@@ -327,9 +348,53 @@ public class SupplierProfilesRepository :
             Upper(
                 Clean(brandName));
 
-        return brand.Length > 0
-            ? $"{supplierName} - {brand} - {phone1}"
-            : $"{supplierName} - {phone1}";
+        string supply =
+            Upper(
+                Clean(supplyType));
+
+        string display =
+            string.Join(
+                " - ",
+                new[] { supplierName, brand, supply, phone1 }
+                    .Where(part => !string.IsNullOrWhiteSpace(part)));
+
+        // The payable ledger carries this name (General Ledger
+        // names are at most 200 characters)
+        if
+        (
+            display.Length > 200
+        )
+        {
+            throw new InvalidOperationException(
+                $"Display Name '{display}' is longer than 200 characters. Use a shorter supplier name.");
+        }
+
+        return display;
+    }
+
+
+    private static string CanonicalSupplyType
+    (
+        string? supplyType
+    )
+    {
+        string value =
+            (supplyType ?? string.Empty).Trim();
+
+        string? type =
+            SupplyTypes.FirstOrDefault
+            (
+                x =>
+                    string.Equals(
+                        x,
+                        value,
+                        StringComparison.OrdinalIgnoreCase)
+            );
+
+        return type
+            ??
+            throw new InvalidOperationException(
+                $"Supply Type must be one of : {string.Join(", ", SupplyTypes)}.");
     }
 
 
@@ -459,6 +524,8 @@ public class SupplierProfilesRepository :
     {
         public string SupplierType { get; init; } = string.Empty;
 
+        public string SupplyType { get; init; } = string.Empty;
+
         public string SupplierName { get; init; } = string.Empty;
 
         public long? BrandManagementId { get; init; }
@@ -495,6 +562,7 @@ public class SupplierProfilesRepository :
         {
             SupplierCode = dto.SupplierCode,
             SupplierType = dto.SupplierType,
+            SupplyType = dto.SupplyType,
             SupplierName = dto.SupplierName,
             DisplayName = dto.DisplayName,
             BrandManagementId = dto.BrandManagementId,
@@ -605,6 +673,9 @@ public class SupplierProfilesRepository :
             SupplierType =
                 CanonicalType(dto.SupplierType),
 
+            SupplyType =
+                CanonicalSupplyType(dto.SupplyType),
+
             SupplierName =
                 Upper(CheckText(dto.SupplierName, "Supplier Name", MaxNameLength, true)),
 
@@ -700,12 +771,14 @@ public class SupplierProfilesRepository :
 
 
     //===========================================================
-    // Unique Phone 1 / BIN / TIN (live suppliers)
+    // Unique Phone 1 / BIN / TIN (live suppliers of the same
+    // Supply Type : one company may hold one code per type)
     //===========================================================
 
     private async Task
         EnsureUniqueAsync
         (
+            string supplyType,
             string phone1,
             string binNo,
             string tinNo,
@@ -723,6 +796,8 @@ public class SupplierProfilesRepository :
                         &&
                         x.SupplierId != currentId
                         &&
+                        x.SupplyType == supplyType
+                        &&
                         x.Phone1 == phone1
                 );
 
@@ -732,7 +807,7 @@ public class SupplierProfilesRepository :
         )
         {
             throw new InvalidOperationException(
-                $"Phone 1 {phone1} already belongs to {samePhone.SupplierName} ({samePhone.SupplierCode}).");
+                $"Phone 1 {phone1} already belongs to {samePhone.SupplierName} ({samePhone.SupplierCode}, {supplyType}).");
         }
 
         if
@@ -751,6 +826,8 @@ public class SupplierProfilesRepository :
                             &&
                             x.SupplierId != currentId
                             &&
+                            x.SupplyType == supplyType
+                            &&
                             x.BinNo == binNo
                     );
 
@@ -760,7 +837,7 @@ public class SupplierProfilesRepository :
             )
             {
                 throw new InvalidOperationException(
-                    $"BIN {binNo} already belongs to {sameBin.SupplierName} ({sameBin.SupplierCode}).");
+                    $"BIN {binNo} already belongs to {sameBin.SupplierName} ({sameBin.SupplierCode}, {supplyType}).");
             }
         }
 
@@ -780,6 +857,8 @@ public class SupplierProfilesRepository :
                             &&
                             x.SupplierId != currentId
                             &&
+                            x.SupplyType == supplyType
+                            &&
                             x.TinNo == tinNo
                     );
 
@@ -789,7 +868,7 @@ public class SupplierProfilesRepository :
             )
             {
                 throw new InvalidOperationException(
-                    $"TIN {tinNo} already belongs to {sameTin.SupplierName} ({sameTin.SupplierCode}).");
+                    $"TIN {tinNo} already belongs to {sameTin.SupplierName} ({sameTin.SupplierCode}, {supplyType}).");
             }
         }
     }
@@ -1158,10 +1237,45 @@ public class SupplierProfilesRepository :
 
 
     //===========================================================
+    // Brands using this supplier as their Motor Bikes Supplier
+    // (live brands; '' when none), e.g. "brand Revoo, Rydo"
+    //===========================================================
+
+    private async Task<string>
+        BrandsUsingAsync
+        (
+            string supplierCode
+        )
+    {
+        List<string> names =
+            await _context
+                .Set<BrandManagementEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.MotorBikesSupplierCode ==
+                        supplierCode
+                )
+                .OrderBy(x => x.BrandName)
+                .Select(x => x.BrandName)
+                .ToListAsync();
+
+        return names.Count == 0
+            ? string.Empty
+            : $"brand {string.Join(", ", names)}";
+    }
+
+
+    //===========================================================
     // Sync Display Names (on read)
     //
     // A renamed brand changes the Display Name of its suppliers
-    // and the name of their ledgers.
+    // and the name of their ledgers. Every live supplier is
+    // checked (with or without a brand), so a rule change (e.g.
+    // the Supply Type part, 2026-10-26) reaches the saved names.
     //===========================================================
 
     private async Task
@@ -1173,11 +1287,13 @@ public class SupplierProfilesRepository :
                 from s in _context.Set<SupplierEntity>()
                 join b in _context.Set<BrandManagementEntity>()
                     on s.BrandManagementId equals (long?)b.BrandManagementId
+                    into brands
+                from b in brands.DefaultIfEmpty()
                 where !s.IsDeleted
                 select new
                 {
                     Supplier = s,
-                    b.BrandName
+                    BrandName = b == null ? null : b.BrandName
                 }
             )
             .ToListAsync();
@@ -1191,11 +1307,22 @@ public class SupplierProfilesRepository :
             in rows
         )
         {
-            string display =
-                BuildDisplayName(
-                    row.Supplier.SupplierName,
-                    row.BrandName,
-                    row.Supplier.Phone1);
+            string display;
+
+            try
+            {
+                display =
+                    BuildDisplayName(
+                        row.Supplier.SupplierName,
+                        row.BrandName ?? string.Empty,
+                        row.Supplier.SupplyType,
+                        row.Supplier.Phone1);
+            }
+            catch (InvalidOperationException)
+            {
+                // Too long : left as it is (the next save reports it)
+                continue;
+            }
 
             if
             (
@@ -1258,9 +1385,10 @@ public class SupplierProfilesRepository :
     )
     {
         entity.SupplierType = input.SupplierType;
+        entity.SupplyType = input.SupplyType;
         entity.SupplierName = input.SupplierName;
         entity.BrandManagementId = input.BrandManagementId;
-        entity.DisplayName = BuildDisplayName(input.SupplierName, brandName, input.Phone1);
+        entity.DisplayName = BuildDisplayName(input.SupplierName, brandName, input.SupplyType, input.Phone1);
         entity.ContactPerson = input.ContactPerson;
         entity.Phone1 = input.Phone1;
         entity.Phone2 = input.Phone2;
@@ -1300,6 +1428,7 @@ public class SupplierProfilesRepository :
                 null);
 
         await EnsureUniqueAsync(
+            input.SupplyType,
             input.Phone1,
             input.BinNo,
             input.TinNo,
@@ -1402,12 +1531,36 @@ public class SupplierProfilesRepository :
             ValidateInput(
                 AsCreate(dto));
 
+        // A brand's Motor Bikes Supplier must stay Motor Bikes
+        if
+        (
+            !string.Equals(
+                input.SupplyType,
+                entity.SupplyType,
+                StringComparison.Ordinal)
+        )
+        {
+            string brands =
+                await BrandsUsingAsync(
+                    entity.SupplierCode);
+
+            if
+            (
+                brands.Length > 0
+            )
+            {
+                throw new InvalidOperationException(
+                    $"Supply Type cannot change : this supplier is the Motor Bikes Supplier of {brands}. Change it on Brand Management first.");
+            }
+        }
+
         string brandName =
             await CheckBrandAsync(
                 input.BrandManagementId,
                 entity.BrandManagementId);
 
         await EnsureUniqueAsync(
+            input.SupplyType,
             input.Phone1,
             input.BinNo,
             input.TinNo,
@@ -1494,6 +1647,20 @@ public class SupplierProfilesRepository :
         {
             throw new KeyNotFoundException(
                 "Supplier not found.");
+        }
+
+        // Blocked while a brand uses it as its Motor Bikes Supplier
+        string usedBy =
+            await BrandsUsingAsync(
+                entity.SupplierCode);
+
+        if
+        (
+            usedBy.Length > 0
+        )
+        {
+            throw new InvalidOperationException(
+                $"Supplier '{entity.DisplayName}' cannot be deleted : it is the Motor Bikes Supplier of {usedBy}.");
         }
 
         DateTime now =
@@ -1587,6 +1754,7 @@ public class SupplierProfilesRepository :
         try
         {
             await EnsureUniqueAsync(
+                entity.SupplyType,
                 entity.Phone1,
                 entity.BinNo,
                 entity.TinNo,
@@ -1700,6 +1868,7 @@ public class SupplierProfilesRepository :
             BuildDisplayName(
                 entity.SupplierName,
                 brandName,
+                entity.SupplyType,
                 entity.Phone1);
 
         entity.PayableLedgerName =

@@ -6,79 +6,23 @@ namespace AppCore.Application.AccountsFinance.VoucherManagement;
 
 
 //===============================================================
-// UpdateJournalVoucherDto
+// Update Journal Voucher DTO (Draft only)
 //===============================================================
 
-public class UpdateJournalVoucherDto
+public class UpdateJournalVoucherDto : CreateJournalVoucherDto
 {
-    //===========================================================
-    // Primary Key
-    //===========================================================
-
-    public long Id
-    {
-        get;
-        set;
-    }
+    public long JournalVoucherId { get; set; }
+}
 
 
-    //===========================================================
-    // Name
-    //===========================================================
+//===============================================================
+// Cancel Journal Voucher DTO (Posted only)
+//===============================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+public class CancelJournalVoucherDto
+{
+    // yyyy-MM-dd (empty = today)
+    public string CancelDate { get; set; } = string.Empty;
 
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Reason { get; set; } = string.Empty;
 }

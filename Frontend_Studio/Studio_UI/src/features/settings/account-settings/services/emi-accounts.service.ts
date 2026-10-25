@@ -148,6 +148,13 @@ export class EmiAccountsService
             LinkedBankAccount:
                 text('LinkedBankAccount'),
 
+            // Display name of the linked bank (stored by code);
+            // an older API without it falls back to the stored value
+            LinkedBankAccountName:
+                text('LinkedBankAccountName')
+                ||
+                text('LinkedBankAccount'),
+
             Branch:
                 text('Branch'),
 

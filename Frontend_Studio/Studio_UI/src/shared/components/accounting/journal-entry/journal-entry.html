@@ -1,0 +1,613 @@
+<div class="vmd">
+
+
+    <!-- =========================================================
+         ROW 1 : Voucher Information | Detail Narration
+         ROW 2 : Debit + Credit | Transaction Summary (by group)
+         Look : voucher-master-data.css (shared) + journal-entry.css
+    ========================================================== -->
+
+
+    <div class="vmd-info">
+
+        <!-- =====================================================
+             1. VOUCHER INFORMATION
+        ====================================================== -->
+
+        <div class="vmd-card">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-file-invoice"></i>
+
+                <span>Voucher Information</span>
+
+                <span class="vit-chip" [title]="groupText">{{ groupText }}</span>
+
+            </div>
+
+            <div class="vmd-grid vmd-grid-2 vit-grid">
+
+                <app-textbox
+
+                    class="vmd-voucher-no"
+
+                    label="Voucher No"
+
+                    placeholder="Assigned on save"
+
+                    [value]="voucherNo"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+                <app-datepicker
+
+                    label="Voucher Date"
+
+                    [required]="true"
+
+                    [value]="$any(voucherDateValue)"
+
+                    [minDate]="minDate"
+
+                    [maxDate]="maxDate"
+
+                    (valueChange)="onDateChange($event)"
+
+                    [disabled]="readonly">
+
+                </app-datepicker>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="vmd-narr">
+
+        <!-- =====================================================
+             DETAIL NARRATION (required)
+        ====================================================== -->
+
+        <div class="vmd-card">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-align-left"></i>
+
+                <span>Detail Narration <b class="vmd-req">*</b></span>
+
+            </div>
+
+            <div class="vmd-narration">
+
+                <app-textbox
+
+                    placeholder="Enter detailed narration (required)"
+
+                    textCase="none"
+
+                    [required]="true"
+
+                    [maxLength]="500"
+
+                    [value]="data.Narration"
+
+                    (valueChange)="onNarrationChange($event)"
+
+                    [readonly]="readonly">
+
+                </app-textbox>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         LEFT : Debit (entered first), Credit
+    ========================================================== -->
+
+    <div class="vmd-col vmd-entry-col jve-entry appcore-scrollbar">
+
+        <ng-container *ngTemplateOutlet="sideCard; context: { side: 'Debit', draft: debit, can: canAddDebit, hint: debitHint, warn: debitHintWarn, locked: false }"></ng-container>
+
+        <ng-container *ngTemplateOutlet="sideCard; context: { side: 'Credit', draft: credit, can: canAddCredit, hint: creditHint, warn: creditHintWarn, locked: creditAmountLocked }"></ng-container>
+
+    </div>
+
+
+    <!-- One entry card (Debit / Credit) -->
+
+    <ng-template
+
+        #sideCard
+
+        let-side="side"
+
+        let-draft="draft"
+
+        let-can="can"
+
+        let-hint="hint"
+
+        let-warn="warn"
+
+        let-locked="locked">
+
+        <div
+
+            class="vmd-card"
+
+            [class.vmd-locked]="!can">
+
+            <div class="vmd-card-header">
+
+                <i [class]="side === 'Debit' ? 'fas fa-arrow-right-to-bracket' : 'fas fa-arrow-right-from-bracket'"></i>
+
+                <span>{{ side }}</span>
+
+                <span
+
+                    class="vmd-side"
+
+                    [class.vmd-side-debit]="side === 'Debit'"
+
+                    [class.vmd-side-credit]="side === 'Credit'">
+
+                    Group {{ cardGroupNo }}
+
+                </span>
+
+                <!-- Hint (grey / amber) or error (red); full text on hover -->
+
+                @if (draft.error)
+                {
+                    <span
+
+                        class="vit-note vit-note-error"
+
+                        [title]="draft.error">
+
+                        <i class="fas fa-circle-exclamation"></i>
+
+                        <span>{{ draft.error }}</span>
+
+                    </span>
+                }
+                @else if (hint && !readonly)
+                {
+                    <span
+
+                        class="vit-note"
+
+                        [class.vit-note-warn]="warn"
+
+                        [title]="hint">
+
+                        <i [class]="warn ? 'fas fa-triangle-exclamation' : 'fas fa-circle-info'"></i>
+
+                        <span>{{ hint }}</span>
+
+                    </span>
+                }
+
+            </div>
+
+            <div class="vmd-grid vmd-grid-2">
+
+                <app-dropdown
+
+                    label="Ledger Type"
+
+                    placeholder="Supplier / Customer / General Ledger"
+
+                    [items]="ledgerTypeItems"
+
+                    [value]="draft.type || null"
+
+                    (valueChange)="onTypeChange(side, $event)"
+
+                    [disabled]="!can"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+                <app-search-dropdown
+
+                    label="Account Sub-Group"
+
+                    placeholder="Select"
+
+                    [items]="draft.subGroupItems"
+
+                    [value]="draft.subGroup || null"
+
+                    (valueChange)="onSubGroupChange(side, $event)"
+
+                    [disabled]="!can || !draft.type"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-search-dropdown
+
+                    label="Account Ledger"
+
+                    placeholder="Select"
+
+                    [items]="draft.ledgerItems"
+
+                    [value]="draft.ledger || null"
+
+                    (valueChange)="onLedgerChange(side, $event)"
+
+                    [disabled]="!can || !draft.subGroup"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                <app-textbox
+
+                    label="Amount"
+
+                    placeholder="0.00"
+
+                    inputMode="decimal"
+
+                    [value]="draft.amountText"
+
+                    (valueChange)="onAmountText(side, $event)"
+
+                    (enterPressed)="add(side)"
+
+                    [readonly]="locked"
+
+                    [disabled]="!can"
+
+                    [required]="true">
+
+                </app-textbox>
+
+                <app-textbox
+
+                    label="Short Notes"
+
+                    placeholder="Optional"
+
+                    [value]="draft.notes"
+
+                    (valueChange)="onNotes(side, $event)"
+
+                    (enterPressed)="add(side)"
+
+                    [disabled]="!can">
+
+                </app-textbox>
+
+                <div class="vit-add-cell">
+
+                    <button
+
+                        type="button"
+
+                        class="vit-add"
+
+                        [disabled]="!can || loading"
+
+                        (click)="add(side)">
+
+                        <i class="fas fa-plus"></i>
+
+                        Add
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </ng-template>
+
+
+    <!-- =========================================================
+         RIGHT : Transaction Summary (by group)
+    ========================================================== -->
+
+    <div class="vmd-summary-slot">
+
+        <div class="vmd-card vmd-summary">
+
+            <div class="vmd-card-header">
+
+                <i class="fas fa-list-check"></i>
+
+                <span>Transaction Summary</span>
+
+                @if (maxLines > 0)
+                {
+                    <span
+
+                        class="vmd-count vmd-lines"
+
+                        [class.vmd-lines-full]="atMaxLines"
+
+                        title="Lines entered / maximum per voucher (System Configuration)">
+
+                        {{ lineCount }} / {{ maxLines }} lines
+
+                    </span>
+                }
+
+                <span
+
+                    class="vmd-count"
+
+                    [class.vmd-count-after]="maxLines > 0">
+
+                    {{ lineCount }}
+
+                </span>
+
+            </div>
+
+            <div class="vmd-table-scroll appcore-scrollbar">
+
+                <table class="vmd-table">
+
+                    <colgroup>
+
+                        <col class="vmd-col-sl">
+
+                        <col>
+
+                        <col class="vmd-col-notes">
+
+                        <col class="vmd-col-num">
+
+                        <col class="vmd-col-num">
+
+                        <col class="vmd-col-action">
+
+                    </colgroup>
+
+                    <thead>
+
+                        <tr>
+
+                            <th class="vmd-sl">SL</th>
+
+                            <th>Particulars</th>
+
+                            <th>Short Notes</th>
+
+                            <th class="vmd-num">Debit</th>
+
+                            <th class="vmd-num">Credit</th>
+
+                            <th class="vmd-action">Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @for (group of groups; track group.no)
+                        {
+                            <tr
+
+                                class="jve-group"
+
+                                [class.jve-group-open]="!groupBalanced(group.no)">
+
+                                <td colspan="5">
+
+                                    <span class="jve-group-name">Group {{ group.no }}</span>
+
+                                    @if (groupBalanced(group.no))
+                                    {
+                                        <span class="jve-chip jve-chip-ok">
+
+                                            <i class="fas fa-check"></i>
+
+                                            Balanced · {{ money(groupDebit(group.no)) }}
+
+                                        </span>
+                                    }
+                                    @else
+                                    {
+                                        <span class="jve-chip jve-chip-open">
+
+                                            Open · balance {{ money(groupBalance(group.no)) }}
+
+                                        </span>
+                                    }
+
+                                </td>
+
+                                <td class="vmd-action">
+
+                                    @if (!readonly)
+                                    {
+                                        <button
+
+                                            type="button"
+
+                                            class="vmd-remove"
+
+                                            title="Remove this group"
+
+                                            [attr.aria-label]="'Remove group ' + group.no"
+
+                                            (click)="removeGroup(group.no)">
+
+                                            <i class="fas fa-trash-can"></i>
+
+                                        </button>
+                                    }
+
+                                </td>
+
+                            </tr>
+
+                            @for (line of group.lines; track trackLine($index, line))
+                            {
+                                <tr>
+
+                                    <td class="vmd-sl">{{ serial(line) }}</td>
+
+                                    <td>
+
+                                        <div class="vmd-ledger">{{ line.LedgerName }} || {{ line.LedgerCode }}</div>
+
+                                        @if (lineDetails(line))
+                                        {
+                                            <div class="vmd-sub">{{ lineDetails(line) }}</div>
+                                        }
+
+                                    </td>
+
+                                    <td class="vmd-notes">{{ line.ShortNotes }}</td>
+
+                                    <td class="vmd-num" [class.vmd-muted]="line.Side !== 'Debit'">{{ line.Side === 'Debit' ? money(line.Amount) : '-' }}</td>
+
+                                    <td class="vmd-num" [class.vmd-muted]="line.Side !== 'Credit'">{{ line.Side === 'Credit' ? money(line.Amount) : '-' }}</td>
+
+                                    <td class="vmd-action">
+
+                                        @if (!readonly && line.GroupNo === openGroupNo)
+                                        {
+                                            <button
+
+                                                type="button"
+
+                                                class="vmd-remove"
+
+                                                [disabled]="!canRemoveLine(line)"
+
+                                                [title]="removeLineTitle(line)"
+
+                                                [attr.aria-label]="'Remove ' + line.LedgerName"
+
+                                                (click)="removeLine(line)">
+
+                                                <i class="fas fa-xmark"></i>
+
+                                            </button>
+                                        }
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                        @if (lineCount === 0)
+                        {
+                            <tr>
+
+                                <td
+
+                                    colspan="6"
+
+                                    class="vmd-empty">
+
+                                    No entry yet. Start Group 1 with a debit.
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <table class="vmd-table vmd-table-foot">
+
+                <colgroup>
+
+                    <col class="vmd-col-sl">
+
+                    <col>
+
+                    <col class="vmd-col-notes">
+
+                    <col class="vmd-col-num">
+
+                    <col class="vmd-col-num">
+
+                    <col class="vmd-col-action">
+
+                </colgroup>
+
+                <tbody>
+
+                    <tr class="vmd-total">
+
+                        <td colspan="3">Total</td>
+
+                        <td class="vmd-num">{{ money(totalDebit) }}</td>
+
+                        <td class="vmd-num">{{ money(totalCredit) }}</td>
+
+                        <td></td>
+
+                    </tr>
+
+                    <tr
+
+                        class="vmd-balance"
+
+                        [class.vmd-balance-ok]="balance === 0 && lineCount > 0">
+
+                        <td colspan="3">Balance Remaining</td>
+
+                        <td
+
+                            colspan="2"
+
+                            class="vmd-num">
+
+                            {{ money(balance) }}
+
+                        </td>
+
+                        <td></td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+            @if (lookupError)
+            {
+                <div class="vmd-error">
+
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    {{ lookupError }}
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>

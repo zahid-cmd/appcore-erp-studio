@@ -40,6 +40,12 @@ import
 }
 from '../../../../core/effective-access/effective-access.service';
 
+import
+{
+    TooltipDirective
+}
+from '../tooltip/tooltip.directive';
+
 
 //===============================================================
 // Component
@@ -51,7 +57,8 @@ from '../../../../core/effective-access/effective-access.service';
     standalone:true,
     imports:
     [
-        CommonModule
+        CommonModule,
+        TooltipDirective
     ],
     templateUrl:
         './command-center.html',
@@ -133,6 +140,8 @@ implements OnChanges
     @Input() command1Icon = '';
 
     @Input() command1Visible = true;
+    // Tooltip; empty = the button text
+    @Input() command1Title = '';
 
     @Input()
     command1Permission:
@@ -158,6 +167,8 @@ implements OnChanges
     @Input() command2Icon = '';
 
     @Input() command2Visible = true;
+    // Tooltip; empty = the button text
+    @Input() command2Title = '';
 
     @Input()
     command2Permission:
@@ -183,6 +194,8 @@ implements OnChanges
     @Input() command3Icon = '';
 
     @Input() command3Visible = true;
+    // Tooltip; empty = the button text
+    @Input() command3Title = '';
 
     @Input()
     command3Permission:
@@ -206,6 +219,8 @@ implements OnChanges
     @Input() rightCommandIcon = '';
 
     @Input() rightCommandVisible = true;
+    // Tooltip of the icon button (empty = none)
+    @Input() rightCommandTitle = '';
 
     @Output() rightCommandClick =
         new EventEmitter<void>();

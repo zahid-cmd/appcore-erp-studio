@@ -11,6 +11,8 @@ from '@angular/router';
 
 //===============================================================
 // Submenu Routes
+//
+// List of checks + the Check Clearing Center (full page).
 //===============================================================
 
 export const CheckReconciliationsRoutes:
@@ -40,7 +42,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Check Reconciliations'
+            breadcrumb:'Check Reconciliation'
         },
 
         loadComponent:() =>
@@ -55,70 +57,24 @@ Routes =
 
 
     //===========================================================
-    // Add
+    // Check Clearing Center (deposit / clear / dishonour)
     //===========================================================
 
     {
-        path:'add',
+        path:'center',
 
         data:
         {
-            breadcrumb:'Add Check Reconciliations'
+            breadcrumb:'Check Clearing Center'
         },
 
         loadComponent:() =>
             import(
-                '../pages/check-reconciliations/form/check-reconciliations-form'
+                '../pages/check-reconciliations/center/check-clearing-center'
             )
             .then(
                 m =>
-                    m.CheckReconciliationsForm
-            )
-    },
-
-
-    //===========================================================
-    // Edit
-    //===========================================================
-
-    {
-        path:'edit/:id',
-
-        data:
-        {
-            breadcrumb:'Edit Check Reconciliations'
-        },
-
-        loadComponent:() =>
-            import(
-                '../pages/check-reconciliations/form/check-reconciliations-form'
-            )
-            .then(
-                m =>
-                    m.CheckReconciliationsForm
-            )
-    },
-
-
-    //===========================================================
-    // View
-    //===========================================================
-
-    {
-        path:'view/:id',
-
-        data:
-        {
-            breadcrumb:'View Check Reconciliations'
-        },
-
-        loadComponent:() =>
-            import(
-                '../pages/check-reconciliations/form/check-reconciliations-form'
-            )
-            .then(
-                m =>
-                    m.CheckReconciliationsForm
+                    m.CheckClearingCenter
             )
     }
 

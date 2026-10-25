@@ -119,9 +119,9 @@
                     <td
                         *ngFor="let column of columns"
                         [style.width]="column.width"
-                        [class.left]="column.align==='left'"
-                        [class.center]="column.align==='center'"
-                        [class.right]="column.align==='right'">
+                        [class.left]="(column.cellAlign || column.align)==='left'"
+                        [class.center]="(column.cellAlign || column.align)==='center'"
+                        [class.right]="(column.cellAlign || column.align)==='right'">
 
 
                         <!-- =================================================
@@ -600,6 +600,35 @@
 
                             <div class="action-buttons">
 
+                                <!-- =========================================
+                                     ROW ACTIONS (page specific, optional)
+                                ========================================== -->
+
+                                <ng-container
+                                    *ngFor="let action of rowActions">
+
+                                    <button
+                                        *ngIf="isRowActionVisible(action, row)"
+                                        type="button"
+                                        class="action-btn"
+                                        [ngClass]="'row-' + (action.tone || 'default')"
+                                        [title]="action.title"
+                                        (click)="
+                                            onRowActionClick(
+                                                action,
+                                                row,
+                                                $event
+                                            )
+                                        ">
+
+                                        <i
+                                            [class]="action.icon">
+                                        </i>
+
+                                    </button>
+
+                                </ng-container>
+
 
                                 <!-- =========================================
                                      VIEW
@@ -720,6 +749,15 @@
                                     column
                                 )
                             }}
+
+                            <span
+                                *ngIf="hasFlag(row, column)"
+                                class="list-table-flag"
+                                [attr.title]="getFlagTitle(row, column)">
+
+                                {{ column.flagText || 'Edited' }}
+
+                            </span>
 
                         </ng-container>
 

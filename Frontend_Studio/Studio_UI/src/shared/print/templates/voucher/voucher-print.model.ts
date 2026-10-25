@@ -32,6 +32,10 @@ export interface VoucherPrintLine
 
     // Added by the system (charges …) : italic, no SL
     system: boolean;
+
+    // Optional group label (Journal Voucher : "Group 1 · Tk 5,000.00");
+    // a separator row is printed where it changes
+    group?: string;
 }
 
 // A note under the narration

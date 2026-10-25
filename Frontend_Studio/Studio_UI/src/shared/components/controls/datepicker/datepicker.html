@@ -112,6 +112,8 @@
 
 <!-- =====================================================
      OVERLAY
+     The calendar always opens at its regular width (380px),
+     whatever the width of the date field
 ===================================================== -->
 
 <app-overlay
@@ -121,6 +123,8 @@
     [(visible)]="calendarVisible"
 
     [width]="'380px'"
+
+    [matchOriginWidth]="false"
 
     (closed)="closeCalendar()">
 

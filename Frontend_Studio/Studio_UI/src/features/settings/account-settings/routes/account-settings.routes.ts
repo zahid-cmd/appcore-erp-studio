@@ -368,6 +368,32 @@ Routes =
 
                 // AUTO-END : SUB-003-002-013
 
+            // AUTO-BEGIN : SUB-003-002-014
+
+                //===========================================================
+                // EMI Reimbursement Schemes
+                //===========================================================
+
+                {
+                    path:'emi-reimbursement-schemes',
+
+                    data:
+                    {
+                        breadcrumb:'EMI Reimbursement Schemes'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './emi-reimbursement-schemes.routes'
+                        )
+                        .then(
+                            m =>
+                                m.EmiReimbursementSchemesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-002-014
+
         ]
 
     }

@@ -1,0 +1,90 @@
+/* ============================================================
+   EMI Reimbursement Schemes
+============================================================ */
+
+export interface EmiReimbursementSchemes
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create EMI Reimbursement Schemes
+============================================================ */
+
+export interface CreateEmiReimbursementSchemes
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update EMI Reimbursement Schemes
+============================================================ */
+
+export interface UpdateEmiReimbursementSchemes
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   EMI Reimbursement Schemes Defaults
+============================================================ */
+
+export interface EmiReimbursementSchemesDefaults
+{
+    code:
+        string;
+}

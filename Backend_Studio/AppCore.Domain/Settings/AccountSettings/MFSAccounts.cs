@@ -101,10 +101,13 @@ public class MFSAccounts
 
 
     //===========================================================
-    // Linked Bank Account (Bank Account Display Name)
+    // Linked Bank Account (Bank Accounts → BankAccountCode)
     //
-    // Merchant : required
+    // Merchant : required — the settlement bank account the
+    //            provider pays into (MFS Reconciliation)
     // Personal : always empty
+    // Stored by CODE (never the name) : renaming the bank account
+    // keeps the link.
     //===========================================================
 
     public string LinkedBankAccount

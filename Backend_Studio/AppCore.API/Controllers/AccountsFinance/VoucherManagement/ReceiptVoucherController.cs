@@ -21,6 +21,7 @@ namespace AppCore.Api.Controllers.AccountsFinance.VoucherManagement;
 // Receipt Voucher Controller
 //
 //   GET    /                    list
+//   GET    /defaults            next voucher number (preview)
 //   GET    /{id}                header + debits + credits
 //   POST   /                    create Draft (returns id + number)
 //   PUT    /                    update Draft
@@ -80,6 +81,35 @@ public class ReceiptVoucherController : ControllerBase
         return Ok(
             await _repository.GetAllAsync());
     }
+
+    //===========================================================
+    // Defaults (Add form) : next voucher number for branch + date
+    //   GET defaults?branchId=1&date=2026-10-22
+    // Always 200; Message tells why there is no number.
+    //===========================================================
+
+    [HttpGet("defaults")]
+
+    public async Task<ActionResult<ReceiptVoucherDefaultsDto>> GetDefaults(
+        [FromQuery] long branchId,
+        [FromQuery] string? date)
+    {
+        DateOnly voucherDate =
+            DateOnly.TryParseExact(
+                date ?? string.Empty,
+                "yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out DateOnly parsed)
+                ? parsed
+                : BusinessToday();
+
+        return Ok(
+            await _repository.GetDefaultsAsync(
+                branchId,
+                voucherDate));
+    }
+
 
     [HttpGet("{id:long}")]
 
@@ -263,6 +293,30 @@ public class ReceiptVoucherController : ControllerBase
 
     // Until login identity is wired into the API
     private static long UserId => 1;
+
+    // Today in Bangladesh time (preview default date), whatever
+    // the server clock
+    private static DateOnly BusinessToday()
+    {
+        foreach (string id in new[] { "Asia/Dhaka", "Bangladesh Standard Time" })
+        {
+            try
+            {
+                return DateOnly.FromDateTime(
+                    TimeZoneInfo.ConvertTimeFromUtc(
+                        DateTime.UtcNow,
+                        TimeZoneInfo.FindSystemTimeZoneById(id)));
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return DateOnly.FromDateTime(DateTime.Now);
+    }
 
     // InvalidOperationException → 400 (create / update) or 409
     private async Task<IActionResult> Run

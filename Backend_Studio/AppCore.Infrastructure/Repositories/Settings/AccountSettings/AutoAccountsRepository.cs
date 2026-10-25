@@ -52,6 +52,9 @@ using SupplierProfilesEntity =
 using MembershipCardsEntity =
     AppCore.Domain.Entities.MembershipManagement.MembershipSetup.MembershipCards;
 
+using BrandManagementEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.BrandManagement;
+
 using AppCore.Infrastructure.Persistence;
 
 
@@ -193,7 +196,14 @@ public class AutoAccountsRepository : IAutoAccountsRepository
         // ledgers are on the Membership Services rows above.
         db => db.Set<MembershipCardsEntity>().AsNoTracking().Select(x => x.FeeLedgerCode),
 
-        db => db.Set<MembershipCardsEntity>().AsNoTracking().Select(x => x.DiscountLedgerCode)
+        db => db.Set<MembershipCardsEntity>().AsNoTracking().Select(x => x.DiscountLedgerCode),
+
+
+        // Brand Management : Offer Adjustment Account (SUB-002-002-008)
+        // and EMI Claim Receivable (SUB-002-002-009)
+        db => db.Set<BrandManagementEntity>().AsNoTracking().Select(x => x.OfferAdjustmentLedgerCode),
+
+        db => db.Set<BrandManagementEntity>().AsNoTracking().Select(x => x.EmiClaimLedgerCode)
     };
 
 

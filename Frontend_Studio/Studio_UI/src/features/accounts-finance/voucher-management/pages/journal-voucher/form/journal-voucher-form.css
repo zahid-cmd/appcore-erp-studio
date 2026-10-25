@@ -1,1 +1,915 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+/*===============================================================
+  Journal Voucher Form
+===============================================================*/
+
+/* Shared controls two sizes larger (voucher pages) */
+@import '../../../../../../shared/styles/voucher-page.css';
+
+
+/*---------------------------------------------------------------
+  Fixed page height
+  The page never grows past the screen : the summary rows scroll
+  inside instead of pushing Total / Balance down.
+---------------------------------------------------------------*/
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.app-form-page > app-page-header
+{
+    flex: 0 0 auto;
+}
+
+/* Toast / confirm / progress show as fixed overlays; their host
+   boxes (progress-dialog is 520 x 240) must not take page height */
+:host > app-toast,
+:host > app-confirm-dialog,
+:host > app-progress-dialog
+{
+    position: absolute;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+.jvf-body
+{
+    /* Fills the page below the header; never scrolls (only the
+       summary rows do) */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* Room for the cards' floating shadow */
+    padding: 2px 6px 8px;
+}
+
+.jvf-body > app-voucher-master-data
+{
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.jvf-body > .jvf-banner
+{
+    flex: 0 0 auto;
+}
+
+.jvf-loading
+{
+    /* AppCore orbit loader, centred in the body */
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+}
+
+
+/*---------------------------------------------------------------
+  Header center : floating ribbon
+  Branch | Financial Year | status · step · unsaved
+---------------------------------------------------------------*/
+
+.jvf-center
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+}
+
+.jvf-ribbon
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    padding: 6px 8px;
+    border: 1px solid #dbe4f3;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+    box-shadow:
+        0 10px 24px -12px rgba(30, 58, 138, 0.35),
+        0 2px 6px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+    white-space: nowrap;
+}
+
+.jvf-ribbon-sep
+{
+    width: 1px;
+    align-self: stretch;
+    margin: 4px 6px;
+    background: #e2e8f0;
+}
+
+.jvf-state
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 0 4px;
+    white-space: nowrap;
+}
+
+@media (max-width: 1400px)
+{
+    .jvf-ribbon
+    {
+        flex-wrap: wrap;
+        border-radius: 16px;
+    }
+}
+
+.jvf-chip
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    padding: 2px 10px 2px 4px;
+    border-radius: 999px;
+}
+
+.jvf-chip-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    font-size: 14px;
+}
+
+.jvf-chip-icon-branch
+{
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.jvf-chip-icon-year
+{
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.jvf-chip-text
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.jvf-chip-label
+{
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.jvf-chip-text strong
+{
+    font-size: 14px;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.jvf-chip-error
+{
+    background: #fef2f2;
+}
+
+.jvf-chip-error strong
+{
+    color: #b91c1c;
+}
+
+
+/*---------------------------------------------------------------
+  Step
+---------------------------------------------------------------*/
+
+.jvf-steps
+{
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+
+/*---------------------------------------------------------------
+  Status pill
+---------------------------------------------------------------*/
+
+.jvf-unsaved
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #b45309;
+}
+
+.jvf-unsaved i
+{
+    font-size: 7px;
+}
+
+.jvf-status
+{
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.jvf-status-draft
+{
+    background: #e0e7ff;
+    color: #1e3a8a;
+}
+
+.jvf-status-approved
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.jvf-status-posted
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.jvf-status-cancelled
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+/*---------------------------------------------------------------
+  Banners
+---------------------------------------------------------------*/
+
+.jvf-banner
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.jvf-banner-warn
+{
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+}
+
+.jvf-banner-cancelled
+{
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+
+/*---------------------------------------------------------------
+  Cancel Voucher modal (same frame as the Payment Desk modal)
+---------------------------------------------------------------*/
+
+.jvf-overlay
+{
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+    animation: jvf-fade-in 0.2s ease-out;
+}
+
+.jvf-cx
+{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow:
+        0 30px 70px -24px rgba(15, 23, 42, 0.55),
+        0 2px 8px rgba(15, 23, 42, 0.08);
+    animation: jvf-modal-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+
+/* Header : light red → grey, red accent line */
+
+.jvf-cx-head
+{
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #f1d5d5;
+    background:
+        linear-gradient(120deg, #fde2e2 0%, #fdf0f0 45%, #f1f5f9 100%);
+}
+
+.jvf-cx-head::before
+{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #991b1b, #ef4444 55%, #94a3b8);
+}
+
+.jvf-cx-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #991b1b, #ef4444);
+    color: #ffffff;
+    font-size: 20px;
+    box-shadow: 0 6px 14px -6px rgba(220, 38, 38, 0.7);
+}
+
+.jvf-cx-title
+{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.jvf-cx-title strong
+{
+    font-size: 19px;
+    color: #1e293b;
+}
+
+.jvf-cx-title span
+{
+    font-size: 15px;
+    font-weight: 600;
+    color: #991b1b;
+}
+
+
+/* Body */
+
+.jvf-cx-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 22px 20px;
+}
+
+.jvf-cx-summary
+{
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 18px;
+    padding: 12px 16px;
+    border: 1px solid #e3e9f3;
+    border-radius: 12px;
+    background: linear-gradient(120deg, #f5f8ff 0%, #f8fafc 100%);
+}
+
+.jvf-cx-summary > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.jvf-cx-summary span
+{
+    font-size: 13.5px;
+    color: #64748b;
+}
+
+.jvf-cx-summary strong
+{
+    font-size: 16px;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.jvf-cx-amount
+{
+    text-align: right;
+}
+
+.jvf-cx-amount strong
+{
+    color: #1e3a8a;
+    font-variant-numeric: tabular-nums;
+}
+
+.jvf-cx-warn
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    background: #fffbeb;
+    font-size: 15px;
+    line-height: 1.45;
+    color: #92400e;
+}
+
+.jvf-cx-warn i
+{
+    margin-top: 2px;
+    color: #d97706;
+}
+
+.jvf-cx-fields
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Half width date, full width reason */
+.jvf-cx-date
+{
+    max-width: 260px;
+}
+
+.jvf-cx-reason
+{
+    --textarea-width: 100%;
+    display: block;
+    width: 100%;
+}
+
+@media (max-width: 560px)
+{
+    .jvf-cx-summary
+    {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .jvf-cx-amount
+    {
+        text-align: left;
+    }
+
+    .jvf-cx-date
+    {
+        max-width: none;
+    }
+}
+
+
+.jvf-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.jvf-btn-light
+{
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.jvf-btn-danger
+{
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.jvf-btn-danger:hover
+{
+    background: #b91c1c;
+}
+
+
+/*---------------------------------------------------------------
+  Payment Desk modal (step 2)
+  Header / scrolling body / footer
+---------------------------------------------------------------*/
+
+.jvf-btn-primary
+{
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.55);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.jvf-btn-primary:hover
+{
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -6px rgba(37, 99, 235, 0.6);
+}
+
+.jvf-btn
+{
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.jvf-btn-light:hover
+{
+    background: #f1f5f9;
+}
+
+.jvf-modal-backdrop
+{
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+    animation: jvf-fade-in 0.2s ease-out;
+}
+
+.jvf-modal
+{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1240px;
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
+    box-shadow:
+        0 30px 70px -24px rgba(15, 23, 42, 0.55),
+        0 2px 8px rgba(15, 23, 42, 0.08);
+    animation: jvf-modal-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+
+/* Header */
+
+.jvf-modal-head
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.07), rgba(37, 99, 235, 0) 60%),
+        #ffffff;
+}
+
+.jvf-modal-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    font-size: 19px;
+    box-shadow: 0 6px 14px -6px rgba(37, 99, 235, 0.7);
+}
+
+.jvf-modal-title
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+    min-width: 0;
+}
+
+.jvf-modal-title strong
+{
+    font-size: 18px;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.jvf-modal-title span
+{
+    font-size: 14.5px;
+    color: #64748b;
+}
+
+.jvf-modal-progress
+{
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 190px;
+}
+
+.jvf-modal-progress-text
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #1e3a8a;
+}
+
+.jvf-progress-track
+{
+    display: block;
+    height: 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.jvf-progress-bar
+{
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2563eb, #60a5fa);
+    transition: width 0.4s ease, background 0.3s ease;
+}
+
+.jvf-modal-progress-done .jvf-modal-progress-text
+{
+    color: #166534;
+}
+
+.jvf-modal-progress-done .jvf-progress-bar
+{
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+.jvf-modal-x
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
+}
+
+.jvf-modal-x:hover
+{
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #dc2626;
+    transform: rotate(90deg);
+}
+
+
+/* Body */
+
+.jvf-modal-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px 18px;
+}
+
+.jvf-modal-body app-payment-desk
+{
+    display: block;
+}
+
+
+/* Footer */
+
+.jvf-modal-foot
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    transition: background 0.2s ease;
+}
+
+.jvf-modal-foot-confirm
+{
+    background: #fff7ed;
+}
+
+.jvf-modal-note
+{
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.jvf-modal-note-ok
+{
+    color: #166534;
+}
+
+.jvf-modal-note-warn
+{
+    color: #9a3412;
+}
+
+.jvf-modal-foot .jvf-btn
+{
+    padding: 8px 18px;
+}
+
+/*---------------------------------------------------------------
+  Header : light blue → grey gradient with a thin blue accent
+  Footer : light premium grey
+---------------------------------------------------------------*/
+
+.jvf-modal-head
+{
+    position: relative;
+    padding: 18px 22px;
+    border-bottom: 1px solid #c9d7ee;
+    background:
+        linear-gradient(120deg, #bcd2ff 0%, #d5e3ff 45%, #e2e8f0 100%);
+}
+
+/* Accent line on top */
+.jvf-modal-head::before
+{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1e3a8a, #3b82f6 55%, #94a3b8);
+}
+
+.jvf-modal-icon
+{
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 20px;
+}
+
+.jvf-modal-title strong
+{
+    font-size: 19px;
+    color: #1e293b;
+}
+
+.jvf-modal-title span
+{
+    color: #475569;
+}
+
+.jvf-progress-track
+{
+    background: rgba(148, 163, 184, 0.35);
+}
+
+.jvf-modal-x
+{
+    width: 36px;
+    height: 36px;
+    border-color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.jvf-modal-foot
+{
+    padding: 14px 22px;
+    border-top: 1px solid #e2e8f0;
+    background:
+        linear-gradient(120deg, #f8fafc 0%, #f1f5fb 55%, #eef2f7 100%);
+}
+
+.jvf-modal-foot-confirm
+{
+    background:
+        linear-gradient(120deg, #fffaf3 0%, #fff1e2 100%);
+}
+
+@media (max-width: 760px)
+{
+    .jvf-modal-head
+    {
+        flex-wrap: wrap;
+    }
+
+    .jvf-modal-progress
+    {
+        order: 3;
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+@keyframes jvf-fade-in
+{
+    from
+    {
+        opacity: 0;
+    }
+
+    to
+    {
+        opacity: 1;
+    }
+}
+
+@keyframes jvf-modal-in
+{
+    from
+    {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+
+    to
+    {
+        opacity: 1;
+        transform: none;
+    }
+}

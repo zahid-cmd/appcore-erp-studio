@@ -25,7 +25,11 @@ export interface MFSAccount
 
     PaymentAccount: boolean;
 
+    // Bank Accounts → BankAccountCode (stored by code)
     LinkedBankAccount: string;
+
+    // Display name of the linked bank account (read only, list)
+    LinkedBankAccountName?: string;
 
     MFSAccountNumber: string;
 

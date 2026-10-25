@@ -1,56 +1,42 @@
-<div class="app-list-page">
+<div class="app-list-page crc-page">
 
     <!-- =====================================================
          PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
-        title="POS Reconciliations"
-
-        subtitle="Manage posreconciliationses"
-
-        icon="fas fa-list">
+        title="POS Reconciliation"
+        subtitle="Settle or reject the card receipts of posted vouchers"
+        icon="fas fa-cash-register">
 
         <div pageHeaderCenter>
 
             <app-search-box
-
                 [(value)]="searchText"
-
-                placeholder="Search posreconciliationses..."
-
+                placeholder="Search card no., party, POS account, voucher..."
                 (valueChange)="onSearch($event)">
 
             </app-search-box>
 
         </div>
 
-
         <div pageHeaderRight>
 
             <app-command-center
-
-                command1Text="Add"
-
-                command1Icon="fas fa-plus"
-
-                (command1Click)="add()"
-
-                command2Text="Refresh"
-
-                command2Icon="fas fa-rotate-right"
-
-                (command2Click)="refresh()"
-
-                command3Text="Restore"
-
-                command3Icon="fas fa-trash-arrow-up"
-
-                (command3Click)="restore()"
-
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                command1Title="Reload the card receipts"
+                (command1Click)="refresh()"
+                command2Text="Settlement"
+                command2Icon="fas fa-money-bill-transfer"
+                command2Title="Open the POS Settlement Center"
+                (command2Click)="openCenter()"
+                command3Text="Auto Log"
+                command3Icon="fas fa-robot"
+                command3Title="Auto Settlement log (last 30 days)"
+                (command3Click)="openAutoRuns()"
                 rightCommandIcon="fas fa-clock-rotate-left"
-
+                rightCommandTitle="Activity history"
                 (rightCommandClick)="openHistory()">
 
             </app-command-center>
@@ -59,114 +45,299 @@
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         PAGE TOOLBAR
+         PAGE TOOLBAR : tab · branch · bank account
     ====================================================== -->
 
     <app-page-toolbar>
 
         <app-control-tabs
-
             pageToolbarLeft
-
             [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
+            [selectedTab]="selectedTab">
 
         </app-control-tabs>
 
-
-        <!-- =================================================
-             STATUS FILTER
-        ================================================== -->
-
-        <app-dropdown
-
+        <div
             pageToolbarRight
+            class="mfr-filters">
 
-            placeholder="All Status"
+            <app-search-dropdown
+                class="mfr-branch"
+                placeholder="All Branches"
+                [items]="branchItems"
+                labelField="label"
+                valueField="value"
+                [value]="branchFilter"
+                (valueChange)="onBranchFilter($event)">
 
-            [items]="statusItems"
+            </app-search-dropdown>
 
-            labelField="text"
+            <app-search-dropdown
+                class="mfr-wallet"
+                placeholder="All Bank Accounts"
+                [items]="bankItems"
+                labelField="label"
+                valueField="value"
+                [value]="bankFilter"
+                (valueChange)="onBankFilter($event)">
 
-            valueField="value"
+            </app-search-dropdown>
 
-            [(value)]="selectedStatus"
-
-            (valueChange)="onStatusFilterChange($event)">
-
-        </app-dropdown>
+        </div>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         PAGE CANVAS
+         BODY : list
     ====================================================== -->
 
-    <app-page-canvas
+    <div class="crc-body">
 
-        [config]="canvasConfig">
+        <app-page-canvas
+            class="crc-canvas"
+            [config]="canvasConfig">
 
+        <section canvasBody class="crc-list">
 
-        <!-- =================================================
-             LIST TABLE
-        ================================================== -->
+            <!-- Status chips -->
 
-        <div canvasBody>
+            <div class="crc-chips">
+
+                @for (chip of statusChips; track chip.id)
+                {
+                    <button
+                        type="button"
+                        class="crc-chip"
+                        [class.crc-chip-on]="statusFilter === chip.id"
+                        (click)="onStatusFilter(chip.id)">
+
+                        {{ chip.label }}
+
+                        <span class="crc-chip-count">{{ chip.count }}</span>
+
+                    </button>
+                }
+
+                <span class="crc-chips-total">
+
+                    {{ filteredRows.length }} transaction(s) · Tk {{ filteredTotalText }}
+
+                </span>
+
+            </div>
+
+            <!-- List table (standard) : row actions Print / Undo / History -->
 
             <app-list-table
-
+                class="crc-list-table"
                 [columns]="columns"
-
-                [rows]="pagedPosReconciliationses"
-
+                [rows]="pagedRows"
                 [serialOffset]="(currentPage - 1) * pageSize"
-
                 [loading]="loading"
-
                 [error]="loadFailed"
-
-                (view)="view($event)"
-
-                (edit)="edit($event)"
-
-                (delete)="delete($event)"
-
+                [actions]="tableActions"
+                [rowActions]="rowActions"
+                (rowAction)="onRowAction($event)"
                 (sortChange)="onSort($event)">
 
             </app-list-table>
 
-        </div>
+        </section>
 
-
-
-        <!-- =================================================
-             PAGINATION
-        ================================================== -->
+        <!-- Pagination -->
 
         <app-pagination
-
             canvasFooter
-
-            [totalRecords]="filteredPosReconciliationses.length"
-
+            [totalRecords]="filteredRows.length"
             [currentPage]="currentPage"
-
             [pageSize]="pageSize"
-
             (pageChange)="onPageChange($event)"
-
             (pageSizeChange)="onPageSizeChange($event)">
 
         </app-pagination>
 
-    </app-page-canvas>
+        </app-page-canvas>
 
+    </div>
+
+    <!-- =====================================================
+         UNDO DIALOG (one transaction)
+    ====================================================== -->
+
+    @if (dialogRow)
+    {
+        <div class="crc-overlay">
+
+            <div
+                class="crc-dlg"
+                role="dialog"
+                aria-modal="true">
+
+                <!-- Header -->
+
+                <div [class]="'crc-dlg-head crc-tone-' + (dialogSettled ? 'danger' : 'warn')">
+
+                    <span class="crc-dlg-icon">
+
+                        <i class="fas fa-rotate-left"></i>
+
+                    </span>
+
+                    <div class="crc-dlg-title">
+
+                        <strong>{{ dialogSettled ? 'Undo Settlement' : 'Undo Reject' }}</strong>
+
+                        <span>{{ dialogRow.TransactionRef ? 'Card **** ' + dialogRow.TransactionRef : 'Card receipt' }} · {{ dialogRow.SourceVoucherNo }}</span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="crc-dlg-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeDialog()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+                <!-- Body -->
+
+                <div class="crc-dlg-body">
+
+                    <div class="crc-dlg-summary">
+
+                        <div>
+
+                            <span>Received From</span>
+
+                            <strong [title]="dialogRow.PartyName">{{ dialogRow.PartyName }}</strong>
+
+                        </div>
+
+                        <div>
+
+                            <span>POS Account</span>
+
+                            <strong [title]="dialogRow.AccountName">{{ dialogRow.AccountName }}</strong>
+
+                        </div>
+
+                        <div class="crc-dlg-amount">
+
+                            <span>Amount</span>
+
+                            <strong>{{ dialogRow.AmountText }}</strong>
+
+                        </div>
+
+                    </div>
+
+                    <div class="crc-dlg-warn">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        <span>
+
+                            <b>{{ dialogVoucherNo }}</b> is reversed on the reversal date.
+
+                            @if (dialogVoucherCount > 1)
+                            {
+                                It holds <b>{{ dialogVoucherCount }} transactions</b>; all of them go back to
+                                <b>{{ dialogBackTo }}</b>.
+                            }
+                            @else
+                            {
+                                The transaction goes back to <b>{{ dialogBackTo }}</b>.
+                            }
+
+                            @if (dialogSettled && dialogRow.IsAuto)
+                            {
+                                It was auto settled : the nightly job will not settle it again; settle it in
+                                the POS Settlement Center.
+                            }
+
+                        </span>
+
+                    </div>
+
+                    <div class="crc-dlg-fields">
+
+                        <app-datepicker
+                            class="crc-dlg-date"
+                            label="Reversal Date"
+                            [required]="true"
+                            [value]="$any(dialogDate)"
+                            [minDate]="dialogMinDate"
+                            [maxDate]="maxDate"
+                            (valueChange)="onDialogDate($event)">
+
+                        </app-datepicker>
+
+                        <app-textarea
+                            class="crc-dlg-reason"
+                            label="Reason"
+                            placeholder="Why? (required)"
+                            [required]="true"
+                            [rows]="3"
+                            [maxLength]="500"
+                            [value]="dialogReason"
+                            (valueChange)="onDialogReason($event)">
+
+                        </app-textarea>
+
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+
+                <div class="crc-dlg-foot">
+
+                    <span class="crc-dlg-note">
+
+                        @if (dialogIssue)
+                        {
+                            <i class="fas fa-circle-info"></i>
+
+                            {{ dialogIssue }}
+                        }
+
+                    </span>
+
+                    <button
+                        type="button"
+                        class="crc-btn crc-btn-light"
+                        (click)="closeDialog()">
+
+                        <i class="fas fa-arrow-left"></i>
+
+                        Close
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="crc-btn crc-btn-danger"
+                        [disabled]="!!dialogIssue || busy"
+                        (click)="confirmDialogAction()">
+
+                        <i class="fas fa-rotate-left"></i>
+
+                        Reverse
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
 
 
     <!-- =====================================================
@@ -174,18 +345,12 @@
     ====================================================== -->
 
     <app-history-drawer
-
         [opened]="historyOpened"
-
         [title]="historyTitle"
-
         [items]="historyItems"
-
         (closed)="closeHistory()">
 
     </app-history-drawer>
-
-
 
     <!-- =====================================================
          UTILITIES
@@ -194,5 +359,7 @@
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
 
 </div>

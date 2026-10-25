@@ -117,12 +117,25 @@ export interface VoucherNumberPreview
 // One group per voucher :
 //   n Debits : 1 Credit   or   1 Debit : n Credits
 //
-// Receipt Voucher : Debits = Receipt Mode (money in, entered
-// first), Credits = Account Details.
+// Inside the shared components the two lists keep their names :
+//   Debits  = money rows (Cash / Bank / Check / MFS / POS / EMI)
+//   Credits = account rows (Customer / Supplier / General Ledger)
+// Receipt Voucher : money is the DEBIT side, entered first.
+// Payment Voucher : accounts (Pay To) are the DEBIT side, entered
+// first; money is the CREDIT side. Each page maps the two lists
+// to its own debit / credit tables.
 //===============================================================
 
 export type VoucherMode =
-    'receipt';
+    'receipt' | 'payment';
+
+// Modes offered per voucher
+export const VOUCHER_MODES:
+    Record<VoucherMode, PaymentMode[]> =
+{
+    receipt:['Cash', 'Bank', 'Check', 'MFS', 'POS', 'EMI'],
+    payment:['Cash', 'Bank', 'Check', 'MFS']
+};
 
 // Receipt / payment mode
 export type PaymentMode =
@@ -132,8 +145,9 @@ export type PaymentMode =
 export type CreditLedgerType =
     'Customer' | 'Supplier' | 'General Ledger';
 
+// Customer (Receipt Voucher) / Payee (Payment Voucher) / Company
 export type ChargeBorneBy =
-    'Customer' | 'Company';
+    'Customer' | 'Payee' | 'Company';
 
 
 //===============================================================
@@ -171,7 +185,7 @@ export interface VoucherDebitLine
     CardSetupId: number;
     CardName: string;
 
-    // MFS : Transaction ID; POS : approval code / last 4
+    // MFS : Transaction ID; POS : card number, last four digits
     TransactionRef: string;
 
     // EMI (information only, not posted)
@@ -184,8 +198,14 @@ export interface VoucherDebitLine
     CheckNo: string;
     // yyyy-MM-dd
     CheckDate: string;
-    // Issuing bank (Bank Setup)
+    // Bank the check is drawn on : issuing bank (receipt) or our
+    // own bank = the ledger (payment)
     CheckBank: string;
+
+    // Payment Voucher : name on the check (Check) / payee wallet
+    // or account (MFS); optional
+    PayeeName?: string;
+    PayeeAccount?: string;
 
     // Read only (Check Reconciliation)
     CheckStatus: string;
@@ -254,6 +274,17 @@ export const CHARGE_RECOVERY_LEDGERS:
     MFS:'GLR-011-001-001-00001',
     POS:'GLR-011-001-001-00002',
     EMI:'GLR-011-001-001-00003'
+};
+
+// Charge expense ledgers (charge the company pays : Payment
+// Voucher posts it with the voucher), looked up by CODE
+export const CHARGE_EXPENSE_LEDGERS:
+    Record<string, string> =
+{
+    Bank:'GLR-004-001-001-00001',
+    MFS:'GLR-004-001-001-00003',
+    POS:'GLR-004-001-001-00004',
+    EMI:'GLR-004-001-001-00005'
 };
 
 // A posting row added by the system (not entered by the user)
@@ -328,6 +359,8 @@ export function debitDetailIssue
         case 'POS':
 
             if (!(row.CardSetupId > 0)) return 'Card is required.';
+
+            if (!/^\d{4}$/.test((row.TransactionRef ?? '').trim())) return 'Card Number (last four digits) is required : 4 digits.';
 
             break;
 
@@ -461,6 +494,8 @@ export function emptyDebitLine
         CheckNo:'',
         CheckDate:'',
         CheckBank:'',
+        PayeeName:'',
+        PayeeAccount:'',
         CheckStatus:'',
         ClearedVoucherNo:''
     };

@@ -59,6 +59,10 @@ public class SupplierProfilesConfiguration
                .IsRequired()
                .HasMaxLength(30);
 
+        builder.Property(x => x.SupplyType)
+               .IsRequired()
+               .HasMaxLength(30);
+
         builder.Property(x => x.SupplierName)
                .IsRequired()
                .HasMaxLength(150);
@@ -129,7 +133,8 @@ public class SupplierProfilesConfiguration
                .HasFilter("\"IsDeleted\" = false")
                .HasDatabaseName("IX_SupplierProfiles_SupplierCode");
 
-        builder.HasIndex(x => x.Phone1)
+        // Unique per Supply Type (one company, one code per type)
+        builder.HasIndex(x => new { x.Phone1, x.SupplyType })
                .IsUnique()
                .HasFilter("\"IsDeleted\" = false")
                .HasDatabaseName("IX_SupplierProfiles_Phone1");
@@ -139,12 +144,14 @@ public class SupplierProfilesConfiguration
                .HasFilter("\"IsDeleted\" = false")
                .HasDatabaseName("IX_SupplierProfiles_PayableLedgerCode");
 
-        builder.HasIndex(x => x.BinNo)
+        // Unique per Supply Type (one company, one code per type)
+        builder.HasIndex(x => new { x.BinNo, x.SupplyType })
                .IsUnique()
                .HasFilter("\"IsDeleted\" = false AND \"BinNo\" <> ''")
                .HasDatabaseName("IX_SupplierProfiles_BinNo");
 
-        builder.HasIndex(x => x.TinNo)
+        // Unique per Supply Type (one company, one code per type)
+        builder.HasIndex(x => new { x.TinNo, x.SupplyType })
                .IsUnique()
                .HasFilter("\"IsDeleted\" = false AND \"TinNo\" <> ''")
                .HasDatabaseName("IX_SupplierProfiles_TinNo");

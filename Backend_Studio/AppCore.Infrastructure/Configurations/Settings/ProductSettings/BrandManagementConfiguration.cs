@@ -89,6 +89,36 @@ public class BrandManagementConfiguration
 
 
         //===========================================================
+        // Motor Bikes Supplier (by supplier code; '' = none)
+        //===========================================================
+
+        builder.Property(x => x.MotorBikesSupplierCode)
+               .IsRequired()
+               .HasMaxLength(20);
+
+
+        //===========================================================
+        // Brand Ledgers (codes + names; '' until created)
+        //===========================================================
+
+        builder.Property(x => x.OfferAdjustmentLedgerCode)
+               .IsRequired()
+               .HasMaxLength(50);
+
+        builder.Property(x => x.OfferAdjustmentLedgerName)
+               .IsRequired()
+               .HasMaxLength(250);
+
+        builder.Property(x => x.EmiClaimLedgerCode)
+               .IsRequired()
+               .HasMaxLength(50);
+
+        builder.Property(x => x.EmiClaimLedgerName)
+               .IsRequired()
+               .HasMaxLength(250);
+
+
+        //===========================================================
         // Status (no database default, so 'false' is kept)
         //===========================================================
 

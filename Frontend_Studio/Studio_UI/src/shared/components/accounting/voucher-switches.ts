@@ -89,7 +89,65 @@ export const VOUCHER_SWITCH =
     RV_MAX_LINES:             'CFG-MOD-004-0033',
     PV_MAX_LINES:             'CFG-MOD-004-0034',
     JV_MAX_LINES:             'CFG-MOD-004-0035',
-    FT_MAX_LINES:             'CFG-MOD-004-0036'
+    FT_MAX_LINES:             'CFG-MOD-004-0036',
+
+    // Voucher date window (Value = most days back / ahead; empty
+    // = no limit). OFF = today or later / today or earlier.
+    RV_BACK_DATED:            'CFG-MOD-004-0037',
+    RV_POST_DATED:            'CFG-MOD-004-0038',
+    PV_BACK_DATED:            'CFG-MOD-004-0039',
+    PV_POST_DATED:            'CFG-MOD-004-0040',
+    JV_BACK_DATED:            'CFG-MOD-004-0041',
+    JV_POST_DATED:            'CFG-MOD-004-0042',
+    FT_BACK_DATED:            'CFG-MOD-004-0043',
+    FT_POST_DATED:            'CFG-MOD-004-0044',
+
+    // Journal Voucher : several balanced groups (OFF = one group)
+    JV_MULTI_GROUP:           'CFG-MOD-004-0045',
+
+    // Fund Transfer Advice : one advice per To account
+    FTA_PER_TO:               'CFG-MOD-004-0046',
+
+    // Check Reconciliation : deposit / clear / dishonour several
+    // checks at once from the cart (OFF = one check at a time)
+    CHECK_MULTI:              'CFG-MOD-004-0047',
+
+    // Check Reconciliation : ask to print the slip / voucher after
+    // an action (OFF = no prompt)
+    CHECK_PRINT_PROMPT:       'CFG-MOD-004-0048',
+
+    // Check Reconciliation : ON = one RRV / RRP per bank account
+    // per Save; OFF = one per source Receipt / Payment Voucher
+    CHECK_ONE_VOUCHER_PER_BATCH: 'CFG-MOD-004-0049',
+
+    // Check Reconciliation : a dishonour recovers its bank charges
+    // from the payer (read-only Recovery column); OFF = no recovery
+    CHECK_DISHONOUR_RECOVERY: 'CFG-MOD-004-0050',
+
+    // MFS Reconciliation : nightly Auto Settlement of the due
+    // Merchant wallet receipts; Value = working days after the
+    // receipt date (Friday / Saturday skipped)
+    MFS_AUTO_SETTLEMENT:      'CFG-MOD-004-0051',
+
+    // MFS Reconciliation : the fee may be changed per transaction
+    // in the MFS Settlement Center (OFF = the wallet's % only)
+    MFS_EDIT_CHARGES:         'CFG-MOD-004-0052',
+
+    // MFS Reconciliation : ask to print the voucher after a
+    // settlement / reject (OFF = no prompt)
+    MFS_PRINT_PROMPT:         'CFG-MOD-004-0053',
+
+    // POS Reconciliation : nightly Auto Settlement of the due card
+    // receipts; Value = working days after the receipt date
+    POS_AUTO_SETTLEMENT:      'CFG-MOD-004-0054',
+
+    // POS Reconciliation : the bank charges may be changed per
+    // transaction (OFF = the charge saved on the Receipt Voucher)
+    POS_EDIT_CHARGES:         'CFG-MOD-004-0055',
+
+    // POS Reconciliation : ask to print the voucher after a
+    // settlement / reject (OFF = no prompt)
+    POS_PRINT_PROMPT:         'CFG-MOD-004-0056'
 } as const;
 
 // Code → enabled
@@ -248,4 +306,178 @@ export class VoucherSwitchesService
 
         return result;
     }
+}
+
+
+//===============================================================
+// Voucher date window (Back Dated / Post Dated Entry)
+//
+//   Back Dated ON  : earlier dates allowed (Value = most days
+//                    back; empty = any day of the open year)
+//   Back Dated OFF : nothing before today
+//   Post Dated ON  : later dates allowed (Value = most days ahead)
+//   Post Dated OFF : nothing after today
+// A missing switch = allowed (today's behaviour).
+//===============================================================
+
+export interface VoucherDateWindow
+{
+    // Earliest / latest allowed date; null = no limit
+    min: Date | null;
+
+    max: Date | null;
+}
+
+function startOfToday():
+    Date
+{
+    const now =
+        new Date();
+
+    return new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+    );
+}
+
+function addDays
+(
+    value:
+        Date,
+    days:
+        number
+):
+    Date
+{
+    return new Date(
+        value.getFullYear(),
+        value.getMonth(),
+        value.getDate() + days
+    );
+}
+
+// Positive whole number of the Value, else 0 (no limit)
+function switchDays
+(
+    values:
+        SwitchValueMap | null | undefined,
+    code:
+        string
+):
+    number
+{
+    const value =
+        Number(
+            (values?.[code] ?? '').trim()
+        );
+
+    return Number.isInteger(value) && value > 0
+        ? value
+        : 0;
+}
+
+export function voucherDateWindow
+(
+    switches:
+        SwitchMap | null | undefined,
+    values:
+        SwitchValueMap | null | undefined,
+    backCode:
+        string,
+    postCode:
+        string
+):
+    VoucherDateWindow
+{
+    const today =
+        startOfToday();
+
+    const backOn =
+        switchOn(switches, backCode, true);
+
+    const postOn =
+        switchOn(switches, postCode, true);
+
+    const backDays =
+        switchDays(values, backCode);
+
+    const postDays =
+        switchDays(values, postCode);
+
+    return {
+        min:
+            !backOn
+                ? today
+                : backDays > 0
+                    ? addDays(today, -backDays)
+                    : null,
+
+        max:
+            !postOn
+                ? today
+                : postDays > 0
+                    ? addDays(today, postDays)
+                    : null
+    };
+}
+
+// '' when the date (yyyy-MM-dd) is inside the window
+export function voucherDateIssue
+(
+    isoDate:
+        string,
+    window:
+        VoucherDateWindow
+):
+    string
+{
+    const parts =
+        (isoDate ?? '').substring(0, 10).split('-').map(Number);
+
+    if
+    (
+        parts.length !== 3
+        ||
+        parts.some(part => !Number.isFinite(part))
+    )
+    {
+        return '';
+    }
+
+    const date =
+        new Date(parts[0], parts[1] - 1, parts[2]);
+
+    const today =
+        startOfToday();
+
+    const show =
+        (value: Date): string =>
+            value.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).replace(/ /g, '-');
+
+    if
+    (
+        window.min
+        &&
+        date < window.min
+    )
+    {
+        return window.min.getTime() === today.getTime()
+            ? 'Back dated entry is not allowed : the voucher date cannot be before today.'
+            : `Back dated entry is allowed up to ${show(window.min)} only.`;
+    }
+
+    if
+    (
+        window.max
+        &&
+        date > window.max
+    )
+    {
+        return window.max.getTime() === today.getTime()
+            ? 'Post dated entry is not allowed : the voucher date cannot be after today.'
+            : `Post dated entry is allowed up to ${show(window.max)} only.`;
+    }
+
+    return '';
 }

@@ -83,18 +83,24 @@ export function voucherDocumentSheet
         [label('Narration'), model.narration],
         [],
         [label('SL'), label('Account'), label('Code'), label('Details'), label('Short Notes'), label('Debit'), label('Credit')],
-        ...model.lines.map
+        ...model.lines.flatMap
         (
-            line =>
+            (line, index) =>
             [
-                line.system ? null : ++serial,
-                line.name,
-                line.code,
-                line.details,
-                line.notes,
-                line.debit ? { v:line.debit, s:'money' } : null,
-                line.credit ? { v:line.credit, s:'money' } : null
-            ] as ExcelCell[]
+                // Group label row where it changes (Journal Voucher)
+                ...(line.group && line.group !== model.lines[index - 1]?.group
+                    ? [[null, label(line.group)] as ExcelCell[]]
+                    : []),
+                [
+                    line.system ? null : ++serial,
+                    line.name,
+                    line.code,
+                    line.details,
+                    line.notes,
+                    line.debit ? { v:line.debit, s:'money' } : null,
+                    line.credit ? { v:line.credit, s:'money' } : null
+                ] as ExcelCell[]
+            ]
         ),
         [null, label('Total'), null, null, null, { v:totalDebit, s:'boldMoney' }, { v:totalCredit, s:'boldMoney' }],
         [],

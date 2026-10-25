@@ -466,6 +466,16 @@ implements OnInit, OnDestroy
 
             align:'left'
         },
+
+        {
+            header:'Motor Bikes Supplier',
+
+            field:'MotorBikesSupplierName',
+
+            width:'320px',
+
+            align:'left'
+        },
         {
             header:'Brand Image',
 
@@ -793,7 +803,13 @@ implements OnInit, OnDestroy
                 item?.Remarks ?? item?.remarks ?? '',
 
             Status:
-                Boolean(item?.Status ?? item?.status ?? true)
+                Boolean(item?.Status ?? item?.status ?? true),
+
+            MotorBikesSupplierCode:
+                item?.MotorBikesSupplierCode ?? item?.motorBikesSupplierCode ?? '',
+
+            MotorBikesSupplierName:
+                item?.MotorBikesSupplierName ?? item?.motorBikesSupplierName ?? ''
         };
     }
 
@@ -952,7 +968,8 @@ implements OnInit, OnDestroy
                         unknown[] =
                     [
                         item.BrandCode,
-                        item.BrandName
+                        item.BrandName,
+                        item.MotorBikesSupplierName
                     ];
 
                     const searchMatch =

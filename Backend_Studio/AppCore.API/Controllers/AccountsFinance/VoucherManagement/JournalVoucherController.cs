@@ -4,9 +4,10 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using AppCore.Application.AccountsFinance.VoucherManagement;
+using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.ActivityHistory.Interfaces;
 
-using AppCore.Domain.Entities.AccountsFinance.VoucherManagement;
+using AppCore.Application.AccountsFinance.VoucherManagement;
 
 
 //===============================================================
@@ -17,300 +18,335 @@ namespace AppCore.Api.Controllers.AccountsFinance.VoucherManagement;
 
 
 //===============================================================
-// JournalVoucherController
+// Journal Voucher Controller
+//
+//   GET    /                    list
+//   GET    /defaults            next voucher number (preview)
+//   GET    /{id}                header + debits + credits
+//   POST   /                    create Draft (returns id + number)
+//   PUT    /                    update Draft
+//   DELETE /{id}                delete Draft
+//   PUT    /restore             restore last deleted Draft
+//   PUT    /{id}/approve        Draft → Approved
+//   PUT    /{id}/return-to-draft Approved → Draft
+//   PUT    /{id}/post           Approved → Posted
+//   PUT    /{id}/cancel         Posted → Cancelled (reason)
+//   GET    /history
+//
+// 400 : validation; 404 : not found; 409 : wrong status / blocked
 //===============================================================
 
 [ApiController]
 
 [Route("api/accounts-finance/voucher-management/journal-voucher")]
 
-public class JournalVoucherController
-    : ControllerBase
+public class JournalVoucherController : ControllerBase
 {
     //===========================================================
-    // Repository
+    // Fields
     //===========================================================
 
     private readonly IJournalVoucherRepository _repository;
+
+    private readonly IActivityHistoryRepository _activityHistoryRepository;
+
+    private readonly ILogger<JournalVoucherController> _logger;
 
 
     //===========================================================
     // Constructor
     //===========================================================
 
-    public JournalVoucherController
-    (
-        IJournalVoucherRepository repository
-    )
+    public JournalVoucherController(
+        IJournalVoucherRepository repository,
+        IActivityHistoryRepository activityHistoryRepository,
+        ILogger<JournalVoucherController> logger)
     {
-        _repository =
-            repository;
+        _repository = repository;
+
+        _activityHistoryRepository = activityHistoryRepository;
+
+        _logger = logger;
     }
 
 
     //===========================================================
-    // Get All
+    // Read
     //===========================================================
 
     [HttpGet]
 
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<List<JournalVoucherDto>>> GetAll()
     {
-        var entities =
-            await _repository
-                .GetAllAsync();
-
-
         return Ok(
-            entities
-        );
+            await _repository.GetAllAsync());
     }
 
+    //===========================================================
+    // Defaults (Add form) : next voucher number for branch + date
+    //   GET defaults?branchId=1&date=2026-10-22
+    // Always 200; Message tells why there is no number.
+    //===========================================================
 
-    //===========================================================
-    // Get By Id
-    //===========================================================
+    [HttpGet("defaults")]
+
+    public async Task<ActionResult<JournalVoucherDefaultsDto>> GetDefaults(
+        [FromQuery] long branchId,
+        [FromQuery] string? date)
+    {
+        DateOnly voucherDate =
+            DateOnly.TryParseExact(
+                date ?? string.Empty,
+                "yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out DateOnly parsed)
+                ? parsed
+                : BusinessToday();
+
+        return Ok(
+            await _repository.GetDefaultsAsync(
+                branchId,
+                voucherDate));
+    }
+
 
     [HttpGet("{id:long}")]
 
-    public async Task<IActionResult> GetById
-    (
-        long id
-    )
+    public async Task<ActionResult<JournalVoucherDto>> GetById(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        JournalVoucherDto? item =
+            await _repository.GetByIdAsync(id);
 
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        return Ok(
-            entity
-        );
+        return item == null
+            ? NotFound()
+            : Ok(item);
     }
 
 
     //===========================================================
-    // Create
+    // Create / Update (Draft)
     //===========================================================
 
     [HttpPost]
 
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreateJournalVoucherDto dto
-    )
+    public Task<IActionResult> Create(
+        CreateJournalVoucherDto dto)
     {
-        var entity =
-            new JournalVoucher
+        return Run(
+            async () =>
+                Ok(
+                    await _repository.CreateAsync(
+                        dto,
+                        UserId)),
+            "Create Journal Voucher",
+            badRequestOnInvalid: true);
+    }
+
+    [HttpPut]
+
+    public Task<IActionResult> Update(
+        UpdateJournalVoucherDto dto)
+    {
+        return Run(
+            async () =>
             {
-                Name =
-                    dto.Name,
+                await _repository.UpdateAsync(
+                    dto,
+                    UserId);
 
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
-
-                SampleField =
-                    dto.SampleField,
-
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
+                return NoContent();
+            },
+            "Update Journal Voucher",
+            badRequestOnInvalid: true);
     }
 
 
     //===========================================================
-    // Update
-    //===========================================================
-
-    [HttpPut("{id:long}")]
-
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdateJournalVoucherDto dto
-    )
-    {
-        if
-        (
-            id != dto.Id
-        )
-        {
-            return BadRequest();
-        }
-
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
-
-        return NoContent();
-    }
-
-
-    //===========================================================
-    // Delete
+    // Delete / Restore (Draft)
     //===========================================================
 
     [HttpDelete("{id:long}")]
 
-    public async Task<IActionResult> Delete
-    (
-        long id
-    )
+    public Task<IActionResult> Delete(
+        long id)
     {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
+        return Run(
+            async () =>
+            {
+                await _repository.DeleteAsync(
+                    id,
+                    UserId);
 
+                return NoContent();
+            },
+            "Delete Journal Voucher");
+    }
 
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
+    [HttpPut("restore")]
 
-
-        await _repository
-            .DeleteAsync(
-                id
-            );
-
-
-        return NoContent();
+    public Task<IActionResult> Restore()
+    {
+        return Run(
+            async () =>
+                await _repository.RestoreAsync(UserId)
+                    ? NoContent()
+                    : NotFound("There are no deleted journal vouchers available to restore."),
+            "Restore Journal Voucher");
     }
 
 
     //===========================================================
-    // Restore
+    // Workflow
     //===========================================================
 
-    [HttpPut("{id:long}/restore")]
+    [HttpPut("{id:long}/approve")]
 
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
+    public Task<IActionResult> Approve(
+        long id)
     {
-        await _repository
-            .RestoreAsync(
-                id
-            );
+        return Run(
+            async () =>
+            {
+                await _repository.ApproveAsync(
+                    id,
+                    UserId);
 
+                return NoContent();
+            },
+            "Approve Journal Voucher");
+    }
 
-        return NoContent();
+    [HttpPut("{id:long}/return-to-draft")]
+
+    public Task<IActionResult> ReturnToDraft(
+        long id)
+    {
+        return Run(
+            async () =>
+            {
+                await _repository.ReturnToDraftAsync(
+                    id,
+                    UserId);
+
+                return NoContent();
+            },
+            "Return Journal Voucher To Draft");
+    }
+
+    [HttpPut("{id:long}/post")]
+
+    public Task<IActionResult> Post(
+        long id)
+    {
+        return Run(
+            async () =>
+            {
+                await _repository.PostAsync(
+                    id,
+                    UserId);
+
+                return NoContent();
+            },
+            "Post Journal Voucher");
+    }
+
+    [HttpPut("{id:long}/cancel")]
+
+    public Task<IActionResult> Cancel(
+        long id,
+        CancelJournalVoucherDto dto)
+    {
+        return Run(
+            async () =>
+            {
+                await _repository.CancelAsync(
+                    id,
+                    dto,
+                    UserId);
+
+                return NoContent();
+            },
+            "Cancel Journal Voucher");
     }
 
 
     //===========================================================
-    // Get History
+    // History
     //===========================================================
 
     [HttpGet("history")]
 
-    public async Task<IActionResult> GetHistory()
+    public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory()
     {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
         return Ok(
-            history
-        );
+            await _activityHistoryRepository.GetListHistoryAsync(
+                "Accounts Finance",
+                "JournalVoucher"));
     }
 
 
     //===========================================================
-    // Get Entity History
+    // Helpers
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    // Until login identity is wired into the API
+    private static long UserId => 1;
 
-    public async Task<IActionResult> GetEntityHistory
+    // Today in Bangladesh time (preview default date), whatever
+    // the server clock
+    private static DateOnly BusinessToday()
+    {
+        foreach (string id in new[] { "Asia/Dhaka", "Bangladesh Standard Time" })
+        {
+            try
+            {
+                return DateOnly.FromDateTime(
+                    TimeZoneInfo.ConvertTimeFromUtc(
+                        DateTime.UtcNow,
+                        TimeZoneInfo.FindSystemTimeZoneById(id)));
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return DateOnly.FromDateTime(DateTime.Now);
+    }
+
+    // InvalidOperationException → 400 (create / update) or 409
+    private async Task<IActionResult> Run
     (
-        long id
+        Func<Task<IActionResult>> work,
+        string action,
+        bool badRequestOnInvalid = false
     )
     {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
+        try
+        {
+            return await work();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return badRequestOnInvalid
+                ? BadRequest(ex.Message)
+                : Conflict(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{Action} failed.", action);
 
-
-        return Ok(
-            history
-        );
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                $"{action} failed.");
+        }
     }
 }

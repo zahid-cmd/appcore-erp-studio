@@ -55,6 +55,12 @@ import
 }
 from '../../../models/pos-accounts.model';
 
+import
+{
+    BankAccountsService
+}
+from '../../../services/bank-accounts.service';
+
 //===============================================================
 // Shared Components
 //===============================================================
@@ -187,6 +193,10 @@ from '../../../../general-settings/services/branches.service';
 interface POSAccountListItem
 extends POSAccount
 {
+    // Display name of the linked bank account (saved by code)
+    LinkedBankAccountName:
+        string;
+
     AccountSubGroupName:
         string;
 
@@ -293,6 +303,15 @@ implements OnInit, OnDestroy
 
     private readonly posAccountsService =
         inject(POSAccountsService);
+
+    // Linked Bank Account is saved as the bank account CODE; the
+    // list shows its display name
+    private readonly bankAccountsService =
+        inject(BankAccountsService);
+
+    private bankAccountNames:
+        Map<string, string> =
+        new Map<string, string>();
 
     private readonly accountSubGroupService =
         inject(AccountSubGroupService);
@@ -518,7 +537,7 @@ implements OnInit, OnDestroy
         },
         {
             header:'Linked Bank Account',
-            field:'LinkedBankAccount',
+            field:'LinkedBankAccountName',
             width:'280px',
             align:'left'
         },
@@ -669,8 +688,15 @@ implements OnInit, OnDestroy
     ):
         POSAccountListItem
     {
+        const linked =
+            String(item.LinkedBankAccount ?? '').trim();
+
         return {
             ...item,
+
+            // By code; a row saved earlier by name shows as it is
+            LinkedBankAccountName:
+                this.bankAccountNames.get(linked) || linked,
 
             AccountSubGroupName:
                 this.getAccountSubGroupName(
@@ -940,6 +966,25 @@ implements OnInit, OnDestroy
                         )
                     ),
 
+            bankAccounts:
+                this.bankAccountsService
+                    .getAll()
+                    .pipe
+                    (
+                        catchError
+                        (
+                            error =>
+                            {
+                                console.error(
+                                    'Load Bank Accounts Error:',
+                                    error
+                                );
+
+                                return of([]);
+                            }
+                        )
+                    ),
+
             accounts:
                 this.posAccountsService.getAll()
         })
@@ -953,12 +998,28 @@ implements OnInit, OnDestroy
                         any;
                     branches:
                         any;
+                    bankAccounts:
+                        any;
                     accounts:
                         POSAccount[];
                 }
             ):
                 void =>
             {
+                this.bankAccountNames =
+                    new Map<string, string>(
+                        (Array.isArray(result.bankAccounts) ? result.bankAccounts : [])
+                            .map
+                            (
+                                (bank: any): [string, string] =>
+                                [
+                                    String(readField(bank, 'BankAccountCode') ?? '').trim(),
+                                    String(readField(bank, 'DisplayName') ?? '').trim()
+                                ]
+                            )
+                            .filter(([code]) => !!code)
+                    );
+
                 this.buildAccountSubGroupMap(
                     result.subGroups
                 );
@@ -1143,6 +1204,7 @@ implements OnInit, OnDestroy
                         item.POSAccountName,
                         item.TerminalNumber,
                         item.LinkedBankAccount,
+                        item.LinkedBankAccountName,
                         item.Branch,
                         item.AccountSubGroupName,
                         item.CollectionAccountText,

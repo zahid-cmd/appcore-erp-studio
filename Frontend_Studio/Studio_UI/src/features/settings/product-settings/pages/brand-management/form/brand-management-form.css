@@ -1,1 +1,33 @@
 @import '../../../../../../shared/styles/app-form-page.css';
+
+/* =====================================================
+   BRAND LEDGERS : sub group missing / inactive note
+===================================================== */
+
+.brand-ledger-note
+{
+    display: flex;
+
+    gap: 6px;
+
+    align-items: flex-start;
+
+    padding: 8px 10px;
+
+    border: 1px solid #fcd34d;
+
+    border-radius: 8px;
+
+    background: #fffbeb;
+
+    color: #92400e;
+
+    font-size: 11.5px;
+
+    line-height: 1.4;
+}
+
+.brand-ledger-note i
+{
+    margin-top: 2px;
+}

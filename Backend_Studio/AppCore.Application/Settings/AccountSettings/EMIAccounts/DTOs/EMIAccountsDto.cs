@@ -44,7 +44,11 @@ public class EmiAccountsDto
 
     public string Platform { get; set; } = string.Empty;
 
+    // Bank Accounts → BankAccountCode (stored by code)
     public string LinkedBankAccount { get; set; } = string.Empty;
+
+    // Display name of the linked bank account (list / view)
+    public string LinkedBankAccountName { get; set; } = string.Empty;
 
     public string Branch { get; set; } = string.Empty;
 

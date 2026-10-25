@@ -6,10 +6,12 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     Input,
     Output,
     EventEmitter,
     ChangeDetectorRef,
+    ElementRef,
     inject
 }
 from '@angular/core';
@@ -70,6 +72,7 @@ import
     BankOption,
     CardChargeRate,
     VoucherDebitLine,
+    VoucherMode,
     needsDetails,
     debitDetailIssue,
     isDebitRowReady,
@@ -148,7 +151,7 @@ interface SelectItem
 })
 
 export class PaymentDeskComponent
-implements OnInit
+implements OnInit, OnDestroy
 {
     //===========================================================
     // Injection
@@ -160,6 +163,9 @@ implements OnInit
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    private readonly host =
+        inject(ElementRef<HTMLElement>);
+
 
     //===========================================================
     // Inputs
@@ -170,6 +176,85 @@ implements OnInit
         boolean =
         false;
 
+    // receipt / payment : wording, charge payer, check fields
+    @Input()
+    set kind
+    (
+        value:
+            VoucherMode
+    )
+    {
+        this._kind =
+            value === 'payment'
+                ? 'payment'
+                : 'receipt';
+
+        this.borneByItems =
+        [
+            {
+                label:'Company',
+                value:'Company'
+            },
+            this._kind === 'payment'
+                ? {
+                    label:'Payee (deducted from the payment)',
+                    value:'Payee'
+                }
+                : {
+                    label:'Customer (pays on top)',
+                    value:'Customer'
+                }
+        ];
+
+        this.fillPaymentCheckBanks();
+    }
+
+    get kind():
+        VoucherMode
+    {
+        return this._kind;
+    }
+
+    private _kind:
+        VoucherMode =
+        'receipt';
+
+    get isPayment():
+        boolean
+    {
+        return this._kind === 'payment';
+    }
+
+    // Payment check : drawn on our own bank (the ledger)
+    private fillPaymentCheckBanks():
+        void
+    {
+        if
+        (
+            !this.isPayment
+        )
+        {
+            return;
+        }
+
+        for
+        (
+            const row of this.rows
+        )
+        {
+            if
+            (
+                row.Mode === 'Check'
+                &&
+                !(row.CheckBank ?? '').trim()
+            )
+            {
+                row.CheckBank =
+                    row.LedgerName;
+            }
+        }
+    }
+
     // Every debit row of the voucher (step 1)
     @Input()
     set lines
@@ -178,6 +263,10 @@ implements OnInit
             VoucherDebitLine[] | null
     )
     {
+        // New copy of the rows : pending rate lookups belong to
+        // the old copy
+        this.ratePending.clear();
+
         this.rows =
             (value ?? []).map
             (
@@ -186,6 +275,8 @@ implements OnInit
                     ...line
                 })
             );
+
+        this.fillPaymentCheckBanks();
 
         // Charged rows without a side yet : the company bears it
         for
@@ -283,7 +374,7 @@ implements OnInit
         SelectItem[] =
         [];
 
-    readonly borneByItems:
+    borneByItems:
         SelectItem[] =
     [
         {
@@ -333,6 +424,23 @@ implements OnInit
     //===========================================================
     // Initialize
     //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        if
+        (
+            this.advanceTimer
+        )
+        {
+            clearTimeout(
+                this.advanceTimer
+            );
+
+            this.advanceTimer =
+                null;
+        }
+    }
 
     ngOnInit():
         void
@@ -601,10 +709,24 @@ implements OnInit
     get selectedIssue():
         string
     {
+        if
+        (
+            this.selected
+            &&
+            this.ratePending.has(this.selected)
+        )
+        {
+            return 'Loading the card charge…';
+        }
+
         return this.selected
             ? this.rowIssue(this.selected)
             : '';
     }
+
+    // Rows waiting for their card charge (Verify waits too)
+    private readonly ratePending =
+        new Set<VoucherDebitLine>();
 
 
     //===========================================================
@@ -624,15 +746,22 @@ implements OnInit
         );
     }
 
+    // Charges on top of the amount : paid by the customer
+    // (receipt) / by the company (payment)
     get customerCharges():
         number
     {
+        const payer =
+            this.isPayment
+                ? 'Company'
+                : 'Customer';
+
         return roundMoney(
             this.rows
                 .filter
                 (
                     row =>
-                        row.ChargeBorneBy === 'Customer'
+                        row.ChargeBorneBy === payer
                 )
                 .reduce
                 (
@@ -772,9 +901,22 @@ implements OnInit
     ):
         void
     {
-        const row =
-            this.selected;
+        this.updateRow(
+            this.selected,
+            change
+        );
+    }
 
+    // Changes one row (selected or not)
+    private updateRow
+    (
+        row:
+            VoucherDebitLine | null | undefined,
+        change:
+            (row: VoucherDebitLine) => void
+    ):
+        void
+    {
         if
         (
             !row
@@ -826,11 +968,10 @@ implements OnInit
 
         this.emitLines();
 
-        // Short pulse on the left, then move to the next row
-        // still waiting
         const index =
             this.selectedIndex;
 
+        // Short green pulse on the verified row (left list)
         this.pulseIndex =
             index;
 
@@ -852,38 +993,67 @@ implements OnInit
                     this.advanceTimer =
                         null;
 
-                    if
-                    (
-                        this.pulseIndex === index
-                    )
-                    {
-                        this.pulseIndex =
-                            -1;
-                    }
+                    this.pulseIndex =
+                        -1;
 
-                    const next =
-                        this.detailIndexes.find
-                        (
-                            item =>
-                                !isDebitRowReady(this.rows[item])
-                        );
-
-                    if
-                    (
-                        next !== undefined
-                        &&
-                        this.selectedIndex === index
-                    )
-                    {
-                        this.selectRow(
-                            next
-                        );
-                    }
-
-                    this.cdr.markForCheck();
+                    this.cdr.detectChanges();
                 },
                 650
             );
+
+        // Move straight on to the next row still waiting : the
+        // rows after this one first, then the ones above it
+        const order =
+            this.detailIndexes;
+
+        const position =
+            order.indexOf(index);
+
+        const next =
+            [
+                ...order.slice(position + 1),
+                ...order.slice(0, Math.max(0, position))
+            ]
+            .find
+            (
+                item =>
+                    !isDebitRowReady(this.rows[item])
+            );
+
+        if
+        (
+            next !== undefined
+        )
+        {
+            this.selectRow(
+                next
+            );
+        }
+
+        this.cdr.detectChanges();
+
+        this.scrollActiveRowIntoView();
+    }
+
+    // Keeps the chosen row visible in the left list
+    private scrollActiveRowIntoView():
+        void
+    {
+        setTimeout
+        (
+            () =>
+            {
+                const active =
+                    (this.host.nativeElement as HTMLElement)
+                        .querySelector<HTMLElement>('.pd-row-active');
+
+                active?.scrollIntoView(
+                {
+                    block:'nearest',
+                    behavior:'smooth'
+                });
+            }
+        );
     }
 
 
@@ -921,6 +1091,36 @@ implements OnInit
                     value
                         ? toIsoDate(value)
                         : ''
+        );
+    }
+
+    // Payment check : name on the check (optional)
+    onPayeeName
+    (
+        input:
+            string | number
+    ):
+        void
+    {
+        this.update(
+            row =>
+                row.PayeeName =
+                    String(input ?? '').trim()
+        );
+    }
+
+    // Payment MFS : payee wallet / account (optional)
+    onPayeeAccount
+    (
+        input:
+            string | number
+    ):
+        void
+    {
+        this.update(
+            row =>
+                row.PayeeAccount =
+                    String(input ?? '').trim()
         );
     }
 
@@ -1051,6 +1251,14 @@ implements OnInit
             return;
         }
 
+        // Verify waits until the rate is in
+        this.ratePending.add(
+            row
+        );
+
+        const cardId =
+            row.CardSetupId;
+
         this.lookup
             .getCardChargesForPos(
                 row.AccountId
@@ -1064,6 +1272,10 @@ implements OnInit
                 ):
                     void =>
                 {
+                    this.ratePending.delete(
+                        row
+                    );
+
                     this.loadedPosRates.add(
                         row.AccountId
                     );
@@ -1078,16 +1290,20 @@ implements OnInit
                         ...rates
                     ];
 
-                    // Still the same row and card ?
+                    // The row is still here with the same card : apply
+                    // the rate to it, selected or not
                     if
                     (
-                        this.selected === row
+                        this.rows.includes(row)
+                        &&
+                        row.CardSetupId === cardId
                     )
                     {
                         const found =
                             find();
 
-                        this.update(
+                        this.updateRow(
+                            row,
                             target =>
                                 this.setChargePercent(
                                     target,
@@ -1103,9 +1319,15 @@ implements OnInit
                 ():
                     void =>
                 {
+                    this.ratePending.delete(
+                        row
+                    );
+
                     this.loadedPosRates.add(
                         row.AccountId
                     );
+
+                    this.cdr.markForCheck();
                 }
             });
     }
@@ -1230,8 +1452,8 @@ implements OnInit
         this.update(
             row =>
                 row.ChargeBorneBy =
-                    value === 'Customer'
-                        ? 'Customer'
+                    value === 'Customer' || value === 'Payee'
+                        ? value
                         : 'Company'
         );
     }

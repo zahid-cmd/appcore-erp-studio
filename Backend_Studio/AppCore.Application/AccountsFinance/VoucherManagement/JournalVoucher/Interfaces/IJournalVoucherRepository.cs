@@ -1,11 +1,4 @@
 //===============================================================
-// Namespaces
-//===============================================================
-
-using AppCore.Application.Common.ActivityHistory.DTOs;
-
-
-//===============================================================
 // Namespace
 //===============================================================
 
@@ -13,98 +6,72 @@ namespace AppCore.Application.AccountsFinance.VoucherManagement;
 
 
 //===============================================================
-// IJournalVoucherRepository
+// Journal Voucher Repository Interface
 //===============================================================
 
 public interface IJournalVoucherRepository
 {
-
     //===========================================================
-    // Get All
-    //===========================================================
-
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.AccountsFinance.VoucherManagement.JournalVoucher>>
-        GetAllAsync();
-
-
-
-    //===========================================================
-    // Get By Id
+    // Read
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.AccountsFinance.VoucherManagement.JournalVoucher?>
-        GetByIdAsync
-    (
-        long id
-    );
+    Task<List<JournalVoucherDto>> GetAllAsync();
 
+    Task<JournalVoucherDto?> GetByIdAsync(
+        long id);
+
+    // Next voucher number preview (Add form)
+    Task<JournalVoucherDefaultsDto> GetDefaultsAsync(
+        long branchId,
+        DateOnly voucherDate);
 
 
     //===========================================================
-    // Create
+    // Draft
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.AccountsFinance.VoucherManagement.JournalVoucher entity
-    );
+    Task<JournalVoucherSavedDto> CreateAsync(
+        CreateJournalVoucherDto dto,
+        long userId);
 
+    Task UpdateAsync(
+        UpdateJournalVoucherDto dto,
+        long userId);
 
+    Task DeleteAsync(
+        long id,
+        long userId);
 
-    //===========================================================
-    // Update
-    //===========================================================
-
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.AccountsFinance.VoucherManagement.JournalVoucher entity
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Delete
+    // Workflow
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
+    Task ApproveAsync(
+        long id,
+        long userId);
 
+    Task ReturnToDraftAsync(
+        long id,
+        long userId);
 
+    Task PostAsync(
+        long id,
+        long userId);
 
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task CancelAsync(
+        long id,
+        CancelJournalVoucherDto dto,
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
-
+    Task<bool> ExistsAsync(
+        long id);
 }

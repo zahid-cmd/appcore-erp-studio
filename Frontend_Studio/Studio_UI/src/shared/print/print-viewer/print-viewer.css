@@ -1,6 +1,8 @@
 /*===============================================================
   Print Viewer (own browser tab, full window)
-  AppCore blue toolbar, light grey canvas, black thumbnail panel
+  AppCore blue toolbar, light grey canvas, black thumbnail panel.
+  Layout : toolbar on top, thumbnails | pages, and the page / zoom
+  controls in a bar floating over the bottom of the pages.
 ===============================================================*/
 
 :host
@@ -22,18 +24,20 @@
 
 
 /*---------------------------------------------------------------
-  Toolbar : left | center | right
+  Toolbar : left | right
 ---------------------------------------------------------------*/
 
 .pv-bar
 {
     flex: 0 0 auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    display: flex;
     align-items: center;
-    gap: 14px;
-    min-height: 58px;
-    padding: 8px 14px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    min-height: 62px;
+    padding: 10px 16px;
+    box-sizing: border-box;
     background:
         linear-gradient(90deg, #0b1d4f 0%, #1e3a8a 50%, #2563eb 100%);
     color: #e0e7ff;
@@ -42,7 +46,6 @@
 }
 
 .pv-bar-left,
-.pv-bar-center,
 .pv-bar-right,
 .pv-group
 {
@@ -54,19 +57,34 @@
 
 .pv-bar-left
 {
+    flex: 1 1 auto;
     gap: 12px;
-}
-
-.pv-bar-center
-{
-    justify-content: center;
-    gap: 6px;
 }
 
 .pv-bar-right
 {
+    flex: 0 1 auto;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 8px;
+}
+
+
+/* Title */
+
+.pv-doc-icon
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    font-size: 15px;
 }
 
 .pv-name
@@ -79,7 +97,7 @@
 
 .pv-name strong
 {
-    font-size: 14px;
+    font-size: 15px;
     color: #ffffff;
     white-space: nowrap;
 }
@@ -103,13 +121,13 @@
 }
 
 
-/* Document choice (AppCore search dropdown) */
+/* Document choice (AppCore search dropdown), next to Refresh */
 
 .pv-doc-select
 {
-    --dropdown-width: 220px;
-    --dropdown-height: 34px;
-    flex: 0 0 220px;
+    --dropdown-width: 230px;
+    --dropdown-height: 36px;
+    flex: 0 0 230px;
     margin-right: 4px;
 }
 
@@ -122,15 +140,22 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    border: none;
-    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    border-radius: 9px;
     background: transparent;
     color: #e0e7ff;
     font-size: 15px;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Boxed : thumbnails toggle and Refresh on the toolbar */
+.pv-icon-btn-boxed
+{
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 .pv-icon-btn:hover:not(:disabled)
@@ -165,12 +190,13 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    height: 34px;
+    height: 36px;
     padding: 0 16px;
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 9px;
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
+    font-family: inherit;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -214,58 +240,6 @@
 }
 
 
-/* Page box / zoom */
-
-.pv-page-box
-{
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin: 0 4px;
-    font-size: 13px;
-    color: #dbeafe;
-}
-
-.pv-page-box input
-{
-    width: 44px;
-    height: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    border-radius: 7px;
-    background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-    outline: none;
-}
-
-.pv-page-box input:focus
-{
-    border-color: #ffffff;
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.pv-zoom
-{
-    height: 32px;
-    padding: 0 8px;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    border-radius: 7px;
-    background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 600;
-    outline: none;
-    cursor: pointer;
-}
-
-.pv-zoom option
-{
-    color: #1e293b;
-}
-
-
 /*---------------------------------------------------------------
   Body : thumbnails (black) | pages (light grey)
 ---------------------------------------------------------------*/
@@ -277,11 +251,15 @@
     display: flex;
 }
 
-/* Width : THUMB_PANEL_WIDTH in print-viewer.ts */
+
+/* Thumbnails. Width : THUMB_PANEL_WIDTH in print-viewer.ts */
+
 .pv-thumbs
 {
-    flex: 0 0 300px;
-    width: 300px;
+    flex: 0 0 420px;
+    width: 420px;
+    display: flex;
+    flex-direction: column;
     background: #000000;
     border-right: 1px solid #000000;
     transition: flex-basis 0.2s ease, width 0.2s ease;
@@ -295,6 +273,44 @@
     border-right: none;
 }
 
+.pv-thumbs-head
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 420px;
+    height: 46px;
+    padding: 0 18px;
+    box-sizing: border-box;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: #bfdbfe;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.pv-thumbs-count
+{
+    min-width: 22px;
+    padding: 2px 9px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 12px;
+    letter-spacing: 0;
+    text-align: center;
+}
+
+.pv-thumb-frame
+{
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 .pv-thumb-frame,
 .pv-frame
 {
@@ -304,11 +320,23 @@
     border: 0;
 }
 
+
+/* Pages + page / zoom bar */
+
+.pv-viewport
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: #e3e6eb;
+}
+
 .pv-stage
 {
     position: relative;
     flex: 1 1 auto;
-    min-width: 0;
+    min-height: 0;
     background: #e3e6eb;
 }
 
@@ -316,6 +344,9 @@
 {
     visibility: hidden;
 }
+
+
+/* Loading / error */
 
 .pv-state
 {
@@ -349,12 +380,16 @@
     background: #2563eb;
 }
 
+
+/* Busy / notice : top centre, clear of the page / zoom bar */
+
 .pv-busy,
 .pv-notice
 {
     position: absolute;
     left: 50%;
-    bottom: 24px;
+    top: 18px;
+    z-index: 3;
     transform: translateX(-50%);
     display: inline-flex;
     align-items: center;
@@ -364,27 +399,119 @@
     background: rgba(15, 23, 42, 0.92);
     color: #ffffff;
     font-size: 13px;
+    white-space: nowrap;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
 }
 
-@media (max-width: 1200px)
-{
-    .pv-bar
-    {
-        grid-template-columns: minmax(0, 1fr) auto;
-    }
 
-    .pv-bar-center
-    {
-        grid-column: 1 / -1;
-        grid-row: 2;
-    }
+/*---------------------------------------------------------------
+  Page / zoom bar : a blue pill floating over the bottom of the
+  preview (takes no space of its own)
+---------------------------------------------------------------*/
+
+.pv-dock-row
+{
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 20px;
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    padding: 0 16px;
+    pointer-events: none;
 }
+
+.pv-dock
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    min-height: 50px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    border-radius: 16px;
+    background:
+        linear-gradient(90deg, #0b1d4f 0%, #1e3a8a 50%, #2563eb 100%);
+    color: #e0e7ff;
+    box-shadow:
+        0 14px 32px -12px rgba(15, 23, 42, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    pointer-events: auto;
+}
+
+
+/* Page box / zoom */
+
+.pv-page-box
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 4px;
+    font-size: 13px;
+    color: #dbeafe;
+}
+
+.pv-page-box input
+{
+    width: 44px;
+    height: 30px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+}
+
+.pv-page-box input:focus
+{
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.pv-zoom
+{
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+}
+
+.pv-zoom option
+{
+    color: #1e293b;
+}
+
+
+/*---------------------------------------------------------------
+  Responsive
+---------------------------------------------------------------*/
 
 @media (max-width: 900px)
 {
     .pv-thumbs
     {
         display: none;
+    }
+
+    .pv-doc-select
+    {
+        --dropdown-width: 180px;
+        flex-basis: 180px;
     }
 }

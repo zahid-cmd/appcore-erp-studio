@@ -7,6 +7,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
+using AppCore.Api.BackgroundJobs;
 using AppCore.Application;
 using AppCore.Infrastructure;
 
@@ -51,6 +52,23 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(
     builder.Configuration
 );
+
+
+//===============================================================
+// Background Jobs
+//===============================================================
+//
+// MFS Auto Settlement : every night at 23:59 (Bangladesh time)
+// settles the due Merchant wallet receipts when switch
+// CFG-MOD-004-0051 is ON; catches up missed days on start.
+//
+//===============================================================
+
+builder.Services.AddHostedService<MfsAutoSettlementService>();
+
+// POS Auto Settlement : the same, switch CFG-MOD-004-0054
+
+builder.Services.AddHostedService<PosAutoSettlementService>();
 
 
 //===============================================================

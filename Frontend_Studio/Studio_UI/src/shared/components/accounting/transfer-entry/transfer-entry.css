@@ -1,0 +1,200 @@
+/*===============================================================
+  Transfer Entry
+  The look comes from voucher-master-data.css (shared); only the
+  left column scroll and one-line card footers are added here.
+===============================================================*/
+
+/* The From card grows (cheque / charge) : the left column
+   scrolls instead of cutting the cards */
+.vmd-entry-col.tre-entry
+{
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.tre-entry > .vmd-card
+{
+    flex-shrink: 0;
+}
+
+/* Card footer (hint / error) : one line; full text in the
+   tooltip */
+.tre-foot
+{
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.tre-foot > i
+{
+    flex: 0 0 auto;
+}
+
+.tre-foot-text
+{
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/*---------------------------------------------------------------
+  Compact layout (2026-10-24)
+    Row 1 : Type | Sub-Group · Row 2 : Account | Amount ·
+    Short Notes full width; tighter spacing so both cards fit
+---------------------------------------------------------------*/
+
+/* Less space between the sections */
+.vmd
+{
+    gap: 8px 14px;
+}
+
+.vmd-entry-col
+{
+    gap: 8px;
+}
+
+/* Fields : tighter rows */
+.vmd-grid
+{
+    gap: 4px 14px;
+    padding: 6px 16px 8px;
+}
+
+.vmd-card-header
+{
+    padding: 2px 16px;
+}
+
+.vmd-hint,
+.vmd-error
+{
+    padding: 5px 16px;
+}
+
+
+/*---------------------------------------------------------------
+  Header note, Add button, Voucher Information (2026-10-24)
+---------------------------------------------------------------*/
+
+/* Voucher Information : Voucher No | Voucher Date (half each);
+   the Voucher No shows in full at the normal size */
+.vit-grid
+{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Group / Transfer Type chip in the Voucher Information header */
+.vit-chip
+{
+    margin-left: auto;
+    max-width: 55%;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Hint / error in the card header (right side, one line; full
+   text on hover) */
+.vit-note
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin-left: auto;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.vit-note > i
+{
+    flex: 0 0 auto;
+    font-size: 12px;
+}
+
+.vit-note > span
+{
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vit-note-warn
+{
+    color: #b45309;
+}
+
+.vit-note-error
+{
+    color: #b91c1c;
+}
+
+/* Header text and chips never push the note out */
+.vmd-card-header > span:not(.vit-note):not(.vit-chip)
+{
+    flex: 0 0 auto;
+}
+
+/* + Add : right of Short Notes, level with the input */
+.vit-add-cell
+{
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+.vit-add
+{
+    /* Same size as the Save / Update command button */
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: auto !important;
+    min-width: 84px;
+    height: 30px;
+    padding: 0 16px;
+    border: 1px solid #1d4ed8;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7);
+    transition: filter 0.15s ease;
+}
+
+.vit-add:hover:not(:disabled)
+{
+    filter: brightness(1.06);
+}
+
+.vit-add:disabled
+{
+    border-color: #cbd5e1;
+    background: #e2e8f0;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Voucher No at the normal input size (the shared 13px rule is
+   for the 3-column Receipt / Payment layout) */
+:host ::ng-deep .vit-grid .vmd-voucher-no .textbox input
+{
+    font-size: 15px;
+    letter-spacing: 0;
+}

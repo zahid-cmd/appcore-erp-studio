@@ -229,10 +229,20 @@ implements AfterViewInit, OnDestroy
     // Derived
     //===========================================================
 
+    // Documents of the source; once the record is loaded, the
+    // ones it does not have (available() false) are left out
     get documents():
         PrintDocumentDef[]
     {
-        return this.source?.documents ?? [];
+        return (this.source?.documents ?? []).filter
+        (
+            doc =>
+                !doc.available
+                ||
+                !this.data
+                ||
+                doc.available(this.data)
+        );
     }
 
     // Document choice : All Documents + each document.
@@ -369,6 +379,21 @@ implements AfterViewInit, OnDestroy
             return;
         }
 
+        this.buildDocumentItems();
+
+        await this.load(
+            false
+        );
+    }
+
+
+    //===========================================================
+    // Document choice : All Documents + each document
+    //===========================================================
+
+    private buildDocumentItems():
+        void
+    {
         this.documentItems =
         [
             {
@@ -395,10 +420,6 @@ implements AfterViewInit, OnDestroy
             this.choice =
                 'all';
         }
-
-        await this.load(
-            false
-        );
     }
 
 
@@ -453,6 +474,9 @@ implements AfterViewInit, OnDestroy
 
             this.data =
                 data;
+
+            // Only the documents this record has
+            this.buildDocumentItems();
 
             this.kit =
                 kit;

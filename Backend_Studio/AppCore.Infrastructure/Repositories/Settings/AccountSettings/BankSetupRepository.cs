@@ -23,6 +23,9 @@ using MFSAccountsEntity =
 using POSAccountsEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.POSAccounts;
 
+using EmiAccountsEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.EmiAccounts;
+
 using AppCore.Infrastructure.Persistence;
 
 using AppCore.Domain.Common;
@@ -647,10 +650,15 @@ public class BankSetupRepository : IBankSetupRepository
     // Bank Accounts  : BankAccounts.Bank        = Bank Name
     // Card Setup     : CardSetup.IssuingBank    = Bank Name
     // MFS Accounts   : MFSAccounts.LinkedBankAccount
-    //                  = DisplayName of a bank account of this bank
+    //                  = BankAccountCode of a bank account of this
+    //                    bank (stored by code)
     // POS Accounts   : POSAccounts.IssuingBank   = Bank Name, or
     //                  POSAccounts.LinkedBankAccount
-    //                  = DisplayName of a bank account of this bank
+    //                  = BankAccountCode of a bank account of this
+    //                    bank (stored by code)
+    // EMI Accounts   : EmiAccounts.LinkedBankAccount
+    //                  = BankAccountCode of a bank account of this
+    //                    bank (stored by code)
     //===========================================================
 
     private async Task<List<string>>
@@ -674,7 +682,7 @@ public class BankSetupRepository : IBankSetupRepository
         // Bank Accounts
         //=======================================================
 
-        List<string> bankAccountDisplayNames =
+        var bankAccounts =
             await _context
                 .Set<BankAccountsEntity>()
                 .AsNoTracking()
@@ -685,8 +693,28 @@ public class BankSetupRepository : IBankSetupRepository
                         &&
                         x.Bank.Trim().ToUpper() == key
                 )
-                .Select(x => x.DisplayName)
+                .Select
+                (
+                    x =>
+                        new
+                        {
+                            x.DisplayName,
+                            x.BankAccountCode
+                        }
+                )
                 .ToListAsync();
+
+        List<string> bankAccountDisplayNames =
+            bankAccounts
+                .Select(x => x.DisplayName)
+                .ToList();
+
+        List<string> bankAccountCodes =
+            bankAccounts
+                .Select(x => x.BankAccountCode)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .ToList();
 
         if (bankAccountDisplayNames.Count > 0)
         {
@@ -717,17 +745,11 @@ public class BankSetupRepository : IBankSetupRepository
         }
 
         //=======================================================
-        // MFS Accounts (linked to this bank's bank accounts)
+        // MFS Accounts (linked by CODE to this bank's bank
+        // accounts)
         //=======================================================
 
-        List<string> linkedKeys =
-            bankAccountDisplayNames
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => x.Trim().ToUpper())
-                .Distinct()
-                .ToList();
-
-        if (linkedKeys.Count > 0)
+        if (bankAccountCodes.Count > 0)
         {
             int mfsCount =
                 await _context
@@ -738,7 +760,7 @@ public class BankSetupRepository : IBankSetupRepository
                         x =>
                             !x.IsDeleted
                             &&
-                            linkedKeys.Contains(x.LinkedBankAccount.Trim().ToUpper())
+                            bankAccountCodes.Contains(x.LinkedBankAccount)
                     );
 
             if (mfsCount > 0)
@@ -766,7 +788,10 @@ public class BankSetupRepository : IBankSetupRepository
                         (
                             x.IssuingBank.Trim().ToUpper() == key
                             ||
-                            linkedKeys.Contains(x.LinkedBankAccount.Trim().ToUpper())
+                            bankAccountCodes.Contains(x.LinkedBankAccount)
+                            ||
+                            // a row not yet converted to the code
+                            bankAccountDisplayNames.Contains(x.LinkedBankAccount)
                         )
                 );
 
@@ -774,6 +799,34 @@ public class BankSetupRepository : IBankSetupRepository
         {
             usages.Add(
                 $"{posCount} POS Account(s)");
+        }
+
+        //=======================================================
+        // EMI Accounts (linked to one of this bank's bank
+        // accounts)
+        //=======================================================
+
+        int emiCount =
+            await _context
+                .Set<EmiAccountsEntity>()
+                .AsNoTracking()
+                .CountAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        (
+                            bankAccountCodes.Contains(x.LinkedBankAccount)
+                            ||
+                            // a row not yet converted to the code
+                            bankAccountDisplayNames.Contains(x.LinkedBankAccount)
+                        )
+                );
+
+        if (emiCount > 0)
+        {
+            usages.Add(
+                $"{emiCount} EMI Account(s)");
         }
 
         return usages;

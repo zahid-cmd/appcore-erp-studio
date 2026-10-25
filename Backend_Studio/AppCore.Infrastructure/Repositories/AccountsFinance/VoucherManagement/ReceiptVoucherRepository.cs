@@ -13,6 +13,7 @@ using AppCore.Application.Settings.AccountSettings;
 using AppCore.Application.Settings.AccountSettings.AutoAccounts.DTOs;
 
 using AppCore.Domain.Common;
+using AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation;
 using AppCore.Domain.Entities.AccountsFinance.VoucherManagement;
 using AppCore.Domain.Platform.Accounting;
 
@@ -56,7 +57,10 @@ namespace AppCore.Infrastructure.Configurations.AccountsFinance.VoucherManagemen
 //              Cr the credit rows (up to the non-check total)
 //            Check rows post nothing : CheckStatus = Pending for
 //            Check Reconciliation (RRV later).
-// Cancel   : Posted → Cancelled, reversing entries.
+// Cancel   : Posted → Cancelled, reversing entries. Blocked
+//            while a check is worked on in Check Reconciliation
+//            or an MFS / card receipt is Settled / Rejected in MFS /
+//            POS Reconciliation.
 //===============================================================
 
 public class ReceiptVoucherRepository : IReceiptVoucherRepository
@@ -87,6 +91,13 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
     //        credit rows; OFF = no limit)
     private const string MaxLinesSwitch =
         "CFG-MOD-004-0033";
+
+    // Voucher date window (Value = most days back / ahead)
+    private const string BackDatedSwitch =
+        "CFG-MOD-004-0037";
+
+    private const string PostDatedSwitch =
+        "CFG-MOD-004-0038";
 
     private const string CheckMode =
         "Check";
@@ -573,6 +584,13 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
         input.Narration =
             Limit(dto.Narration, 500);
 
+        // Detail Narration is required on every voucher
+        if (input.Narration.Length == 0)
+        {
+            throw new InvalidOperationException(
+                "Detail Narration is required.");
+        }
+
         //=======================================================
         // One group : n debits : 1 credit or 1 debit : n credits
         //=======================================================
@@ -1004,7 +1022,14 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
 
                     RequireCard(row, debit, label);
 
+                    // Card Number : the last four digits (required)
                     row.TransactionRef = Limit(debit.TransactionRef, 100);
+
+                    if (row.TransactionRef.Length != 4 || !row.TransactionRef.All(char.IsAsciiDigit))
+                    {
+                        throw new InvalidOperationException(
+                            $"{label} : Card Number (last four digits) is required : 4 digits.");
+                    }
 
                     ApplyCharge(row, debit, label);
 
@@ -1128,6 +1153,20 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
         {
             throw new InvalidOperationException(
                 $"{label} : charge amount must be between 0 and the amount.");
+        }
+
+        // Charge amount and % must agree (the page keeps them in
+        // step; % is rounded to 2 decimals, so allow that much)
+        decimal expected =
+            row.Amount * percent / 100m;
+
+        decimal tolerance =
+            0.01m + row.Amount * 0.00005m;
+
+        if (Math.Abs(amount - expected) > tolerance)
+        {
+            throw new InvalidOperationException(
+                $"{label} : charge amount {amount:N2} does not match {percent:0.##}% of {row.Amount:N2}.");
         }
 
         row.ChargePercent = decimal.Round(percent, 2);
@@ -1326,6 +1365,10 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
         RvInput input =
             await NormalizeAsync(dto);
 
+        await EnsureDateAllowedAsync(
+            input.VoucherDate,
+            null);
+
         ReceiptVoucher entity =
             new()
             {
@@ -1395,6 +1438,11 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
                     await LoadAsync(dto.ReceiptVoucherId);
 
                 RequireStatus(entity, VoucherStatuses.Draft, "edited");
+
+                // An older draft keeps its saved date
+                await EnsureDateAllowedAsync(
+                    input.VoucherDate,
+                    entity.VoucherDate);
 
                 string expectedStart =
                     $"{VoucherTypes.Receipt}-{input.Period.BranchDigits}-{input.Period.FinancialYearCode}-{input.Period.PeriodMonth:D2}-";
@@ -1536,15 +1584,40 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
 
                 AddHistory(entity, "Approve", "Approved", userId, now);
 
-                // Switch "Post Receipt Voucher On Approval" : post in
-                // the same transaction (all or nothing)
-                if (await IsSwitchOnAsync(PostOnApprovalSwitch, false))
+                // Post in the same transaction (all or nothing) when
+                //   - switch "Post Receipt Voucher On Approval" is ON, or
+                //   - every payment line is a check : posting would
+                //     write nothing (the check part posts at Check
+                //     Reconciliation), so the voucher goes straight to
+                //     Posted and its checks to reconciliation
+                if (await IsCheckOnlyAsync(entity.ReceiptVoucherId)
+                    || await IsSwitchOnAsync(PostOnApprovalSwitch, false))
                 {
                     await PostCoreAsync(entity, userId);
                 }
 
                 await _context.SaveChangesAsync();
             });
+    }
+
+
+    // Every payment line is a check (none = false)
+    private async Task<bool>
+        IsCheckOnlyAsync
+        (
+            long id
+        )
+    {
+        List<string> modes =
+            await _context
+                .Set<ReceiptVoucherPayments>()
+                .AsNoTracking()
+                .Where(x => x.ReceiptVoucherId == id)
+                .Select(x => x.Mode)
+                .ToListAsync();
+
+        return modes.Count > 0
+            && modes.All(mode => string.Equals((mode ?? string.Empty).Trim(), CheckMode, StringComparison.OrdinalIgnoreCase));
     }
 
 
@@ -1659,8 +1732,11 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
                     VoucherNo = entity.VoucherNo,
                     VoucherDate = entity.VoucherDate,
                     BranchId = entity.BranchId,
-                    PartyType = entity.LedgerType,
-                    PartyCode = lines.Count == 1 ? lines[0].PartyCode : string.Empty,
+                    // Each credit line carries its own party; money and
+                    // charge lines have none (keeps party statements
+                    // clean)
+                    PartyType = string.Empty,
+                    PartyCode = string.Empty,
                     ReferenceNo = string.Empty,
                     Narration = string.IsNullOrWhiteSpace(entity.Narration)
                         ? $"Received from {entity.PartyName}"
@@ -1685,6 +1761,131 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
         entity.PostedDate = now;
 
         AddHistory(entity, "Post", "Posted", userId, now);
+    }
+
+
+    //===========================================================
+    // Business date (Bangladesh time, whatever the server clock)
+    //===========================================================
+
+    private static readonly TimeZoneInfo BusinessZone =
+        FindBusinessZone();
+
+    private static TimeZoneInfo FindBusinessZone()
+    {
+        foreach (string id in new[] { "Asia/Dhaka", "Bangladesh Standard Time" })
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(id);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return TimeZoneInfo.Local;
+    }
+
+    private static DateOnly BusinessToday()
+    {
+        return DateOnly.FromDateTime(
+            TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow,
+                BusinessZone));
+    }
+
+
+    //===========================================================
+    // Back Dated / Post Dated Entry (settings 0037 / 0038)
+    //
+    //   ON  : earlier / later dates allowed; Value = most days
+    //         back / ahead (empty = no limit)
+    //   OFF : nothing before / after today
+    // An unchanged date of an existing draft is not checked.
+    //===========================================================
+
+    private async Task
+        EnsureDateAllowedAsync
+        (
+            DateOnly date,
+            DateOnly? savedDate
+        )
+    {
+        if (savedDate.HasValue && savedDate.Value == date)
+        {
+            return;
+        }
+
+        DateOnly today =
+            BusinessToday();
+
+        (bool backOn, int backDays) =
+            await SwitchStateAsync(BackDatedSwitch);
+
+        (bool postOn, int postDays) =
+            await SwitchStateAsync(PostDatedSwitch);
+
+        if (date < today)
+        {
+            if (!backOn)
+            {
+                throw new InvalidOperationException(
+                    "Back dated entry is not allowed : the voucher date cannot be before today.");
+            }
+
+            if (backDays > 0 && date < today.AddDays(-backDays))
+            {
+                throw new InvalidOperationException(
+                    $"Back dated entry is allowed up to {today.AddDays(-backDays):dd-MMM-yyyy} only.");
+            }
+        }
+
+        if (date > today)
+        {
+            if (!postOn)
+            {
+                throw new InvalidOperationException(
+                    "Post dated entry is not allowed : the voucher date cannot be after today.");
+            }
+
+            if (postDays > 0 && date > today.AddDays(postDays))
+            {
+                throw new InvalidOperationException(
+                    $"Post dated entry is allowed up to {today.AddDays(postDays):dd-MMM-yyyy} only.");
+            }
+        }
+    }
+
+    // On / off (missing = ON) and the whole-number Value (0 = none)
+    private async Task<(bool IsOn, int Number)>
+        SwitchStateAsync
+        (
+            string code
+        )
+    {
+        var row =
+            await _context
+                .Set<SystemConfigurationsEntity>()
+                .AsNoTracking()
+                .Where(x => x.ConfigurationCode == code && !x.IsDeleted)
+                .Select(x => new { x.IsEnabled, x.Value })
+                .FirstOrDefaultAsync();
+
+        if (row == null)
+        {
+            return (true, 0);
+        }
+
+        int number =
+            int.TryParse((row.Value ?? string.Empty).Trim(), out int parsed) && parsed > 0
+                ? parsed
+                : 0;
+
+        return (row.IsEnabled, number);
     }
 
 
@@ -1888,7 +2089,7 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
 
         DateOnly cancelDate =
             string.IsNullOrWhiteSpace(dto?.CancelDate)
-                ? DateOnly.FromDateTime(DateTime.Today)
+                ? BusinessToday()
                 : ParseDate(dto!.CancelDate, "Cancel date");
 
         await InTransactionAsync(
@@ -1918,10 +2119,80 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
                         .Where(x => x.ReceiptVoucherId == id)
                         .ToListAsync();
 
-                if (payments.Any(x => x.Mode == CheckMode && x.CheckStatus == "Cleared"))
+                // A check already worked on in Check Reconciliation
+                // (deposited, cleared or dishonoured) must be undone
+                // there first
+                ReceiptVoucherPayments? busyCheck =
+                    payments.FirstOrDefault
+                    (
+                        x =>
+                            x.Mode == CheckMode
+                            &&
+                            (x.CheckStatus == "Deposited" || x.CheckStatus == "Cleared" || x.CheckStatus == "Dishonoured")
+                    );
+
+                if (busyCheck != null)
                 {
                     throw new InvalidOperationException(
-                        $"Receipt Voucher {entity.VoucherNo} has a cleared check. Reverse the check clearing first.");
+                        $"Receipt Voucher {entity.VoucherNo} has check {busyCheck.CheckNo} {busyCheck.CheckStatus.ToLowerInvariant()} in Check Reconciliation. Undo it there first.");
+                }
+
+                // An MFS receipt already settled or rejected in MFS
+                // Reconciliation must be undone there first
+                var busyMfs =
+                    await _context
+                        .Set<MfsReconciliations>()
+                        .AsNoTracking()
+                        .Where
+                        (
+                            x =>
+                                x.SourceVoucherType == "RV"
+                                &&
+                                x.SourceVoucherId == id
+                                &&
+                                (x.Status == "Settled" || x.Status == "Rejected")
+                        )
+                        .Select(x => new { x.TransactionRef, x.Status })
+                        .FirstOrDefaultAsync();
+
+                if (busyMfs != null)
+                {
+                    string what =
+                        string.IsNullOrWhiteSpace(busyMfs.TransactionRef)
+                            ? "an MFS receipt"
+                            : $"MFS Txn {busyMfs.TransactionRef}";
+
+                    throw new InvalidOperationException(
+                        $"Receipt Voucher {entity.VoucherNo} has {what} {busyMfs.Status.ToLowerInvariant()} in MFS Reconciliation. Undo it there first.");
+                }
+
+                // A card (POS) receipt already settled or rejected in
+                // POS Reconciliation must be undone there first
+                var busyPos =
+                    await _context
+                        .Set<PosReconciliations>()
+                        .AsNoTracking()
+                        .Where
+                        (
+                            x =>
+                                x.SourceVoucherType == "RV"
+                                &&
+                                x.SourceVoucherId == id
+                                &&
+                                (x.Status == "Settled" || x.Status == "Rejected")
+                        )
+                        .Select(x => new { x.TransactionRef, x.Status })
+                        .FirstOrDefaultAsync();
+
+                if (busyPos != null)
+                {
+                    string what =
+                        string.IsNullOrWhiteSpace(busyPos.TransactionRef)
+                            ? "a card receipt"
+                            : $"card {busyPos.TransactionRef}";
+
+                    throw new InvalidOperationException(
+                        $"Receipt Voucher {entity.VoucherNo} has {what} {busyPos.Status.ToLowerInvariant()} in POS Reconciliation. Undo it there first.");
                 }
 
                 if (await _postingService.IsPostedAsync(entity.VoucherNo))

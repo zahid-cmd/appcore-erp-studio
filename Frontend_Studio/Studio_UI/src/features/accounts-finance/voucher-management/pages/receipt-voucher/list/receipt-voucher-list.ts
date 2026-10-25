@@ -8,9 +8,16 @@ import
     OnInit,
     OnDestroy,
     inject,
-    ChangeDetectorRef
+    ChangeDetectorRef,
+    DestroyRef
 }
 from '@angular/core';
+
+import
+{
+    takeUntilDestroyed
+}
+from '@angular/core/rxjs-interop';
 
 import
 {
@@ -252,6 +259,10 @@ implements OnInit, OnDestroy
 
     private readonly cdr =
         inject(ChangeDetectorRef);
+
+    // Requests stop when the page is left
+    private readonly destroyRef =
+        inject(DestroyRef);
 
     //===========================================================
     // Page Tabs
@@ -759,6 +770,7 @@ implements OnInit, OnDestroy
 
         this.receiptVoucherService
             .getAll()
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
@@ -1285,6 +1297,7 @@ implements OnInit, OnDestroy
                 item.ReceiptVoucherId
             )
         )
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
@@ -1398,6 +1411,7 @@ implements OnInit, OnDestroy
         this.withMinimumDuration(
             this.receiptVoucherService.restore()
         )
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
@@ -1492,6 +1506,7 @@ implements OnInit, OnDestroy
     {
         this.receiptVoucherService
             .getHistory()
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:

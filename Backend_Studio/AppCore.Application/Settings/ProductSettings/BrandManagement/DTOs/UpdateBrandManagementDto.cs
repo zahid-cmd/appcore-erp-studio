@@ -23,4 +23,7 @@ public class UpdateBrandManagementDto
     public string Remarks { get; set; } = string.Empty;
 
     public bool Status { get; set; }
+
+    // Optional : SupplierCode of a Motor Bikes supplier ('' = none)
+    public string MotorBikesSupplierCode { get; set; } = string.Empty;
 }

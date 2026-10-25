@@ -56,6 +56,21 @@
         </app-control-tabs>
 
         <!-- =================================================
+             SUPPLY TYPE FILTER
+        ================================================== -->
+
+        <app-search-dropdown
+            pageToolbarRight
+            placeholder="All Supply Types"
+            [items]="supplyTypeFilterItems"
+            labelField="label"
+            valueField="value"
+            [value]="selectedSupplyType"
+            (valueChange)="onSupplyTypeFilterChange($event)">
+
+        </app-search-dropdown>
+
+        <!-- =================================================
              BRAND FILTER
         ================================================== -->
 

@@ -92,7 +92,16 @@ public class MFSAccountDto
     // Linked Bank Account
     //===========================================================
 
+    // Bank Accounts → BankAccountCode
     public string LinkedBankAccount
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    // Display name of the linked bank account (read only)
+    public string LinkedBankAccountName
     {
         get;
         set;

@@ -1025,6 +1025,61 @@ public class AppDbContext
 
     // AUTO-END : ReceiptVoucher
 
+    // AUTO-BEGIN : CheckReconciliations
+
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation.CheckReconciliations>
+    CheckReconciliationss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : CheckReconciliations
+
+    // AUTO-BEGIN : EmiReconciliations
+
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation.EmiReconciliations>
+    EmiReconciliationss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : EmiReconciliations
+
+    // AUTO-BEGIN : MfsReconciliations
+
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation.MfsReconciliations>
+    MfsReconciliationss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MfsReconciliations
+
+    // AUTO-BEGIN : PosReconciliations
+
+    public DbSet<AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation.PosReconciliations>
+    PosReconciliationss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PosReconciliations
+
+    // AUTO-BEGIN : EmiReimbursementSchemes
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.EmiReimbursementSchemes>
+    EmiReimbursementSchemess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : EmiReimbursementSchemes
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 

@@ -1,0 +1,99 @@
+/*===============================================================
+  Voucher pages : shared text size
+
+  Imported by every voucher form page (Receipt, Payment, Journal,
+  Fund Transfer). Makes the shared controls inside the page two
+  sizes (+2px) larger than their app-wide defaults, so the voucher
+  reads the same as its own cards. Only this page is affected;
+  the page header has no controls, so it keeps its size.
+===============================================================*/
+
+/* Textbox (15 → 17) */
+:host ::ng-deep app-textbox .textbox-label,
+:host ::ng-deep app-textbox .textbox-required,
+:host ::ng-deep app-textbox .textbox-prefix,
+:host ::ng-deep app-textbox .textbox-suffix,
+:host ::ng-deep app-textbox .textbox input,
+:host ::ng-deep app-textbox .textbox input::placeholder
+{
+    font-size: 17px;
+}
+
+/* Dropdown */
+:host ::ng-deep app-dropdown .dropdown-label,
+:host ::ng-deep app-dropdown .dropdown-required,
+:host ::ng-deep app-dropdown .dropdown-option-label
+{
+    font-size: 17px;
+}
+
+:host ::ng-deep app-dropdown .dropdown-selected-text,
+:host ::ng-deep app-dropdown .dropdown-placeholder
+{
+    font-size: 18px;
+}
+
+:host ::ng-deep app-dropdown .dropdown-icon,
+:host ::ng-deep app-dropdown .dropdown-no-data
+{
+    font-size: 16px;
+}
+
+:host ::ng-deep app-dropdown .dropdown-selected-icon
+{
+    font-size: 15px;
+}
+
+/* Search dropdown */
+:host ::ng-deep app-search-dropdown .dropdown-label,
+:host ::ng-deep app-search-dropdown .dropdown-required
+{
+    font-size: 17px;
+}
+
+:host ::ng-deep app-search-dropdown .dropdown-selected-text,
+:host ::ng-deep app-search-dropdown .dropdown-placeholder
+{
+    font-size: 16px;
+}
+
+:host ::ng-deep app-search-dropdown .dropdown-option-label,
+:host ::ng-deep app-search-dropdown .dropdown-no-data
+{
+    font-size: 15px;
+}
+
+:host ::ng-deep app-search-dropdown .dropdown-icon,
+:host ::ng-deep app-search-dropdown .dropdown-selected-icon
+{
+    font-size: 13px;
+}
+
+/* Datepicker (15 → 17) */
+:host ::ng-deep app-datepicker .datepicker-label,
+:host ::ng-deep app-datepicker .datepicker-required,
+:host ::ng-deep app-datepicker .datepicker-value,
+:host ::ng-deep app-datepicker .datepicker-placeholder
+{
+    font-size: 17px;
+}
+
+:host ::ng-deep app-datepicker .datepicker-icon
+{
+    font-size: 16px;
+}
+
+/* Textarea */
+:host ::ng-deep app-textarea .textarea-label,
+:host ::ng-deep app-textarea .textarea-required
+{
+    font-size: 17px;
+}
+
+:host ::ng-deep app-textarea .textarea-prefix,
+:host ::ng-deep app-textarea .textarea-suffix,
+:host ::ng-deep app-textarea .textarea textarea,
+:host ::ng-deep app-textarea .textarea textarea::placeholder
+{
+    font-size: 18px;
+}

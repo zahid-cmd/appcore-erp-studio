@@ -8,9 +8,16 @@ import
     OnInit,
     OnDestroy,
     ChangeDetectorRef,
+    DestroyRef,
     inject
 }
 from '@angular/core';
+
+import
+{
+    takeUntilDestroyed
+}
+from '@angular/core/rxjs-interop';
 
 import
 {
@@ -82,6 +89,12 @@ import
     ToastComponent
 }
 from '../../../../../../shared/components/utilities/toast/toast';
+
+import
+{
+    OrbitLoaderComponent
+}
+from '../../../../../../shared/components/utilities/orbit-loader/orbit-loader';
 
 import
 {
@@ -168,6 +181,9 @@ import
     SwitchValueMap,
     switchOn,
     switchNumber,
+    voucherDateWindow,
+    voucherDateIssue,
+    VoucherDateWindow,
     VoucherSwitchesService
 }
 from '../../../../../../shared/components/accounting/voucher-switches';
@@ -280,6 +296,7 @@ const VOUCHER_PREFIX:
         //=======================================================
 
         ToastComponent,
+        OrbitLoaderComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -343,6 +360,17 @@ implements OnInit, OnDestroy
 
     private readonly cdr =
         inject(ChangeDetectorRef);
+
+    // Requests and timers stop when the page is left
+    private readonly destroyRef =
+        inject(DestroyRef);
+
+    private destroyed =
+        false;
+
+    private completeTimer:
+        number | null =
+        null;
 
     //===========================================================
     // Progress Configuration
@@ -562,6 +590,8 @@ implements OnInit, OnDestroy
         this.switchValues =
             this.switchesService.lastValues;
 
+        this.refreshDateWindow();
+
         this.cdr.detectChanges();
     }
 
@@ -579,11 +609,72 @@ implements OnInit, OnDestroy
         return switchOn(this.switches, VOUCHER_SWITCH.RV_POST_ON_APPROVAL, false);
     }
 
+    // Every payment row is a check : posting writes nothing (the
+    // checks post at Check Reconciliation), so Approve always posts
+    get checkOnly():
+        boolean
+    {
+        return this.entry.Debits.length > 0
+            &&
+            this.entry.Debits.every
+            (
+                line =>
+                    line.Mode === 'Check'
+            );
+    }
+
+    // Approve also posts : switch ON, or a check-only voucher
+    get approvePosts():
+        boolean
+    {
+        return this.postOnApproval || this.checkOnly;
+    }
+
     // Receipt Voucher : Max Lines (0 = no limit)
     get maxLines():
         number
     {
         return switchNumber(this.switches, this.switchValues, VOUCHER_SWITCH.RV_MAX_LINES);
+    }
+
+    // Receipt Voucher : Back Dated / Post Dated Entry
+    get dateWindow():
+        VoucherDateWindow
+    {
+        return voucherDateWindow(
+            this.switches,
+            this.switchValues,
+            VOUCHER_SWITCH.RV_BACK_DATED,
+            VOUCHER_SWITCH.RV_POST_DATED
+        );
+    }
+
+    // Calendar limits (kept as fields so the calendar is not
+    // rebuilt on every check)
+    minVoucherDate:
+        Date | null =
+        null;
+
+    maxVoucherDate:
+        Date | null =
+        null;
+
+    // Date of the voucher as saved (an unchanged date of an
+    // older draft is not checked again)
+    private savedVoucherDate =
+        '';
+
+    private refreshDateWindow():
+        void
+    {
+        const window =
+            this.dateWindow;
+
+        this.minVoucherDate =
+            window.min;
+
+        this.maxVoucherDate =
+            window.max;
     }
 
     // Receipt Voucher : Allow Print On Approval
@@ -600,7 +691,23 @@ implements OnInit, OnDestroy
     ngOnDestroy():
         void
     {
+        this.destroyed =
+            true;
+
         this.clearProgressTimer();
+
+        if
+        (
+            this.completeTimer !== null
+        )
+        {
+            window.clearTimeout(
+                this.completeTimer
+            );
+
+            this.completeTimer =
+                null;
+        }
 
         if
         (
@@ -965,6 +1072,13 @@ implements OnInit, OnDestroy
             );
     }
 
+    // Detail Narration is required on every voucher
+    get narrationMissing():
+        boolean
+    {
+        return !(this.entry.Narration ?? '').trim();
+    }
+
     get nextHint():
         string
     {
@@ -978,8 +1092,16 @@ implements OnInit, OnDestroy
             return this.periodError;
         }
 
-        return this.masterValid
-            ? ''
+        if
+        (
+            this.masterValid
+        )
+        {
+            return '';
+        }
+
+        return this.narrationMissing
+            ? 'Detail Narration is required.'
             : 'Balance the debit and credit first.';
     }
 
@@ -1056,11 +1178,15 @@ implements OnInit, OnDestroy
     // Add          : Checkout, Clear  |  Save, Checkout, Clear
     // Edit (Draft) : Checkout, Approve, Clear  |  Update, Checkout, Approve
     // Step 2       : Done → back to step 1 (View : workflow buttons + Done)
-    // View Draft   : Edit, Approve (+ Checkout)
+    // Button 1 is always the main action (Save / Update /
+    // Approve / Post / Return …); Print is always the last button
+    // before the divider.
+    // View Draft   : Approve, Edit (+ Checkout)
     // Approved     : Post, Return (+ Print)
     // After any action (Save, Update, Approve, Post, Return,
     // Cancel) the page goes back to the list
-    // Posted       : Cancel, Print (+ Checkout)
+    // Posted       : Cancel (+ Checkout), Print
+    // Cancelled    : (Checkout), Print
     //
     // Button texts (all vouchers) : Return = back to Draft,
     // Cancel = cancel a posted voucher (command keys unchanged)
@@ -1178,16 +1304,16 @@ implements OnInit, OnDestroy
             )
             {
                 case 'Draft':
-                    return [edit, approve, back];
+                    return [approve, edit, back];
 
                 case 'Approved':
                     return [post, returnToDraft, back];
 
                 case 'Posted':
-                    return [cancel, print, back];
+                    return [cancel, back, print];
 
                 case 'Cancelled':
-                    return [print, back];
+                    return [back, print];
 
                 default:
                     return [back];
@@ -1233,17 +1359,17 @@ implements OnInit, OnDestroy
                     return [...primary, approve, clear].slice(0, 3);
                 }
 
-                return [edit, approve, ...reopen];
+                return [approve, edit, ...reopen];
 
             // Prints : Posted / Cancelled; Approved when allowed
             case 'Approved':
                 return [post, returnToDraft, ...(this.printOnApproval ? [print] : [])];
 
             case 'Posted':
-                return [cancel, print, ...reopen];
+                return [cancel, ...reopen, print];
 
             case 'Cancelled':
-                return [print, ...reopen];
+                return [...reopen, print];
 
             default:
                 return reopen;
@@ -1483,6 +1609,7 @@ implements OnInit, OnDestroy
             .getById(
                 this.entityId
             )
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
@@ -1566,6 +1693,9 @@ implements OnInit, OnDestroy
 
         this.voucherNoText =
             item.VoucherNo;
+
+        this.savedVoucherDate =
+            item.VoucherDate;
 
         this.entry =
         {
@@ -1682,6 +1812,10 @@ implements OnInit, OnDestroy
         this.periodDate =
             date;
 
+        // The old year is not valid for the new date
+        this.period =
+            null;
+
         this.periodChecking =
             true;
 
@@ -1697,6 +1831,7 @@ implements OnInit, OnDestroy
                 branchId,
                 date
             )
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
@@ -1770,6 +1905,7 @@ implements OnInit, OnDestroy
                 branchId,
                 date
             )
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
@@ -1847,6 +1983,7 @@ implements OnInit, OnDestroy
                 branchId,
                 date
             )
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
@@ -1911,6 +2048,10 @@ implements OnInit, OnDestroy
 
         this.periodChecking =
             false;
+
+        // The same date may be tried again
+        this.periodDate =
+            '';
 
         this.voucherNoText =
             this.isAddMode
@@ -2193,6 +2334,19 @@ implements OnInit, OnDestroy
 
         if
         (
+            this.periodChecking
+        )
+        {
+            this.toast.info(
+                'Financial Year',
+                'Checking the financial year for the voucher date. Try again in a moment.'
+            );
+
+            return;
+        }
+
+        if
+        (
             !this.period
         )
         {
@@ -2211,7 +2365,9 @@ implements OnInit, OnDestroy
         {
             this.toast.error(
                 'Validation',
-                'Debit and credit must be entered and equal (Balance Remaining 0.00).'
+                this.narrationMissing
+                    ? 'Detail Narration is required.'
+                    : 'Debit and credit must be entered and equal (Balance Remaining 0.00).'
             );
 
             this.step =
@@ -2233,6 +2389,36 @@ implements OnInit, OnDestroy
             );
 
             return;
+        }
+
+        // Settings "Back Dated / Post Dated Entry" (an older draft
+        // keeps its saved date)
+        if
+        (
+            this.entry.VoucherDate !== this.savedVoucherDate
+        )
+        {
+            const dateIssue =
+                voucherDateIssue(
+                    this.entry.VoucherDate,
+                    this.dateWindow
+                );
+
+            if
+            (
+                dateIssue
+            )
+            {
+                this.toast.error(
+                    'Validation',
+                    dateIssue
+                );
+
+                this.step =
+                    1;
+
+                return;
+            }
         }
 
         // Setting "Receipt Voucher : Max Lines"
@@ -2287,6 +2473,7 @@ implements OnInit, OnDestroy
                 model
             )
         )
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe
         ({
             next:
@@ -2390,6 +2577,7 @@ implements OnInit, OnDestroy
                 model
             )
         )
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe
         ({
             next:
@@ -2462,15 +2650,19 @@ implements OnInit, OnDestroy
 
         this.confirmDialog.open(
             'Approve Receipt Voucher',
-            this.postOnApproval
-                ? `Approve and post ${this.voucher?.VoucherNo ?? 'this voucher'} for ${this.money(this.total)}? Posting writes the ledger entries.`
-                : `Approve ${this.voucher?.VoucherNo ?? 'this voucher'} for ${this.money(this.total)}?`,
+            this.checkOnly
+                ? `Approve ${this.voucher?.VoucherNo ?? 'this voucher'} for ${this.money(this.total)}? It is posted at once and its checks go to Check Reconciliation (they post when cleared).`
+                : this.postOnApproval
+                    ? `Approve and post ${this.voucher?.VoucherNo ?? 'this voucher'} for ${this.money(this.total)}? Posting writes the ledger entries.`
+                    : `Approve ${this.voucher?.VoucherNo ?? 'this voucher'} for ${this.money(this.total)}?`,
             () =>
                 setTimeout(
                     () =>
                         this.runWorkflow(
-                            this.postOnApproval ? 'Approving and Posting' : 'Approving Receipt Voucher',
-                            this.postOnApproval ? 'Receipt voucher approved and posted.' : 'Receipt voucher approved.',
+                            this.approvePosts ? 'Approving and Posting' : 'Approving Receipt Voucher',
+                            this.checkOnly
+                                ? 'Receipt voucher approved and posted; its checks are in Check Reconciliation.'
+                                : this.postOnApproval ? 'Receipt voucher approved and posted.' : 'Receipt voucher approved.',
                             id =>
                                 this.receiptVoucherService.approve(id),
                             'list'
@@ -2508,17 +2700,8 @@ implements OnInit, OnDestroy
     private onPost():
         void
     {
-        const checkOnly =
-            this.entry.Debits.length > 0
-            &&
-            this.entry.Debits.every
-            (
-                line =>
-                    line.Mode === 'Check'
-            );
-
         const note =
-            checkOnly
+            this.checkOnly
                 ? ' Checks post nothing now; they post at Check Reconciliation.'
                 : '';
 
@@ -2688,6 +2871,15 @@ implements OnInit, OnDestroy
     ):
         void
     {
+        // One action at a time
+        if
+        (
+            this.isSaving
+        )
+        {
+            return;
+        }
+
         const id:
             number =
             this.voucher?.ReceiptVoucherId
@@ -2710,6 +2902,7 @@ implements OnInit, OnDestroy
         this.withMinimumDuration(
             call(id)
         )
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe
         ({
             next:
@@ -2955,13 +3148,26 @@ implements OnInit, OnDestroy
             message
         );
 
-        window.setTimeout(
+        this.completeTimer =
+            window.setTimeout(
             () =>
             {
+                this.completeTimer =
+                    null;
+
                 this.progressDialog.close();
 
                 this.isSaving =
                     false;
+
+                // Page already left : no navigation / redraw
+                if
+                (
+                    this.destroyed
+                )
+                {
+                    return;
+                }
 
                 this.cdr.detectChanges();
 

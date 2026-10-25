@@ -112,7 +112,25 @@ export class BrandManagementService
                                     Boolean(brandManagement.Status ?? brandManagement.status ?? true),
 
                                 BrandImagePath:
-                                    brandManagement.BrandImagePath ?? brandManagement.brandImagePath ?? ''
+                                    brandManagement.BrandImagePath ?? brandManagement.brandImagePath ?? '',
+
+                                MotorBikesSupplierCode:
+                                    brandManagement.MotorBikesSupplierCode ?? brandManagement.motorBikesSupplierCode ?? '',
+
+                                MotorBikesSupplierName:
+                                    brandManagement.MotorBikesSupplierName ?? brandManagement.motorBikesSupplierName ?? '',
+
+                                OfferAdjustmentLedgerCode:
+                                    brandManagement.OfferAdjustmentLedgerCode ?? brandManagement.offerAdjustmentLedgerCode ?? '',
+
+                                OfferAdjustmentLedgerName:
+                                    brandManagement.OfferAdjustmentLedgerName ?? brandManagement.offerAdjustmentLedgerName ?? '',
+
+                                EmiClaimLedgerCode:
+                                    brandManagement.EmiClaimLedgerCode ?? brandManagement.emiClaimLedgerCode ?? '',
+
+                                EmiClaimLedgerName:
+                                    brandManagement.EmiClaimLedgerName ?? brandManagement.emiClaimLedgerName ?? ''
                             })
                         )
                 )
@@ -149,14 +167,65 @@ export class BrandManagementService
             .pipe(
                 map(
                     response =>
-                    ({
-                        Code:
-                            response.code
+                    {
+                        const text =
+                            (key: string): string =>
+                                String(
+                                    response?.[key]
+                                    ??
+                                    response?.[key.charAt(0).toLowerCase() + key.slice(1)]
+                                    ??
+                                    ''
+                                );
+
+                        const suppliers: any[] =
+                            response?.MotorBikesSuppliers
                             ??
-                            response.Code
+                            response?.motorBikesSuppliers
                             ??
-                            ''
-                    })
+                            [];
+
+                        return {
+                            Code:
+                                text('Code'),
+
+                            MotorBikesSuppliers:
+                                suppliers.map(
+                                    item =>
+                                    ({
+                                        SupplierCode:
+                                            String(item?.SupplierCode ?? item?.supplierCode ?? ''),
+
+                                        DisplayName:
+                                            String(item?.DisplayName ?? item?.displayName ?? ''),
+
+                                        IsActive:
+                                            Boolean(item?.IsActive ?? item?.isActive ?? true)
+                                    })
+                                ),
+
+                            OfferAdjustmentSubGroupCode:
+                                text('OfferAdjustmentSubGroupCode'),
+
+                            OfferAdjustmentSubGroupName:
+                                text('OfferAdjustmentSubGroupName'),
+
+                            NextOfferAdjustmentLedgerCode:
+                                text('NextOfferAdjustmentLedgerCode'),
+
+                            EmiClaimSubGroupCode:
+                                text('EmiClaimSubGroupCode'),
+
+                            EmiClaimSubGroupName:
+                                text('EmiClaimSubGroupName'),
+
+                            NextEmiClaimLedgerCode:
+                                text('NextEmiClaimLedgerCode'),
+
+                            LedgerMessage:
+                                text('LedgerMessage')
+                        };
+                    }
                 )
             );
     }

@@ -219,7 +219,7 @@ export function modeDetails
         case 'POS':
             return join([
                 line.CardName,
-                line.TransactionRef && `Approval ${line.TransactionRef}`
+                line.TransactionRef && `Card No. **** ${line.TransactionRef}`
             ]);
 
         case 'EMI':
@@ -278,7 +278,7 @@ export function videText
             return join(
                 [
                     `Card${line.CardName ? ` (${line.CardName})` : ''} via ${line.LedgerName}`,
-                    line.TransactionRef && `Approval / Last 4 : ${line.TransactionRef}`
+                    line.TransactionRef && `Card Number **** ${line.TransactionRef}`
                 ],
                 ', '
             );

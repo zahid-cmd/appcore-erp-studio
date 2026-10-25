@@ -39,8 +39,13 @@ export interface EmiAccounts
     Platform:
         string;
 
-    // Bank Accounts → Display Name (settlement account)
+    // Bank Accounts → BankAccountCode (settlement account,
+    // stored by code)
     LinkedBankAccount:
+        string;
+
+    // Its display name (from the server)
+    LinkedBankAccountName:
         string;
 
     Branch:

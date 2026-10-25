@@ -1,0 +1,597 @@
+<!-- =============================================================
+     Check Clearing Center (modal)
+     Left  : Check Tray (a slip per check, state edge)
+     Right : stat ribbon, cheque preview + its fields, Posting
+     Footer: note, Close, the action
+============================================================== -->
+
+@if (opened)
+{
+    <div class="cc-backdrop">
+
+        <div
+            class="cc-modal"
+            [class.cc-deposit]="mode === 'deposit'"
+            [class.cc-dishonour]="mode === 'dishonour'"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cc-title">
+
+            <!-- =================================================
+                 HEADER
+            ================================================== -->
+
+            <div class="cc-head">
+
+                <span class="cc-icon">
+
+                    <i [class]="icon"></i>
+
+                </span>
+
+                <div class="cc-title">
+
+                    <strong id="cc-title">Check Clearing Center</strong>
+
+                    <span>
+
+                        {{ received ? 'Received Checks' : 'Issued Checks' }}
+
+                        @if (branchName)
+                        {
+                            · {{ branchName }}
+                        }
+
+                    </span>
+
+                </div>
+
+                <!-- Mode : chip, or the Clear | Dishonour switch -->
+
+                @if (canSwitch)
+                {
+                    <div class="cc-switch">
+
+                        <button
+                            type="button"
+                            [class.cc-switch-on]="mode === 'clear'"
+                            [disabled]="busy"
+                            (click)="setMode('clear')">
+
+                            <i class="fas fa-circle-check"></i>
+
+                            Clearing
+
+                        </button>
+
+                        <button
+                            type="button"
+                            [class.cc-switch-on]="mode === 'dishonour'"
+                            [disabled]="busy"
+                            (click)="setMode('dishonour')">
+
+                            <i class="fas fa-ban"></i>
+
+                            Dishonour
+
+                        </button>
+
+                    </div>
+                }
+                @else
+                {
+                    <span class="cc-mode-chip">
+
+                        <i [class]="icon"></i>
+
+                        {{ modeLabel }}
+
+                    </span>
+                }
+
+                <!-- Progress : checks ready -->
+
+                @if (rows.length > 0)
+                {
+                    <div
+                        class="cc-progress"
+                        [class.cc-progress-done]="readyCount === rows.length">
+
+                        <span class="cc-progress-text">
+
+                            <i [class]="readyCount === rows.length ? 'fas fa-circle-check' : 'fas fa-list-check'"></i>
+
+                            {{ readyCount }} of {{ rows.length }} ready
+
+                        </span>
+
+                        <span class="cc-progress-track">
+
+                            <span
+                                class="cc-progress-bar"
+                                [style.width.%]="rows.length ? (readyCount * 100 / rows.length) : 0">
+                            </span>
+
+                        </span>
+
+                    </div>
+                }
+
+                <button
+                    type="button"
+                    class="cc-x"
+                    title="Close"
+                    aria-label="Close"
+                    [disabled]="busy"
+                    (click)="close()">
+
+                    <i class="fas fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+            <!-- =================================================
+                 BODY
+            ================================================== -->
+
+            <div class="cc-body appcore-scrollbar">
+
+                @if (rows.length === 0)
+                {
+                    <div class="cc-empty-state">
+
+                        <app-empty-state
+                            icon="fas fa-cart-shopping"
+                            title="No Checks Selected"
+                            subtitle="Tick checks in the list to deposit, clear or dishonour them here."
+                            [showAction]="false">
+
+                        </app-empty-state>
+
+                    </div>
+                }
+                @else
+                {
+                    <div class="cc-grid">
+
+                        <!-- =========================================
+                             LEFT : Check Tray
+                        ========================================== -->
+
+                        <div class="cc-tray">
+
+                            <div class="cc-tray-head">
+
+                                <span class="cc-tray-title">
+
+                                    <i class="fas fa-layer-group"></i>
+
+                                    Check Tray
+
+                                </span>
+
+                                <span class="cc-tray-count">{{ rows.length }}</span>
+
+                                <button
+                                    type="button"
+                                    class="cc-link"
+                                    title="Remove every check"
+                                    [disabled]="busy"
+                                    (click)="emptied.emit()">
+
+                                    <i class="fas fa-trash-can"></i>
+
+                                    Empty
+
+                                </button>
+
+                            </div>
+
+                            <div class="cc-tray-frame">
+
+                                <div class="cc-tray-list appcore-scrollbar">
+
+                                    @for (row of rows; track row.PaymentId)
+                                    {
+                                        <div
+                                            class="cc-slip"
+                                            role="button"
+                                            tabindex="0"
+                                            [class.cc-slip-active]="row.PaymentId === selectedId"
+                                            [class.cc-slip-todo]="rowState(row) === 'todo'"
+                                            (click)="select(row)"
+                                            (keydown.enter)="select(row)">
+
+                                            <div class="cc-slip-main">
+
+                                                <span class="cc-slip-no">{{ row.CheckNo }}</span>
+
+                                                <span class="cc-slip-party" [title]="row.PartyName">{{ row.PartyName }}</span>
+
+                                                <span class="cc-slip-meta">{{ row.CheckDateText }} · {{ row.CheckBank || '—' }}</span>
+
+                                            </div>
+
+                                            <div class="cc-slip-side">
+
+                                                <span class="cc-slip-amount">{{ money(row.Amount) }}</span>
+
+                                                <span
+                                                    class="cc-slip-state"
+                                                    [class.cc-slip-state-todo]="rowState(row) === 'todo'">
+
+                                                    <i [class]="rowState(row) === 'todo' ? 'fas fa-circle-exclamation' : 'fas fa-circle-check'"></i>
+
+                                                    {{ rowState(row) === 'todo' ? 'Details needed' : 'Ready' }}
+
+                                                </span>
+
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                class="cc-slip-x"
+                                                title="Remove from the cart"
+                                                [disabled]="busy"
+                                                (click)="$event.stopPropagation(); removed.emit(row.PaymentId)">
+
+                                                <i class="fas fa-xmark"></i>
+
+                                            </button>
+
+                                        </div>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- =========================================
+                             RIGHT
+                        ========================================== -->
+
+                        <div class="cc-right">
+
+                            <!-- Stat ribbon -->
+
+                            <div class="cc-ribbon">
+
+                                <div class="cc-ribbon-stats">
+
+                                    <div>
+
+                                        <span>Checks</span>
+
+                                        <b>{{ rows.length }}</b>
+
+                                    </div>
+
+                                    <div class="cc-ribbon-main">
+
+                                        <span>Total Amount</span>
+
+                                        <b>Tk {{ money(total) }}</b>
+
+                                    </div>
+
+                                    <div>
+
+                                        <span>{{ mode === 'dishonour' ? 'Fees · Recovery' : 'Bank Charges' }}</span>
+
+                                        <b>
+
+                                            @if (mode === 'dishonour')
+                                            {
+                                                {{ money(fees) }} · {{ money(recoveries) }}
+                                            }
+                                            @else
+                                            {
+                                                {{ money(chargesTotal) }}
+                                            }
+
+                                        </b>
+
+                                    </div>
+
+                                    <div>
+
+                                        <span>{{ mode === 'deposit' ? 'Creates' : 'Posts' }}</span>
+
+                                        <b>
+
+                                            @if (mode === 'deposit')
+                                            {
+                                                1 Deposit Slip
+                                            }
+                                            @else
+                                            {
+                                                {{ voucherCount }} {{ voucherPrefix }}
+                                            }
+
+                                        </b>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="cc-ribbon-words" [title]="inWords">
+
+                                    <i class="fas fa-spell-check"></i>
+
+                                    {{ inWords }}
+
+                                </div>
+
+                            </div>
+
+                            <!-- Posting : date, bank / narration (all checks) -->
+
+                            <div class="cc-posting">
+
+                                <div class="cc-posting-head">
+
+                                    <i class="fas fa-stamp"></i>
+
+                                    <span>{{ modeLabel }} Posting</span>
+
+                                    <small>applies to all checks</small>
+
+                                </div>
+
+                                <div class="cc-fields cc-common">
+
+                                    <app-datepicker
+                                        [label]="dateLabel"
+                                        [required]="true"
+                                        [value]="$any(date)"
+                                        [minDate]="minDate"
+                                        [maxDate]="maxDate"
+                                        (valueChange)="onDate($event)"
+                                        [disabled]="busy">
+
+                                    </app-datepicker>
+
+                                    @if (mode === 'deposit')
+                                    {
+                                        <app-search-dropdown
+                                            label="Deposit Into"
+                                            placeholder="Select bank account"
+                                            [items]="depositAccounts"
+                                            labelField="label"
+                                            valueField="value"
+                                            [value]="bankCode"
+                                            [required]="true"
+                                            [disabled]="busy"
+                                            (valueChange)="onBank($event)">
+
+                                        </app-search-dropdown>
+                                    }
+
+                                    @if (mode === 'dishonour')
+                                    {
+                                        <app-textbox
+                                            label="Reason"
+                                            placeholder="e.g. Insufficient funds"
+                                            [required]="true"
+                                            [maxLength]="500"
+                                            [value]="reason"
+                                            (valueChange)="onReason($event)"
+                                            [disabled]="busy">
+
+                                        </app-textbox>
+                                    }
+
+                                    @if (mode === 'clear')
+                                    {
+                                        <app-textbox
+                                            label="Narration"
+                                            placeholder="Optional (a default is written)"
+                                            textCase="none"
+                                            [maxLength]="500"
+                                            [value]="narration"
+                                            (valueChange)="onNarration($event)"
+                                            [disabled]="busy">
+
+                                        </app-textbox>
+                                    }
+
+                                </div>
+
+                                @if (mode === 'clear' && banks.length > 0)
+                                {
+                                    <div class="cc-banks">
+
+                                        @for (bank of banks; track bank.name)
+                                        {
+                                            <span class="cc-bank-chip" [title]="bank.name">
+
+                                                <i class="fas fa-building-columns"></i>
+
+                                                {{ voucherPrefix }} · {{ bank.name }} · {{ bank.count }} · {{ money(bank.amount) }}
+
+                                            </span>
+                                        }
+
+                                    </div>
+                                }
+
+                            </div>
+
+                            <!-- Cheque preview + its fields -->
+
+                            @if (selected; as row)
+                            {
+                                @for (key of [selectedId]; track key)
+                                {
+                                    <div class="cc-cheque-card cc-fade">
+
+                                        <div class="cc-cheque">
+
+                                            <div class="cc-cheque-top">
+
+                                                <span class="cc-cheque-bank">
+
+                                                    <i class="fas fa-building-columns"></i>
+
+                                                    {{ row.CheckBank || 'Bank not stated' }}
+
+                                                </span>
+
+                                                <span class="cc-cheque-date">
+
+                                                    <small>Date</small>
+
+                                                    {{ row.CheckDateText }}
+
+                                                </span>
+
+                                            </div>
+
+                                            <div class="cc-cheque-pay">
+
+                                                <small>{{ received ? 'Received from' : 'Pay to' }}</small>
+
+                                                <span [title]="row.PartyName">{{ row.PartyName }}</span>
+
+                                            </div>
+
+                                            <div class="cc-cheque-amount-line">
+
+                                                <span class="cc-cheque-words" [title]="row.AmountText">{{ wordsOf(row.Amount) }}</span>
+
+                                                <span class="cc-cheque-amount">Tk {{ row.AmountText }}</span>
+
+                                            </div>
+
+                                            <div class="cc-cheque-bottom">
+
+                                                <span class="cc-micr">⑈{{ row.CheckNo }}⑈</span>
+
+                                                <span class="cc-cheque-ref">
+
+                                                    {{ row.SourceVoucherNo }} ·
+
+                                                    {{ mode === 'deposit' ? row.AccountLedgerName : bankOf(row) }}
+
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                        @if (mode !== 'deposit')
+                                        {
+                                            <div class="cc-fields">
+
+                                                @if (mode === 'clear')
+                                                {
+                                                    <app-textbox
+                                                        label="Bank Charge"
+                                                        placeholder="0.00 (optional)"
+                                                        inputMode="decimal"
+                                                        [value]="extra(row).charge"
+                                                        (valueChange)="onExtra(row, 'charge', $event)"
+                                                        [disabled]="busy">
+
+                                                    </app-textbox>
+                                                }
+
+                                                @if (mode === 'dishonour')
+                                                {
+                                                    <app-textbox
+                                                        label="Bank Fee"
+                                                        placeholder="0.00 (optional)"
+                                                        inputMode="decimal"
+                                                        [value]="extra(row).fee"
+                                                        (valueChange)="onExtra(row, 'fee', $event)"
+                                                        [disabled]="busy">
+
+                                                    </app-textbox>
+
+                                                    <app-textbox
+                                                        label="Recover From Payer"
+                                                        placeholder="0.00 (optional)"
+                                                        inputMode="decimal"
+                                                        [value]="extra(row).recovery"
+                                                        (valueChange)="onExtra(row, 'recovery', $event)"
+                                                        [disabled]="busy">
+
+                                                    </app-textbox>
+                                                }
+
+                                            </div>
+
+                                        }
+
+                                    </div>
+                                }
+                            }
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+            <!-- =================================================
+                 FOOTER
+            ================================================== -->
+
+            <div class="cc-foot">
+
+                <span
+                    class="cc-note"
+                    [class.cc-note-ok]="!issue"
+                    [class.cc-note-warn]="!!issue">
+
+                    @if (issue)
+                    {
+                        <i class="fas fa-circle-exclamation"></i>
+
+                        {{ issue }}
+                    }
+                    @else
+                    {
+                        <i class="fas fa-circle-check"></i>
+
+                        Ready : {{ rows.length }} check(s), Tk {{ money(total) }}.
+                    }
+
+                </span>
+
+                <button
+                    type="button"
+                    class="cc-btn cc-btn-light"
+                    [disabled]="busy"
+                    (click)="close()">
+
+                    <i class="fas fa-arrow-left"></i>
+
+                    Close
+
+                </button>
+
+                <button
+                    type="button"
+                    class="cc-btn"
+                    [class.cc-btn-primary]="mode !== 'dishonour'"
+                    [class.cc-btn-danger]="mode === 'dishonour'"
+                    [disabled]="busy || !!issue"
+                    (click)="run()">
+
+                    <i [class]="icon"></i>
+
+                    {{ actionText }}
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}

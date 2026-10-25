@@ -266,6 +266,9 @@ function readField
 
 interface LinkedBankOption
 {
+    // Bank Account Code : what the EMI account saves
+    Code:
+        string;
     DisplayName:
         string;
     Bank:
@@ -681,6 +684,7 @@ implements OnInit, OnDestroy
             EmiAccountName:'',
             Platform:'',
             LinkedBankAccount:'',
+            LinkedBankAccountName:'',
             Branch:'',
             CollectionAccount:true,
             PaymentAccount:false,
@@ -1049,6 +1053,9 @@ implements OnInit, OnDestroy
                             (
                                 item =>
                                 ({
+                                    Code:
+                                        this.text(item, 'BankAccountCode'),
+
                                     DisplayName:
                                         this.text(item, 'DisplayName'),
 
@@ -1066,8 +1073,12 @@ implements OnInit, OnDestroy
                             .filter
                             (
                                 item =>
+                                    !!item.Code
+                                    &&
                                     !!item.DisplayName
                             );
+
+                    this.adoptLegacyLinkedBank();
 
                     this.buildLinkedBankAccountItems();
 
@@ -1100,9 +1111,64 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
+    // Legacy Linked Bank (saved by display name before the code
+    // rule) : show it as its code; the server stores the code on
+    // the next Update. The form baseline is kept, so this alone
+    // is not an unsaved change.
+    //===========================================================
+
+    private adoptLegacyLinkedBank():
+        void
+    {
+        const saved =
+            (this.entity.LinkedBankAccount ?? '').trim();
+
+        if
+        (
+            !saved
+            ||
+            this.bankAccounts.some(item => item.Code === saved)
+        )
+        {
+            return;
+        }
+
+        const match =
+            this.bankAccounts.find
+            (
+                item =>
+                    item.DisplayName ===
+                    saved
+            );
+
+        if
+        (
+            !match
+        )
+        {
+            return;
+        }
+
+        const pristine =
+            !this.hasChanges;
+
+        this.entity.LinkedBankAccount =
+            match.Code;
+
+        if
+        (
+            pristine
+        )
+        {
+            this.setInitialFormState();
+        }
+    }
+
+    //===========================================================
     // Build Linked Bank Account Items
     //
     // Active bank accounts + the saved one (even if inactive)
+    // label = Display Name, value = Bank Account CODE (saved)
     //===========================================================
 
     private buildLinkedBankAccountItems():
@@ -1118,7 +1184,7 @@ implements OnInit, OnDestroy
                     item =>
                         item.IsActive
                         ||
-                        item.DisplayName ===
+                        item.Code ===
                         selected
                 )
                 .map
@@ -1128,7 +1194,7 @@ implements OnInit, OnDestroy
                         label:
                             item.DisplayName,
                         value:
-                            item.DisplayName
+                            item.Code
                     })
                 );
 
@@ -1178,10 +1244,14 @@ implements OnInit, OnDestroy
             return '';
         }
 
+        // By code (or a legacy display name)
         const account =
             this.bankAccounts.find
             (
                 item =>
+                    item.Code ===
+                    linked
+                    ||
                     item.DisplayName ===
                     linked
             );
@@ -1556,6 +1626,10 @@ implements OnInit, OnDestroy
                     this.buildPlatformItems();
 
                     this.setInitialFormState();
+
+                    this.adoptLegacyLinkedBank();
+
+                    this.buildLinkedBankAccountItems();
 
                     // Bring the saved name in line with the rule if
                     // the lookup lists are already loaded.

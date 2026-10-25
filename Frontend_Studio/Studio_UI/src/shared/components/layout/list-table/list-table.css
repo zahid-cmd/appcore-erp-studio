@@ -370,6 +370,44 @@
 
 
 /* =====================================================
+   CELL FLAG (e.g. Edited charges)
+===================================================== */
+
+.list-table-flag
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    height: 18px;
+
+    margin-left: 6px;
+
+    padding: 0 6px;
+
+    border-radius: 999px;
+
+    color: #92400e;
+
+    background: #fef3c7;
+
+    border: 1px solid #fcd34d;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+    vertical-align: middle;
+
+    white-space: nowrap;
+
+    cursor: help;
+}
+
+
+/* =====================================================
    STATUS
 ===================================================== */
 
@@ -534,6 +572,48 @@
     font-size: 13px;
 
     line-height: 1;
+}
+
+
+/* Actions cells aligned right (cellAlign:'right') : buttons sit
+   at the right edge (rows with fewer buttons leave the gap on the
+   left). Centred columns are unchanged. */
+td.right .action-buttons
+{
+    justify-content: flex-end;
+}
+
+
+/* =====================================================
+   ROW ACTIONS (page specific)
+===================================================== */
+
+.action-btn.row-default
+{
+    background: #f1f5f9;
+
+    color: #475569;
+}
+
+.action-btn.row-primary
+{
+    background: #edf4ff;
+
+    color: #2563eb;
+}
+
+.action-btn.row-success
+{
+    background: #ecfdf5;
+
+    color: #059669;
+}
+
+.action-btn.row-danger
+{
+    background: #ffecec;
+
+    color: #dc2626;
 }
 
 

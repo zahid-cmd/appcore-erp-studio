@@ -11,6 +11,8 @@ from '@angular/router';
 
 //===============================================================
 // Submenu Routes
+//
+// List of MFS receipts + the MFS Settlement Center (full page).
 //===============================================================
 
 export const MfsReconciliationsRoutes:
@@ -40,7 +42,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'MFS Reconciliations'
+            breadcrumb:'MFS Reconciliation'
         },
 
         loadComponent:() =>
@@ -55,70 +57,24 @@ Routes =
 
 
     //===========================================================
-    // Add
+    // MFS Settlement Center (settle / reject)
     //===========================================================
 
     {
-        path:'add',
+        path:'center',
 
         data:
         {
-            breadcrumb:'Add MFS Reconciliations'
+            breadcrumb:'MFS Settlement Center'
         },
 
         loadComponent:() =>
             import(
-                '../pages/mfs-reconciliations/form/mfs-reconciliations-form'
+                '../pages/mfs-reconciliations/center/mfs-settlement-center'
             )
             .then(
                 m =>
-                    m.MfsReconciliationsForm
-            )
-    },
-
-
-    //===========================================================
-    // Edit
-    //===========================================================
-
-    {
-        path:'edit/:id',
-
-        data:
-        {
-            breadcrumb:'Edit MFS Reconciliations'
-        },
-
-        loadComponent:() =>
-            import(
-                '../pages/mfs-reconciliations/form/mfs-reconciliations-form'
-            )
-            .then(
-                m =>
-                    m.MfsReconciliationsForm
-            )
-    },
-
-
-    //===========================================================
-    // View
-    //===========================================================
-
-    {
-        path:'view/:id',
-
-        data:
-        {
-            breadcrumb:'View MFS Reconciliations'
-        },
-
-        loadComponent:() =>
-            import(
-                '../pages/mfs-reconciliations/form/mfs-reconciliations-form'
-            )
-            .then(
-                m =>
-                    m.MfsReconciliationsForm
+                    m.MfsSettlementCenter
             )
     }
 

@@ -6,10 +6,24 @@ import
 {
     Component,
     OnInit,
+    OnDestroy,
     inject,
-    ChangeDetectorRef
+    ChangeDetectorRef,
+    DestroyRef
 }
 from '@angular/core';
+
+import
+{
+    takeUntilDestroyed
+}
+from '@angular/core/rxjs-interop';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
 
 import
 {
@@ -24,6 +38,17 @@ import
 }
 from '@angular/router';
 
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
 
 //===============================================================
 // Models
@@ -35,6 +60,11 @@ import
 }
 from '../../../models/journal-voucher.model';
 
+import
+{
+    formatMoney
+}
+from '../../../../../../shared/components/accounting/accounting.models';
 
 //===============================================================
 // Shared Components
@@ -71,12 +101,6 @@ import
     SearchBoxComponent
 }
 from '../../../../../../shared/components/utilities/search-box/search-box';
-
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
@@ -117,6 +141,18 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
     ToastService
 }
 from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -127,6 +163,11 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 //===============================================================
 // Service
@@ -138,6 +179,28 @@ import
 }
 from '../../../services/journal-voucher.service';
 
+//===============================================================
+// List Row (adds display values)
+//===============================================================
+
+type JournalVoucherRow =
+    JournalVoucher
+    &
+    {
+        // dd-MM-yyyy
+        VoucherDateText:
+            string;
+
+        // First debited ledger
+        PartyText:
+            string;
+
+        GroupCountText:
+            string;
+
+        TotalAmountText:
+            string;
+    };
 
 //===============================================================
 // Component
@@ -145,81 +208,64 @@ from '../../../services/journal-voucher.service';
 
 @Component(
 {
-    selector:'journalVoucher-list',
-
+    selector:'journal-voucher-list',
     standalone:true,
-
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
-        DropdownComponent,
-
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
+        ProgressDialogComponent,
+        SearchDropdownComponent,
         ToastComponent
     ],
-
     templateUrl:'./journal-voucher-list.html',
-
     styleUrl:'./journal-voucher-list.css'
 })
 
-
 //===============================================================
-// Journal Voucher List Component
+// Journal Voucher List
 //===============================================================
 
 export class JournalVoucherList
-implements OnInit
+implements OnInit, OnDestroy
 {
-
     //===========================================================
     // Dependency Injection
     //===========================================================
 
-    private readonly journalvoucherservice =
+    private readonly journalVoucherService =
         inject(JournalVoucherService);
-
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
+    private readonly progressDialog =
+        inject(ProgressDialogService);
 
     private readonly toast =
         inject(ToastService);
 
-
     private readonly router =
         inject(Router);
-
 
     private readonly route =
         inject(ActivatedRoute);
 
-
     private readonly cdr =
         inject(ChangeDetectorRef);
 
-
+    // Requests stop when the page is left
+    private readonly destroyRef =
+        inject(DestroyRef);
 
     //===========================================================
     // Page Tabs
@@ -230,70 +276,45 @@ implements OnInit
     [
         {
             id:'all',
-
-            label:'All JournalVouchers'
+            label:'All Journal Vouchers'
+        },
+        {
+            id:'Draft',
+            label:'Draft'
+        },
+        {
+            id:'Approved',
+            label:'Approved'
+        },
+        {
+            id:'Posted',
+            label:'Posted'
+        },
+        {
+            id:'Cancelled',
+            label:'Cancelled'
         }
     ];
-
 
     selectedTab:
         string =
         'all';
 
-
-
     //===========================================================
-    // Status Filter
+    // Data
     //===========================================================
 
-    statusItems:
-        any[] =
-    [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
-    ];
-
-
-    selectedStatus:
-        string | null =
-        null;
-
-
-
-    //===========================================================
-    // Data Source
-    //===========================================================
-
-    journalvouchers:
-        JournalVoucher[] =
+    journalVouchers:
+        JournalVoucherRow[] =
     [];
-
 
     filteredJournalVouchers:
-        JournalVoucher[] =
+        JournalVoucherRow[] =
     [];
-
 
     pagedJournalVouchers:
-        JournalVoucher[] =
+        JournalVoucherRow[] =
     [];
-
-
 
     //===========================================================
     // Search & Loading
@@ -303,17 +324,78 @@ implements OnInit
         string =
         '';
 
-
     loading:
         boolean =
         false;
-
 
     loadFailed:
         boolean =
         false;
 
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+        false;
 
+    //===========================================================
+    // Ledger Type Filter
+    //===========================================================
+
+    partyTypeFilterItems:
+        any[] =
+    [
+        {
+            label:'All Ledger Types',
+            value:null
+        },
+        {
+            label:'Supplier',
+            value:'Supplier'
+        },
+        {
+            label:'Customer',
+            value:'Customer'
+        },
+        {
+            label:'General Ledger',
+            value:'General Ledger'
+        },
+        {
+            label:'Mixed',
+            value:'Mixed'
+        }
+    ];
+
+    selectedPartyType:
+        string | null =
+        null;
+
+    //===========================================================
+    // Progress Dialog Settings
+    //===========================================================
+
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
 
     //===========================================================
     // Pagination
@@ -323,12 +405,9 @@ implements OnInit
         number =
         1;
 
-
     pageSize:
         number =
         10;
-
-
 
     //===========================================================
     // History
@@ -338,17 +417,13 @@ implements OnInit
         boolean =
         false;
 
-
     historyTitle:
         string =
         'Journal Voucher History';
 
-
     historyItems:
         any[] =
     [];
-
-
 
     //===========================================================
     // Page Canvas Configuration
@@ -358,27 +433,16 @@ implements OnInit
         PageCanvasConfig =
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
-
-
 
     //===========================================================
     // Table Columns
@@ -389,55 +453,59 @@ implements OnInit
     [
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
-            width:'60px',
-
+            width:'50px',
             align:'center'
         },
-
         {
-            header:'Code',
-
-            field:'code',
-
-            width:'180px',
-
+            header:'Voucher No',
+            field:'VoucherNo',
+            width:'210px',
             align:'center'
         },
-
         {
-            header:'Name',
-
-            field:'name',
-
+            header:'Date',
+            field:'VoucherDateText',
+            width:'100px',
+            align:'center'
+        },
+        {
+            header:'Branch',
+            field:'BranchName',
+            width:'140px',
             align:'left'
         },
-
+        {
+            header:'Particulars',
+            field:'PartyText',
+            width:'280px',
+            align:'left'
+        },
+        {
+            header:'Amount',
+            field:'TotalAmountText',
+            width:'130px',
+            align:'right'
+        },
+        {
+            header:'Groups',
+            field:'GroupCountText',
+            width:'170px',
+            align:'left'
+        },
         {
             header:'Status',
-
-            field:'status',
-
+            field:'Status',
             type:'status',
-
-            width:'120px',
-
+            width:'100px',
             align:'center'
         },
-
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
-            width:'180px',
-
+            width:'80px',
             align:'center'
         }
     ];
@@ -445,7 +513,7 @@ implements OnInit
 
 
     //===========================================================
-    // Initialization
+    // Initialize
     //===========================================================
 
     ngOnInit():
@@ -454,10 +522,248 @@ implements OnInit
         this.loadItems();
     }
 
+    //===========================================================
+    // Destroy
+    //===========================================================
 
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
 
     //===========================================================
-    // Load JournalVouchers
+    // Progress Dialog (Animated)
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    private completeProgress
+    (
+        message:
+            string,
+
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Error Message
+    //===========================================================
+
+    private extractErrorMessage
+    (
+        error:
+            unknown,
+
+        fallback:
+            string
+    ):
+        string
+    {
+        if
+        (
+            error instanceof HttpErrorResponse
+        )
+        {
+            if
+            (
+                typeof error.error === 'string'
+                &&
+                error.error.trim()
+            )
+            {
+                return error.error;
+            }
+
+            if
+            (
+                error.error?.message
+            )
+            {
+                return error.error.message;
+            }
+
+            if
+            (
+                error.error?.title
+            )
+            {
+                return error.error.title;
+            }
+        }
+
+        return fallback;
+    }
+
+    //===========================================================
+    // Load Items
     //===========================================================
 
     loadItems():
@@ -466,110 +772,93 @@ implements OnInit
         this.loading =
             true;
 
-
         this.loadFailed =
             false;
 
-
-        this.journalvoucherservice
+        this.journalVoucherService
             .getAll()
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
                 (
                     response:
                         JournalVoucher[]
-                ): void =>
+                ):
+                    void =>
                 {
-                    this.journalvouchers =
-                    [
-                        ...response
-                    ];
+                    // Display values
+                    this.journalVouchers =
+                        (response ?? []).map
+                        (
+                            item =>
+                            ({
+                                ...item,
 
+                                VoucherDateText:
+                                    this.toDisplayDate(
+                                        item.VoucherDate
+                                    ),
+
+                                PartyText:
+                                    item.PartyName,
+
+                                GroupCountText:
+                                    String(item.GroupCount || 1),
+
+                                TotalAmountText:
+                                    formatMoney(
+                                        item.TotalAmount
+                                    )
+                            })
+                        );
 
                     this.applyFilters();
-
 
                     this.loading =
                         false;
 
-
-                    this.loadFailed =
-                        false;
-
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Load JournalVouchers Error',
-
+                        'Load Journal Vouchers Error:',
                         error
                     );
 
-
-                    this.journalvouchers =
-                    [];
-
+                    this.journalVouchers =
+                        [];
 
                     this.filteredJournalVouchers =
-                    [];
-
+                        [];
 
                     this.pagedJournalVouchers =
-                    [];
-
+                        [];
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         true;
-
 
                     this.toast.error
                     (
                         'Load Failed',
-
-                        'Unable to load journalvouchers.'
+                        'Unable to load journal vouchers.'
                     );
-
 
                     this.cdr.detectChanges();
                 }
             });
     }
-
-
-
-    //===========================================================
-    // Status Filter Changed
-    //===========================================================
-
-    onStatusFilterChange
-    (
-        value:
-            string | null
-    ):
-        void
-    {
-        this.selectedStatus =
-            value;
-
-
-        this.applyFilters();
-    }
-
-
 
     //===========================================================
     // Apply Filters
@@ -583,59 +872,75 @@ implements OnInit
                 .trim()
                 .toLowerCase();
 
-
         this.filteredJournalVouchers =
-            this.journalvouchers
-                .filter
-                (
-                    (
-                        x:
-                            JournalVoucher
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
+            this.journalVouchers.filter
+            (
+                item =>
+                {
+                    const partyMatch =
+                        this.selectedPartyType === null
+                        ||
+                        item.LedgerType ===
+                        this.selectedPartyType;
 
+                    const tabMatch =
+                        this.selectedTab === 'all'
+                        ||
+                        item.Status ===
+                        this.selectedTab;
 
-                        const searchMatch =
+                    const text =
+                        [
+                            item.VoucherNo,
+                            item.VoucherDate,
+                            item.VoucherDateText,
+                            item.BranchName,
+                            item.LedgerType,
+                            item.PartyText,
+                            item.Narration,
+                            item.TotalAmountText,
+                            item.GroupCountText,
+                            item.Status
+                        ]
+                        .join(' ')
+                        .toLowerCase();
+
+                    return partyMatch
+                        &&
+                        tabMatch
+                        &&
+                        (
                             !keyword
                             ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
-                );
-
+                            text.includes(keyword)
+                        );
+                }
+            );
 
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
 
+    //===========================================================
+    // Tab Change
+    //===========================================================
 
+    onTabChange
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.selectedTab =
+            value;
+
+        this.applyFilters();
+
+        this.cdr.detectChanges();
+    }
 
     //===========================================================
     // Search
@@ -649,13 +954,50 @@ implements OnInit
         void
     {
         this.searchText =
-            value;
-
+            value
+            ??
+            '';
 
         this.applyFilters();
     }
 
+    //===========================================================
+    // Ledger Type Filter Change
+    //===========================================================
 
+    onPartyTypeFilterChange
+    (
+        value:
+            string | null
+    ):
+        void
+    {
+        this.selectedPartyType =
+            value
+            ||
+            null;
+
+        this.applyFilters();
+    }
+
+    //===========================================================
+    // Display Date (yyyy-MM-dd → dd-MM-yyyy)
+    //===========================================================
+
+    private toDisplayDate
+    (
+        value:
+            string
+    ):
+        string
+    {
+        const parts =
+            (value ?? '').substring(0, 10).split('-');
+
+        return parts.length === 3
+            ? `${parts[2]}-${parts[1]}-${parts[0]}`
+            : value ?? '';
+    }
 
     //===========================================================
     // Sort
@@ -674,36 +1016,32 @@ implements OnInit
     ):
         void
     {
+        const direction =
+            event.direction === 'asc'
+                ? 1
+                : -1;
+
+        // Display columns sort on their raw values
+        const field =
+            event.field === 'VoucherDateText'
+                ? 'VoucherDate'
+                : event.field === 'TotalAmountText'
+                    ? 'TotalAmount'
+                    : event.field;
+
         this.filteredJournalVouchers =
         [
             ...this.filteredJournalVouchers
-        ];
-
-
-        this.filteredJournalVouchers.sort
+        ]
+        .sort
         (
-            (
-                a:
-                    JournalVoucher,
-
-                b:
-                    JournalVoucher
-            ):
-                number =>
+            (a: any, b: any): number =>
             {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof JournalVoucher
-                    ];
+                const valueA =
+                    a[field];
 
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof JournalVoucher
-                    ];
-
+                const valueB =
+                    b[field];
 
                 if
                 (
@@ -715,24 +1053,21 @@ implements OnInit
                     return 0;
                 }
 
-
                 if
                 (
                     valueA == null
                 )
                 {
-                    return -1;
+                    return -1 * direction;
                 }
-
 
                 if
                 (
                     valueB == null
                 )
                 {
-                    return 1;
+                    return 1 * direction;
                 }
-
 
                 if
                 (
@@ -741,53 +1076,18 @@ implements OnInit
                     typeof valueB === 'string'
                 )
                 {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
+                    return valueA.localeCompare(valueB) * direction;
                 }
 
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
+                return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * direction;
             }
         );
-
 
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
-
 
     //===========================================================
     // Refresh
@@ -799,18 +1099,20 @@ implements OnInit
         this.searchText =
             '';
 
+        this.selectedTab =
+            'all';
 
-        this.selectedStatus =
+        this.selectedPartyType =
             null;
 
+        this.currentPage =
+            1;
 
         this.loadItems();
     }
 
-
-
     //===========================================================
-    // Update Pagination
+    // Pagination
     //===========================================================
 
     updatePagination():
@@ -818,30 +1120,17 @@ implements OnInit
     {
         const start:
             number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
+            (this.currentPage - 1) * this.pageSize;
 
         this.pagedJournalVouchers =
         [
-            ...this.filteredJournalVouchers
-                .slice
-                (
-                    start,
-
-                    start + this.pageSize
-                )
+            ...this.filteredJournalVouchers.slice
+            (
+                start,
+                start + this.pageSize
+            )
         ];
     }
-
-
-
-    //===========================================================
-    // Page Change
-    //===========================================================
 
     onPageChange
     (
@@ -853,15 +1142,8 @@ implements OnInit
         this.currentPage =
             page;
 
-
         this.updatePagination();
     }
-
-
-
-    //===========================================================
-    // Page Size Change
-    //===========================================================
 
     onPageSizeChange
     (
@@ -873,18 +1155,14 @@ implements OnInit
         this.pageSize =
             size;
 
-
         this.currentPage =
             1;
-
 
         this.updatePagination();
     }
 
-
-
     //===========================================================
-    // Add
+    // Add / View / Edit
     //===========================================================
 
     add():
@@ -895,7 +1173,6 @@ implements OnInit
             [
                 'add'
             ],
-
             {
                 relativeTo:
                     this.route.parent
@@ -903,16 +1180,10 @@ implements OnInit
         );
     }
 
-
-
-    //===========================================================
-    // View
-    //===========================================================
-
     view
     (
         item:
-            JournalVoucher
+            JournalVoucherRow
     ):
         void
     {
@@ -920,46 +1191,53 @@ implements OnInit
         (
             [
                 'view',
-
-                item.id
+                item.JournalVoucherId
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
-
-
-    //===========================================================
-    // Edit
-    //===========================================================
 
     edit
     (
         item:
-            JournalVoucher
+            JournalVoucherRow
     ):
         void
     {
+        // Only drafts can be changed; others open in View
+        if
+        (
+            item.Status !== 'Draft'
+        )
+        {
+            this.toast.info
+            (
+                'Edit Not Allowed',
+                `${item.VoucherNo} is ${item.Status}. Only a draft can be edited; it opens in View.`
+            );
+
+            this.view(
+                item
+            );
+
+            return;
+        }
+
         void this.router.navigate
         (
             [
                 'edit',
-
-                item.id
+                item.JournalVoucherId
             ],
-
             {
                 relativeTo:
                     this.route.parent
             }
         );
     }
-
-
 
     //===========================================================
     // Delete
@@ -968,67 +1246,136 @@ implements OnInit
     delete
     (
         item:
-            JournalVoucher
+            JournalVoucherRow
     ):
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            item.Status !== 'Draft'
+        )
+        {
+            this.toast.info
+            (
+                'Delete Not Allowed',
+                `${item.VoucherNo} is ${item.Status}. Only a draft can be deleted; a posted voucher is cancelled from its page.`
+            );
+
+            return;
+        }
+
         this.confirmDialog.open
         (
             'Delete Journal Voucher',
-
-            `Are you sure you want to delete "${item.name}" ?`,
-
-            (): void =>
+            `Are you sure you want to delete draft "${item.VoucherNo}"?`,
+            ():
+                void =>
             {
-                this.journalvoucherservice
-                    .delete
-                    (
-                        item.id
-                    )
-                    .subscribe
-                    ({
-                        next:
-                        (): void =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-
-                                `${item.name} deleted successfully.`
-                            );
-
-
-                            this.loadItems();
-                        },
-
-
-                        error:
-                        (
-                            error:
-                                unknown
-                        ): void =>
-                        {
-                            console.error
-                            (
-                                'Delete Journal Voucher Error',
-
-                                error
-                            );
-
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-
-                                'Failed to delete journalVoucher.'
-                            );
-                        }
-                    });
+                // Next tick : let the confirm dialog close first
+                setTimeout(
+                    () =>
+                        this.deleteItem(
+                            item
+                        )
+                );
             }
         );
     }
 
+    private deleteItem
+    (
+        item:
+            JournalVoucherRow
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Journal Voucher',
+            `Please wait while "${item.VoucherNo}" is being deleted...`
+        );
 
+        this.withMinimumDuration(
+            this.journalVoucherService.delete(
+                item.JournalVoucherId
+            )
+        )
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
+                {
+                    this.completeProgress(
+
+                        'Journal voucher deleted.',
+
+                        () =>
+                        {
+                            this.toast.success
+                            (
+                                'Delete Successful',
+                                `${item.VoucherNo} deleted successfully.`
+                            );
+
+                            this.loadItems();
+                        }
+                    );
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'Delete Journal Voucher Error:',
+                        error
+                    );
+
+                    this.failProgress(
+                        () =>
+                        {
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                this.toast.info
+                                (
+                                    'Delete Blocked',
+                                    this.extractErrorMessage(
+                                        error,
+                                        'Only a draft journal voucher can be deleted.'
+                                    )
+                                );
+
+                                return;
+                            }
+
+                            this.toast.error
+                            (
+                                'Delete Failed',
+                                'Failed to delete journal voucher.'
+                            );
+                        }
+                    );
+                }
+            });
+    }
 
     //===========================================================
     // Restore
@@ -1037,176 +1384,223 @@ implements OnInit
     restore():
         void
     {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
         this.confirmDialog.open
         (
             'Restore Journal Voucher',
-
-            'Are you sure you want to restore the most recently deleted journalVoucher?',
-
-            (): void =>
+            'Are you sure you want to restore the most recently deleted draft journal voucher?',
+            ():
+                void =>
             {
-                this.restoreItem();
+                setTimeout(
+                    () =>
+                        this.restoreItem()
+                );
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
 
-
-
-    //===========================================================
-    // Restore Item
-    //===========================================================
-
     private restoreItem():
         void
     {
-        this.journalvoucherservice
-            .restore()
+        this.startProgress(
+            'Restoring Journal Voucher',
+            'Please wait while the most recently deleted journal voucher is being restored...'
+        );
+
+        this.withMinimumDuration(
+            this.journalVoucherService.restore()
+        )
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
-                (): void =>
+                ():
+                    void =>
                 {
-                    this.toast.success
-                    (
-                        'Restore Successful',
+                    this.completeProgress(
 
-                        'The most recently deleted journalVoucher has been restored.'
+                        'Journal voucher restored.',
+
+                        () =>
+                        {
+                            this.toast.success
+                            (
+                                'Restore Successful',
+                                'The most recently deleted journal voucher has been restored.'
+                            );
+
+                            this.loadItems();
+                        }
                     );
-
-
-                    this.loadItems();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'Restore Journal Voucher Error',
-
+                        'Restore Journal Voucher Error:',
                         error
                     );
 
+                    this.failProgress(
+                        () =>
+                        {
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 404
+                            )
+                            {
+                                this.toast.info
+                                (
+                                    'No Data to Restore',
+                                    'There is no deleted journal voucher to restore.'
+                                );
 
-                    this.toast.error
-                    (
-                        'Restore Failed',
+                                return;
+                            }
 
-                        'Failed to restore journalVoucher.'
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                this.toast.info
+                                (
+                                    'Restore Blocked',
+                                    this.extractErrorMessage(
+                                        error,
+                                        'The journal voucher cannot be restored.'
+                                    )
+                                );
+
+                                return;
+                            }
+
+                            this.toast.error
+                            (
+                                'Restore Failed',
+                                'Failed to restore journal voucher.'
+                            );
+                        }
                     );
                 }
             });
     }
 
-
-
     //===========================================================
-    // Open History
+    // History
     //===========================================================
 
     openHistory():
         void
     {
-        this.journalvoucherservice
+        this.journalVoucherService
             .getHistory()
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
                 (
                     response:
                         any[]
-                ): void =>
+                ):
+                    void =>
                 {
                     this.historyItems =
-                        response.map
+                        (response ?? []).map
                         (
                             history =>
                             ({
                                 title:
-                                    history.activityTitle,
-
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
 
                                 description:
-                                    history.activityDescription,
-
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
 
                                 user:
                                     history.performedByName
                                     ??
+                                    history.PerformedByName
+                                    ??
                                     'System',
-
 
                                 dateTime:
                                     new Date
                                     (
                                         history.performedDate
+                                        ??
+                                        history.PerformedDate
                                     )
                                     .toLocaleString(),
 
-
                                 badge:
                                     history.activityType
+                                    ??
+                                    history.ActivityType
                             })
                         );
 
-
                     this.historyTitle =
-                        'Journal Voucher Management History';
-
+                        'Journal Voucher History';
 
                     this.historyOpened =
                         true;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
                     error:
                         unknown
-                ): void =>
+                ):
+                    void =>
                 {
                     console.error
                     (
-                        'History Load Failed',
-
+                        'History Load Failed:',
                         error
                     );
-
 
                     this.toast.error
                     (
                         'History',
-
-                        'Failed to load journalVoucher history.'
+                        'Failed to load journal voucher history.'
                     );
                 }
             });
     }
-
-
-
-    //===========================================================
-    // Close History
-    //===========================================================
 
     closeHistory():
         void
     {
         this.historyOpened =
             false;
-    }
 
+        this.cdr.detectChanges();
+    }
 }

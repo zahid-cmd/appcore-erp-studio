@@ -21,6 +21,13 @@ from '@angular/common';
         CommonModule
     ],
 
+    // "title" is an input; without this the browser also keeps it as
+    // the host's HTML title, which shows as a tooltip over every
+    // button inside the header
+    host:
+    {
+        '[attr.title]':'null'
+    },
     templateUrl:
         './page-header.html',
 

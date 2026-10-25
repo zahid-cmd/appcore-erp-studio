@@ -1,11 +1,4 @@
 //===============================================================
-// Namespaces
-//===============================================================
-
-using AppCore.Application.Common.ActivityHistory.DTOs;
-
-
-//===============================================================
 // Namespace
 //===============================================================
 
@@ -13,98 +6,72 @@ namespace AppCore.Application.AccountsFinance.VoucherManagement;
 
 
 //===============================================================
-// IFundTransferRepository
+// Fund Transfer Repository Interface
 //===============================================================
 
 public interface IFundTransferRepository
 {
-
     //===========================================================
-    // Get All
-    //===========================================================
-
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.AccountsFinance.VoucherManagement.FundTransfer>>
-        GetAllAsync();
-
-
-
-    //===========================================================
-    // Get By Id
+    // Read
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.AccountsFinance.VoucherManagement.FundTransfer?>
-        GetByIdAsync
-    (
-        long id
-    );
+    Task<List<FundTransferDto>> GetAllAsync();
 
+    Task<FundTransferDto?> GetByIdAsync(
+        long id);
+
+    // Next voucher number preview (Add form)
+    Task<FundTransferDefaultsDto> GetDefaultsAsync(
+        long branchId,
+        DateOnly voucherDate);
 
 
     //===========================================================
-    // Create
+    // Draft
     //===========================================================
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.AccountsFinance.VoucherManagement.FundTransfer entity
-    );
+    Task<FundTransferSavedDto> CreateAsync(
+        CreateFundTransferDto dto,
+        long userId);
 
+    Task UpdateAsync(
+        UpdateFundTransferDto dto,
+        long userId);
 
+    Task DeleteAsync(
+        long id,
+        long userId);
 
-    //===========================================================
-    // Update
-    //===========================================================
-
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.AccountsFinance.VoucherManagement.FundTransfer entity
-    );
-
+    Task<bool> RestoreAsync(
+        long userId);
 
 
     //===========================================================
-    // Delete
+    // Workflow
     //===========================================================
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
+    Task ApproveAsync(
+        long id,
+        long userId);
 
+    Task ReturnToDraftAsync(
+        long id,
+        long userId);
 
+    Task PostAsync(
+        long id,
+        long userId);
 
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task CancelAsync(
+        long id,
+        CancelFundTransferDto dto,
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Exists
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
-
+    Task<bool> ExistsAsync(
+        long id);
 }

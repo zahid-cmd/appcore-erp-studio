@@ -2,8 +2,13 @@
 // Shared SLIP print : styles
 //
 // Half-A4 slip (Money Receipt / Payment Slip / Fund Transfer
-// Advice). Paper and watermark are in
+// Advice). Paper is in
 // shared/print/print-engine.service.ts (BASE_CSS).
+//
+// The card, title block and amount box use see-through colours,
+// so each half's CANCELLED / REVERSED watermark (under the
+// content) shows through them. On white paper they look the same
+// as before.
 //===============================================================
 
 export function SLIP_DOCUMENT_CSS():
@@ -17,9 +22,12 @@ export function SLIP_DOCUMENT_CSS():
 .sl-half { position: relative; height: 147mm; padding: 9mm 12mm 8mm 22mm; display: flex; flex-direction: column; overflow: hidden; }
 .sl-half > * { position: relative; z-index: 1; }
 .sl-half > .sl-frame { position: absolute; inset: 5mm 7mm 5mm 7mm; z-index: 0; border: 1px solid #c7d5f0; border-radius: 3mm;
-    background: repeating-linear-gradient(45deg, rgba(29, 78, 216, 0.035) 0 1.2mm, transparent 1.2mm 2.4mm), #ffffff; }
+    background: repeating-linear-gradient(45deg, rgba(29, 78, 216, 0.035) 0 1.2mm, transparent 1.2mm 2.4mm); }
 .sl-half > .sl-spine { position: absolute; left: 7mm; top: 5mm; bottom: 5mm; width: 10mm; z-index: 1; border-radius: 3mm 0 0 3mm;
     background: linear-gradient(180deg, #0b2a5b, #1d4ed8); display: flex; align-items: center; justify-content: center; }
+/* Watermark : one per half, centred on the card, under the content */
+.sl-half > .sl-mark { position: absolute; top: 50%; left: calc(50% + 5mm); z-index: 0; transform: translate(-50%, -50%) rotate(-20deg);
+    font-size: 54pt; font-weight: 800; letter-spacing: 6pt; color: rgba(220, 38, 38, 0.12); white-space: nowrap; pointer-events: none; }
 .sl-spine span { writing-mode: vertical-rl; transform: rotate(180deg); color: #ffffff; font-size: 7.5pt; font-weight: 800;
                  letter-spacing: 3pt; text-transform: uppercase; white-space: nowrap; }
 
@@ -41,15 +49,15 @@ export function SLIP_DOCUMENT_CSS():
 .sl-qr svg { display: block; width: 100%; height: 100%; }
 
 /* Title block : MONEY RECEIPT ribbon (top), Receipt No / Date (bottom) */
-.sl-titlebox { margin: 3.5mm 0 0 3mm; border: 1px solid #cdd9ee; border-radius: 2.5mm; overflow: hidden; background: #ffffff; }
+.sl-titlebox { margin: 3.5mm 0 0 3mm; border: 1px solid #cdd9ee; border-radius: 2.5mm; overflow: hidden; background: transparent; }
 .sl-ribbon { position: relative; padding: 2.2mm 5mm 2.2mm 7mm; text-align: center;
              background: radial-gradient(120% 180% at 100% 0%, rgba(29,78,216,0.10) 0%, rgba(29,78,216,0) 55%),
-                         linear-gradient(90deg, #f7f9fe 0%, #edf2fc 55%, #e3ebfa 100%); }
+                         linear-gradient(90deg, rgba(29,78,216,0.035) 0%, rgba(29,78,216,0.077) 55%, rgba(29,78,216,0.12) 100%); }
 .sl-ribbon::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2mm; background: linear-gradient(180deg, #0b2a5b, #1d4ed8); }
 .sl-ribbon::after { content: ""; position: absolute; left: 2mm; right: 0; bottom: 0; height: 0.5mm; opacity: 0.55;
                     background: linear-gradient(90deg, #0b2a5b 0%, #1d4ed8 45%, rgba(29,78,216,0) 100%); }
 .sl-title { font-size: 14pt; font-weight: 800; letter-spacing: 4pt; color: #0b2a5b; white-space: nowrap; }
-.sl-ids { display: grid; grid-template-columns: 1fr 1fr; background: #f5f7fb; border-top: 1px solid #cdd9ee; }
+.sl-ids { display: grid; grid-template-columns: 1fr 1fr; background: rgba(100, 116, 139, 0.06); border-top: 1px solid #cdd9ee; }
 .sl-idc { display: flex; flex-direction: column; padding: 1.8mm 4mm 1.8mm 7mm; min-width: 0; }
 .sl-idc-right { border-left: 1px solid #e2e8f0; text-align: right; padding: 1.8mm 4mm; }
 .sl-idc span { font-size: 6.4pt; font-weight: 700; letter-spacing: 0.8pt; text-transform: uppercase; color: #64748b; }
@@ -77,8 +85,10 @@ export function SLIP_DOCUMENT_CSS():
 .sl-bottom { margin: auto 0 0 3mm; display: grid; grid-template-columns: auto 1fr auto; gap: 6mm; align-items: end; }
 .sl-amount { display: flex; align-items: stretch; border-radius: 2mm; overflow: hidden; box-shadow: 0 0 0 1px #0b2a5b; }
 .sl-amount span { display: grid; place-items: center; padding: 2.4mm 3mm; background: #0b2a5b; color: #ffffff; font-size: 10pt; font-weight: 800; }
-.sl-amount b { padding: 1.6mm 5mm; background: #ffffff; color: #0b2a5b; font-size: 16pt; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sl-amount b { padding: 1.6mm 5mm; background: rgba(255, 255, 255, 0.72); color: #0b2a5b; font-size: 16pt; font-weight: 800; font-variant-numeric: tabular-nums; }
 .sl-note { align-self: center; font-size: 7.6pt; line-height: 1.4; color: #92400e; }
+.sl-signs { display: flex; gap: 4mm; }
+.sl-signs .sl-sign:not(:only-child) { width: 38mm; }
 .sl-sign { width: 52mm; text-align: center; font-size: 8pt; color: #334155; }
 .sl-sign div { border-top: 1px solid #334155; padding-top: 1mm; }
 .sl-foot { margin: 2.5mm 0 0 3mm; display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; font-size: 6.6pt; color: #94a3b8; }

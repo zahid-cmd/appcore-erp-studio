@@ -207,6 +207,23 @@ public class EmiAccountsRepository : IEmiAccountsRepository
                 .Where(x => subGroupIds.Contains(x.AccountSubGroupId))
                 .ToDictionaryAsync(x => x.AccountSubGroupId);
 
+        // Linked bank is stored by code : show its display name
+        // (a not-yet-converted row still holds the name itself)
+        List<string> bankCodes =
+            rows.Select(x => x.LinkedBankAccount).Distinct().ToList();
+
+        Dictionary<string, string> bankNames =
+            (
+                await _context
+                    .Set<BankAccountsEntity>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted && bankCodes.Contains(x.BankAccountCode))
+                    .Select(x => new { x.BankAccountCode, x.DisplayName })
+                    .ToListAsync()
+            )
+            .GroupBy(x => x.BankAccountCode)
+            .ToDictionary(g => g.Key, g => g.First().DisplayName);
+
         return rows
             .Select
             (
@@ -233,6 +250,11 @@ public class EmiAccountsRepository : IEmiAccountsRepository
                         Platform = x.Platform,
 
                         LinkedBankAccount = x.LinkedBankAccount,
+
+                        LinkedBankAccountName =
+                            bankNames.TryGetValue(x.LinkedBankAccount, out string? bankName)
+                                ? bankName
+                                : x.LinkedBankAccount,
 
                         Branch = x.Branch,
 
@@ -438,21 +460,38 @@ public class EmiAccountsRepository : IEmiAccountsRepository
 
 
     //===========================================================
-    // Linked Bank Short Name
+    // Resolve Linked Bank
     //
-    // Linked Bank Account (Display Name)
+    // Linked Bank Account is stored as the BANK ACCOUNT CODE
+    // (ERP rule : link by code). A display name sent by an older
+    // screen / older row is accepted once and replaced by its code.
     //   → BankAccounts.Bank (Bank Name)
     //   → BankSetup.ShortName (falls back to Bank Name)
+    //
+    // savedLinkedBankAccount : the record's current link (code or
+    // legacy name), so an inactive bank account already saved can
+    // be kept.
     //===========================================================
 
-    private async Task<string>
-        ResolveLinkedBankShortNameAsync
+    private async Task<(string Code, string ShortName)>
+        ResolveLinkedBankAsync
         (
             string linkedBankAccount,
             string? savedLinkedBankAccount
         )
     {
         BankAccountsEntity? bankAccount =
+            await _context
+                .Set<BankAccountsEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.BankAccountCode == linkedBankAccount
+                )
+            ??
             await _context
                 .Set<BankAccountsEntity>()
                 .AsNoTracking()
@@ -471,10 +510,19 @@ public class EmiAccountsRepository : IEmiAccountsRepository
         }
 
         // Must be Active, unless it is the account already saved
-        if (!bankAccount.Status && savedLinkedBankAccount != linkedBankAccount)
+        bool alreadySaved =
+            !string.IsNullOrWhiteSpace(savedLinkedBankAccount)
+            &&
+            (
+                savedLinkedBankAccount == bankAccount.BankAccountCode
+                ||
+                savedLinkedBankAccount == bankAccount.DisplayName
+            );
+
+        if (!bankAccount.Status && !alreadySaved)
         {
             throw new InvalidOperationException(
-                $"Linked Bank Account '{linkedBankAccount}' is inactive in Bank Accounts.");
+                $"Linked Bank Account '{bankAccount.DisplayName}' is inactive in Bank Accounts.");
         }
 
         string bankName =
@@ -483,7 +531,7 @@ public class EmiAccountsRepository : IEmiAccountsRepository
         if (string.IsNullOrWhiteSpace(bankName))
         {
             throw new InvalidOperationException(
-                $"Linked Bank Account '{linkedBankAccount}' has no bank selected.");
+                $"Linked Bank Account '{bankAccount.DisplayName}' has no bank selected.");
         }
 
         string key =
@@ -510,9 +558,13 @@ public class EmiAccountsRepository : IEmiAccountsRepository
         string shortName =
             (bank.ShortName ?? string.Empty).Trim();
 
-        return string.IsNullOrWhiteSpace(shortName)
-            ? bank.BankName.Trim()
-            : shortName;
+        return
+        (
+            bankAccount.BankAccountCode,
+            string.IsNullOrWhiteSpace(shortName)
+                ? bank.BankName.Trim()
+                : shortName
+        );
     }
 
 
@@ -593,10 +645,14 @@ public class EmiAccountsRepository : IEmiAccountsRepository
                 $"Linked Bank Account cannot be longer than {LinkedBankAccountMaxLength} characters.");
         }
 
-        string linkedShortName =
-            await ResolveLinkedBankShortNameAsync(
+        (string linkedCode, string linkedShortName) =
+            await ResolveLinkedBankAsync(
                 linkedBank,
                 savedLinkedBankAccount);
+
+        // Stored by code from now on
+        linkedBank =
+            linkedCode;
 
         //=======================================================
         // Remarks
@@ -1084,7 +1140,11 @@ public class EmiAccountsRepository : IEmiAccountsRepository
                     x =>
                         !x.IsDeleted
                         &&
-                        x.DisplayName == entity.LinkedBankAccount
+                        (
+                            x.BankAccountCode == entity.LinkedBankAccount
+                            ||
+                            x.DisplayName == entity.LinkedBankAccount
+                        )
                 );
 
         if (!bankAccountExists)
@@ -1102,10 +1162,17 @@ public class EmiAccountsRepository : IEmiAccountsRepository
 
         try
         {
-            linkedShortName =
-                await ResolveLinkedBankShortNameAsync(
+            (string linkedCode, string shortName) =
+                await ResolveLinkedBankAsync(
                     entity.LinkedBankAccount,
                     entity.LinkedBankAccount);
+
+            // A legacy display name becomes the code
+            entity.LinkedBankAccount =
+                linkedCode;
+
+            linkedShortName =
+                shortName;
         }
         catch (InvalidOperationException ex)
         {

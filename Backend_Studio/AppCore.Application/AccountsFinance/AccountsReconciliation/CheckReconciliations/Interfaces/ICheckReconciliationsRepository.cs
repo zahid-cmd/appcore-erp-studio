@@ -1,11 +1,4 @@
 //===============================================================
-// Namespaces
-//===============================================================
-
-using AppCore.Application.Common.ActivityHistory.DTOs;
-
-
-//===============================================================
 // Namespace
 //===============================================================
 
@@ -13,98 +6,97 @@ namespace AppCore.Application.AccountsFinance.AccountsReconciliation;
 
 
 //===============================================================
-// ICheckReconciliationsRepository
+// Check Reconciliations Repository
+//
+// Checks come from POSTED Receipt Vouchers (received) and Payment
+// Vouchers (issued). Every action runs in one transaction, locks
+// the source voucher and keeps its CheckStatus in step.
+//
+// InvalidOperationException : rule broken (409 / 400)
+// KeyNotFoundException      : check / voucher not found (404)
 //===============================================================
 
 public interface ICheckReconciliationsRepository
 {
-
     //===========================================================
-    // Get All
-    //===========================================================
-
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation.CheckReconciliations>>
-        GetAllAsync();
-
-
-
-    //===========================================================
-    // Get By Id
+    // Read
     //===========================================================
 
-    Task<global::AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation.CheckReconciliations?>
-        GetByIdAsync
-    (
-        long id
-    );
+    // direction : Received / Issued / empty = both
+    Task<List<CheckReconciliationDto>> GetAllAsync(
+        string? direction);
 
+    Task<List<CheckReconciliationHistoryDto>> GetCheckHistoryAsync(
+        string direction,
+        long paymentId);
 
+    // Check Clearing Center : next number preview
+    //   mode : deposit (DS) / clear (RRV / RRP) / dishonour (RRV)
+    Task<CheckCenterDefaultsDto> GetDefaultsAsync(
+        string direction,
+        string mode,
+        long branchId,
+        DateOnly date);
 
-    //===========================================================
-    // Create
-    //===========================================================
+    // Bank accounts a branch may deposit into
+    Task<List<CheckBankAccountDto>> GetDepositAccountsAsync(
+        long branchId);
 
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation.CheckReconciliations entity
-    );
+    // Print (by id)
+    Task<CheckClearingVoucherDto?> GetVoucherAsync(
+        long id);
 
+    Task<CheckDepositSlipDto?> GetDepositSlipAsync(
+        long id);
 
 
     //===========================================================
-    // Update
+    // Received
     //===========================================================
 
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.AccountsFinance.AccountsReconciliation.CheckReconciliations entity
-    );
+    Task<CheckActionResultDto> DepositAsync(
+        CheckDepositDto dto,
+        long userId);
 
+    Task<CheckActionResultDto> UndoDepositAsync(
+        CheckUndoDto dto,
+        long userId);
 
+    Task<CheckActionResultDto> DishonourAsync(
+        CheckDishonourDto dto,
+        long userId);
 
-    //===========================================================
-    // Delete
-    //===========================================================
+    Task<CheckActionResultDto> UndoDishonourAsync(
+        CheckUndoDto dto,
+        long userId);
 
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
+    Task<CheckActionResultDto> RepresentAsync(
+        CheckUndoDto dto,
+        long userId);
 
 
     //===========================================================
-    // Get History
+    // Both
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
+    Task<CheckActionResultDto> ClearAsync(
+        CheckClearDto dto,
+        long userId);
 
+    Task<CheckActionResultDto> UndoClearAsync(
+        CheckUndoDto dto,
+        long userId);
 
 
     //===========================================================
-    // Get Entity History
+    // Issued
     //===========================================================
 
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+    Task<CheckActionResultDto> VoidAsync(
+        CheckVoidDto dto,
+        long userId);
 
+    Task<CheckActionResultDto> UndoVoidAsync(
+        CheckUndoDto dto,
+        long userId);
 }

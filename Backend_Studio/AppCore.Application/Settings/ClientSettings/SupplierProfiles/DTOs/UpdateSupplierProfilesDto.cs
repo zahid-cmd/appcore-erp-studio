@@ -42,6 +42,15 @@ public class UpdateSupplierProfilesDto
     } = string.Empty;
 
 
+    // Motor Bikes / Spare Parts / Accessories / General : what this
+    // supplier code supplies
+    public string SupplyType
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
     // CAPITAL LETTERS
     public string SupplierName
     {

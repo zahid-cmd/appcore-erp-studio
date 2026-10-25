@@ -165,6 +165,13 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : CheckReconciliations
+
+using AppCore.Application.AccountsFinance.AccountsReconciliation;
+using AppCore.Infrastructure.Configurations.AccountsFinance.AccountsReconciliation;
+
+// AUTO-END : CheckReconciliations
+
 // AUTO-BEGIN : MembershipStatus
 
 using AppCore.Application.MembershipManagement.MembershipAssignment;
@@ -722,6 +729,56 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : EmiReimbursementSchemes
+
+        services.AddScoped
+        <
+            IEmiReimbursementSchemesRepository,
+            EmiReimbursementSchemesRepository
+        >();
+
+        // AUTO-END : EmiReimbursementSchemes
+
+        // AUTO-BEGIN : PosReconciliations
+
+        services.AddScoped
+        <
+            IPosReconciliationsRepository,
+            PosReconciliationsRepository
+        >();
+
+        // AUTO-END : PosReconciliations
+
+        // AUTO-BEGIN : MfsReconciliations
+
+        services.AddScoped
+        <
+            IMfsReconciliationsRepository,
+            MfsReconciliationsRepository
+        >();
+
+        // AUTO-END : MfsReconciliations
+
+        // AUTO-BEGIN : EmiReconciliations
+
+        services.AddScoped
+        <
+            IEmiReconciliationsRepository,
+            EmiReconciliationsRepository
+        >();
+
+        // AUTO-END : EmiReconciliations
+
+        // AUTO-BEGIN : CheckReconciliations
+
+        services.AddScoped
+        <
+            ICheckReconciliationsRepository,
+            CheckReconciliationsRepository
+        >();
+
+        // AUTO-END : CheckReconciliations
 
         // AUTO-BEGIN : ReceiptVoucher
 

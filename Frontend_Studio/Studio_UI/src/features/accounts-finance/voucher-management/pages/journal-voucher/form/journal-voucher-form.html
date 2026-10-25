@@ -1,38 +1,132 @@
 <div class="app-form-page">
 
+
     <!-- =====================================================
-         PAGE HEADER
+         SECTION 01 : PAGE HEADER
+         Center : Branch + Financial Year, status
+         Right  : commands (at most 3) + back to list
+           Add          : Save, Clear
+           Edit (Draft) : Update, Approve, Clear
+           View Draft   : Approve, Edit
+           Approved     : Post, Return (+ Print)
+           Posted       : Cancel, Print
+           Cancelled    : Print
     ====================================================== -->
 
     <app-page-header
 
-        icon="fas fa-list"
+        icon="fas fa-book"
 
         [title]="pageTitle"
 
-        subtitle="Manage journalvouchers">
+        subtitle="Journal : Draft → Approved → Posted">
+
+        <div
+
+            pageHeaderCenter
+
+            class="jvf-center">
+
+          <div class="jvf-ribbon">
+
+            <div class="jvf-chip">
+
+                <span class="jvf-chip-icon jvf-chip-icon-branch">
+
+                    <i class="fas fa-building"></i>
+
+                </span>
+
+                <span class="jvf-chip-text">
+
+                    <span class="jvf-chip-label">Branch</span>
+
+                    <strong>{{ branchName || 'Not set' }}</strong>
+
+                </span>
+
+            </div>
+
+            <span class="jvf-ribbon-sep"></span>
+
+            <div
+
+                class="jvf-chip"
+
+                [class.jvf-chip-error]="!!periodError && isEditable"
+
+                [title]="periodError">
+
+                <span class="jvf-chip-icon jvf-chip-icon-year">
+
+                    <i class="fas fa-calendar-days"></i>
+
+                </span>
+
+                <span class="jvf-chip-text">
+
+                    <span class="jvf-chip-label">Financial Year</span>
+
+                    <strong>{{ financialYearText }}</strong>
+
+                </span>
+
+            </div>
+
+            <span class="jvf-ribbon-sep"></span>
+
+            <div class="jvf-state">
+
+                <span [class]="statusClass">
+
+                    {{ voucher ? status : 'New Draft' }}
+
+                </span>
+
+                @if (hasChanges && isEditable)
+                {
+                    <span class="jvf-unsaved">
+
+                        <i class="fas fa-circle"></i>
+
+                        Unsaved
+
+                    </span>
+                }
+
+            </div>
+
+          </div>
+
+        </div>
 
         <app-command-center
 
             pageHeaderRight
 
-            [command1Text]="saveButtonText"
+            [command1Text]="command1.text"
 
-            command1Icon="fas fa-floppy-disk"
+            [command1Icon]="command1.icon"
 
-            (command1Click)="onSave()"
+            [command1Visible]="!!command1.command"
 
-            [command1Visible]="!isViewMode"
+            (command1Click)="onCommand(0)"
 
-            command2Text="Clear"
+            [command2Text]="command2.text"
 
-            command2Icon="fas fa-broom"
+            [command2Icon]="command2.icon"
 
-            (command2Click)="onClear()"
+            [command2Visible]="!!command2.command"
 
-            [command2Visible]="!isViewMode"
+            (command2Click)="onCommand(1)"
 
-            [command3Visible]="false"
+            [command3Text]="command3.text"
+
+            [command3Icon]="command3.icon"
+
+            [command3Visible]="!!command3.command"
+
+            (command3Click)="onCommand(2)"
 
             rightCommandIcon="fas fa-arrow-left"
 
@@ -45,229 +139,314 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR
+         SECTION 02 : BODY (full available height, scrolls)
     ====================================================== -->
 
-    <app-page-toolbar>
+    <div class="jvf-body">
 
-        <app-control-tabs
+        @if (loading)
+        {
+            <!-- AppCore standard loader -->
 
-            pageToolbarLeft
+            <div class="jvf-loading">
 
-            [tabs]="tabs"
+                <app-orbit-loader
 
-            [(selectedTab)]="selectedTab">
+                    title="Loading Journal Voucher"
 
-        </app-control-tabs>
+                    message="Please wait while the voucher is being loaded."
 
-    </app-page-toolbar>
+                    size="medium"
+
+                    [showMessage]="true"
+
+                    [overlay]="false">
+
+                </app-orbit-loader>
+
+            </div>
+        }
+        @else
+        {
+
+            <!-- Period problem (Add / Edit) -->
+
+            @if (periodError && isEditable)
+            {
+                <div class="jvf-banner jvf-banner-warn">
+
+                    <i class="fas fa-triangle-exclamation"></i>
+
+                    <span>{{ periodError }}</span>
+
+                </div>
+            }
+
+
+            <!-- Cancelled -->
+
+            @if (status === 'Cancelled' && voucher)
+            {
+                <div class="jvf-banner jvf-banner-cancelled">
+
+                    <i class="fas fa-ban"></i>
+
+                    <span>
+
+                        <strong>Cancelled</strong>
+
+                        on {{ displayDate(voucher.CancelDate) }}
+
+                        @if (voucher.CancelReason)
+                        {
+                            : {{ voucher.CancelReason }}
+                        }
+
+                    </span>
+
+                </div>
+            }
+
+
+            <!-- =============================================
+                 JOURNAL ENTRY (groups by balance)
+            ============================================== -->
+
+            <app-journal-entry
+
+                [readonly]="isReadonly"
+
+                [multiGroup]="multiGroup"
+
+                [maxLines]="maxLines"
+
+                [minDate]="minVoucherDate"
+
+                [maxDate]="maxVoucherDate"
+
+                [voucherNo]="voucherNoText"
+
+                [value]="entryInput"
+
+                (valueChange)="onEntryChange($event)"
+
+                (totalChange)="onTotalChange($event)"
+
+                (validChange)="onMasterValidChange($event)">
+
+            </app-journal-entry>
+
+
+
+        }
+
+    </div>
 
 
 
     <!-- =====================================================
-         PAGE CANVAS
+         CANCEL VOUCHER MODAL (Posted)
+           Header : icon, title, voucher no, X
+           Body   : voucher summary, warning, Cancel Date, Reason
+           Footer : Keep Voucher, Cancel Voucher
     ====================================================== -->
 
-    <app-page-canvas>
+    @if (cancelOpened)
+    {
+        <div class="jvf-overlay">
 
-        <app-form-grid
+            <div
 
-            canvasBody
+                class="jvf-cx"
 
-            [columns]="4">
+                role="dialog"
 
+                aria-modal="true"
 
-            <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
-            ============================================== -->
+                aria-labelledby="jvf-cx-title">
 
-            <app-form-section
 
-                title="General Information"
+                <!-- Header -->
 
-                icon="fas fa-circle-info">
+                <div class="jvf-cx-head">
 
+                    <span class="jvf-cx-icon">
 
-                <!-- Code -->
+                        <i class="fas fa-ban"></i>
 
-                <app-textbox
+                    </span>
 
-                    label="Code"
+                    <div class="jvf-cx-title">
 
-                    placeholder="Auto generated"
+                        <strong id="jvf-cx-title">Cancel Voucher</strong>
 
-                    [(value)]="entity.code"
+                        <span>{{ voucher?.VoucherNo }}</span>
 
-                    [readonly]="true"
+                    </div>
 
-                    [required]="true">
+                    <button
 
-                </app-textbox>
+                        type="button"
 
+                        class="jvf-modal-x"
 
+                        title="Close"
 
-                <!-- Name -->
+                        aria-label="Close"
 
-                <app-textbox
+                        (click)="closeCancel()">
 
-                    label="Name"
+                        <i class="fas fa-xmark"></i>
 
-                    placeholder="Enter name"
+                    </button>
 
-                    [(value)]="entity.name"
+                </div>
 
-                    (valueChange)="onValueChange()"
 
-                    [disabled]="isViewMode"
+                <!-- Body -->
 
-                    [required]="true">
+                <div class="jvf-cx-body">
 
-                </app-textbox>
+                    <div class="jvf-cx-summary">
 
+                        <div>
 
-            </app-form-section>
+                            <span>Voucher Date</span>
 
+                            <strong>{{ displayDate(voucher?.VoucherDate) }}</strong>
 
+                        </div>
 
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
+                        <div>
 
-            <app-form-section
+                            <span>Particulars</span>
 
-                title="Sample Information"
+                            <strong [title]="voucher?.PartyName || ''">{{ voucher?.PartyName || '—' }}</strong>
 
-                icon="fas fa-layer-group">
+                        </div>
 
+                        <div class="jvf-cx-amount">
 
-                <!-- Sample Search Dropdown -->
+                            <span>Amount</span>
 
-                <app-search-dropdown
+                            <strong>{{ money(voucher?.TotalAmount ?? 0) }}</strong>
 
-                    label="Sample Search Dropdown"
+                        </div>
 
-                    [items]="items"
+                    </div>
 
-                    labelField="text"
+                    <div class="jvf-cx-warn">
 
-                    valueField="value"
+                        <i class="fas fa-triangle-exclamation"></i>
 
-                    [(value)]="entity.sampleSearchDropdownId"
+                        <span>
 
-                    (valueChange)="onValueChange()"
+                            A reversing entry is posted on the cancel date and the
+                            voucher becomes <b>Cancelled</b>. This cannot be undone.
+                            Not allowed when a check is already cleared.
 
-                    [disabled]="isViewMode">
+                        </span>
 
-                </app-search-dropdown>
+                    </div>
 
+                    <div class="jvf-cx-fields">
 
+                        <app-datepicker
 
-                <!-- Sample Field -->
+                            class="jvf-cx-date"
 
-                <app-textbox
+                            label="Cancel Date"
 
-                    label="Sample Field"
+                            [required]="true"
 
-                    placeholder="Enter sample value"
+                            [value]="$any(cancelDateValue)"
 
-                    [(value)]="entity.sampleField"
+                            (valueChange)="onCancelDateChange($event)">
 
-                    (valueChange)="onValueChange()"
+                        </app-datepicker>
 
-                    [disabled]="isViewMode">
+                        <app-textarea
 
-                </app-textbox>
+                            class="jvf-cx-reason"
 
+                            label="Reason"
 
-            </app-form-section>
+                            placeholder="Why is this voucher cancelled?"
 
+                            [required]="true"
 
+                            [rows]="4"
 
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
+                            [maxLength]="500"
 
-            <app-form-section
+                            [value]="cancelReason"
 
-                title="Status Information"
+                            (valueChange)="onCancelReasonChange($event)">
 
-                icon="fas fa-toggle-on">
+                        </app-textarea>
 
+                    </div>
 
-                <!-- Status -->
+                </div>
 
-                <app-dropdown
 
-                    label="Status"
+                <!-- Footer -->
 
-                    [items]="statusItems"
+                <div class="jvf-modal-foot">
 
-                    labelField="text"
+                    <span class="jvf-modal-note">
 
-                    valueField="value"
+                        <i class="fas fa-circle-info"></i>
 
-                    [(value)]="entity.status"
+                        Date and reason are required.
 
-                    (valueChange)="onValueChange()"
+                    </span>
 
-                    [disabled]="isViewMode"
+                    <button
 
-                    [required]="true">
+                        type="button"
 
-                </app-dropdown>
+                        class="jvf-btn jvf-btn-light"
 
+                        (click)="closeCancel()">
 
-            </app-form-section>
+                        <i class="fas fa-arrow-left"></i>
 
+                        Keep Voucher
 
+                    </button>
 
-            <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
-            ============================================== -->
+                    <button
 
-            <app-form-section
+                        type="button"
 
-                title="Additional Information"
+                        class="jvf-btn jvf-btn-danger"
 
-                icon="fas fa-clipboard">
+                        (click)="confirmCancel()">
 
+                        <i class="fas fa-ban"></i>
 
-                <!-- Remarks -->
+                        Cancel Voucher
 
-                <app-textarea
+                    </button>
 
-                    label="Remarks"
+                </div>
 
-                    placeholder="Enter remarks"
+            </div>
 
-                    [(value)]="entity.remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-
-            </app-form-section>
-
-
-        </app-form-grid>
-
-    </app-page-canvas>
+        </div>
+    }
 
 </div>
 
 
 
-<!-- =====================================================
+<!-- =========================================================
      UTILITIES
-====================================================== -->
+========================================================== -->
 
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

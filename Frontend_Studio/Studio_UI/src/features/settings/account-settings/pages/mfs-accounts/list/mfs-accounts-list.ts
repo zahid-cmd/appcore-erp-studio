@@ -896,6 +896,9 @@ implements OnInit, OnDestroy
             LinkedBankAccount:
                 this.text(item, 'LinkedBankAccount'),
 
+            LinkedBankAccountName:
+                this.text(item, 'LinkedBankAccountName'),
+
             MFSAccountNumber:
                 this.text(item, 'MFSAccountNumber'),
 
@@ -1377,6 +1380,7 @@ implements OnInit, OnDestroy
                         item.Branch,
                         item.AccountSubGroupName,
                         item.LinkedBankAccount,
+                        item.LinkedBankAccountName,
                         item.MFSChargesText,
                         item.CollectionAccountText,
                         item.PaymentAccountText,

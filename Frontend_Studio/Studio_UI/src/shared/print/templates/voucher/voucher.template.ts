@@ -55,12 +55,24 @@ export function voucherDocumentHtml
     let serial =
         0;
 
+    // Group separator rows (Journal Voucher) where the label changes
+    let group =
+        '';
+
     const rows =
         model.lines
             .map
             (
                 line =>
                 {
+                    const separator =
+                        line.group && line.group !== group
+                            ? `<tr class="vd-group"><td colspan="5">${e(line.group)}</td></tr>`
+                            : '';
+
+                    group =
+                        line.group ?? '';
+
                     const sl =
                         line.system
                             ? ''
@@ -71,7 +83,7 @@ export function voucherDocumentHtml
                             ? ` <span class="vd-code">· ${e(line.code)}</span>`
                             : '';
 
-                    return `<tr class="${line.system ? 'vd-sys' : ''}">
+                    return `${separator}<tr class="${line.system ? 'vd-sys' : ''}">
 <td class="vd-c vd-sl">${sl}</td>
 <td><div class="vd-main">${e(line.name)}${code}</div>${line.details ? `<div class="vd-sub">${e(line.details)}</div>` : ''}</td>
 <td class="vd-notes">${e(line.notes)}</td>
