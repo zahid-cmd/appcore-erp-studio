@@ -144,7 +144,7 @@ public class ServiceCategoryController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateServiceCategoryDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -187,7 +187,7 @@ public class ServiceCategoryController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -228,7 +228,7 @@ public class ServiceCategoryController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -268,7 +268,7 @@ public class ServiceCategoryController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored;
 

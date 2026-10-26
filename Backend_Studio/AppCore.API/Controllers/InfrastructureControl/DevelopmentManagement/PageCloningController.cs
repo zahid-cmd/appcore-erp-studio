@@ -163,7 +163,7 @@ public class PageCloningController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreatePageCloningDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -196,7 +196,7 @@ public class PageCloningController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -227,7 +227,7 @@ public class PageCloningController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -252,7 +252,7 @@ public class PageCloningController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored =
             await _repository.RestoreAsync(
@@ -303,7 +303,7 @@ public class PageCloningController : ControllerBase
         long id,
         [FromQuery] bool overwriteEdited = false)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -333,7 +333,7 @@ public class PageCloningController : ControllerBase
         [FromBody] ClonePlanDto plan,
         [FromQuery] bool overwriteEdited = false)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -355,7 +355,7 @@ public class PageCloningController : ControllerBase
     public async Task<ActionResult<PageCloningResultDto>> RestoreToBaseline(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

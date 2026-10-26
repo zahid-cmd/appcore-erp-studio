@@ -129,7 +129,7 @@ public class BankSetupController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateBankSetupDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -164,7 +164,7 @@ public class BankSetupController : ControllerBase
     public async Task<IActionResult> Update(
         UpdateBankSetupDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -205,7 +205,7 @@ public class BankSetupController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -245,7 +245,7 @@ public class BankSetupController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

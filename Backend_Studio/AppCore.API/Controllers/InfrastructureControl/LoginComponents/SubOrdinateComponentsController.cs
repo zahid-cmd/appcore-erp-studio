@@ -2,6 +2,7 @@
 // Namespaces
 //===============================================================
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -121,6 +122,7 @@ public class SubOrdinateComponentsController
     // Get By Id
     //===========================================================
 
+    [AllowAnonymous]
     [HttpGet("{id:long}")]
 
     public async Task<IActionResult>

@@ -6,7 +6,7 @@
 
     <app-page-header
         title="Activity Management"
-        subtitle="Manage ERP master activities."
+        subtitle="Common activities show on every page; page actions only on their pages."
         icon="fas fa-list">
 
         <div pageHeaderCenter>
@@ -53,7 +53,8 @@
         <app-control-tabs
             pageToolbarLeft
             [tabs]="tabs"
-            [(selectedTab)]="selectedTab">
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
 
         </app-control-tabs>
 

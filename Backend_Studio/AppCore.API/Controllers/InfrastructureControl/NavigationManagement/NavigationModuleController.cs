@@ -211,7 +211,7 @@ public class NavigationModuleController : ControllerBase
                 "This display order is already assigned to another navigation module.");
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         long id =
             await _repository.CreateAsync(
@@ -260,7 +260,7 @@ public class NavigationModuleController : ControllerBase
                 "This display order is already assigned to another navigation module.");
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         await _repository.UpdateAsync(
             dto,
@@ -286,7 +286,7 @@ public class NavigationModuleController : ControllerBase
         }
 
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
 
         await _repository.DeleteAsync(
@@ -305,7 +305,7 @@ public class NavigationModuleController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored =
             await _repository.RestoreAsync(

@@ -148,7 +148,7 @@ public class ProductSubCategoryController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateProductSubCategoryDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -185,7 +185,7 @@ public class ProductSubCategoryController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -228,7 +228,7 @@ public class ProductSubCategoryController : ControllerBase
         // Current User
         //===========================================================
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         //===========================================================
         // Delete
@@ -274,7 +274,7 @@ public class ProductSubCategoryController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

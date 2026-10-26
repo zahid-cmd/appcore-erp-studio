@@ -100,6 +100,18 @@ export class MasterActivityService
     }
 
     //===========================================================
+    // Pages With Switches (submenu codes)
+    //===========================================================
+
+    getSwitchPages():
+        Observable<string[]>
+    {
+        return this.http.get<string[]>(
+            `${this.apiUrl}/switch-pages`
+        );
+    }
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 

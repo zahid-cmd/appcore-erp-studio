@@ -158,7 +158,7 @@ public class POSAccountsController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreatePOSAccountDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -197,7 +197,7 @@ public class POSAccountsController : ControllerBase
     public async Task<IActionResult> Update(
         UpdatePOSAccountDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -238,7 +238,7 @@ public class POSAccountsController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -278,7 +278,7 @@ public class POSAccountsController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

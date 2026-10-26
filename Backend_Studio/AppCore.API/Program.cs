@@ -4,11 +4,14 @@
 
 using System.Text;
 
+using Microsoft.AspNetCore.Authorization;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 using AppCore.Api.BackgroundJobs;
 using AppCore.Application;
+using AppCore.Application.Platform.CurrentUser;
 using AppCore.Infrastructure;
 
 
@@ -27,6 +30,25 @@ var builder =
 //===============================================================
 
 builder.Services.AddControllers();
+
+
+//===============================================================
+// Current User
+//===============================================================
+//
+// Reads the logged-in user (UserProfileId, Login ID, Display
+// Name, Branch) from the login token of the current request.
+//
+// Controllers : this.CurrentUserId() / this.CurrentUserName()
+// Repositories: inject ICurrentUserService
+//
+// Outside a request (background jobs) it falls back to System.
+//
+//===============================================================
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 
 //===============================================================
@@ -162,8 +184,31 @@ builder.Services.AddAuthentication(
 //===============================================================
 // Authorization
 //===============================================================
+//
+// Login required everywhere (fallback policy).
+//
+// Every controller / endpoint needs a valid login token unless it
+// is marked [AllowAnonymous]. Open endpoints (used by the login
+// page before anyone is logged in) :
+//
+//     api/authentication/login, register, forgot-password/*
+//     api/infrastructure-control/application-configuration/login-pages/active
+//     api/infrastructure-control/login-components/sub-ordinate-components/{id}
+//     api/settings/general-settings/company        (GET list : name on login)
+//     api/platform/current-user                    (who am I)
+//
+// Static files (wwwroot/uploads) and Swagger are not affected.
+//===============================================================
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(
+    options =>
+    {
+        options.FallbackPolicy =
+            new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+    }
+);
 
 
 //===============================================================

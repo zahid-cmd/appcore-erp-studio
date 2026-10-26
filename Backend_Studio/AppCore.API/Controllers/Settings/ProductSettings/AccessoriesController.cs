@@ -125,7 +125,7 @@ public class AccessoriesController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateAccessoriesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -156,7 +156,7 @@ public class AccessoriesController : ControllerBase
     public async Task<IActionResult> Update(
         UpdateAccessoriesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -192,7 +192,7 @@ public class AccessoriesController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -221,7 +221,7 @@ public class AccessoriesController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

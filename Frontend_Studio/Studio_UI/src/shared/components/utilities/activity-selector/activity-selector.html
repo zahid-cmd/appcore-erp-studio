@@ -1,57 +1,65 @@
-<div class="activity-selector">
+<div class="activity-selector act-grid">
 
     <!--========================================================
-        ALL
+        ALL (single, vertically centred)
     =========================================================-->
 
-    @if (hasActivities)
-    {
-        <div class="activity-item activity-all">
-
+    <div class="act-all">
+        @if (hasActivities)
+        {
             <app-checkbox
-
                 [readOnly]="readOnly"
-
-                [(value)]="allChecked"
-
-                (valueChange)="onAllChanged()">
-
+                [value]="allChecked"
+                (valueChange)="onAllChanged($event)">
             </app-checkbox>
 
-            <span class="activity-text">
-
-                All
-
-            </span>
-
-        </div>
-    }
+            <span class="act-text act-text-all">All</span>
+        }
+    </div>
 
     <!--========================================================
-        ACTIVITIES
+        COMMON ACTIVITIES (3 columns, two lines)
     =========================================================-->
 
-    @for(activity of activities; track activity.id)
-    {
-        <div class="activity-item">
+    <div class="act-common">
+        @for (activity of commonActivities; track activity.id)
+        {
+            <div class="act-item" [attr.title]="activity.text">
+                <app-checkbox
+                    [readOnly]="readOnly"
+                    [(value)]="activity.checked"
+                    (valueChange)="onCheckedChanged()">
+                </app-checkbox>
 
-            <app-checkbox
+                <span class="act-text">{{ activity.text }}</span>
+            </div>
+        }
+    </div>
 
-                [readOnly]="readOnly"
+    <!--========================================================
+        PAGE ACTIONS (fixed slots, two lines)
+    =========================================================-->
 
-                [(value)]="activity.checked"
+    <div class="act-page" [style.grid-template-columns]="slotColumns">
+        @for (slot of pageSlots; track slot.key)
+        {
+            @if (slotItem(slot); as activity)
+            {
+                <div class="act-item" [attr.title]="activity.text">
+                    <app-checkbox
+                        [readOnly]="readOnly"
+                        [(value)]="activity.checked"
+                        (valueChange)="onCheckedChanged()">
+                    </app-checkbox>
 
-                (valueChange)="onCheckedChanged()">
-
-            </app-checkbox>
-
-            <span class="activity-text">
-
-                {{ activity.text }}
-
-            </span>
-
-        </div>
-    }
+                    <span class="act-text act-text-page">{{ activity.text }}</span>
+                </div>
+            }
+            @else
+            {
+                <div class="act-item act-slot-empty" aria-hidden="true"></div>
+            }
+        }
+    </div>
 
 </div>

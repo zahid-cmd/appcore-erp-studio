@@ -36,138 +36,49 @@
 
                             <div class="permission-header">
 
-                                <div class="permission-header-content">
-
+                                <!-- All : single, centred -->
+                                <div class="permission-header-all">
                                     <div class="permission-header-action">
-
                                         <app-checkbox
                                             color="success"
                                             [readOnly]="readOnly"
                                             [value]="headerCheckboxStates['all']"
-                                            (valueChange)="
-                                                onHeaderCheckboxChanged(
-                                                    'all',
-                                                    $event
-                                                )
-                                            ">
+                                            (valueChange)="onHeaderCheckboxChanged('all', $event)">
                                         </app-checkbox>
-
-                                        <span class="permission-header-label">
-                                            Select All
-                                        </span>
-
+                                        <span class="permission-header-label">Select All</span>
                                     </div>
+                                </div>
 
-                                    <span class="permission-header-divider">|</span>
+                                <!-- Common : one "All" per column (same grid as the rows) -->
+                                <div class="permission-header-common">
+                                    @for (activity of commonColumns; track activity.id)
+                                    {
+                                        <div class="permission-header-action" [attr.title]="activity.text + ' : every row'">
+                                            <app-checkbox
+                                                color="success"
+                                                [readOnly]="readOnly"
+                                                [value]="columnState([activity.id])"
+                                                (valueChange)="onColumnChanged([activity.id], $event)">
+                                            </app-checkbox>
+                                            <span class="permission-header-label">{{ activity.text }} All</span>
+                                        </div>
+                                    }
+                                </div>
 
-                                    <div class="permission-header-action">
-
-                                        <app-checkbox
-                                            color="success"
-                                            [readOnly]="readOnly"
-                                            [value]="headerCheckboxStates['view']"
-                                            (valueChange)="
-                                                onHeaderCheckboxChanged(
-                                                    'view',
-                                                    $event
-                                                )
-                                            ">
-                                        </app-checkbox>
-
-                                        <span class="permission-header-label">
-                                            View All
-                                        </span>
-
-                                    </div>
-
-                                    <span class="permission-header-divider">|</span>
-
-                                    <div class="permission-header-action">
-
-                                        <app-checkbox
-                                            color="success"
-                                            [readOnly]="readOnly"
-                                            [value]="headerCheckboxStates['add']"
-                                            (valueChange)="
-                                                onHeaderCheckboxChanged(
-                                                    'add',
-                                                    $event
-                                                )
-                                            ">
-                                        </app-checkbox>
-
-                                        <span class="permission-header-label">
-                                            Add All
-                                        </span>
-
-                                    </div>
-
-                                    <span class="permission-header-divider">|</span>
-
-                                    <div class="permission-header-action">
-
-                                        <app-checkbox
-                                            color="success"
-                                            [readOnly]="readOnly"
-                                            [value]="headerCheckboxStates['update']"
-                                            (valueChange)="
-                                                onHeaderCheckboxChanged(
-                                                    'update',
-                                                    $event
-                                                )
-                                            ">
-                                        </app-checkbox>
-
-                                        <span class="permission-header-label">
-                                            Update All
-                                        </span>
-
-                                    </div>
-
-                                    <span class="permission-header-divider">|</span>
-
-                                    <div class="permission-header-action">
-
-                                        <app-checkbox
-                                            color="success"
-                                            [readOnly]="readOnly"
-                                            [value]="headerCheckboxStates['delete']"
-                                            (valueChange)="
-                                                onHeaderCheckboxChanged(
-                                                    'delete',
-                                                    $event
-                                                )
-                                            ">
-                                        </app-checkbox>
-
-                                        <span class="permission-header-label">
-                                            Delete All
-                                        </span>
-
-                                    </div>
-
-                                    <span class="permission-header-divider">|</span>
-
-                                    <div class="permission-header-action">
-
-                                        <app-checkbox
-                                            color="success"
-                                            [readOnly]="readOnly"
-                                            [value]="headerCheckboxStates['restore']"
-                                            (valueChange)="
-                                                onHeaderCheckboxChanged(
-                                                    'restore',
-                                                    $event
-                                                )
-                                            ">
-                                        </app-checkbox>
-
-                                        <span class="permission-header-label">
-                                            Restore All
-                                        </span>
-
-                                    </div>
-
+                                <!-- Page actions : one "All" per slot -->
+                                <div class="permission-header-page" [style.grid-template-columns]="slotColumns">
+                                    @for (slot of pageSlots; track slot.key)
+                                    {
+                                        <div class="permission-header-action" [attr.title]="slot.label + ' : every row'">
+                                            <app-checkbox
+                                                color="success"
+                                                [readOnly]="readOnly"
+                                                [value]="columnState(slot.ids)"
+                                                (valueChange)="onColumnChanged(slot.ids, $event)">
+                                            </app-checkbox>
+                                            <span class="permission-header-label">{{ slot.label }}</span>
+                                        </div>
+                                    }
                                 </div>
 
                             </div>
@@ -192,7 +103,7 @@
         Body
     =========================================================-->
 
-    <div class="list-table-body">
+    <div class="list-table-body appcore-scrollbar">
 
         <div
             *ngIf="loading"
@@ -250,7 +161,8 @@
                         [style.width]="column.width"
                         [class.left]="column.align === 'left'"
                         [class.center]="column.align === 'center'"
-                        [class.right]="column.align === 'right'">
+                        [class.right]="column.align === 'right'"
+                        [class.permission-cell]="column.type === 'masterActivities'">
 
                         <ng-container
                             *ngIf="
@@ -272,6 +184,7 @@
                             ">
 
                             <app-activity-selector
+                                [pageSlots]="pageSlots"
                                 [readOnly]="readOnly"
                                 [(activities)]="row.masterActivities"
                                 (changed)="onActivityChanged()">

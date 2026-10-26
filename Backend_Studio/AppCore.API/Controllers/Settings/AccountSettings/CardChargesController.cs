@@ -174,7 +174,7 @@ public class CardChargesController : ControllerBase
     public async Task<IActionResult> Create(
         [FromBody] CreateCardChargesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -210,7 +210,7 @@ public class CardChargesController : ControllerBase
     public async Task<IActionResult> Update(
         [FromBody] UpdateCardChargesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -254,7 +254,7 @@ public class CardChargesController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -292,7 +292,7 @@ public class CardChargesController : ControllerBase
     public async Task<IActionResult> Delete(
         long posAccountId)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

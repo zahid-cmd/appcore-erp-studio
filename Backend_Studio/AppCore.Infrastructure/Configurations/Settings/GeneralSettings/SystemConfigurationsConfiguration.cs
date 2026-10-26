@@ -76,16 +76,110 @@ public class SystemConfigurationsConfiguration
 
 
         //=======================================================
-        // Configuration Name (unique per module, active rows)
+        // Configuration Name
+        //
+        // Unique per module + page / menu among active rows :
+        // index "UX_SystemConfigurations_Scope_Name" (an
+        // expression index, created by
+        // SystemConfigurations_Redesign.sql; the repository
+        // checks it too).
         //=======================================================
 
         builder.Property(x => x.ConfigurationName)
                .IsRequired()
                .HasMaxLength(200);
 
-        builder.HasIndex(x => new { x.NavigationModuleId, x.ConfigurationName })
-               .IsUnique()
-               .HasFilter("\"IsDeleted\" = false");
+
+        //=======================================================
+        // Scope : Module / Menu / Submenu (linked by code)
+        //=======================================================
+
+        builder.Property(x => x.ScopeType)
+               .IsRequired()
+               .HasMaxLength(10)
+               .HasDefaultValue("Module");
+
+        builder.Property(x => x.NavigationMenuCode)
+               .HasMaxLength(30);
+
+        builder.Property(x => x.NavigationSubmenuCode)
+               .HasMaxLength(30);
+
+        builder.HasIndex(x => x.NavigationSubmenuCode)
+               .HasDatabaseName("IX_SystemConfigurations_SubmenuCode");
+
+
+        //=======================================================
+        // ON / OFF texts
+        //=======================================================
+
+        builder.Property(x => x.OnDescription)
+               .IsRequired()
+               .HasMaxLength(300)
+               .HasDefaultValue(string.Empty);
+
+        builder.Property(x => x.OffDescription)
+               .IsRequired()
+               .HasMaxLength(300)
+               .HasDefaultValue(string.Empty);
+
+
+        //=======================================================
+        // Value definition
+        //=======================================================
+
+        builder.Property(x => x.ValueType)
+               .IsRequired()
+               .HasMaxLength(10)
+               .HasDefaultValue("None");
+
+        builder.Property(x => x.ValueUnit)
+               .IsRequired()
+               .HasMaxLength(30)
+               .HasDefaultValue(string.Empty);
+
+        builder.Property(x => x.ValueMin);
+
+        builder.Property(x => x.ValueMax);
+
+        builder.Property(x => x.ValueEmptyText)
+               .IsRequired()
+               .HasMaxLength(40)
+               .HasDefaultValue(string.Empty);
+
+
+        //=======================================================
+        // Defaults
+        //=======================================================
+
+        builder.Property(x => x.DefaultEnabled)
+               .IsRequired()
+               .HasDefaultValue(false);
+
+        builder.Property(x => x.DefaultValue)
+               .IsRequired()
+               .HasMaxLength(100)
+               .HasDefaultValue(string.Empty);
+
+
+        //=======================================================
+        // Parent / flags / order
+        //=======================================================
+
+        builder.Property(x => x.ParentConfigurationCode)
+               .HasMaxLength(50);
+
+        builder.Property(x => x.IsCritical)
+               .IsRequired()
+               .HasDefaultValue(false);
+
+        builder.Property(x => x.IsSystemDefined)
+               .IsRequired()
+               .HasDefaultValue(false);
+
+        builder.Property(x => x.DisplayOrder)
+               .IsRequired()
+               .HasDefaultValue(0);
 
 
         //=======================================================

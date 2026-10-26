@@ -156,7 +156,7 @@ public class NavigationSubmenuController : ControllerBase
                 "This route key already exists in the selected navigation menu.");
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         long id =
             await _repository.CreateAsync(
@@ -189,7 +189,7 @@ public class NavigationSubmenuController : ControllerBase
                 "This route key already exists in the selected navigation menu.");
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         await _repository.UpdateAsync(
             dto,
@@ -212,7 +212,7 @@ public class NavigationSubmenuController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         await _repository.DeleteAsync(
             id,
@@ -229,7 +229,7 @@ public class NavigationSubmenuController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored =
             await _repository.RestoreAsync(

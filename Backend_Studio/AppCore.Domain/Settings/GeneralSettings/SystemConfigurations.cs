@@ -8,12 +8,27 @@ namespace AppCore.Domain.Entities.Settings.GeneralSettings;
 //===============================================================
 // System Configurations
 //
-// A switchable setting that belongs to one Navigation Module.
-// ConfigurationCode is system generated per module and never
-// reused : CFG-<ModuleCode>-0001
+// A switchable setting. ConfigurationCode is system generated
+// per module and never reused : CFG-<ModuleCode>-0001. Pages and
+// the server read a switch by its CODE only.
 //
-// Value (optional) : a number or short text the setting needs,
-// e.g. Max Lines = 20. Empty for plain on/off settings.
+// Scope (who may change it) :
+//
+//   Module  : module-wide system switch      → admin only
+//   Menu    : menu-wide system switch        → admin only
+//   Submenu : page switch (one submenu)      → admin, or a user
+//             with "Change Configuration" on that submenu
+//
+// Menu / submenu are linked by CODE (NavigationMenus.Code,
+// NavigationSubmenus.Code).
+//
+// Value (optional) : ValueType None / Number / Text. A Number
+// is a whole number between ValueMin and ValueMax; empty is
+// allowed only when ValueEmptyText is set ("No limit").
+//
+// IsCritical : a reason is required, and a change by a non-admin
+// waits for approval (SystemConfigurationRequests).
+// IsSystemDefined : read by code somewhere → cannot be deleted.
 //===============================================================
 
 public class SystemConfigurations
@@ -33,6 +48,17 @@ public class SystemConfigurations
 
 
     //===========================================================
+    // Scope : Module / Menu / Submenu, linked by code
+    //===========================================================
+
+    public string ScopeType { get; set; } = "Module";
+
+    public string? NavigationMenuCode { get; set; }
+
+    public string? NavigationSubmenuCode { get; set; }
+
+
+    //===========================================================
     // Configuration Code (auto generated)
     //===========================================================
 
@@ -47,6 +73,15 @@ public class SystemConfigurations
 
 
     //===========================================================
+    // What ON and OFF do (the two lines on the card)
+    //===========================================================
+
+    public string OnDescription { get; set; } = string.Empty;
+
+    public string OffDescription { get; set; } = string.Empty;
+
+
+    //===========================================================
     // Enabled / Disabled
     //===========================================================
 
@@ -58,6 +93,47 @@ public class SystemConfigurations
     //===========================================================
 
     public string Value { get; set; } = string.Empty;
+
+    // None / Number / Text
+    public string ValueType { get; set; } = "None";
+
+    // e.g. "days", "lines"
+    public string ValueUnit { get; set; } = string.Empty;
+
+    public int? ValueMin { get; set; }
+
+    public int? ValueMax { get; set; }
+
+    // Shown when Value is empty (e.g. "No limit"); empty text =
+    // an empty Value is not allowed for a Number
+    public string ValueEmptyText { get; set; } = string.Empty;
+
+
+    //===========================================================
+    // Defaults (Reset to default / "Changed" dot)
+    //===========================================================
+
+    public bool DefaultEnabled { get; set; }
+
+    public string DefaultValue { get; set; } = string.Empty;
+
+
+    //===========================================================
+    // Parent switch (this one only works while the parent is ON)
+    //===========================================================
+
+    public string? ParentConfigurationCode { get; set; }
+
+
+    //===========================================================
+    // Flags
+    //===========================================================
+
+    public bool IsCritical { get; set; }
+
+    public bool IsSystemDefined { get; set; }
+
+    public int DisplayOrder { get; set; }
 
 
     //===========================================================

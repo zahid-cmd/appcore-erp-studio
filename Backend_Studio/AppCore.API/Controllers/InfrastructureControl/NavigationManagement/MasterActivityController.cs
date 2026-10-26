@@ -98,6 +98,18 @@ public class MasterActivityController : ControllerBase
     }
 
     //===============================================================
+    // Pages With Switches (submenu codes)
+    //===============================================================
+
+    [HttpGet("switch-pages")]
+
+    public async Task<ActionResult<List<string>>> GetSwitchPagesAsync()
+    {
+        return Ok(
+            await _repository.GetSwitchPageCodesAsync());
+    }
+
+    //===============================================================
     // Create
     //===============================================================
 
@@ -106,14 +118,21 @@ public class MasterActivityController : ControllerBase
     public async Task<ActionResult<long>> CreateAsync(
         CreateMasterActivityDto dto)
     {
-        long userId = 1;
+        long userId = this.CurrentUserId();
 
-        long id =
-            await _repository.CreateAsync(
-                dto,
-                userId);
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
 
-        return Ok(id);
+            return Ok(id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     //===============================================================
@@ -130,13 +149,20 @@ public class MasterActivityController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+        long userId = this.CurrentUserId();
 
-        await _repository.UpdateAsync(
-            dto,
-            userId);
+        try
+        {
+            await _repository.UpdateAsync(
+                dto,
+                userId);
 
-        return NoContent();
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     //===============================================================
@@ -153,7 +179,7 @@ public class MasterActivityController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+        long userId = this.CurrentUserId();
 
         await _repository.DeleteAsync(
             id,
@@ -161,6 +187,7 @@ public class MasterActivityController : ControllerBase
 
         return NoContent();
     }
+
     //===============================================================
     // Restore
     //===============================================================
@@ -169,11 +196,20 @@ public class MasterActivityController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+        long userId = this.CurrentUserId();
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
+        bool restored;
+
+        try
+        {
+            restored =
+                await _repository.RestoreAsync(
+                    userId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
 
         if (!restored)
         {
@@ -183,6 +219,7 @@ public class MasterActivityController : ControllerBase
 
         return NoContent();
     }
+
     //===============================================================
     // Get History
     //===============================================================

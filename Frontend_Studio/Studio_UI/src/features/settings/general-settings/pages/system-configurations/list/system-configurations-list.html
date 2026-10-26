@@ -5,603 +5,649 @@
     ====================================================== -->
 
     <app-page-header
-
         title="System Configurations"
-
-        subtitle="Turn module features on or off"
-
+        [subtitle]="subtitle"
         icon="fas fa-sliders">
 
         <div pageHeaderCenter>
-
             <app-search-box
-
                 [(value)]="searchText"
-
-                placeholder="Search settings..."
-
+                placeholder="Search name, code or description..."
                 (valueChange)="onSearch($event)">
-
             </app-search-box>
-
         </div>
-
 
         <div pageHeaderRight>
-
             <app-command-center
-
                 command1Text="Add"
-
                 command1Icon="fas fa-plus"
-
+                [command1Visible]="canManage"
                 (command1Click)="add()"
-
                 command2Text="Refresh"
-
                 command2Icon="fas fa-rotate-right"
-
                 (command2Click)="refresh()"
-
                 command3Text="Restore"
-
                 command3Icon="fas fa-trash-arrow-up"
-
+                [command3Visible]="canManage"
                 (command3Click)="restore()"
-
                 rightCommandIcon="fas fa-clock-rotate-left"
-
+                rightCommandTitle="History"
                 (rightCommandClick)="openHistory()">
-
             </app-command-center>
-
         </div>
-
     </app-page-header>
 
 
-
     <!-- =====================================================
-         PAGE TOOLBAR
+         PAGE TOOLBAR : tabs (left) · module / menu (right)
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <!-- =================================================
-             TABS + COUNTERS
-        ================================================== -->
-
-        <div
-
+        <app-control-tabs
             pageToolbarLeft
-
-            class="sc-toolbar-left">
-
-            <app-control-tabs
-
-                [tabs]="tabs"
-
-                [(selectedTab)]="selectedTab">
-
-            </app-control-tabs>
-
-
-            <div class="sc-counters">
-
-                <div
-
-                    class="sc-counter"
-
-                    title="Total settings">
-
-                    <span class="sc-counter-icon sc-counter-total">
-                        <i class="fas fa-sliders"></i>
-                    </span>
-
-                    <span class="sc-counter-value">{{ totalCount }}</span>
-
-                    <span class="sc-counter-label">Total</span>
-
-                </div>
-
-
-                <div
-
-                    class="sc-counter"
-
-                    title="Enabled settings">
-
-                    <span class="sc-counter-icon sc-counter-on">
-                        <i class="fas fa-toggle-on"></i>
-                    </span>
-
-                    <span class="sc-counter-value">{{ enabledCount }}</span>
-
-                    <span class="sc-counter-label">Enabled</span>
-
-                </div>
-
-
-                <div
-
-                    class="sc-counter"
-
-                    title="Disabled settings">
-
-                    <span class="sc-counter-icon sc-counter-off">
-                        <i class="fas fa-toggle-off"></i>
-                    </span>
-
-                    <span class="sc-counter-value">{{ disabledCount }}</span>
-
-                    <span class="sc-counter-label">Disabled</span>
-
-                </div>
-
-
-                <div
-
-                    class="sc-counter"
-
-                    title="Modules that have at least one setting">
-
-                    <span class="sc-counter-icon sc-counter-modules">
-                        <i class="fas fa-layer-group"></i>
-                    </span>
-
-                    <span class="sc-counter-value">{{ activeModuleCount }}</span>
-
-                    <span class="sc-counter-label">Modules</span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             FILTERS : MODULE + ENABLED
-        ================================================== -->
+            [tabs]="tabs"
+            [selectedTab]="view"
+            (selectedTabChange)="onTabChange($event)">
+        </app-control-tabs>
 
         <div
-
             pageToolbarRight
+            class="sc-filters">
 
-            style="display:flex;gap:12px">
-
-            <div style="width:220px">
+            @if (view === 'settings' && hasAccess)
+            {
 
                 <app-search-dropdown
-
+                    class="sc-filter-module"
                     placeholder="All Modules"
-
-                    [items]="moduleFilterItems"
-
+                    [items]="moduleItems"
                     labelField="label"
-
                     valueField="value"
-
-                    [value]="selectedModule"
-
-                    (valueChange)="onModuleFilterChange($event)">
-
+                    [value]="selectedModuleId"
+                    (valueChange)="onModuleFilter($event)">
                 </app-search-dropdown>
-
-            </div>
-
-
-            <div style="width:200px">
 
                 <app-search-dropdown
-
-                    placeholder="All Settings"
-
-                    [items]="enabledFilterItems"
-
+                    class="sc-filter-menu"
+                    placeholder="All Menus"
+                    [items]="menuItems"
                     labelField="label"
-
                     valueField="value"
-
-                    [value]="selectedEnabled"
-
-                    (valueChange)="onEnabledFilterChange($event)">
-
+                    [value]="selectedMenuCode"
+                    (valueChange)="onMenuFilter($event)">
                 </app-search-dropdown>
 
-            </div>
-
+                <app-search-dropdown
+                    class="sc-filter-submenu"
+                    placeholder="All Submenus"
+                    [items]="submenuItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="selectedSubmenuCode"
+                    (valueChange)="onSubmenuFilter($event)">
+                </app-search-dropdown>
+            }
         </div>
-
     </app-page-toolbar>
 
 
-
     <!-- =====================================================
-         MODULE PANELS (scroll inside the page)
+         STATES : loading / failed / no access
     ====================================================== -->
 
-    <div class="sc-scroll appcore-scrollbar">
-
-        @if (loading)
-        {
+    @if (loading && !workspace)
+    {
+        <div class="sc-body">
+        <div class="sc-scroll">
             <div class="sc-grid">
-
-                @for (n of [1, 2, 3, 4]; track n)
+                @for (n of [1, 2, 3, 4, 5, 6, 7, 8]; track n)
                 {
-                    <div class="sc-panel sc-panel-skeleton">
+                    <div class="sc-card sc-card-skeleton"></div>
+                }
+            </div>
+        </div>
+        </div>
+    }
+    @else if (loadFailed)
+    {
+        <div class="sc-state">
+            <app-empty-state
+                icon="fas fa-triangle-exclamation"
+                title="Unable to Load Configurations"
+                subtitle="Check your connection and try again."
+                actionText="Try Again"
+                [showAction]="true"
+                (action)="refresh()">
+            </app-empty-state>
+        </div>
+    }
+    @else if (workspace && !hasAccess)
+    {
+        <div class="sc-state">
+            <app-empty-state
+                icon="fas fa-lock"
+                title="No Configuration Access"
+                subtitle="Ask an administrator for 'Change Configuration' on your pages, or 'Manage Configurations' on this page.">
+            </app-empty-state>
+        </div>
+    }
+    @else if (workspace)
+    {
+        <div class="sc-body">
 
-                        <div class="sc-panel-header">
-                            <span class="sc-skeleton sc-skeleton-title"></span>
-                        </div>
+        <!-- =================================================
+             SCROLL AREA
+        ================================================== -->
 
-                        <div class="sc-panel-body">
-                            <span class="sc-skeleton sc-skeleton-card"></span>
-                            <span class="sc-skeleton sc-skeleton-card"></span>
-                        </div>
+        <div class="sc-scroll appcore-scrollbar" [class.sc-scroll-fill]="view === 'pending' || sections.length === 0">
 
+            @if (view === 'settings')
+            {
+                @if (sections.length === 0)
+                {
+                    <div class="sc-fill-empty">
+                        <app-empty-state
+                            [icon]="emptyIcon"
+                            [title]="emptyTitle"
+                            [subtitle]="emptyText">
+                        </app-empty-state>
                     </div>
                 }
 
-            </div>
-        }
-        @else if (loadFailed)
-        {
-            <div class="sc-page-state">
-
-                <app-empty-state
-
-                    icon="fas fa-triangle-exclamation"
-
-                    title="Unable to Load Configurations"
-
-                    subtitle="Check your connection and try again."
-
-                    actionText="Try Again"
-
-                    [showAction]="true"
-
-                    (action)="refresh()">
-
-                </app-empty-state>
-
-            </div>
-        }
-        @else if (!hasModules)
-        {
-            <div class="sc-page-state">
-
-                <app-empty-state
-
-                    icon="fas fa-cubes"
-
-                    title="No Modules Found"
-
-                    subtitle="Panels appear here automatically when modules are added in Navigation Management."
-
-                    [showAction]="false">
-
-                </app-empty-state>
-
-            </div>
-        }
-        @else if (panels.length === 0)
-        {
-            <div class="sc-page-state">
-
-                <app-empty-state
-
-                    icon="fas fa-magnifying-glass"
-
-                    title="No Matching Settings"
-
-                    subtitle="No configuration matches the current search or filters."
-
-                    actionText="Clear Filters"
-
-                    [showAction]="true"
-
-                    (action)="clearFilters()">
-
-                </app-empty-state>
-
-            </div>
-        }
-        @else
-        {
-            <div class="sc-grid">
-
-                @for (panel of panels; track panel.id)
+                @for (section of sections; track section.key)
                 {
-                    <section class="sc-panel">
+                    <section class="sc-section" [attr.aria-label]="section.title">
 
-                        <!-- PANEL HEADER -->
-
-                        <header class="sc-panel-header">
-
-                            <div class="sc-panel-title">
-
-                                <span class="sc-panel-icon">
-                                    <i [class]="panel.icon"></i>
-                                </span>
-
-                                <span class="sc-panel-name">{{ panel.name }}</span>
-
-                                @if (!panel.isActive)
-                                {
-                                    <span
-
-                                        class="sc-panel-inactive"
-
-                                        title="This module is inactive in Navigation Management">
-
-                                        Inactive
-
-                                    </span>
-                                }
-
-                            </div>
-
-                            <div class="sc-panel-meta">
-
-                                <span
-
-                                    class="sc-panel-count"
-
-                                    [title]="panel.enabled + ' of ' + panel.total + ' enabled'">
-
-                                    {{ panel.enabled }} / {{ panel.total }}
-
-                                </span>
-
-                                <button
-
-                                    type="button"
-
-                                    class="sc-panel-add"
-
-                                    title="Add setting to {{ panel.name }}"
-
-                                    [disabled]="isProcessing"
-
-                                    (click)="addToModule(panel.id)">
-
-                                    <i class="fas fa-plus"></i>
-
-                                </button>
-
-                            </div>
-
-                        </header>
-
-                        <!-- PANEL PROGRESS -->
-
-                        <div class="sc-panel-progress">
-
+                        <div class="sc-section-head">
+                            <span class="sc-section-title">{{ section.title }}</span>
                             <span
-
-                                class="sc-panel-progress-bar"
-
-                                [style.width.%]="panel.total ? (panel.enabled / panel.total) * 100 : 0">
-
+                                class="sc-tag"
+                                [class.sc-tag-system]="section.isSystem"
+                                [class.sc-tag-page]="!section.isSystem">
+                                {{ section.subtitle }}
                             </span>
-
+                            <span class="sc-section-line"></span>
+                            <span class="sc-section-count">
+                                {{ section.onCount }} / {{ section.cards.length }} ON
+                            </span>
                         </div>
 
-                        <!-- PANEL BODY -->
-
-                        <div class="sc-panel-body">
-
-                            @for (item of panel.items; track item.SystemConfigurationId)
+                        <div class="sc-grid">
+                            @for (card of section.cards; track card.item.ConfigurationCode)
                             {
                                 <article
-
                                     class="sc-card"
+                                    [class.sc-card-on]="card.isLive"
+                                    [class.sc-card-staged]="card.isStaged"
+                                    [class.sc-card-blocked]="card.isBlocked"
+                                    [class.sc-card-pending]="card.item.IsPending">
 
-                                    [class.sc-card-off]="!item.IsEnabled">
-
+                                    <!-- Top : tile, name, toggle -->
                                     <div class="sc-card-top">
-
-                                        <span class="sc-code">{{ item.ConfigurationCode }}</span>
-
-                                        <div class="sc-card-actions">
-
-                                            <button
-
-                                                type="button"
-
-                                                class="sc-icon-btn"
-
-                                                title="View"
-
-                                                (click)="view(item)">
-
-                                                <i class="fas fa-eye"></i>
-
-                                            </button>
-
-                                            <button
-
-                                                type="button"
-
-                                                class="sc-icon-btn"
-
-                                                title="Edit"
-
-                                                (click)="edit(item)">
-
-                                                <i class="fas fa-pen"></i>
-
-                                            </button>
-
-                                            <button
-
-                                                type="button"
-
-                                                class="sc-icon-btn sc-icon-danger"
-
-                                                title="Delete"
-
-                                                (click)="delete(item)">
-
-                                                <i class="fas fa-trash"></i>
-
-                                            </button>
-
-                                        </div>
-
-                                    </div>
-
-                                    <div class="sc-card-name">{{ item.ConfigurationName }}</div>
-
-                                    @if (item.Remarks)
-                                    {
-                                        <div
-
-                                            class="sc-card-remarks"
-
-                                            [title]="item.Remarks">
-
-                                            {{ item.Remarks }}
-
-                                        </div>
-                                    }
-
-                                    <div class="sc-card-footer">
-
                                         <span
-
-                                            class="sc-state"
-
-                                            [class.sc-state-on]="item.IsEnabled">
-
-                                            <span class="sc-state-dot"></span>
-
-                                            {{ item.IsEnabled ? 'Enabled' : 'Disabled' }}
-
+                                            class="sc-tile"
+                                            [style.background]="card.iconBg"
+                                            [style.color]="card.iconFg">
+                                            {{ card.abbr }}
                                         </span>
 
-                                        @if (item.Value)
+                                        <div class="sc-card-title">
+                                            <span class="sc-card-name">{{ card.item.ConfigurationName }}</span>
+
+                                            @if (card.isBlocked)
+                                            {
+                                                <span class="sc-card-note sc-note-blocked">
+                                                    Needs “{{ card.parentName }}” ON
+                                                </span>
+                                            }
+
+                                            @if (card.item.IsPending)
+                                            {
+                                                <span class="sc-card-note sc-note-pending">
+                                                    <i class="fas fa-hourglass-half"></i>
+                                                    {{ card.pendingText }}
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            role="switch"
+                                            class="sc-toggle"
+                                            [class.sc-toggle-on]="card.isOn"
+                                            [attr.aria-checked]="card.isOn"
+                                            [attr.aria-label]="card.item.ConfigurationName"
+                                            [disabled]="card.toggleLocked"
+                                            (click)="toggle(card)">
+                                            <span class="sc-knob"></span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Middle : live ON / OFF lines -->
+                                    <div class="sc-lines">
+                                        <div class="sc-line" [class.sc-line-live]="card.isLive">
+                                            <span class="sc-ldot" [class.sc-ldot-on]="card.isLive"></span>
+                                            <b>ON</b>
+                                            <span>{{ card.item.OnDescription || '—' }}</span>
+                                        </div>
+                                        <div class="sc-line" [class.sc-line-live]="!card.isLive">
+                                            <span class="sc-ldot" [class.sc-ldot-off]="!card.isLive"></span>
+                                            <b>OFF</b>
+                                            <span>{{ card.item.OffDescription || '—' }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bottom : meta -->
+                                    <div class="sc-meta">
+                                        <span class="sc-code">{{ card.item.ConfigurationCode }}</span>
+
+                                        @if (card.item.IsCritical)
                                         {
-                                            <span
-
-                                                class="sc-value"
-
-                                                [class.sc-value-on]="item.IsEnabled"
-
-                                                [title]="'Value : ' + item.Value">
-
-                                                <i class="fas fa-hashtag"></i>
-
-                                                {{ item.Value }}
-
+                                            <span class="sc-tag sc-tag-critical">
+                                                <i class="fas fa-triangle-exclamation"></i>
+                                                Critical
                                             </span>
                                         }
 
-                                        <button
+                                        @if (card.isStaged)
+                                        {
+                                            <span class="sc-tag sc-tag-unsaved">Unsaved</span>
+                                        }
 
-                                            type="button"
+                                        @if (card.isChanged)
+                                        {
+                                            <span class="sc-changed">
+                                                <span class="sc-dot sc-dot-changed"></span>
+                                                Changed
+                                            </span>
+                                        }
 
-                                            role="switch"
+                                        @if (card.canReset)
+                                        {
+                                            <button type="button" class="sc-reset" (click)="reset(card)">Reset</button>
+                                        }
 
-                                            class="sc-switch"
+                                        <span class="sc-meta-gap"></span>
 
-                                            [class.sc-switch-on]="item.IsEnabled"
+                                        @if (card.hasValue && !card.isText)
+                                        {
+                                            <div class="sc-stepper" [class.sc-stepper-locked]="card.valueLocked">
+                                                <button
+                                                    type="button"
+                                                    aria-label="Decrease"
+                                                    [disabled]="card.valueLocked"
+                                                    (click)="stepValue(card, -1)">
+                                                    −
+                                                </button>
+                                                <span>{{ card.valueText }}</span>
+                                                <button
+                                                    type="button"
+                                                    aria-label="Increase"
+                                                    [disabled]="card.valueLocked"
+                                                    (click)="stepValue(card, 1)">
+                                                    +
+                                                </button>
+                                            </div>
+                                        }
 
-                                            [class.sc-switch-busy]="isToggling(item)"
+                                        @if (card.hasValue && card.isText)
+                                        {
+                                            <input
+                                                class="sc-text-value"
+                                                type="text"
+                                                maxlength="100"
+                                                [attr.aria-label]="card.item.ConfigurationName + ' value'"
+                                                [disabled]="card.valueLocked"
+                                                [ngModel]="card.value"
+                                                (ngModelChange)="onTextValue(card, $event)">
+                                        }
 
-                                            [attr.aria-checked]="item.IsEnabled"
-
-                                            [attr.aria-label]="(item.IsEnabled ? 'Disable ' : 'Enable ') + item.ConfigurationName"
-
-                                            [disabled]="isProcessing || isToggling(item)"
-
-                                            (click)="toggleEnabled(item)">
-
-                                            <span class="sc-switch-knob"></span>
-
-                                        </button>
-
+                                        @if (canManage)
+                                        {
+                                            <span class="sc-tools">
+                                                <button
+                                                    type="button"
+                                                    class="sc-icon-btn"
+                                                    aria-label="Edit definition"
+                                                    title="Edit definition"
+                                                    (click)="edit(card)">
+                                                    <i class="fas fa-pen"></i>
+                                                </button>
+                                                @if (card.item.IsSystemDefined)
+                                                {
+                                                    <span
+                                                        class="sc-icon-btn sc-icon-locked"
+                                                        role="img"
+                                                        aria-label="System switch: cannot be deleted"
+                                                        title="System switch: used by the app, so it cannot be deleted. Turn it OFF instead.">
+                                                        <i class="fas fa-lock"></i>
+                                                    </span>
+                                                }
+                                                @else
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="sc-icon-btn sc-icon-danger"
+                                                        aria-label="Delete"
+                                                        title="Delete"
+                                                        (click)="delete(card)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                            </span>
+                                        }
                                     </div>
-
                                 </article>
                             }
-
-                            <!-- EMPTY MODULE (quiet) -->
-
-                            @if (panel.items.length === 0)
-                            {
-                                <div class="sc-panel-empty">
-
-                                    <span class="sc-empty-icon">
-                                        <i class="fas fa-layer-group"></i>
-                                    </span>
-
-                                    <span class="sc-empty-title">No Settings Yet</span>
-
-                                    <span class="sc-empty-subtitle">
-
-                                        Nothing is configured for {{ panel.name }}.
-
-                                    </span>
-
-                                    <button
-
-                                        type="button"
-
-                                        class="sc-empty-action"
-
-                                        [disabled]="isProcessing"
-
-                                        (click)="addToModule(panel.id)">
-
-                                        <i class="fas fa-plus"></i>
-
-                                        Add Setting
-
-                                    </button>
-
-                                </div>
-                            }
-
                         </div>
-
                     </section>
                 }
+            }
+            @else
+            {
+                <!-- =============================================
+                     PENDING APPROVAL (admin)
+                ============================================== -->
 
+                <p class="sc-pending-intro">
+                    Critical changes requested by users with <b>Change Configuration</b>.
+                    Nothing changes until approved. A request is closed as stale if the
+                    switch changed after it was made.
+                </p>
+
+                @if (requestsLoading && requests.length === 0)
+                {
+                    <div class="sc-card sc-card-skeleton"></div>
+                }
+                @else if (requests.length === 0)
+                {
+                    <div class="sc-fill-empty">
+                        <app-empty-state
+                            icon="fas fa-user-check"
+                            title="No Changes Waiting"
+                            subtitle="Critical changes requested by page users will appear here for approval.">
+                        </app-empty-state>
+                    </div>
+                }
+
+                @for (request of requests; track request.SystemConfigurationRequestId)
+                {
+                    <div class="sc-request">
+                        <div class="sc-request-main">
+                            <div class="sc-meta sc-meta-plain">
+                                <span class="sc-code">{{ request.ConfigurationCode }}</span>
+                                <span class="sc-tag sc-tag-critical">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                    Critical
+                                </span>
+                                @if (request.IsStale)
+                                {
+                                    <span class="sc-tag sc-tag-stale">Stale · switch changed since the request</span>
+                                }
+                            </div>
+                            <div class="sc-card-name">{{ request.ConfigurationName }}</div>
+                            <div class="sc-request-place">
+                                {{ request.ModuleName }}{{ request.SubmenuName ? ' · ' + request.SubmenuName : '' }}
+                            </div>
+                            <div class="sc-arrow">
+                                <span class="sc-old">{{ requestFrom(request) }}</span>
+                                →
+                                <span class="sc-new">{{ requestTo(request) }}</span>
+                            </div>
+                            <div class="sc-request-reason"><b>Reason :</b> {{ request.Reason || '—' }}</div>
+                            <div class="sc-request-by">
+                                Requested by {{ request.RequestedByName }} · {{ recentWhen(request.RequestedDate) }}
+                            </div>
+                        </div>
+
+                        <div class="sc-request-actions">
+                            <button
+                                type="button"
+                                class="sc-btn"
+                                [disabled]="decidingId > 0"
+                                (click)="reject(request)">
+                                Reject
+                            </button>
+                            <button
+                                type="button"
+                                class="sc-btn sc-btn-primary"
+                                [disabled]="decidingId > 0 || request.IsStale"
+                                (click)="approve(request)">
+                                Approve
+                            </button>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+
+            <!-- =============================================
+                 RIGHT RAIL : status chips (with counts)
+            ============================================== -->
+
+            @if (view === 'settings')
+            {
+                <aside class="sc-rail appcore-scrollbar" aria-label="Filter by status">
+
+                    <div class="sc-rail-label">Show</div>
+
+                    <div class="sc-chip-list">
+                        @for (c of chips; track c.id)
+                        {
+                            <button
+                                type="button"
+                                class="sc-chip"
+                                [attr.data-chip]="c.id"
+                                [attr.title]="chipTitle(c.id)"
+                                [attr.aria-pressed]="chip === c.id"
+                                (click)="pickChip(c.id)">
+                                <span class="sc-chip-dot" aria-hidden="true"></span>
+                                <span class="sc-chip-text">{{ c.label }}</span>
+                                <span class="sc-chip-count">{{ c.count }}</span>
+                            </button>
+                        }
+                    </div>
+
+                    <!-- At a glance -->
+                    <div class="sc-glance">
+
+                        <div class="sc-rail-label">At a glance</div>
+
+                        <div
+                            class="sc-gauge"
+                            [style.--sc-gauge]="onPercent"
+                            role="img"
+                            [attr.aria-label]="onPercent + ' percent of switches are ON'">
+                            <div class="sc-gauge-hole">
+                                <span class="sc-gauge-value">{{ onPercent }}<small>%</small></span>
+                                <span class="sc-gauge-label">switched on</span>
+                            </div>
+                        </div>
+
+                        <div class="sc-legend">
+                            <span><i class="sc-legend-dot sc-legend-on"></i>ON <b>{{ viewOnCount }}</b></span>
+                            <span><i class="sc-legend-dot sc-legend-off"></i>OFF <b>{{ viewOffCount }}</b></span>
+                        </div>
+
+                        <div class="sc-stats">
+                            <div class="sc-stat sc-stat-critical">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                <b>{{ criticalCount }}</b>
+                                <span>Critical</span>
+                            </div>
+
+                            <div class="sc-stat sc-stat-changed">
+                                <i class="fas fa-pen-to-square"></i>
+                                <b>{{ viewChangedCount }}</b>
+                                <span>Changed</span>
+                            </div>
+
+                            @if (pendingCount > 0)
+                            {
+                                <div class="sc-stat sc-stat-pending sc-stat-wide">
+                                    <i class="fas fa-hourglass-half"></i>
+                                    <b>{{ pendingCount }}</b>
+                                    <span>{{ canManage ? 'Waiting for your approval' : 'Waiting for approval' }}</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Showing (bottom) -->
+                    <div class="sc-showing">
+                        <div class="sc-showing-line">
+                            <span>Showing</span>
+                            <span><b>{{ shownCount }}</b> / {{ totalCount }}</span>
+                        </div>
+
+                        <div class="sc-showing-track">
+                            <span [style.width.%]="shownPercent"></span>
+                        </div>
+
+                        @if (isFiltered)
+                        {
+                            <button type="button" class="sc-clear" (click)="clearFilters()">
+                                <i class="fas fa-filter-circle-xmark"></i>
+                                Clear filters
+                            </button>
+                        }
+                    </div>
+                </aside>
+            }
+        </div>
+
+
+        <!-- =================================================
+             UNSAVED CHANGES BAR (always inside the page)
+        ================================================== -->
+
+        @if (stagedCount > 0 && view === 'settings')
+        {
+            <div class="sc-bar" role="region" aria-label="Unsaved changes">
+                <span class="sc-bar-count">{{ stagedCount }}</span>
+                <div class="sc-bar-text">
+                    <span class="sc-bar-title">
+                        {{ stagedCount }} unsaved {{ stagedCount === 1 ? 'change' : 'changes' }}
+                    </span>
+                    <span class="sc-bar-line">{{ stagedSummary }}</span>
+                </div>
+                <button type="button" class="sc-btn sc-btn-ghost" (click)="discard()">Discard</button>
+                <button type="button" class="sc-btn sc-btn-light" (click)="openReview()">Review &amp; Apply</button>
             </div>
         }
-
-    </div>
-
+    }
 
 
     <!-- =====================================================
-         HISTORY
+         REVIEW DIALOG
+    ====================================================== -->
+
+    @if (reviewOpen)
+    {
+        <div class="sc-overlay" (click)="closeReview()">
+            <div
+                class="sc-modal appcore-scrollbar"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Review changes"
+                (click)="$event.stopPropagation()">
+
+                <div class="sc-modal-head">
+                    <h2>Review changes</h2>
+                    <button
+                        type="button"
+                        class="sc-icon-btn"
+                        aria-label="Close"
+                        [disabled]="applying"
+                        (click)="closeReview()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <p class="sc-modal-note">
+                    @if (canManage)
+                    {
+                        These apply as soon as you click Apply. Critical switches need a reason, saved in the history.
+                    }
+                    @else
+                    {
+                        Normal switches apply at once. Critical switches go to an administrator and change only after approval.
+                    }
+                </p>
+
+                <div class="sc-review-list">
+                    @for (row of reviewRows; track row.code)
+                    {
+                        <div class="sc-review">
+                            <div class="sc-meta sc-meta-plain">
+                                <span class="sc-code">{{ row.code }}</span>
+                                @if (row.isCritical)
+                                {
+                                    <span class="sc-tag sc-tag-critical">Critical</span>
+                                }
+                                @if (row.goesForApproval)
+                                {
+                                    <span class="sc-tag sc-tag-pending">Will go for approval</span>
+                                }
+                            </div>
+                            <div class="sc-card-name">{{ row.name }}</div>
+                            <div class="sc-request-place">{{ row.place }}</div>
+                            <div class="sc-arrow">
+                                <span class="sc-old">{{ row.fromText }}</span>
+                                →
+                                <span class="sc-new">{{ row.toText }}</span>
+                            </div>
+                            @if (row.isCritical)
+                            {
+                                <label class="sc-reason">
+                                    Reason (required)
+                                    <textarea
+                                        class="appcore-scrollbar"
+                                        rows="2"
+                                        maxlength="500"
+                                        placeholder="Why is this changing?"
+                                        [ngModel]="reasons[row.code] ?? ''"
+                                        (ngModelChange)="setReason(row.code, $event)"
+                                        [disabled]="applying"></textarea>
+                                </label>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="sc-modal-foot">
+                    @if (needsReason)
+                    {
+                        <span class="sc-modal-warn">Give a reason for each critical change.</span>
+                    }
+                    <button type="button" class="sc-btn" [disabled]="applying" (click)="closeReview()">Back</button>
+                    <button
+                        type="button"
+                        class="sc-btn sc-btn-primary"
+                        [disabled]="applying || needsReason"
+                        (click)="apply()">
+                        {{ applying ? 'Applying…' : applyText }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+
+    <!-- =====================================================
+         HISTORY + UTILITIES
     ====================================================== -->
 
     <app-history-drawer
-
         [opened]="historyOpened"
-
         [title]="historyTitle"
-
         [items]="historyItems"
-
         (closed)="closeHistory()">
-
     </app-history-drawer>
-
-
-
-    <!-- =====================================================
-         UTILITIES
-    ====================================================== -->
 
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
-
-    <app-progress-dialog></app-progress-dialog>
-
 </div>

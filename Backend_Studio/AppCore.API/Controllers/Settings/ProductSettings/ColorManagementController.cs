@@ -325,7 +325,7 @@ public class ColorManagementController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateColorManagementDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -361,7 +361,7 @@ public class ColorManagementController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -411,7 +411,7 @@ public class ColorManagementController : ControllerBase
         // Current User
         //===========================================================
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
 
         //===========================================================
@@ -464,7 +464,7 @@ public class ColorManagementController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored =
             await _repository.RestoreAsync(

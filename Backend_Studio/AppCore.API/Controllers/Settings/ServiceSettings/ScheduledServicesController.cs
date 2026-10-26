@@ -109,7 +109,7 @@ public class ScheduledServicesController : ControllerBase
     public async Task<IActionResult> Configure(
         ConfigureScheduledServicesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

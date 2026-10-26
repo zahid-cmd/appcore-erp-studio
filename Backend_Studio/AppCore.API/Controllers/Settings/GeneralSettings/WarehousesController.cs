@@ -126,7 +126,7 @@ public class WarehousesController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateWarehousesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         long id =
             await _repository.CreateAsync(
@@ -152,7 +152,7 @@ public class WarehousesController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         await _repository.UpdateAsync(
             dto,
@@ -185,7 +185,7 @@ public class WarehousesController : ControllerBase
         // Current User
         //===========================================================
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
 
         //===========================================================
@@ -223,7 +223,7 @@ public class WarehousesController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored =
             await _repository.RestoreAsync(

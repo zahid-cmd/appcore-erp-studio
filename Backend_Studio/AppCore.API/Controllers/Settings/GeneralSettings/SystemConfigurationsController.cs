@@ -21,11 +21,27 @@ namespace AppCore.API.Controllers.Settings.GeneralSettings;
 //===============================================================
 // System Configurations Controller
 //
+//   GET  values                    code / ON-OFF / value of every
+//                                  switch (any logged-in user;
+//                                  what other pages read)
+//   GET  workspace                 the page, filtered for the user
+//   GET                            switches the user may see
+//   GET  {id}
+//   GET  next-code / defaults      (per module)
+//   GET  history
+//   POST apply                     Review & Apply (staged changes)
+//   PUT  {id}/enabled              one switch (same rules)
+//   GET  requests                  pending approvals   (admin)
+//   POST requests/{id}/approve                         (admin)
+//   POST requests/{id}/reject                          (admin)
+//   POST / PUT / DELETE / restore  definitions         (admin)
+//
 // Error mapping:
-//   InvalidOperationException → 400 (Create / Update / Enable)
-//                             → 409 (Delete / Restore)
-//   KeyNotFoundException      → 404
-//   Anything else             → 500 (logged)
+//   UnauthorizedAccessException → 403
+//   KeyNotFoundException        → 404
+//   InvalidOperationException   → 400 (create / update / apply)
+//                               → 409 (delete / restore / approve)
+//   Anything else               → 500 (logged)
 //===============================================================
 
 [ApiController]
@@ -66,7 +82,63 @@ public class SystemConfigurationsController : ControllerBase
 
 
     //===========================================================
-    // Get All
+    // Forbidden (403) with a message
+    //===========================================================
+
+    private ObjectResult Forbidden(
+        string message)
+    {
+        return StatusCode(403, message);
+    }
+
+
+    //===========================================================
+    // Runtime Values (every logged-in user)
+    //===========================================================
+
+    [HttpGet("values")]
+
+    public async Task<ActionResult<List<SystemConfigurationValueDto>>> GetValues()
+    {
+        try
+        {
+            return Ok(
+                await _repository.GetValuesAsync());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load configuration values.");
+
+            return StatusCode(500, "Unable to load configuration values.");
+        }
+    }
+
+
+    //===========================================================
+    // Workspace (the page for the logged-in user)
+    //===========================================================
+
+    [HttpGet("workspace")]
+
+    public async Task<ActionResult<SystemConfigurationWorkspaceDto>> GetWorkspace()
+    {
+        try
+        {
+            return Ok(
+                await _repository.GetWorkspaceAsync(
+                    this.CurrentUserId()));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load the configuration workspace.");
+
+            return StatusCode(500, "Unable to load system configurations.");
+        }
+    }
+
+
+    //===========================================================
+    // Get All (switches the user may see)
     //===========================================================
 
     [HttpGet]
@@ -76,7 +148,8 @@ public class SystemConfigurationsController : ControllerBase
         try
         {
             return Ok(
-                await _repository.GetAllAsync());
+                await _repository.GetAllAsync(
+                    this.CurrentUserId()));
         }
         catch (Exception ex)
         {
@@ -153,10 +226,20 @@ public class SystemConfigurationsController : ControllerBase
     {
         try
         {
-            return Ok(
+            List<ActivityHistoryDto> history =
                 await _activityHistoryRepository.GetListHistoryAsync(
                     "General Settings",
-                    "SystemConfiguration"));
+                    "SystemConfiguration");
+
+            // Only the switches this user may see (admins : all)
+            HashSet<long>? visible =
+                await _repository.GetVisibleIdsAsync(
+                    this.CurrentUserId());
+
+            return Ok(
+                visible == null
+                    ? history
+                    : history.Where(x => visible.Contains(x.EntityId)).ToList());
         }
         catch (Exception ex)
         {
@@ -179,7 +262,9 @@ public class SystemConfigurationsController : ControllerBase
         try
         {
             SystemConfigurationsDto? configuration =
-                await _repository.GetByIdAsync(id);
+                await _repository.GetByIdAsync(
+                    id,
+                    this.CurrentUserId());
 
             if (configuration == null)
             {
@@ -198,24 +283,25 @@ public class SystemConfigurationsController : ControllerBase
 
 
     //===========================================================
-    // Create
+    // Apply (Review & Apply)
     //===========================================================
 
-    [HttpPost]
+    [HttpPost("apply")]
 
-    public async Task<ActionResult<long>> Create(
-        [FromBody] CreateSystemConfigurationsDto dto)
+    public async Task<ActionResult<ApplySystemConfigurationResultDto>> Apply(
+        [FromBody] ApplySystemConfigurationChangesDto dto)
     {
-        long userId = 1;
-
         try
         {
-            long id =
-                await _repository.CreateAsync(
+            return Ok(
+                await _repository.ApplyAsync(
                     dto,
-                    userId);
-
-            return Ok(id);
+                    this.CurrentUserId(),
+                    this.CurrentUserName()));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbidden(ex.Message);
         }
         catch (InvalidOperationException ex)
         {
@@ -227,51 +313,15 @@ public class SystemConfigurationsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create system configuration.");
+            _logger.LogError(ex, "Failed to apply configuration changes.");
 
-            return StatusCode(500, "Unable to save configuration.");
+            return StatusCode(500, "Unable to apply the changes.");
         }
     }
 
 
     //===========================================================
-    // Update
-    //===========================================================
-
-    [HttpPut]
-
-    public async Task<IActionResult> Update(
-        [FromBody] UpdateSystemConfigurationsDto dto)
-    {
-        long userId = 1;
-
-        try
-        {
-            await _repository.UpdateAsync(
-                dto,
-                userId);
-
-            return NoContent();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to update configuration {SystemConfigurationId}.", dto.SystemConfigurationId);
-
-            return StatusCode(500, "Unable to update configuration.");
-        }
-    }
-
-
-    //===========================================================
-    // Set Enabled (on/off switch)
+    // Set Enabled (one switch; same rules as Apply)
     //===========================================================
 
     [HttpPut("{id:long}/enabled")]
@@ -280,16 +330,20 @@ public class SystemConfigurationsController : ControllerBase
         long id,
         [FromBody] SetSystemConfigurationEnabledDto dto)
     {
-        long userId = 1;
-
         try
         {
             await _repository.SetEnabledAsync(
                 id,
                 dto.IsEnabled,
-                userId);
+                dto.Reason,
+                this.CurrentUserId(),
+                this.CurrentUserName());
 
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbidden(ex.Message);
         }
         catch (InvalidOperationException ex)
         {
@@ -309,20 +363,207 @@ public class SystemConfigurationsController : ControllerBase
 
 
     //===========================================================
-    // Restore
+    // Pending Requests (admin)
+    //===========================================================
+
+    [HttpGet("requests")]
+
+    public async Task<ActionResult<List<SystemConfigurationRequestDto>>> GetRequests()
+    {
+        try
+        {
+            return Ok(
+                await _repository.GetRequestsAsync(
+                    this.CurrentUserId()));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbidden(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load configuration requests.");
+
+            return StatusCode(500, "Unable to load requests.");
+        }
+    }
+
+
+    //===========================================================
+    // Approve (admin)
+    //===========================================================
+
+    [HttpPost("requests/{id:long}/approve")]
+
+    public async Task<IActionResult> Approve(
+        long id,
+        [FromBody] DecideSystemConfigurationRequestDto? dto)
+    {
+        try
+        {
+            await _repository.ApproveRequestAsync(
+                id,
+                dto?.Note ?? string.Empty,
+                this.CurrentUserId(),
+                this.CurrentUserName());
+
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbidden(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to approve configuration request {RequestId}.", id);
+
+            return StatusCode(500, "Unable to approve the request.");
+        }
+    }
+
+
+    //===========================================================
+    // Reject (admin)
+    //===========================================================
+
+    [HttpPost("requests/{id:long}/reject")]
+
+    public async Task<IActionResult> Reject(
+        long id,
+        [FromBody] DecideSystemConfigurationRequestDto? dto)
+    {
+        try
+        {
+            await _repository.RejectRequestAsync(
+                id,
+                dto?.Note ?? string.Empty,
+                this.CurrentUserId(),
+                this.CurrentUserName());
+
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbidden(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to reject configuration request {RequestId}.", id);
+
+            return StatusCode(500, "Unable to reject the request.");
+        }
+    }
+
+
+    //===========================================================
+    // Create (admin)
+    //===========================================================
+
+    [HttpPost]
+
+    public async Task<ActionResult<long>> Create(
+        [FromBody] CreateSystemConfigurationsDto dto)
+    {
+        try
+        {
+            long id =
+                await _repository.CreateAsync(
+                    dto,
+                    this.CurrentUserId(),
+                    this.CurrentUserName());
+
+            return Ok(id);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbidden(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create system configuration.");
+
+            return StatusCode(500, "Unable to save configuration.");
+        }
+    }
+
+
+    //===========================================================
+    // Update (admin)
+    //===========================================================
+
+    [HttpPut]
+
+    public async Task<IActionResult> Update(
+        [FromBody] UpdateSystemConfigurationsDto dto)
+    {
+        try
+        {
+            await _repository.UpdateAsync(
+                dto,
+                this.CurrentUserId(),
+                this.CurrentUserName());
+
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbidden(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update configuration {SystemConfigurationId}.", dto.SystemConfigurationId);
+
+            return StatusCode(500, "Unable to update configuration.");
+        }
+    }
+
+
+    //===========================================================
+    // Restore (admin)
     //===========================================================
 
     [HttpPut("restore")]
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
-
         try
         {
             bool restored =
                 await _repository.RestoreAsync(
-                    userId);
+                    this.CurrentUserId(),
+                    this.CurrentUserName());
 
             if (!restored)
             {
@@ -331,6 +572,10 @@ public class SystemConfigurationsController : ControllerBase
             }
 
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbidden(ex.Message);
         }
         catch (InvalidOperationException ex)
         {
@@ -346,7 +591,7 @@ public class SystemConfigurationsController : ControllerBase
 
 
     //===========================================================
-    // Delete
+    // Delete (admin)
     //===========================================================
 
     [HttpDelete("{id:long}")]
@@ -354,15 +599,18 @@ public class SystemConfigurationsController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        long userId = 1;
-
         try
         {
             await _repository.DeleteAsync(
                 id,
-                userId);
+                this.CurrentUserId(),
+                this.CurrentUserName());
 
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbidden(ex.Message);
         }
         catch (InvalidOperationException ex)
         {

@@ -151,7 +151,7 @@ public class BrandManagementController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateBrandManagementDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -182,7 +182,7 @@ public class BrandManagementController : ControllerBase
     public async Task<IActionResult> Update(
         UpdateBrandManagementDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -221,7 +221,7 @@ public class BrandManagementController : ControllerBase
         long id,
         IFormFile file)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         //=======================================================
         // Validate
@@ -339,7 +339,7 @@ public class BrandManagementController : ControllerBase
     public async Task<IActionResult> DeleteImage(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -376,7 +376,7 @@ public class BrandManagementController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -405,7 +405,7 @@ public class BrandManagementController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

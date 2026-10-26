@@ -146,7 +146,7 @@ public class ProductCategoryController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateProductCategoryDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -189,7 +189,7 @@ public class ProductCategoryController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -239,7 +239,7 @@ public class ProductCategoryController : ControllerBase
         // Current User
         //===========================================================
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
 
         //===========================================================
@@ -293,7 +293,7 @@ public class ProductCategoryController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored;
 

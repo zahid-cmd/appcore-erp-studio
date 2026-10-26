@@ -140,7 +140,7 @@ public class CustomerProfilesController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateCustomerProfilesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -183,7 +183,7 @@ public class CustomerProfilesController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -224,7 +224,7 @@ public class CustomerProfilesController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -264,7 +264,7 @@ public class CustomerProfilesController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored;
 
@@ -305,7 +305,7 @@ public class CustomerProfilesController : ControllerBase
         long id,
         IFormFile file)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         //=======================================================
         // Validate
@@ -423,7 +423,7 @@ public class CustomerProfilesController : ControllerBase
     public async Task<IActionResult> DeletePhoto(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

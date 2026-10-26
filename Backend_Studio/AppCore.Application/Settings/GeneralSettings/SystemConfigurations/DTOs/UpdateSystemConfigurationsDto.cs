@@ -6,25 +6,17 @@ namespace AppCore.Application.Settings.GeneralSettings.SystemConfigurations.DTOs
 
 
 //===============================================================
-// Update System Configurations DTO
+// Update System Configurations DTO (admin only)
 //
-// Module and Code are locked after creation.
+// Module and Code are locked after creation. ON / OFF and Value
+// change here too, with Reason when the switch is critical.
 //===============================================================
 
 public class UpdateSystemConfigurationsDto
+    : CreateSystemConfigurationsDto
 {
     public long SystemConfigurationId { get; set; }
 
-    public long NavigationModuleId { get; set; }
-
-    public string ConfigurationCode { get; set; } = string.Empty;
-
-    public string ConfigurationName { get; set; } = string.Empty;
-
-    public bool IsEnabled { get; set; }
-
-    // Optional number / short text (e.g. Max Lines = 20)
-    public string Value { get; set; } = string.Empty;
-
-    public string Remarks { get; set; } = string.Empty;
+    // Required when a critical switch's ON / OFF or Value changes
+    public string Reason { get; set; } = string.Empty;
 }

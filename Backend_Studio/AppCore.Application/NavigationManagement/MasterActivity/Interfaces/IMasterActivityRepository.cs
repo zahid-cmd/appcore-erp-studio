@@ -30,6 +30,9 @@ public interface IMasterActivityRepository
     Task<bool> ExistsAsync(
         long id);
 
+    // Submenu codes of every page that has page switches
+    Task<List<string>> GetSwitchPageCodesAsync();
+
     //===============================================================
     // Write
     //===============================================================

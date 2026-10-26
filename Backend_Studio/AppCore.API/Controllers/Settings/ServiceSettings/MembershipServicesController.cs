@@ -125,7 +125,7 @@ public class MembershipServicesController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

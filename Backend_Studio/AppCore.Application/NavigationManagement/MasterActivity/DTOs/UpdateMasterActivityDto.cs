@@ -43,6 +43,30 @@ public class UpdateMasterActivityDto
     }
 
     //===============================================================
+    // Scope
+    //===============================================================
+
+    // Common / Page
+    public string ActivityScope
+    {
+        get;
+        set;
+    } = "Common";
+
+    public bool LinkToSwitchPages
+    {
+        get;
+        set;
+    }
+
+    // Submenu codes (Page scope only)
+    public List<string> PageSubmenuCodes
+    {
+        get;
+        set;
+    } = new();
+
+    //===============================================================
     // Status
     //===============================================================
 

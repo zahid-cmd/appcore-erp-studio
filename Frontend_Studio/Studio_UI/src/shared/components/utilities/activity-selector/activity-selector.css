@@ -1,119 +1,155 @@
 /*==============================================================
-  Activity Selector
+  Activity Selector (one row of the assignment table)
+
+  [ All ] [ View    Add      Update ] | [ slot  slot  slot ... ]
+          [ Delete  Restore  Print  ] | [ slot  slot  slot ... ]
+
+  Widths are fixed and shared with the table header (item-cart) :
+    --act-all-width   All
+    --act-col-width   each common column
+  Page-action columns : pageSlotColumns() (longer label of a pair)
 ==============================================================*/
 
-.activity-selector
+:host
+{
+    --act-all-width: 96px;
+
+    --act-col-width: 106px;
+}
+
+.act-grid
 {
     display: flex;
 
-    flex-direction: row;
-
     align-items: center;
-
-    justify-content: flex-start;
-
-    flex-wrap: nowrap;
 
     width: 100%;
 
-    gap: 0;
+    min-height: 56px;
+
+    box-sizing: border-box;
 }
 
 /*==============================================================
-  Activity Item
+  All
 ==============================================================*/
 
-.activity-item
+.act-all
+{
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    flex: 0 0 var(--act-all-width);
+
+    width: var(--act-all-width);
+}
+
+/*==============================================================
+  Common : 3 columns, two lines
+==============================================================*/
+
+.act-common
+{
+    display: grid;
+
+    grid-template-columns: repeat(3, var(--act-col-width));
+
+    grid-auto-rows: 26px;
+
+    row-gap: 2px;
+
+    flex: 0 0 auto;
+}
+
+/*==============================================================
+  Page actions : fixed slots, top-to-bottom pairs
+==============================================================*/
+
+.act-page
+{
+    display: grid;
+
+    grid-auto-flow: column;
+
+    grid-template-rows: repeat(2, 26px);
+
+    column-gap: 12px;
+
+    row-gap: 2px;
+
+    flex: 1 1 auto;
+
+    min-width: 0;
+
+    margin-left: 6px;
+
+    padding-left: 14px;
+
+    border-left: 1px solid #e3e9f3;
+}
+
+/*==============================================================
+  Items
+==============================================================*/
+
+.act-item
+{
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    height: 26px;
+
+    min-width: 0;
+
+    white-space: nowrap;
+}
+
+.act-item app-checkbox
 {
     display: inline-flex;
 
     align-items: center;
 
-    justify-content: flex-start;
-
-    width: 80px;
-
-    min-width: 80px;
-
-    max-width: 80px;
-
-    height: 24px;
-
-    box-sizing: border-box;
-
-    white-space: nowrap;
-}
-
-/*==============================================================
-  All Item
-==============================================================*/
-
-.activity-item:first-child
-{
-    width: 60px;
-
-    min-width: 60px;
-
-    max-width: 60px;
-
-    font-weight: 600;
-}
-
-/*==============================================================
-  Checkbox
-==============================================================*/
-
-.activity-item app-checkbox
-{
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
     flex: 0 0 auto;
-
-    margin-right: 6px;
-
-    height: 24px;
 }
 
-/*==============================================================
-  Activity Text
-==============================================================*/
-
-.activity-text
+.act-text
 {
-    display: flex;
+    min-width: 0;
 
-    align-items: center;
+    overflow: hidden;
 
-    height: 24px;
-
-    margin: 0;
-
-    padding: 0;
+    text-overflow: ellipsis;
 
     font-size: 13px;
 
     font-weight: 400;
 
-    line-height: 24px;
+    line-height: 26px;
 
     color: #374151;
 
     user-select: none;
-
-    white-space: nowrap;
 }
 
-/*==============================================================
-  All Text
-==============================================================*/
-
-.activity-item:first-child .activity-text
+.act-text-all
 {
     font-weight: 600;
 
     color: #1f2937;
+}
+
+.act-text-page
+{
+    font-size: 12.5px;
+
+    font-weight: 500;
+
+    color: #1e3a8a;
 }

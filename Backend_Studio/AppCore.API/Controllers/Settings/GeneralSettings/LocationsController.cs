@@ -116,7 +116,7 @@ public class LocationsController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateLocationsDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -159,7 +159,7 @@ public class LocationsController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -200,7 +200,7 @@ public class LocationsController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -240,7 +240,7 @@ public class LocationsController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored;
 

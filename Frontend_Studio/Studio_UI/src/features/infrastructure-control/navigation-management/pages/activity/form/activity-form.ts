@@ -54,6 +54,13 @@ from '../../../../../../shared/components/utilities/command-center/command-cente
 
 import
 {
+    ControlTabsComponent,
+    ControlTab
+}
+from '../../../../../../shared/components/controls/control-tabs/control-tabs';
+
+import
+{
     PageCanvasComponent
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
@@ -90,6 +97,12 @@ from '../../../../../../shared/components/controls/dropdown/dropdown';
 
 import
 {
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
+import
+{
     ToastComponent
 }
 from '../../../../../../shared/components/utilities/toast/toast';
@@ -118,6 +131,7 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    ActivityScope,
     MasterActivity,
     MasterActivityDefaults,
     CreateMasterActivity,
@@ -130,6 +144,33 @@ import
     MasterActivityService
 }
 from '../../../services/master-activity.service';
+
+import
+{
+    NavigationSubmenu
+}
+from '../../../models/navigation-submenu.model';
+
+import
+{
+    NavigationSubmenuService
+}
+from '../../../services/submenu.service';
+
+//===============================================================
+// Page Option (Used on Pages)
+//===============================================================
+
+interface PageOption
+{
+    code: string;
+
+    // Module › Menu › Submenu (lists)
+    label: string;
+
+    // Submenu || Menu (dropdowns)
+    pickLabel?: string;
+}
 
 //===============================================================
 // Component
@@ -145,6 +186,7 @@ from '../../../services/master-activity.service';
         FormsModule,
         PageHeaderComponent,
         PageToolbarComponent,
+        ControlTabsComponent,
         CommandCenterComponent,
         PageCanvasComponent,
         FormGridComponent,
@@ -152,6 +194,7 @@ from '../../../services/master-activity.service';
         TextboxComponent,
         TextareaComponent,
         DropdownComponent,
+        SearchDropdownComponent,
         ToastComponent,
         ConfirmDialogComponent
     ],
@@ -181,6 +224,9 @@ implements OnInit
 
     private readonly masterActivityService =
         inject(MasterActivityService);
+
+    private readonly submenuService =
+        inject(NavigationSubmenuService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
@@ -254,18 +300,303 @@ implements OnInit
     ];
 
     //===========================================================
+    // Scope Tabs (page toolbar)
+    //   Common Activity : every page
+    //   Page Activity   : only the selected pages
+    // The list is rebuilt only when the mode changes (a new array
+    // on every check would redraw the tabs).
+    //===========================================================
+
+    scopeTabs:
+        ControlTab[] =
+        [
+            { id:'Common', label:'Common Activity' },
+            { id:'Page', label:'Page Activity' }
+        ];
+
+    private buildScopeTabs():
+        ControlTab[]
+    {
+        const locked =
+            this.mode === 'view';
+
+        return [
+            {
+                id:'Common',
+                label:'Common Activity',
+                disabled:locked && this.activity.activityScope !== 'Common'
+            },
+            {
+                id:'Page',
+                label:'Page Activity',
+                disabled:locked && this.activity.activityScope !== 'Page'
+            }
+        ];
+    }
+
+    onScopeTabChange
+    (
+        id:string
+    ):
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            id === this.activity.activityScope
+        )
+        {
+            return;
+        }
+
+        this.onScopeChange(
+            id as ActivityScope
+        );
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Scope Dropdowns
+    //===========================================================
+
+    scopes =
+    [
+        {
+            value:'Common',
+            text:'Common (every page)'
+        },
+        {
+            value:'Page',
+            text:'Page (selected pages)'
+        }
+    ];
+
+    switchPageOptions =
+    [
+        {
+            value:true,
+            text:'Yes'
+        },
+        {
+            value:false,
+            text:'No'
+        }
+    ];
+
+    //===========================================================
     // Activity Model
     //===========================================================
 
     activity: MasterActivity =
+        this.emptyActivity();
+
+    //===========================================================
+    // Used on Pages
+    //===========================================================
+
+    // Every live submenu, as "Module › Menu › Submenu"
+    private allPages:
+        PageOption[] =
+        [];
+
+    // Pages that can still be added (not chosen yet)
+    availablePages:
+        PageOption[] =
+        [];
+
+    // Page picked in the dropdown, waiting for Add
+    pickedPageCode:
+        string | null =
+        null;
+
+    // Pages that have page switches (System Configurations)
+    private switchPageCodes:
+        string[] =
+        [];
+
+    // Number of pages that have page switches (System Configurations)
+    // : shown only as information; the server resolves them.
+    get isPageScope():
+        boolean
     {
-        id:0,
-        code:'',
-        name:'',
-        displayOrder:1,
-        remarks:'',
-        isActive:true
-    };
+        return this.activity.activityScope === 'Page';
+    }
+
+    get chosenPages():
+        PageOption[]
+    {
+        return this.activity.pageSubmenuCodes.map
+        (
+            code =>
+                this.allPages.find(x => x.code === code)
+                ??
+                { code, label: code }
+        );
+    }
+
+    // Pages with switches (shown when Pages With Switches = Yes),
+    // without the ones already added by hand
+    get switchPages():
+        PageOption[]
+    {
+        if
+        (
+            !this.isPageScope
+            ||
+            !this.activity.linkToSwitchPages
+        )
+        {
+            return [];
+        }
+
+        const chosen =
+            new Set(this.activity.pageSubmenuCodes);
+
+        return this.switchPageCodes
+            .filter(code => !chosen.has(code))
+            .map
+            (
+                code =>
+                    this.allPages.find(x => x.code === code)
+                    ??
+                    { code, label: code }
+            );
+    }
+
+    // Pickers : one for pages that have switches, one for the rest
+    pickedSwitchCode:
+        string | null =
+        null;
+
+    pickedPlainCode:
+        string | null =
+        null;
+
+    get availableSwitchPages():
+        PageOption[]
+    {
+        const switches =
+            new Set(this.switchPageCodes);
+
+        return this.availablePages.filter(x => switches.has(x.code));
+    }
+
+    get availablePlainPages():
+        PageOption[]
+    {
+        const switches =
+            new Set(this.switchPageCodes);
+
+        return this.availablePages.filter(x => !switches.has(x.code));
+    }
+
+    // Row of the page lists
+    private toRow
+    (
+        page:PageOption,
+        auto:boolean
+    ):
+        { code:string; module:string; page:string; auto:boolean; }
+    {
+        const parts =
+            page.label.split(' › ');
+
+        return {
+            code:page.code,
+            page:parts[parts.length - 1] ?? page.label,
+            module:parts.slice(0, -1).join(' › '),
+            auto
+        };
+    }
+
+    // List 3 : selected pages that have switches (+ automatic ones)
+    get switchPageRows():
+        { code:string; module:string; page:string; auto:boolean; }[]
+    {
+        const switches =
+            new Set(this.switchPageCodes);
+
+        return [
+            ...this.chosenPages
+                .filter(x => switches.has(x.code))
+                .map(x => this.toRow(x, false)),
+            ...this.switchPages
+                .map(x => this.toRow(x, true))
+        ];
+    }
+
+    // List 4 : selected pages without switches
+    get plainPageRows():
+        { code:string; module:string; page:string; auto:boolean; }[]
+    {
+        const switches =
+            new Set(this.switchPageCodes);
+
+        return this.chosenPages
+            .filter(x => !switches.has(x.code))
+            .map(x => this.toRow(x, false));
+    }
+
+    // Add : the page picked in one dropdown
+    addPickedPage
+    (
+        kind:'switch' | 'plain'
+    ):
+        void
+    {
+        const code =
+            kind === 'switch'
+                ? this.pickedSwitchCode
+                : this.pickedPlainCode;
+
+        if (kind === 'switch')
+        {
+            this.pickedSwitchCode = null;
+        }
+        else
+        {
+            this.pickedPlainCode = null;
+        }
+
+        if
+        (
+            !code
+            ||
+            this.activity.pageSubmenuCodes.includes(code)
+        )
+        {
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+        this.activity.pageSubmenuCodes =
+        [
+            ...this.activity.pageSubmenuCodes,
+            code
+        ];
+
+        this.refreshAvailablePages();
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+
+    get pagesSummary():
+        string
+    {
+        const count =
+            this.activity.pageSubmenuCodes.length
+            +
+            this.switchPages.length;
+
+        return count === 1
+            ? '1 page'
+            : `${count} pages`;
+    }
 
     //===========================================================
     // Form State
@@ -297,7 +628,244 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.loadPages();
+
+        this.loadSwitchPages();
+
         this.initializeMode();
+    }
+
+    //===========================================================
+    // Empty Activity
+    //===========================================================
+
+    private emptyActivity():
+        MasterActivity
+    {
+        return {
+            id:0,
+            code:'',
+            name:'',
+            displayOrder:1,
+            remarks:'',
+            activityScope:'Common',
+            linkToSwitchPages:false,
+            pageSubmenuCodes:[],
+            pageSubmenuIds:[],
+            isActive:true
+        };
+    }
+
+    //===========================================================
+    // Load Pages (every live submenu)
+    //===========================================================
+
+    private loadPages():
+        void
+    {
+        this.submenuService
+            .getAll()
+            .subscribe(
+            {
+                next:(submenus:NavigationSubmenu[]) =>
+                {
+                    this.allPages =
+                        submenus
+                            .filter(x => !!x.code)
+                            .map
+                            (
+                                x =>
+                                ({
+                                    code:x.code,
+                                    label:`${x.navigationModuleName} › ${x.navigationMenuName} › ${x.name}`,
+                                    pickLabel:`${x.name} || ${x.navigationMenuName}`
+                                })
+                            )
+                            .sort((a, b) => (a.pickLabel ?? a.label).localeCompare(b.pickLabel ?? b.label));
+
+                    this.refreshAvailablePages();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:(error) =>
+                {
+                    console.error(error);
+
+                    this.toast.error(
+                        'Error',
+                        'Unable to load the pages list.'
+                    );
+                }
+            });
+    }
+
+    //===========================================================
+    // Load Pages With Switches
+    //===========================================================
+
+    private loadSwitchPages():
+        void
+    {
+        this.masterActivityService
+            .getSwitchPages()
+            .subscribe(
+            {
+                next:(codes:string[]) =>
+                {
+                    this.switchPageCodes =
+                        codes ?? [];
+
+                    this.cdr.detectChanges();
+                },
+
+                error:(error) =>
+                {
+                    console.error(error);
+                }
+            });
+    }
+
+    //===========================================================
+    // Pages not chosen yet
+    //===========================================================
+
+    private refreshAvailablePages():
+        void
+    {
+        const chosen =
+            new Set(this.activity.pageSubmenuCodes);
+
+        this.availablePages =
+            this.allPages.filter(x => !chosen.has(x.code));
+
+        if
+        (
+            this.pickedPageCode
+            &&
+            chosen.has(this.pickedPageCode)
+        )
+        {
+            this.pickedPageCode = null;
+        }
+    }
+
+    //===========================================================
+    // Scope Changed
+    //===========================================================
+
+    onScopeChange
+    (
+        value:ActivityScope
+    ):
+        void
+    {
+        this.activity.activityScope =
+            value;
+
+        if
+        (
+            value === 'Common'
+        )
+        {
+            this.activity.linkToSwitchPages = false;
+            this.activity.pageSubmenuCodes = [];
+            this.pickedPageCode = null;
+            this.refreshAvailablePages();
+        }
+
+        this.checkForChanges();
+    }
+
+    onSwitchPagesChange
+    (
+        value:boolean
+    ):
+        void
+    {
+        this.activity.linkToSwitchPages =
+            value;
+
+        this.checkForChanges();
+    }
+
+    //===========================================================
+    // Add / Remove Page
+    //===========================================================
+
+    onPagePicked
+    (
+        code:string | null
+    ):
+        void
+    {
+        this.pickedPageCode =
+            code;
+    }
+
+    addPage():
+        void
+    {
+        const code =
+            this.pickedPageCode;
+
+        if
+        (
+            !code
+            ||
+            this.activity.pageSubmenuCodes.includes(code)
+        )
+        {
+            return;
+        }
+
+        this.activity.pageSubmenuCodes =
+        [
+            ...this.activity.pageSubmenuCodes,
+            code
+        ];
+
+        this.pickedPageCode = null;
+
+        this.refreshAvailablePages();
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+
+    removePage
+    (
+        code:string
+    ):
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+        this.activity.pageSubmenuCodes =
+            this.activity.pageSubmenuCodes.filter(x => x !== code);
+
+        this.refreshAvailablePages();
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+
+    trackPage
+    (
+        index:number,
+        page:PageOption
+    ):
+        string
+    {
+        return page.code;
     }
 
     //===========================================================
@@ -364,14 +932,7 @@ implements OnInit
         //=======================================================
 
         this.activity =
-        {
-            id:0,
-            code:'',
-            name:'',
-            displayOrder:1,
-            remarks:'',
-            isActive:true
-        };
+            this.emptyActivity();
 
         this.originalActivity =
             JSON.stringify(this.activity);
@@ -401,9 +962,18 @@ implements OnInit
                         code:response.code,
                         name:response.name,
                         displayOrder:response.displayOrder,
-                        remarks:response.remarks,
+                        remarks:response.remarks ?? '',
+                        activityScope:response.activityScope ?? 'Common',
+                        linkToSwitchPages:!!response.linkToSwitchPages,
+                        pageSubmenuCodes:[ ...(response.pageSubmenuCodes ?? []) ],
+                        pageSubmenuIds:[ ...(response.pageSubmenuIds ?? []) ],
                         isActive:response.isActive
                     };
+
+                    this.refreshAvailablePages();
+
+                    this.scopeTabs =
+                        this.buildScopeTabs();
 
                     this.originalActivity =
                         JSON.stringify(this.activity);
@@ -511,6 +1081,23 @@ implements OnInit
             return;
         }
 
+        if
+        (
+            this.isPageScope
+            &&
+            this.activity.pageSubmenuCodes.length === 0
+            &&
+            !this.activity.linkToSwitchPages
+        )
+        {
+            this.toast.warning(
+                'Validation',
+                'Add at least one page, or set Pages With Switches to Yes.'
+            );
+
+            return;
+        }
+
         //=======================================================
         // Create
         //=======================================================
@@ -527,6 +1114,15 @@ implements OnInit
 
                 remarks:
                     this.activity.remarks,
+
+                activityScope:
+                    this.activity.activityScope,
+
+                linkToSwitchPages:
+                    this.isPageScope && this.activity.linkToSwitchPages,
+
+                pageSubmenuCodes:
+                    this.isPageScope ? [ ...this.activity.pageSubmenuCodes ] : [],
 
                 isActive:
                     this.activity.isActive
@@ -588,6 +1184,15 @@ implements OnInit
 
             remarks:
                 this.activity.remarks,
+
+            activityScope:
+                this.activity.activityScope,
+
+            linkToSwitchPages:
+                this.isPageScope && this.activity.linkToSwitchPages,
+
+            pageSubmenuCodes:
+                this.isPageScope ? [ ...this.activity.pageSubmenuCodes ] : [],
 
             isActive:
                 this.activity.isActive
@@ -652,6 +1257,17 @@ implements OnInit
             this.activity.isActive =
                 true;
 
+            this.activity.activityScope =
+                'Common';
+
+            this.activity.linkToSwitchPages =
+                false;
+
+            this.activity.pageSubmenuCodes =
+                [];
+
+            this.refreshAvailablePages();
+
             this.checkForChanges();
 
             return;
@@ -669,13 +1285,12 @@ implements OnInit
 
         this.activity =
         {
-            id:0,
+            ...this.emptyActivity(),
             code:currentCode,
-            name:'',
-            displayOrder:currentDisplayOrder,
-            remarks:'',
-            isActive:true
+            displayOrder:currentDisplayOrder
         };
+
+        this.refreshAvailablePages();
 
         this.originalActivity =
             JSON.stringify(this.activity);

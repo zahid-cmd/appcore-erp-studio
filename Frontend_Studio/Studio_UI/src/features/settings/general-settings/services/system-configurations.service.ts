@@ -32,16 +32,22 @@ import
 {
     SystemConfiguration,
     CreateSystemConfiguration,
-    UpdateSystemConfiguration
+    UpdateSystemConfiguration,
+    SystemConfigurationValue,
+    ConfigurationWorkspace,
+    ConfigurationChange,
+    ApplyConfigurationResult,
+    ConfigurationRequest,
+    ConfigurationScope,
+    ConfigurationValueType
 }
 from '../models/system-configurations.model';
 
 
 //===============================================================
-// Case-Insensitive Field Reader
+// Case-insensitive field readers
 //
-// ASP.NET Core camel-cases JSON names :
-//   SystemConfigurationId → "systemConfigurationId"
+// The API may send PascalCase or camelCase.
 //===============================================================
 
 function readField
@@ -87,11 +93,6 @@ function readField
         : undefined;
 }
 
-
-//===============================================================
-// Typed Readers
-//===============================================================
-
 function readText
 (
     item:
@@ -129,6 +130,38 @@ function readNumber
         : 0;
 }
 
+function readOptionalNumber
+(
+    item:
+        any,
+    name:
+        string
+):
+    number | null
+{
+    const raw =
+        readField(item, name);
+
+    if
+    (
+        raw === null
+        ||
+        raw === undefined
+        ||
+        raw === ''
+    )
+    {
+        return null;
+    }
+
+    const value =
+        Number(raw);
+
+    return Number.isFinite(value)
+        ? value
+        : null;
+}
+
 function readBool
 (
     item:
@@ -148,9 +181,56 @@ function readBool
         : Boolean(value);
 }
 
+function readList
+(
+    item:
+        any,
+    name:
+        string
+):
+    any[]
+{
+    const value =
+        readField(item, name);
+
+    return Array.isArray(value)
+        ? value
+        : [];
+}
+
+function readScope
+(
+    item:
+        any
+):
+    ConfigurationScope
+{
+    const value =
+        readText(item, 'ScopeType');
+
+    return value === 'Menu' || value === 'Submenu'
+        ? value
+        : 'Module';
+}
+
+function readValueType
+(
+    item:
+        any
+):
+    ConfigurationValueType
+{
+    const value =
+        readText(item, 'ValueType');
+
+    return value === 'Number' || value === 'Text'
+        ? value
+        : 'None';
+}
+
 
 //===============================================================
-// Normalize System Configuration (API → Model)
+// Normalize a switch
 //===============================================================
 
 export function normalizeSystemConfiguration
@@ -161,41 +241,153 @@ export function normalizeSystemConfiguration
     SystemConfiguration
 {
     return {
-        SystemConfigurationId:
-            readNumber(item, 'SystemConfigurationId'),
-
-        NavigationModuleId:
-            readNumber(item, 'NavigationModuleId'),
-
-        ModuleCode:
-            readText(item, 'ModuleCode'),
-
-        ModuleName:
-            readText(item, 'ModuleName'),
-
-        ModuleIcon:
-            readText(item, 'ModuleIcon'),
-
-        ConfigurationCode:
-            readText(item, 'ConfigurationCode'),
-
-        ConfigurationName:
-            readText(item, 'ConfigurationName'),
-
-        IsEnabled:
-            readBool(item, 'IsEnabled', false),
-
-        Value:
-            readText(item, 'Value'),
-
-        Remarks:
-            readText(item, 'Remarks')
+        SystemConfigurationId: readNumber(item, 'SystemConfigurationId'),
+        NavigationModuleId: readNumber(item, 'NavigationModuleId'),
+        ModuleCode: readText(item, 'ModuleCode'),
+        ModuleName: readText(item, 'ModuleName'),
+        ModuleIcon: readText(item, 'ModuleIcon'),
+        ScopeType: readScope(item),
+        NavigationMenuCode: readText(item, 'NavigationMenuCode'),
+        MenuName: readText(item, 'MenuName'),
+        NavigationSubmenuCode: readText(item, 'NavigationSubmenuCode'),
+        SubmenuName: readText(item, 'SubmenuName'),
+        ConfigurationCode: readText(item, 'ConfigurationCode'),
+        ConfigurationName: readText(item, 'ConfigurationName'),
+        OnDescription: readText(item, 'OnDescription'),
+        OffDescription: readText(item, 'OffDescription'),
+        IsEnabled: readBool(item, 'IsEnabled', false),
+        Value: readText(item, 'Value'),
+        ValueType: readValueType(item),
+        ValueUnit: readText(item, 'ValueUnit'),
+        ValueMin: readOptionalNumber(item, 'ValueMin'),
+        ValueMax: readOptionalNumber(item, 'ValueMax'),
+        ValueEmptyText: readText(item, 'ValueEmptyText'),
+        DefaultEnabled: readBool(item, 'DefaultEnabled', false),
+        DefaultValue: readText(item, 'DefaultValue'),
+        ParentConfigurationCode: readText(item, 'ParentConfigurationCode'),
+        IsCritical: readBool(item, 'IsCritical', false),
+        IsSystemDefined: readBool(item, 'IsSystemDefined', false),
+        DisplayOrder: readNumber(item, 'DisplayOrder'),
+        Remarks: readText(item, 'Remarks'),
+        CanChange: readBool(item, 'CanChange', false),
+        IsPending: readBool(item, 'IsPending', false),
+        PendingEnabled: readBool(item, 'PendingEnabled', false),
+        PendingValue: readText(item, 'PendingValue'),
+        PendingByName: readText(item, 'PendingByName')
     };
 }
 
 
 //===============================================================
-// System Configurations Service
+// Normalize the workspace
+//===============================================================
+
+export function normalizeWorkspace
+(
+    item:
+        any
+):
+    ConfigurationWorkspace
+{
+    return {
+        CanManage:
+            readBool(item, 'CanManage', false),
+
+        PendingCount:
+            readNumber(item, 'PendingCount'),
+
+        Modules:
+            readList(item, 'Modules').map
+            (
+                x =>
+                ({
+                    NavigationModuleId: readNumber(x, 'NavigationModuleId'),
+                    Code: readText(x, 'Code'),
+                    Name: readText(x, 'Name'),
+                    Icon: readText(x, 'Icon'),
+                    DisplayOrder: readNumber(x, 'DisplayOrder')
+                })
+            ),
+
+        Menus:
+            readList(item, 'Menus').map
+            (
+                x =>
+                ({
+                    NavigationModuleId: readNumber(x, 'NavigationModuleId'),
+                    Code: readText(x, 'Code'),
+                    Name: readText(x, 'Name'),
+                    DisplayOrder: readNumber(x, 'DisplayOrder')
+                })
+            ),
+
+        Submenus:
+            readList(item, 'Submenus').map
+            (
+                x =>
+                ({
+                    NavigationModuleId: readNumber(x, 'NavigationModuleId'),
+                    MenuCode: readText(x, 'MenuCode'),
+                    Code: readText(x, 'Code'),
+                    Name: readText(x, 'Name'),
+                    DisplayOrder: readNumber(x, 'DisplayOrder')
+                })
+            ),
+
+        Switches:
+            readList(item, 'Switches').map(normalizeSystemConfiguration),
+
+        Recent:
+            readList(item, 'Recent').map
+            (
+                x =>
+                ({
+                    ConfigurationCode: readText(x, 'ConfigurationCode'),
+                    ConfigurationName: readText(x, 'ConfigurationName'),
+                    Description: readText(x, 'Description'),
+                    PerformedByName: readText(x, 'PerformedByName'),
+                    PerformedDate: readText(x, 'PerformedDate')
+                })
+            )
+    };
+}
+
+
+//===============================================================
+// Normalize a change request
+//===============================================================
+
+export function normalizeRequest
+(
+    item:
+        any
+):
+    ConfigurationRequest
+{
+    return {
+        SystemConfigurationRequestId: readNumber(item, 'SystemConfigurationRequestId'),
+        ConfigurationCode: readText(item, 'ConfigurationCode'),
+        ConfigurationName: readText(item, 'ConfigurationName'),
+        ModuleName: readText(item, 'ModuleName'),
+        SubmenuName: readText(item, 'SubmenuName'),
+        ValueUnit: readText(item, 'ValueUnit'),
+        ValueEmptyText: readText(item, 'ValueEmptyText'),
+        FromEnabled: readBool(item, 'FromEnabled', false),
+        FromValue: readText(item, 'FromValue'),
+        ToEnabled: readBool(item, 'ToEnabled', false),
+        ToValue: readText(item, 'ToValue'),
+        Reason: readText(item, 'Reason'),
+        Status: readText(item, 'Status'),
+        IsStale: readBool(item, 'IsStale', false),
+        RequestedBy: readNumber(item, 'RequestedBy'),
+        RequestedByName: readText(item, 'RequestedByName'),
+        RequestedDate: readText(item, 'RequestedDate')
+    };
+}
+
+
+//===============================================================
+// Service
 //===============================================================
 
 @Injectable(
@@ -205,24 +397,61 @@ export function normalizeSystemConfiguration
 
 export class SystemConfigurationsService
 {
-    //===========================================================
-    // Injection
-    //===========================================================
-
     private readonly http =
         inject(HttpClient);
-
-
-    //===========================================================
-    // API
-    //===========================================================
 
     private readonly apiUrl =
         `${environment.apiUrl}/settings/general-settings/system-configurations`;
 
 
     //===========================================================
-    // Get All
+    // Runtime values (any logged-in user; read by code)
+    //===========================================================
+
+    getValues():
+        Observable<SystemConfigurationValue[]>
+    {
+        return this.http
+            .get<any[]>(
+                `${this.apiUrl}/values`
+            )
+            .pipe(
+                map(
+                    response =>
+                        (Array.isArray(response) ? response : [])
+                            .map
+                            (
+                                item =>
+                                ({
+                                    ConfigurationCode: readText(item, 'ConfigurationCode'),
+                                    IsEnabled: readBool(item, 'IsEnabled', false),
+                                    Value: readText(item, 'Value')
+                                })
+                            )
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Workspace (the page for the logged-in user)
+    //===========================================================
+
+    getWorkspace():
+        Observable<ConfigurationWorkspace>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/workspace`
+            )
+            .pipe(
+                map(normalizeWorkspace)
+            );
+    }
+
+
+    //===========================================================
+    // Switches the user may see
     //===========================================================
 
     getAll():
@@ -236,22 +465,10 @@ export class SystemConfigurationsService
                 map(
                     response =>
                         (Array.isArray(response) ? response : [])
-                            .map(
-                                item =>
-                                    normalizeSystemConfiguration(
-                                        item
-                                    )
-                            )
+                            .map(normalizeSystemConfiguration)
                 )
             );
     }
-
-
-    //===========================================================
-    // Get Next Code (per Navigation Module)
-    //
-    // CFG-<ModuleCode>-0001
-    //===========================================================
 
     getNextCode
     (
@@ -269,7 +486,6 @@ export class SystemConfigurationsService
                         navigationModuleId:
                             navigationModuleId
                     },
-
                     responseType:
                         'text'
                 }
@@ -284,11 +500,6 @@ export class SystemConfigurationsService
             );
     }
 
-
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
     getById
     (
         id:
@@ -301,18 +512,125 @@ export class SystemConfigurationsService
                 `${this.apiUrl}/${id}`
             )
             .pipe(
-                map(
-                    response =>
-                        normalizeSystemConfiguration(
-                            response
-                        )
-                )
+                map(normalizeSystemConfiguration)
             );
     }
 
 
     //===========================================================
-    // Create
+    // Review & Apply
+    //===========================================================
+
+    apply
+    (
+        changes:
+            ConfigurationChange[]
+    ):
+        Observable<ApplyConfigurationResult>
+    {
+        return this.http
+            .post<any>(
+                `${this.apiUrl}/apply`,
+                {
+                    Changes:
+                        changes
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                    ({
+                        Applied: readNumber(response, 'Applied'),
+                        SentForApproval: readNumber(response, 'SentForApproval'),
+                        Unchanged: readNumber(response, 'Unchanged')
+                    })
+                )
+            );
+    }
+
+    setEnabled
+    (
+        id:
+            number,
+        isEnabled:
+            boolean,
+        reason:
+            string = ''
+    ):
+        Observable<void>
+    {
+        return this.http.put<void>(
+            `${this.apiUrl}/${id}/enabled`,
+            {
+                IsEnabled:
+                    isEnabled,
+
+                Reason:
+                    reason
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Approvals (admin)
+    //===========================================================
+
+    getRequests():
+        Observable<ConfigurationRequest[]>
+    {
+        return this.http
+            .get<any[]>(
+                `${this.apiUrl}/requests`
+            )
+            .pipe(
+                map(
+                    response =>
+                        (Array.isArray(response) ? response : [])
+                            .map(normalizeRequest)
+                )
+            );
+    }
+
+    approve
+    (
+        requestId:
+            number,
+        note:
+            string = ''
+    ):
+        Observable<void>
+    {
+        return this.http.post<void>(
+            `${this.apiUrl}/requests/${requestId}/approve`,
+            {
+                Note:
+                    note
+            }
+        );
+    }
+
+    reject
+    (
+        requestId:
+            number,
+        note:
+            string = ''
+    ):
+        Observable<void>
+    {
+        return this.http.post<void>(
+            `${this.apiUrl}/requests/${requestId}/reject`,
+            {
+                Note:
+                    note
+            }
+        );
+    }
+
+
+    //===========================================================
+    // Definitions (admin)
     //===========================================================
 
     create
@@ -328,11 +646,6 @@ export class SystemConfigurationsService
         );
     }
 
-
-    //===========================================================
-    // Update
-    //===========================================================
-
     update
     (
         model:
@@ -346,34 +659,6 @@ export class SystemConfigurationsService
         );
     }
 
-
-    //===========================================================
-    // Set Enabled (card toggle)
-    //===========================================================
-
-    setEnabled
-    (
-        id:
-            number,
-        isEnabled:
-            boolean
-    ):
-        Observable<void>
-    {
-        return this.http.put<void>(
-            `${this.apiUrl}/${id}/enabled`,
-            {
-                IsEnabled:
-                    isEnabled
-            }
-        );
-    }
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
     delete
     (
         id:
@@ -386,11 +671,6 @@ export class SystemConfigurationsService
         );
     }
 
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
     restore():
         Observable<void>
     {
@@ -399,11 +679,6 @@ export class SystemConfigurationsService
             {}
         );
     }
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
 
     getHistory():
         Observable<any[]>

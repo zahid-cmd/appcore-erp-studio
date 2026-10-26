@@ -146,7 +146,7 @@ public class GeneralLedgersController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateGeneralLedgersDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -202,7 +202,7 @@ public class GeneralLedgersController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -265,7 +265,7 @@ public class GeneralLedgersController : ControllerBase
         // Current User
         //===========================================================
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
 
         //===========================================================
@@ -311,7 +311,7 @@ public class GeneralLedgersController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored;
 

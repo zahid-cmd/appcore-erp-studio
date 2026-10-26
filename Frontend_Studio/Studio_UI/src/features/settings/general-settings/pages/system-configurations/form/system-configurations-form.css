@@ -11,3 +11,24 @@
 {
     display: block;
 }
+
+
+/* =====================================================
+   TWO FIELDS ON ONE LINE
+   (Lowest | Highest, Default | Current, Setting | Default
+   Status) so every value type fits its four sections.
+===================================================== */
+
+.sc-pair
+{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    min-width: 0;
+}
+
+.sc-pair > *
+{
+    display: block;
+    min-width: 0;
+}

@@ -194,6 +194,9 @@
 
             <app-item-cart
                 [columns]="itemCartColumns"
+                [pageSlots]="pageSlots"
+                [allRows]="itemCartRows"
+                (columnCheckboxChange)="onColumnCheckboxChange($event)"
                 [rows]="pagedItemCartRows"
                 [serialOffset]="
                     (currentPage - 1) * pageSize

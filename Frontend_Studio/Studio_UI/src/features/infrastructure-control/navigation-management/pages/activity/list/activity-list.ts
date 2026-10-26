@@ -191,13 +191,99 @@ implements OnInit
         ControlTab[] =
     [
         {
-            id:'master',
-            label:'Master Activities'
+            id:'all',
+            label:'All Activities'
+        },
+        {
+            id:'common',
+            label:'Common'
+        },
+        {
+            id:'page',
+            label:'Page Actions'
         }
     ];
 
     selectedTab =
-        'master';
+        'all';
+
+    //===========================================================
+    // Activities of the selected tab
+    //===========================================================
+
+    private get tabActivities():
+        MasterActivity[]
+    {
+        switch (this.selectedTab)
+        {
+            case 'common':
+                return this.activities.filter(x => x.activityScope !== 'Page');
+
+            case 'page':
+                return this.activities.filter(x => x.activityScope === 'Page');
+
+            default:
+                return this.activities;
+        }
+    }
+
+    onTabChange
+    (
+        tab:string
+    ):
+        void
+    {
+        this.selectedTab =
+            tab;
+
+        this.onSearch(
+            this.searchText
+        );
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Scope / Pages text for the table
+    //===========================================================
+
+    private withDisplayText
+    (
+        activity:MasterActivity
+    ):
+        MasterActivity
+    {
+        const isPage =
+            activity.activityScope === 'Page';
+
+        const count =
+            (activity.pageSubmenuIds ?? []).length;
+
+        let pagesText =
+            'Every page';
+
+        if (isPage)
+        {
+            pagesText =
+                count === 1
+                    ? '1 page'
+                    : `${count} pages`;
+
+            if (activity.linkToSwitchPages)
+            {
+                pagesText += ' (with switches)';
+            }
+        }
+
+        return {
+            ...activity,
+            scopeText:
+                isPage
+                    ? 'Page'
+                    : 'Common',
+            pagesText
+        } as MasterActivity;
+    }
 
     //===========================================================
     // Data Source
@@ -288,7 +374,7 @@ implements OnInit
         {
             header:'Code',
             field:'code',
-            width:'260px',
+            width:'160px',
             align:'center'
         },
         {
@@ -297,16 +383,28 @@ implements OnInit
             align:'left'
         },
         {
+            header:'Scope',
+            field:'scopeText',
+            width:'160px',
+            align:'center'
+        },
+        {
+            header:'Used On',
+            field:'pagesText',
+            width:'240px',
+            align:'center'
+        },
+        {
             header:'Order',
             field:'displayOrder',
-            width:'220px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Status',
             field:'isActive',
             type:'status',
-            width:'220px',
+            width:'160px',
             align:'center'
         },
         {
@@ -351,14 +449,16 @@ implements OnInit
                     ) =>
                     {
                         this.activities =
-                        [
-                            ...response
-                        ];
+                            response.map(
+                                x => this.withDisplayText(x)
+                            );
 
                         this.filteredActivities =
                         [
-                            ...this.activities
-                        ].sort(
+                            ...this.tabActivities
+                        ].filter(
+                            x => this.matchesSearch(x)
+                        ).sort(
                             (
                                 a,
                                 b
@@ -417,6 +517,33 @@ implements OnInit
     }
 
     //===========================================================
+    // Search Match (keeps the search after a reload)
+    //===========================================================
+
+    private matchesSearch
+    (
+        activity:MasterActivity
+    ):
+        boolean
+    {
+        const keyword =
+            (this.searchText ?? '')
+                .trim()
+                .toLowerCase();
+
+        if (!keyword)
+        {
+            return true;
+        }
+
+        return activity.code.toLowerCase().includes(keyword)
+            ||
+            activity.name.toLowerCase().includes(keyword)
+            ||
+            (activity.remarks ?? '').toLowerCase().includes(keyword);
+    }
+
+    //===========================================================
     // Search Master Activities
     //===========================================================
 
@@ -441,13 +568,13 @@ implements OnInit
         {
             this.filteredActivities =
             [
-                ...this.activities
+                ...this.tabActivities
             ];
         }
         else
         {
             this.filteredActivities =
-                this.activities.filter(
+                this.tabActivities.filter(
                     activity =>
                         activity.code
                             .toLowerCase()

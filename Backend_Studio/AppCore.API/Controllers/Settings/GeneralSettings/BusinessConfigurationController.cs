@@ -99,7 +99,7 @@ public class BusinessConfigurationController : ControllerBase
     public async Task<IActionResult> UpdateWingLines(
         UpdateWingBusinessLinesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -200,7 +200,7 @@ public class BusinessConfigurationController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateBusinessConfigurationDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -225,7 +225,7 @@ public class BusinessConfigurationController : ControllerBase
     public async Task<IActionResult> Update(
         UpdateBusinessConfigurationDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -255,7 +255,7 @@ public class BusinessConfigurationController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -284,7 +284,7 @@ public class BusinessConfigurationController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

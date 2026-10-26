@@ -11,7 +11,7 @@
 
         [title]="pageTitle"
 
-        subtitle="Turn module features on or off">
+        subtitle="Define a switch : where it belongs, what ON and OFF do, its value and rules">
 
         <app-command-center
 
@@ -57,7 +57,9 @@
 
             [tabs]="tabs"
 
-            [(selectedTab)]="selectedTab">
+            [selectedTab]="entity.ValueType"
+
+            (selectedTabChange)="onValueTabChange($event)">
 
         </app-control-tabs>
 
@@ -79,12 +81,12 @@
 
 
             <!-- =================================================
-                 SECTION 01 : PARENT INFORMATION
+                 SECTION 01 : WHERE IT BELONGS
             ================================================== -->
 
             <app-form-section
 
-                title="Parent Information"
+                title="Module & Page"
 
                 icon="fas fa-sitemap">
 
@@ -124,65 +126,18 @@
 
                 </app-textbox>
 
-            </app-form-section>
 
-
-
-            <!-- =================================================
-                 SECTION 02 : CONFIGURATION INFORMATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Configuration Information"
-
-                icon="fas fa-sliders">
-
-
-                <!-- Configuration Name -->
-
-                <app-textbox
-
-                    label="Configuration Name"
-
-                    placeholder="e.g. Allow negative stock"
-
-                    [(value)]="entity.ConfigurationName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 03 : CONFIGURATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Configuration"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Setting Status (Enabled / Disabled) -->
+                <!-- Scope : who may change it -->
 
                 <app-dropdown
 
-                    label="Setting Status"
+                    label="Who Can Change It"
 
-                    [items]="enabledItems"
+                    [items]="scopeItems"
 
-                    [(value)]="entity.IsEnabled"
+                    [(value)]="entity.ScopeType"
 
-                    (valueChange)="onValueChange()"
+                    (valueChange)="onScopeChange()"
 
                     [disabled]="isViewMode || isSaving"
 
@@ -191,61 +146,439 @@
                 </app-dropdown>
 
 
-                <!-- Value (optional : a number or short text the
-                     setting needs, e.g. Max Lines = 20) -->
+                @if (isMenuScope)
+                {
+                    <!-- Menu (by code) -->
 
-                <app-textbox
+                    <app-search-dropdown
 
-                    label="Value"
+                        label="Menu"
 
-                    placeholder="Optional, e.g. 20"
+                        placeholder="Choose the menu"
 
-                    textCase="none"
+                        [items]="menuItems"
 
-                    [maxLength]="100"
+                        [(value)]="entity.NavigationMenuCode"
 
-                    [(value)]="entity.Value"
+                        (valueChange)="onValueChange()"
 
-                    (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving"
 
-                    [disabled]="isViewMode || isSaving">
+                        [required]="true">
 
-                </app-textbox>
+                    </app-search-dropdown>
+                }
+
+
+                @if (isSubmenuScope)
+                {
+                    <!-- Page (submenu, by code) -->
+
+                    <app-search-dropdown
+
+                        label="Page (Submenu)"
+
+                        placeholder="Choose the page"
+
+                        [items]="submenuItems"
+
+                        [(value)]="entity.NavigationSubmenuCode"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-search-dropdown>
+                }
+
+
+                @if (entity.ValueType !== 'None')
+                {
+                    <!-- Order on the page (number / text switches) -->
+
+                    <app-textbox
+                        label="Display Order"
+                        type="number"
+                        inputMode="numeric"
+                        [(value)]="displayOrderText"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textbox>
+                }
 
             </app-form-section>
 
 
 
-            <!-- =================================================
-                 SECTION 04 : STATUS & DESCRIPTION
-            ================================================== -->
+            @if (entity.ValueType === 'None')
+            {
+                <!-- =============================================
+                     SECTION 02 : CONFIGURATION INFORMATION
+                ============================================== -->
 
-            <app-form-section
+                <app-form-section
+                    title="Configuration Information"
+                    icon="fas fa-sliders">
 
-                title="Status & Description"
+                    <app-textbox
+                        label="Configuration Name"
+                        placeholder="e.g. Max Lines"
+                        textCase="none"
+                        [maxLength]="200"
+                        [(value)]="entity.ConfigurationName"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving"
+                        [required]="true">
+                    </app-textbox>
 
-                icon="fas fa-align-left">
+                    <app-textbox
+                        label="Display Order"
+                        type="number"
+                        inputMode="numeric"
+                        [(value)]="displayOrderText"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textbox>
+
+                    <app-textarea
+                        label="Remarks"
+                        placeholder="Internal note"
+                        [rows]="4"
+                        [maxLength]="1000"
+                        [(value)]="entity.Remarks"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textarea>
+
+                </app-form-section>
 
 
-                <!-- Remarks -->
+                <!-- =============================================
+                     SECTION 03 : WHEN ON / OFF
+                ============================================== -->
 
-                <app-textarea
+                <app-form-section
+                    title="When ON / OFF"
+                    icon="fas fa-toggle-on">
 
-                    label="Remarks"
+                    <app-textarea
+                        label="When ON"
+                        placeholder="What happens when it is ON"
+                        [rows]="5"
+                        [maxLength]="300"
+                        [(value)]="entity.OnDescription"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textarea>
 
-                    placeholder="What does this setting control?"
+                    <app-textarea
+                        label="When OFF"
+                        placeholder="What happens when it is OFF"
+                        [rows]="5"
+                        [maxLength]="300"
+                        [(value)]="entity.OffDescription"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textarea>
 
-                    [rows]="4"
+                </app-form-section>
 
-                    [(value)]="entity.Remarks"
 
-                    (valueChange)="onValueChange()"
+                <!-- =============================================
+                     SECTION 04 : STATUS & RULES
+                ============================================== -->
 
-                    [disabled]="isViewMode || isSaving">
+                <app-form-section
+                    title="Status & Rules"
+                    icon="fas fa-shield-halved">
 
-                </app-textarea>
+                    <app-dropdown
+                        label="Setting Status"
+                        [items]="enabledItems"
+                        [(value)]="entity.IsEnabled"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving"
+                        [required]="true">
+                    </app-dropdown>
 
-            </app-form-section>
+                    <app-dropdown
+                        label="Default Status"
+                        [items]="enabledItems"
+                        [(value)]="entity.DefaultEnabled"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <app-dropdown
+                        label="Critical (reason + approval)"
+                        [items]="yesNoItems"
+                        [(value)]="entity.IsCritical"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <app-search-dropdown
+                        label="Works Only When ON"
+                        placeholder="No parent"
+                        [items]="parentItems"
+                        [(value)]="entity.ParentConfigurationCode"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-search-dropdown>
+
+                    @if (needsReason)
+                    {
+                        <app-textarea
+                            label="Reason For This Change"
+                            placeholder="Why is this critical switch changing?"
+                            [rows]="2"
+                            [maxLength]="500"
+                            [(value)]="reason"
+                            [disabled]="isSaving"
+                            [required]="true">
+                        </app-textarea>
+                    }
+
+                </app-form-section>
+
+            }
+            @else
+            {
+                <!-- =============================================
+                     SECTION 02 : CONFIGURATION INFORMATION
+                ============================================== -->
+
+                <app-form-section
+                    title="Configuration Information"
+                    icon="fas fa-sliders">
+
+                    <app-textbox
+                        label="Configuration Name"
+                        placeholder="e.g. Max Lines"
+                        textCase="none"
+                        [maxLength]="200"
+                        [(value)]="entity.ConfigurationName"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving"
+                        [required]="true">
+                    </app-textbox>
+
+                    <app-textarea
+                        label="When ON"
+                        placeholder="What happens when it is ON"
+                        [rows]="2"
+                        [maxLength]="300"
+                        [(value)]="entity.OnDescription"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textarea>
+
+                    <app-textarea
+                        label="When OFF"
+                        placeholder="What happens when it is OFF"
+                        [rows]="2"
+                        [maxLength]="300"
+                        [(value)]="entity.OffDescription"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textarea>
+
+                </app-form-section>
+
+
+                @if (entity.ValueType === 'Number')
+                {
+                <!-- =============================================
+                     SECTION 03 : WHOLE NUMBER
+                ============================================== -->
+
+                <app-form-section
+                    title="Whole Number"
+                    icon="fas fa-hashtag">
+
+                    <app-textbox
+                        label="Unit"
+                        placeholder="e.g. days, lines"
+                        textCase="none"
+                        [maxLength]="30"
+                        [(value)]="entity.ValueUnit"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textbox>
+
+                    <div class="sc-pair">
+                        <app-textbox
+                            label="Lowest Number"
+                            type="number"
+                            inputMode="numeric"
+                            placeholder="No minimum"
+                            [(value)]="valueMinText"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Highest Number"
+                            type="number"
+                            inputMode="numeric"
+                            placeholder="No maximum"
+                            [(value)]="valueMaxText"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-textbox>
+                    </div>
+
+                    <app-textbox
+                        label="When Empty, Show"
+                        placeholder="e.g. No limit (blank: a number is required)"
+                        textCase="none"
+                        [maxLength]="40"
+                        [(value)]="entity.ValueEmptyText"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textbox>
+
+                    <div class="sc-pair">
+                        <app-textbox
+                            label="Default Value"
+                            textCase="none"
+                            [maxLength]="100"
+                            [(value)]="entity.DefaultValue"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Current Value"
+                            textCase="none"
+                            [maxLength]="100"
+                            [(value)]="entity.Value"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-textbox>
+                    </div>
+
+                </app-form-section>
+
+                }
+                @else
+                {
+                <!-- =============================================
+                     SECTION 03 : SHORT TEXT
+                ============================================== -->
+
+                <app-form-section
+                    title="Short Text"
+                    icon="fas fa-font">
+
+                    <app-textbox
+                        label="Unit"
+                        placeholder="e.g. days, lines"
+                        textCase="none"
+                        [maxLength]="30"
+                        [(value)]="entity.ValueUnit"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Default Value"
+                        textCase="none"
+                        [maxLength]="100"
+                        [(value)]="entity.DefaultValue"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Current Value"
+                        textCase="none"
+                        [maxLength]="100"
+                        [(value)]="entity.Value"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textbox>
+
+                </app-form-section>
+
+                }
+
+                <!-- =============================================
+                     SECTION 04 : STATUS & RULES
+                ============================================== -->
+
+                <app-form-section
+                    title="Status & Rules"
+                    icon="fas fa-shield-halved">
+
+                    <div class="sc-pair">
+                        <app-dropdown
+                            label="Setting Status"
+                            [items]="enabledItems"
+                            [(value)]="entity.IsEnabled"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving"
+                            [required]="true">
+                        </app-dropdown>
+
+                        <app-dropdown
+                            label="Default Status"
+                            [items]="enabledItems"
+                            [(value)]="entity.DefaultEnabled"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving"
+                            [required]="true">
+                        </app-dropdown>
+                    </div>
+
+                    <app-dropdown
+                        label="Critical (reason + approval)"
+                        [items]="yesNoItems"
+                        [(value)]="entity.IsCritical"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <app-search-dropdown
+                        label="Works Only When ON"
+                        placeholder="No parent"
+                        [items]="parentItems"
+                        [(value)]="entity.ParentConfigurationCode"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-search-dropdown>
+
+                    <app-textarea
+                        label="Remarks"
+                        placeholder="Internal note"
+                        [rows]="2"
+                        [maxLength]="1000"
+                        [(value)]="entity.Remarks"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textarea>
+
+                    @if (needsReason)
+                    {
+                        <app-textarea
+                            label="Reason For This Change"
+                            placeholder="Why is this critical switch changing?"
+                            [rows]="2"
+                            [maxLength]="500"
+                            [(value)]="reason"
+                            [disabled]="isSaving"
+                            [required]="true">
+                        </app-textarea>
+                    }
+
+                </app-form-section>
+
+            }
 
         </app-form-grid>
 

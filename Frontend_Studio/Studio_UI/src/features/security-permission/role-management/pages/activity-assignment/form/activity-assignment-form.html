@@ -43,7 +43,7 @@
     </app-page-header>
 
     <app-page-toolbar
-        leftFlex="0 0 420px"
+        leftFlex="0 0 auto"
         rightFlex="1 1 auto">
         <div
             pageToolbarLeft
@@ -145,6 +145,9 @@
         <ng-container canvasBody>
             <app-item-cart
                 [columns]="itemCartColumns"
+                [pageSlots]="pageSlots"
+                [allRows]="itemCartRows"
+                (columnCheckboxChange)="onColumnCheckboxChange($event)"
                 [rows]="pagedItemCartRows"
                 [serialOffset]="
                     (currentPage - 1) * pageSize

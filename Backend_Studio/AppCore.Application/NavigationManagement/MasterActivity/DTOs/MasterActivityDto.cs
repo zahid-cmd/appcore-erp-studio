@@ -49,6 +49,38 @@ public class MasterActivityDto
     }
 
     //===============================================================
+    // Scope
+    //===============================================================
+
+    // Common / Page
+    public string ActivityScope
+    {
+        get;
+        set;
+    } = "Common";
+
+    public bool LinkToSwitchPages
+    {
+        get;
+        set;
+    }
+
+    // Pages linked by hand (submenu codes)
+    public List<string> PageSubmenuCodes
+    {
+        get;
+        set;
+    } = new();
+
+    // Every page it shows on : hand links + pages with switches
+    // (submenu ids, used by the assignment grids)
+    public List<long> PageSubmenuIds
+    {
+        get;
+        set;
+    } = new();
+
+    //===============================================================
     // Status
     //===============================================================
 

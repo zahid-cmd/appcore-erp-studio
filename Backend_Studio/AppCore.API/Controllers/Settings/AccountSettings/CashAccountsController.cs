@@ -166,7 +166,7 @@ public class CashAccountsController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateCashAccountDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -222,7 +222,7 @@ public class CashAccountsController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -285,7 +285,7 @@ public class CashAccountsController : ControllerBase
         // Current User
         //===========================================================
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
 
         //===========================================================
@@ -330,7 +330,7 @@ public class CashAccountsController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored;
 

@@ -144,7 +144,7 @@ public class AccountClassController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateAccountClassDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -187,7 +187,7 @@ public class AccountClassController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -228,7 +228,7 @@ public class AccountClassController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -261,7 +261,7 @@ public class AccountClassController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

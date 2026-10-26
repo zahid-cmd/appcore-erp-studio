@@ -149,7 +149,7 @@ public class MotorBikesController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateMotorBikesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -180,7 +180,7 @@ public class MotorBikesController : ControllerBase
     public async Task<IActionResult> Update(
         UpdateMotorBikesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -219,7 +219,7 @@ public class MotorBikesController : ControllerBase
         long id,
         IFormFile file)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         //=======================================================
         // Validate
@@ -337,7 +337,7 @@ public class MotorBikesController : ControllerBase
     public async Task<IActionResult> DeleteImage(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -374,7 +374,7 @@ public class MotorBikesController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -403,7 +403,7 @@ public class MotorBikesController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

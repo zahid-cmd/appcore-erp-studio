@@ -80,6 +80,17 @@ public class AppDbContext
         } = null!;
 
 
+    // Page activities : the pages each one is used on (by code).
+    // Table created by MasterActivities_PageActivities.sql.
+
+    public DbSet<MasterActivityPages>
+        MasterActivityPageRows
+        {
+            get;
+            set;
+        } = null!;
+
+
     //===========================================================
     // Development Management
     //===========================================================
@@ -669,6 +680,17 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : SystemConfigurations
+
+    // System Configuration Requests (manual) : critical changes
+    // waiting for approval. Table created by
+    // SystemConfigurations_Redesign.sql.
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurationRequests>
+    SystemConfigurationRequests
+    {
+    get;
+    set;
+    } = null!;
 
 
 

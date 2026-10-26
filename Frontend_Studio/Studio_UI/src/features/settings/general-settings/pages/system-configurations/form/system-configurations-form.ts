@@ -172,7 +172,10 @@ import
 {
     SystemConfiguration,
     CreateSystemConfiguration,
-    UpdateSystemConfiguration
+    UpdateSystemConfiguration,
+    ConfigurationWorkspace,
+    ConfigurationScope,
+    ConfigurationValueType
 }
 from '../../../models/system-configurations.model';
 
@@ -203,6 +206,14 @@ const REMARKS_MAX_LENGTH:
 const VALUE_MAX_LENGTH:
     number =
     100;
+
+const TEXT_MAX_LENGTH:
+    number =
+    300;
+
+const REASON_MAX_LENGTH:
+    number =
+    500;
 
 //===============================================================
 // Case-Insensitive Field Reader
@@ -427,15 +438,72 @@ implements OnInit, OnDestroy
         string =
         'general';
 
+    // Toolbar tabs = Value Type : the form arranges its four
+    // sections for the chosen type. Kept as the same array until
+    // the mode or type changes (a new array on every check would
+    // redraw the tabs). In View mode only the record's tab is open.
+    private tabsCache:
+        ControlTab[] = [];
+
+    private tabsKey =
+        '';
+
     get tabs():
         ControlTab[]
     {
-        return [
-            {
-                id:'general',
-                label:this.tabTitle
-            }
+        const key =
+            `${this.mode}|${this.entity?.ValueType}`;
+
+        if
+        (
+            key === this.tabsKey
+        )
+        {
+            return this.tabsCache;
+        }
+
+        const locked =
+            this.mode === 'view';
+
+        const type =
+            this.entity?.ValueType ?? 'None';
+
+        this.tabsKey = key;
+
+        this.tabsCache =
+        [
+            { id:'None', label:'On / Off', disabled:locked && type !== 'None' },
+            { id:'Number', label:'Whole Number', disabled:locked && type !== 'Number' },
+            { id:'Text', label:'Short Text', disabled:locked && type !== 'Text' }
         ];
+
+        return this.tabsCache;
+    }
+
+    onValueTabChange
+    (
+        id:string
+    ):
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.isSaving
+            ||
+            id === this.entity.ValueType
+        )
+        {
+            return;
+        }
+
+        this.entity.ValueType =
+            id as ConfigurationValueType;
+
+        this.onValueTypeChange();
+
+        this.cdr.detectChanges();
     }
 
     get tabTitle():
@@ -484,6 +552,228 @@ implements OnInit, OnDestroy
         { label:'Disabled', value:false }
     ];
 
+    // Who may change it
+    scopeItems:
+        any[] =
+    [
+        { label:'Page (submenu) : page users with permission', value:'Submenu' },
+        { label:'Menu-wide : admin only', value:'Menu' },
+        { label:'Module-wide : admin only', value:'Module' }
+    ];
+
+    valueTypeItems:
+        any[] =
+    [
+        { label:'No value (ON / OFF only)', value:'None' },
+        { label:'Whole number', value:'Number' },
+        { label:'Short text', value:'Text' }
+    ];
+
+    yesNoItems:
+        any[] =
+    [
+        { label:'Yes', value:true },
+        { label:'No', value:false }
+    ];
+
+    //===========================================================
+    // Workspace (menus, pages, switches; admin only)
+    //===========================================================
+
+    private workspace:
+        ConfigurationWorkspace | null =
+        null;
+
+    // ON / OFF and Value as saved (a critical change needs a
+    // reason on Update)
+    private savedEnabled:
+        boolean =
+        false;
+
+    private savedValue:
+        string =
+        '';
+
+    // Reason for a critical ON / OFF / Value change (Update)
+    reason:
+        string =
+        '';
+
+    get menuItems():
+        any[]
+    {
+        const moduleId =
+            Number(this.entity.NavigationModuleId) || 0;
+
+        return (this.workspace?.Menus ?? [])
+            .filter(x => x.NavigationModuleId === moduleId)
+            .map(x => ({ label: `${x.Name} (${x.Code})`, value: x.Code }));
+    }
+
+    get submenuItems():
+        any[]
+    {
+        const moduleId =
+            Number(this.entity.NavigationModuleId) || 0;
+
+        const menus =
+            new Map(
+                (this.workspace?.Menus ?? []).map(x => [x.Code, x.Name] as [string, string])
+            );
+
+        return (this.workspace?.Submenus ?? [])
+            .filter(x => x.NavigationModuleId === moduleId)
+            .map(x => ({ label: `${menus.get(x.MenuCode) ?? x.MenuCode} › ${x.Name}`, value: x.Code }));
+    }
+
+    get parentItems():
+        any[]
+    {
+        const moduleId =
+            Number(this.entity.NavigationModuleId) || 0;
+
+        const items =
+            (this.workspace?.Switches ?? [])
+                .filter
+                (
+                    x =>
+                        x.NavigationModuleId === moduleId
+                        &&
+                        x.ConfigurationCode !== this.entity.ConfigurationCode
+                        &&
+                        x.ValueType === 'None'
+                )
+                .map
+                (
+                    x =>
+                    ({
+                        label: `${x.ConfigurationName}${x.SubmenuName ? ' · ' + x.SubmenuName : ''} (${x.ConfigurationCode})`,
+                        value: x.ConfigurationCode
+                    })
+                );
+
+        return [{ label:'No parent', value:'' }, ...items];
+    }
+
+    get isMenuScope():
+        boolean
+    {
+        return this.entity.ScopeType === 'Menu';
+    }
+
+    get isSubmenuScope():
+        boolean
+    {
+        return this.entity.ScopeType === 'Submenu';
+    }
+
+    get hasValueType():
+        boolean
+    {
+        return this.entity.ValueType !== 'None';
+    }
+
+    get isNumberType():
+        boolean
+    {
+        return this.entity.ValueType === 'Number';
+    }
+
+    // Reason box : Update of a critical switch whose ON / OFF or
+    // Value changed
+    get needsReason():
+        boolean
+    {
+        return !this.isAddMode
+               &&
+               this.entity.IsCritical
+               &&
+               (
+                   this.entity.IsEnabled !== this.savedEnabled
+                   ||
+                   String(this.entity.Value ?? '').trim() !== this.savedValue
+               );
+    }
+
+    // Min / Max / Order as text for the textboxes
+    get valueMinText():
+        string
+    {
+        return this.entity.ValueMin === null || this.entity.ValueMin === undefined
+            ? ''
+            : String(this.entity.ValueMin);
+    }
+
+    set valueMinText
+    (
+        value:
+            string
+    )
+    {
+        this.entity.ValueMin =
+            this.toOptionalInt(value);
+    }
+
+    get valueMaxText():
+        string
+    {
+        return this.entity.ValueMax === null || this.entity.ValueMax === undefined
+            ? ''
+            : String(this.entity.ValueMax);
+    }
+
+    set valueMaxText
+    (
+        value:
+            string
+    )
+    {
+        this.entity.ValueMax =
+            this.toOptionalInt(value);
+    }
+
+    get displayOrderText():
+        string
+    {
+        return String(this.entity.DisplayOrder ?? 0);
+    }
+
+    set displayOrderText
+    (
+        value:
+            string
+    )
+    {
+        this.entity.DisplayOrder =
+            this.toOptionalInt(value) ?? 0;
+    }
+
+    private toOptionalInt
+    (
+        value:
+            string | number | null | undefined
+    ):
+        number | null
+    {
+        const text =
+            String(value ?? '').trim();
+
+        if
+        (
+            !text
+        )
+        {
+            return null;
+        }
+
+        const number =
+            Number(text);
+
+        return Number.isFinite(number)
+            ? Math.trunc(number)
+            : null;
+    }
+
     //===========================================================
     // Code Request Guard
     //
@@ -524,6 +814,8 @@ implements OnInit, OnDestroy
         this.initializeMode();
 
         this.loadModules();
+
+        this.loadWorkspace();
     }
 
     //===========================================================
@@ -557,11 +849,34 @@ implements OnInit, OnDestroy
             ModuleCode:'',
             ModuleName:'',
             ModuleIcon:'',
+            ScopeType:'Submenu',
+            NavigationMenuCode:'',
+            MenuName:'',
+            NavigationSubmenuCode:'',
+            SubmenuName:'',
             ConfigurationCode:'',
             ConfigurationName:'',
-            IsEnabled:true,
+            OnDescription:'',
+            OffDescription:'',
+            IsEnabled:false,
             Value:'',
-            Remarks:''
+            ValueType:'None',
+            ValueUnit:'',
+            ValueMin:null,
+            ValueMax:null,
+            ValueEmptyText:'',
+            DefaultEnabled:false,
+            DefaultValue:'',
+            ParentConfigurationCode:'',
+            IsCritical:false,
+            IsSystemDefined:false,
+            DisplayOrder:0,
+            Remarks:'',
+            CanChange:true,
+            IsPending:false,
+            PendingEnabled:false,
+            PendingValue:'',
+            PendingByName:''
         };
     }
 
@@ -650,6 +965,126 @@ implements OnInit, OnDestroy
         }
 
         return 0;
+    }
+
+    //===========================================================
+    // Load Workspace (menus / pages / switches; admin only)
+    //===========================================================
+
+    private loadWorkspace():
+        void
+    {
+        this.systemConfigurationsService
+            .getWorkspace()
+            .subscribe
+            ({
+                next:
+                (
+                    workspace:
+                        ConfigurationWorkspace
+                ):
+                    void =>
+                {
+                    if
+                    (
+                        !workspace.CanManage
+                        &&
+                        !this.isViewMode
+                    )
+                    {
+                        this.toast.error(
+                            'Permission',
+                            "Only users with 'Manage Configurations' can add or edit switches."
+                        );
+
+                        this.hasChanges =
+                            false;
+
+                        this.onBackToList();
+
+                        return;
+                    }
+
+                    this.workspace =
+                        workspace;
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Configuration Workspace Error',
+                        error
+                    );
+
+                    this.toast.error(
+                        'Error',
+                        'Failed to load menus and pages.'
+                    );
+                }
+            });
+    }
+
+    //===========================================================
+    // Scope / value type changed
+    //===========================================================
+
+    onScopeChange():
+        void
+    {
+        if
+        (
+            this.entity.ScopeType !== 'Menu'
+        )
+        {
+            this.entity.NavigationMenuCode =
+                '';
+        }
+
+        if
+        (
+            this.entity.ScopeType !== 'Submenu'
+        )
+        {
+            this.entity.NavigationSubmenuCode =
+                '';
+        }
+
+        this.onValueChange();
+    }
+
+    onValueTypeChange():
+        void
+    {
+        if
+        (
+            this.entity.ValueType === 'None'
+        )
+        {
+            this.entity.ValueUnit = '';
+            this.entity.ValueMin = null;
+            this.entity.ValueMax = null;
+            this.entity.ValueEmptyText = '';
+            this.entity.DefaultValue = '';
+            this.entity.Value = '';
+        }
+        else if
+        (
+            this.entity.ValueType === 'Text'
+        )
+        {
+            this.entity.ValueMin = null;
+            this.entity.ValueMax = null;
+            this.entity.ValueEmptyText = '';
+        }
+
+        this.onValueChange();
     }
 
     //===========================================================
@@ -908,6 +1343,15 @@ implements OnInit, OnDestroy
         this.entity.ModuleName =
             module?.name ?? '';
 
+        this.entity.NavigationMenuCode =
+            '';
+
+        this.entity.NavigationSubmenuCode =
+            '';
+
+        this.entity.ParentConfigurationCode =
+            '';
+
         this.generateCode(
             false
         );
@@ -1067,6 +1511,15 @@ implements OnInit, OnDestroy
                             this.entityId
                     };
 
+                    this.savedEnabled =
+                        this.entity.IsEnabled;
+
+                    this.savedValue =
+                        String(this.entity.Value ?? '').trim();
+
+                    this.reason =
+                        '';
+
                     // Saved module stays selectable even if inactive
                     this.buildModuleItems();
 
@@ -1187,6 +1640,68 @@ implements OnInit, OnDestroy
         )
         {
             return this.fail(`Remarks cannot be longer than ${REMARKS_MAX_LENGTH} characters.`);
+        }
+
+        if
+        (
+            this.entity.ScopeType === 'Menu'
+            &&
+            !this.entity.NavigationMenuCode
+        )
+        {
+            return this.fail('Choose the menu.');
+        }
+
+        if
+        (
+            this.entity.ScopeType === 'Submenu'
+            &&
+            !this.entity.NavigationSubmenuCode
+        )
+        {
+            return this.fail('Choose the page (submenu).');
+        }
+
+        if
+        (
+            (this.entity.OnDescription?.trim().length ?? 0) > TEXT_MAX_LENGTH
+            ||
+            (this.entity.OffDescription?.trim().length ?? 0) > TEXT_MAX_LENGTH
+        )
+        {
+            return this.fail(`ON / OFF texts cannot be longer than ${TEXT_MAX_LENGTH} characters.`);
+        }
+
+        if
+        (
+            this.entity.ValueType === 'Number'
+            &&
+            this.entity.ValueMin !== null
+            &&
+            this.entity.ValueMax !== null
+            &&
+            this.entity.ValueMin > this.entity.ValueMax
+        )
+        {
+            return this.fail('Value Min cannot be more than Value Max.');
+        }
+
+        if
+        (
+            this.needsReason
+            &&
+            !this.reason.trim()
+        )
+        {
+            return this.fail('Give a reason for changing this critical switch.');
+        }
+
+        if
+        (
+            this.reason.trim().length > REASON_MAX_LENGTH
+        )
+        {
+            return this.fail(`Reason cannot be longer than ${REASON_MAX_LENGTH} characters.`);
         }
 
         return true;
@@ -1447,22 +1962,55 @@ implements OnInit, OnDestroy
     private buildPayload():
         CreateSystemConfiguration
     {
+        const valueType:
+            ConfigurationValueType =
+            this.entity.ValueType ?? 'None';
+
+        const scope:
+            ConfigurationScope =
+            this.entity.ScopeType ?? 'Submenu';
+
         return {
             NavigationModuleId:
                 Number(this.entity.NavigationModuleId) || 0,
-
             ConfigurationCode:
                 this.entity.ConfigurationCode?.trim() ?? '',
-
             ConfigurationName:
                 this.entity.ConfigurationName?.trim() ?? '',
-
+            ScopeType:
+                scope,
+            NavigationMenuCode:
+                scope === 'Menu' ? (this.entity.NavigationMenuCode || null) : null,
+            NavigationSubmenuCode:
+                scope === 'Submenu' ? (this.entity.NavigationSubmenuCode || null) : null,
+            OnDescription:
+                this.entity.OnDescription?.trim() ?? '',
+            OffDescription:
+                this.entity.OffDescription?.trim() ?? '',
             IsEnabled:
                 this.entity.IsEnabled,
-
             Value:
-                String(this.entity.Value ?? '').trim(),
-
+                valueType === 'None' ? '' : String(this.entity.Value ?? '').trim(),
+            ValueType:
+                valueType,
+            ValueUnit:
+                valueType === 'None' ? '' : (this.entity.ValueUnit?.trim() ?? ''),
+            ValueMin:
+                valueType === 'Number' ? this.entity.ValueMin : null,
+            ValueMax:
+                valueType === 'Number' ? this.entity.ValueMax : null,
+            ValueEmptyText:
+                valueType === 'Number' ? (this.entity.ValueEmptyText?.trim() ?? '') : '',
+            DefaultEnabled:
+                this.entity.DefaultEnabled,
+            DefaultValue:
+                valueType === 'None' ? '' : String(this.entity.DefaultValue ?? '').trim(),
+            ParentConfigurationCode:
+                this.entity.ParentConfigurationCode || null,
+            IsCritical:
+                this.entity.IsCritical,
+            DisplayOrder:
+                Number(this.entity.DisplayOrder) || 0,
             Remarks:
                 this.entity.Remarks?.trim() ?? ''
         };
@@ -1572,6 +2120,9 @@ implements OnInit, OnDestroy
         {
             SystemConfigurationId:
                 id,
+
+            Reason:
+                this.reason.trim(),
 
             ...this.buildPayload()
         };

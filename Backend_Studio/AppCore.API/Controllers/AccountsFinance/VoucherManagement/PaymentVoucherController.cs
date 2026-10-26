@@ -292,7 +292,7 @@ public class PaymentVoucherController : ControllerBase
     //===========================================================
 
     // Until login identity is wired into the API
-    private static long UserId => 1;
+    private long UserId => this.CurrentUserId();
 
     // Today in Bangladesh time (preview default date), whatever
     // the server clock

@@ -2,6 +2,7 @@
 // Namespaces 
 //=============================================================== 
  
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc; 
  
 using AppCore.Application.InfrastructureControl.ApplicationConfiguration; 
@@ -104,6 +105,7 @@ public class LoginPagesController
     // Get Active 
     //=========================================================== 
  
+    [AllowAnonymous]
     [HttpGet("active")] 
  
     public async Task<IActionResult> GetActive() 

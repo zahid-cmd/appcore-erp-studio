@@ -17,7 +17,9 @@ from '@angular/core';
 import
 {
     ActivityItem,
-    ActivitySelector
+    ActivitySelector,
+    PageSlot,
+    pageSlotColumns
 }
 from '../../utilities/activity-selector/activity-selector';
 import
@@ -136,6 +138,88 @@ export class ItemCart
         0;
 
     //===========================================================
+    // Page Slots : every page action in the table, fixed order
+    // (each keeps the same column on every row)
+    //===========================================================
+    @Input()
+    pageSlots:
+        PageSlot[] = [];
+
+    //===========================================================
+    // All rows (every page of the table) : the column "All"
+    // boxes act on these, not only on the visible page.
+    //===========================================================
+    @Input()
+    allRows:
+        ItemCartRow[] = [];
+
+    get slotColumns():
+        string
+    {
+        return pageSlotColumns(
+            this.pageSlots
+        );
+    }
+
+    private get sourceRows():
+        ItemCartRow[]
+    {
+        return this.allRows.length > 0
+            ? this.allRows
+            : this.rows;
+    }
+
+    // Common columns, in the same order as the rows
+    get commonColumns():
+        ActivityItem[]
+    {
+        const first =
+            this.sourceRows[0];
+
+        return (first?.masterActivities ?? [])
+            .filter(activity => activity.group !== 'page');
+    }
+
+    // Column "All" : ticked when every row that has it is ticked
+    columnState
+    (
+        ids:number[]
+    ):
+        boolean
+    {
+        const items =
+            this.sourceRows
+                .flatMap(row => row.masterActivities)
+                .filter(activity => ids.includes(activity.id));
+
+        return items.length > 0
+            &&
+            items.every(activity => activity.checked);
+    }
+
+    onColumnChanged
+    (
+        ids:number[],
+        checked:boolean
+    ):
+        void
+    {
+        if
+        (
+            this.readOnly
+        )
+        {
+            return;
+        }
+
+        this.columnCheckboxChange.emit(
+        {
+            ids,
+            checked
+        });
+    }
+
+    //===========================================================
     // Read Only
     //===========================================================
     @Input()
@@ -177,6 +261,16 @@ export class ItemCart
     @Output()
     activityChanged =
         new EventEmitter<void>();
+
+    // Column "All" box : the page ticks / clears these activity ids
+    // on every row (all pages of the table)
+    @Output()
+    columnCheckboxChange =
+        new EventEmitter<
+        {
+            ids:number[];
+            checked:boolean;
+        }>();
 
     //===========================================================
     // Track Row

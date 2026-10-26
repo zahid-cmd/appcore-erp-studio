@@ -298,7 +298,7 @@ public class CheckReconciliationsController : ControllerBase
     //===========================================================
 
     // Until login identity is wired into the API
-    private static long UserId => 1;
+    private long UserId => this.CurrentUserId();
 
     // InvalidOperationException → 409; KeyNotFoundException → 404
     private async Task<IActionResult> Run

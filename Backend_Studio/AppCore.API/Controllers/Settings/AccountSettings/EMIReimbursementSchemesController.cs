@@ -118,7 +118,7 @@ public class EmiReimbursementSchemesController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateEmiReimbursementSchemesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -157,7 +157,7 @@ public class EmiReimbursementSchemesController : ControllerBase
     public async Task<IActionResult> Update(
         UpdateEmiReimbursementSchemesDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -198,7 +198,7 @@ public class EmiReimbursementSchemesController : ControllerBase
     public async Task<IActionResult> Delete(
         long id)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -238,7 +238,7 @@ public class EmiReimbursementSchemesController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {

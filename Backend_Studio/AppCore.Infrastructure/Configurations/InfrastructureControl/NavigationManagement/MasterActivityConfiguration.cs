@@ -71,6 +71,19 @@ public class MasterActivityConfiguration
                .HasMaxLength(500);
 
         //===========================================================
+        // Scope
+        //===========================================================
+
+        builder.Property(x => x.ActivityScope)
+               .IsRequired()
+               .HasMaxLength(20)
+               .HasDefaultValue("Common");
+
+        builder.Property(x => x.LinkToSwitchPages)
+               .IsRequired()
+               .HasDefaultValue(false);
+
+        //===========================================================
         // Status
         //===========================================================
 

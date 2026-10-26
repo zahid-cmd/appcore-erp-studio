@@ -179,7 +179,6 @@ using AppCore.Infrastructure.Configurations.MembershipManagement.MembershipAssig
 
 // AUTO-END : MembershipStatus
 
-
 // AUTO-BEGIN : MembershipCards
 
 using AppCore.Application.MembershipManagement.MembershipSetup;
@@ -194,16 +193,12 @@ using AppCore.Infrastructure.Configurations.Settings.ClientSettings;
 
 // AUTO-END : CustomerProfiles
 
-
-
-
 // AUTO-BEGIN : ServiceCategory
 
 using AppCore.Application.Settings.ServiceSettings;
 using AppCore.Infrastructure.Configurations.Settings.ServiceSettings;
 
 // AUTO-END : ServiceCategory
-
 
 // AUTO-BEGIN : BusinessConfiguration
 
@@ -218,16 +213,11 @@ using AppCore.Infrastructure.Configurations.Settings.ProductSettings;
 
 // AUTO-END : ProductCategory
 
-
 // AUTO-BEGIN : ColorManagement
 
 using AppCore.Infrastructure.Repositories.Settings.ProductSettings;
 
 // AUTO-END : ColorManagement
-
-
-
-
 
 // AUTO-BEGIN : FinancialYears
 
@@ -290,16 +280,12 @@ using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
 
 // AUTO-END : Branches
 
-
-
-
 // AUTO-BEGIN : Wings
 
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
 
 // AUTO-END : Wings
-
 
 // AUTO-BEGIN : SubOrdinateComponents
 
@@ -315,8 +301,6 @@ using AppCore.Infrastructure.Repositories.InfrastructureControl.LoginComponents;
 
 // AUTO-END : CoreComponents
 
-
-
 // AUTO-BEGIN : Company
 
 using AppCore.Application.Settings.GeneralSettings;
@@ -330,8 +314,6 @@ using AppCore.Application.InfrastructureControl.ApplicationConfiguration;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.ApplicationConfiguration;
 
 // AUTO-END : WidgetConfiguration
-
-
 
 // AUTO-BEGIN : RoleBasedDBComponents
 
@@ -347,26 +329,12 @@ using AppCore.Infrastructure.Repositories.InfrastructureControl.DashboardCompone
 
 // AUTO-END : DefaultDBComponents
 
-
-
 // AUTO-BEGIN : Dashboards
 
 using AppCore.Application.InfrastructureControl.ApplicationConfiguration;
 using AppCore.Infrastructure.Repositories.InfrastructureControl.ApplicationConfiguration;
 
 // AUTO-END : Dashboards
-
-
-
-
-
-
-
-
-
-
-
-
 
 // AUTO-BEGIN : LoginPages
 
@@ -375,10 +343,6 @@ using AppCore.Infrastructure.Repositories.InfrastructureControl.ApplicationConfi
 
 // AUTO-END : LoginPages
 
-
-
-
-
 // AUTO-BEGIN : ApplicationComponents
 
 using AppCore.Application.InfrastructureControl.ComponentManagement;
@@ -386,16 +350,12 @@ using AppCore.Infrastructure.Repositories.InfrastructureControl.ComponentManagem
 
 // AUTO-END : ApplicationComponents
 
-
 // AUTO-BEGIN : SpecialAssignment
 
 using AppCore.Application.SecurityPermission.UserManagement;
 using AppCore.Infrastructure.Repositories.SecurityPermission.UserManagement;
 
 // AUTO-END : SpecialAssignment
-
-
-
 
 // AUTO-BEGIN : RoleAssignment
 
@@ -411,20 +371,12 @@ using AppCore.Infrastructure.Repositories.SecurityPermission.UserManagement;
 
 // AUTO-END : UserProfile
 
-
-
-
-
-
-
 // AUTO-BEGIN : ActivityAssignment
 
 using AppCore.Application.SecurityPermission.RoleManagement;
 using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
 
 // AUTO-END : ActivityAssignment
-
-
 
 // AUTO-BEGIN : RoleProfile
 
@@ -433,16 +385,12 @@ using AppCore.Infrastructure.Repositories.SecurityPermission.RoleManagement;
 
 // AUTO-END : RoleProfile
 
-
-
 // AUTO-BEGIN : PaymentVoucher
 
 using AppCore.Application.AccountsFinance.VoucherManagement;
 using AppCore.Infrastructure.Configurations.AccountsFinance.VoucherManagement;
 
 // AUTO-END : PaymentVoucher
-
-
 
 // AUTO-BEGIN : ReceiptVoucher
 
@@ -451,17 +399,12 @@ using AppCore.Infrastructure.Configurations.AccountsFinance.VoucherManagement;
 
 // AUTO-END : ReceiptVoucher
 
-
-
-
 // AUTO-BEGIN : Designation
 
 using AppCore.Application.HumanResourceManangement.HumanResourceSetup;
 using AppCore.Infrastructure.Configurations.HumanResourceManangement.HumanResourceSetup;
 
 // AUTO-END : Designation
-
-
 
 // AUTO-BEGIN : Department
 
@@ -470,16 +413,12 @@ using AppCore.Infrastructure.Configurations.HumanResourceManangement.HumanResour
 
 // AUTO-END : Department
 
-
-
 // AUTO-BEGIN : DeploymentCenter
 
 using AppCore.Application.InfrastructureControl.CodeManagement;
 using AppCore.Infrastructure.Configurations.InfrastructureControl.CodeManagement;
 
 // AUTO-END : DeploymentCenter
-
-
 
 // AUTO-BEGIN : ServerManagement
 
@@ -488,18 +427,12 @@ using AppCore.Infrastructure.Configurations.InfrastructureControl.CodeManagement
 
 // AUTO-END : ServerManagement
 
-
-
 // AUTO-BEGIN : SourceControl
 
 using AppCore.Application.InfrastructureControl.CodeManagement;
 using AppCore.Infrastructure.Configurations.InfrastructureControl.CodeManagement;
 
 // AUTO-END : SourceControl
-
-
-
-
 
 // AUTO-BEGIN : UtilityComponents
 
@@ -508,8 +441,6 @@ using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManag
 
 // AUTO-END : UtilityComponents
 
-
-
 // AUTO-BEGIN : LayoutComponents
 
 using AppCore.Application.InfrastructureControl.ComponentManagement;
@@ -517,28 +448,12 @@ using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManag
 
 // AUTO-END : LayoutComponents
 
-
-
 // AUTO-BEGIN : ControlComponents
 
 using AppCore.Application.InfrastructureControl.ComponentManagement;
 using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManagement;
 
 // AUTO-END : ControlComponents
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // AUTO-END : AUTO REGISTER NAMESPACES
 
@@ -549,7 +464,6 @@ using AppCore.Infrastructure.Configurations.InfrastructureControl.ComponentManag
 
 public static class DependencyInjection
 {
-
     //===========================================================
     // Register Infrastructure Services
     //===========================================================
@@ -561,6 +475,19 @@ public static class DependencyInjection
         IConfiguration configuration
     )
     {
+        //=======================================================
+        // Current User Stamp Interceptor
+        //
+        // Before every save, new rows with PerformedBy = 1 /
+        // PerformedByName = "System" get the logged-in user.
+        // Background jobs (no user) stay "System".
+        //=======================================================
+
+        services.AddScoped
+        <
+            CurrentUserStampInterceptor
+        >();
+
 
         //=======================================================
         // Database Context
@@ -568,14 +495,19 @@ public static class DependencyInjection
 
         services.AddDbContext<AppDbContext>
         (
-            options =>
-                options.UseNpgsql
-                (
-                    configuration.GetConnectionString
+            (serviceProvider, options) =>
+                options
+                    .UseNpgsql
                     (
-                        "DefaultConnection"
+                        configuration.GetConnectionString
+                        (
+                            "DefaultConnection"
+                        )
                     )
-                )
+                    .AddInterceptors
+                    (
+                        serviceProvider.GetRequiredService<CurrentUserStampInterceptor>()
+                    )
         );
 
 
@@ -680,7 +612,7 @@ public static class DependencyInjection
             ICodeSynchronizationRepository,
             CodeSynchronizationRepository
         >();
-        
+
         //=======================================================
         // Page Cloning Repository
         //=======================================================
@@ -820,9 +752,6 @@ public static class DependencyInjection
 
         // AUTO-END : EmiAccounts
 
-
-
-
         // AUTO-BEGIN : MembershipStatus
 
         services.AddScoped
@@ -832,7 +761,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : MembershipStatus
-
 
         // AUTO-BEGIN : MembershipPolicies
 
@@ -864,7 +792,6 @@ public static class DependencyInjection
 
         // AUTO-END : SupplierProfiles
 
-
         // AUTO-BEGIN : CustomerProfiles
 
         services.AddScoped
@@ -875,10 +802,6 @@ public static class DependencyInjection
 
         // AUTO-END : CustomerProfiles
 
-
-
-
-
         // AUTO-BEGIN : Locations
 
         services.AddScoped
@@ -888,8 +811,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : Locations
-
-
 
         // AUTO-BEGIN : MembershipServices
 
@@ -911,7 +832,6 @@ public static class DependencyInjection
 
         // AUTO-END : CustomizedServices
 
-
         // AUTO-BEGIN : LaborChart
 
         services.AddScoped
@@ -921,7 +841,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : LaborChart
-
 
         // AUTO-BEGIN : ScheduledServices
 
@@ -933,7 +852,6 @@ public static class DependencyInjection
 
         // AUTO-END : ScheduledServices
 
-
         // AUTO-BEGIN : ServiceSubCategory
 
         services.AddScoped
@@ -943,7 +861,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : ServiceSubCategory
-
 
         // AUTO-BEGIN : ServicePolicy
 
@@ -955,7 +872,6 @@ public static class DependencyInjection
 
         // AUTO-END : ServicePolicy
 
-
         // AUTO-BEGIN : ServiceCategory
 
         services.AddScoped
@@ -965,7 +881,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : ServiceCategory
-
 
         // AUTO-BEGIN : BusinessConfiguration
 
@@ -997,7 +912,6 @@ public static class DependencyInjection
 
         // AUTO-END : RackManagement
 
-
         // AUTO-BEGIN : SpareParts
 
         services.AddScoped
@@ -1007,8 +921,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : SpareParts
-
-
 
         // AUTO-BEGIN : MotorBikes
 
@@ -1040,8 +952,6 @@ public static class DependencyInjection
 
         // AUTO-END : BrandManagement
 
-
-
         // AUTO-BEGIN : ProductSubCategory
 
         services.AddScoped
@@ -1051,7 +961,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : ProductSubCategory
-
 
         // AUTO-BEGIN : CardCharges
 
@@ -1103,9 +1012,6 @@ public static class DependencyInjection
 
         // AUTO-END : ColorManagement
 
-
-
-
         // AUTO-BEGIN : SystemConfigurations
 
         services.AddScoped
@@ -1126,10 +1032,6 @@ public static class DependencyInjection
 
         // AUTO-END : FinancialYears
 
-
-
-
-
         // AUTO-BEGIN : CardSetup
 
         services.AddScoped
@@ -1139,13 +1041,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : CardSetup
-
-
-
-
-
-
-
 
         // AUTO-BEGIN : BankSetup
 
@@ -1157,7 +1052,6 @@ public static class DependencyInjection
 
         // AUTO-END : BankSetup
 
-
         // AUTO-BEGIN : CashAccounts
 
         services.AddScoped
@@ -1167,12 +1061,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : CashAccounts
-
-
-
-
-
-
 
         // AUTO-BEGIN : GeneralLedgers
 
@@ -1184,7 +1072,6 @@ public static class DependencyInjection
 
         // AUTO-END : GeneralLedgers
 
-
         // AUTO-BEGIN : AccountSubGroup
 
         services.AddScoped
@@ -1194,13 +1081,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : AccountSubGroup
-
-
-
-
-
-
-
 
         // AUTO-BEGIN : AccountGroup
 
@@ -1252,9 +1132,6 @@ public static class DependencyInjection
 
         // AUTO-END : Branches
 
-
-
-
         // AUTO-BEGIN : Wings
 
         services.AddScoped
@@ -1264,10 +1141,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : Wings
-
-
-
-
 
         // AUTO-BEGIN : SubOrdinateComponents
 
@@ -1289,8 +1162,6 @@ public static class DependencyInjection
 
         // AUTO-END : CoreComponents
 
-
-
         // AUTO-BEGIN : Company
 
         services.AddScoped
@@ -1310,8 +1181,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : WidgetConfiguration
-
-
 
         // AUTO-BEGIN : RoleBasedDBComponents
 
@@ -1333,8 +1202,6 @@ public static class DependencyInjection
 
         // AUTO-END : DefaultDBComponents
 
-
-
         // AUTO-BEGIN : Dashboards
 
         services.AddScoped
@@ -1344,18 +1211,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : Dashboards
-
-
-
-
-
-
-
-
-
-
-
-
 
         // AUTO-BEGIN : LoginPages
 
@@ -1367,10 +1222,6 @@ public static class DependencyInjection
 
         // AUTO-END : LoginPages
 
-
-
-
-
         // AUTO-BEGIN : ApplicationComponents
 
         services.AddScoped
@@ -1381,7 +1232,6 @@ public static class DependencyInjection
 
         // AUTO-END : ApplicationComponents
 
-
         // AUTO-BEGIN : SpecialAssignment
 
         services.AddScoped
@@ -1391,9 +1241,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : SpecialAssignment
-
-
-
 
         // AUTO-BEGIN : RoleAssignment
 
@@ -1415,12 +1262,6 @@ public static class DependencyInjection
 
         // AUTO-END : UserProfile
 
-
-
-
-
-
-
         // AUTO-BEGIN : ActivityAssignment
 
         services.AddScoped
@@ -1430,8 +1271,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : ActivityAssignment
-
-
 
         // AUTO-BEGIN : RoleProfile
 
@@ -1443,8 +1282,6 @@ public static class DependencyInjection
 
         // AUTO-END : RoleProfile
 
-
-
         // AUTO-BEGIN : PaymentVoucher
 
         services.AddScoped
@@ -1454,12 +1291,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : PaymentVoucher
-
-
-
-
-
-
 
         // AUTO-BEGIN : Designation
 
@@ -1471,8 +1302,6 @@ public static class DependencyInjection
 
         // AUTO-END : Designation
 
-
-
         // AUTO-BEGIN : Department
 
         services.AddScoped
@@ -1482,8 +1311,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : Department
-
-
 
         // AUTO-BEGIN : DeploymentCenter
 
@@ -1495,8 +1322,6 @@ public static class DependencyInjection
 
         // AUTO-END : DeploymentCenter
 
-
-
         // AUTO-BEGIN : ServerManagement
 
         services.AddScoped
@@ -1506,8 +1331,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : ServerManagement
-
-
 
         // AUTO-BEGIN : SourceControl
 
@@ -1519,8 +1342,6 @@ public static class DependencyInjection
 
         // AUTO-END : SourceControl
 
-
-
         // AUTO-BEGIN : UtilityComponents
 
         services.AddScoped
@@ -1530,8 +1351,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : UtilityComponents
-
-
 
         // AUTO-BEGIN : LayoutComponents
 
@@ -1543,8 +1362,6 @@ public static class DependencyInjection
 
         // AUTO-END : LayoutComponents
 
-
-
         // AUTO-BEGIN : ControlComponents
 
         services.AddScoped
@@ -1554,19 +1371,6 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : ControlComponents
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         // AUTO-END : AUTO REGISTER SERVICES
 

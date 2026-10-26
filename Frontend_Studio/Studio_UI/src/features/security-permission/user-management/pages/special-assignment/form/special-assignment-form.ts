@@ -113,7 +113,9 @@ from '../../../../../../shared/components/controls/pagination/pagination';
 
 import
 {
-    ActivityItem
+    ActivityItem,
+    PageSlot,
+    buildPageSlots
 }
 from '../../../../../../shared/components/utilities/activity-selector/activity-selector';
 
@@ -584,6 +586,42 @@ implements OnInit
     [
     ];
 
+    //===========================================================
+    // Page Actions
+    //
+    // Common activities show on every row. A Page activity
+    // (Approve, Post, Settlement ...) shows only on the rows of
+    // the pages it is linked to on the Navigation Activities page.
+    //===========================================================
+    private pageActivityPages =
+        new Map<number, Set<number>>();
+    // Page actions used in the table, in a fixed order : each keeps
+    // the same column on every row of the grid.
+    pageSlots:
+        PageSlot[] =
+    [
+    ];
+    private activitiesFor
+    (
+        subMenuId:number
+    ):
+        ActivityItem[]
+    {
+        return this.masterActivities.filter
+        (
+            activity =>
+                activity.group !== 'page'
+                ||
+                (
+                    this.pageActivityPages
+                        .get(activity.id)
+                        ?.has(Number(subMenuId))
+                    ??
+                    false
+                )
+        );
+    }
+
 
 
     //===========================================================
@@ -839,72 +877,89 @@ implements OnInit
     //===========================================================
     // Item Cart Columns
     //===========================================================
-
     readonly itemCartColumns:
         ItemCartColumn[] =
     [
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
-            width:'50px',
-
+            width:'60px',
             align:'center'
         },
-
         {
             header:'Menu',
-
             field:'menu',
-
             type:'text',
-
-            width:'220px',
-
+            width:'200px',
             align:'left'
         },
-
         {
             header:'Sub Menu',
-
             field:'subMenu',
-
             type:'text',
-
-            width:'280px',
-
+            width:'230px',
             align:'left'
         },
-
         {
-            header:'Master Activities',
-
+            header:'',
             field:'masterActivities',
-
             type:'masterActivities',
-
-            width:'500px',
-
             align:'center',
-
             headerCheckbox:true
         },
-
         {
             header:'Action',
-
             field:'action',
-
             type:'action',
-
-            width:'50px',
-
+            width:'80px',
             align:'center'
         }
     ];
+
+
+    //===========================================================
+    // Column "All" box (header) : tick / clear these activities
+    // on every row. New row objects, so every row redraws.
+    //===========================================================
+
+    onColumnCheckboxChange
+    (
+        event:
+        {
+            ids:number[];
+            checked:boolean;
+        }
+    ):
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+        this.itemCartRows =
+            this.itemCartRows.map(
+                row =>
+                ({
+                    ...row,
+                    masterActivities:
+                        row.masterActivities.map(
+                            activity =>
+                                event.ids.includes(activity.id)
+                                    ? { ...activity, checked:event.checked }
+                                    : activity
+                        )
+                })
+            );
+
+        this.updatePagination();
+        this.updateHeaderCheckboxStates();
+        this.cdr.detectChanges();
+    }
 
 
     //===========================================================
@@ -1770,6 +1825,18 @@ implements OnInit
             {
                 next:(response) =>
                 {
+                    this.pageActivityPages =
+                        new Map(
+                            response
+                                .filter(activity => activity.activityScope === 'Page')
+                                .map(
+                                    activity =>
+                                    [
+                                        activity.id,
+                                        new Set((activity.pageSubmenuIds ?? []).map(Number))
+                                    ] as [number, Set<number>]
+                                )
+                        );
                     this.masterActivities =
                         response.map(
                             activity => (
@@ -1780,9 +1847,29 @@ implements OnInit
                                 text:
                                     activity.name,
 
+                                group:
+                                    activity.activityScope === 'Page'
+                                        ? 'page'
+                                        : 'common',
+
                                 checked:
                                     false
                             })
+                        );
+
+                    // Fixed Page Actions slots : one per action, same column on
+                    // every row, each with its own "All" box in the header.
+                    this.pageSlots =
+                        buildPageSlots
+                        (
+                            this.masterActivities.filter
+                            (
+                                activity =>
+                                    activity.group === 'page'
+                                    &&
+                                    (this.pageActivityPages.get(activity.id)?.size ?? 0) > 0
+                            ),
+                            this.pageActivityPages
                         );
 
                     //===================================================
@@ -2947,7 +3034,7 @@ implements OnInit
 
                             masterActivities:
 
-                                this.masterActivities.map(
+                                this.activitiesFor(detail.subMenuId).map(
                                     activity =>
                                     ({
                                         id:
@@ -2955,6 +3042,8 @@ implements OnInit
 
                                         text:
                                             activity.text,
+                                        group:
+                                            activity.group,
 
                                         checked:
 
@@ -3068,7 +3157,7 @@ implements OnInit
 
                             masterActivities:
 
-                                this.masterActivities.map(
+                                this.activitiesFor(subMenu.id).map(
                                     activity =>
                                     ({
                                         id:
@@ -3076,6 +3165,8 @@ implements OnInit
 
                                         text:
                                             activity.text,
+                                        group:
+                                            activity.group,
 
                                         checked:
 
@@ -3889,7 +3980,7 @@ implements OnInit
 
                     masterActivities:
 
-                        this.masterActivities.map(
+                        this.activitiesFor(subMenu.id).map(
                             activity =>
                             ({
                                 id:
@@ -3897,6 +3988,8 @@ implements OnInit
 
                                 text:
                                     activity.text,
+                                group:
+                                    activity.group,
 
                                 checked:
                                     false

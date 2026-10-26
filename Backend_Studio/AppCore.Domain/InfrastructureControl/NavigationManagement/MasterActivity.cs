@@ -37,4 +37,30 @@ public class MasterActivity : CodeMasterEntity
         get;
         set;
     }
+
+    //===============================================================
+    // Scope
+    //
+    // Common : shown on every page (View, Add, Update ...).
+    // Page   : shown only on the pages it is linked to
+    //          (Approve, Post, Settlement ...). The links are kept
+    //          in MasterActivityPages by code.
+    //===============================================================
+
+    public string ActivityScope
+    {
+        get;
+        set;
+    } = "Common";
+
+    //===============================================================
+    // Page activity : also linked to every page that has page
+    // switches (System Configurations), without manual links.
+    //===============================================================
+
+    public bool LinkToSwitchPages
+    {
+        get;
+        set;
+    }
 }

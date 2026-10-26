@@ -158,7 +158,7 @@ public static class CodeGenerator
         }
 
 
-        return $"MACT-{sequenceNo:D4}";
+        return $"ACT-{sequenceNo:D4}";
     }
 
 

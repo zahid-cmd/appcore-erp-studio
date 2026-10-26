@@ -146,7 +146,7 @@ public class AccountSubGroupController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateAccountSubGroupDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -202,7 +202,7 @@ public class AccountSubGroupController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -266,7 +266,7 @@ public class AccountSubGroupController : ControllerBase
         // Current User
         //===========================================================
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
 
         //===========================================================
@@ -320,7 +320,7 @@ public class AccountSubGroupController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored;
 

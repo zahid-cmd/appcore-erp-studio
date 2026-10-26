@@ -2,6 +2,7 @@
 // Namespaces
 //===============================================================
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
@@ -60,6 +61,7 @@ public class CompanyController : ControllerBase
     // Get All
     //===============================================================
 
+    [AllowAnonymous]
     [HttpGet]
 
     public async Task<ActionResult<List<CompanyDto>>> GetAll()
@@ -324,7 +326,7 @@ public class CompanyController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateCompanyDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -360,7 +362,7 @@ public class CompanyController : ControllerBase
             return NotFound();
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -410,7 +412,7 @@ public class CompanyController : ControllerBase
         // Current User
         //===========================================================
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
 
         //===========================================================
@@ -463,7 +465,7 @@ public class CompanyController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         bool restored =
             await _repository.RestoreAsync(

@@ -37,6 +37,14 @@
     ====================================================== -->
 
     <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="scopeTabs"
+            [selectedTab]="activity.activityScope"
+            (selectedTabChange)="onScopeTabChange($event)">
+        </app-control-tabs>
+
     </app-page-toolbar>
 
 
@@ -50,95 +58,339 @@
             canvasBody
             [columns]="4">
 
-            <!-- =============================================
-                 ACTIVITY INFORMATION
-            ============================================== -->
+            @if (isPageScope)
+            {
+                <!-- =============================================
+                     1 · ACTIVITY INFORMATION
+                ============================================== -->
 
-            <app-form-section
-                title="Activity Information"
-                icon="fas fa-list">
+                <app-form-section
+                    title="Activity Information"
+                    icon="fas fa-list">
 
-                <app-textbox
-                    label="Activity Code"
-                    [(value)]="activity.code"
-                    [readonly]="true"
-                    [required]="true">
+                    <app-textbox
+                        label="Activity Code"
+                        [(value)]="activity.code"
+                        [readonly]="true"
+                        [required]="true">
 
-                </app-textbox>
+                    </app-textbox>
 
-            </app-form-section>
+                    <app-textbox
+                        label="Activity Name"
+                        [(value)]="activity.name"
+                        (valueChange)="checkForChanges()"
+                        [disabled]="isViewMode"
+                        [required]="true">
 
+                    </app-textbox>
 
-            <!-- =============================================
-                 DISPLAY SETTINGS
-            ============================================== -->
+                    <app-textbox
+                        label="Display Order"
+                        type="number"
+                        [(value)]="activity.displayOrder"
+                        (valueChange)="checkForChanges()"
+                        [disabled]="isViewMode"
+                        [required]="true">
 
-            <app-form-section
-                title="Display Settings"
-                icon="fas fa-sort-numeric-down">
+                    </app-textbox>
 
-                <app-textbox
-                    label="Activity Name"
-                    [(value)]="activity.name"
-                    (valueChange)="checkForChanges()"
-                    [disabled]="isViewMode"
-                    [required]="true">
+                    <app-textarea
+                        label="Remarks"
+                        [(value)]="activity.remarks"
+                        (valueChange)="checkForChanges()"
+                        [disabled]="isViewMode">
 
-                </app-textbox>
-
-                <app-textbox
-                    label="Display Order"
-                    type="number"
-                    [(value)]="activity.displayOrder"
-                    (valueChange)="checkForChanges()"
-                    [disabled]="isViewMode"
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
+                    </app-textarea>
 
 
-            <!-- =============================================
-                 CONFIGURATION
-            ============================================== -->
-
-            <app-form-section
-                title="Configuration"
-                icon="fas fa-sliders">
-
-                <app-dropdown
-                    label="Status"
-                    [required]="true"
-                    [(value)]="activity.isActive"
-                    (valueChange)="onStatusChange($event)"
-                    [items]="statuses"
-                    labelField="text"
-                    valueField="value"
-                    [disabled]="isViewMode">
-
-                </app-dropdown>
-
-            </app-form-section>
+                </app-form-section>
 
 
-            <!-- =============================================
-                 DESCRIPTION
-            ============================================== -->
+                <!-- =============================================
+                     2 · ADD PAGES
+                ============================================== -->
 
-            <app-form-section
-                title="Description"
-                icon="fas fa-comment">
+                <app-form-section
+                    title="Add Pages"
+                    icon="fas fa-file-circle-plus">
 
-                <app-textarea
-                    label="Remarks"
-                    [(value)]="activity.remarks"
-                    (valueChange)="checkForChanges()"
-                    [disabled]="isViewMode">
+                    <div class="af-add-pick">
+                        <app-search-dropdown
+                            label="Page With Switches"
+                            placeholder="Select a page"
+                            [items]="availableSwitchPages"
+                            labelField="pickLabel"
+                            valueField="code"
+                            [value]="pickedSwitchCode"
+                            [disabled]="isViewMode"
+                            (valueChange)="pickedSwitchCode = $event">
+                        </app-search-dropdown>
+                    </div>
 
-                </app-textarea>
+                    @if (!isViewMode)
+                    {
+                        <button
+                            type="button"
+                            class="af-add-button"
+                            [disabled]="!pickedSwitchCode"
+                            (click)="addPickedPage('switch')">
+                            <i class="fas fa-plus"></i>
+                            <span>Add</span>
+                        </button>
+                    }
 
-            </app-form-section>
+                    <div class="af-add-pick">
+                        <app-search-dropdown
+                            label="Page Without Switches"
+                            placeholder="Select a page"
+                            [items]="availablePlainPages"
+                            labelField="pickLabel"
+                            valueField="code"
+                            [value]="pickedPlainCode"
+                            [disabled]="isViewMode"
+                            (valueChange)="pickedPlainCode = $event">
+                        </app-search-dropdown>
+                    </div>
+
+                    @if (!isViewMode)
+                    {
+                        <button
+                            type="button"
+                            class="af-add-button"
+                            [disabled]="!pickedPlainCode"
+                            (click)="addPickedPage('plain')">
+                            <i class="fas fa-plus"></i>
+                            <span>Add</span>
+                        </button>
+                    }
+
+                    <app-dropdown
+                        label="Status"
+                        [required]="true"
+                        [(value)]="activity.isActive"
+                        (valueChange)="onStatusChange($event)"
+                        [items]="statuses"
+                        labelField="text"
+                        valueField="value"
+                        [disabled]="isViewMode">
+
+                    </app-dropdown>
+
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     3 · PAGES WITH SWITCHES
+                ============================================== -->
+
+                <app-form-section
+                    class="af-list-section"
+                    title="Pages With Switches"
+                    icon="fas fa-toggle-on">
+
+                    <div class="af-cart">
+
+                        <div class="af-cart-head">
+                            <span>#</span>
+                            <span>Page</span>
+                            <span class="af-cart-count">{{ switchPageRows.length }}</span>
+                        </div>
+
+                        <div class="af-cart-body appcore-scrollbar">
+
+                            @for (row of switchPageRows; track row.code; let i = $index)
+                            {
+                                <div class="af-cart-row" [class.af-cart-row-auto]="row.auto">
+                                    <span class="af-cart-no">{{ i + 1 }}</span>
+
+                                    <span class="af-cart-page">
+                                        <span class="af-cart-name">{{ row.page }}</span>
+                                        <span class="af-cart-path">{{ row.module }}</span>
+                                    </span>
+
+                                    @if (row.auto)
+                                    {
+                                        <span class="af-cart-auto" title="Added automatically : the activity follows every page with switches">Auto</span>
+                                    }
+                                    @else if (!isViewMode)
+                                    {
+                                        <button
+                                            type="button"
+                                            class="af-cart-remove"
+                                            [attr.aria-label]="'Remove ' + row.page"
+                                            (click)="removePage(row.code)">
+                                            <i class="fas fa-xmark"></i>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            @empty
+                            {
+                                <div class="af-cart-empty">
+                                    <i class="fas fa-file-circle-plus"></i>
+                                    <span>No pages with switches selected.</span>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     4 · PAGES WITHOUT SWITCHES
+                ============================================== -->
+
+                <app-form-section
+                    class="af-list-section"
+                    title="Pages Without Switches"
+                    icon="fas fa-file-lines">
+
+                    <div class="af-cart">
+
+                        <div class="af-cart-head">
+                            <span>#</span>
+                            <span>Page</span>
+                            <span class="af-cart-count">{{ plainPageRows.length }}</span>
+                        </div>
+
+                        <div class="af-cart-body appcore-scrollbar">
+
+                            @for (row of plainPageRows; track row.code; let i = $index)
+                            {
+                                <div class="af-cart-row" [class.af-cart-row-auto]="row.auto">
+                                    <span class="af-cart-no">{{ i + 1 }}</span>
+
+                                    <span class="af-cart-page">
+                                        <span class="af-cart-name">{{ row.page }}</span>
+                                        <span class="af-cart-path">{{ row.module }}</span>
+                                    </span>
+
+                                    @if (!isViewMode)
+                                    {
+                                        <button
+                                            type="button"
+                                            class="af-cart-remove"
+                                            [attr.aria-label]="'Remove ' + row.page"
+                                            (click)="removePage(row.code)">
+                                            <i class="fas fa-xmark"></i>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            @empty
+                            {
+                                <div class="af-cart-empty">
+                                    <i class="fas fa-file-circle-plus"></i>
+                                    <span>No pages without switches selected.</span>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+
+                </app-form-section>
+            }
+            @else
+            {
+                <!-- =============================================
+                     1 · ACTIVITY INFORMATION
+                ============================================== -->
+
+                <app-form-section
+                    title="Activity Information"
+                    icon="fas fa-list">
+
+                    <app-textbox
+                        label="Activity Code"
+                        [(value)]="activity.code"
+                        [readonly]="true"
+                        [required]="true">
+
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Activity Name"
+                        [(value)]="activity.name"
+                        (valueChange)="checkForChanges()"
+                        [disabled]="isViewMode"
+                        [required]="true">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     2 · CONFIGURATION
+                ============================================== -->
+
+                <app-form-section
+                    title="Configuration"
+                    icon="fas fa-sliders">
+
+                    <app-textbox
+                        label="Display Order"
+                        type="number"
+                        [(value)]="activity.displayOrder"
+                        (valueChange)="checkForChanges()"
+                        [disabled]="isViewMode"
+                        [required]="true">
+
+                    </app-textbox>
+
+                    <app-dropdown
+                        label="Status"
+                        [required]="true"
+                        [(value)]="activity.isActive"
+                        (valueChange)="onStatusChange($event)"
+                        [items]="statuses"
+                        labelField="text"
+                        valueField="value"
+                        [disabled]="isViewMode">
+
+                    </app-dropdown>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     3 · USED ON PAGES
+                ============================================== -->
+
+                <app-form-section
+                    title="Used on Pages"
+                    icon="fas fa-file-circle-check">
+
+                    <div class="af-pages-common">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Common activity : shown on every page.</span>
+                    </div>
+
+                </app-form-section>
+
+
+                <!-- =============================================
+                     4 · DESCRIPTION
+                ============================================== -->
+
+                <app-form-section
+                    title="Description"
+                    icon="fas fa-comment">
+
+                    <app-textarea
+                        label="Remarks"
+                        [(value)]="activity.remarks"
+                        (valueChange)="checkForChanges()"
+                        [disabled]="isViewMode">
+
+                    </app-textarea>
+
+                </app-form-section>
+            }
 
         </app-form-grid>
 

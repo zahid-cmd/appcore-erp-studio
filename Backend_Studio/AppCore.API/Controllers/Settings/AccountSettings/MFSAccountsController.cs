@@ -148,7 +148,7 @@ public class MFSAccountsController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateMFSAccountDto dto)
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -185,7 +185,7 @@ public class MFSAccountsController : ControllerBase
             return NotFound("MFS Account not found.");
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -220,7 +220,7 @@ public class MFSAccountsController : ControllerBase
             return NotFound("MFS Account not found.");
         }
 
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
@@ -253,7 +253,7 @@ public class MFSAccountsController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
-        long userId = 1;
+           long userId = this.CurrentUserId();
 
         try
         {
