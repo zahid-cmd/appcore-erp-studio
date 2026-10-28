@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const PurchaseOrdersRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Purchase Orders'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-orders/list/purchase-orders-list'
+            )
+            .then(
+                m =>
+                    m.PurchaseOrdersList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Purchase Orders'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-orders/form/purchase-orders-form'
+            )
+            .then(
+                m =>
+                    m.PurchaseOrdersForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Purchase Orders'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-orders/form/purchase-orders-form'
+            )
+            .then(
+                m =>
+                    m.PurchaseOrdersForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Purchase Orders'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-orders/form/purchase-orders-form'
+            )
+            .then(
+                m =>
+                    m.PurchaseOrdersForm
+            )
+    }
+
+];

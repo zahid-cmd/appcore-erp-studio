@@ -34,6 +34,14 @@ public static class VoucherTypes
     // (issued cheques)
     public const string PaymentReconciliation = "RRP";
 
+    // Purchase Orders (numbered like vouchers, never posted) :
+    // Motor Bikes / Spare Parts & Lubricants / Accessories
+    public const string PurchaseOrderMotorBikes = "POMB";
+
+    public const string PurchaseOrderSpareParts = "POSP";
+
+    public const string PurchaseOrderAccessories = "POAC";
+
 
     public static readonly string[] All =
     {
@@ -42,7 +50,10 @@ public static class VoucherTypes
         Journal,
         FundTransfer,
         ReceiptReconciliation,
-        PaymentReconciliation
+        PaymentReconciliation,
+        PurchaseOrderMotorBikes,
+        PurchaseOrderSpareParts,
+        PurchaseOrderAccessories
     };
 
 

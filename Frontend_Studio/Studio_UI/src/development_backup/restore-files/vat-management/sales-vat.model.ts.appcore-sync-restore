@@ -1,0 +1,90 @@
+/* ============================================================
+   Sales VAT
+============================================================ */
+
+export interface SalesVat
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Sales VAT
+============================================================ */
+
+export interface CreateSalesVat
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Sales VAT
+============================================================ */
+
+export interface UpdateSalesVat
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Sales VAT Defaults
+============================================================ */
+
+export interface SalesVatDefaults
+{
+    code:
+        string;
+}

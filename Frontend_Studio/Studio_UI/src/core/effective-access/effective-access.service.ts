@@ -382,6 +382,25 @@ export class EffectiveAccessService
 
 
     //===========================================================
+    // Any Activity by name (Common or Page)
+    //
+    // Page actions (Approve, Post, Place Order, Close Short …)
+    // and common ones (Print …) by their Master Activity name
+    //===========================================================
+
+    canDo(
+        subMenuId: number,
+        activityName: string
+    ):
+        boolean
+    {
+        return this.hasMasterActivity(
+            subMenuId,
+            activityName
+        );
+    }
+
+    //===========================================================
     // Clear Permission Cache
     //===========================================================
 

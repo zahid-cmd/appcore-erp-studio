@@ -1,4 +1,29 @@
 /* =====================================================
+   LAYOUT SIZES : single source of truth
+   -----------------------------------------------------
+   Change a number here and every part follows. These
+   variables are inherited by everything inside the
+   layout (top bar, sidebar, footer, pages).
+
+     --sidebar-width            open sidebar
+     --sidebar-collapsed-width  sidebar with icons only
+     --topbar-height            top bar
+     --footer-height            footer
+===================================================== */
+
+:host
+{
+    --sidebar-width:320px;
+
+    --sidebar-collapsed-width:70px;
+
+    --topbar-height:70px;
+
+    --footer-height:50px;
+}
+
+
+/* =====================================================
    HOST
 ===================================================== */
 
@@ -13,12 +38,6 @@
     min-height:0;
 
     overflow:hidden;
-
-    --topbar-height:70px;
-
-    --footer-height:50px;
-
-    --sidebar-width:300px;
 }
 
 
@@ -138,9 +157,9 @@ app-sidebar
 
 app-sidebar.sidebar-collapsed
 {
-    width:70px;
+    width:var(--sidebar-collapsed-width);
 
-    flex:0 0 70px;
+    flex:0 0 var(--sidebar-collapsed-width);
 }
 
 

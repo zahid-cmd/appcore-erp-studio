@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const PurchaseReturnsRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Purchase Returns'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-returns/list/purchase-returns-list'
+            )
+            .then(
+                m =>
+                    m.PurchaseReturnsList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Purchase Returns'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-returns/form/purchase-returns-form'
+            )
+            .then(
+                m =>
+                    m.PurchaseReturnsForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Purchase Returns'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-returns/form/purchase-returns-form'
+            )
+            .then(
+                m =>
+                    m.PurchaseReturnsForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Purchase Returns'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-returns/form/purchase-returns-form'
+            )
+            .then(
+                m =>
+                    m.PurchaseReturnsForm
+            )
+    }
+
+];

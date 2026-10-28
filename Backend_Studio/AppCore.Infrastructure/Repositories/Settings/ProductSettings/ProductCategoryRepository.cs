@@ -45,7 +45,7 @@ namespace AppCore.Infrastructure.Configurations.Settings.ProductSettings;
 //                      numbered per Category Type, restarting at 001
 //                      for each type:
 //                        Motor Bikes → MB, Spare Parts → SP,
-//                        Accessories → AC
+//                        Lubricants → LB, Accessories → AC
 //
 //   One Account Group in each of the three inventory classes (found
 //   by Class Type, never by a fixed code), all with the class's own
@@ -100,6 +100,7 @@ public class ProductCategoryRepository :
         {
             ["Motor Bikes"] = "MB",
             ["Spare Parts"] = "SP",
+            ["Lubricants"] = "LB",
             ["Accessories"] = "AC"
         };
 
@@ -438,7 +439,7 @@ public class ProductCategoryRepository :
     }
 
 
-    // Category Code prefix for a type : MB / SP / AC
+    // Category Code prefix for a type : MB / SP / LB / AC
     private static string TypePrefix
     (
         string categoryType
@@ -805,8 +806,9 @@ public class ProductCategoryRepository :
     // Category Type + Brand → Category Name
     //
     // Returns the canonical Category Type and the name :
-    //   Motor Bikes / Spare Parts : generated "<Brand Name> <Category Type>"
-    //   Accessories               : the name typed on the form
+    //   Motor Bikes / Spare Parts / Lubricants :
+    //                           generated "<Brand Name> <Category Type>"
+    //   Accessories           : the name typed on the form
     // An inactive brand is refused unless the category already
     // uses it. Brand is required for every type.
     //===========================================================
@@ -829,7 +831,7 @@ public class ProductCategoryRepository :
                 categoryType)
             ??
             throw new InvalidOperationException(
-                "Category Type is required (Motor Bikes, Spare Parts or Accessories).");
+                "Category Type is required (Motor Bikes, Spare Parts, Lubricants or Accessories).");
 
         if
         (

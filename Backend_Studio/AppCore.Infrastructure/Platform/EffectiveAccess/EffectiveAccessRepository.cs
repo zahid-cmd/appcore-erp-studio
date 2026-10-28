@@ -321,4 +321,105 @@ public class EffectiveAccessRepository
                 .AsNoTracking()
                 .ToListAsync();
     }
+
+
+    //===========================================================
+    // Has Activity (one activity on one page)
+    //===========================================================
+
+    public async Task<bool>
+        HasActivityAsync
+        (
+            long userProfileId,
+            string submenuRoutePattern,
+            string activityName
+        )
+    {
+        string
+            pattern =
+                (submenuRoutePattern ?? string.Empty).Trim();
+
+        string
+            name =
+                (activityName ?? string.Empty).Trim().ToLower();
+
+        if
+        (
+            userProfileId <= 0
+            ||
+            pattern.Length == 0
+            ||
+            name.Length == 0
+        )
+        {
+            return false;
+        }
+
+        //=======================================================
+        // The page(s) and the activity
+        //=======================================================
+
+        List<long>
+            subMenuIds =
+                await _context
+                    .NavigationSubmenus
+                    .AsNoTracking()
+                    .Where
+                    (
+                        submenu =>
+                            !submenu.IsDeleted
+                            &&
+                            EF.Functions.ILike(
+                                submenu.Route,
+                                pattern)
+                    )
+                    .Select(submenu => submenu.Id)
+                    .ToListAsync();
+
+        List<long>
+            activityIds =
+                await _context
+                    .MasterActivities
+                    .AsNoTracking()
+                    .Where
+                    (
+                        activity =>
+                            activity.IsActive
+                            &&
+                            !activity.IsDeleted
+                            &&
+                            activity.Name.Trim().ToLower() == name
+                    )
+                    .Select(activity => activity.Id)
+                    .ToListAsync();
+
+        if
+        (
+            subMenuIds.Count == 0
+            ||
+            activityIds.Count == 0
+        )
+        {
+            return false;
+        }
+
+        //=======================================================
+        // Role Assignment + Special Assignment
+        //=======================================================
+
+        List<EffectiveAccessDto>
+            access =
+                await GetEffectiveAccessAsync(
+                    userProfileId);
+
+        return access.Any
+        (
+            row =>
+                subMenuIds.Contains(row.SubMenuId)
+                &&
+                row.MasterActivityId.HasValue
+                &&
+                activityIds.Contains(row.MasterActivityId.Value)
+        );
+    }
 }

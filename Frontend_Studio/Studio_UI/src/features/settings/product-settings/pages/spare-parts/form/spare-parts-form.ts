@@ -257,6 +257,18 @@ from '../../../../general-settings/services/business-configuration.service';
 
 
 //===============================================================
+// Category Types this page accepts (lower case)
+//===============================================================
+
+const SPARE_PARTS_PAGE_TYPES:
+    readonly string[] =
+[
+    'spare parts',
+    'lubricants'
+];
+
+
+//===============================================================
 // Component
 //===============================================================
 
@@ -413,12 +425,12 @@ implements OnInit, OnDestroy
 
     pageTitle:
         string =
-        'Spare Parts';
+        'Spare Parts & Lubricants';
 
 
     entityName:
         string =
-        'Spare Part';
+        'Spare Part / Lubricant';
 
 
 
@@ -511,7 +523,7 @@ implements OnInit, OnDestroy
     //===========================================================
     // Lookups
     //
-    // Categories : active, Category Type = Spare Parts
+    // Categories : active, Category Type = Spare Parts or Lubricants
     // Sub Cats   : active, under the chosen category
     // Units      : fixed list
     // In edit / view the record's own (maybe inactive) choices
@@ -1136,11 +1148,11 @@ implements OnInit, OnDestroy
                         (response ?? [])
                             .filter(
                                 item =>
-                                    String(item?.CategoryType ?? '')
-                                        .trim()
-                                        .toLowerCase()
-                                    ===
-                                    'spare parts'
+                                    SPARE_PARTS_PAGE_TYPES.includes(
+                                        String(item?.CategoryType ?? '')
+                                            .trim()
+                                            .toLowerCase()
+                                    )
                             );
 
                     this.buildCategoryItems();

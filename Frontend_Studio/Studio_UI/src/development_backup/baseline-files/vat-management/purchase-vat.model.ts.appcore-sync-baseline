@@ -1,0 +1,90 @@
+/* ============================================================
+   Purchase VAT
+============================================================ */
+
+export interface PurchaseVat
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Purchase VAT
+============================================================ */
+
+export interface CreatePurchaseVat
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Purchase VAT
+============================================================ */
+
+export interface UpdatePurchaseVat
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Purchase VAT Defaults
+============================================================ */
+
+export interface PurchaseVatDefaults
+{
+    code:
+        string;
+}

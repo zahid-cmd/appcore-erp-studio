@@ -53,7 +53,8 @@ namespace AppCore.Infrastructure.Configurations.Settings.ProductSettings;
 // One Spare Part = one part number inside a Product Sub Category.
 //
 // Parent    : Product Category must be of Category Type
-//             "Spare Parts"; the Sub Category must belong to it.
+//             "Spare Parts" or "Lubricants" (one page for both);
+//             the Sub Category must belong to it.
 //             New parts need an active category and sub category.
 //             Both are locked after saving.
 // Codes     : nnnnn = highest number already used by any part of
@@ -84,8 +85,13 @@ public class SparePartsRepository : ISparePartsRepository
     // Constants
     //===========================================================
 
-    private const string SparePartsCategoryType =
-        "Spare Parts";
+    // Category Types this page accepts (Spare Parts & Lubricants)
+    private static readonly string[] AllowedCategoryTypes =
+        new[]
+        {
+            "Spare Parts",
+            "Lubricants"
+        };
 
     // Allowed units
     private static readonly string[] Units =
@@ -852,7 +858,7 @@ public class SparePartsRepository : ISparePartsRepository
         )
     {
         //=======================================================
-        // Product Category (Spare Parts type only)
+        // Product Category (Spare Parts or Lubricants type)
         //=======================================================
 
         if
@@ -890,14 +896,18 @@ public class SparePartsRepository : ISparePartsRepository
 
         if
         (
-            !string.Equals(
-                category.CategoryType?.Trim(),
-                SparePartsCategoryType,
-                StringComparison.OrdinalIgnoreCase)
+            !AllowedCategoryTypes.Any
+            (
+                type =>
+                    string.Equals(
+                        category.CategoryType?.Trim(),
+                        type,
+                        StringComparison.OrdinalIgnoreCase)
+            )
         )
         {
             throw new InvalidOperationException(
-                $"Product Category '{category.CategoryName}' is not a Spare Parts category.");
+                $"Product Category '{category.CategoryName}' is not a Spare Parts or Lubricants category.");
         }
 
         if

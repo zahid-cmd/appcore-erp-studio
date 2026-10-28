@@ -6,9 +6,9 @@
 
     <app-page-header
 
-        title="Spare Parts"
+        title="Spare Parts &amp; Lubricants"
 
-        subtitle="Manage spare parts"
+        subtitle="Manage spare parts and lubricants"
 
         icon="fas fa-gears">
 
@@ -18,7 +18,7 @@
 
                 [(value)]="searchText"
 
-                placeholder="Search spare parts..."
+                placeholder="Search spare parts and lubricants..."
 
                 (valueChange)="onSearch($event)">
 
@@ -73,7 +73,9 @@
 
             [tabs]="tabs"
 
-            [(selectedTab)]="selectedTab">
+            [(selectedTab)]="selectedTab"
+
+            (selectedTabChange)="onTabChange($event)">
 
         </app-control-tabs>
 

@@ -1,0 +1,90 @@
+/* ============================================================
+   Purchase Adjustments
+============================================================ */
+
+export interface PurchaseAdjustments
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Purchase Adjustments
+============================================================ */
+
+export interface CreatePurchaseAdjustments
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Purchase Adjustments
+============================================================ */
+
+export interface UpdatePurchaseAdjustments
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Purchase Adjustments Defaults
+============================================================ */
+
+export interface PurchaseAdjustmentsDefaults
+{
+    code:
+        string;
+}

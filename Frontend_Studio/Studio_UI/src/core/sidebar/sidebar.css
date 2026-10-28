@@ -1,4 +1,14 @@
 /* =====================================================
+   SIDEBAR WIDTH
+   -----------------------------------------------------
+   Set once at the top of layout.css (--sidebar-width,
+   --sidebar-collapsed-width). The layout sizes this
+   sidebar from it, and the labels below follow it, so
+   long names show in full when the sidebar is wider.
+===================================================== */
+
+
+/* =====================================================
    SIDEBAR
 ===================================================== */
 
@@ -222,7 +232,7 @@
 
     opacity:1;
 
-    max-width:220px;
+    max-width:var(--sidebar-width, 300px);
 
     transform:translateX(0);
 
@@ -358,7 +368,7 @@
 
     opacity:1;
 
-    max-width:220px;
+    max-width:var(--sidebar-width, 300px);
 
     transform:translateX(0);
 
@@ -506,7 +516,7 @@
 
     opacity:1;
 
-    max-width:220px;
+    max-width:var(--sidebar-width, 300px);
 
     transition:
         opacity .18s ease,

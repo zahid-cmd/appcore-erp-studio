@@ -49,7 +49,7 @@ namespace AppCore.Infrastructure.Repositories.Settings.ProductSettings;
 // the Product Category / Sub Category / Motor Bikes / Spare
 // Parts / Accessories pages shows up on the next load.
 //
-// Tree     : Category Type (fixed MB / SP / AC) → Category →
+// Tree     : Category Type (fixed MB / SP / LB / AC) → Category →
 //            Sub Category, linked by ID only.
 // Products : every product table is registered ONCE in
 //            ProductSources below. Counts, product lists,
@@ -106,7 +106,10 @@ public class ChartOfInventoryRepository : IChartOfInventoryRepository
 
         new TypeDef { Id = 2, Code = "SP", Name = "Spare Parts", ItemType = ChartOfInventoryItemTypes.SparePart },
 
-        new TypeDef { Id = 3, Code = "AC", Name = "Accessories", ItemType = ChartOfInventoryItemTypes.Accessory }
+        // Lubricants are kept in the Spare Parts table (one page)
+        new TypeDef { Id = 3, Code = "LB", Name = "Lubricants", ItemType = ChartOfInventoryItemTypes.SparePart },
+
+        new TypeDef { Id = 4, Code = "AC", Name = "Accessories", ItemType = ChartOfInventoryItemTypes.Accessory }
     };
 
 
@@ -790,7 +793,7 @@ public class ChartOfInventoryRepository : IChartOfInventoryRepository
                         cat.Id,
                         cat.Code,
                         cat.Name,
-                        $"Category Type '{cat.CategoryType}' is not Motor Bikes, Spare Parts or Accessories, so it is not shown in the tree."));
+                        $"Category Type '{cat.CategoryType}' is not Motor Bikes, Spare Parts, Lubricants or Accessories, so it is not shown in the tree."));
 
                 continue;
             }

@@ -1102,6 +1102,72 @@ public class AppDbContext
 
     // AUTO-END : EmiReimbursementSchemes
 
+    // AUTO-BEGIN : PurchaseVat
+
+    public DbSet<AppCore.Domain.Entities.VatManagement.VatSetup.PurchaseVat>
+    PurchaseVats
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseVat
+
+    // AUTO-BEGIN : SalesVat
+
+    public DbSet<AppCore.Domain.Entities.VatManagement.VatSetup.SalesVat>
+    SalesVats
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesVat
+
+    // AUTO-BEGIN : PurchaseOrdersMb
+
+    public DbSet<AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchaseOrdersMb>
+    PurchaseOrdersMbs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseOrdersMb
+
+    // AUTO-BEGIN : PurchaseAdjustmentsMb
+
+    public DbSet<AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchaseAdjustmentsMb>
+    PurchaseAdjustmentsMbs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseAdjustmentsMb
+
+    // AUTO-BEGIN : PurchaseReturnsMb
+
+    public DbSet<AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchaseReturnsMb>
+    PurchaseReturnsMbs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseReturnsMb
+
+    // AUTO-BEGIN : PurchasesMb
+
+    public DbSet<AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb>
+    PurchasesMbs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchasesMb
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 

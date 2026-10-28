@@ -877,42 +877,55 @@ implements OnInit
     //===========================================================
     // Item Cart Columns
     //===========================================================
+
     readonly itemCartColumns:
         ItemCartColumn[] =
     [
         {
             header:'#',
+
             field:'serial',
+
             type:'serial',
-            width:'60px',
+
+            width:'50px',
+
             align:'center'
         },
-        {
-            header:'Menu',
-            field:'menu',
-            type:'text',
-            width:'200px',
-            align:'left'
-        },
+
         {
             header:'Sub Menu',
+
             field:'subMenu',
+
             type:'text',
-            width:'230px',
+
+            width:'240px',
+
             align:'left'
         },
+
         {
-            header:'',
+            header:'Master Activities',
+
             field:'masterActivities',
+
             type:'masterActivities',
+
             align:'center',
+
             headerCheckbox:true
         },
+
         {
             header:'Action',
+
             field:'action',
+
             type:'action',
-            width:'80px',
+
+            width:'50px',
+
             align:'center'
         }
     ];

@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const PurchaseVatRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Purchase VAT'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-vat/list/purchase-vat-list'
+            )
+            .then(
+                m =>
+                    m.PurchaseVatList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Purchase VAT'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-vat/form/purchase-vat-form'
+            )
+            .then(
+                m =>
+                    m.PurchaseVatForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Purchase VAT'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-vat/form/purchase-vat-form'
+            )
+            .then(
+                m =>
+                    m.PurchaseVatForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Purchase VAT'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchase-vat/form/purchase-vat-form'
+            )
+            .then(
+                m =>
+                    m.PurchaseVatForm
+            )
+    }
+
+];

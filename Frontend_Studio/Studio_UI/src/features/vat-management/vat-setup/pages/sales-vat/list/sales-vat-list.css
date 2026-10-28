@@ -1,0 +1,50 @@
+@import '../../../../../../shared/styles/app-list-page.css';
+
+/* =====================================================
+   EXPIRY ALERTS
+===================================================== */
+
+.vat-alerts
+{
+    display: flex;
+
+    gap: 10px;
+
+    align-items: flex-start;
+
+    margin: 0 0 10px;
+
+    padding: 10px 14px;
+
+    border: 1px solid #fcd34d;
+
+    border-radius: 12px;
+
+    background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+
+    color: #92400e;
+
+    font-size: 12.5px;
+
+    font-weight: 600;
+
+    line-height: 1.5;
+}
+
+.vat-alerts > i
+{
+    margin-top: 2px;
+
+    color: #d97706;
+
+    font-size: 15px;
+}
+
+.vat-alerts-text
+{
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 2px;
+}

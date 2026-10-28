@@ -269,7 +269,19 @@ implements OnInit, OnDestroy
         {
             id:'all',
 
-            label:'All Spare Parts'
+            label:'All Items'
+        },
+
+        {
+            id:'SP',
+
+            label:'Spare Parts'
+        },
+
+        {
+            id:'LB',
+
+            label:'Lubricants'
         }
     ];
 
@@ -390,7 +402,7 @@ implements OnInit, OnDestroy
 
     historyTitle:
         string =
-        'Spare Parts History';
+        'Spare Parts & Lubricants History';
 
 
     historyItems:
@@ -1010,7 +1022,19 @@ implements OnInit, OnDestroy
                         (item.IsActive ? 'active' : 'inactive')
                             .includes(keyword);
 
-                    return searchMatch;
+                    // Tab : the category code prefix (SP- / LB-)
+                    const tabMatch =
+                        this.selectedTab === 'all'
+                        ||
+                        String(item.CategoryCode ?? '')
+                            .toUpperCase()
+                            .startsWith(
+                                `${this.selectedTab}-`
+                            );
+
+                    return searchMatch
+                        &&
+                        tabMatch;
                 }
             );
 
@@ -1020,6 +1044,27 @@ implements OnInit, OnDestroy
 
 
         this.updatePagination();
+    }
+
+
+
+    //===========================================================
+    // Tab Change
+    //===========================================================
+
+    onTabChange
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.selectedTab =
+            value;
+
+        this.applyFilters();
+
+        this.cdr.detectChanges();
     }
 
 
@@ -1725,7 +1770,7 @@ implements OnInit, OnDestroy
 
 
                     this.historyTitle =
-                        'Spare Parts History';
+                        'Spare Parts & Lubricants History';
 
 
                     this.historyOpened =

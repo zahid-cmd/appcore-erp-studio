@@ -12,6 +12,7 @@ using AppCore.Domain.Entities.InfrastructureControl.NavigationManagement;
 
 using AppCore.Infrastructure.Persistence;
 using AppCore.Infrastructure.CodeMaster;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement;
 
 //===============================================================
 // Namespace
@@ -428,7 +429,6 @@ public class NavigationSubmenuRepository : INavigationSubmenuRepository
     {
         NavigationSubmenu? entity =
             await _context.NavigationSubmenus
-
                 .FirstOrDefaultAsync(x =>
                     x.Id == dto.Id
                     &&
@@ -444,10 +444,8 @@ public class NavigationSubmenuRepository : INavigationSubmenuRepository
 
         NavigationMenu? menu =
             await _context.NavigationMenus
-
                 .Include(x =>
                     x.NavigationModule)
-
                 .FirstOrDefaultAsync(x =>
                     x.Id == dto.NavigationMenuId
                     &&
@@ -461,8 +459,66 @@ public class NavigationSubmenuRepository : INavigationSubmenuRepository
         }
 
 
+        //===========================================================
+        // Moved to another menu ?
+        //
+        // The code follows the new menu : "SUB-" + the menu code's
+        // numbers + the next number inside that menu (deleted
+        // submenus counted, so numbers are never reused). Every
+        // table that keeps the old code / menu follows too.
+        //===========================================================
+
+        bool moved =
+            entity.NavigationMenuId !=
+            dto.NavigationMenuId;
+
+        string oldCode =
+            entity.Code;
+
+        string newCode =
+            oldCode;
+
+        int newSequenceNo =
+            entity.SequenceNo;
+
+        if (moved)
+        {
+            newSequenceNo =
+                await GetNextSequenceNoAsync(
+                    menu.Id);
+
+            newCode =
+                $"SUB-{menu.Code.Substring(4)}-{newSequenceNo:D3}";
+
+            bool codeTaken =
+                await _context.NavigationSubmenus
+                    .AnyAsync(x =>
+                        x.Code == newCode
+                        &&
+                        x.Id != entity.Id);
+
+            if (codeTaken)
+            {
+                throw new InvalidOperationException(
+                    $"Code {newCode} is already used by another submenu. Fix that submenu's code first.");
+            }
+        }
+
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+
         entity.NavigationMenuId =
             dto.NavigationMenuId;
+
+
+        entity.SequenceNo =
+            newSequenceNo;
+
+
+        entity.Code =
+            newCode;
 
 
         entity.Name =
@@ -504,40 +560,52 @@ public class NavigationSubmenuRepository : INavigationSubmenuRepository
         await _context.SaveChangesAsync();
 
 
+        if (moved)
+        {
+            await NavigationMoveReferences.SubmenuMovedAsync(
+                _context,
+                entity.Id,
+                oldCode,
+                newCode,
+                menu.NavigationModule.Id,
+                menu.NavigationModule.Code,
+                menu.NavigationModule.Name,
+                menu.Id,
+                menu.Code,
+                menu.Name);
+        }
+
+
         _context.ActivityHistories.Add(
             new ActivityHistory
             {
                 Module =
                     "Navigation Management",
 
-
                 EntityName =
                     "Navigation Submenu",
-
 
                 EntityId =
                     entity.Id,
 
-
                 ActivityType =
                     "Update",
 
-
                 ActivityTitle =
-                    "Navigation Submenu Updated",
-
+                    moved
+                        ? "Navigation Submenu Moved"
+                        : "Navigation Submenu Updated",
 
                 ActivityDescription =
-                    $"Submenu '{entity.Name}' updated.",
-
+                    moved
+                        ? $"Submenu '{entity.Name}' moved to '{menu.Name}' ({oldCode} -> {newCode})."
+                        : $"Submenu '{entity.Name}' updated.",
 
                 PerformedBy =
                     userId,
 
-
                 PerformedByName =
                     "System",
-
 
                 PerformedDate =
                     DateTime.UtcNow
@@ -545,6 +613,9 @@ public class NavigationSubmenuRepository : INavigationSubmenuRepository
 
 
         await _context.SaveChangesAsync();
+
+
+        await transaction.CommitAsync();
     }
 
     //===============================================================

@@ -82,5 +82,11 @@ export const PRINT_SOURCES:
     'pos-received':
         () =>
             import('../../features/accounts-finance/accounts-reconciliation/print/pos-documents.print')
-                .then(module => module.POS_RECEIVED_PRINT)
+                .then(module => module.POS_RECEIVED_PRINT),
+
+    // Procurement : Purchase Orders - MB
+    'purchase-orders-mb':
+        () =>
+            import('../../features/procurement/motor-bike-purchase/print/purchase-orders-mb.print')
+                .then(module => module.PURCHASE_ORDERS_MB_PRINT)
 };

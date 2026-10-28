@@ -95,10 +95,11 @@ export function pageSlotColumns
 ):
     string
 {
+    // checkbox + gap (26px) + label (~6.4px a letter at 12.5px)
     const width =
         (slot?:PageSlot):number =>
             slot
-                ? 30 + Math.ceil(slot.label.length * 7)
+                ? 26 + Math.ceil(slot.label.length * 6.4)
                 : 0;
 
     const columns:

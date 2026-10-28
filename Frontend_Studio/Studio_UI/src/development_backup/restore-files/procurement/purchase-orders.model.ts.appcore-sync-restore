@@ -1,0 +1,90 @@
+/* ============================================================
+   Purchase Orders
+============================================================ */
+
+export interface PurchaseOrders
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Purchase Orders
+============================================================ */
+
+export interface CreatePurchaseOrders
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Purchase Orders
+============================================================ */
+
+export interface UpdatePurchaseOrders
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Purchase Orders Defaults
+============================================================ */
+
+export interface PurchaseOrdersDefaults
+{
+    code:
+        string;
+}

@@ -596,17 +596,10 @@ implements OnInit
             align:'center'
         },
         {
-            header:'Menu',
-            field:'menu',
-            type:'text',
-            width:'200px',
-            align:'left'
-        },
-        {
             header:'Sub Menu',
             field:'subMenu',
             type:'text',
-            width:'230px',
+            width:'240px',
             align:'left'
         },
         {

@@ -40,7 +40,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Spare Parts'
+            breadcrumb:'Spare Parts & Lubricants'
         },
 
         loadComponent:() =>
@@ -63,7 +63,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Add Spare Parts'
+            breadcrumb:'Add Spare Part / Lubricant'
         },
 
         loadComponent:() =>
@@ -86,7 +86,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Edit Spare Parts'
+            breadcrumb:'Edit Spare Part / Lubricant'
         },
 
         loadComponent:() =>
@@ -109,7 +109,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'View Spare Parts'
+            breadcrumb:'View Spare Part / Lubricant'
         },
 
         loadComponent:() =>

@@ -2,6 +2,11 @@
    APPCORE GLOBAL BASE STYLE
 ===================================================== */
 
+:root
+{
+    --app-sidebar-width: 300px;            /* open sidebar */
+    --app-sidebar-collapsed-width: 72px;   /* icons only  */
+}
 
 /* =====================================================
    DOCUMENT RESET

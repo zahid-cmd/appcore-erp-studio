@@ -12,9 +12,9 @@
 
 :host
 {
-    --act-all-width: 96px;
+    --act-all-width: 78px;
 
-    --act-col-width: 106px;
+    --act-col-width: 102px;
 }
 
 .act-grid
@@ -76,7 +76,7 @@
 
     grid-template-rows: repeat(2, 26px);
 
-    column-gap: 12px;
+    column-gap: 10px;
 
     row-gap: 2px;
 
@@ -84,9 +84,9 @@
 
     min-width: 0;
 
-    margin-left: 6px;
+    margin-left: 4px;
 
-    padding-left: 14px;
+    padding-left: 12px;
 
     border-left: 1px solid #e3e9f3;
 }

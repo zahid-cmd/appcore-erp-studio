@@ -154,6 +154,11 @@ implements OnChanges
         '' =
         '';
 
+    // Page / common activity the button needs, by its Master
+    // Activity name ('Approve', 'Place Order', 'Print' …);
+    // empty = the Add / Update / Restore rule above
+    @Input() command1Activity = '';
+
     @Output() command1Click =
         new EventEmitter<void>();
 
@@ -181,6 +186,11 @@ implements OnChanges
         '' =
         '';
 
+    // Page / common activity the button needs, by its Master
+    // Activity name ('Approve', 'Place Order', 'Print' …);
+    // empty = the Add / Update / Restore rule above
+    @Input() command2Activity = '';
+
     @Output() command2Click =
         new EventEmitter<void>();
 
@@ -207,6 +217,11 @@ implements OnChanges
         |
         '' =
         '';
+
+    // Page / common activity the button needs, by its Master
+    // Activity name ('Approve', 'Place Order', 'Print' …);
+    // empty = the Add / Update / Restore rule above
+    @Input() command3Activity = '';
 
     @Output() command3Click =
         new EventEmitter<void>();
@@ -396,10 +411,30 @@ implements OnChanges
             |
             'restore'
             |
+            '',
+        activity:
+            string =
             ''
     ):
         boolean
     {
+        // Named activity : the user needs it on this page
+        if
+        (
+            activity.trim()
+        )
+        {
+            const activitySubMenuId =
+                this.getCurrentSubMenuId();
+
+            return activitySubMenuId !== null
+                &&
+                this.effectiveAccessService.canDo(
+                    activitySubMenuId,
+                    activity
+                );
+        }
+
         const permission =
             this.resolveCommandPermission(
                 text,
@@ -486,7 +521,8 @@ implements OnChanges
             &&
             this.hasCommandPermission(
                 this.command1Text,
-                this.command1Permission
+                this.command1Permission,
+                this.command1Activity
             )
         );
     }
@@ -510,7 +546,8 @@ implements OnChanges
             &&
             this.hasCommandPermission(
                 this.command2Text,
-                this.command2Permission
+                this.command2Permission,
+                this.command2Activity
             )
         );
     }
@@ -534,7 +571,8 @@ implements OnChanges
             &&
             this.hasCommandPermission(
                 this.command3Text,
-                this.command3Permission
+                this.command3Permission,
+                this.command3Activity
             )
         );
     }

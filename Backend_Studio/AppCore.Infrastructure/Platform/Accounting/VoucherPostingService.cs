@@ -11,6 +11,9 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.Persistence;
 
+using BranchesEntity =
+    AppCore.Domain.Entities.Settings.GeneralSettings.Branches;
+
 
 //===============================================================
 // Namespace
@@ -27,6 +30,16 @@ namespace AppCore.Infrastructure.Platform.Accounting;
 // through here.
 //
 // Post   : checks, then writes one row per line.
+// Branch : every row carries a branch. A line on a money
+//          account that belongs to ONE other branch (Cash / Bank
+//          / MFS / POS / EMI with Branch Exclusive) is posted to
+//          that branch; every other line to the voucher's branch.
+//          When a group then touches more than one branch, an
+//          Inter-Branch Current Account line is added per branch
+//          so each branch's own books balance (company total of
+//          that ledger stays 0) :
+//            A (from) : Dr Inter-Branch, Cr A's cash
+//            B (to)   : Dr B's bank,     Cr Inter-Branch
 // Reverse: adds the same rows with debit / credit swapped
 //          (IsReversal = true), dated the cancel date.
 //
@@ -47,6 +60,10 @@ public class VoucherPostingService : IVoucherPostingService
 
     // numeric(18,2)
     private const decimal MaxAmount = 9_999_999_999_999_999.99m;
+
+    // Inter-Branch Current Account (General Ledger, by code)
+    private const string InterBranchLedgerCode =
+        "GLR-002-002-010-00001";
 
 
     //===========================================================
@@ -292,6 +309,16 @@ public class VoucherPostingService : IVoucherPostingService
         }
 
         //=======================================================
+        // Branch of every line (see the class notes)
+        //=======================================================
+
+        List<PostingRow> rows =
+            await ResolveBranchesAsync(
+                lines,
+                ledgers,
+                period);
+
+        //=======================================================
         // Write
         //=======================================================
 
@@ -302,13 +329,16 @@ public class VoucherPostingService : IVoucherPostingService
             Limit(request.Narration, NarrationMaxLength);
 
         List<VoucherEntries> entries =
-            lines
+            rows
                 .Select
                 (
-                    (line, index) =>
+                    (row, index) =>
                     {
+                        VoucherPostingLine line =
+                            row.Line;
+
                         VoucherLedgerDto ledger =
-                            ledgers[line.LedgerCode.Trim()];
+                            row.Ledger;
 
                         string narration =
                             string.IsNullOrWhiteSpace(line.Narration)
@@ -327,9 +357,9 @@ public class VoucherPostingService : IVoucherPostingService
 
                             FinancialYearId = period.FinancialYearId,
 
-                            BranchId = period.BranchId,
+                            BranchId = row.BranchId,
 
-                            BranchCode = period.BranchCode,
+                            BranchCode = row.BranchCode,
 
                             GroupNo = line.GroupNo,
 
@@ -376,6 +406,264 @@ public class VoucherPostingService : IVoucherPostingService
 
         await SaveAsync(entries);
     }
+
+
+    //===========================================================
+    // Posting Row : a line with its ledger and branch
+    //===========================================================
+
+    private sealed class PostingRow
+    {
+        public VoucherPostingLine Line { get; init; } = new();
+
+        public VoucherLedgerDto Ledger { get; init; } = new();
+
+        public long BranchId { get; init; }
+
+        public string BranchCode { get; init; } = string.Empty;
+    }
+
+
+    //===========================================================
+    // Resolve Branches
+    //
+    // 1. Each line : the branch of its money account when that
+    //    account is exclusive to another branch, else the
+    //    voucher's branch.
+    // 2. Each group : per branch, debit - credit must net to 0;
+    //    an Inter-Branch Current Account line is added for the
+    //    difference (debit when the branch gave, credit when it
+    //    received). The group and the voucher stay balanced
+    //    because the differences of a group add up to 0.
+    //===========================================================
+
+    private async Task<List<PostingRow>>
+        ResolveBranchesAsync
+        (
+            List<VoucherPostingLine> lines,
+            Dictionary<string, VoucherLedgerDto> ledgers,
+            VoucherPeriodDto period
+        )
+    {
+        // Other branches named on exclusive money accounts
+        string voucherBranchKey =
+            (period.BranchName ?? string.Empty).Trim().ToUpperInvariant();
+
+        HashSet<string> otherNames =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (VoucherPostingLine line in lines)
+        {
+            VoucherLedgerDto ledger =
+                ledgers[line.LedgerCode.Trim()];
+
+            string accountBranch =
+                (ledger.Branch ?? string.Empty).Trim();
+
+            if (ledger.IsMoneyLedger
+                &&
+                ledger.BranchExclusive
+                &&
+                accountBranch.Length > 0
+                &&
+                accountBranch.ToUpperInvariant() != voucherBranchKey)
+            {
+                otherNames.Add(accountBranch);
+            }
+        }
+
+        List<PostingRow> rows =
+            new();
+
+        if (otherNames.Count == 0)
+        {
+            // Usual case : everything on the voucher's branch
+            foreach (VoucherPostingLine line in lines)
+            {
+                rows.Add(
+                    new PostingRow
+                    {
+                        Line = line,
+                        Ledger = ledgers[line.LedgerCode.Trim()],
+                        BranchId = period.BranchId,
+                        BranchCode = period.BranchCode
+                    });
+            }
+
+            return rows;
+        }
+
+        List<string> wanted =
+            otherNames
+                .Select(x => x.ToUpper())
+                .ToList();
+
+        List<BranchesEntity> branches =
+            await _context
+                .Set<BranchesEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        wanted.Contains(x.BranchName.Trim().ToUpper())
+                )
+                .ToListAsync();
+
+        Dictionary<string, BranchesEntity> byName =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (BranchesEntity branch in branches)
+        {
+            byName.TryAdd(
+                (branch.BranchName ?? string.Empty).Trim(),
+                branch);
+        }
+
+        foreach (VoucherPostingLine line in lines)
+        {
+            VoucherLedgerDto ledger =
+                ledgers[line.LedgerCode.Trim()];
+
+            string accountBranch =
+                (ledger.Branch ?? string.Empty).Trim();
+
+            bool other =
+                ledger.IsMoneyLedger
+                &&
+                ledger.BranchExclusive
+                &&
+                otherNames.Contains(accountBranch);
+
+            if (!other)
+            {
+                rows.Add(
+                    new PostingRow
+                    {
+                        Line = line,
+                        Ledger = ledger,
+                        BranchId = period.BranchId,
+                        BranchCode = period.BranchCode
+                    });
+
+                continue;
+            }
+
+            if (!byName.TryGetValue(accountBranch, out BranchesEntity? branch))
+            {
+                throw new InvalidOperationException(
+                    $"'{ledger.LedgerName}' belongs to branch '{accountBranch}', which was not found.");
+            }
+
+            rows.Add(
+                new PostingRow
+                {
+                    Line = line,
+                    Ledger = ledger,
+                    BranchId = branch.BranchId,
+                    BranchCode = branch.BranchCode ?? string.Empty
+                });
+        }
+
+        // Inter-Branch Current Account lines
+        Dictionary<string, VoucherLedgerDto> interBranch =
+            await _ledgerRepository.GetByCodesAsync(
+                new[] { InterBranchLedgerCode });
+
+        if (!interBranch.TryGetValue(InterBranchLedgerCode, out VoucherLedgerDto? interLedger))
+        {
+            throw new InvalidOperationException(
+                $"This voucher moves money between branches, but the Inter-Branch Current Account ({InterBranchLedgerCode}) was not found.");
+        }
+
+        if (!interLedger.IsActive)
+        {
+            throw new InvalidOperationException(
+                $"The Inter-Branch Current Account ({InterBranchLedgerCode}) is inactive.");
+        }
+
+        Dictionary<long, string> branchNames =
+            new()
+            {
+                [period.BranchId] = period.BranchName
+            };
+
+        foreach (BranchesEntity branch in branches)
+        {
+            branchNames.TryAdd(
+                branch.BranchId,
+                branch.BranchName ?? string.Empty);
+        }
+
+        List<PostingRow> interRows =
+            new();
+
+        foreach (IGrouping<int, PostingRow> group in rows.GroupBy(x => x.Line.GroupNo))
+        {
+            var nets =
+                group
+                    .GroupBy(x => new { x.BranchId, x.BranchCode })
+                    .Select
+                    (
+                        x =>
+                            new
+                            {
+                                x.Key.BranchId,
+                                x.Key.BranchCode,
+                                Net = x.Sum(r => r.Line.Debit - r.Line.Credit)
+                            }
+                    )
+                    .Where(x => x.Net != 0)
+                    .ToList();
+
+            if (nets.Count == 0)
+            {
+                continue;
+            }
+
+            foreach (var net in nets)
+            {
+                string others =
+                    string.Join(
+                        ", ",
+                        nets
+                            .Where(x => x.BranchId != net.BranchId)
+                            .Select(x => branchNames.TryGetValue(x.BranchId, out string? name) ? name : x.BranchCode));
+
+                interRows.Add(
+                    new PostingRow
+                    {
+                        Line =
+                            new VoucherPostingLine
+                            {
+                                GroupNo = group.Key,
+
+                                LedgerCode = interLedger.LedgerCode,
+
+                                // Received more than it gave → owes the
+                                // other branch (credit); gave → is owed (debit)
+                                Debit = net.Net < 0 ? -net.Net : 0,
+
+                                Credit = net.Net > 0 ? net.Net : 0,
+
+                                Narration = Limit($"Inter-branch with {others}", NarrationMaxLength)
+                            },
+
+                        Ledger = interLedger,
+
+                        BranchId = net.BranchId,
+
+                        BranchCode = net.BranchCode
+                    });
+            }
+        }
+
+        rows.AddRange(interRows);
+
+        return rows;
+    }
+
 
 
     //===========================================================

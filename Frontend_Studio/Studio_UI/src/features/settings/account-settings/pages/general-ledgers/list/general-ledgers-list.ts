@@ -571,13 +571,12 @@ implements OnInit, OnDestroy
         {
             header:'Ledger Code',
             field:'LedgerCode',
-            width:'180px',
+            width:'200px',
             align:'left'
         },
         {
             header:'Ledger Name',
             field:'LedgerName',
-            width:'240px',
             align:'left'
         },
         {
@@ -590,14 +589,14 @@ implements OnInit, OnDestroy
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'120px',
+            width:'150px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'150px',
             align:'center'
         }
     ];

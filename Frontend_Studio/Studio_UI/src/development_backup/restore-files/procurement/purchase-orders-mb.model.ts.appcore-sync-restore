@@ -1,0 +1,90 @@
+/* ============================================================
+   Purchase Orders - MB
+============================================================ */
+
+export interface PurchaseOrdersMb
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Purchase Orders - MB
+============================================================ */
+
+export interface CreatePurchaseOrdersMb
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Purchase Orders - MB
+============================================================ */
+
+export interface UpdatePurchaseOrdersMb
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Purchase Orders - MB Defaults
+============================================================ */
+
+export interface PurchaseOrdersMbDefaults
+{
+    code:
+        string;
+}

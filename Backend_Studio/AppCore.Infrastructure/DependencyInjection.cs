@@ -165,6 +165,20 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : PurchaseOrdersMb
+
+using AppCore.Application.Procurement.MotorBikePurchase;
+using AppCore.Infrastructure.Configurations.Procurement.MotorBikePurchase;
+
+// AUTO-END : PurchaseOrdersMb
+
+// AUTO-BEGIN : PurchaseVat
+
+using AppCore.Application.VatManagement.VatSetup;
+using AppCore.Infrastructure.Configurations.VatManagement.VatSetup;
+
+// AUTO-END : PurchaseVat
+
 // AUTO-BEGIN : CheckReconciliations
 
 using AppCore.Application.AccountsFinance.AccountsReconciliation;
@@ -661,6 +675,66 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : PurchasesMb
+
+        services.AddScoped
+        <
+            IPurchasesMbRepository,
+            PurchasesMbRepository
+        >();
+
+        // AUTO-END : PurchasesMb
+
+        // AUTO-BEGIN : PurchaseReturnsMb
+
+        services.AddScoped
+        <
+            IPurchaseReturnsMbRepository,
+            PurchaseReturnsMbRepository
+        >();
+
+        // AUTO-END : PurchaseReturnsMb
+
+        // AUTO-BEGIN : PurchaseAdjustmentsMb
+
+        services.AddScoped
+        <
+            IPurchaseAdjustmentsMbRepository,
+            PurchaseAdjustmentsMbRepository
+        >();
+
+        // AUTO-END : PurchaseAdjustmentsMb
+
+        // AUTO-BEGIN : PurchaseOrdersMb
+
+        services.AddScoped
+        <
+            IPurchaseOrdersMbRepository,
+            PurchaseOrdersMbRepository
+        >();
+
+        // AUTO-END : PurchaseOrdersMb
+
+        // AUTO-BEGIN : SalesVat
+
+        services.AddScoped
+        <
+            ISalesVatRepository,
+            SalesVatRepository
+        >();
+
+        // AUTO-END : SalesVat
+
+        // AUTO-BEGIN : PurchaseVat
+
+        services.AddScoped
+        <
+            IPurchaseVatRepository,
+            PurchaseVatRepository
+        >();
+
+        // AUTO-END : PurchaseVat
 
         // AUTO-BEGIN : EmiReimbursementSchemes
 

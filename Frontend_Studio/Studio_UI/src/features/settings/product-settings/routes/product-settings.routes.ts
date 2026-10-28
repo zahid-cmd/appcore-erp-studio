@@ -197,7 +197,7 @@ Routes =
 
                     data:
                     {
-                        breadcrumb:'Spare Parts'
+                        breadcrumb:'Spare Parts & Lubricants'
                     },
 
                     loadChildren:() =>
@@ -237,32 +237,6 @@ Routes =
                 },
 
                 // AUTO-END : SUB-003-003-008
-
-            // AUTO-BEGIN : SUB-003-003-009
-
-                //===========================================================
-                // Rack Management
-                //===========================================================
-
-                {
-                    path:'rack-management',
-
-                    data:
-                    {
-                        breadcrumb:'Rack Management'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './rack-management.routes'
-                        )
-                        .then(
-                            m =>
-                                m.RackManagementRoutes
-                        )
-                },
-
-                // AUTO-END : SUB-003-003-009
 
         ]
 

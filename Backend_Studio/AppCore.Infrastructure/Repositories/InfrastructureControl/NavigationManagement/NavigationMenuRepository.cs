@@ -11,6 +11,7 @@ using AppCore.Domain.Entities.InfrastructureControl.NavigationManagement;
 
 using AppCore.Infrastructure.Persistence;
 using AppCore.Infrastructure.CodeMaster;
+using AppCore.Infrastructure.Repositories.InfrastructureControl.NavigationManagement;
 
 //===============================================================
 // Namespace
@@ -620,11 +621,110 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             $"/{module.RouteKey}/{dto.RouteKey}";
 
         //===========================================================
+        // Moved to another module ?
+        //
+        // The menu code follows the new module : "MNU-" + the
+        // module code's number + the next menu number in that
+        // module (deleted menus counted, never reused). Each of
+        // its submenus keeps its own number and gets
+        // "SUB-<new menu numbers>-sss". Routes are rebuilt for the
+        // submenus whenever the menu's route changes. Every table
+        // that keeps the old codes / module follows too.
+        //===========================================================
+
+        bool moved =
+            entity.NavigationModuleId !=
+            dto.NavigationModuleId;
+
+        string oldMenuCode =
+            entity.Code;
+
+        string newMenuCode =
+            oldMenuCode;
+
+        int newSequenceNo =
+            entity.SequenceNo;
+
+        if (moved)
+        {
+            newSequenceNo =
+                await GetNextSequenceNoAsync(
+                    module.Id);
+
+            newMenuCode =
+                $"MNU-{module.Code.Substring(4)}-{newSequenceNo:D3}";
+
+            bool codeTaken =
+                await _context.NavigationMenus
+                    .AnyAsync(x =>
+                        x.Code == newMenuCode
+                        &&
+                        x.Id != entity.Id);
+
+            if (codeTaken)
+            {
+                throw new InvalidOperationException(
+                    $"Code {newMenuCode} is already used by another menu. Fix that menu's code first.");
+            }
+        }
+
+
+        // Submenus of this menu (deleted ones too : they keep codes)
+        List<NavigationSubmenu> submenus =
+            await _context.NavigationSubmenus
+                .Where(x =>
+                    x.NavigationMenuId == entity.Id)
+                .ToListAsync();
+
+        List<(NavigationSubmenu Submenu, string OldCode, string NewCode)> codeChanges =
+            new();
+
+        if (moved)
+        {
+            foreach
+            (
+                NavigationSubmenu submenu
+                in submenus
+            )
+            {
+                string newSubCode =
+                    $"SUB-{newMenuCode.Substring(4)}-{submenu.SequenceNo:D3}";
+
+                bool subTaken =
+                    await _context.NavigationSubmenus
+                        .AnyAsync(x =>
+                            x.Code == newSubCode
+                            &&
+                            x.NavigationMenuId != entity.Id);
+
+                if (subTaken)
+                {
+                    throw new InvalidOperationException(
+                        $"Code {newSubCode} is already used by a submenu of another menu. Fix that submenu's code first.");
+                }
+
+                codeChanges.Add(
+                    (submenu, submenu.Code, newSubCode));
+            }
+        }
+
+
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+
+        //===========================================================
         // Update Entity
         //===========================================================
 
         entity.NavigationModuleId =
             dto.NavigationModuleId;
+
+        entity.SequenceNo =
+            newSequenceNo;
+
+        entity.Code =
+            newMenuCode;
 
         entity.Name =
             dto.Name;
@@ -653,7 +753,63 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
         entity.ModifiedDate =
             DateTime.UtcNow;
 
+
+        // Submenus : new codes (when moved) and routes
+        foreach
+        (
+            NavigationSubmenu submenu
+            in submenus
+        )
+        {
+            submenu.Route =
+                $"/{module.RouteKey}/{dto.RouteKey}/{submenu.RouteKey}";
+        }
+
+        foreach
+        (
+            var change
+            in codeChanges
+        )
+        {
+            change.Submenu.Code =
+                change.NewCode;
+        }
+
         await _context.SaveChangesAsync();
+
+
+        if (moved)
+        {
+            await NavigationMoveReferences.MenuMovedAsync(
+                _context,
+                entity.Id,
+                oldMenuCode,
+                newMenuCode,
+                entity.Name,
+                module.Id,
+                module.Code,
+                module.Name);
+
+            foreach
+            (
+                var change
+                in codeChanges
+            )
+            {
+                await NavigationMoveReferences.SubmenuMovedAsync(
+                    _context,
+                    change.Submenu.Id,
+                    change.OldCode,
+                    change.NewCode,
+                    module.Id,
+                    module.Code,
+                    module.Name,
+                    entity.Id,
+                    newMenuCode,
+                    entity.Name);
+            }
+        }
+
 
         //===========================================================
         // Activity History
@@ -675,10 +831,14 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
                     "Update",
 
                 ActivityTitle =
-                    "Navigation Menu Updated",
+                    moved
+                        ? "Navigation Menu Moved"
+                        : "Navigation Menu Updated",
 
                 ActivityDescription =
-                    $"Menu '{entity.Name}' updated.",
+                    moved
+                        ? $"Menu '{entity.Name}' moved to '{module.Name}' ({oldMenuCode} -> {newMenuCode}, {codeChanges.Count} submenu(s) recoded)."
+                        : $"Menu '{entity.Name}' updated.",
 
                 PerformedBy =
                     userId,
@@ -691,6 +851,9 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             });
 
         await _context.SaveChangesAsync();
+
+
+        await transaction.CommitAsync();
     }
 
 

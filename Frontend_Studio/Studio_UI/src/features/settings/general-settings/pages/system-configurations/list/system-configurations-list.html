@@ -173,172 +173,347 @@
                             </span>
                         </div>
 
-                        <div class="sc-grid">
+                        <div class="sc-grid" [class.sc-grid-credit]="cardStyle === 'credit'">
                             @for (card of section.cards; track card.item.ConfigurationCode)
                             {
-                                <article
-                                    class="sc-card"
-                                    [class.sc-card-on]="card.isLive"
-                                    [class.sc-card-staged]="card.isStaged"
-                                    [class.sc-card-blocked]="card.isBlocked"
-                                    [class.sc-card-pending]="card.item.IsPending">
+                                @if (cardStyle === 'credit')
+                                {
+                                    <article
+                                        class="sc-cc"
+                                        [class.sc-cc-on]="card.isLive"
+                                        [class.sc-cc-staged]="card.isStaged"
+                                        [class.sc-cc-blocked]="card.isBlocked"
+                                        [class.sc-cc-pending]="card.item.IsPending"
+                                        [attr.aria-label]="card.item.ConfigurationName">
 
-                                    <!-- Top : tile, name, toggle -->
-                                    <div class="sc-card-top">
-                                        <span
-                                            class="sc-tile"
-                                            [style.background]="card.iconBg"
-                                            [style.color]="card.iconFg">
-                                            {{ card.abbr }}
-                                        </span>
+                                        <span class="sc-cc-shine" aria-hidden="true"></span>
 
-                                        <div class="sc-card-title">
-                                            <span class="sc-card-name">{{ card.item.ConfigurationName }}</span>
-
-                                            @if (card.isBlocked)
-                                            {
-                                                <span class="sc-card-note sc-note-blocked">
-                                                    Needs “{{ card.parentName }}” ON
-                                                </span>
-                                            }
-
-                                            @if (card.item.IsPending)
-                                            {
-                                                <span class="sc-card-note sc-note-pending">
-                                                    <i class="fas fa-hourglass-half"></i>
-                                                    {{ card.pendingText }}
-                                                </span>
-                                            }
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            role="switch"
-                                            class="sc-toggle"
-                                            [class.sc-toggle-on]="card.isOn"
-                                            [attr.aria-checked]="card.isOn"
-                                            [attr.aria-label]="card.item.ConfigurationName"
-                                            [disabled]="card.toggleLocked"
-                                            (click)="toggle(card)">
-                                            <span class="sc-knob"></span>
-                                        </button>
-                                    </div>
-
-                                    <!-- Middle : live ON / OFF lines -->
-                                    <div class="sc-lines">
-                                        <div class="sc-line" [class.sc-line-live]="card.isLive">
-                                            <span class="sc-ldot" [class.sc-ldot-on]="card.isLive"></span>
-                                            <b>ON</b>
-                                            <span>{{ card.item.OnDescription || '—' }}</span>
-                                        </div>
-                                        <div class="sc-line" [class.sc-line-live]="!card.isLive">
-                                            <span class="sc-ldot" [class.sc-ldot-off]="!card.isLive"></span>
-                                            <b>OFF</b>
-                                            <span>{{ card.item.OffDescription || '—' }}</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Bottom : meta -->
-                                    <div class="sc-meta">
-                                        <span class="sc-code">{{ card.item.ConfigurationCode }}</span>
-
-                                        @if (card.item.IsCritical)
-                                        {
-                                            <span class="sc-tag sc-tag-critical">
-                                                <i class="fas fa-triangle-exclamation"></i>
-                                                Critical
-                                            </span>
-                                        }
-
-                                        @if (card.isStaged)
-                                        {
-                                            <span class="sc-tag sc-tag-unsaved">Unsaved</span>
-                                        }
-
-                                        @if (card.isChanged)
-                                        {
-                                            <span class="sc-changed">
-                                                <span class="sc-dot sc-dot-changed"></span>
-                                                Changed
-                                            </span>
-                                        }
-
-                                        @if (card.canReset)
-                                        {
-                                            <button type="button" class="sc-reset" (click)="reset(card)">Reset</button>
-                                        }
-
-                                        <span class="sc-meta-gap"></span>
-
-                                        @if (card.hasValue && !card.isText)
-                                        {
-                                            <div class="sc-stepper" [class.sc-stepper-locked]="card.valueLocked">
-                                                <button
-                                                    type="button"
-                                                    aria-label="Decrease"
-                                                    [disabled]="card.valueLocked"
-                                                    (click)="stepValue(card, -1)">
-                                                    −
-                                                </button>
-                                                <span>{{ card.valueText }}</span>
-                                                <button
-                                                    type="button"
-                                                    aria-label="Increase"
-                                                    [disabled]="card.valueLocked"
-                                                    (click)="stepValue(card, 1)">
-                                                    +
-                                                </button>
-                                            </div>
-                                        }
-
-                                        @if (card.hasValue && card.isText)
-                                        {
-                                            <input
-                                                class="sc-text-value"
-                                                type="text"
-                                                maxlength="100"
-                                                [attr.aria-label]="card.item.ConfigurationName + ' value'"
-                                                [disabled]="card.valueLocked"
-                                                [ngModel]="card.value"
-                                                (ngModelChange)="onTextValue(card, $event)">
-                                        }
-
-                                        @if (canManage)
-                                        {
-                                            <span class="sc-tools">
-                                                <button
-                                                    type="button"
-                                                    class="sc-icon-btn"
-                                                    aria-label="Edit definition"
-                                                    title="Edit definition"
-                                                    (click)="edit(card)">
-                                                    <i class="fas fa-pen"></i>
-                                                </button>
-                                                @if (card.item.IsSystemDefined)
+                                        <!-- Top : tags (left) · name (right, like the bank name) -->
+                                        <div class="sc-cc-top">
+                                            <div class="sc-cc-tags">
+                                                @if (card.item.IsCritical)
                                                 {
-                                                    <span
-                                                        class="sc-icon-btn sc-icon-locked"
-                                                        role="img"
-                                                        aria-label="System switch: cannot be deleted"
-                                                        title="System switch: used by the app, so it cannot be deleted. Turn it OFF instead.">
-                                                        <i class="fas fa-lock"></i>
-                                                    </span>
+                                                    <span class="sc-cc-tag sc-cc-tag-crit">Critical</span>
                                                 }
-                                                @else
+                                                @if (card.item.IsPending)
                                                 {
+                                                    <span class="sc-cc-tag sc-cc-tag-pend" [attr.title]="card.pendingText">Pending</span>
+                                                }
+                                                @if (card.isStaged)
+                                                {
+                                                    <span class="sc-cc-tag sc-cc-tag-unsaved">Unsaved</span>
+                                                }
+                                                @if (card.isChanged && !card.isStaged)
+                                                {
+                                                    <span class="sc-cc-tag sc-cc-tag-changed" title="Not the default setting">Changed</span>
+                                                }
+                                            </div>
+
+                                            <span class="sc-cc-name" [attr.title]="card.item.ConfigurationName">{{ card.item.ConfigurationName }}</span>
+                                        </div>
+
+                                        <!-- Chip + page code · tools -->
+                                        <div class="sc-cc-chiprow">
+                                            <span class="sc-cc-chip" aria-hidden="true">
+                                                <span class="sc-cc-chip-h" style="top: 11px"></span>
+                                                <span class="sc-cc-chip-h" style="top: 21px"></span>
+                                                <span class="sc-cc-chip-v" style="left: 14px"></span>
+                                                <span class="sc-cc-chip-v" style="left: 28px"></span>
+                                                <span class="sc-cc-chip-c"></span>
+                                            </span>
+                                            <span class="sc-cc-lbl sc-cc-abbr">{{ card.abbr }}</span>
+
+                                            @if (card.canReset)
+                                            {
+                                                <button type="button" class="sc-cc-reset" (click)="reset(card)">Reset</button>
+                                            }
+
+                                            <span class="sc-meta-gap"></span>
+
+                                            @if (canManage)
+                                            {
+                                                <span class="sc-cc-tools">
                                                     <button
                                                         type="button"
-                                                        class="sc-icon-btn sc-icon-danger"
-                                                        aria-label="Delete"
-                                                        title="Delete"
-                                                        (click)="delete(card)">
-                                                        <i class="fas fa-trash"></i>
+                                                        class="sc-cc-icon"
+                                                        aria-label="Edit definition"
+                                                        title="Edit definition"
+                                                        (click)="edit(card)">
+                                                        <i class="fas fa-pen"></i>
                                                     </button>
-                                                }
+                                                    @if (card.item.IsSystemDefined)
+                                                    {
+                                                        <span
+                                                            class="sc-cc-icon sc-cc-icon-locked"
+                                                            role="img"
+                                                            aria-label="System switch: cannot be deleted"
+                                                            title="System switch: used by the app, so it cannot be deleted. Turn it OFF instead.">
+                                                            <i class="fas fa-lock"></i>
+                                                        </span>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="sc-cc-icon sc-cc-icon-danger"
+                                                            aria-label="Delete"
+                                                            title="Delete"
+                                                            (click)="delete(card)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    }
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <!-- Code as the card number -->
+                                        <div class="sc-cc-num">
+                                            @for (group of card.codeGroups; track $index)
+                                            {
+                                                <span>{{ group }}</span>
+                                            }
+                                        </div>
+
+                                        <!-- What is true right now / blocked note -->
+                                        <div class="sc-cc-live" [attr.title]="'ON : ' + (card.item.OnDescription || '—') + '\nOFF : ' + (card.item.OffDescription || '—')">
+                                            @if (card.isBlocked)
+                                            {
+                                                <i class="fas fa-link-slash"></i>
+                                                Needs “{{ card.parentName }}” ON
+                                            }
+                                            @else
+                                            {
+                                                {{ card.liveText }}
+                                            }
+                                        </div>
+
+                                        <!-- Bottom : value / default + holder line · hologram switch -->
+                                        <div class="sc-cc-bottom">
+                                            <div class="sc-cc-left">
+                                                <div class="sc-cc-valrow">
+                                                    @if (card.hasValue && !card.isText)
+                                                    {
+                                                        <span class="sc-cc-lbl">Value<br>Set</span>
+                                                        <div class="sc-cc-step" [class.sc-cc-step-locked]="card.valueLocked">
+                                                            <button
+                                                                type="button"
+                                                                aria-label="Decrease"
+                                                                [disabled]="card.valueLocked"
+                                                                (click)="stepValue(card, -1)">
+                                                                −
+                                                            </button>
+                                                            <span>{{ card.valueText }}</span>
+                                                            <button
+                                                                type="button"
+                                                                aria-label="Increase"
+                                                                [disabled]="card.valueLocked"
+                                                                (click)="stepValue(card, 1)">
+                                                                +
+                                                            </button>
+                                                        </div>
+                                                    }
+                                                    @else if (card.hasValue && card.isText)
+                                                    {
+                                                        <span class="sc-cc-lbl">Value</span>
+                                                        <input
+                                                            class="sc-cc-text"
+                                                            type="text"
+                                                            maxlength="100"
+                                                            [attr.aria-label]="card.item.ConfigurationName + ' value'"
+                                                            [disabled]="card.valueLocked"
+                                                            [ngModel]="card.value"
+                                                            (ngModelChange)="onTextValue(card, $event)">
+                                                    }
+                                                    @else
+                                                    {
+                                                        <span class="sc-cc-lbl">Default<br>State</span>
+                                                        <span class="sc-cc-def">{{ card.defaultText }}</span>
+                                                    }
+                                                </div>
+
+                                                <span class="sc-cc-holder" [attr.title]="card.holderText">{{ card.holderText }}</span>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                class="sc-cc-holo"
+                                                [class.sc-cc-holo-on]="card.isOn"
+                                                [attr.aria-checked]="card.isOn"
+                                                [attr.aria-label]="card.item.ConfigurationName"
+                                                [disabled]="card.toggleLocked"
+                                                (click)="toggle(card)">
+                                                <span class="sc-cc-knob">{{ card.isOn ? 'ON' : 'OFF' }}</span>
+                                            </button>
+                                        </div>
+                                    </article>
+                                }
+                                @else
+                                {
+                                    <article
+                                        class="sc-card"
+                                        [class.sc-card-on]="card.isLive"
+                                        [class.sc-card-staged]="card.isStaged"
+                                        [class.sc-card-blocked]="card.isBlocked"
+                                        [class.sc-card-pending]="card.item.IsPending">
+
+                                        <!-- Top : tile, name, toggle -->
+                                        <div class="sc-card-top">
+                                            <span
+                                                class="sc-tile"
+                                                [style.background]="card.iconBg"
+                                                [style.color]="card.iconFg">
+                                                {{ card.abbr }}
                                             </span>
-                                        }
-                                    </div>
-                                </article>
+
+                                            <div class="sc-card-title">
+                                                <span class="sc-card-name">{{ card.item.ConfigurationName }}</span>
+
+                                                @if (card.isBlocked)
+                                                {
+                                                    <span class="sc-card-note sc-note-blocked">
+                                                        Needs “{{ card.parentName }}” ON
+                                                    </span>
+                                                }
+
+                                                @if (card.item.IsPending)
+                                                {
+                                                    <span class="sc-card-note sc-note-pending">
+                                                        <i class="fas fa-hourglass-half"></i>
+                                                        {{ card.pendingText }}
+                                                    </span>
+                                                }
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                class="sc-toggle"
+                                                [class.sc-toggle-on]="card.isOn"
+                                                [attr.aria-checked]="card.isOn"
+                                                [attr.aria-label]="card.item.ConfigurationName"
+                                                [disabled]="card.toggleLocked"
+                                                (click)="toggle(card)">
+                                                <span class="sc-knob"></span>
+                                            </button>
+                                        </div>
+
+                                        <!-- Middle : live ON / OFF lines -->
+                                        <div class="sc-lines">
+                                            <div class="sc-line" [class.sc-line-live]="card.isLive">
+                                                <span class="sc-ldot" [class.sc-ldot-on]="card.isLive"></span>
+                                                <b>ON</b>
+                                                <span>{{ card.item.OnDescription || '—' }}</span>
+                                            </div>
+                                            <div class="sc-line" [class.sc-line-live]="!card.isLive">
+                                                <span class="sc-ldot" [class.sc-ldot-off]="!card.isLive"></span>
+                                                <b>OFF</b>
+                                                <span>{{ card.item.OffDescription || '—' }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Bottom : meta -->
+                                        <div class="sc-meta">
+                                            <span class="sc-code">{{ card.item.ConfigurationCode }}</span>
+
+                                            @if (card.item.IsCritical)
+                                            {
+                                                <span class="sc-tag sc-tag-critical">
+                                                    <i class="fas fa-triangle-exclamation"></i>
+                                                    Critical
+                                                </span>
+                                            }
+
+                                            @if (card.isStaged)
+                                            {
+                                                <span class="sc-tag sc-tag-unsaved">Unsaved</span>
+                                            }
+
+                                            @if (card.isChanged)
+                                            {
+                                                <span class="sc-changed">
+                                                    <span class="sc-dot sc-dot-changed"></span>
+                                                    Changed
+                                                </span>
+                                            }
+
+                                            @if (card.canReset)
+                                            {
+                                                <button type="button" class="sc-reset" (click)="reset(card)">Reset</button>
+                                            }
+
+                                            <span class="sc-meta-gap"></span>
+
+                                            @if (card.hasValue && !card.isText)
+                                            {
+                                                <div class="sc-stepper" [class.sc-stepper-locked]="card.valueLocked">
+                                                    <button
+                                                        type="button"
+                                                        aria-label="Decrease"
+                                                        [disabled]="card.valueLocked"
+                                                        (click)="stepValue(card, -1)">
+                                                        −
+                                                    </button>
+                                                    <span>{{ card.valueText }}</span>
+                                                    <button
+                                                        type="button"
+                                                        aria-label="Increase"
+                                                        [disabled]="card.valueLocked"
+                                                        (click)="stepValue(card, 1)">
+                                                        +
+                                                    </button>
+                                                </div>
+                                            }
+
+                                            @if (card.hasValue && card.isText)
+                                            {
+                                                <input
+                                                    class="sc-text-value"
+                                                    type="text"
+                                                    maxlength="100"
+                                                    [attr.aria-label]="card.item.ConfigurationName + ' value'"
+                                                    [disabled]="card.valueLocked"
+                                                    [ngModel]="card.value"
+                                                    (ngModelChange)="onTextValue(card, $event)">
+                                            }
+
+                                            @if (canManage)
+                                            {
+                                                <span class="sc-tools">
+                                                    <button
+                                                        type="button"
+                                                        class="sc-icon-btn"
+                                                        aria-label="Edit definition"
+                                                        title="Edit definition"
+                                                        (click)="edit(card)">
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    @if (card.item.IsSystemDefined)
+                                                    {
+                                                        <span
+                                                            class="sc-icon-btn sc-icon-locked"
+                                                            role="img"
+                                                            aria-label="System switch: cannot be deleted"
+                                                            title="System switch: used by the app, so it cannot be deleted. Turn it OFF instead.">
+                                                            <i class="fas fa-lock"></i>
+                                                        </span>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="sc-icon-btn sc-icon-danger"
+                                                            aria-label="Delete"
+                                                            title="Delete"
+                                                            (click)="delete(card)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    }
+                                                </span>
+                                            }
+                                        </div>
+                                    </article>
+                                }
                             }
                         </div>
                     </section>
@@ -430,6 +605,32 @@
             @if (view === 'settings')
             {
                 <aside class="sc-rail appcore-scrollbar" aria-label="Filter by status">
+
+                    <div class="sc-rail-label">Display Style</div>
+
+                    <!-- Card style : Classic / Credit Card -->
+                    <div class="sc-style" role="group" aria-label="Display style">
+                        <button
+                            type="button"
+                            class="sc-style-btn"
+                            [class.sc-style-on]="cardStyle === 'classic'"
+                            [attr.aria-pressed]="cardStyle === 'classic'"
+                            title="Classic cards"
+                            (click)="setCardStyle('classic')">
+                            <i class="fas fa-table-cells-large"></i>
+                            <span>Classic</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="sc-style-btn"
+                            [class.sc-style-on]="cardStyle === 'credit'"
+                            [attr.aria-pressed]="cardStyle === 'credit'"
+                            title="Credit card style"
+                            (click)="setCardStyle('credit')">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Credit Card</span>
+                        </button>
+                    </div>
 
                     <div class="sc-rail-label">Show</div>
 

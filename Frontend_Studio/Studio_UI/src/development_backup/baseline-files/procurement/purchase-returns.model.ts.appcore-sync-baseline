@@ -1,0 +1,90 @@
+/* ============================================================
+   Purchase Returns
+============================================================ */
+
+export interface PurchaseReturns
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Purchase Returns
+============================================================ */
+
+export interface CreatePurchaseReturns
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Purchase Returns
+============================================================ */
+
+export interface UpdatePurchaseReturns
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Purchase Returns Defaults
+============================================================ */
+
+export interface PurchaseReturnsDefaults
+{
+    code:
+        string;
+}

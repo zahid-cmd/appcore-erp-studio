@@ -985,6 +985,14 @@ private readonly navigationContextSubscription =
       case 'approved':
         return 'approved';
 
+      // Purchase orders : Placed (purple), Closed Short (orange);
+      // Completed uses .active, Cancelled uses .inactive
+      case 'placed':
+        return 'placed';
+
+      case 'closed short':
+        return 'closed';
+
       // Checks : Pending → Deposited → Cleared / Dishonoured, Void
       case 'deposited':
         return 'approved';

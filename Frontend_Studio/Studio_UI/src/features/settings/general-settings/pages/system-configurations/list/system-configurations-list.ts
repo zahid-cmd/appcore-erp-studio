@@ -202,6 +202,15 @@ interface CardView
     iconBg: string;
 
     iconFg: string;
+
+    // Credit-card face
+    codeGroups: string[];   // CFG MOD 004 0033 (the "card number")
+
+    holderText: string;     // Menu · Page (the "cardholder" line)
+
+    liveText: string;       // what is true right now (ON or OFF text)
+
+    defaultText: string;    // ON / OFF
 }
 
 interface SectionView
@@ -268,6 +277,28 @@ interface ReviewRow
 //===============================================================
 // Component
 //===============================================================
+
+//===============================================================
+// Card style : the remembered choice (Classic by default)
+//===============================================================
+
+const CARD_STYLE_KEY =
+    'appcore.systemConfigurations.cardStyle';
+
+function readCardStyle():
+    'classic' | 'credit'
+{
+    try
+    {
+        return localStorage.getItem(CARD_STYLE_KEY) === 'credit'
+            ? 'credit'
+            : 'classic';
+    }
+    catch
+    {
+        return 'classic';
+    }
+}
 
 @Component(
 {
@@ -927,6 +958,39 @@ implements OnInit
                     this.cdr.detectChanges();
                 }
             });
+    }
+
+    //===========================================================
+    // Card style : Classic / Credit Card (remembered per browser)
+    //===========================================================
+
+    cardStyle:
+        'classic' | 'credit' =
+        readCardStyle();
+
+    setCardStyle
+    (
+        style:
+            'classic' | 'credit'
+    ):
+        void
+    {
+        this.cardStyle =
+            style;
+
+        try
+        {
+            localStorage.setItem(
+                CARD_STYLE_KEY,
+                style
+            );
+        }
+        catch
+        {
+            // storage blocked : the choice lasts for this visit only
+        }
+
+        this.cdr.detectChanges();
     }
 
     refresh():
@@ -1611,6 +1675,18 @@ implements OnInit
             abbr: tile.abbr,
             iconBg: tile.bg,
             iconFg: tile.fg,
+            codeGroups: String(item.ConfigurationCode ?? '').split('-').filter(x => !!x),
+            holderText:
+                item.ScopeType === 'Submenu'
+                    ? `${item.MenuName} · ${item.SubmenuName}`
+                    : item.ScopeType === 'Menu'
+                        ? `${item.ModuleName} · ${item.MenuName}`
+                        : `${item.ModuleName} · Module-wide`,
+            liveText:
+                (isBlocked ? false : state.IsEnabled)
+                    ? (item.OnDescription || 'ON')
+                    : (item.OffDescription || 'OFF'),
+            defaultText: item.DefaultEnabled ? 'ON' : 'OFF',
             pendingText:
                 item.IsPending
                     ? `Pending approval → ${this.stateText(item, item.PendingEnabled, item.PendingValue)}`

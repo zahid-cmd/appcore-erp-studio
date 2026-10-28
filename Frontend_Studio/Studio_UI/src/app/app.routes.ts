@@ -299,6 +299,84 @@ export const routes:
 
             // AUTO-END : MOD-009
 
+            // AUTO-BEGIN : MOD-012
+
+            //===========================================================
+            // Store Management
+            //===========================================================
+
+            {
+                path:'store-management',
+
+                data:
+                {
+                    breadcrumb:'Store Management'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/store-management/routes/store-management.routes'
+                    )
+                    .then(
+                        m =>
+                            m.storeManagementRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-012
+
+            // AUTO-BEGIN : MOD-007
+
+            //===========================================================
+            // Procurement
+            //===========================================================
+
+            {
+                path:'procurement',
+
+                data:
+                {
+                    breadcrumb:'Procurement'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/procurement/routes/procurement.routes'
+                    )
+                    .then(
+                        m =>
+                            m.procurementRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-007
+
+            // AUTO-BEGIN : MOD-013
+
+            //===========================================================
+            // VAT Management
+            //===========================================================
+
+            {
+                path:'vat-management',
+
+                data:
+                {
+                    breadcrumb:'VAT Management'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/vat-management/routes/vat-management.routes'
+                    )
+                    .then(
+                        m =>
+                            m.vatManagementRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-013
+
         ]
     },
 

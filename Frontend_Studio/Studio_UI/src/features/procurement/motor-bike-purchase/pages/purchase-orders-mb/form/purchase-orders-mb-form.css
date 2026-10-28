@@ -1,0 +1,1348 @@
+@import '../../../../../../shared/styles/app-form-page.css';
+
+/*===============================================================
+  Purchase Order Form
+===============================================================*/
+
+/* Shared controls two sizes larger (voucher pages) */
+@import '../../../../../../shared/styles/voucher-page.css';
+
+
+/*---------------------------------------------------------------
+  Fixed page height
+  The page never grows past the screen : the summary rows scroll
+  inside instead of pushing Total / Balance down.
+---------------------------------------------------------------*/
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.app-form-page > app-page-header
+{
+    flex: 0 0 auto;
+}
+
+/* Toast / confirm / progress show as fixed overlays; their host
+   boxes (progress-dialog is 520 x 240) must not take page height */
+:host > app-toast,
+:host > app-confirm-dialog,
+:host > app-progress-dialog
+{
+    position: absolute;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+.pof-body
+{
+    /* Fills the page below the header; the summary rows scroll,
+       the body scrolls only on a short screen */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* Room for the cards' floating shadow */
+    padding: 2px 6px 8px;
+}
+
+.pof-body > .pof-grid
+{
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.pof-body > .pof-banner
+{
+    flex: 0 0 auto;
+}
+
+.pof-loading
+{
+    /* AppCore orbit loader, centred in the body */
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+}
+
+
+/*---------------------------------------------------------------
+  Header center : floating ribbon
+  Branch | Financial Year | status · step · unsaved
+---------------------------------------------------------------*/
+
+.pof-center
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+}
+
+.pof-ribbon
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    padding: 6px 8px;
+    border: 1px solid #dbe4f3;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+    box-shadow:
+        0 10px 24px -12px rgba(30, 58, 138, 0.35),
+        0 2px 6px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+    white-space: nowrap;
+}
+
+.pof-ribbon-sep
+{
+    width: 1px;
+    align-self: stretch;
+    margin: 4px 6px;
+    background: #e2e8f0;
+}
+
+.pof-state
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 0 4px;
+    white-space: nowrap;
+}
+
+@media (max-width: 1400px)
+{
+    .pof-ribbon
+    {
+        flex-wrap: wrap;
+        border-radius: 16px;
+    }
+}
+
+.pof-chip
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    padding: 2px 10px 2px 4px;
+    border-radius: 999px;
+}
+
+.pof-chip-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    font-size: 14px;
+}
+
+.pof-chip-icon-branch
+{
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.pof-chip-icon-year
+{
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.pof-chip-text
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.pof-chip-label
+{
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.pof-chip-text strong
+{
+    font-size: 14px;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.pof-chip-error
+{
+    background: #fef2f2;
+}
+
+.pof-chip-error strong
+{
+    color: #b91c1c;
+}
+
+
+/*---------------------------------------------------------------
+  Step
+---------------------------------------------------------------*/
+
+.pof-steps
+{
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+
+/*---------------------------------------------------------------
+  Status pill
+---------------------------------------------------------------*/
+
+.pof-unsaved
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #b45309;
+}
+
+.pof-unsaved i
+{
+    font-size: 7px;
+}
+
+.pof-status
+{
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.pof-status-draft
+{
+    background: #e0e7ff;
+    color: #1e3a8a;
+}
+
+.pof-status-approved
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.pof-status-posted
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.pof-status-cancelled
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+/*---------------------------------------------------------------
+  Banners
+---------------------------------------------------------------*/
+
+.pof-banner
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.pof-banner-warn
+{
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+}
+
+.pof-banner-cancelled
+{
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+
+/*---------------------------------------------------------------
+  Reason modal (Close Short / Cancel)
+---------------------------------------------------------------*/
+
+.pof-overlay
+{
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+    animation: pof-fade-in 0.2s ease-out;
+}
+
+.pof-cx
+{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow:
+        0 30px 70px -24px rgba(15, 23, 42, 0.55),
+        0 2px 8px rgba(15, 23, 42, 0.08);
+    animation: pof-modal-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+
+/* Header : light red → grey, red accent line */
+
+.pof-cx-head
+{
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #f1d5d5;
+    background:
+        linear-gradient(120deg, #fde2e2 0%, #fdf0f0 45%, #f1f5f9 100%);
+}
+
+.pof-cx-head::before
+{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #991b1b, #ef4444 55%, #94a3b8);
+}
+
+.pof-cx-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #991b1b, #ef4444);
+    color: #ffffff;
+    font-size: 20px;
+    box-shadow: 0 6px 14px -6px rgba(220, 38, 38, 0.7);
+}
+
+.pof-cx-title
+{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.pof-cx-title strong
+{
+    font-size: 19px;
+    color: #1e293b;
+}
+
+.pof-cx-title span
+{
+    font-size: 15px;
+    font-weight: 600;
+    color: #991b1b;
+}
+
+
+/* Body */
+
+.pof-cx-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 22px 20px;
+}
+
+.pof-cx-summary
+{
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 18px;
+    padding: 12px 16px;
+    border: 1px solid #e3e9f3;
+    border-radius: 12px;
+    background: linear-gradient(120deg, #f5f8ff 0%, #f8fafc 100%);
+}
+
+.pof-cx-summary > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.pof-cx-summary span
+{
+    font-size: 13.5px;
+    color: #64748b;
+}
+
+.pof-cx-summary strong
+{
+    font-size: 16px;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pof-cx-amount
+{
+    text-align: right;
+}
+
+.pof-cx-amount strong
+{
+    color: #1e3a8a;
+    font-variant-numeric: tabular-nums;
+}
+
+.pof-cx-warn
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    background: #fffbeb;
+    font-size: 15px;
+    line-height: 1.45;
+    color: #92400e;
+}
+
+.pof-cx-warn i
+{
+    margin-top: 2px;
+    color: #d97706;
+}
+
+.pof-cx-fields
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Half width date, full width reason */
+.pof-cx-date
+{
+    max-width: 260px;
+}
+
+.pof-cx-reason
+{
+    --textarea-width: 100%;
+    display: block;
+    width: 100%;
+}
+
+@media (max-width: 560px)
+{
+    .pof-cx-summary
+    {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .pof-cx-amount
+    {
+        text-align: left;
+    }
+
+    .pof-cx-date
+    {
+        max-width: none;
+    }
+}
+
+
+/* Close (X) : round, quiet until hovered */
+
+.pof-modal-x
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.7);
+    color: #64748b;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.pof-modal-x:hover
+{
+    background: #ffffff;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+
+/* Footer : note on the left, buttons on the right */
+
+.pof-modal-foot
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.pof-modal-note
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-right: auto;
+    font-size: 13.5px;
+    color: #64748b;
+}
+
+.pof-modal-note i
+{
+    color: #94a3b8;
+}
+
+.pof-btn
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.pof-btn-light
+{
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.pof-btn-danger
+{
+    background: linear-gradient(135deg, #991b1b, #dc2626);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(220, 38, 38, 0.55);
+}
+
+.pof-btn-danger:hover
+{
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -6px rgba(220, 38, 38, 0.6);
+}
+
+
+.pof-btn-primary
+{
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.55);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.pof-btn-primary:hover
+{
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -6px rgba(37, 99, 235, 0.6);
+}
+
+.pof-btn
+{
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.pof-btn-light:hover
+{
+    background: #f1f5f9;
+}
+
+
+@keyframes pof-fade-in
+{
+    from
+    {
+        opacity: 0;
+    }
+
+    to
+    {
+        opacity: 1;
+    }
+}
+
+@keyframes pof-modal-in
+{
+    from
+    {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+
+    to
+    {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+
+/*---------------------------------------------------------------
+  Card
+---------------------------------------------------------------*/
+
+/* Floating card : soft border + layered shadow */
+.pof-card
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 10px 24px -16px rgba(30, 58, 138, 0.28);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.pof-card:hover
+{
+    border-color: #d6e0ef;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.05),
+        0 14px 30px -16px rgba(30, 58, 138, 0.34);
+}
+
+/* Light premium shade */
+.pof-card-header
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 3px 20px;
+    border-bottom: 1px solid #e6ecf5;
+    background:
+        linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #1e293b;
+}
+
+.pof-card-header > i
+{
+    color: #2563eb;
+}
+
+.pof-count
+{
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Lines entered / Max Lines (setting) */
+.pof-lines
+{
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.pof-lines-full
+{
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+/* Second chip in the header : no auto margin */
+.pof-count-after
+{
+    margin-left: 6px;
+}
+
+.pof-side
+{
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.pof-side-debit
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.pof-side-credit
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+/*---------------------------------------------------------------
+  + Add (header right)
+---------------------------------------------------------------*/
+
+.pof-add
+{
+    /* Same look as the Journal Voucher / Fund Transfer + Add
+       (and the Save / Update command button); stays in the
+       card header */
+    margin-left: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 84px;
+    height: 30px;
+    padding: 0 16px;
+    border: 1px solid #1d4ed8;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7);
+    transition: filter 0.15s ease;
+}
+
+.pof-add:hover:not(:disabled)
+{
+    filter: brightness(1.06);
+}
+
+.pof-add:disabled
+{
+    border-color: #cbd5e1;
+    background: #e2e8f0;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+
+/*---------------------------------------------------------------
+  Field grid (inside a card)
+---------------------------------------------------------------*/
+
+.pof-fields
+{
+    display: grid;
+    gap: 6px 18px;
+    padding: 8px 20px 10px;
+}
+
+.pof-grid-2
+{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 560px)
+{
+    .pof-grid-2
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.pof-locked .pof-fields
+{
+    opacity: 0.7;
+}
+
+
+/*---------------------------------------------------------------
+  Messages
+---------------------------------------------------------------*/
+
+.pof-error,
+.pof-hint
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* Full-width card footer, kept at the bottom of the card */
+    margin: auto 0 0;
+    padding: 6px 20px;
+    border-top: 1px solid #e6ecf5;
+    border-radius: 0;
+    font-size: 15.5px;
+    font-weight: 500;
+}
+
+.pof-error
+{
+    border-top-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+/* Same light premium shade as the card headers */
+.pof-hint
+{
+    background:
+        linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    color: #475569;
+}
+
+/* Max Lines warning : last line / line kept for the credit */
+.pof-hint.pof-hint-warn
+{
+    border-top-color: #fde68a;
+    background:
+        linear-gradient(120deg, #fffbeb 0%, #fef9ec 55%, #fffdf6 100%);
+    color: #92400e;
+}
+
+.pof-hint.pof-hint-warn i
+{
+    color: #d97706;
+}
+
+
+/*---------------------------------------------------------------
+  Transaction Summary
+---------------------------------------------------------------*/
+
+.pof-summary
+{
+    display: flex;
+    flex-direction: column;
+}
+
+/* Rows scroll (AppCore scrollbar); header sticks */
+.pof-table-scroll
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.pof-table
+{
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 16.5px;
+}
+
+/* Serial No. : debit + credit rows 1 … n (Max Lines counts
+   these); system charge rows have none */
+.pof-col-sl
+{
+    width: 52px;
+}
+
+.pof-table th.pof-sl,
+.pof-table td.pof-sl
+{
+    padding-left: 14px;
+    padding-right: 4px;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.pof-col-notes
+{
+    width: 18%;
+}
+
+/* Wide enough for 999,999,999.99 in the bold totals */
+.pof-col-num
+{
+    width: 170px;
+}
+
+.pof-col-action
+{
+    width: 88px;
+}
+
+.pof-table th,
+.pof-table td
+{
+    padding: 10px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pof-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f6f8fc;
+    color: #475569;
+    font-size: 15.5px;
+    font-weight: 600;
+}
+
+/* Totals : always visible under the rows */
+.pof-table-foot
+{
+    flex: 0 0 auto;
+    border-top: 2px solid #e2e8f0;
+}
+
+.pof-table-foot td
+{
+    font-size: 17px;
+}
+
+.pof-num
+{
+    text-align: right !important;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Amounts and totals are never cut */
+.pof-table th.pof-num,
+.pof-table td.pof-num
+{
+    padding-left: 10px;
+    padding-right: 12px;
+    text-overflow: clip;
+}
+
+.pof-action
+{
+    text-align: center !important;
+}
+
+/* "Action" header shown in full */
+.pof-table th.pof-action,
+.pof-table td.pof-action
+{
+    padding-left: 6px;
+    padding-right: 6px;
+    white-space: nowrap;
+    text-overflow: clip;
+}
+
+.pof-muted
+{
+    color: #cbd5e1;
+}
+
+.pof-ledger
+{
+    white-space: normal;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.pof-sub
+{
+    margin-top: 3px;
+    font-size: 14.5px;
+    color: #64748b;
+}
+
+.pof-notes
+{
+    color: #475569;
+}
+
+.pof-empty
+{
+    padding: 22px 12px !important;
+    text-align: center !important;
+    color: #94a3b8;
+}
+
+.pof-remove
+{
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+.pof-remove:disabled
+{
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.pof-total td
+{
+    font-weight: 700;
+    color: #1e293b;
+    background: #f8fafc;
+}
+
+.pof-balance td
+{
+    font-weight: 700;
+    color: #b45309;
+    background: #fffbeb;
+}
+
+.pof-balance.pof-balance-ok td
+{
+    color: #166534;
+    background: #f0fdf4;
+}
+
+
+/*---------------------------------------------------------------
+  Status pills (Purchase Order)
+---------------------------------------------------------------*/
+
+.pof-status-placed
+{
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.pof-status-completed
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.pof-status-closed-short
+{
+    background: #ffedd5;
+    color: #9a3412;
+}
+
+.pof-banner-info
+{
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
+
+/*---------------------------------------------------------------
+  Layout
+  Left  : PO Information, Add Motor Bike
+  Right : Terms & Narration (single line), Order Summary (fills
+          the rest and ends with the left column; rows scroll)
+---------------------------------------------------------------*/
+
+.pof-grid
+{
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 9fr);
+    gap: 10px 18px;
+    align-items: stretch;
+    min-height: 0;
+}
+
+.pof-col
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Add Motor Bike stretches when the page is taller */
+.pof-col-left > .pof-card:last-child
+{
+    flex: 1 1 auto;
+}
+
+/* The slot takes what the narration leaves; the summary card
+   fills it and never makes the row taller */
+.pof-summary-slot
+{
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+}
+
+.pof-summary
+{
+    position: absolute;
+    inset: 0;
+}
+
+@media (max-width: 1100px)
+{
+    .pof-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pof-summary
+    {
+        position: static;
+        max-height: 520px;
+    }
+}
+
+/* Dropdowns fill their grid cell (default is a fixed 360px) */
+.pof-fields app-search-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+    flex: none;
+}
+
+.pof-span-2
+{
+    grid-column: 1 / -1;
+}
+
+.pof-req
+{
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* PO No : smaller text so the whole number shows */
+:host ::ng-deep .pof-order-no .textbox input
+{
+    font-size: 13px;
+    letter-spacing: -0.1px;
+    padding-left: 10px;
+    padding-right: 8px;
+    text-overflow: clip;
+}
+
+
+/*---------------------------------------------------------------
+  Price Entry (segment in the PO Information header, no label)
+---------------------------------------------------------------*/
+
+.pof-price-entry
+{
+    margin-left: auto;
+    flex: 0 0 auto;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+
+/*---------------------------------------------------------------
+  Terms & Narration
+---------------------------------------------------------------*/
+
+.pof-narration
+{
+    padding: 10px 20px 12px;
+}
+
+/* Single-line box, full card width */
+.pof-narration app-textbox
+{
+    display: block;
+    width: 100%;
+}
+
+
+/*---------------------------------------------------------------
+  Order Summary footer : totals + amount in words
+---------------------------------------------------------------*/
+
+.pof-col-qty
+{
+    width: 80px;
+}
+
+.pof-col-rate
+{
+    width: 80px;
+}
+
+.pof-billed
+{
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #0369a1;
+}
+
+.pof-payable td
+{
+    font-weight: 700;
+    color: #1e3a8a;
+    background: #eef2ff;
+}
+
+.pof-words
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-top: 1px solid #e6ecf5;
+    background:
+        linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    font-size: 15px;
+    font-style: italic;
+    color: #334155;
+}
+
+.pof-words i
+{
+    color: #2563eb;
+    font-style: normal;
+}
+
+
+/*---------------------------------------------------------------
+  Line edit (double-click a row)
+---------------------------------------------------------------*/
+
+.pof-row-editable
+{
+    cursor: pointer;
+}
+
+.pof-row-editable:hover td
+{
+    background: #f8fafc;
+}
+
+/* The line open in the left card */
+.pof-row-editing td,
+.pof-row-editable.pof-row-editing:hover td
+{
+    background: #fffbeb;
+}
+
+.pof-row-editing td:first-child
+{
+    box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+/* Cancel edit (X) : sits before Update in the card header */
+.pof-cancel-edit
+{
+    margin-left: auto;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.pof-cancel-edit:hover:not(:disabled)
+{
+    background: #f1f5f9;
+}
+
+/* Update follows the Cancel button (no auto margin) */
+.pof-add.pof-add-after
+{
+    margin-left: 0;
+}

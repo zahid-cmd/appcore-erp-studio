@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const PurchasesRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Purchases'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases/list/purchases-list'
+            )
+            .then(
+                m =>
+                    m.PurchasesList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Purchases'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases/form/purchases-form'
+            )
+            .then(
+                m =>
+                    m.PurchasesForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Purchases'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases/form/purchases-form'
+            )
+            .then(
+                m =>
+                    m.PurchasesForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Purchases'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases/form/purchases-form'
+            )
+            .then(
+                m =>
+                    m.PurchasesForm
+            )
+    }
+
+];

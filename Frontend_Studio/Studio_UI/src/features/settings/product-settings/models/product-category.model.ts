@@ -7,6 +7,7 @@ export const PRODUCT_CATEGORY_TYPES:
 [
     'Motor Bikes',
     'Spare Parts',
+    'Lubricants',
     'Accessories'
 ];
 
@@ -236,7 +237,7 @@ export interface ProductCategoryDefaults
 
     //===========================================================
     // Next Category Code per Category Type
-    // { 'Motor Bikes': 'MB-001', 'Spare Parts': 'SP-001', ... }
+    // { 'Motor Bikes': 'MB-001', 'Spare Parts': 'SP-001', 'Lubricants': 'LB-001', ... }
     //===========================================================
 
     TypeCodes:
