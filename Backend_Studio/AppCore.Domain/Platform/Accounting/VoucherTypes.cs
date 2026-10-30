@@ -43,6 +43,16 @@ public static class VoucherTypes
     public const string PurchaseOrderAccessories = "POAC";
 
 
+    // Purchases (Mushak 6.3 as the purchase invoice; posted under
+    // the purchase number) : Motor Bikes / Spare Parts &
+    // Lubricants / Accessories
+    public const string PurchaseMotorBikes = "PIMB";
+
+    public const string PurchaseSpareParts = "PISP";
+
+    public const string PurchaseAccessories = "PIAC";
+
+
     public static readonly string[] All =
     {
         Receipt,
@@ -53,7 +63,10 @@ public static class VoucherTypes
         PaymentReconciliation,
         PurchaseOrderMotorBikes,
         PurchaseOrderSpareParts,
-        PurchaseOrderAccessories
+        PurchaseOrderAccessories,
+        PurchaseMotorBikes,
+        PurchaseSpareParts,
+        PurchaseAccessories
     };
 
 
@@ -65,4 +78,4 @@ public static class VoucherTypes
         return All.Contains(
             (prefix ?? string.Empty).Trim());
     }
-}
+}

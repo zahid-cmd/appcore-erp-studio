@@ -177,6 +177,9 @@ public class MotorBikesRepository : IMotorBikesRepository
                 RedLevel =
                     x.RedLevel,
 
+                MaxStockLevel =
+                    x.MaxStockLevel,
+
                 ImagePath =
                     x.ImagePath,
 
@@ -756,10 +759,12 @@ public class MotorBikesRepository : IMotorBikesRepository
     // Validate Stock Levels
     //===========================================================
 
+    // Red < Re-order < Max (each 0 = not set)
     private static void ValidateLevels
     (
         int reorderLevel,
-        int redLevel
+        int redLevel,
+        int maxStockLevel
     )
     {
         if
@@ -767,10 +772,23 @@ public class MotorBikesRepository : IMotorBikesRepository
             reorderLevel < 0
             ||
             redLevel < 0
+            ||
+            maxStockLevel < 0
         )
         {
             throw new InvalidOperationException(
-                "Re-order Level and Red Level cannot be negative.");
+                "Re-order Level, Red Level and Max Stock Level cannot be negative.");
+        }
+
+        if
+        (
+            maxStockLevel > 0
+            &&
+            maxStockLevel <= reorderLevel
+        )
+        {
+            throw new InvalidOperationException(
+                "Max Stock Level must be higher than Re-order Level.");
         }
 
         if
@@ -1105,7 +1123,8 @@ public class MotorBikesRepository : IMotorBikesRepository
 
         ValidateLevels(
             dto.ReorderLevel,
-            dto.RedLevel);
+            dto.RedLevel,
+            dto.MaxStockLevel);
 
         string productName =
             BuildProductName(
@@ -1167,6 +1186,9 @@ public class MotorBikesRepository : IMotorBikesRepository
 
                 RedLevel =
                     dto.RedLevel,
+
+                MaxStockLevel =
+                    dto.MaxStockLevel,
 
                 ImagePath =
                     string.Empty,
@@ -1287,7 +1309,8 @@ public class MotorBikesRepository : IMotorBikesRepository
 
         ValidateLevels(
             dto.ReorderLevel,
-            dto.RedLevel);
+            dto.RedLevel,
+            dto.MaxStockLevel);
 
         string productName =
             BuildProductName(
@@ -1310,6 +1333,9 @@ public class MotorBikesRepository : IMotorBikesRepository
 
         entity.RedLevel =
             dto.RedLevel;
+
+        entity.MaxStockLevel =
+            dto.MaxStockLevel;
 
         entity.Remarks =
             dto.Remarks?.Trim()

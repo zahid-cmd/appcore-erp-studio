@@ -152,6 +152,9 @@ export class AccessoriesService
             RedLevel:
                 Number(item?.RedLevel ?? item?.redLevel ?? 0),
 
+            MaxStockLevel:
+                Number(item?.MaxStockLevel ?? item?.maxStockLevel ?? 0),
+
             Remarks:
                 item?.Remarks ?? item?.remarks ?? '',
 

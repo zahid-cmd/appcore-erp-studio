@@ -38,6 +38,18 @@ import
 }
 from '../../shared/components/layout/topbar-actions/topbar-actions';
 
+import
+{
+    TopbarSearchComponent
+}
+from '../../shared/components/layout/topbar-search/topbar-search';
+
+import
+{
+    TopbarContextComponent
+}
+from '../../shared/components/layout/topbar-context/topbar-context';
+
 
 //===============================================================
 // Change Password
@@ -108,6 +120,10 @@ from '../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
         TopbarHeaderComponent,
 
         TopbarActionsComponent,
+
+        TopbarSearchComponent,
+
+        TopbarContextComponent,
 
         ChangePasswordComponent,
 

@@ -1,23 +1,111 @@
-<div class="topbar-header"> 
- 
-    <!-- LOGO --> 
-    <div class="topbar-header-logo"> 
- 
-        <img 
-            src="assets/logo-dark.png" 
-            alt="AppCore Logo"> 
- 
-    </div> 
- 
-    <!-- TOGGLE --> 
-    <button 
-        type="button" 
-        class="topbar-header-toggle" 
-        aria-label="Toggle Sidebar"
-        (click)="toggleSidebar()"> 
- 
-        <i class="fa-solid fa-bars"></i> 
- 
-    </button> 
- 
-</div>
+<!-- =====================================================
+     TOPBAR HEADER
+     -----------------------------------------------------
+     The brand block is exactly as wide as the sidebar
+     (open or collapsed), so its right edge lines up with
+     the sidebar edge below it.
+
+       Open       full logo + toggle inside the block
+       Collapsed  logo mark centred in the rail,
+                  toggle just after the block
+
+     Company logo (Settings › General Settings › Company)
+     follows the block after a divider.
+===================================================== -->
+
+<div
+    class="topbar-header"
+    [class.collapsed]="isCollapsed()">
+
+
+    <!-- =================================================
+         BRAND BLOCK
+    ================================================== -->
+
+    <div class="brand-block">
+
+        @if (isCollapsed())
+        {
+            <img
+                class="brand-mark"
+                src="assets/AC.png"
+                alt="AppCore">
+        }
+        @else
+        {
+            <img
+                class="brand-logo"
+                src="assets/logo-dark.png"
+                alt="AppCore Logo">
+
+            <button
+                type="button"
+                class="sidebar-toggle"
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+                (click)="toggleSidebar()">
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+        }
+
+    </div>
+
+
+
+    <!-- =================================================
+         TOGGLE (collapsed)
+    ================================================== -->
+
+    @if (isCollapsed())
+    {
+        <button
+            type="button"
+            class="sidebar-toggle outside"
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+            (click)="toggleSidebar()">
+
+            <i class="fa-solid fa-bars"></i>
+
+        </button>
+    }
+
+
+
+    <!-- =================================================
+         COMPANY LOGO
+    ================================================== -->
+
+    @if (companyName() || companyLogoUrl())
+    {
+        <span class="brand-divider"></span>
+
+        <span
+            class="company-badge"
+            [class.text-only]="!companyLogoUrl()"
+            [title]="companyName()">
+
+            @if (companyLogoUrl())
+            {
+                <img
+                    class="company-logo"
+                    [src]="companyLogoUrl()"
+                    [alt]="companyName() || 'Company logo'"
+                    (error)="onLogoError()">
+            }
+            @else
+            {
+                <i class="fa-solid fa-building-columns"></i>
+
+                <b class="company-name">
+                    {{ companyName() }}
+                </b>
+            }
+
+        </span>
+    }
+
+
+</div>

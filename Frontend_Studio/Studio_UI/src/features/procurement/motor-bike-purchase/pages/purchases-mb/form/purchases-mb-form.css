@@ -1,1 +1,6 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+/* The shared page lays itself out; this wrapper adds no box */
+
+:host
+{
+    display: contents;
+}

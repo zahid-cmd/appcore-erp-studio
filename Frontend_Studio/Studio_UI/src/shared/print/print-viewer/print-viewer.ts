@@ -576,7 +576,7 @@ implements AfterViewInit, OnDestroy
         this.cdr.detectChanges();
 
         doc.open();
-        doc.write(html);
+        doc.write(html.replace('</head>', `<style>${VIEW_CSS}</style></head>`));
         doc.close();
 
         const pages =
@@ -1395,15 +1395,22 @@ const MM_TO_PX =
 const THUMB_PANEL_WIDTH =
     300;
 
+// Main pages on screen : the viewer's light glass shows around
+// the paper (print keeps white)
+const VIEW_CSS =
+`
+@media screen { html, body { background: transparent !important; } }
+`;
+
 // Thumbnail copy : small pages, a number badge, click to open
 const THUMB_CSS =
 `
 html { overflow-x: hidden; }
-body { background: #000000 !important; }
+html, body { background: transparent !important; }
 .pv-doc { padding: 60px 0; }
-.pv-page { margin: 0 auto 70px !important; cursor: pointer; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08) !important; }
+.pv-page { margin: 0 auto 70px !important; cursor: pointer; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 18px 40px -12px rgba(15, 23, 42, 0.35) !important; }
 .pv-page::after { content: attr(data-no); position: absolute; right: 18px; bottom: 18px; z-index: 5;
-                  min-width: 120px; padding: 10px 26px; border-radius: 40px; background: rgba(30, 41, 59, 0.85);
+                  min-width: 120px; padding: 10px 26px; border-radius: 40px; background: rgba(51, 65, 85, 0.88);
                   color: #fff; font: 700 64px/1 "Segoe UI", Arial, sans-serif; text-align: center; }
 .pv-page.pv-current { outline: 12px solid #3b82f6 !important; outline-offset: 10px; }
-`;
+`;

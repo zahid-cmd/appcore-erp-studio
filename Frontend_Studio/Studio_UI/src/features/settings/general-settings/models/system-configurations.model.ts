@@ -10,9 +10,11 @@
 //   Submenu : a page switch (NavigationSubmenuCode) → admin, or
 //             a user with "Change Configuration" on that page
 //
-// Value (optional) : ValueType None / Number / Text. A Number is
-// a whole number between ValueMin and ValueMax; empty allowed
-// only when ValueEmptyText is set (e.g. "No limit").
+// Value (optional) : ValueType None / Number / Text / Date. A
+// Number is a whole number between ValueMin and ValueMax; empty
+// allowed only when ValueEmptyText is set (e.g. "No limit").
+// A Date is yyyy-MM-dd, picked on a calendar; empty = the day
+// the change is applied (the server writes that day in).
 //
 // IsCritical : a reason is needed; a non-admin's change waits
 // for an admin's approval (IsPending).
@@ -26,7 +28,8 @@ export type ConfigurationScope =
 export type ConfigurationValueType =
     | 'None'
     | 'Number'
-    | 'Text';
+    | 'Text'
+    | 'Date';
 
 export interface SystemConfiguration
 {
@@ -357,6 +360,8 @@ export function formatConfigurationState
         valueType !== 'Number'
         &&
         valueType !== 'Text'
+        &&
+        valueType !== 'Date'
     )
     {
         return state;
@@ -375,7 +380,89 @@ export function formatConfigurationState
             : state;
     }
 
+    if
+    (
+        valueType === 'Date'
+    )
+    {
+        return `${state} · from ${formatConfigurationDate(clean)}`;
+    }
+
     return unit
         ? `${state} · ${clean} ${unit}`
         : `${state} · ${clean}`;
+}
+
+//===============================================================
+// Date values : yyyy-MM-dd ⇄ Date, shown as 01-Nov-2026
+//===============================================================
+
+const MONTHS =
+    ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export function parseConfigurationDate
+(
+    value:
+        string
+):
+    Date | null
+{
+    const match =
+        /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value ?? '').trim());
+
+    if
+    (
+        !match
+    )
+    {
+        return null;
+    }
+
+    const date =
+        new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+
+    return isNaN(date.getTime())
+        ? null
+        : date;
+}
+
+export function toConfigurationDate
+(
+    date:
+        Date | null
+):
+    string
+{
+    if
+    (
+        !(date instanceof Date)
+        ||
+        isNaN(date.getTime())
+    )
+    {
+        return '';
+    }
+
+    const month =
+        String(date.getMonth() + 1).padStart(2, '0');
+
+    const day =
+        String(date.getDate()).padStart(2, '0');
+
+    return `${date.getFullYear()}-${month}-${day}`;
+}
+
+export function formatConfigurationDate
+(
+    value:
+        string
+):
+    string
+{
+    const date =
+        parseConfigurationDate(value);
+
+    return date
+        ? `${String(date.getDate()).padStart(2, '0')}-${MONTHS[date.getMonth()]}-${date.getFullYear()}`
+        : String(value ?? '').trim();
 }

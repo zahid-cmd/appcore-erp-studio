@@ -182,6 +182,10 @@ public class SupplierProfilesRepository :
                         PayableLedgerCode = x.PayableLedgerCode,
                         PayableLedgerName = x.PayableLedgerName,
                         CreditDays = x.CreditDays,
+                        DefaultPriceEntry = x.DefaultPriceEntry,
+                        DefaultInvoicePrice = x.DefaultInvoicePrice,
+                        DefaultProfitPercent = x.DefaultProfitPercent,
+                        DefaultProfitOn = x.DefaultProfitOn,
                         Remarks = x.Remarks,
                         IsActive = x.IsActive,
                         IsDeleted = x.IsDeleted,
@@ -548,6 +552,14 @@ public class SupplierProfilesRepository :
 
         public int CreditDays { get; init; }
 
+        public string? DefaultPriceEntry { get; init; }
+
+        public string? DefaultInvoicePrice { get; init; }
+
+        public decimal? DefaultProfitPercent { get; init; }
+
+        public string? DefaultProfitOn { get; init; }
+
         public string Remarks { get; init; } = string.Empty;
     }
 
@@ -577,6 +589,10 @@ public class SupplierProfilesRepository :
             PayableLedgerCode = dto.PayableLedgerCode,
             PayableLedgerName = dto.PayableLedgerName,
             CreditDays = dto.CreditDays,
+            DefaultPriceEntry = dto.DefaultPriceEntry,
+            DefaultInvoicePrice = dto.DefaultInvoicePrice,
+            DefaultProfitPercent = dto.DefaultProfitPercent,
+            DefaultProfitOn = dto.DefaultProfitOn,
             Remarks = dto.Remarks,
             IsActive = dto.IsActive
         };
@@ -668,6 +684,12 @@ public class SupplierProfilesRepository :
                 $"Credit Days must be between 0 and {MaxCreditDays} (0 = pay on purchase).");
         }
 
+        (decimal? profitPercent, string? profitOn) =
+            CheckDefaultProfit(dto);
+
+        (string? priceEntry, string? invoicePrice) =
+            CheckPriceTerms(dto);
+
         return new SupplierInput
         {
             SupplierType =
@@ -705,9 +727,112 @@ public class SupplierProfilesRepository :
 
             CreditDays = dto.CreditDays,
 
+            DefaultPriceEntry = priceEntry,
+
+            DefaultInvoicePrice = invoicePrice,
+
+            DefaultProfitPercent = profitPercent,
+
+            DefaultProfitOn = profitOn,
+
             Remarks =
                 (dto.Remarks ?? string.Empty).Trim()
         };
+    }
+
+
+    //===========================================================
+    // Margin % / Profit % (Spare Parts / Accessories / General)
+    //
+    //   Invoice Price = MRP : Margin % on MRP - the supplier bills
+    //     MRP less it (sets the DP on the PO / purchase); below 100%
+    //   Invoice Price = DP  : Profit % on DP - for the Pricing page
+    //     only (selling price); up to 999.99%. POs and purchases
+    //     never use it.
+    //
+    // At most 2 decimals; empty = not set. No Invoice Price : none.
+    //===========================================================
+
+    private static (decimal? Percent, string? On) CheckDefaultProfit
+    (
+        CreateSupplierProfilesDto dto
+    )
+    {
+        string invoice =
+            (dto.DefaultInvoicePrice ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (CanonicalSupplyType(dto.SupplyType) == "Motor Bikes"
+            || (invoice != "MRP" && invoice != "DP")
+            || !dto.DefaultProfitPercent.HasValue)
+        {
+            return (null, null);
+        }
+
+        decimal percent =
+            dto.DefaultProfitPercent.Value;
+
+        string label =
+            invoice == "MRP" ? "Margin % on MRP" : "Profit % on DP";
+
+        if (percent < 0 || decimal.Round(percent, 2) != percent)
+        {
+            throw new InvalidOperationException(
+                $"{label} must be 0 or more with at most 2 decimals, or left empty.");
+        }
+
+        if (invoice == "MRP" && percent >= 100)
+        {
+            throw new InvalidOperationException(
+                "Margin % on MRP must be less than 100%.");
+        }
+
+        if (invoice == "DP" && percent > 999.99m)
+        {
+            throw new InvalidOperationException(
+                "Profit % on DP can be at most 999.99%.");
+        }
+
+        return (percent, invoice);
+    }
+
+
+    //===========================================================
+    // Prices (Incl / Excl / None) and Invoice Price (DP / MRP)
+    //
+    // Empty = not set. Invoice Price only for non Motor Bikes
+    // suppliers; an MRP invoice is always VAT inclusive.
+    //===========================================================
+
+    private static (string? PriceEntry, string? InvoicePrice) CheckPriceTerms
+    (
+        CreateSupplierProfilesDto dto
+    )
+    {
+        string entryText =
+            (dto.DefaultPriceEntry ?? string.Empty).Trim();
+
+        string? priceEntry =
+            entryText.Length == 0
+                ? null
+                : new[] { "Incl", "Excl", "None" }.FirstOrDefault(x => string.Equals(x, entryText, StringComparison.OrdinalIgnoreCase))
+                  ?? throw new InvalidOperationException("Prices must be Incl, Excl or None.");
+
+        string invoiceText =
+            (dto.DefaultInvoicePrice ?? string.Empty).Trim();
+
+        string? invoicePrice =
+            invoiceText.Length == 0 || CanonicalSupplyType(dto.SupplyType) == "Motor Bikes"
+                ? null
+                : new[] { "DP", "MRP" }.FirstOrDefault(x => string.Equals(x, invoiceText, StringComparison.OrdinalIgnoreCase))
+                  ?? throw new InvalidOperationException("Invoice Price must be DP or MRP.");
+
+        if (invoicePrice == "MRP" && priceEntry == "Excl")
+        {
+            throw new InvalidOperationException(
+                "An MRP invoice is always VAT inclusive : choose Incl. VAT (or No VAT) for Prices.");
+        }
+
+        return (priceEntry, invoicePrice);
     }
 
 
@@ -1399,6 +1524,10 @@ public class SupplierProfilesRepository :
         entity.TinNo = input.TinNo;
         entity.PayableLedgerName = entity.DisplayName;
         entity.CreditDays = input.CreditDays;
+        entity.DefaultPriceEntry = input.DefaultPriceEntry;
+        entity.DefaultInvoicePrice = input.DefaultInvoicePrice;
+        entity.DefaultProfitPercent = input.DefaultProfitPercent;
+        entity.DefaultProfitOn = input.DefaultProfitOn;
         entity.Remarks = input.Remarks;
         entity.IsActive = isActive;
     }

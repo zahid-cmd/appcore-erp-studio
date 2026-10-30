@@ -19,7 +19,7 @@ from 'rxjs';
 
 import
 {
-    SystemConfiguration
+    SystemConfigurationValue
 }
 from '../../../features/settings/general-settings/models/system-configurations.model';
 
@@ -243,8 +243,11 @@ export class VoucherSwitchesService
 
         const rows =
             await firstValueFrom(
+                // Runtime values : every logged-in user reads every
+                // switch (the list on the System Configuration page only
+                // holds the switches the user may change)
                 this.configurations
-                    .getAll()
+                    .getValues()
                     .pipe(
                         catchError(
                             error =>
@@ -257,7 +260,7 @@ export class VoucherSwitchesService
                                     error
                                 );
 
-                                return of([] as SystemConfiguration[]);
+                                return of([] as SystemConfigurationValue[]);
                             }
                         )
                     )
@@ -291,7 +294,7 @@ export class VoucherSwitchesService
                     !!row.IsEnabled;
 
                 values[code] =
-                    String((row as { Value?: string }).Value ?? '').trim();
+                    String(row.Value ?? '').trim();
             }
         }
 

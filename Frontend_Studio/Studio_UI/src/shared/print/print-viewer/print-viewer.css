@@ -260,8 +260,13 @@
     width: 420px;
     display: flex;
     flex-direction: column;
-    background: #000000;
-    border-right: 1px solid #000000;
+    /* Deeper grey glass with a white sheen */
+    background:
+        linear-gradient(115deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.12) 36%, rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0.22) 100%),
+        linear-gradient(180deg, #c9cfd8 0%, #b7bfca 55%, #a9b2bf 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: inset -1px 0 0 rgba(148, 163, 184, 0.45), 8px 0 24px -18px rgba(15, 23, 42, 0.35);
+    backdrop-filter: blur(10px);
     transition: flex-basis 0.2s ease, width 0.2s ease;
     overflow: hidden;
 }
@@ -283,8 +288,9 @@
     height: 46px;
     padding: 0 18px;
     box-sizing: border-box;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    color: #bfdbfe;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(255, 255, 255, 0.45);
+    color: #1e293b;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 1.4px;
@@ -298,7 +304,7 @@
     padding: 2px 9px;
     box-sizing: border-box;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
+    background: #334155;
     color: #ffffff;
     font-size: 12px;
     letter-spacing: 0;
@@ -309,6 +315,9 @@
 {
     flex: 1 1 auto;
     min-height: 0;
+    /* The panel's gradient shows through */
+    background: transparent;
+    color-scheme: normal;
 }
 
 .pv-thumb-frame,
@@ -329,7 +338,10 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    background: #e3e6eb;
+    /* Light glass : near white with a soft sheen */
+    background:
+        linear-gradient(125deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.35) 40%, rgba(255, 255, 255, 0) 60%, rgba(255, 255, 255, 0.55) 100%),
+        linear-gradient(180deg, #f6f7f9 0%, #eef1f4 60%, #e7ebf0 100%);
 }
 
 .pv-stage
@@ -337,7 +349,7 @@
     position: relative;
     flex: 1 1 auto;
     min-height: 0;
-    background: #e3e6eb;
+    background: transparent;
 }
 
 .pv-hidden
@@ -514,4 +526,4 @@
         --dropdown-width: 180px;
         flex-basis: 180px;
     }
-}
+}

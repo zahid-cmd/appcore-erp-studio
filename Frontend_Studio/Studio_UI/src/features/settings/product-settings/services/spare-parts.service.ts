@@ -151,6 +151,9 @@ export class SparePartsService
             RedLevel:
                 Number(item?.RedLevel ?? item?.redLevel ?? 0),
 
+            MaxStockLevel:
+                Number(item?.MaxStockLevel ?? item?.maxStockLevel ?? 0),
+
             ImagePath:
                 item?.ImagePath ?? item?.imagePath ?? '',
 

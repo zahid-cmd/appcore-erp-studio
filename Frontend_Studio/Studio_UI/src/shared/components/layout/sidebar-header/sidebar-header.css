@@ -1,149 +1,129 @@
-/* ===========================================================
-   DASHBOARD HEADER
+/* ==========================================================
+   SIDEBAR HEADER : Dashboard
 =========================================================== */
+
+:host
+{
+    display:block;
+}
+
+
+.sidebar-header
+{
+    padding:12px 12px 0;
+}
+
 
 .dashboard-header
 {
-    position:relative;
-    width:100%;
-    height:50px;
-    min-height:50px;
-    max-height:50px;
     display:flex;
+
     align-items:center;
-    box-sizing:border-box;
-    padding:0 16px;
-    background:
-        linear-gradient(
-            135deg,
-            #111a3d 0%,
-            #182552 48%,
-            #202f67 100%
-        );
-    color:#ffffff;
+
+    gap:12px;
+
+    height:40px;
+
+    padding:0 12px;
+
+    border-radius:10px;
+
+    color:#d7e3f7;
+
+    font-size:14px;
+
+    font-weight:700;
+
     text-decoration:none;
-    cursor:pointer;
-    user-select:none;
-    overflow:hidden;
+
     transition:
-        background .2s ease,
-        color .2s ease;
+        background .18s ease,
+        color .18s ease;
 }
 
 
-/* ===========================================================
-   ACTIVE INDICATOR
-=========================================================== */
-
-.dashboard-header::before
+.dashboard-header:visited
 {
-    content:'';
-    position:absolute;
-    top:0;
-    left:0;
-    width:3px;
-    height:100%;
-    background:
-        linear-gradient(
-            180deg,
-            #60a5fa 0%,
-            #3b82f6 50%,
-            #2563eb 100%
-        );
-    opacity:0;
-    transition:
-        opacity .2s ease;
+    color:#d7e3f7;
 }
 
-
-/* ===========================================================
-   HOVER
-=========================================================== */
 
 .dashboard-header:hover
 {
-    background:
-        linear-gradient(
-            135deg,
-            #162044 0%,
-            #1d2d5d 48%,
-            #263b78 100%
-        );
-}
+    background:rgba(255,255,255,.07);
 
-
-/* ===========================================================
-   ACTIVE
-=========================================================== */
-
-.dashboard-header.active
-{
-    background:
-        linear-gradient(
-            135deg,
-            #1a2a52 0%,
-            #24396f 48%,
-            #2d4788 100%
-        );
-}
-
-.dashboard-header.active::before
-{
-    opacity:1;
-}
-
-
-/* ===========================================================
-   DASHBOARD TITLE
-=========================================================== */
-
-.dashboard-title
-{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    width:100%;
-    min-width:0;
     color:#ffffff;
-    font-size:14px;
-    font-weight:600;
-    letter-spacing:.15px;
-    white-space:nowrap;
 }
 
 
-/* ===========================================================
-   DASHBOARD ICON
-=========================================================== */
-
-.dashboard-title i
+.dashboard-header:focus-visible
 {
-    width:20px;
-    min-width:20px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#bfdbfe;
+    outline:2px solid #93b4f5;
+
+    outline-offset:-2px;
+}
+
+
+.dashboard-header i
+{
+    flex:0 0 18px;
+
+    width:18px;
+
+    text-align:center;
+
     font-size:16px;
+
+    color:#93b4f5;
 }
 
 
-/* ===========================================================
-   COLLAPSED SIDEBAR
+.dashboard-header.active,
+.dashboard-header.active:visited
+{
+    background:rgba(255,255,255,.08);
+
+    color:#ffffff;
+}
+
+
+.dashboard-label
+{
+    white-space:nowrap;
+
+    overflow:hidden;
+}
+
+
+/* ==========================================================
+   COLLAPSED : centred in the rail
 =========================================================== */
 
-:host-context(.sidebar.collapsed) .dashboard-header
+.sidebar-header.collapsed
+{
+    display:flex;
+
+    justify-content:center;
+
+    padding:12px 0 0;
+}
+
+
+.sidebar-header.collapsed .dashboard-header
 {
     justify-content:center;
+
+    width:48px;
+
+    height:44px;
+
     padding:0;
+
+    border-radius:12px;
 }
 
-:host-context(.sidebar.collapsed) .dashboard-title
-{
-    justify-content:center;
-}
 
-:host-context(.sidebar.collapsed) .dashboard-title span
+.sidebar-header.collapsed .dashboard-label
 {
     display:none;
 }

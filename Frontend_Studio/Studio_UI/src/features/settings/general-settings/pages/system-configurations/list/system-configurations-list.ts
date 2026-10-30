@@ -47,7 +47,10 @@ import
     ConfigurationRequest,
     ConfigurationChange,
     DEFAULT_MODULE_ICON,
-    formatConfigurationState
+    formatConfigurationState,
+    formatConfigurationDate,
+    parseConfigurationDate,
+    toConfigurationDate
 }
 from '../../../models/system-configurations.model';
 
@@ -86,6 +89,12 @@ import
     SearchDropdownComponent
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
+import
+{
+    DatepickerComponent
+}
+from '../../../../../../shared/components/controls/datepicker/datepicker';
 
 import
 {
@@ -180,6 +189,13 @@ interface CardView
     hasValue: boolean;
 
     isText: boolean;
+
+    // Date value (e.g. Effective From) : calendar on the card
+    isDate: boolean;
+
+    dateValue: Date | null;
+
+    datePlaceholder: string;
 
     valueText: string;
 
@@ -314,6 +330,7 @@ function readCardStyle():
         PageToolbarComponent,
         ControlTabsComponent,
         SearchDropdownComponent,
+        DatepickerComponent,
         SearchBoxComponent,
         CommandCenterComponent,
         EmptyStateComponent,
@@ -1056,6 +1073,8 @@ implements OnInit
 
         return item.ValueType !== 'None'
                &&
+               item.ValueType !== 'Date'
+               &&
                (state.Value ?? '') !== (item.DefaultValue ?? '');
     }
 
@@ -1648,12 +1667,17 @@ implements OnInit
         const tile =
             this.tileFor(item);
 
+        const isDate =
+            item.ValueType === 'Date';
+
         const valueText =
             !hasValue
                 ? ''
-                : (state.Value ?? '').trim()
-                    ? `${state.Value} ${this.unitFor(state.Value, item.ValueUnit)}`.trim()
-                    : (item.ValueEmptyText || 'Not set');
+                : !(state.Value ?? '').trim()
+                    ? (item.ValueEmptyText || 'Not set')
+                    : isDate
+                        ? `From ${formatConfigurationDate(state.Value)}`
+                        : `${state.Value} ${this.unitFor(state.Value, item.ValueUnit)}`.trim();
 
         return {
             item,
@@ -1666,8 +1690,12 @@ implements OnInit
             canReset: isChanged && !item.IsPending && !isBlocked,
             hasValue,
             isText: item.ValueType === 'Text',
+            isDate,
+            dateValue: isDate ? parseConfigurationDate(state.Value) : null,
+            datePlaceholder: 'From today',
             valueText,
-            valueLocked: !state.IsEnabled || isBlocked || item.IsPending,
+            // A date is picked for an ON and an OFF change alike
+            valueLocked: (!state.IsEnabled && !isDate) || isBlocked || item.IsPending,
             toggleLocked: (isBlocked && !state.IsEnabled) || item.IsPending,
             stateText: isBlocked ? 'Inactive' : state.IsEnabled ? 'Enabled' : 'Disabled',
             stateClass: isBlocked ? 'sc-state-blocked' : state.IsEnabled ? 'sc-state-on' : 'sc-state-off',
@@ -1754,10 +1782,67 @@ implements OnInit
             return;
         }
 
+        const next =
+            !card.isOn;
+
+        // Date switch : back to the saved state keeps the saved
+        // date; a new ON / OFF starts empty (= from today) and a
+        // date can then be picked
+        const value =
+            card.isDate
+                ? (next === card.item.IsEnabled ? (card.item.Value ?? '') : '')
+                : card.value;
+
         this.stage(
             card.item,
-            !card.isOn,
-            card.value
+            next,
+            value
+        );
+    }
+
+    onDateValue
+    (
+        card:
+            CardView,
+        date:
+            Date | null
+    ):
+        void
+    {
+        if
+        (
+            card.valueLocked
+        )
+        {
+            return;
+        }
+
+        this.stage(
+            card.item,
+            card.isOn,
+            toConfigurationDate(date)
+        );
+    }
+
+    clearDate
+    (
+        card:
+            CardView
+    ):
+        void
+    {
+        if
+        (
+            card.valueLocked
+        )
+        {
+            return;
+        }
+
+        this.stage(
+            card.item,
+            card.isOn,
+            card.isOn === card.item.IsEnabled ? (card.item.Value ?? '') : ''
         );
     }
 
@@ -1875,7 +1960,9 @@ implements OnInit
             item.DefaultEnabled,
             item.ValueType === 'None'
                 ? item.Value
-                : item.DefaultValue
+                : item.ValueType === 'Date'
+                    ? (item.DefaultEnabled === item.IsEnabled ? (item.Value ?? '') : '')
+                    : item.DefaultValue
         );
     }
 

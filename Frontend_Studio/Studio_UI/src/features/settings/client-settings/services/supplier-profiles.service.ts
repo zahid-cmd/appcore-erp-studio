@@ -165,6 +165,20 @@ export class SupplierProfilesService
             CreditDays:
                 Number(this.pick(item, 'CreditDays') ?? 0),
 
+            DefaultProfitPercent:
+                this.pick(item, 'DefaultProfitPercent') === null || this.pick(item, 'DefaultProfitPercent') === undefined
+                    ? null
+                    : Number(this.pick(item, 'DefaultProfitPercent')),
+
+            DefaultPriceEntry:
+                (['Incl', 'Excl', 'None'].includes(text('DefaultPriceEntry')) ? text('DefaultPriceEntry') : '') as '' | 'Incl' | 'Excl' | 'None',
+
+            DefaultInvoicePrice:
+                (['DP', 'MRP'].includes(text('DefaultInvoicePrice')) ? text('DefaultInvoicePrice') : '') as '' | 'DP' | 'MRP',
+
+            DefaultProfitOn:
+                (['DP', 'MRP'].includes(text('DefaultProfitOn')) ? text('DefaultProfitOn') : '') as '' | 'DP' | 'MRP',
+
             Remarks:
                 text('Remarks'),
 

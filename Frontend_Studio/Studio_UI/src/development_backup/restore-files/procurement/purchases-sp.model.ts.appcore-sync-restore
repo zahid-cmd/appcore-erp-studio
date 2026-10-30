@@ -1,0 +1,90 @@
+/* ============================================================
+   Purchases - SP
+============================================================ */
+
+export interface PurchasesSp
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Purchases - SP
+============================================================ */
+
+export interface CreatePurchasesSp
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Purchases - SP
+============================================================ */
+
+export interface UpdatePurchasesSp
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Purchases - SP Defaults
+============================================================ */
+
+export interface PurchasesSpDefaults
+{
+    code:
+        string;
+}

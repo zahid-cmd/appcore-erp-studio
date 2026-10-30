@@ -1,0 +1,208 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Injectable,
+    inject
+}
+from '@angular/core';
+
+import
+{
+    HttpClient
+}
+from '@angular/common/http';
+
+import
+{
+    Observable
+}
+from 'rxjs';
+
+import
+{
+    environment
+}
+from '../../../../environments/environment';
+
+import
+{
+    PurchasesSp,
+
+    CreatePurchasesSp,
+
+    UpdatePurchasesSp
+}
+from '../models/purchases-sp.model';
+
+
+//===============================================================
+// Purchases - SP Service
+//===============================================================
+
+@Injectable(
+{
+    providedIn:'root'
+})
+
+
+export class PurchasesSpService
+{
+
+    //===========================================================
+    // Injection
+    //===========================================================
+
+    private readonly http =
+        inject(HttpClient);
+
+
+
+    //===========================================================
+    // API
+    //===========================================================
+
+    private readonly apiUrl =
+        `${environment.apiUrl}/procurement/spare-parts-lubricant-purchase/purchases-sp`;
+
+
+
+    //===========================================================
+    // Get All
+    //===========================================================
+
+    getAll():
+        Observable<PurchasesSp[]>
+    {
+        return this.http.get<PurchasesSp[]>(
+            this.apiUrl
+        );
+    }
+
+
+
+    //===========================================================
+    // Get By Id
+    //===========================================================
+
+    getById
+    (
+        id:
+            number
+    ):
+        Observable<PurchasesSp>
+    {
+        return this.http.get<PurchasesSp>(
+            `${this.apiUrl}/${id}`
+        );
+    }
+
+
+
+    //===========================================================
+    // Create
+    //===========================================================
+
+    create
+    (
+        model:
+            CreatePurchasesSp
+    ):
+        Observable<number>
+    {
+        return this.http.post<number>(
+            this.apiUrl,
+
+            model
+        );
+    }
+
+
+
+    //===========================================================
+    // Update
+    //===========================================================
+
+    update
+    (
+        model:
+            UpdatePurchasesSp
+    ):
+        Observable<void>
+    {
+        return this.http.put<void>(
+            `${this.apiUrl}/${model.id}`,
+
+            model
+        );
+    }
+
+
+
+    //===========================================================
+    // Delete
+    //===========================================================
+
+    delete
+    (
+        id:
+            number
+    ):
+        Observable<void>
+    {
+        return this.http.delete<void>(
+            `${this.apiUrl}/${id}`
+        );
+    }
+
+
+
+    //===========================================================
+    // Restore
+    //===========================================================
+
+    restore():
+        Observable<void>
+    {
+        return this.http.put<void>(
+            `${this.apiUrl}/restore`,
+
+            {}
+        );
+    }
+
+
+
+    //===========================================================
+    // Get History
+    //===========================================================
+
+    getHistory():
+        Observable<any[]>
+    {
+        return this.http.get<any[]>(
+            `${this.apiUrl}/history`
+        );
+    }
+
+
+
+    //===========================================================
+    // Get Entity History
+    //===========================================================
+
+    getEntityHistory
+    (
+        id:
+            number
+    ):
+        Observable<any[]>
+    {
+        return this.http.get<any[]>(
+            `${this.apiUrl}/${id}/history`
+        );
+    }
+
+}

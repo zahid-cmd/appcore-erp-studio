@@ -1,222 +1,49 @@
-//=============================================================== 
-// Namespaces 
-//=============================================================== 
- 
-using Microsoft.EntityFrameworkCore; 
-using Microsoft.EntityFrameworkCore.Metadata.Builders; 
- 
-using AppCore.Domain.Entities.Procurement.MotorBikePurchase; 
- 
- 
-//=============================================================== 
-// Namespace 
-//=============================================================== 
- 
-namespace AppCore.Infrastructure.Configurations.Procurement.MotorBikePurchase; 
- 
- 
-//=============================================================== 
-// PurchasesMbConfiguration 
-//=============================================================== 
- 
-public class PurchasesMbConfiguration 
-    : IEntityTypeConfiguration<PurchasesMb> 
-{ 
- 
-    //=========================================================== 
-    // Configure 
-    //=========================================================== 
- 
-    public void Configure 
-    ( 
-        EntityTypeBuilder<PurchasesMb> builder 
-    ) 
-    { 
- 
-        //======================================================= 
-        // Table 
-        //======================================================= 
- 
-        builder.ToTable( 
-            "PurchasesMb" 
-        ); 
- 
- 
-        //======================================================= 
-        // Primary Key 
-        //======================================================= 
- 
-        builder.HasKey( 
-            x => x.Id 
-        ); 
- 
- 
-        builder.Property( 
-            x => x.Id 
-        ) 
-        .HasColumnName( 
-            "id" 
-        ); 
- 
- 
-        //======================================================= 
-        // Code 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.Code 
-        ) 
-        .HasColumnName( 
-            "code" 
-        ) 
-        .IsRequired() 
-        .HasMaxLength(50); 
- 
- 
-        //======================================================= 
-        // Name 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.Name 
-        ) 
-        .HasColumnName( 
-            "name" 
-        ) 
-        .IsRequired() 
-        .HasMaxLength(200); 
- 
- 
-        //======================================================= 
-        // Sample Search Dropdown 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.SampleSearchDropdownId 
-        ) 
-        .HasColumnName( 
-            "sampleSearchDropdownId" 
-        ) 
-        .IsRequired(false); 
- 
- 
-        //======================================================= 
-        // Sample Field 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.SampleField 
-        ) 
-        .HasColumnName( 
-            "sampleField" 
-        ) 
-        .IsRequired() 
-        .HasMaxLength(500); 
- 
- 
-        //======================================================= 
-        // Status 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.Status 
-        ) 
-        .HasColumnName( 
-            "status" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Remarks 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.Remarks 
-        ) 
-        .HasColumnName( 
-            "remarks" 
-        ) 
-        .IsRequired() 
-        .HasMaxLength(1000); 
- 
- 
-        //======================================================= 
-        // Active 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.IsActive 
-        ) 
-        .HasColumnName( 
-            "isActive" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Deleted 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.IsDeleted 
-        ) 
-        .HasColumnName( 
-            "isDeleted" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Created By 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.CreatedBy 
-        ) 
-        .HasColumnName( 
-            "createdBy" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Created Date 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.CreatedDate 
-        ) 
-        .HasColumnName( 
-            "createdDate" 
-        ) 
-        .IsRequired(); 
- 
- 
-        //======================================================= 
-        // Modified By 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.ModifiedBy 
-        ) 
-        .HasColumnName( 
-            "modifiedBy" 
-        ) 
-        .IsRequired(false); 
- 
- 
-        //======================================================= 
-        // Modified Date 
-        //======================================================= 
- 
-        builder.Property( 
-            x => x.ModifiedDate 
-        ) 
-        .HasColumnName( 
-            "modifiedDate" 
-        ) 
-        .IsRequired(false); 
-    } 
- 
+//===============================================================
+// Namespaces
+//===============================================================
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+using AppCore.Domain.Entities.Procurement.MotorBikePurchase;
+using AppCore.Infrastructure.Configurations.Procurement.Shared;
+
+
+//===============================================================
+// Namespace
+//===============================================================
+
+namespace AppCore.Infrastructure.Configurations.Procurement.MotorBikePurchase;
+
+
+//===============================================================
+// Purchases - MB : header + lines + motor bike units.
+// The header is registered by Code Synchronization (DbSet); the
+// other entities enter the model through this class.
+//===============================================================
+
+public class PurchasesMbConfiguration
+    : IEntityTypeConfiguration<PurchasesMb>,
+      IEntityTypeConfiguration<PurchasesMbLines>,
+      IEntityTypeConfiguration<MotorBikeUnits>
+{
+    public void Configure(
+        EntityTypeBuilder<PurchasesMb> builder)
+    {
+        PurchaseModel.ConfigureHeader(builder, "PurchasesMb");
+    }
+
+
+    public void Configure(
+        EntityTypeBuilder<PurchasesMbLines> builder)
+    {
+        PurchaseModel.ConfigureLine(builder, "PurchasesMbLines");
+    }
+
+
+    public void Configure(
+        EntityTypeBuilder<MotorBikeUnits> builder)
+    {
+        PurchaseModel.ConfigureUnits(builder);
+    }
 }

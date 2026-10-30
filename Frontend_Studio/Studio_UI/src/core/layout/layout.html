@@ -1,4 +1,7 @@
-<div class="layout">
+<div
+    class="layout"
+    [class.sidebar-is-collapsed]="isSidebarCollapsed"
+    [style.--sidebar-width]="sidebarFitWidth()">
 
 
     <!-- =====================================================

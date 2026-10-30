@@ -8,6 +8,7 @@ import
     OnInit,
     OnDestroy,
     ChangeDetectorRef,
+    computed,
     inject
 }
 from '@angular/core';
@@ -87,6 +88,12 @@ import
 }
 from '../effective-access/effective-access.service';
 
+import
+{
+    ShellService
+}
+from '../shell/shell.service';
+
 
 //===============================================================
 // Component
@@ -158,6 +165,9 @@ implements
     private readonly effectiveAccessService =
         inject(EffectiveAccessService);
 
+    private readonly shellService =
+        inject(ShellService);
+
 
     //===========================================================
     // Properties
@@ -171,6 +181,30 @@ implements
 
     showAbout =
         false;
+
+
+    //===========================================================
+    // Sidebar Auto-fit Width
+    // ----------------------------------------------------------
+    // The sidebar measures its longest name and stores the
+    // width in ShellService. It is set on .layout as
+    // --sidebar-width, so the sidebar, the top bar logo block
+    // and the footer version block all follow it. null = keep
+    // the starting width from layout.css.
+    //===========================================================
+
+    readonly sidebarFitWidth =
+        computed(
+            () =>
+            {
+                const width =
+                    this.shellService.sidebarWidth();
+
+                return width
+                    ? `${width}px`
+                    : null;
+            }
+        );
 
     private readonly subscriptions =
         new Subscription();

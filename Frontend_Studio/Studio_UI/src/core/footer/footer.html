@@ -1,24 +1,103 @@
+<!-- ==========================================================
+     APP FOOTER
+     ----------------------------------------------------------
+     Version | Server status | Session time left
+     © copyright                          About · brand
+=========================================================== -->
+
 <div class="footer">
 
-    <!-- LEFT -->
-    <div class="footer-left">
 
-        <app-footer-version></app-footer-version>
+    <!-- ======================================================
+         VERSION (same width as the sidebar)
+    ======================================================= -->
+
+    <app-footer-version>
+    </app-footer-version>
+
+
+
+    <!-- ======================================================
+         STATUS
+    ======================================================= -->
+
+    <div class="footer-status">
+
+
+        <!-- SERVER -->
+
+        <span
+            class="status-item server"
+            [class.online]="server().state === 'online'"
+            [class.degraded]="server().state === 'degraded'"
+            [class.offline]="server().state === 'offline'"
+            [title]="serverTitle()"
+            role="status">
+
+            <span class="status-dot"></span>
+
+            <b class="status-value">
+                {{ serverLabel() }}
+            </b>
+
+            @if (server().state === 'online' && server().responseMs !== null)
+            {
+                <span class="status-muted">
+                    · {{ server().responseMs }} ms
+                </span>
+            }
+
+        </span>
+
+
+
+        <!-- SESSION -->
+
+        @if (sessionLeft() !== null)
+        {
+            <span class="status-divider"></span>
+
+            <span
+                class="status-item session"
+                [class.warning]="sessionWarning()"
+                [title]="sessionTitle()">
+
+                <i class="fa-regular fa-clock"></i>
+
+                <span class="status-muted">Session</span>
+
+                <b class="status-value numeric">
+                    {{ sessionLabel() }}
+                </b>
+
+                <span class="status-muted">left</span>
+
+            </span>
+        }
+
 
     </div>
 
-    <!-- CENTER -->
+
+
+    <!-- ======================================================
+         COPYRIGHT
+    ======================================================= -->
+
     <div class="footer-center">
 
         <span class="footer-copyright">
-
-            © 2026 AppCore Technologies
-
+            © {{ year }} AppCore Technologies
         </span>
 
     </div>
 
-    <!-- RIGHT -->
+
+
+    <!-- ======================================================
+         ABOUT · BRAND
+    ======================================================= -->
+
     <div class="footer-right">
 
         <app-footer-brand
@@ -26,5 +105,6 @@
         </app-footer-brand>
 
     </div>
+
 
 </div>

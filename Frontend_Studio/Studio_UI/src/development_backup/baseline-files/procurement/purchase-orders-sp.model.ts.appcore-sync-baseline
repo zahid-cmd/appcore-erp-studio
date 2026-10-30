@@ -1,0 +1,90 @@
+/* ============================================================
+   Purchase Orders - SP
+============================================================ */
+
+export interface PurchaseOrdersSp
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Purchase Orders - SP
+============================================================ */
+
+export interface CreatePurchaseOrdersSp
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Purchase Orders - SP
+============================================================ */
+
+export interface UpdatePurchaseOrdersSp
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Purchase Orders - SP Defaults
+============================================================ */
+
+export interface PurchaseOrdersSpDefaults
+{
+    code:
+        string;
+}

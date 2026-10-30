@@ -1,0 +1,75 @@
+<!-- =====================================================
+     TOPBAR CONTEXT
+     -----------------------------------------------------
+     Branch  : the branch chosen at login
+     FY      : the financial year covering today
+               (no "FY" label: the value already reads
+               "FY 2026-2027")
+     Company logo now lives in the topbar header,
+     after the AppCore logo.
+===================================================== -->
+
+<div class="context-chips">
+
+
+    <!-- =================================================
+         BRANCH
+    ================================================== -->
+
+    @if (branchName())
+    {
+        <span
+            class="context-chip"
+            [title]="'Login branch: ' + branchName()">
+
+            <i class="fa-solid fa-building"></i>
+
+            <span class="context-label">Branch</span>
+
+            <b class="context-value">
+                {{ branchName() }}
+            </b>
+
+        </span>
+    }
+
+
+
+    <!-- =================================================
+         FINANCIAL YEAR
+    ================================================== -->
+
+    @if (context(); as row)
+    {
+        @if (row.financialYearCode || row.financialYearName)
+        {
+            <span
+                class="context-chip"
+                [title]="financialYearTitle()">
+
+                <i class="fa-regular fa-calendar"></i>
+
+                <b class="context-value">
+                    {{ row.financialYearName || row.financialYearCode }}
+                </b>
+
+            </span>
+        }
+        @else
+        {
+            <span
+                class="context-chip warning"
+                title="No active financial year covers today's date.">
+
+                <i class="fa-regular fa-calendar-xmark"></i>
+
+                <b class="context-value">
+                    FY not set
+                </b>
+
+            </span>
+        }
+    }
+
+
+</div>

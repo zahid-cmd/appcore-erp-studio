@@ -1,5 +1,19 @@
 //===============================================================
-// Imports
+// Topbar Actions
+// --------------------------------------------------------------
+// Clock, notifications bell and the profile menu.
+//
+// Profile button : photo (initials when none), name, role
+//                  (role = PrimaryRoleName from the user's
+//                  profile; falls back to the login name)
+//                  Same width as the dropdown below it.
+// Photo          : UserPhotoData from the user's profile
+//                  (same source as the Welcome widget)
+// Profile menu   : Profile, Change Password, Logout
+//                  (same behaviour as before)
+//
+// The confirm dialog used by Logout lives in topbar.html
+// (one instance for the whole shell).
 //===============================================================
 
 import
@@ -7,35 +21,20 @@ import
     Component,
     EventEmitter,
     HostListener,
-    Input,
+    OnDestroy,
     OnInit,
-    Output
+    Output,
+    computed,
+    inject,
+    signal
 }
 from '@angular/core';
-
-import
-{
-    CommonModule
-}
-from '@angular/common';
 
 import
 {
     Router
 }
 from '@angular/router';
-
-import
-{
-    SearchBoxComponent
-}
-from '../../utilities/search-box/search-box';
-
-import
-{
-    ConfirmDialogComponent
-}
-from '../../utilities/confirm-dialog/confirm-dialog';
 
 import
 {
@@ -55,11 +54,18 @@ import
 }
 from '../../../../core/authentication/authentication-storage.service';
 
+import
+{
+    UserProfileService
+}
+from '../../../../features/security-permission/user-management/services/user-profile.service';
 
+import
+{
+    TopbarNotificationsComponent
+}
+from '../topbar-notifications/topbar-notifications';
 
-//===============================================================
-// Topbar Actions Component
-//===============================================================
 
 @Component
 ({
@@ -71,11 +77,7 @@ from '../../../../core/authentication/authentication-storage.service';
 
     imports:
     [
-        CommonModule,
-
-        SearchBoxComponent,
-
-        ConfirmDialogComponent
+        TopbarNotificationsComponent
     ],
 
     templateUrl:
@@ -86,167 +88,227 @@ from '../../../../core/authentication/authentication-storage.service';
         './topbar-actions.css'
     ]
 })
-
-
-
-//===============================================================
-// Topbar Actions
-//===============================================================
-
 export class TopbarActionsComponent
-    implements OnInit
+implements
+    OnInit,
+    OnDestroy
 {
 
     //===========================================================
-    // Injection
+    // Dependencies
     //===========================================================
 
-    constructor
-    (
-        private readonly authenticationService:
-            AuthenticationService,
+    private readonly authenticationService =
+        inject(AuthenticationService);
 
-        private readonly authenticationStorageService:
-            AuthenticationStorageService,
+    private readonly authenticationStorageService =
+        inject(AuthenticationStorageService);
 
-        private readonly router:
-            Router,
+    private readonly userProfileService =
+        inject(UserProfileService);
 
-        private readonly confirmDialog:
-            ConfirmDialogService
-    )
-    {
-    }
+    private readonly router =
+        inject(Router);
 
+    private readonly confirmDialog =
+        inject(ConfirmDialogService);
 
 
     //===========================================================
-    // User Name
-    // ----------------------------------------------------------
-    // The displayed user name is populated from the currently
-    // authenticated user stored during successful login.
-    //
-    // Priority:
-    //
-    //     1. Full Name
-    //     2. Display Name
-    //     3. Login User Name
-    //===========================================================
-
-    @Input()
-    userName:
-        string =
-            '';
-
-
-
-    //===========================================================
-    // User Role
-    //===========================================================
-
-    @Input()
-    userRole:
-        string =
-            'System Administrator';
-
-
-
-    //===========================================================
-    // Avatar Icon
-    //===========================================================
-
-    @Input()
-    avatarIcon:
-        string =
-            'fas fa-user-circle';
-
-
-
-    //===========================================================
-    // Search Placeholder
-    //===========================================================
-
-    @Input()
-    searchPlaceholder:
-        string =
-            'Search anything...';
-
-
-
-    //===========================================================
-    // User Menu State
-    // ----------------------------------------------------------
-    // false = dropdown closed
-    // true  = dropdown open
-    //===========================================================
-
-    isUserMenuOpen:
-        boolean =
-            false;
-
-
-
-    //===========================================================
-    // Search Event
+    // Outputs
     //===========================================================
 
     @Output()
-    search:
-        EventEmitter<string> =
-            new EventEmitter<string>();
-
-
-
-    //===========================================================
-    // User Menu Event
-    //===========================================================
+    userMenuClick =
+        new EventEmitter<void>();
 
     @Output()
-    userMenuClick:
-        EventEmitter<void> =
-            new EventEmitter<void>();
-
-
-
-    //===========================================================
-    // Profile Event
-    //===========================================================
+    profileClick =
+        new EventEmitter<void>();
 
     @Output()
-    profileClick:
-        EventEmitter<void> =
-            new EventEmitter<void>();
-
-
-
-    //===========================================================
-    // Change Password Event
-    //===========================================================
-
-    @Output()
-    changePasswordClick:
-        EventEmitter<void> =
-            new EventEmitter<void>();
-
+    changePasswordClick =
+        new EventEmitter<void>();
 
 
     //===========================================================
-    // Initialize
+    // User
+    //===========================================================
+
+    readonly userName =
+        signal<string>('');
+
+    readonly loginName =
+        signal<string>('');
+
+    readonly branchName =
+        signal<string>('');
+
+    readonly userRole =
+        signal<string>('');
+
+    readonly photoUrl =
+        signal<string>('');
+
+    readonly initials =
+        computed(
+            () =>
+            {
+                const words =
+                    this.userName()
+                        .replace(
+                            /\b(md|mohammad|mohammed|muhammad)\.?\s+/i,
+                            ''
+                        )
+                        .split(
+                            /\s+/
+                        )
+                        .filter(
+                            x =>
+                                /[A-Za-z0-9]/.test(
+                                    x
+                                )
+                        );
+
+                if
+                (
+                    words.length === 0
+                )
+                {
+                    return '?';
+                }
+
+                const first =
+                    words[0].charAt(0);
+
+                const last =
+                    words.length > 1
+                    ? words[words.length - 1].charAt(0)
+                    : words[0].charAt(1);
+
+                return (
+                    first + last
+                )
+                .toUpperCase();
+            }
+        );
+
+
+    //===========================================================
+    // Menu
+    //===========================================================
+
+    readonly isUserMenuOpen =
+        signal<boolean>(false);
+
+
+    //===========================================================
+    // Clock
+    //===========================================================
+
+    private readonly now =
+        signal<Date>(new Date());
+
+    private clockTimer:
+        ReturnType<typeof setInterval> | null =
+        null;
+
+    readonly clockTime =
+        computed(
+            () =>
+                this.now()
+                    .toLocaleTimeString(
+                        'en-US',
+                        {
+                            hour:
+                                'numeric',
+
+                            minute:
+                                '2-digit'
+                        }
+                    )
+        );
+
+    readonly clockDate =
+        computed(
+            () =>
+                this.now()
+                    .toLocaleDateString(
+                        'en-GB',
+                        {
+                            weekday:
+                                'short',
+
+                            day:
+                                '2-digit',
+
+                            month:
+                                'short',
+
+                            year:
+                                'numeric'
+                        }
+                    )
+                    .replace(
+                        /^(\w+)\s/,
+                        '$1, '
+                    )
+        );
+
+    readonly clockTitle =
+        computed(
+            () =>
+                this.now()
+                    .toLocaleString(
+                        'en-GB',
+                        {
+                            dateStyle:
+                                'full',
+
+                            timeStyle:
+                                'medium'
+                        }
+                    )
+        );
+
+
+    //===========================================================
+    // Lifecycle
     //===========================================================
 
     ngOnInit():
         void
     {
         this.loadAuthenticatedUser();
+
+        this.clockTimer =
+            setInterval(
+                () =>
+                    this.now.set(
+                        new Date()
+                    ),
+                1000
+            );
     }
 
 
+    ngOnDestroy():
+        void
+    {
+        if
+        (
+            this.clockTimer
+        )
+        {
+            clearInterval(
+                this.clockTimer
+            );
+        }
+    }
+
 
     //===========================================================
-    // Document Click
-    // ----------------------------------------------------------
-    // Closes the user account dropdown whenever the user clicks
-    // outside the User Account area.
+    // Close Menu On Outside Click / Esc
     //===========================================================
 
     @HostListener
@@ -264,32 +326,34 @@ export class TopbarActionsComponent
         void
     {
         const target =
-            event.target as HTMLElement;
-
-
-
-        //=======================================================
-        // Ignore clicks inside the User Account area
-        //=======================================================
+            event.target as HTMLElement | null;
 
         if
         (
-            target.closest('.user-account')
+            target?.closest(
+                '.user-account'
+            )
         )
         {
             return;
         }
 
-
-
-        //=======================================================
-        // Close Dropdown
-        //=======================================================
-
-        this.isUserMenuOpen =
-            false;
+        this.isUserMenuOpen.set(
+            false
+        );
     }
 
+
+    @HostListener(
+        'document:keydown.escape'
+    )
+    onEscape():
+        void
+    {
+        this.isUserMenuOpen.set(
+            false
+        );
+    }
 
 
     //===========================================================
@@ -299,196 +363,193 @@ export class TopbarActionsComponent
     private loadAuthenticatedUser():
         void
     {
-        const authenticatedUser =
+        const user =
             this.authenticationStorageService
                 .getUser();
 
-
-
-        //=======================================================
-        // No Authenticated User
-        //=======================================================
-
         if
         (
-            !authenticatedUser
+            !user
         )
         {
-            this.userName =
-                '';
+            this.userName.set(
+                ''
+            );
 
             return;
         }
 
-
-
-        //=======================================================
-        // Full Name
-        //=======================================================
-
-        this.userName =
-            authenticatedUser.fullName?.trim()
+        this.userName.set(
+            user.fullName?.trim()
             ||
-            authenticatedUser.displayName?.trim()
+            user.displayName?.trim()
             ||
-            authenticatedUser.userName?.trim()
+            user.userName?.trim()
             ||
-            '';
+            ''
+        );
+
+        this.loginName.set(
+            user.userName?.trim()
+            ||
+            ''
+        );
+
+        this.branchName.set(
+            user.branchName?.trim()
+            ||
+            ''
+        );
+
+        // Until the role arrives, show the login name.
+        this.userRole.set(
+            this.loginName()
+        );
+
+        const userProfileId =
+            Number(
+                user.userProfileId
+            );
+
+        if
+        (
+            !Number.isFinite(
+                userProfileId
+            )
+            ||
+            userProfileId <= 0
+        )
+        {
+            return;
+        }
+
+        this.userProfileService
+            .getById(
+                userProfileId
+            )
+            .subscribe(
+            {
+                next:
+                    profile =>
+                    {
+                        const role =
+                            (
+                                profile?.PrimaryRoleName
+                                ??
+                                ''
+                            )
+                            .trim();
+
+                        if
+                        (
+                            role.length > 0
+                        )
+                        {
+                            this.userRole.set(
+                                role
+                            );
+                        }
+
+                        const photo =
+                            (
+                                profile?.UserPhotoData
+                                ??
+                                ''
+                            )
+                            .trim();
+
+                        this.photoUrl.set(
+                            photo
+                        );
+                    },
+
+                error:
+                    () =>
+                    {
+                        // Keep the login name.
+                    }
+            });
     }
 
 
-
-    //===========================================================
-    // Search
-    //===========================================================
-
-    onSearch
-    (
-        value:
-            string
-    ):
+    onPhotoError():
         void
     {
-        this.search.emit
-        (
-            value
+        // Broken photo: fall back to the initials.
+        this.photoUrl.set(
+            ''
         );
     }
 
 
-
     //===========================================================
-    // User Menu Click
+    // User Menu
     //===========================================================
 
     onUserMenuClick():
         void
     {
-        this.isUserMenuOpen =
-            !this.isUserMenuOpen;
+        this.isUserMenuOpen.set(
+            !this.isUserMenuOpen()
+        );
 
         this.userMenuClick.emit();
     }
 
 
-
-    //===========================================================
-    // Profile
-    //===========================================================
-
     onProfileClick():
         void
     {
-        this.isUserMenuOpen =
-            false;
+        this.isUserMenuOpen.set(
+            false
+        );
 
         this.profileClick.emit();
     }
 
 
-
-    //===========================================================
-    // Change Password
-    //===========================================================
-
     onChangePasswordClick():
         void
     {
-        this.isUserMenuOpen =
-            false;
+        this.isUserMenuOpen.set(
+            false
+        );
 
         this.changePasswordClick.emit();
     }
 
 
-
     //===========================================================
     // Logout
-    // ----------------------------------------------------------
-    // Opens the standard AppCore confirmation dialog before
-    // clearing the authenticated session.
-    //
-    // The authentication session is cleared only after the user
-    // confirms the Logout command.
     //===========================================================
 
     onLogout():
         void
     {
-        //=======================================================
-        // Close User Menu
-        //=======================================================
-
-        this.isUserMenuOpen =
-            false;
-
-
-
-        //=======================================================
-        // Confirm Logout
-        //=======================================================
+        this.isUserMenuOpen.set(
+            false
+        );
 
         this.confirmDialog.open
         (
             'Confirm Logout',
-
             'Are you sure you want to logout from AppCore ERP?',
-
             () =>
             {
                 this.executeLogout();
             },
-
             'Logout',
-
             'Cancel',
-
             'danger'
         );
     }
 
 
-
-    //===========================================================
-    // Execute Logout
-    // ----------------------------------------------------------
-    // Centralized authentication logout:
-    //
-    //     Topbar Actions
-    //          ↓
-    //     AuthenticationService.logout()
-    //          ↓
-    //     AuthenticationStorageService.logout()
-    //          ↓
-    //     clearAuthentication()
-    //          ↓
-    //     localStorage cleared
-    //     sessionStorage cleared
-    //          ↓
-    //     /login
-    //
-    // replaceUrl prevents the authenticated dashboard from
-    // remaining as the previous browser history entry.
-    //===========================================================
-
     private executeLogout():
         void
     {
-        //=======================================================
-        // Clear Authentication
-        //=======================================================
-
         this.authenticationService
             .logout();
-
-
-
-        //=======================================================
-        // Navigate To Login
-        // ------------------------------------------------------
-        // replaceUrl prevents returning to the authenticated
-        // dashboard through the browser Back button.
-        //=======================================================
 
         void this.router.navigate
         (
@@ -502,4 +563,4 @@ export class TopbarActionsComponent
         );
     }
 
-}
+}

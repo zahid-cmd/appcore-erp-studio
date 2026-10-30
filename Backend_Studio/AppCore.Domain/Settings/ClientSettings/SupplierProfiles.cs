@@ -181,6 +181,40 @@ public class SupplierProfiles
     }
 
 
+    // Supplier terms : what a new purchase order takes when this
+    // supplier is picked. Empty = not set.
+    //   Prices        : Incl / Excl / None (No VAT on the invoice)
+    //   Invoice Price : DP / MRP (not Motor Bikes)
+    //   Profit        : Default Profit % and its base DP / MRP
+    //                   (not Motor Bikes)
+    public string? DefaultPriceEntry
+    {
+        get;
+        set;
+    }
+
+
+    public string? DefaultInvoicePrice
+    {
+        get;
+        set;
+    }
+
+
+    public decimal? DefaultProfitPercent
+    {
+        get;
+        set;
+    }
+
+
+    public string? DefaultProfitOn
+    {
+        get;
+        set;
+    }
+
+
     //===========================================================
     // Remarks & Status
     //===========================================================

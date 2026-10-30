@@ -1,16 +1,238 @@
-<div class="sidebar-footer">
+<!-- ==========================================================
+     SIDEBAR FOOTER
+     ----------------------------------------------------------
+     Home · Favorites (count) · Recent · Settings
+     Open    : 4 buttons in a row, label under the icon
+     Collapsed : stacked in the rail, tooltips on hover
+     Favorites / Recent open a panel beside the footer.
+=========================================================== -->
 
-    <button
-        *ngFor="let item of items"
-        type="button"
-        class="footer-icon-button"
-        [title]="item.tooltip"
-        (click)="onItemClick(item.action)">
+<div
+    class="sidebar-footer"
+    [class.collapsed]="isCollapsed">
 
-        <i
-            [class]="item.icon">
-        </i>
 
-    </button>
+    <!-- ======================================================
+         COMMANDS
+    ======================================================= -->
+
+    <nav
+        class="footer-commands"
+        aria-label="Sidebar shortcuts">
+
+        @for (item of items; track item.action)
+        {
+            <button
+                type="button"
+                class="footer-command"
+                [class.active]="isActive(item.action)"
+                [class.favorites]="item.action === 'favorites'"
+                [disabled]="item.action === 'settings' && !settingsRoute()"
+                [attr.aria-label]="ariaLabel(item)"
+                [attr.aria-pressed]="
+                    item.action === 'favorites' || item.action === 'recent'
+                    ? isActive(item.action)
+                    : null
+                "
+                [title]="
+                    item.action === 'settings' && !settingsRoute()
+                    ? 'You do not have access to Navigation Settings'
+                    : ''
+                "
+                (mouseenter)="showTip($event, item)"
+                (mouseleave)="hideTip()"
+                (focus)="showTip($event, item)"
+                (blur)="hideTip()"
+                (click)="onItemClick(item.action)">
+
+                <i [class]="iconFor(item)"></i>
+
+                <span class="command-label">
+                    {{ item.label }}
+                </span>
+
+                @if (item.action === 'favorites' && favoriteCount() > 0)
+                {
+                    <span class="command-count">
+                        {{ favoriteCount() }}
+                    </span>
+                }
+
+            </button>
+        }
+
+    </nav>
+
+
+
+    <!-- ======================================================
+         FAVORITES / RECENT PANEL
+    ======================================================= -->
+
+    @if (panel(); as tab)
+    {
+        <section
+            class="footer-panel"
+            aria-label="Favorites and recent pages">
+
+
+            <!-- TABS -->
+
+            <div
+                class="panel-tabs"
+                role="tablist">
+
+                <button
+                    type="button"
+                    class="panel-tab"
+                    role="tab"
+                    [class.active]="tab === 'favorites'"
+                    [attr.aria-selected]="tab === 'favorites'"
+                    (click)="setTab('favorites')">
+                    Favorites ({{ favoriteCount() }})
+                </button>
+
+                <button
+                    type="button"
+                    class="panel-tab"
+                    role="tab"
+                    [class.active]="tab === 'recent'"
+                    [attr.aria-selected]="tab === 'recent'"
+                    (click)="setTab('recent')">
+                    Recent
+                </button>
+
+            </div>
+
+
+
+            <!-- LIST -->
+
+            <div class="panel-list">
+
+                @if (tab === 'favorites')
+                {
+                    @for (item of favorites(); track item.submenuId)
+                    {
+                        <div
+                            class="panel-row"
+                            [class.current]="isCurrent(item.route)">
+
+                            <a
+                                class="panel-link"
+                                [routerLink]="item.route">
+
+                                <b class="panel-title">
+                                    {{ item.name }}
+                                </b>
+
+                                <span class="panel-path">
+                                    {{ item.moduleName }} › {{ item.menuName }}
+                                </span>
+
+                            </a>
+
+                            <button
+                                type="button"
+                                class="panel-unstar"
+                                [attr.aria-label]="'Remove ' + item.name + ' from Favorites'"
+                                title="Remove from Favorites"
+                                (click)="removeFavorite(item.submenuId)">
+
+                                <i class="fa-solid fa-star"></i>
+
+                            </button>
+
+                        </div>
+                    }
+                    @empty
+                    {
+                        <div class="panel-empty">
+
+                            <i class="fa-regular fa-star"></i>
+
+                            <span>
+                                No favorites yet. Point at a page in the
+                                menu and click its star.
+                            </span>
+
+                        </div>
+                    }
+                }
+                @else
+                {
+                    @for (item of recent(); track item.submenuId)
+                    {
+                        <div
+                            class="panel-row"
+                            [class.current]="isCurrent(item.route)">
+
+                            <a
+                                class="panel-link"
+                                [routerLink]="item.route">
+
+                                <b class="panel-title">
+                                    {{ item.title }}
+                                </b>
+
+                                <span class="panel-path">
+                                    {{ item.path }}
+                                </span>
+
+                            </a>
+
+                            <span class="panel-time">
+                                {{ timeAgo(item.visitedAt) }}
+                            </span>
+
+                        </div>
+                    }
+                    @empty
+                    {
+                        <div class="panel-empty">
+
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+
+                            <span>
+                                Pages you open will show here.
+                            </span>
+
+                        </div>
+                    }
+                }
+
+            </div>
+
+
+
+            <!-- FOOTER -->
+
+            <div class="panel-footer">
+
+                @if (tab === 'favorites')
+                {
+                    <span>Up to 30 · saved to your account</span>
+                }
+                @else
+                {
+                    <span>Last 10 pages · this browser</span>
+
+                    @if (recent().length > 0)
+                    {
+                        <button
+                            type="button"
+                            class="panel-clear"
+                            (click)="clearRecent()">
+                            Clear
+                        </button>
+                    }
+                }
+
+            </div>
+
+
+        </section>
+    }
+
 
 </div>

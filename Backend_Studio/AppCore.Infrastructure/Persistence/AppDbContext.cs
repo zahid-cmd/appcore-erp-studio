@@ -203,6 +203,23 @@ public class AppDbContext
 
 
     //===========================================================
+    // Platform Shell (top bar, sidebar footer, app footer)
+    //
+    // Manual, OUTSIDE the AUTO blocks : no page of its own, so
+    // Code Synchronization must not own it.
+    //===========================================================
+
+    // Favorite pages per user (sidebar star / Favorites panel).
+    // Table created by UserFavorites.sql.
+    public DbSet<AppCore.Domain.Platform.Shell.UserFavorites>
+        UserFavoriteRows
+        {
+            get;
+            set;
+        } = null!;
+
+
+    //===========================================================
     // AUTO REGISTER DBSETS
     //===========================================================
 
@@ -1168,6 +1185,105 @@ public class AppDbContext
 
     // AUTO-END : PurchasesMb
 
+    // AUTO-BEGIN : PurchaseOrdersAc
+
+    public DbSet<AppCore.Domain.Entities.Procurement.AccessoriesPurchase.PurchaseOrdersAc>
+    PurchaseOrdersAcs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseOrdersAc
+
+    // AUTO-BEGIN : PurchaseOrdersSp
+
+    public DbSet<AppCore.Domain.Entities.Procurement.SparePartsLubricantPurchase.PurchaseOrdersSp>
+    PurchaseOrdersSps
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseOrdersSp
+
+    // AUTO-BEGIN : ProductPricing
+
+    public DbSet<AppCore.Domain.Entities.StoreManagement.PricingLabels.ProductPricing>
+    ProductPricings
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ProductPricing
+
+    // AUTO-BEGIN : PurchasesAc
+
+    public DbSet<AppCore.Domain.Entities.Procurement.AccessoriesPurchase.PurchasesAc>
+    PurchasesAcs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchasesAc
+
+    // AUTO-BEGIN : PurchasesSp
+
+    public DbSet<AppCore.Domain.Entities.Procurement.SparePartsLubricantPurchase.PurchasesSp>
+    PurchasesSps
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchasesSp
+
+    // AUTO-BEGIN : PurchaseAdjustmentsAc
+
+    public DbSet<AppCore.Domain.Entities.Procurement.AccessoriesPurchase.PurchaseAdjustmentsAc>
+    PurchaseAdjustmentsAcs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseAdjustmentsAc
+
+    // AUTO-BEGIN : PurchaseReturnsAc
+
+    public DbSet<AppCore.Domain.Entities.Procurement.AccessoriesPurchase.PurchaseReturnsAc>
+    PurchaseReturnsAcs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseReturnsAc
+
+    // AUTO-BEGIN : PurchaseAdjustmentsSp
+
+    public DbSet<AppCore.Domain.Entities.Procurement.SparePartsLubricantPurchase.PurchaseAdjustmentsSp>
+    PurchaseAdjustmentsSps
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseAdjustmentsSp
+
+    // AUTO-BEGIN : PurchaseReturnsSp
+
+    public DbSet<AppCore.Domain.Entities.Procurement.SparePartsLubricantPurchase.PurchaseReturnsSp>
+    PurchaseReturnsSps
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PurchaseReturnsSp
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 
@@ -1230,6 +1346,52 @@ public class AppDbContext
     // Receipt Voucher → how it is received (Payment Desk lines)
     public DbSet<AppCore.Domain.Entities.AccountsFinance.VoucherManagement.ReceiptVoucherPayments>
     ReceiptVoucherPaymentRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Posting Setup page : ledger per posting purpose (custom page)
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.PostingSetups>
+    PostingSetupRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Posting Setup page : ledger changes with the reason
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.PostingSetupHistory>
+    PostingSetupHistoryRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Stock ledger : batches (exact cost), movements, issue
+    // allocations, item-level VAT register
+    public DbSet<AppCore.Domain.Platform.Inventory.StockBatches>
+    StockBatchRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Platform.Inventory.StockMovements>
+    StockMovementRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Platform.Inventory.StockAllocations>
+    StockAllocationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Platform.Inventory.VatRegister>
+    VatRegisterRows
     {
     get;
     set;

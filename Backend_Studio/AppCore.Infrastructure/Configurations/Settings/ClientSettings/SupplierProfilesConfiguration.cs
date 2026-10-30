@@ -120,6 +120,18 @@ public class SupplierProfilesConfiguration
         builder.Property(x => x.CreditDays)
                .IsRequired();
 
+        builder.Property(x => x.DefaultPriceEntry)
+               .HasMaxLength(5);
+
+        builder.Property(x => x.DefaultInvoicePrice)
+               .HasMaxLength(5);
+
+        builder.Property(x => x.DefaultProfitPercent)
+               .HasPrecision(7, 2);
+
+        builder.Property(x => x.DefaultProfitOn)
+               .HasMaxLength(5);
+
         builder.Property(x => x.IsActive)
                .IsRequired();
 

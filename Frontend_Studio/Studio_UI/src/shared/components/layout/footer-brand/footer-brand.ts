@@ -1,22 +1,48 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+//===============================================================
+// Footer Brand : About button + logo
+//===============================================================
 
-@Component({
-    selector: 'app-footer-brand',
-    standalone: true,
-    imports: [],
-    templateUrl: './footer-brand.html',
-    styleUrls: ['./footer-brand.css']
+import
+{
+    Component,
+    EventEmitter,
+    Output
+}
+from '@angular/core';
+
+
+@Component(
+{
+    selector:
+        'app-footer-brand',
+
+    standalone:
+        true,
+
+    imports:
+    [
+    ],
+
+    templateUrl:
+        './footer-brand.html',
+
+    styleUrls:
+    [
+        './footer-brand.css'
+    ]
 })
-export class FooterBrandComponent {
+export class FooterBrandComponent
+{
 
     @Output()
     aboutClick =
         new EventEmitter<void>();
 
-    openAbout(): void {
 
+    openAbout():
+        void
+    {
         this.aboutClick.emit();
-
     }
 
 }

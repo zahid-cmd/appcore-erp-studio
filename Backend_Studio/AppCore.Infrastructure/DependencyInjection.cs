@@ -165,6 +165,27 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : ProductPricing
+
+using AppCore.Application.StoreManagement.PricingLabels;
+using AppCore.Infrastructure.Configurations.StoreManagement.PricingLabels;
+
+// AUTO-END : ProductPricing
+
+// AUTO-BEGIN : PurchaseOrdersSp
+
+using AppCore.Application.Procurement.SparePartsLubricantPurchase;
+using AppCore.Infrastructure.Configurations.Procurement.SparePartsLubricantPurchase;
+
+// AUTO-END : PurchaseOrdersSp
+
+// AUTO-BEGIN : PurchaseOrdersAc
+
+using AppCore.Application.Procurement.AccessoriesPurchase;
+using AppCore.Infrastructure.Configurations.Procurement.AccessoriesPurchase;
+
+// AUTO-END : PurchaseOrdersAc
+
 // AUTO-BEGIN : PurchaseOrdersMb
 
 using AppCore.Application.Procurement.MotorBikePurchase;
@@ -658,6 +679,20 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Chart of Services Repository (manual, read-only page)
+        //
+        // Fully qualified, outside the AUTO blocks : its classes
+        // were renamed from the generated ChartofServices… names,
+        // so Code Synchronization must not own this line.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.Settings.ServiceSettings.IChartOfServicesRepository,
+            AppCore.Infrastructure.Configurations.Settings.ServiceSettings.ChartOfServicesRepository
+        >();
+
+        //=======================================================
         // Auto Accounts Repository (manual, read-only)
         //
         // Tells the Account Group / Sub Group / General Ledger
@@ -671,10 +706,113 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Posting Setup Repository (manual, custom page)
+        //
+        // Settings › Account Settings › Posting Setup : the
+        // ledger of each posting purpose (VAT, Inter-Branch ...).
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.Settings.AccountSettings.IPostingSetupRepository,
+            AppCore.Infrastructure.Configurations.Settings.AccountSettings.PostingSetupRepository
+        >();
+
+        //=======================================================
         // AUTO REGISTER SERVICES
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : PurchaseReturnsSp
+
+        services.AddScoped
+        <
+            IPurchaseReturnsSpRepository,
+            PurchaseReturnsSpRepository
+        >();
+
+        // AUTO-END : PurchaseReturnsSp
+
+        // AUTO-BEGIN : PurchaseAdjustmentsSp
+
+        services.AddScoped
+        <
+            IPurchaseAdjustmentsSpRepository,
+            PurchaseAdjustmentsSpRepository
+        >();
+
+        // AUTO-END : PurchaseAdjustmentsSp
+
+        // AUTO-BEGIN : PurchaseReturnsAc
+
+        services.AddScoped
+        <
+            IPurchaseReturnsAcRepository,
+            PurchaseReturnsAcRepository
+        >();
+
+        // AUTO-END : PurchaseReturnsAc
+
+        // AUTO-BEGIN : PurchaseAdjustmentsAc
+
+        services.AddScoped
+        <
+            IPurchaseAdjustmentsAcRepository,
+            PurchaseAdjustmentsAcRepository
+        >();
+
+        // AUTO-END : PurchaseAdjustmentsAc
+
+        // AUTO-BEGIN : PurchasesSp
+
+        services.AddScoped
+        <
+            IPurchasesSpRepository,
+            PurchasesSpRepository
+        >();
+
+        // AUTO-END : PurchasesSp
+
+        // AUTO-BEGIN : PurchasesAc
+
+        services.AddScoped
+        <
+            IPurchasesAcRepository,
+            PurchasesAcRepository
+        >();
+
+        // AUTO-END : PurchasesAc
+
+        // AUTO-BEGIN : ProductPricing
+
+        services.AddScoped
+        <
+            IProductPricingRepository,
+            ProductPricingRepository
+        >();
+
+        // AUTO-END : ProductPricing
+
+        // AUTO-BEGIN : PurchaseOrdersSp
+
+        services.AddScoped
+        <
+            IPurchaseOrdersSpRepository,
+            PurchaseOrdersSpRepository
+        >();
+
+        // AUTO-END : PurchaseOrdersSp
+
+        // AUTO-BEGIN : PurchaseOrdersAc
+
+        services.AddScoped
+        <
+            IPurchaseOrdersAcRepository,
+            PurchaseOrdersAcRepository
+        >();
+
+        // AUTO-END : PurchaseOrdersAc
 
         // AUTO-BEGIN : PurchasesMb
 
@@ -1627,6 +1765,9 @@ public static class DependencyInjection
         // Voucher numbers, the ledger list and the ONLY writer of
         // VoucherEntries. Used by every voucher page (RV / PV /
         // JV / FT) and every reconciliation (RRV / RRP).
+        //
+        // VAT applicability : the dated VAT Management switches
+        // (MOD-013) read by Purchase Orders - SP / AC.
         //=======================================================
 
         services.AddScoped
@@ -1645,6 +1786,34 @@ public static class DependencyInjection
         <
             IVoucherPostingService,
             VoucherPostingService
+        >();
+
+        services.AddScoped
+        <
+            IVatApplicabilityService,
+            VatApplicabilityService
+        >();
+
+        // Fixed posting ledgers (VAT, Inter-Branch ...) from the
+        // Posting Setup page
+        services.AddScoped
+        <
+            IPostingLedgerService,
+            PostingLedgerService
+        >();
+
+
+        //=======================================================
+        // Platform Shell (top bar, sidebar footer, app footer)
+        //
+        // Favorites, notifications and the top bar context.
+        // Fully qualified : no using lines needed.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.Platform.Shell.IShellRepository,
+            AppCore.Infrastructure.Platform.Shell.ShellRepository
         >();
 
 

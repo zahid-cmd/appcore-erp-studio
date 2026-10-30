@@ -339,6 +339,11 @@
 
                                     <!-- =====================================
                                          REGISTER / DEREGISTER
+
+                                         Registration does not depend on
+                                         the Database Engine : a
+                                         synchronized row can always be
+                                         registered or deregistered.
                                     ====================================== -->
 
                                     <button
@@ -351,26 +356,8 @@
                                             'registered'
                                         "
                                         [disabled]="
-                                            row.status?.toLowerCase()
-                                            !==
-                                            'synchronized'
-                                            ||
-                                            (
-                                                row.dbStatus?.toLowerCase()
-                                                ===
-                                                'registered'
-                                                    ?
-                                                    row.databaseCreated === true
-                                                    :
-                                                    (
-                                                        row.databaseCreated === true
-                                                        ||
-                                                        row.registrationDisabled === true
-                                                        ||
-                                                        isRegistrationDisabled(
-                                                            row
-                                                        )
-                                                    )
+                                            isRegistrationDisabled(
+                                                row
                                             )
                                         "
                                         [title]="
@@ -385,35 +372,9 @@
                                                     ===
                                                     'registered'
                                                         ?
-                                                        (
-                                                            row.databaseCreated === true
-                                                                ?
-                                                                'Deregister disabled while database table exists'
-                                                                :
-                                                                'Deregister'
-                                                        )
+                                                        'Deregister'
                                                         :
-                                                        (
-                                                            row.databaseCreated === true
-                                                                ?
-                                                                'Registration unavailable while database table exists'
-                                                                :
-                                                                (
-                                                                    row.registrationDisabled === true
-                                                                        ?
-                                                                        'Registration locked until the pending database creation is completed'
-                                                                        :
-                                                                        (
-                                                                            isRegistrationDisabled(
-                                                                                row
-                                                                            )
-                                                                                ?
-                                                                                'Another record is currently registered. Complete database creation first.'
-                                                                                :
-                                                                                'Register'
-                                                                        )
-                                                                )
-                                                        )
+                                                        'Register'
                                                 )
                                         "
                                         (click)="
@@ -442,116 +403,6 @@
                                                 'registered'
                                             "
                                             class="fas fa-clipboard-check">
-
-                                        </i>
-
-                                    </button>
-
-
-                                    <!-- =====================================
-                                         DATABASE CREATE / REMOVE
-
-                                         Database creation will be handled
-                                         directly by the Database Engine.
-
-                                         Once the database table exists,
-                                         the same button becomes the
-                                         Remove Database operation.
-                                    ====================================== -->
-
-                                    <button
-                                        *ngIf="showRegistration"
-                                        type="button"
-                                        class="action-btn database"
-                                        [class.remove-database]="
-                                            row.databaseCreated === true
-                                        "
-                                        [disabled]="
-                                            row.status?.toLowerCase()
-                                            !==
-                                            'synchronized'
-                                            ||
-                                            row.dbStatus?.toLowerCase()
-                                            !==
-                                            'registered'
-                                        "
-                                        [title]="
-                                            row.status?.toLowerCase()
-                                            !==
-                                            'synchronized'
-                                                ?
-                                                'Database operation unavailable until code synchronization is completed'
-                                                :
-                                                (
-                                                    row.dbStatus?.toLowerCase()
-                                                    !==
-                                                    'registered'
-                                                        ?
-                                                        'Register backend code before creating the database'
-                                                        :
-                                                        (
-                                                            row.databaseCreated === true
-                                                                ?
-                                                                'Remove Database'
-                                                                :
-                                                                'Create Database'
-                                                        )
-                                                )
-                                        "
-                                        (click)="
-                                            onDatabaseClick(
-                                                row,
-                                                $event
-                                            )
-                                        ">
-
-                                        <i
-                                            class="fas fa-database">
-
-                                        </i>
-
-                                    </button>
-
-
-                                    <!-- =====================================
-                                         INITIALIZE DB
-
-                                         Initialize DB is available only
-                                         after the physical database table
-                                         has been created.
-
-                                         Initial state:
-
-                                             Disabled
-
-                                         Database created:
-
-                                             Enabled
-                                    ====================================== -->
-
-                                    <button
-                                        *ngIf="showRegistration"
-                                        type="button"
-                                        class="action-btn initialize-database"
-                                        [disabled]="
-                                            row.databaseCreated !== true
-                                        "
-                                        [title]="
-                                            row.databaseCreated === true
-                                                ?
-                                                'Initialize DB'
-                                                :
-                                                'Initialize DB disabled until database is created'
-                                        "
-                                        (click)="
-                                            onInitializeDatabaseClick(
-                                                row,
-                                                $event
-                                            )
-                                        ">
-
-                                        <i
-                                            class="fas fa-database">
 
                                         </i>
 

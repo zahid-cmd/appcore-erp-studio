@@ -1,0 +1,171 @@
+<!-- =====================================================
+     TOPBAR NOTIFICATIONS
+     -----------------------------------------------------
+     Bell with unread count + drop-down list.
+     Read state is kept in this browser, per user.
+===================================================== -->
+
+<div class="notifications">
+
+
+    <!-- =================================================
+         BELL
+    ================================================== -->
+
+    <button
+        type="button"
+        class="bell-button"
+        aria-haspopup="true"
+        [attr.aria-expanded]="isOpen()"
+        [attr.aria-label]="
+            unreadCount() > 0
+            ? 'Notifications, ' + unreadCount() + ' new'
+            : 'Notifications'
+        "
+        [title]="
+            unreadCount() > 0
+            ? unreadCount() + ' new notification' + (unreadCount() === 1 ? '' : 's')
+            : 'Notifications'
+        "
+        (click)="toggle()">
+
+        <i class="fa-regular fa-bell"></i>
+
+        @if (unreadCount() > 0)
+        {
+            <span class="bell-count">
+                {{ unreadCount() > 99 ? '99+' : unreadCount() }}
+            </span>
+        }
+
+    </button>
+
+
+
+    <!-- =================================================
+         DROP-DOWN
+    ================================================== -->
+
+    @if (isOpen())
+    {
+        <section
+            class="notification-panel"
+            aria-label="Notifications">
+
+
+            <!-- HEADER -->
+
+            <div class="panel-header">
+
+                <b class="panel-title">
+
+                    Notifications
+
+                    @if (unreadCount() > 0)
+                    {
+                        <span class="panel-new">
+                            {{ unreadCount() }} new
+                        </span>
+                    }
+
+                </b>
+
+                <button
+                    type="button"
+                    class="panel-link"
+                    [disabled]="unreadCount() === 0"
+                    (click)="markAllRead()">
+                    Mark all read
+                </button>
+
+            </div>
+
+
+
+            <!-- LIST -->
+
+            <div class="panel-list">
+
+                @for (item of notifications(); track item.key)
+                {
+                    <button
+                        type="button"
+                        class="panel-item"
+                        [class.unread]="!item.isRead"
+                        (click)="openItem(item)">
+
+                        <span class="item-icon">
+                            <i [class]="iconFor(item.kind)"></i>
+                        </span>
+
+                        <span class="item-text">
+
+                            <b class="item-title">
+                                {{ item.title }}
+                            </b>
+
+                            @if (item.detail)
+                            {
+                                <span class="item-detail">
+                                    {{ item.detail }}
+                                </span>
+                            }
+
+                            <span class="item-time">
+                                {{ timeAgo(item.date) }}
+                            </span>
+
+                        </span>
+
+                        @if (!item.isRead)
+                        {
+                            <span
+                                class="item-dot"
+                                aria-label="New">
+                            </span>
+                        }
+
+                    </button>
+                }
+                @empty
+                {
+                    <div class="panel-empty">
+
+                        <i class="fa-regular fa-bell-slash"></i>
+
+                        <span>You are all caught up.</span>
+
+                    </div>
+                }
+
+            </div>
+
+
+
+            <!-- FOOTER -->
+
+            <div class="panel-footer">
+
+                <span>
+                    Approvals and cheques due
+                </span>
+
+                <button
+                    type="button"
+                    class="panel-link"
+                    (click)="refresh()">
+
+                    <i class="fa-solid fa-rotate-right"></i>
+
+                    Refresh
+
+                </button>
+
+            </div>
+
+
+        </section>
+    }
+
+
+</div>

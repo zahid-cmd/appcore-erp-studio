@@ -88,5 +88,35 @@ export const PRINT_SOURCES:
     'purchase-orders-mb':
         () =>
             import('../../features/procurement/motor-bike-purchase/print/purchase-orders-mb.print')
-                .then(module => module.PURCHASE_ORDERS_MB_PRINT)
+                .then(module => module.PURCHASE_ORDERS_MB_PRINT),
+
+    // Procurement : Purchase Orders - SP
+    'purchase-orders-sp':
+        () =>
+            import('../../features/procurement/spare-parts-lubricant-purchase/print/purchase-orders-sp.print')
+                .then(module => module.PURCHASE_ORDERS_SP_PRINT),
+
+    // Procurement : Purchase Orders - AC
+    'purchase-orders-ac':
+        () =>
+            import('../../features/procurement/accessories-purchase/print/purchase-orders-ac.print')
+                .then(module => module.PURCHASE_ORDERS_AC_PRINT),
+
+    // Procurement : Purchases - MB
+    'purchases-mb':
+        () =>
+            import('../../features/procurement/motor-bike-purchase/print/purchases-mb.print')
+                .then(module => module.PURCHASES_MB_PRINT),
+
+    // Procurement : Purchases - SP
+    'purchases-sp':
+        () =>
+            import('../../features/procurement/spare-parts-lubricant-purchase/print/purchases-sp.print')
+                .then(module => module.PURCHASES_SP_PRINT),
+
+    // Procurement : Purchases - AC
+    'purchases-ac':
+        () =>
+            import('../../features/procurement/accessories-purchase/print/purchases-ac.print')
+                .then(module => module.PURCHASES_AC_PRINT)
 };

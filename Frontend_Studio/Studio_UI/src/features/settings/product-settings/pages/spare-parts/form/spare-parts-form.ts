@@ -677,6 +677,11 @@ implements OnInit, OnDestroy
         '0';
 
 
+    maxStockLevelText:
+        string =
+        '0';
+
+
 
     //===========================================================
     // Entity
@@ -709,6 +714,8 @@ implements OnInit, OnDestroy
         ReorderLevel:0,
 
         RedLevel:0,
+
+        MaxStockLevel:0,
 
         // Not used on this form (kept for the model)
         ImagePath:'',
@@ -977,6 +984,8 @@ implements OnInit, OnDestroy
             ReorderLevel:0,
 
             RedLevel:0,
+
+            MaxStockLevel:0,
 
             ImagePath:'',
 
@@ -2258,6 +2267,9 @@ implements OnInit, OnDestroy
 
         this.redLevelText =
             String(this.entity.RedLevel ?? 0);
+
+        this.maxStockLevelText =
+            String(this.entity.MaxStockLevel ?? 0);
     }
 
 
@@ -2324,6 +2336,28 @@ implements OnInit, OnDestroy
             result.text;
 
         this.entity.RedLevel =
+            result.number;
+
+        this.onValueChange();
+    }
+
+
+    onMaxStockLevelChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        const result =
+            this.toWholeNumber(
+                value
+            );
+
+        this.maxStockLevelText =
+            result.text;
+
+        this.entity.MaxStockLevel =
             result.number;
 
         this.onValueChange();
@@ -2851,6 +2885,24 @@ implements OnInit, OnDestroy
         }
 
 
+        // Max Stock Level above Re-order Level (0 = not set)
+        if
+        (
+            this.entity.MaxStockLevel > 0
+            &&
+            this.entity.MaxStockLevel <= this.entity.ReorderLevel
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Max Stock Level must be higher than Re-order Level.'
+            );
+
+            return;
+        }
+
+
         //=======================================================
         // Storage Locations : complete rows, one per warehouse
         //=======================================================
@@ -2947,6 +2999,10 @@ implements OnInit, OnDestroy
 
             RedLevel:
                 Number(this.entity.RedLevel ?? 0),
+
+
+            MaxStockLevel:
+                Number(this.entity.MaxStockLevel ?? 0),
 
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
@@ -3080,6 +3136,10 @@ implements OnInit, OnDestroy
 
             RedLevel:
                 Number(this.entity.RedLevel ?? 0),
+
+
+            MaxStockLevel:
+                Number(this.entity.MaxStockLevel ?? 0),
 
             Remarks:
                 this.entity.Remarks?.trim() ?? '',

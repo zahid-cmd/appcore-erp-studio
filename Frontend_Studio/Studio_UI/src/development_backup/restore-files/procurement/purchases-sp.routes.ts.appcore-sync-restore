@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const PurchasesSpRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Purchases - SP'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases-sp/list/purchases-sp-list'
+            )
+            .then(
+                m =>
+                    m.PurchasesSpList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Purchases - SP'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases-sp/form/purchases-sp-form'
+            )
+            .then(
+                m =>
+                    m.PurchasesSpForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Purchases - SP'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases-sp/form/purchases-sp-form'
+            )
+            .then(
+                m =>
+                    m.PurchasesSpForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Purchases - SP'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases-sp/form/purchases-sp-form'
+            )
+            .then(
+                m =>
+                    m.PurchasesSpForm
+            )
+    }
+
+];

@@ -100,6 +100,13 @@ export interface SpareParts
 
     RedLevel: number;
 
+
+    // 0 = not set : a purchase order cannot take the
+
+    // company stock above it
+
+    MaxStockLevel: number;
+
     // Saved image path from the server ('' when none).
     // The image itself is uploaded / deleted separately.
     ImagePath: string;
@@ -152,6 +159,13 @@ export interface CreateSpareParts
     ReorderLevel: number;
 
     RedLevel: number;
+
+
+    // 0 = not set : a purchase order cannot take the
+
+    // company stock above it
+
+    MaxStockLevel: number;
 
     Remarks: string;
 

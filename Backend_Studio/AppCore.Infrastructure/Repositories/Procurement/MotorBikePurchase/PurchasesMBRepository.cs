@@ -2,15 +2,12 @@
 // Namespaces
 //===============================================================
 
-using Microsoft.EntityFrameworkCore;
-
-using AppCore.Application.Common.ActivityHistory.DTOs;
-
-using AppCore.Domain.Common;
-
+using AppCore.Application.Platform.Accounting;
+using AppCore.Application.Procurement.MotorBikePurchase;
+using AppCore.Domain.Entities.Procurement.MotorBikePurchase;
+using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.Persistence;
-
-using global::AppCore.Application.Procurement.MotorBikePurchase;
+using AppCore.Infrastructure.Repositories.Procurement.Shared;
 
 
 //===============================================================
@@ -21,594 +18,62 @@ namespace AppCore.Infrastructure.Configurations.Procurement.MotorBikePurchase;
 
 
 //===============================================================
-// PurchasesMbRepository
+// Purchases - MB : the shared Purchases engine with this page's
+// tables, Purchase Order tables, number prefix and switch codes
 //===============================================================
 
 public class PurchasesMbRepository
-    : IPurchasesMbRepository
+    : PurchaseRepositoryBase<PurchasesMb, PurchasesMbLines, PurchaseOrdersMb, PurchaseOrdersMbLines>,
+      IPurchasesMbRepository
 {
-
-    //===========================================================
-    // DbContext
-    //===========================================================
-
-    private readonly AppDbContext
-        _context;
-
-
-
-    //===========================================================
-    // Constructor
-    //===========================================================
-
-    public PurchasesMbRepository
-    (
-        AppDbContext context
-    )
-    {
-        _context =
-            context;
-    }
-
-
-
-    //===========================================================
-    // Get All
-    //===========================================================
-
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb>>
-        GetAllAsync()
-    {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb>()
-            .AsNoTracking()
-            .Where(
-                x =>
-                    !x.IsDeleted
-            )
-            .OrderBy(
-                x =>
-                    x.Name
-            )
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
-    public async Task<global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb?>
-        GetByIdAsync
-    (
-        long id
-    )
-    {
-        return await _context
-            .Set<global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
-                x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
-            );
-    }
-
-
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    public async Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb entity
-    )
-    {
-        const long userId =
-            1;
-
-
-        entity.IsActive =
-            true;
-
-
-        entity.IsDeleted =
-            false;
-
-
-        entity.CreatedBy =
-            userId;
-
-
-        entity.CreatedDate =
-            DateTime.UtcNow;
-
-
-        entity.ModifiedBy =
-            null;
-
-
-        entity.ModifiedDate =
-            null;
-
-
-        await _context
-            .Set<global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb>()
-            .AddAsync(
-                entity
-            );
-
-
-        await _context.SaveChangesAsync();
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Procurement",
-
-                EntityName =
-                    "PurchasesMb",
-
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Create",
-
-                ActivityTitle =
-                    "PurchasesMb Created",
-
-                ActivityDescription =
-                    $"PurchasesMb '{entity.Name}' was created.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
-
-
-        return entity.Id;
-    }
-
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    public async Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb entity
-    )
-    {
-        const long userId =
-            1;
-
-
-        var existing =
-            await _context
-                .Set<global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb>()
-                .FirstOrDefaultAsync(
-                    x =>
-                        x.Id == entity.Id
-                        &&
-                        !x.IsDeleted
-                );
-
-
-        if
-        (
-            existing is null
-        )
+    private static readonly PurchasePage ThisPage =
+        new()
         {
-            throw new InvalidOperationException(
-                "PurchasesMb record was not found."
-            );
-        }
+            PageType = "MB",
+            Prefix = VoucherTypes.PurchaseMotorBikes,
+            Title = "Purchase - MB",
+            TableName = "PurchasesMb",
+            OrderTableName = "PurchaseOrdersMb",
+            SupplyTypes = new[] { "Motor Bikes", "General" },
+            MrpPricing = false,
+            SwitchPoRequired = "CFG-MOD-007-0001",
+            SwitchCarryBalance = "CFG-MOD-007-0002",
+            SwitchFreeGoods = null,
+            SwitchRoundPayable = null,
+            SwitchWholeTakaLines = null,
+            SwitchEditSupplierTerms = "CFG-MOD-007-0040",
+            SwitchBackDated = "CFG-MOD-007-0041",
+            SwitchPostDated = "CFG-MOD-007-0042",
+            SwitchMaxLines = "CFG-MOD-007-0043",
+            SwitchMushakRequired = "CFG-MOD-007-0044",
+            SwitchReceivedOnPurchase = "CFG-MOD-007-0045",
+            SwitchPostOnApproval = "CFG-MOD-007-0046",
+            SwitchPrintOnApproval = "CFG-MOD-007-0047",
+            SwitchUnitsRequired = "CFG-MOD-007-0048",
+            SwitchUniqueKeyNo = "CFG-MOD-007-0049",
+            SwitchUniqueBatteryNo = "CFG-MOD-007-0050",
+            SwitchInvoiceNoRequired = "CFG-MOD-007-0065",
+            SwitchDoRequired = "CFG-MOD-007-0066",
+            SwitchGatePassRequired = "CFG-MOD-007-0067",
+            SwitchPriceAbovePo = "CFG-MOD-007-0068",
+            SwitchVatAsPer63 = "CFG-MOD-007-0069"
+        };
 
 
-        existing.Code =
-            entity.Code;
+    protected override PurchasePage Page =>
+        ThisPage;
 
 
-        existing.Name =
-            entity.Name;
-
-
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
-
-
-        existing.SampleField =
-            entity.SampleField;
-
-
-        existing.Status =
-            entity.Status;
-
-
-        existing.Remarks =
-            entity.Remarks;
-
-
-        existing.ModifiedBy =
-            userId;
-
-
-        existing.ModifiedDate =
-            DateTime.UtcNow;
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Procurement",
-
-                EntityName =
-                    "PurchasesMb",
-
-                EntityId =
-                    existing.Id,
-
-                ActivityType =
-                    "Update",
-
-                ActivityTitle =
-                    "PurchasesMb Updated",
-
-                ActivityDescription =
-                    $"PurchasesMb '{existing.Name}' was updated.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
-    }
-
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    public async Task
-        DeleteAsync
-    (
-        long id
-    )
+    public PurchasesMbRepository(
+        AppDbContext context,
+        IVoucherNumberService numberService,
+        IVatApplicabilityService vatApplicability,
+        IVoucherPostingService postingService)
+        : base(
+            context,
+            numberService,
+            vatApplicability,
+            postingService)
     {
-        const long userId =
-            1;
-
-
-        var entity =
-            await _context
-                .Set<global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb>()
-                .FirstOrDefaultAsync(
-                    x =>
-                        x.Id == id
-                        &&
-                        !x.IsDeleted
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return;
-        }
-
-
-        entity.IsDeleted =
-            true;
-
-
-        entity.IsActive =
-            false;
-
-
-        entity.ModifiedBy =
-            userId;
-
-
-        entity.ModifiedDate =
-            DateTime.UtcNow;
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Procurement",
-
-                EntityName =
-                    "PurchasesMb",
-
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Delete",
-
-                ActivityTitle =
-                    "PurchasesMb Deleted",
-
-                ActivityDescription =
-                    $"PurchasesMb '{entity.Name}' was deleted.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
     }
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    public async Task
-        RestoreAsync
-    (
-        long id
-    )
-    {
-        const long userId =
-            1;
-
-
-        var entity =
-            await _context
-                .Set<global::AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchasesMb>()
-                .FirstOrDefaultAsync(
-                    x =>
-                        x.Id == id
-                        &&
-                        x.IsDeleted
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return;
-        }
-
-
-        entity.IsDeleted =
-            false;
-
-
-        entity.IsActive =
-            true;
-
-
-        entity.ModifiedBy =
-            userId;
-
-
-        entity.ModifiedDate =
-            DateTime.UtcNow;
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "Procurement",
-
-                EntityName =
-                    "PurchasesMb",
-
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Restore",
-
-                ActivityTitle =
-                    "PurchasesMb Restored",
-
-                ActivityDescription =
-                    $"PurchasesMb '{entity.Name}' was restored.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
-    }
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "Procurement"
-
-                    &&
-
-                    x.EntityName ==
-                    "PurchasesMb"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "Procurement"
-
-                    &&
-
-                    x.EntityName ==
-                    "PurchasesMb"
-
-                    &&
-
-                    x.EntityId ==
-                    id
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
 }

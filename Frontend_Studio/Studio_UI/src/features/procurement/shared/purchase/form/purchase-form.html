@@ -1,0 +1,1776 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+         Center : Branch + Financial Year, status
+         Right  : commands (at most 3) + back to list
+           Add          : Save, Clear
+           Edit (Draft) : Update, Approve, Clear
+           View Draft   : Approve, Edit
+           Approved     : Post, Return, Print (Print on Approval)
+           Posted       : Cancel, Print
+           Cancelled    : Print
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-file-invoice-dollar"
+        [title]="pageTitle"
+        subtitle="Purchase : Draft → Approved → Posted">
+
+        <div
+            pageHeaderCenter
+            class="pof-center">
+
+          <div class="pof-ribbon">
+
+            <div class="pof-chip">
+
+                <span class="pof-chip-icon pof-chip-icon-branch">
+                    <i class="fas fa-building"></i>
+                </span>
+
+                <span class="pof-chip-text">
+                    <span class="pof-chip-label">Branch</span>
+                    <strong>{{ branchName || 'Not set' }}</strong>
+                </span>
+
+            </div>
+
+            <span class="pof-ribbon-sep"></span>
+
+            <div
+                class="pof-chip"
+                [class.pof-chip-error]="!!periodError && isEditable"
+                [title]="periodError">
+
+                <span class="pof-chip-icon pof-chip-icon-year">
+                    <i class="fas fa-calendar-days"></i>
+                </span>
+
+                <span class="pof-chip-text">
+                    <span class="pof-chip-label">Financial Year</span>
+                    <strong>{{ financialYearText }}</strong>
+                </span>
+
+            </div>
+
+            <span class="pof-ribbon-sep"></span>
+
+            <div class="pof-state">
+
+                <span [class]="statusClass">
+                    {{ order ? status : 'New Draft' }}
+                </span>
+
+                @if (hasChanges && isEditable)
+                {
+                    <span class="pof-unsaved">
+                        <i class="fas fa-circle"></i>
+                        Unsaved
+                    </span>
+                }
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="command1.text"
+            [command1Icon]="command1.icon"
+            [command1Visible]="!!command1.command"
+            [command1Activity]="command1.activity"
+            (command1Click)="onCommand(0)"
+            [command2Text]="command2.text"
+            [command2Icon]="command2.icon"
+            [command2Visible]="!!command2.command"
+            [command2Activity]="command2.activity"
+            (command2Click)="onCommand(1)"
+            [command3Text]="command3.text"
+            [command3Icon]="command3.icon"
+            [command3Visible]="!!command3.command"
+            [command3Activity]="command3.activity"
+            (command3Click)="onCommand(2)"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         SECTION 02 : BODY
+    ====================================================== -->
+
+    <div class="pof-body">
+
+        @if (loading)
+        {
+            <div class="pof-loading">
+
+                <app-orbit-loader
+                    title="Loading Purchase"
+                    message="Please wait while the purchase is being loaded."
+                    size="medium"
+                    [showMessage]="true"
+                    [overlay]="false">
+
+                </app-orbit-loader>
+
+            </div>
+        }
+        @else
+        {
+            <!-- Period problem (Add / Edit) -->
+            @if (periodError && isEditable)
+            {
+                <div class="pof-banner pof-banner-warn">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>{{ periodError }}</span>
+                </div>
+            }
+
+            <!-- Cancelled : journal reversed, stock out again -->
+            @if (order && status === 'Cancelled')
+            {
+                <div class="pof-banner pof-banner-cancelled">
+                    <i class="fas fa-ban"></i>
+                    <span>
+                        <strong>Cancelled</strong>
+                        on {{ displayDate(order.CancelledDate) }}
+                        @if (order.CancelReason)
+                        {
+                            : {{ order.CancelReason }}
+                        }
+                    </span>
+                </div>
+            }
+
+            <!-- Posted : journal made; stock in (here or on receiving) -->
+            @if (order && status === 'Posted')
+            {
+                <div class="pof-banner pof-banner-info">
+                    <i class="fas fa-book"></i>
+                    <span>
+                        Posted on {{ displayDate(order.PostedDate) }}
+                        @if (order.VoucherNo)
+                        {
+                            · Journal <strong>{{ order.VoucherNo }}</strong>
+                        }
+                        ·
+                        @if (order.StockedIn)
+                        {
+                            Stock received{{ order.WarehouseName ? ' into ' + order.WarehouseName : '' }}.
+                        }
+                        @else
+                        {
+                            Stock comes in on Product Receiving.
+                        }
+                    </span>
+                </div>
+            }
+
+            <!-- PO Required : no open order for the supplier -->
+            @if (isEditable && poRequired && supplierCode && !ordersLoading && orderItems.length === 0)
+            {
+                <div class="pof-banner pof-banner-warn">
+                    <i class="fas fa-file-circle-exclamation"></i>
+                    <span>This supplier has no approved or placed Purchase Order with quantity left. A purchase needs one (System Configuration › PO Required).</span>
+                </div>
+            }
+
+            <!-- =================================================
+                 LEFT  : Purchase Information, Supplier Documents,
+                         Add <item>
+                 RIGHT : Pricing Terms (one line), Narration (single
+                         line), Purchase Summary
+                         (fills the rest; ends with the left column,
+                         its rows scroll)
+            ================================================== -->
+
+            <div class="pof-grid pur-grid">
+
+              <!-- Row 1 : Purchase Information | Pricing Terms + Narration
+                   (one height : the taller decides, the other stretches) -->
+
+              <div class="pof-col pof-col-left pur-top">
+
+                <!-- 1. PURCHASE INFORMATION
+                     No, Date, Warehouse (received here) / Supplier, PO -->
+
+                <div class="pof-card">
+
+                    <div class="pof-card-header">
+
+                        <i class="fas fa-file-invoice-dollar"></i>
+
+                        <span>Purchase Information</span>
+
+                    </div>
+
+                    <div class="pof-grid-3 pof-fields">
+
+                        <app-textbox
+                            class="pof-order-no"
+                            label="Purchase No"
+                            placeholder="Assigned on save"
+                            [value]="orderNoText"
+                            [readonly]="true">
+
+                        </app-textbox>
+
+                        <app-datepicker
+                            label="Purchase Date"
+                            [required]="true"
+                            [value]="$any(orderDateValue)"
+                            [minDate]="minOrderDate"
+                            [maxDate]="maxOrderDate"
+                            (valueChange)="onOrderDateChange($event)"
+                            [disabled]="isReadonly">
+
+                        </app-datepicker>
+
+                        @if (receivedOnPurchase)
+                        {
+                            <app-search-dropdown
+                                label="Warehouse"
+                                placeholder="Select warehouse"
+                                [items]="warehouseItems"
+                                [value]="warehouseId"
+                                (valueChange)="onWarehouseChange($event)"
+                                [disabled]="isReadonly"
+                                [required]="true">
+
+                            </app-search-dropdown>
+                        }
+                        @else
+                        {
+                            <app-textbox
+                                label="Stock In"
+                                [value]="'On Product Receiving'"
+                                [readonly]="true">
+
+                            </app-textbox>
+                        }
+
+                        <!-- Supplier | Purchase Order : half and half (PO
+                             Required ON); Supplier full width otherwise -->
+                        <div
+                            class="pof-span-all pur-sup-po"
+                            [class.pur-sup-po-half]="poRequired">
+
+                            <app-search-dropdown
+                                label="Supplier"
+                                placeholder="Select supplier"
+                                [items]="supplierItems"
+                                [value]="supplierCode || null"
+                                (valueChange)="onSupplierChange($event)"
+                                [disabled]="isReadonly"
+                                [required]="true">
+
+                            </app-search-dropdown>
+
+                            @if (poRequired)
+                            {
+                                <app-search-dropdown
+                                    label="Purchase Order"
+                                    [placeholder]="!supplierCode ? 'Select supplier first' : ordersLoading ? 'Loading orders...' : 'Select purchase order'"
+                                    [items]="orderItems"
+                                    [value]="orderId"
+                                    (valueChange)="onOrderChange($event)"
+                                    [disabled]="isReadonly || !supplierCode || ordersLoading"
+                                    [required]="true">
+
+                                </app-search-dropdown>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+              </div>
+
+              <div class="pof-col pof-col-right pur-top">
+
+                <!-- PRICING TERMS : one line. Change opens the terms
+                     to the right in the same line (no extra height) -->
+
+                <div
+                    class="pof-card pur-tb"
+                    [class.pur-tb-open]="termsOpen && !isReadonly">
+
+                    <div class="pur-tb-row">
+
+                        <span class="pur-tb-title">
+                            <i class="fas fa-sliders"></i>
+                            Pricing Terms
+                        </span>
+
+                        <span class="pur-tb-sep"></span>
+
+                        @if (!termsOpen || isReadonly)
+                        {
+                            <!-- The terms and where they came from -->
+                            <div class="pur-tb-body">
+
+                                @for (part of termsSummary; track part)
+                                {
+                                    <span class="pof-term-chip">{{ part }}</span>
+                                }
+
+                                @if (vatChip; as chip)
+                                {
+                                    <span class="pof-tip-wrap">
+                                        <button
+                                            type="button"
+                                            class="pof-vat-chip"
+                                            [class.pof-vat-tone-claim]="chip.tone === 'claim'"
+                                            [class.pof-vat-tone-cost]="chip.tone === 'cost'"
+                                            [class.pof-vat-tone-none]="chip.tone === 'none'"
+                                            [attr.aria-label]="chip.tip">
+                                            @if (chip.label)
+                                            {
+                                                {{ chip.label }}
+                                            }
+                                            <i class="fas fa-circle-info"></i>
+                                        </button>
+                                        <span class="pof-tip" role="tooltip">{{ chip.tip }}</span>
+                                    </span>
+                                }
+
+                                @if (profitNote)
+                                {
+                                    <span class="pof-tip-wrap">
+                                        <button
+                                            type="button"
+                                            class="pof-terms-source pof-terms-source-fixed pof-terms-source-tip"
+                                            [attr.aria-label]="profitNote">
+                                            <i class="fas fa-lock"></i>
+                                            {{ termsSource }}
+                                            <i class="fas fa-circle-info"></i>
+                                        </button>
+                                        <span class="pof-tip" role="tooltip">{{ profitNote }}</span>
+                                    </span>
+                                }
+                                @else
+                                {
+                                    <span
+                                        class="pof-terms-source"
+                                        [class.pof-terms-source-fixed]="anyTermLocked">
+                                        @if (anyTermLocked)
+                                        {
+                                            <i class="fas fa-lock"></i>
+                                        }
+                                        {{ termsSource }}
+                                    </span>
+                                }
+
+                            </div>
+                        }
+                        @else
+                        {
+                            <!-- Open : label + control side by side -->
+                            <div class="pur-tb-body pur-tb-edit">
+
+                                <div class="pur-tb-term">
+                                    <span class="pur-tb-label">Prices</span>
+                                    @if (purchaseVatOn)
+                                    {
+                                        <app-control-segment
+                                            name="pof-price-entry"
+                                            [title]="invoicePriceBasis === 'MRP' ? 'MRP invoice : prices include VAT (Excl. VAT is not available), or No VAT on this invoice.' : 'Prices with or without VAT, or No VAT on this invoice (supplier not VAT-registered).'"
+                                            [items]="priceModeItems"
+                                            [value]="priceMode"
+                                            [disabled]="isReadonly || priceLocked"
+                                            (valueChange)="onPriceModeChange($event)">
+                                        </app-control-segment>
+                                    }
+                                    @else
+                                    {
+                                        <span
+                                            class="pof-novat"
+                                            title="Purchase VAT is not applicable on the purchase date (VAT Management)">
+                                            <i class="fas fa-ban"></i>
+                                            No VAT
+                                        </span>
+                                    }
+                                </div>
+
+                                @if (mrpPricing)
+                                {
+                                    <div class="pur-tb-term">
+                                        <span class="pur-tb-label">Invoice Price</span>
+                                        <app-control-segment
+                                            name="pof-invoice-price"
+                                            title="MRP : the supplier bills MRP less its margin · DP : the supplier bills the dealer price"
+                                            [items]="invoicePriceItems"
+                                            [value]="invoicePriceBasis"
+                                            [disabled]="isReadonly || invoiceLocked"
+                                            (valueChange)="onInvoicePriceChange($event)">
+                                        </app-control-segment>
+                                    </div>
+
+                                    @if (marginMode)
+                                    {
+                                        <div class="pur-tb-term">
+                                            <span class="pur-tb-label">
+                                                Margin %
+                                                @if (profitLocked)
+                                                {
+                                                    <i class="fas fa-lock pof-term-lock" title="Fixed by the supplier (System Configuration › Edit Supplier Terms)"></i>
+                                                }
+                                            </span>
+                                            <div class="pof-default-profit pur-tb-margin">
+
+                                                <app-textbox
+                                                    placeholder="0"
+                                                    inputMode="decimal"
+                                                    [value]="defaultProfitText"
+                                                [attr.title]="headerMarginTip"
+                                                    (valueChange)="onDefaultProfitText($event)"
+                                                    [disabled]="isReadonly || profitLocked">
+
+                                                </app-textbox>
+
+                                                <button
+                                                    type="button"
+                                                    class="pof-apply"
+                                                    title="Apply to all lines : every line takes this Margin % (DP worked out again from its MRP)"
+                                                    aria-label="Apply the Margin % to all lines"
+                                                    [disabled]="isReadonly || lines.length === 0"
+                                                    (click)="applyProfitToAll()">
+                                                    <i class="fas fa-wand-magic-sparkles"></i>
+                                                </button>
+
+                                            </div>
+                                        </div>
+                                    }
+                                }
+
+                            </div>
+                        }
+
+                        <!-- Notes as a tip (keeps the line single) -->
+                        @if (termsOpen && !isReadonly && (vatTermsNote || profitNote))
+                        {
+                            <span class="pof-tip-wrap pof-tip-right pur-tb-note">
+                                <button
+                                    type="button"
+                                    class="pof-info-btn"
+                                    [attr.aria-label]="(vatTermsNote?.text ?? '') + ' ' + (profitNote ?? '')">
+                                    <i class="fas fa-circle-info"></i>
+                                </button>
+                                <span class="pof-tip" role="tooltip">
+                                    {{ vatTermsNote?.text }}
+                                    @if (vatTermsNote && profitNote)
+                                    {
+                                        <br>
+                                    }
+                                    {{ profitNote }}
+                                </span>
+                            </span>
+                        }
+
+                        <!-- A warning always shows (an icon with its text as a tip) -->
+                        @if (vatTermsNote?.warn)
+                        {
+                            <span class="pof-tip-wrap pof-tip-right">
+                                <span class="pur-tb-warn" [attr.aria-label]="vatTermsNote?.text">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                </span>
+                                <span class="pof-tip" role="tooltip">{{ vatTermsNote?.text }}</span>
+                            </span>
+                        }
+
+                        @if (!isReadonly)
+                        {
+                            <button
+                                type="button"
+                                class="pof-terms-toggle"
+                                [title]="termsOpen ? 'Close the pricing terms' : 'Change the pricing terms of this purchase'"
+                                (click)="toggleTerms()">
+                                <i [class]="termsOpen ? 'fas fa-check' : 'fas fa-pen'"></i>
+                                {{ termsOpen ? 'Done' : 'Change' }}
+                            </button>
+                        }
+
+                    </div>
+
+                </div>
+
+                <!-- NARRATION : fills what the terms bar leaves, so this
+                     block is as tall as Purchase Information -->
+
+                <div class="pof-card pur-narr-card">
+
+                    <div class="pof-card-header">
+                        <i class="fas fa-align-left"></i>
+                        <span>Narration <b class="pof-req">*</b></span>
+                    </div>
+
+                    <div class="pof-narration pur-narr">
+
+                        <app-textarea
+                            placeholder="Remarks on this purchase (required; goes to the journal)"
+                            [required]="true"
+                            [rows]="1"
+                            [maxLength]="1000"
+                            [value]="narration"
+                            (valueChange)="onNarrationChange($event)"
+                            [readonly]="isReadonly">
+
+                        </app-textarea>
+
+                    </div>
+
+                </div>
+
+              </div>
+
+              <!-- Row 2 : Supplier Documents, Add <item> | Purchase Summary -->
+
+              <div class="pof-col pof-col-left">
+
+                <!-- 2. SUPPLIER DOCUMENTS : Mushak 6.3, invoice, DO, gate pass -->
+
+                <div class="pof-card">
+
+                    <div class="pof-card-header">
+
+                        <i class="fas fa-receipt"></i>
+
+                        <span>Mushak 6.3 &amp; Supplier Documents</span>
+
+                    </div>
+
+                    <div class="pof-grid-3 pof-fields">
+
+                        <app-textbox
+                            label="Supplier Invoice No"
+                            [placeholder]="invoiceRequired ? 'Required' : oneDocumentNeeded ? 'Invoice or Mushak' : 'Optional'"
+                            textCase="upper"
+                            [maxLength]="50"
+                            [value]="supplierInvoiceNo"
+                            (valueChange)="onInvoiceNoChange($event)"
+                            [readonly]="isReadonly"
+                            [required]="invoiceRequired">
+
+                        </app-textbox>
+
+                        <app-datepicker
+                            label="Invoice Date"
+                            [placeholder]="invoiceRequired || supplierInvoiceNo ? 'Select date' : oneDocumentNeeded ? 'Invoice or Mushak' : 'Optional'"
+                            [required]="invoiceRequired"
+                            [value]="$any(supplierInvoiceDate)"
+                            [maxDate]="orderDateValue"
+                            (valueChange)="onInvoiceDateChange($event)"
+                            [disabled]="isReadonly">
+
+                        </app-datepicker>
+
+                        <app-textbox
+                            label="DO Reference"
+                            [placeholder]="doRequired ? 'Required' : 'Optional'"
+                            textCase="upper"
+                            [maxLength]="50"
+                            [value]="doReference"
+                            (valueChange)="onDoReferenceChange($event)"
+                            [readonly]="isReadonly"
+                            [required]="doRequired">
+
+                        </app-textbox>
+
+                        <app-textbox
+                            [class.pur-field-bad]="!!mushakError"
+                            [attr.title]="mushakError || null"
+                            label="Mushak 6.3 No"
+                            [placeholder]="mushakRequired ? 'Required' : oneDocumentNeeded ? 'Invoice or Mushak' : 'Optional'"
+                            textCase="upper"
+                            [maxLength]="50"
+                            [value]="mushakNo"
+                            (valueChange)="onMushakNoChange($event)"
+                            [readonly]="isReadonly"
+                            [required]="mushakRequired">
+
+                        </app-textbox>
+
+                        <app-datepicker
+                            label="Mushak Date"
+                            [placeholder]="mushakRequired || mushakNo ? 'Select date' : oneDocumentNeeded ? 'Invoice or Mushak' : 'Optional'"
+                            [value]="$any(mushakDate)"
+                            [maxDate]="orderDateValue"
+                            (valueChange)="onMushakDateChange($event)"
+                            [disabled]="isReadonly"
+                            [required]="mushakRequired || !!mushakNo">
+
+                        </app-datepicker>
+
+                        <app-textbox
+                            label="Gate Pass No"
+                            [placeholder]="gatePassRequired ? 'Required' : 'Optional'"
+                            textCase="upper"
+                            [maxLength]="50"
+                            [value]="gatePassNo"
+                            (valueChange)="onGatePassChange($event)"
+                            [readonly]="isReadonly"
+                            [required]="gatePassRequired">
+
+                        </app-textbox>
+
+                    </div>
+
+                    @if (mushakError && isEditable)
+                    {
+                        <div
+                            class="pof-error pur-doc-hint"
+                            [title]="mushakError">
+                            <i class="fas fa-circle-exclamation"></i>
+                            <span>{{ mushakError }}</span>
+                        </div>
+                    }
+                    @else if (oneDocumentNeeded && isEditable)
+                    {
+                        <div
+                            class="pof-hint pof-hint-terms pur-doc-hint pof-hint-warn"
+                            title="Neither switch requires a document, but a purchase still needs the supplier's invoice (No + Date) or the Mushak 6.3 (No + Date).">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>Enter the invoice or the Mushak 6.3 (No + Date) : at least one.</span>
+                        </div>
+                    }
+                    @else if (vatEditable && isEditable)
+                    {
+                        <div
+                            class="pof-hint pof-hint-terms pur-doc-hint"
+                            title="VAT as per 6.3 : type the VAT % of each line as it is on the supplier's Mushak 6.3 (blank = the Purchase VAT rule).">
+                            <i class="fas fa-circle-info"></i>
+                            <span>Line VAT % as on the Mushak 6.3 (blank = VAT rule).</span>
+                        </div>
+                    }
+
+                </div>
+
+                <!-- 3. ADD ITEM (motor bike / spare part / accessory) -->
+
+                <div
+                    class="pof-card pur-add-card"
+                    [class.pof-locked]="lineLocked">
+
+                    <div class="pof-card-header">
+
+                        <i [class]="isEditingLine ? 'fas fa-pen-to-square' : 'fas ' + page.icon"></i>
+
+                        <span>{{ lineCardTitle }}</span>
+
+                        <!-- Notices as icons (hover for the text) : the card
+                             has no room for message lines -->
+                        <span class="pur-hd-notes">
+                            @if (lineError)
+                            {
+                                <span class="pof-tip-wrap">
+                                    <span class="pur-hd-ico pur-hd-red" [attr.aria-label]="lineError">
+                                        <i class="fas fa-circle-exclamation"></i>
+                                    </span>
+                                    <span class="pof-tip" role="tooltip">{{ lineError }}</span>
+                                </span>
+                            }
+                            @if (stockNote; as note)
+                            {
+                                <span class="pof-tip-wrap">
+                                    <span
+                                        class="pur-hd-ico"
+                                        [class.pur-hd-red]="note.tone === 'red'"
+                                        [class.pur-hd-amber]="note.tone === 'amber'"
+                                        [class.pur-hd-green]="note.tone === 'green'"
+                                        [attr.aria-label]="note.text">
+                                        <i class="fas fa-boxes-stacked"></i>
+                                    </span>
+                                    <span class="pof-tip" role="tooltip">{{ note.text }}</span>
+                                </span>
+                            }
+                            @if (marginHint; as mh)
+                            {
+                                <span class="pof-tip-wrap">
+                                    <span
+                                        class="pur-hd-ico"
+                                        [class.pur-hd-green]="mh.last"
+                                        [attr.aria-label]="mh.text">
+                                        <i class="fas fa-percent"></i>
+                                    </span>
+                                    <span class="pof-tip" role="tooltip">{{ mh.text }}</span>
+                                </span>
+                            }
+                            @if (!needsSupplier && mrpHint; as hint)
+                            {
+                                <span class="pof-tip-wrap">
+                                    <span
+                                        class="pur-hd-ico"
+                                        [class.pur-hd-amber]="hint.warn"
+                                        [attr.aria-label]="hint.text">
+                                        <i [class]="hint.warn ? 'fas fa-triangle-exclamation' : 'fas fa-tag'"></i>
+                                    </span>
+                                    <span class="pof-tip" role="tooltip">{{ hint.text }}</span>
+                                </span>
+                            }
+                        </span>
+
+                        <!-- Editing a line : Cancel goes back to Add -->
+                        @if (isEditingLine)
+                        {
+                            <button
+                                type="button"
+                                class="pof-cancel-edit"
+                                title="Cancel edit"
+                                aria-label="Cancel edit"
+                                [disabled]="lineLocked"
+                                (click)="cancelEdit()">
+
+                                <i class="fas fa-xmark"></i>
+
+                            </button>
+                        }
+
+                        <!-- Product Shelf : pick several at once (not when the
+                             lines come from a Purchase Order) -->
+                        @if (!isEditingLine && !poRequired)
+                        {
+                            <button
+                                type="button"
+                                class="pof-shelf"
+                                title="Product Shelf : pick several items at once"
+                                [disabled]="lineLocked"
+                                (click)="openShelf()">
+                                <i class="fas fa-store"></i>
+                                Shelf
+                            </button>
+                        }
+
+                        <button
+                            type="button"
+                            class="pof-add"
+                            [class.pof-add-after]="isEditingLine"
+                            [disabled]="lineLocked"
+                            (click)="onAddLine()">
+
+                            <i [class]="isEditingLine ? 'fas fa-check' : 'fas fa-plus'"></i>
+                            {{ isEditingLine ? 'Update' : 'Add' }}
+
+                        </button>
+
+                    </div>
+
+                    <div class="pof-grid-3 pof-fields">
+
+                        <app-search-dropdown
+                            label="Category"
+                            placeholder="All"
+                            [items]="categoryItems"
+                            [value]="categoryId"
+                            (valueChange)="onCategoryChange($event)"
+                            [disabled]="lineLocked">
+
+                        </app-search-dropdown>
+
+                        <app-search-dropdown
+                            label="Sub-Category"
+                            placeholder="All"
+                            [items]="subCategoryItems"
+                            [value]="subCategoryId"
+                            (valueChange)="onSubCategoryChange($event)"
+                            [disabled]="lineLocked">
+
+                        </app-search-dropdown>
+
+                        <div class="pof-vat-field">
+
+                            @if (vatEditable)
+                            {
+                                <!-- VAT as per 6.3 : typed from the Mushak -->
+                                <app-textbox
+                                    label="VAT %"
+                                    [placeholder]="vatRateText || '0'"
+                                    inputMode="decimal"
+                                    [value]="vatText"
+                                    (valueChange)="onVatTextChange($event)"
+                                    (enterPressed)="onAddLine()"
+                                    [disabled]="lineLocked">
+
+                                </app-textbox>
+                            }
+                            @else
+                            {
+                                <app-textbox
+                                    label="VAT %"
+                                    placeholder="—"
+                                    [value]="vatRateText"
+                                    [readonly]="true">
+
+                                </app-textbox>
+                            }
+
+                            @if (vatRateTip)
+                            {
+                                <span class="pof-tip-wrap pof-tip-right pof-vat-info">
+                                    <button
+                                        type="button"
+                                        class="pof-info-btn"
+                                        [attr.aria-label]="vatRateTip">
+                                        <i class="fas fa-circle-info"></i>
+                                    </button>
+                                    <span class="pof-tip" role="tooltip">{{ vatRateTip }}</span>
+                                </span>
+                            }
+
+                        </div>
+
+                        <app-search-dropdown
+                            class="pof-span-two"
+                            [label]="itemLabel"
+                            [placeholder]="'Select ' + itemLabel.toLowerCase()"
+                            [items]="productItems"
+                            [value]="productCode || null"
+                            (valueChange)="onProductChange($event)"
+                            [disabled]="lineLocked"
+                            [required]="true">
+
+                        </app-search-dropdown>
+
+                        <!-- Total Stock (all branches) : read-only, with the
+                             branch list; "—" until Product Receiving -->
+                        <div class="pof-stock-field">
+
+                            <app-textbox
+                                class="pof-stock"
+                                label="Total Stock"
+                                placeholder="—"
+                                [value]="stockText"
+                                [readonly]="true">
+
+                            </app-textbox>
+
+                            <button
+                                type="button"
+                                class="pof-stock-btn"
+                                title="Stock by branch"
+                                aria-label="Stock by branch"
+                                [disabled]="!productCode"
+                                (click)="toggleStockList()">
+                                <i class="fas fa-location-dot"></i>
+                            </button>
+
+                            @if (stockListOpen && productCode)
+                            {
+                                <div class="pof-stock-pop" role="dialog" aria-label="Stock by branch">
+                                    <div class="pof-stock-pop-head">
+                                        <span>Stock by branch</span>
+                                        <button
+                                            type="button"
+                                            aria-label="Close"
+                                            (click)="toggleStockList()">
+                                            <i class="fas fa-xmark"></i>
+                                        </button>
+                                    </div>
+                                    <div class="pof-stock-pop-empty">
+                                        <i class="fas fa-warehouse"></i>
+                                        Branch-wise stock shows here once Product Receiving is built.
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+
+                        <!-- Read-only, just before Quantity -->
+                        <app-textbox
+                            class="pof-stock"
+                            label="Re-order Level"
+                            placeholder="Not set"
+                            [value]="reorderText"
+                            [readonly]="true">
+
+                        </app-textbox>
+
+                        <app-textbox
+                            class="pof-stock"
+                            [class.pof-suggest-red]="pickedStock?.status === 'red'"
+                            [class.pof-suggest-amber]="pickedStock?.status === 'amber'"
+                            label="Suggested Qty"
+                            placeholder="—"
+                            [value]="suggestedText"
+                            [readonly]="true">
+
+                        </app-textbox>
+
+                        <!-- Quantity first, then the rate -->
+
+                        <app-textbox
+                            label="Quantity"
+                            placeholder="0"
+                            inputMode="decimal"
+                            [value]="quantityText"
+                            (valueChange)="onQuantityText($event)"
+                            (enterPressed)="onAddLine()"
+                            [disabled]="lineLocked"
+                            [required]="true">
+
+                        </app-textbox>
+
+                        @if (freeGoodsAllowed)
+                        {
+                            <app-textbox
+                                label="Free Qty"
+                                placeholder="0"
+                                inputMode="decimal"
+                                [value]="freeText"
+                                (valueChange)="onFreeText($event)"
+                                (enterPressed)="onAddLine()"
+                                [disabled]="lineLocked">
+
+                            </app-textbox>
+                        }
+
+                        @if (showMrp)
+                        {
+                            <app-textbox
+                                label="MRP"
+                                placeholder="0.00"
+                                inputMode="decimal"
+                                [value]="mrpText"
+                                (valueChange)="onMrpText($event)"
+                                (enterPressed)="onAddLine()"
+                                [disabled]="lineLocked"
+                                [required]="invoicePriceBasis === 'MRP'">
+
+                            </app-textbox>
+                        }
+
+                        @if (marginMode)
+                        {
+                            <app-textbox
+                                [label]="marginBoxLabel"
+                                [placeholder]="marginPlaceholder"
+                                [attr.title]="marginHint?.text || null"
+                                inputMode="decimal"
+                                [value]="profitText"
+                                (valueChange)="onProfitText($event)"
+                                (enterPressed)="onAddLine()"
+                                [disabled]="lineLocked">
+
+                            </app-textbox>
+                        }
+
+                        <app-textbox
+                            [label]="dpLabel"
+                            placeholder="0.00"
+                            inputMode="decimal"
+                            [readonly]="marginMode"
+                            [attr.title]="marginMode ? 'Worked out from MRP and Margin % (MRP invoice)' : null"
+                            [value]="unitPriceText"
+                            (valueChange)="onUnitPriceText($event)"
+                            (enterPressed)="onAddLine()"
+                            [disabled]="lineLocked"
+                            [required]="true">
+
+                        </app-textbox>
+
+                        @if (mrpPricing)
+                        {
+                            <app-textbox
+                                label="Line Total (DP)"
+                                placeholder="0.00"
+                                inputMode="decimal"
+                                [readonly]="marginMode"
+                                [value]="totalText"
+                                (valueChange)="onTotalText($event)"
+                                (enterPressed)="onAddLine()"
+                                [disabled]="lineLocked">
+
+                            </app-textbox>
+                        }
+
+                        <app-textbox
+                            label="Short Notes"
+                            [class.pof-span-all]="freeGoodsAllowed"
+                            placeholder="Optional"
+                            textCase="none"
+                            [maxLength]="200"
+                            [value]="shortNotes"
+                            (valueChange)="onShortNotes($event)"
+                            (enterPressed)="onAddLine()"
+                            [disabled]="lineLocked">
+
+                        </app-textbox>
+
+                    </div>
+
+                    @if (needsSupplier)
+                    {
+                        <div class="pof-hint pof-hint-mrp">
+                            <i class="fas fa-truck-field"></i>
+                            Select a supplier first : then pick {{ page.itemArticle }}.
+                        </div>
+                    }
+                    @else if (poRequired && !orderId && isEditable)
+                    {
+                        <div class="pof-hint pof-hint-mrp">
+                            <i class="fas fa-file-signature"></i>
+                            Select the Purchase Order : its lines with quantity left come in, then change them as billed.
+                        </div>
+                    }
+
+                    @if (vatMessage && isEditable && vatCharged && vatWarn)
+                    {
+                        <div
+                            class="pof-hint"
+                            [class.pof-hint-warn]="vatWarn">
+                            <i [class]="vatWarn ? 'fas fa-triangle-exclamation' : 'fas fa-circle-info'"></i>
+                            {{ vatMessage }}
+                        </div>
+                    }
+
+                </div>
+
+              </div>
+
+              <div class="pof-col pof-col-right">
+
+                <!-- PURCHASE SUMMARY (fills the rest; rows scroll) -->
+
+                <div class="pof-summary-slot">
+
+                    <div class="pof-card pof-summary">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-list-check"></i>
+                            <span>Purchase Summary</span>
+                            @if (order?.OrderNo || selectedOrder)
+                            {
+                                <span class="pur-po-tag" title="The Purchase Order billed">
+                                    <i class="fas fa-link"></i>
+                                    {{ selectedOrder?.OrderNo || order?.OrderNo }}
+                                </span>
+                            }
+                            <span
+                                class="pof-count"
+                                [title]="maxLines > 0 ? 'Lines entered / maximum per purchase (System Configuration)' : ''">
+                                @if (maxLines > 0)
+                                {
+                                    {{ lines.length }} / {{ maxLines }} lines
+                                }
+                                @else
+                                {
+                                    {{ lines.length }} {{ lines.length === 1 ? 'line' : 'lines' }}
+                                }
+                            </span>
+                        </div>
+
+                        <!-- Rows scroll; header and totals stay -->
+                        <div class="pof-table-scroll appcore-scrollbar">
+
+                            <table class="pof-table">
+
+                                <colgroup>
+                                    <col class="pof-col-sl">
+                                    <col>
+                                    <col class="pof-col-qty">
+                                    @if (showMrp)
+                                    {
+                                        <col class="pof-col-money">
+                                    }
+                                    @if (marginMode)
+                                    {
+                                        <col class="pof-col-rate">
+                                    }
+                                    <col class="pof-col-money">
+                                    <col class="pof-col-num">
+                                    <col class="pof-col-money">
+                                    @if (mrpPricing)
+                                    {
+                                        <col class="pof-col-money">
+                                    }
+                                    <col class="pof-col-action">
+                                </colgroup>
+
+                                <thead>
+                                    <tr>
+                                        <th class="pof-sl">SL</th>
+                                        <th>{{ page.item }}</th>
+                                        <th class="pof-num">Qty</th>
+                                        @if (showMrp)
+                                        {
+                                            <th class="pof-num">MRP</th>
+                                        }
+                                        @if (marginMode)
+                                        {
+                                            <th class="pof-num" [title]="profitLabel">Margin %</th>
+                                        }
+                                        <th class="pof-num">{{ priceWord }}</th>
+                                        <th class="pof-num">Line Total</th>
+                                        <th class="pof-num">VAT</th>
+                                        @if (mrpPricing)
+                                        {
+                                            <th class="pof-num" title="Amount without VAT ÷ (Qty + Free Qty)">Net Cost</th>
+                                        }
+                                        <th class="pof-action">Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    @for (line of lines; track line.ProductCode)
+                                    {
+                                        <tr
+                                            [class.pur-row-clash]="lineHasClash(line)"
+                                            [class.pof-row-editable]="isEditable"
+                                            [class.pof-row-editing]="editingIndex === $index"
+                                            [title]="isEditable ? 'Double-click to edit' : ''"
+                                            (dblclick)="startEdit($index)">
+
+                                            <td class="pof-sl">{{ $index + 1 }}</td>
+
+                                            <td>
+                                                <div class="pof-ledger">{{ line.ProductName }}</div>
+                                                <div class="pof-sub">
+                                                    {{ line.ProductCode }}
+                                                    @if (line.ShortNotes)
+                                                    {
+                                                        · {{ line.ShortNotes }}
+                                                    }
+                                                </div>
+                                            </td>
+
+                                            <td class="pof-num">
+                                                {{ line.Quantity }} <span class="pof-unit">{{ line.Unit }}</span>
+                                                @if (line.FreeQuantity > 0)
+                                                {
+                                                    <span class="pof-free">+{{ line.FreeQuantity }} free</span>
+                                                }
+                                                @if (isEditable && poLeft(line.PurchaseOrderLineId) !== null)
+                                                {
+                                                    <span
+                                                        class="pof-billed"
+                                                        title="Quantity (with free) the Purchase Order still has for this line">PO left {{ poLeft(line.PurchaseOrderLineId) }}</span>
+                                                }
+                                                @if ((line.ReturnedQuantity ?? 0) > 0)
+                                                {
+                                                    <span class="pof-billed pur-returned">Returned {{ line.ReturnedQuantity }}</span>
+                                                }
+                                                @if (lineStock(line.ProductCode); as st)
+                                                {
+                                                    <span
+                                                        class="pof-line-stock"
+                                                        [class.pof-stock-red]="st.tone === 'red'"
+                                                        [class.pof-stock-amber]="st.tone === 'amber'"
+                                                        [class.pof-stock-green]="st.tone === 'green'">
+                                                        <i class="fas fa-circle"></i>{{ st.text }}
+                                                    </span>
+                                                }
+                                            </td>
+
+                                            @if (showMrp)
+                                            {
+                                                <td class="pof-num">{{ line.Mrp > 0 ? money(line.Mrp) : '—' }}</td>
+                                            }
+
+                                            @if (marginMode)
+                                            {
+                                                <td class="pof-num">
+                                                    {{ line.ProfitPercent }}
+                                                    @if (line.IsAdjusted)
+                                                    {
+                                                        <span
+                                                            class="pof-adj"
+                                                            title="DP or line total typed over the calculated figure">adj</span>
+                                                    }
+                                                </td>
+                                            }
+
+                                            <td class="pof-num">{{ money(line.UnitPrice) }}</td>
+
+                                            <td class="pof-num">{{ money(line.DpAmount) }}</td>
+
+                                            <td
+                                                class="pof-num"
+                                                [title]="'VAT ' + line.VatRate + '%'">
+                                                {{ money(line.VatAmount) }}
+                                            </td>
+
+                                            @if (mrpPricing)
+                                            {
+                                                <td class="pof-num">{{ money(line.NetUnitCost) }}</td>
+                                            }
+
+                                            <td class="pof-action">
+                                                @if (unitDesk && (isEditable || (line.Units?.length ?? 0) > 0))
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="pur-units-btn"
+                                                        [class.pur-units-short]="isEditable && unitsShort(line) > 0"
+                                                        [class.pur-units-clash]="lineHasClash(line)"
+                                                        [title]="'Bikes : ' + (line.Units?.length ?? 0) + ' of ' + unitsWanted(line) + ' with chassis and engine'"
+                                                        [attr.aria-label]="'Bikes of ' + line.ProductName"
+                                                        [disabled]="isSaving"
+                                                        (click)="openUnits($index); $event.stopPropagation()">
+                                                        <i class="fas fa-motorcycle"></i>
+                                                        {{ line.Units?.length ?? 0 }}/{{ unitsWanted(line) }}
+                                                    </button>
+                                                }
+                                                @if (isEditable)
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="pof-remove"
+                                                        title="Remove"
+                                                        [disabled]="isSaving || editingIndex === $index"
+                                                        [attr.aria-label]="'Remove ' + line.ProductName"
+                                                        (click)="removeLine($index)">
+                                                        <i class="fas fa-xmark"></i>
+                                                    </button>
+                                                }
+                                            </td>
+
+                                        </tr>
+                                    }
+
+                                    @if (lines.length === 0)
+                                    {
+                                        <tr>
+                                            <td
+                                                [attr.colspan]="tableCols"
+                                                class="pof-empty">
+                                                @if (poRequired && !orderId) { Select the Purchase Order : its lines come in here. } @else { No {{ page.itemLower }} yet. Pick one on the left and press Add. Double-click a line to edit it. }
+                                            </td>
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <!-- Totals : always visible under the rows -->
+                        <div class="pof-table-foot">
+
+                            <table class="pof-table">
+
+                                <colgroup>
+                                    <col class="pof-col-sl">
+                                    <col>
+                                    <col class="pof-col-qty">
+                                    @if (showMrp)
+                                    {
+                                        <col class="pof-col-money">
+                                    }
+                                    @if (marginMode)
+                                    {
+                                        <col class="pof-col-rate">
+                                    }
+                                    <col class="pof-col-money">
+                                    <col class="pof-col-num">
+                                    <col class="pof-col-money">
+                                    @if (mrpPricing)
+                                    {
+                                        <col class="pof-col-money">
+                                    }
+                                    <col class="pof-col-action">
+                                </colgroup>
+
+                                <tbody>
+
+                                    @if (invoicePriceBasis === 'MRP')
+                                    {
+                                        <tr class="pof-total pof-total-sub">
+                                            <td colspan="2">Total at MRP</td>
+                                            <td class="pof-num">{{ totalQuantity }}</td>
+                                            <td [attr.colspan]="qtyGapSpan"></td>
+                                            <td class="pof-num">{{ money(totalMrp) }}</td>
+                                            <td [attr.colspan]="mrpPricing ? 3 : 2"></td>
+                                        </tr>
+
+                                        <tr class="pof-total pof-total-sub">
+                                            <td [attr.colspan]="leadSpan">Less Margin</td>
+                                            <td class="pof-num">{{ money(-totalProfit) }}</td>
+                                            <td [attr.colspan]="mrpPricing ? 3 : 2"></td>
+                                        </tr>
+                                    }
+
+                                    <tr class="pof-total pof-total-sub">
+                                        <td colspan="2">{{ mrpPricing ? 'Total at DP' : 'Total' }}</td>
+                                        <td class="pof-num">{{ invoicePriceBasis === 'MRP' ? '' : totalQuantity }}</td>
+                                        <td [attr.colspan]="qtyGapSpan"></td>
+                                        <td class="pof-num">{{ money(totalDp) }}</td>
+                                        <td [attr.colspan]="mrpPricing ? 3 : 2"></td>
+                                    </tr>
+
+                                    @if (mrpPricing && (isEditable || discountAmount > 0))
+                                    {
+                                        <tr class="pof-total pof-total-sub">
+                                            <td [attr.colspan]="leadSpan">
+                                                <div class="pof-disc">
+                                                    <span>Less Additional Discount</span>
+                                                    @if (isEditable)
+                                                    {
+                                                        <app-control-segment
+                                                            name="pof-discount-type"
+                                                            [items]="discountTypeItems"
+                                                            [value]="discountType"
+                                                            (valueChange)="onDiscountTypeChange($event)">
+                                                        </app-control-segment>
+
+                                                        @if (discountType !== 'None')
+                                                        {
+                                                            <app-textbox
+                                                                class="pof-disc-value"
+                                                                [placeholder]="discountType === 'Percent' ? '%' : 'Tk'"
+                                                                inputMode="decimal"
+                                                                [value]="discountValueText"
+                                                                (valueChange)="onDiscountValueText($event)">
+                                                            </app-textbox>
+                                                        }
+                                                    }
+                                                    @else if (discountType === 'Percent')
+                                                    {
+                                                        <span class="pof-disc-rate">({{ discountValueText }}%)</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="pof-num">{{ money(-discountAmount) }}</td>
+                                            <td [attr.colspan]="mrpPricing ? 3 : 2"></td>
+                                        </tr>
+                                    }
+
+                                    <tr class="pof-total">
+                                        <td [attr.colspan]="leadSpan">Net Amount</td>
+                                        <td class="pof-num">{{ money(netAmount) }}</td>
+                                        <td [attr.colspan]="mrpPricing ? 3 : 2"></td>
+                                    </tr>
+
+                                    @if (vatCharged)
+                                    {
+                                        <tr class="pof-total pof-total-sub">
+                                            <td [attr.colspan]="leadSpan">
+                                                {{ priceIncludesVat ? 'VAT (Included)' : 'VAT (Added)' }}
+                                                @if (anyVatInCost)
+                                                {
+                                                    <span class="pof-vat-cost">not claimable · in cost</span>
+                                                }
+                                            </td>
+                                            <td class="pof-num">{{ money(totalVat) }}</td>
+                                            <td [attr.colspan]="mrpPricing ? 3 : 2"></td>
+                                        </tr>
+                                    }
+
+                                    @if (showRoundOff)
+                                    {
+                                        <tr class="pof-total pof-total-sub">
+                                            <td [attr.colspan]="leadSpan">Round off ({{ roundingMethod }})</td>
+                                            <td class="pof-num">{{ money(roundingAdjustment) }}</td>
+                                            <td [attr.colspan]="mrpPricing ? 3 : 2"></td>
+                                        </tr>
+                                    }
+
+                                    <tr class="pof-payable">
+                                        <td [attr.colspan]="leadSpan">Total Payable</td>
+                                        <td class="pof-num">{{ money(totalPayable) }}</td>
+                                        <td [attr.colspan]="mrpPricing ? 3 : 2"></td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <div class="pof-words">
+                            <i class="fas fa-quote-left"></i>
+                            <span>{{ totalPayableInWords }}</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+              </div>
+
+            </div>
+        }
+
+    </div>
+
+    <!-- =====================================================
+         CANCEL MODAL
+           Header : icon, title, purchase no, X
+           Body   : purchase summary, warning, Reason
+           Footer : Keep Purchase, Cancel Purchase
+    ====================================================== -->
+
+    @if (reasonOpened)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="pof-cx-title">
+
+                <!-- Header -->
+
+                <div class="pof-cx-head">
+
+                    <span class="pof-cx-icon">
+                        <i class="fas fa-ban"></i>
+                    </span>
+
+                    <div class="pof-cx-title">
+                        <strong id="pof-cx-title">Cancel Purchase</strong>
+                        <span>{{ order?.PurchaseNo }}</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeReason()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+                <!-- Body -->
+
+                <div class="pof-cx-body">
+
+                    <div class="pof-cx-summary">
+
+                        <div>
+                            <span>Purchase Date</span>
+                            <strong>{{ displayDate(order?.PurchaseDate) }}</strong>
+                        </div>
+
+                        <div>
+                            <span>Supplier</span>
+                            <strong [title]="order?.SupplierName || ''">{{ order?.SupplierName || '—' }}</strong>
+                        </div>
+
+                        <div class="pof-cx-amount">
+                            <span>Total Payable</span>
+                            <strong>{{ money(order?.TotalPayable ?? 0) }}</strong>
+                        </div>
+
+                    </div>
+
+                    <div class="pof-cx-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>
+                            The journal {{ order?.VoucherNo || order?.PurchaseNo }} is reversed, the stock goes out
+                            again and the Purchase Order gets its quantity back. Not allowed once any of this stock
+                            is sold, moved or returned. This cannot be undone.
+                        </span>
+                    </div>
+
+                    <div class="pof-cx-fields">
+
+                        <app-textarea
+                            class="pof-cx-reason"
+                            label="Reason"
+                            placeholder="Why is this purchase cancelled?"
+                            [required]="true"
+                            [rows]="4"
+                            [maxLength]="500"
+                            [value]="reasonText"
+                            (valueChange)="onReasonChange($event)">
+
+                        </app-textarea>
+
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+
+                <div class="pof-modal-foot">
+
+                    <span class="pof-modal-note">
+                        <i class="fas fa-circle-info"></i>
+                        Reason is required.
+                    </span>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="closeReason()">
+                        <i class="fas fa-arrow-left"></i>
+                        Keep Purchase
+                    </button>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-danger"
+                        (click)="confirmReason()">
+                        <i class="fas fa-ban"></i>
+                        Cancel Purchase
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <!-- =====================================================
+         UNIT DESK (MB, received here) : one row per bike
+           Header : bike, line, X
+           Body   : Chassis / Engine / Key / Battery per bike
+                    (paste a list from Excel into any box)
+           Footer : Close, Save
+    ====================================================== -->
+
+    @if (unitLine; as uline)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx pur-ud"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="pur-ud-title">
+
+                <div class="pof-cx-head">
+
+                    <span class="pof-cx-icon pur-ud-icon">
+                        <i class="fas fa-motorcycle"></i>
+                    </span>
+
+                    <div class="pof-cx-title">
+                        <strong id="pur-ud-title">Unit Desk · {{ uline.ProductName }}</strong>
+                        <span>{{ uline.ProductCode }} · {{ unitsWanted(uline) }} bike{{ unitsWanted(uline) === 1 ? '' : 's' }}</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeUnits()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+                <div class="pof-cx-body">
+
+                    @if (!isReadonly)
+                    {
+                        <div class="pof-hint">
+                            <i class="fas fa-paste"></i>
+                            Copy the four columns from Excel (Chassis, Engine, Key, Battery) and paste into a Chassis box : every row fills at once, from that bike down.
+                        </div>
+                    }
+
+                    <div class="pur-ud-scroll appcore-scrollbar">
+
+                        <table class="pof-table pur-ud-table">
+
+                            <!-- SL 50px · Chassis, Engine 2 parts · Key 1 · Battery 1.2 -->
+                            <colgroup>
+                                <col class="pur-ud-c-sl">
+                                <col class="pur-ud-c-wide">
+                                <col class="pur-ud-c-wide">
+                                <col class="pur-ud-c-key">
+                                <col class="pur-ud-c-bat">
+                                @if (isReadonly)
+                                {
+                                    <col class="pur-ud-c-status">
+                                }
+                                @else
+                                {
+                                    <col class="pur-ud-c-act">
+                                }
+                            </colgroup>
+
+                            <thead>
+                                <tr>
+                                    <th class="pof-sl">SL</th>
+                                    <th>Chassis No <b class="pof-req">*</b></th>
+                                    <th>Engine No <b class="pof-req">*</b></th>
+                                    <th>Key No @if (unitsRequired) { <b class="pof-req">*</b> }</th>
+                                    <th>Battery No @if (unitsRequired) { <b class="pof-req">*</b> }</th>
+                                    @if (isReadonly)
+                                    {
+                                        <th>Status</th>
+                                    }
+                                    @else
+                                    {
+                                        <th class="pur-ud-act" aria-label="Clear"></th>
+                                    }
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @for (row of unitRows; track $index)
+                                {
+                                    <tr>
+                                        <td class="pof-sl">{{ $index + 1 }}</td>
+                                        @if (isReadonly)
+                                        {
+                                            <td>{{ row.ChassisNo }}</td>
+                                            <td>{{ row.EngineNo }}</td>
+                                            <td>{{ row.KeyNo || '—' }}</td>
+                                            <td>{{ row.BatteryNo || '—' }}</td>
+                                            <td>{{ row.Status || '—' }}</td>
+                                        }
+                                        @else
+                                        {
+                                            <td
+                                                [class.pur-ud-bad]="!!unitBad($index, 'ChassisNo')"
+                                                [attr.title]="unitBad($index, 'ChassisNo') || null"
+                                                (paste)="onUnitPaste($event, $index, 0)">
+                                                <app-textbox
+                                                    placeholder="Chassis"
+                                                    textCase="upper"
+                                                    [maxLength]="50"
+                                                    [value]="row.ChassisNo"
+                                                    (valueChange)="onUnitChange($index, 'ChassisNo', $event)">
+                                                </app-textbox>
+                                            </td>
+                                            <td
+                                                [class.pur-ud-bad]="!!unitBad($index, 'EngineNo')"
+                                                [attr.title]="unitBad($index, 'EngineNo') || null"
+                                                (paste)="onUnitPaste($event, $index, 1)">
+                                                <app-textbox
+                                                    placeholder="Engine"
+                                                    textCase="upper"
+                                                    [maxLength]="50"
+                                                    [value]="row.EngineNo"
+                                                    (valueChange)="onUnitChange($index, 'EngineNo', $event)">
+                                                </app-textbox>
+                                            </td>
+                                            <td
+                                                [class.pur-ud-bad]="!!unitBad($index, 'KeyNo')"
+                                                [attr.title]="unitBad($index, 'KeyNo') || null"
+                                                (paste)="onUnitPaste($event, $index, 2)">
+                                                <app-textbox
+                                                    placeholder="Key"
+                                                    textCase="upper"
+                                                    [maxLength]="50"
+                                                    [value]="row.KeyNo"
+                                                    (valueChange)="onUnitChange($index, 'KeyNo', $event)">
+                                                </app-textbox>
+                                            </td>
+                                            <td
+                                                [class.pur-ud-bad]="!!unitBad($index, 'BatteryNo')"
+                                                [attr.title]="unitBad($index, 'BatteryNo') || null"
+                                                (paste)="onUnitPaste($event, $index, 3)">
+                                                <app-textbox
+                                                    placeholder="Battery"
+                                                    textCase="upper"
+                                                    [maxLength]="50"
+                                                    [value]="row.BatteryNo"
+                                                    (valueChange)="onUnitChange($index, 'BatteryNo', $event)">
+                                                </app-textbox>
+                                            </td>
+                                            <td class="pur-ud-act">
+                                                <button
+                                                    type="button"
+                                                    class="pur-ud-clear"
+                                                    title="Clear this bike's four numbers"
+                                                    [attr.aria-label]="'Clear bike ' + ($index + 1)"
+                                                    [disabled]="!row.ChassisNo && !row.EngineNo && !row.KeyNo && !row.BatteryNo"
+                                                    (click)="clearUnitRow($index)">
+                                                    <i class="fas fa-eraser"></i>
+                                                </button>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+
+                                @if (unitRows.length === 0)
+                                {
+                                    <tr>
+                                        <td colspan="6" class="pof-empty">No bikes entered.</td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    @if (unitError)
+                    {
+                        <div class="pof-error">
+                            <i class="fas fa-circle-exclamation"></i>
+                            {{ unitError }}
+                        </div>
+                    }
+
+                </div>
+
+                <div class="pof-modal-foot">
+
+                    <span class="pof-modal-note">
+                        <i class="fas fa-circle-info"></i>
+                        {{ unitsRequired ? 'Every bike needs all four numbers.' : 'Chassis and Engine are required for each bike entered.' }}
+                    </span>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="closeUnits()">
+                        <i class="fas fa-arrow-left"></i>
+                        Close
+                    </button>
+
+                    @if (!isReadonly)
+                    {
+                        <button
+                            type="button"
+                            class="pof-btn pof-btn-primary"
+                            (click)="saveUnits()">
+                            <i class="fas fa-check"></i>
+                            Save
+                        </button>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+<!-- =========================================================
+     UTILITIES
+========================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>
+
+<!-- Product Shelf popup -->
+<app-product-shelf
+    [open]="shelfOpen"
+    [title]="'Product Shelf · ' + page.goods"
+    [subtitle]="shelfSubtitle"
+    [chips]="termsSummary"
+    [products]="shelfProducts"
+    [options]="shelfOptions"
+    [maxLines]="maxLines"
+    [lineCount]="lines.length"
+    [error]="shelfError"
+    (add)="onShelfAdd($event)"
+    (closed)="closeShelf()">
+</app-product-shelf>

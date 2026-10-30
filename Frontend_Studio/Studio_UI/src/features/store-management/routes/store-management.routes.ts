@@ -56,4 +56,82 @@ export const storeManagementRoutes:
 
     // AUTO-END : MNU-012-001
 
+    // AUTO-BEGIN : MNU-012-002
+
+    //===========================================================
+    // Product Receiving
+    //===========================================================
+
+    {
+        path:'product-receiving',
+
+        data:
+        {
+            breadcrumb:'Product Receiving'
+        },
+
+        loadChildren:() =>
+            import(
+                '../product-receiving/routes/product-receiving.routes'
+            )
+            .then(
+                m =>
+                    m.mnu012002Routes
+            )
+    },
+
+    // AUTO-END : MNU-012-002
+
+    // AUTO-BEGIN : MNU-012-004
+
+    //===========================================================
+    // Pricing & Labels
+    //===========================================================
+
+    {
+        path:'pricing-labels',
+
+        data:
+        {
+            breadcrumb:'Pricing & Labels'
+        },
+
+        loadChildren:() =>
+            import(
+                '../pricing-labels/routes/pricing-labels.routes'
+            )
+            .then(
+                m =>
+                    m.mnu012004Routes
+            )
+    },
+
+    // AUTO-END : MNU-012-004
+
+    // AUTO-BEGIN : MNU-012-003
+
+    //===========================================================
+    // Stock Movement
+    //===========================================================
+
+    {
+        path:'stock-movement',
+
+        data:
+        {
+            breadcrumb:'Stock Movement'
+        },
+
+        loadChildren:() =>
+            import(
+                '../stock-movement/routes/stock-movement.routes'
+            )
+            .then(
+                m =>
+                    m.mnu012003Routes
+            )
+    },
+
+    // AUTO-END : MNU-012-003
+
 ];

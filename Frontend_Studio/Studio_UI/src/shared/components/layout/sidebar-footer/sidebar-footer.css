@@ -1,207 +1,570 @@
-/* =====================================================
+/* ==========================================================
    SIDEBAR FOOTER
-===================================================== */
+   ----------------------------------------------------------
+   Its own strip at the bottom of the sidebar (normal flow,
+   never covers the menu).
+=========================================================== */
+
+:host
+{
+    display:block;
+}
+
 
 .sidebar-footer
 {
     position:relative;
 
-    width:300px;
+    border-top:1px solid rgba(255,255,255,.08);
 
-    min-width:300px;
+    background:rgba(5,12,30,.45);
+}
 
-    max-width:300px;
 
-    height:40px;
+/* ==========================================================
+   COMMANDS : open sidebar = one row of four
+=========================================================== */
 
-    min-height:40px;
+.footer-commands
+{
+    display:grid;
 
-    max-height:40px;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+
+    gap:4px;
+
+    padding:8px 10px 10px;
+}
+
+
+.footer-command
+{
+    position:relative;
 
     display:flex;
+
+    flex-direction:column;
 
     align-items:center;
 
     justify-content:center;
 
-    gap:40px;
+    gap:3px;
 
-    padding:
-        0
-        12px;
+    height:48px;
 
-    box-sizing:border-box;
-
-    background:
-        linear-gradient(
-            135deg,
-            #111a3d 0%,
-            #182552 48%,
-            #202f67 100%
-        );
-
-    overflow:hidden;
-}
-
-
-
-/* =====================================================
-   TOP BORDER GRADIENT
-===================================================== */
-
-.sidebar-footer::before
-{
-    content:'';
-
-    position:absolute;
-
-    top:0;
-
-    left:0;
-
-    width:100%;
-
-    height:2px;
-
-    background:
-        linear-gradient(
-            90deg,
-            #7f1d1d 0%,
-            #dc2626 25%,
-            #ef4444 50%,
-            #dc2626 75%,
-            #7f1d1d 100%
-        );
-
-    z-index:2;
-
-    pointer-events:none;
-}
-
-
-
-/* =====================================================
-   FOOTER ICON BUTTON
-===================================================== */
-
-.footer-icon-button
-{
-    width:20px;
-
-    height:20px;
-
-    min-width:20px;
-
-    min-height:20px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
+    min-width:0;
 
     padding:0;
 
-    border:none;
+    border:0;
 
-    border-radius:50%;
+    border-radius:10px;
 
     background:transparent;
 
-    color:
-        rgba(
-            255,
-            255,
-            255,
-            .72
-        );
+    color:#a9bbd8;
+
+    font-family:inherit;
+
+    font-size:10.5px;
+
+    font-weight:700;
 
     cursor:pointer;
 
-    box-sizing:border-box;
-
     transition:
-        background-color .20s ease,
-        color .20s ease,
-        transform .20s ease;
+        background .18s ease,
+        color .18s ease,
+        box-shadow .18s ease;
 }
 
 
-
-/* =====================================================
-   FOOTER ICON BUTTON HOVER
-===================================================== */
-
-.footer-icon-button:hover
+.footer-command i
 {
-    background:
-        rgba(
-            37,
-            99,
-            235,
-            .18
-        );
+    font-size:16px;
+
+    line-height:1;
+}
+
+
+.footer-command:hover:not(:disabled)
+{
+    background:rgba(255,255,255,.07);
+
+    color:#ffffff;
+}
+
+
+.footer-command:focus-visible
+{
+    outline:2px solid #93b4f5;
+
+    outline-offset:-2px;
+}
+
+
+.footer-command.active
+{
+    background:rgba(59,130,246,.18);
+
+    box-shadow:inset 0 0 0 1px rgba(147,180,245,.35);
+
+    color:#ffffff;
+}
+
+
+.footer-command.favorites i
+{
+    color:#ffd166;
+}
+
+
+.footer-command:disabled
+{
+    opacity:.4;
+
+    cursor:not-allowed;
+}
+
+
+.command-label
+{
+    max-width:100%;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.command-count
+{
+    position:absolute;
+
+    top:4px;
+
+    right:10px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:16px;
+
+    height:16px;
+
+    padding:0 4px;
+
+    border-radius:999px;
+
+    background:#3b82f6;
 
     color:#ffffff;
 
-    transform:
-        translateY(-1px);
+    font-size:9.5px;
+
+    font-weight:800;
+
+    box-sizing:border-box;
 }
 
 
+/* ==========================================================
+   COLLAPSED : stacked, centred in the rail
+=========================================================== */
 
-/* =====================================================
-   FOOTER ICON BUTTON ACTIVE
-===================================================== */
-
-.footer-icon-button:active
+.sidebar-footer.collapsed .footer-commands
 {
-    transform:
-        scale(.95);
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:4px;
+
+    padding:8px 0 10px;
 }
 
 
-
-/* =====================================================
-   FOOTER ICON BUTTON FOCUS
-===================================================== */
-
-.footer-icon-button:focus-visible
+.sidebar-footer.collapsed .footer-command
 {
-    outline:none;
+    width:48px;
 
-    background:
-        rgba(
-            37,
-            99,
-            235,
-            .25
-        );
-
-    box-shadow:
-        0
-        0
-        0
-        2px
-        rgba(
-            37,
-            99,
-            235,
-            .35
-        );
+    height:40px;
 }
 
 
-
-/* =====================================================
-   FOOTER ICON
-===================================================== */
-
-.footer-icon-button i
+.sidebar-footer.collapsed .command-label
 {
+    display:none;
+}
+
+
+.sidebar-footer.collapsed .command-count
+{
+    top:2px;
+
+    right:4px;
+
+    min-width:15px;
+
+    height:15px;
+
+    padding:0 3px;
+
+    font-size:9px;
+}
+
+
+/* ==========================================================
+   PANEL : beside the sidebar footer
+=========================================================== */
+
+.footer-panel
+{
+    position:fixed;
+
+    left:calc(var(--sidebar-current-width, 300px) + 10px);
+
+    bottom:calc(var(--footer-height, 44px) + 8px);
+
+    display:flex;
+
+    flex-direction:column;
+
+    width:330px;
+
+    max-height:min(480px, calc(100vh - 160px));
+
+    border:1px solid #e2e8f1;
+
+    border-radius:16px;
+
+    background:#ffffff;
+
+    box-shadow:0 24px 60px -24px rgba(10,22,49,.5);
+
+    color:#13254a;
+
+    overflow:hidden;
+
+    z-index:500;
+
+    animation:panel-in .16s ease;
+}
+
+
+/* Tabs */
+
+.panel-tabs
+{
+    display:flex;
+
+    gap:4px;
+
+    flex:0 0 auto;
+
+    padding:8px;
+
+    border-bottom:1px solid #e2e8f1;
+}
+
+
+.panel-tab
+{
+    flex:1 1 0;
+
+    height:34px;
+
+    border:0;
+
+    border-radius:9px;
+
+    background:transparent;
+
+    color:#52627f;
+
+    font-family:inherit;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:
+        background .15s ease,
+        color .15s ease;
+}
+
+
+.panel-tab:hover:not(.active)
+{
+    background:#eef2f7;
+}
+
+
+.panel-tab.active
+{
+    background:#13254a;
+
+    color:#ffffff;
+}
+
+
+/* List */
+
+.panel-list
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    min-height:0;
+
+    padding:6px;
+
+    overflow-y:auto;
+
+    scrollbar-width:thin;
+
+    scrollbar-color:#c6d2e4 transparent;
+}
+
+
+.panel-row
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    border-radius:10px;
+
+    transition:background .15s ease;
+}
+
+
+.panel-row:hover
+{
+    background:#f3f6fb;
+}
+
+
+.panel-row.current
+{
+    background:#eef4ff;
+}
+
+
+.panel-link
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    min-width:0;
+
+    padding:10px;
+
+    color:#13254a;
+
+    text-decoration:none;
+}
+
+
+.panel-link:visited
+{
+    color:#13254a;
+}
+
+
+.panel-link:focus-visible
+{
+    outline:2px solid #3b82f6;
+
+    outline-offset:-2px;
+
+    border-radius:10px;
+}
+
+
+.panel-title
+{
+    font-size:13px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.panel-path
+{
+    color:#52627f;
+
+    font-size:11.5px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.panel-time
+{
+    flex:0 0 auto;
+
+    padding-right:10px;
+
+    color:#6b7a94;
+
+    font-size:11px;
+}
+
+
+.panel-unstar
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex:0 0 30px;
+
+    width:30px;
+
+    height:30px;
+
+    margin-right:6px;
+
+    padding:0;
+
+    border:0;
+
+    border-radius:8px;
+
+    background:transparent;
+
+    color:#f0b429;
+
+    cursor:pointer;
+}
+
+
+.panel-unstar:hover
+{
+    background:#fff4d6;
+}
+
+
+.panel-empty
+{
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:26px 18px;
+
+    color:#6b7a94;
+
+    font-size:12.5px;
+
+    line-height:1.5;
+
+    text-align:center;
+}
+
+
+.panel-empty i
+{
+    color:#9aa8bf;
+
     font-size:18px;
+}
 
-    line-height:1;
 
-    pointer-events:none;
+/* Footer */
+
+.panel-footer
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    flex:0 0 auto;
+
+    padding:10px 14px;
+
+    border-top:1px solid #e2e8f1;
+
+    background:#f7f9fc;
+
+    color:#52627f;
+
+    font-size:11.5px;
+}
+
+
+.panel-clear
+{
+    padding:0;
+
+    border:0;
+
+    background:transparent;
+
+    color:#1d4ed8;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    cursor:pointer;
+}
+
+
+.panel-clear:hover
+{
+    text-decoration:underline;
+}
+
+
+@keyframes panel-in
+{
+    from { opacity:0; transform:translateX(-6px); }
+    to   { opacity:1; transform:translateX(0); }
+}
+
+
+@media (prefers-reduced-motion: reduce)
+{
+    .footer-panel
+    {
+        animation:none;
+    }
 }

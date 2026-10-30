@@ -17,6 +17,9 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.Persistence;
 
+using PostingLedgerCodes =
+    AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
+
 using BankAccountsEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts;
 
@@ -125,14 +128,14 @@ public class PosReconciliationsRepository : IPosReconciliationsRepository
     private const string EditChargesSwitch =
         "CFG-MOD-004-0055";
 
-    // Ledgers (looked up by CODE)
+    // Ledgers (codes from Posting Setup)
     //   POS Charges (expense)
-    private const string PosChargesLedger =
-        "GLR-004-001-001-00004";
+    private string PosChargesLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.PosCharges);
 
     //   POS Charges Recovery (income; the RV credited it)
-    private const string PosRecoveryLedger =
-        "GLR-011-001-001-00002";
+    private string PosRecoveryLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.PosRecovery);
 
     // The nightly job posts as
     private const long SystemUserId = 1;
@@ -2917,4 +2920,4 @@ public class PosReconciliationsRepository : IPosReconciliationsRepository
     {
         return decimal.Round(value, 2) == value;
     }
-}
+}

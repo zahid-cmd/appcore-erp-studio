@@ -78,6 +78,10 @@ public class SpareParts
 
     public int RedLevel { get; set; }
 
+    // Highest stock wanted (0 = not set) : a purchase order
+    // cannot take the company stock above it
+    public int MaxStockLevel { get; set; }
+
 
     //===========================================================
     // Image (path only; the file is saved by the controller)

@@ -460,6 +460,64 @@
 
                 </app-textbox>
 
+                <!-- Supplier terms : a new PO takes them (System Configuration › Edit Supplier Terms fixes them) -->
+
+                @if (showsTerms)
+                {
+                    <app-dropdown
+
+                        label="Prices"
+
+                        [items]="priceEntryItems"
+
+                        [(value)]="entity.DefaultPriceEntry"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-dropdown>
+                }
+
+                @if (showsProfit)
+                {
+                    <app-dropdown
+
+                        label="Invoice Price"
+
+                        [items]="invoicePriceItems"
+
+                        [(value)]="entity.DefaultInvoicePrice"
+
+                        (valueChange)="onInvoicePriceChange()"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-dropdown>
+
+                    <!-- MRP invoice : Margin % on MRP (sets the DP on the
+                         PO / purchase). DP invoice : Profit % on DP (Pricing
+                         page only). -->
+                    @if (profitOn)
+                    {
+                        <app-textbox
+
+                            [label]="profitOn === 'MRP' ? 'Margin % (on MRP)' : 'Profit % (on DP · Pricing)'"
+
+                            [placeholder]="profitOn === 'MRP' ? 'Not set' : 'Not set · used by the Pricing page'"
+
+                            inputMode="decimal"
+
+                            [value]="defaultProfitText"
+
+                            (valueChange)="onDefaultProfitChange($event)"
+
+                            [disabled]="isViewMode || isSaving">
+
+                        </app-textbox>
+                    }
+                }
+
 
                 <app-dropdown
 
@@ -497,4 +555,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

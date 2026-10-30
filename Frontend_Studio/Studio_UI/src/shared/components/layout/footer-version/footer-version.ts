@@ -1,5 +1,9 @@
 //===============================================================
-// Imports
+// Footer Version
+// --------------------------------------------------------------
+// Version badge at the left of the app footer. Its block is as
+// wide as the sidebar. (The sidebar toggle now lives only in
+// the top bar.)
 //===============================================================
 
 import
@@ -11,19 +15,34 @@ from '@angular/core';
 
 import
 {
+    toSignal
+}
+from '@angular/core/rxjs-interop';
+
+import
+{
     SidebarService
 }
 from '../../../../core/sidebar/sidebar.service';
 
+
 //===============================================================
-// Component
+// Application Version
+// --------------------------------------------------------------
+// Change it here when a new version is released.
 //===============================================================
+
+export const APPCORE_VERSION =
+    'v1.0.0';
+
 
 @Component(
 {
-    selector: 'app-footer-version',
+    selector:
+        'app-footer-version',
 
-    standalone: true,
+    standalone:
+        true,
 
     templateUrl:
         './footer-version.html',
@@ -31,13 +50,9 @@ from '../../../../core/sidebar/sidebar.service';
     styleUrl:
         './footer-version.css'
 })
-
-//===============================================================
-// Footer Version Component
-//===============================================================
-
 export class FooterVersionComponent
 {
+
     //===========================================================
     // Dependencies
     //===========================================================
@@ -45,20 +60,21 @@ export class FooterVersionComponent
     private readonly sidebarService =
         inject(SidebarService);
 
-    //===========================================================
-    // Properties
-    //===========================================================
-
-    version =
-        'Version 1.0.0';
 
     //===========================================================
-    // Toggle Sidebar
+    // State
     //===========================================================
 
-    toggleSidebar():
-        void
-    {
-        this.sidebarService.toggleSidebar();
-    }
+    readonly version =
+        APPCORE_VERSION;
+
+    readonly isCollapsed =
+        toSignal(
+            this.sidebarService.sidebarCollapsed$,
+            {
+                initialValue:
+                    false
+            }
+        );
+
 }

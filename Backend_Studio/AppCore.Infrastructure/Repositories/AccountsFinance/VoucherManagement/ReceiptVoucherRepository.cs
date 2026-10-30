@@ -20,6 +20,9 @@ using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
 
+using PostingLedgerCodes =
+    AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
+
 using CustomerProfilesEntity =
     AppCore.Domain.Entities.Settings.ClientSettings.CustomerProfiles;
 
@@ -103,15 +106,15 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
         "Check";
 
     // Charge recovery income (charge borne by the customer),
-    // looked up by CODE
-    private const string MfsRecoveryLedger =
-        "GLR-011-001-001-00001";
+    // ledger codes from Posting Setup
+    private string MfsRecoveryLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.MfsRecovery);
 
-    private const string PosRecoveryLedger =
-        "GLR-011-001-001-00002";
+    private string PosRecoveryLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.PosRecovery);
 
-    private const string EmiRecoveryLedger =
-        "GLR-011-001-001-00003";
+    private string EmiRecoveryLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.EmiRecovery);
 
     // Credit side ledger types
     private static readonly string[] CreditLedgerTypes =
@@ -1949,7 +1952,7 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
     //    (the check part is credited later by the RRV)
     //===========================================================
 
-    private static List<VoucherPostingLine> BuildPostingLines
+    private List<VoucherPostingLine> BuildPostingLines
     (
         ReceiptVoucher entity,
         List<ReceiptVoucherLines> lines,
@@ -2249,4 +2252,4 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
                     !x.IsDeleted
             );
     }
-}
+}
