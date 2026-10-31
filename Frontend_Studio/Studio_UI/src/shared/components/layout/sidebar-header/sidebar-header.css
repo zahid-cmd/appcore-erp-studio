@@ -127,3 +127,86 @@
 {
     display:none;
 }
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+/* Glass strip : deeper tint, frosted, top sheen */
+
+:host-context(.appearance-light) .sidebar-header
+{
+    position:relative;
+
+    padding:10px 10px 10px;
+
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 46%),
+        linear-gradient(180deg, #c9d7ed 0%, #d6e1f2 100%);
+
+    border-bottom:1px solid rgba(255,255,255,.75);
+
+    box-shadow:
+        inset 0 -1px 0 rgba(19,37,74,.10),
+        0 8px 16px -14px rgba(19,37,74,.55);
+
+    -webkit-backdrop-filter:blur(14px) saturate(160%);
+    backdrop-filter:blur(14px) saturate(160%);
+}
+
+
+:host-context(.appearance-light) .sidebar-header.collapsed
+{
+    padding:10px 0;
+}
+
+
+/* Dashboard : frosted pill on the glass */
+
+:host-context(.appearance-light) .dashboard-header,
+:host-context(.appearance-light) .dashboard-header:visited
+{
+    border:1px solid rgba(255,255,255,.65);
+
+    background:rgba(255,255,255,.38);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.8),
+        0 2px 6px -3px rgba(19,37,74,.25);
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .dashboard-header:hover
+{
+    background:rgba(255,255,255,.62);
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .dashboard-header i
+{
+    color:#2563eb;
+}
+
+
+:host-context(.appearance-light) .dashboard-header.active,
+:host-context(.appearance-light) .dashboard-header.active:visited
+{
+    border-color:rgba(255,255,255,.9);
+
+    background:rgba(255,255,255,.78);
+
+    box-shadow:
+        inset 0 1px 0 #ffffff,
+        inset 3px 0 0 #2563eb,
+        0 4px 10px -6px rgba(19,37,74,.4);
+
+    color:#13254a;
+}

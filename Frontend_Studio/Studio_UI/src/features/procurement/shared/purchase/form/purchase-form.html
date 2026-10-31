@@ -1470,7 +1470,9 @@
                         <span>
                             The journal {{ order?.VoucherNo || order?.PurchaseNo }} is reversed, the stock goes out
                             again and the Purchase Order gets its quantity back. Not allowed once any of this stock
-                            is sold, moved or returned. This cannot be undone.
+                            is sold, moved or returned, or once payments to the supplier have used this amount
+                            (the supplier's payable balance must still cover {{ totalPayable | number:'1.2-2' }}).
+                            This cannot be undone.
                         </span>
                     </div>
 
@@ -1718,8 +1720,16 @@
                 <div class="pof-modal-foot">
 
                     <span class="pof-modal-note">
-                        <i class="fas fa-circle-info"></i>
-                        {{ unitsRequired ? 'Every bike needs all four numbers.' : 'Chassis and Engine are required for each bike entered.' }}
+                        @if (unitChecking)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                            Checking the numbers against other purchases…
+                        }
+                        @else
+                        {
+                            <i class="fas fa-circle-info"></i>
+                            {{ unitsRequired ? 'Every bike needs all four numbers.' : 'Chassis and Engine are required for each bike entered.' }}
+                        }
                     </span>
 
                     <button

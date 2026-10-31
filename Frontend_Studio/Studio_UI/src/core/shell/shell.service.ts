@@ -74,8 +74,10 @@ from '../sidebar/sidebar.service';
 
 import
 {
+    ShellAppearance,
     ShellContextDto,
     ShellFavoriteDto,
+    ShellLayoutMode,
     ShellNotification,
     ShellNotificationDto,
     ShellPage,
@@ -106,6 +108,12 @@ const RECENT_STORAGE_KEY =
 
 const READ_STORAGE_KEY =
     'appcore_shell_read_';
+
+const LAYOUT_STORAGE_KEY =
+    'appcore_shell_layout_';
+
+const APPEARANCE_STORAGE_KEY =
+    'appcore_shell_appearance_';
 
 const BADGE_SKIP_WORDS =
     new Set<string>(
@@ -167,6 +175,19 @@ export class ShellService
 
     readonly pages =
         signal<ShellPage[]>([]);
+
+    // The sidebar's own module › menu › page tree (already
+    // filtered by access). The top navigation bar draws it.
+    readonly navModules =
+        signal<SidebarModuleDto[]>([]);
+
+    // Side (sidebar) or Top (modules bar under the top bar).
+    readonly layoutMode =
+        signal<ShellLayoutMode>('side');
+
+    // Deep (navy) or Light chrome: top bar, sidebar, footer.
+    readonly appearance =
+        signal<ShellAppearance>('deep');
 
     readonly favorites =
         signal<ShellFavoriteDto[]>([]);
@@ -462,6 +483,10 @@ export class ShellService
             pages
         );
 
+        this.navModules.set(
+            modules ?? []
+        );
+
         this.ensureUserState();
 
         this.trackRecent(
@@ -520,6 +545,8 @@ export class ShellService
             )
         );
 
+        this.loadPreferences();
+
         if
         (
             userId !== null
@@ -527,6 +554,185 @@ export class ShellService
         {
             this.loadFavorites();
         }
+    }
+
+
+    //===========================================================
+    // Layout and Appearance
+    // ----------------------------------------------------------
+    // Both are remembered per user in this browser and never
+    // change on their own.
+    //===========================================================
+
+    private loadPreferences():
+        void
+    {
+        const layout =
+            this.readStorage<string>(
+                LAYOUT_STORAGE_KEY,
+                'side'
+            );
+
+        this.layoutMode.set(
+            layout === 'top'
+            ? 'top'
+            : 'side'
+        );
+
+        const appearance =
+            this.readStorage<string>(
+                APPEARANCE_STORAGE_KEY,
+                'deep'
+            );
+
+        this.appearance.set(
+            appearance === 'light'
+            ? 'light'
+            : 'deep'
+        );
+    }
+
+
+    setLayoutMode
+    (
+        mode:
+            ShellLayoutMode
+    ):
+        void
+    {
+        if
+        (
+            mode === this.layoutMode()
+        )
+        {
+            return;
+        }
+
+        this.panel.set(
+            null
+        );
+
+        this.railTip.set(
+            null
+        );
+
+        this.withTransition(
+            () =>
+                this.layoutMode.set(
+                    mode
+                )
+        );
+
+        this.writeStorage(
+            LAYOUT_STORAGE_KEY,
+            mode
+        );
+    }
+
+
+    toggleLayoutMode():
+        void
+    {
+        this.setLayoutMode(
+            this.layoutMode() === 'top'
+            ? 'side'
+            : 'top'
+        );
+    }
+
+
+    setAppearance
+    (
+        appearance:
+            ShellAppearance
+    ):
+        void
+    {
+        if
+        (
+            appearance === this.appearance()
+        )
+        {
+            return;
+        }
+
+        this.withTransition(
+            () =>
+                this.appearance.set(
+                    appearance
+                )
+        );
+
+        this.writeStorage(
+            APPEARANCE_STORAGE_KEY,
+            appearance
+        );
+    }
+
+
+    toggleAppearance():
+        void
+    {
+        this.setAppearance(
+            this.appearance() === 'light'
+            ? 'deep'
+            : 'light'
+        );
+    }
+
+
+    // Smooth change where the browser supports View
+    // Transitions (and the user has not asked for less motion).
+    private withTransition
+    (
+        change:
+            () => void
+    ):
+        void
+    {
+        const doc =
+            document as Document &
+            {
+                startViewTransition?:
+                    (callback: () => Promise<void> | void) => unknown;
+            };
+
+        const reduceMotion =
+            typeof window.matchMedia === 'function'
+            &&
+            window.matchMedia(
+                '(prefers-reduced-motion: reduce)'
+            )
+            .matches;
+
+        if
+        (
+            !doc.startViewTransition
+            ||
+            reduceMotion
+        )
+        {
+            change();
+
+            return;
+        }
+
+        doc.startViewTransition(
+            () =>
+            {
+                change();
+
+                // Let Angular draw the new state before the
+                // browser takes the "after" picture.
+                return new Promise<void>(
+                    resolve =>
+                        setTimeout(
+                            resolve,
+                            40
+                        )
+                );
+            }
+        );
     }
 
 

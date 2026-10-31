@@ -99,6 +99,49 @@
 
 
 /* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .context-chip
+{
+    border-color:#c3d4f2;
+
+    background:#f4f8ff;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .context-chip > i
+{
+    color:#2563eb;
+}
+
+
+:host-context(.appearance-light) .context-label
+{
+    color:#52627f;
+}
+
+
+:host-context(.appearance-light) .context-chip.warning
+{
+    border-color:#fcd34d;
+
+    background:#fffbeb;
+}
+
+
+:host-context(.appearance-light) .context-chip.warning > i
+{
+    color:#d97706;
+}
+
+
+/* =====================================================
    NARROW SCREENS : drop the chips
 ===================================================== */
 

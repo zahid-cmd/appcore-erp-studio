@@ -8,6 +8,8 @@
        Open       full logo + toggle inside the block
        Collapsed  logo mark centred in the rail,
                   toggle just after the block
+       Top layout full logo only (no sidebar, no toggle)
+       Light      logo-light.png instead of logo-dark.png
 
      Company logo (Settings › General Settings › Company)
      follows the block after a divider.
@@ -15,7 +17,8 @@
 
 <div
     class="topbar-header"
-    [class.collapsed]="isCollapsed()">
+    [class.collapsed]="showMark()"
+    [class.top-layout]="isTopLayout()">
 
 
     <!-- =================================================
@@ -24,7 +27,7 @@
 
     <div class="brand-block">
 
-        @if (isCollapsed())
+        @if (showMark())
         {
             <img
                 class="brand-mark"
@@ -35,9 +38,12 @@
         {
             <img
                 class="brand-logo"
-                src="assets/logo-dark.png"
+                [src]="logoSrc()"
                 alt="AppCore Logo">
+        }
 
+        @if (!showMark() && !isTopLayout())
+        {
             <button
                 type="button"
                 class="sidebar-toggle"
@@ -58,7 +64,7 @@
          TOGGLE (collapsed)
     ================================================== -->
 
-    @if (isCollapsed())
+    @if (showMark())
     {
         <button
             type="button"

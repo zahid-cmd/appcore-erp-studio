@@ -1,0 +1,482 @@
+<!-- =====================================================
+     TOP NAVIGATION (Top layout)
+     -----------------------------------------------------
+     Modules row → menus drop down under the module →
+     pages fly out to the right of the menu.
+===================================================== -->
+
+<nav
+    class="topnav"
+    aria-label="Modules"
+    (mouseenter)="onNavEnter()"
+    (mouseleave)="onNavLeave()">
+
+
+    <!-- =================================================
+         MODULES
+    ================================================== -->
+
+    <div
+        #moduleRow
+        class="tn-modules">
+
+        @for (module of modules(); track module.id; let i = $index)
+        {
+            <div
+                class="tn-item"
+                [class.hidden]="isHidden(i)"
+                [attr.data-module-id]="module.id">
+
+                <button
+                    type="button"
+                    class="tn-module"
+                    [class.active]="activeModuleId() === module.id"
+                    [class.open]="openModuleId() === module.id"
+                    [attr.aria-expanded]="openModuleId() === module.id"
+                    aria-haspopup="true"
+                    [attr.aria-label]="module.title"
+                    [attr.data-label]="module.title"
+                    (mouseenter)="onModuleEnter(module, $event)"
+                    (click)="onModuleClick(module)"
+                    (keydown)="onModuleKeydown($event, i, module)">
+
+                    <i
+                        class="tn-module-icon"
+                        [class]="module.icon">
+                    </i>
+
+                    <span class="tn-label">
+                        {{ module.title }}
+                    </span>
+
+                    <i class="fas fa-chevron-down tn-caret"></i>
+
+                </button>
+
+
+
+                <!-- ====================================
+                     MENUS (drop-down)
+                ===================================== -->
+
+                @if (openModuleId() === module.id)
+                {
+                    <div
+                        class="tn-dropdown"
+                        role="menu"
+                        [attr.aria-label]="module.title">
+
+                        <div class="tn-panel-title">
+                            {{ module.title }}
+                        </div>
+
+                        @for (menu of module.menus; track menu.id)
+                        {
+                            <div
+                                class="tn-menu-row"
+                                role="menuitem"
+                                tabindex="0"
+                                aria-haspopup="true"
+                                [class.open]="openMenuId() === menu.id"
+                                [attr.aria-expanded]="openMenuId() === menu.id"
+                                [attr.data-menu-id]="menu.id"
+                                (mouseenter)="onMenuEnter(menu, $event)"
+                                (click)="onMenuEnter(menu, $event)"
+                                (keydown)="onMenuKeydown($event, menu)">
+
+                                <i
+                                    class="tn-menu-icon"
+                                    [class]="menu.icon">
+                                </i>
+
+                                <span class="tn-menu-title">
+                                    {{ menu.title }}
+                                </span>
+
+                                <i class="fas fa-chevron-right tn-menu-caret"></i>
+
+
+
+                                <!-- ====================
+                                     PAGES (fly-out)
+                                ===================== -->
+
+                                @if (openMenuId() === menu.id)
+                                {
+                                    <div
+                                        class="tn-flyout"
+                                        role="menu"
+                                        [class.to-left]="flyoutLeft()"
+                                        [attr.aria-label]="menu.title"
+                                        (mouseenter)="onFlyoutEnter()"
+                                        (click)="$event.stopPropagation()">
+
+                                        @for (page of menu.pages; track page.id)
+                                        {
+                                            <div
+                                                class="tn-page-row"
+                                                [class.current]="currentPageId() === page.id">
+
+                                                <a
+                                                    class="tn-page-link"
+                                                    role="menuitem"
+                                                    [routerLink]="page.route"
+                                                    [attr.aria-current]="currentPageId() === page.id ? 'page' : null"
+                                                    (keydown)="onPageKeydown($event)">
+
+                                                    <i
+                                                        class="tn-page-icon"
+                                                        [class]="page.icon">
+                                                    </i>
+
+                                                    <span class="tn-page-title">
+                                                        {{ page.title }}
+                                                    </span>
+
+                                                    @if (currentPageId() === page.id)
+                                                    {
+                                                        <span class="tn-here">
+                                                            You are here
+                                                        </span>
+                                                    }
+
+                                                </a>
+
+                                                <button
+                                                    type="button"
+                                                    class="tn-star"
+                                                    [class.on]="isFavorite(page.id)"
+                                                    [attr.aria-pressed]="isFavorite(page.id)"
+                                                    [attr.aria-label]="
+                                                        isFavorite(page.id)
+                                                        ? 'Remove ' + page.title + ' from Favorites'
+                                                        : 'Add ' + page.title + ' to Favorites'
+                                                    "
+                                                    [title]="
+                                                        isFavorite(page.id)
+                                                        ? 'Remove from Favorites'
+                                                        : 'Add to Favorites'
+                                                    "
+                                                    (click)="onStarClick($event, page.id)">
+
+                                                    <i
+                                                        [class]="
+                                                            isFavorite(page.id)
+                                                            ? 'fa-solid fa-star'
+                                                            : 'fa-regular fa-star'
+                                                        ">
+                                                    </i>
+
+                                                </button>
+
+                                            </div>
+                                        }
+
+                                    </div>
+                                }
+
+                            </div>
+                        }
+
+                    </div>
+                }
+
+            </div>
+        }
+
+
+
+        <!-- =============================================
+             MORE (modules that do not fit)
+        ============================================== -->
+
+        @if (!measuring() && overflowModules().length > 0)
+        {
+            <div class="tn-item tn-more-item">
+
+                <button
+                    type="button"
+                    class="tn-more"
+                    [class.open]="moreOpen()"
+                    [attr.aria-expanded]="moreOpen()"
+                    aria-haspopup="true"
+                    (click)="onMoreClick()">
+
+                    More
+
+                    <i class="fas fa-chevron-down tn-caret"></i>
+
+                </button>
+
+                @if (moreOpen())
+                {
+                    <div
+                        class="tn-dropdown"
+                        role="menu"
+                        aria-label="More modules">
+
+                        @for (module of overflowModules(); track module.id)
+                        {
+                            <div
+                                class="tn-menu-row"
+                                role="menuitem"
+                                tabindex="0"
+                                aria-haspopup="true"
+                                [class.open]="moreModuleId() === module.id"
+                                [class.active]="activeModuleId() === module.id"
+                                (mouseenter)="onMoreModuleEnter(module, $event)"
+                                (click)="onMoreModuleEnter(module, $event)">
+
+                                <i
+                                    class="tn-menu-icon"
+                                    [class]="module.icon">
+                                </i>
+
+                                <span class="tn-menu-title">
+                                    {{ module.title }}
+                                </span>
+
+                                <i class="fas fa-chevron-right tn-menu-caret"></i>
+
+                                @if (moreModuleId() === module.id)
+                                {
+                                    <div
+                                        class="tn-flyout grouped"
+                                        role="menu"
+                                        [class.to-left]="flyoutLeft()"
+                                        [attr.aria-label]="module.title"
+                                        (mouseenter)="onFlyoutEnter()"
+                                        (click)="$event.stopPropagation()">
+
+                                        @for (menu of module.menus; track menu.id)
+                                        {
+                                            <div class="tn-group-title">
+                                                <i [class]="menu.icon"></i>
+                                                {{ menu.title }}
+                                            </div>
+
+                                            @for (page of menu.pages; track page.id)
+                                            {
+                                                <div
+                                                    class="tn-page-row"
+                                                    [class.current]="currentPageId() === page.id">
+
+                                                    <a
+                                                        class="tn-page-link"
+                                                        role="menuitem"
+                                                        [routerLink]="page.route"
+                                                        [attr.aria-current]="currentPageId() === page.id ? 'page' : null">
+
+                                                        <span class="tn-page-title">
+                                                            {{ page.title }}
+                                                        </span>
+
+                                                        @if (currentPageId() === page.id)
+                                                        {
+                                                            <span class="tn-here">
+                                                                You are here
+                                                            </span>
+                                                        }
+
+                                                    </a>
+
+                                                    <button
+                                                        type="button"
+                                                        class="tn-star"
+                                                        [class.on]="isFavorite(page.id)"
+                                                        [attr.aria-pressed]="isFavorite(page.id)"
+                                                        [attr.aria-label]="'Favorite: ' + page.title"
+                                                        (click)="onStarClick($event, page.id)">
+
+                                                        <i
+                                                            [class]="
+                                                                isFavorite(page.id)
+                                                                ? 'fa-solid fa-star'
+                                                                : 'fa-regular fa-star'
+                                                            ">
+                                                        </i>
+
+                                                    </button>
+
+                                                </div>
+                                            }
+                                        }
+
+                                    </div>
+                                }
+
+                            </div>
+                        }
+
+                    </div>
+                }
+
+            </div>
+        }
+
+
+        <!-- Sliding underline under the active / pointed module -->
+
+        <span
+            class="tn-indicator"
+            aria-hidden="true"
+            [style.left.px]="indicatorLeft()"
+            [style.width.px]="indicatorWidth()">
+        </span>
+
+    </div>
+
+
+
+    <!-- =================================================
+         HOME · FAVORITES · RECENT
+    ================================================== -->
+
+    <div class="tn-quick">
+
+        <button
+            type="button"
+            class="tn-quick-button"
+            aria-label="Home"
+            title="Dashboard"
+            (click)="goHome()">
+
+            <i class="fas fa-house"></i>
+
+            <span class="tn-quick-label">Home</span>
+
+        </button>
+
+        <button
+            type="button"
+            class="tn-quick-button favorites"
+            [class.open]="quickPanel() === 'favorites'"
+            [attr.aria-expanded]="quickPanel() === 'favorites'"
+            [attr.aria-label]="'Favorites, ' + favoriteCount()"
+            title="Favorites"
+            (click)="toggleQuick('favorites')">
+
+            <i
+                [class]="
+                    favoriteCount() > 0
+                    ? 'fa-solid fa-star'
+                    : 'fa-regular fa-star'
+                ">
+            </i>
+
+            <span class="tn-quick-label">Favorites</span>
+
+            @if (favoriteCount() > 0)
+            {
+                <span class="tn-count">
+                    {{ favoriteCount() }}
+                </span>
+            }
+
+        </button>
+
+        <button
+            type="button"
+            class="tn-quick-button"
+            [class.open]="quickPanel() === 'recent'"
+            [attr.aria-expanded]="quickPanel() === 'recent'"
+            aria-label="Recent pages"
+            title="Recent pages"
+            (click)="toggleQuick('recent')">
+
+            <i class="fas fa-clock-rotate-left"></i>
+
+            <span class="tn-quick-label">Recent</span>
+
+        </button>
+
+
+
+        <!-- Favorites / Recent drop-down -->
+
+        @if (quickPanel(); as tab)
+        {
+            <section
+                class="tn-quick-panel"
+                [attr.aria-label]="tab === 'favorites' ? 'Favorites' : 'Recent pages'">
+
+                <div class="tn-quick-head">
+
+                    <b>
+                        {{ tab === 'favorites' ? 'Favorites' : 'Recent pages' }}
+                    </b>
+
+                    @if (tab === 'recent' && recent().length > 0)
+                    {
+                        <button
+                            type="button"
+                            class="tn-clear"
+                            (click)="clearRecent()">
+                            Clear
+                        </button>
+                    }
+
+                </div>
+
+                <div class="tn-quick-list">
+
+                    @if (tab === 'favorites')
+                    {
+                        @for (item of favorites(); track item.submenuId)
+                        {
+                            <a
+                                class="tn-quick-row"
+                                [class.current]="isCurrent(item.route)"
+                                [routerLink]="item.route">
+
+                                <i class="fa-solid fa-star tn-quick-star"></i>
+
+                                <span class="tn-quick-text">
+                                    <b>{{ item.name }}</b>
+                                    <span>{{ item.moduleName }} › {{ item.menuName }}</span>
+                                </span>
+
+                            </a>
+                        }
+                        @empty
+                        {
+                            <div class="tn-quick-empty">
+                                No favorites yet. Open a module and click ★ next to a page.
+                            </div>
+                        }
+                    }
+                    @else
+                    {
+                        @for (item of recent(); track item.submenuId)
+                        {
+                            <a
+                                class="tn-quick-row"
+                                [class.current]="isCurrent(item.route)"
+                                [routerLink]="item.route">
+
+                                <i class="fas fa-clock-rotate-left tn-quick-clock"></i>
+
+                                <span class="tn-quick-text">
+                                    <b>{{ item.title }}</b>
+                                    <span>{{ item.path }}</span>
+                                </span>
+
+                            </a>
+                        }
+                        @empty
+                        {
+                            <div class="tn-quick-empty">
+                                Pages you open will show here.
+                            </div>
+                        }
+                    }
+
+                </div>
+
+            </section>
+        }
+
+    </div>
+
+
+</nav>

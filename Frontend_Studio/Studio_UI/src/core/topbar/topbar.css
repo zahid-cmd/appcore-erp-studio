@@ -151,6 +151,35 @@
 
 
 /* =====================================================
+   RIGHT : spacing between the switches and the actions
+===================================================== */
+
+.topbar-right
+{
+    gap:10px;
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch.
+===================================================== */
+
+:host-context(.appearance-light) .topbar
+{
+    background:#e9eef7;
+
+    border-bottom:1px solid #cdd7e6;
+
+    box-shadow:0 6px 18px -14px rgba(19,37,74,.45);
+
+    color:#13254a;
+}
+
+
+/* =====================================================
    LOGIN PAGE PREVIEW MODE
 ===================================================== */
 

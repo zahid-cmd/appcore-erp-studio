@@ -257,6 +257,25 @@ public abstract class PurchaseControllerBase : ControllerBase
 
 
     //===========================================================
+    // Unit Desk check (live) : bike numbers already on another
+    // purchase
+    //   POST unit-check { PurchaseId, Units:[{ChassisNo, ...}] }
+    //===========================================================
+
+    [HttpPost("unit-check")]
+    public Task<IActionResult> CheckUnits(
+        [FromBody] PurchaseUnitCheckDto? dto)
+    {
+        return Run(
+            async () =>
+                Ok(
+                    await _repository.CheckUnitsAsync(
+                        dto ?? new PurchaseUnitCheckDto())),
+            "Failed to check the bike numbers.");
+    }
+
+
+    //===========================================================
     // Open Purchase Orders of a supplier (PO Required ON)
     //   GET open-orders?supplierCode=SUP-000001&keepOrderId=12
     //===========================================================

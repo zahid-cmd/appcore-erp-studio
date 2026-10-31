@@ -165,10 +165,17 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : AccessoriesReceiving
+
+using AppCore.Application.InventoryManagement.ProductReceiving;
+using AppCore.Infrastructure.Configurations.InventoryManagement.ProductReceiving;
+
+// AUTO-END : AccessoriesReceiving
+
 // AUTO-BEGIN : ProductPricing
 
-using AppCore.Application.StoreManagement.PricingLabels;
-using AppCore.Infrastructure.Configurations.StoreManagement.PricingLabels;
+using AppCore.Application.InventoryManagement.PricingLabels;
+using AppCore.Infrastructure.Configurations.InventoryManagement.PricingLabels;
 
 // AUTO-END : ProductPricing
 
@@ -719,10 +726,96 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Inventory Status Repository (manual, read-only pages)
+        //
+        // Inventory Management › Inventory Status : Motor Bike
+        // Stock, Spare Parts & Lubricants Stock, Accessories
+        // Stock (stock from the movements, stock card, bikes).
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.InventoryManagement.InventoryStatus.IInventoryStatusRepository,
+            AppCore.Infrastructure.Repositories.InventoryManagement.InventoryStatus.InventoryStatusRepository
+        >();
+
+        //=======================================================
+        // Auto Journal Registers Repository (manual, read-only page)
+        //
+        // Accounts & Finance › Accounting Registers : journals
+        // posted by pages, by Module › Menu › Submenu
+        // (AutoJournalSources links a voucher type to its page).
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.AccountsFinance.AccountingRegisters.IAutoJournalRegistersRepository,
+            AppCore.Infrastructure.Repositories.AccountsFinance.AccountingRegisters.AutoJournalRegistersRepository
+        >();
+
+        //=======================================================
+        // Ledger Statements and Registers Repository (manual,
+        // read-only pages)
+        //
+        // Accounts & Finance › Accounting Registers : Ledger
+        // Statements and Cash / Bank / MFS / POS / EMI Registers.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.AccountsFinance.AccountingRegisters.ILedgerRegistersRepository,
+            AppCore.Infrastructure.Repositories.AccountsFinance.AccountingRegisters.LedgerRegistersRepository
+        >();
+
+        //=======================================================
+        // Product Ledgers Repository (manual, read-only pages)
+        //
+        // Inventory Management › Product Ledgers : Motor Bikes
+        // Ledger, Spare Parts & Lubricants Ledger, Accessories
+        // Ledger (stock history per product, FIFO batch values).
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.InventoryManagement.ProductLedgers.IProductLedgersRepository,
+            AppCore.Infrastructure.Repositories.InventoryManagement.ProductLedgers.ProductLedgersRepository
+        >();
+
+        //=======================================================
         // AUTO REGISTER SERVICES
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : SparePartsLubricantsReceiving
+
+        services.AddScoped
+        <
+            ISparePartsLubricantsReceivingRepository,
+            SparePartsLubricantsReceivingRepository
+        >();
+
+        // AUTO-END : SparePartsLubricantsReceiving
+
+        // AUTO-BEGIN : MotorBikeReceiving
+
+        services.AddScoped
+        <
+            IMotorBikeReceivingRepository,
+            MotorBikeReceivingRepository
+        >();
+
+        // AUTO-END : MotorBikeReceiving
+
+        // AUTO-BEGIN : AccessoriesReceiving
+
+        services.AddScoped
+        <
+            IAccessoriesReceivingRepository,
+            AccessoriesReceivingRepository
+        >();
+
+        // AUTO-END : AccessoriesReceiving
 
         // AUTO-BEGIN : PurchaseReturnsSp
 
@@ -1846,4 +1939,4 @@ public static class DependencyInjection
 
         return services;
     }
-}
+}

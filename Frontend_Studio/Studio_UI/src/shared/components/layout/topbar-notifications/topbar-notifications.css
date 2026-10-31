@@ -427,6 +427,42 @@
 }
 
 
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .bell-button
+{
+    border-color:#cbd6e7;
+
+    background:#f6f8fc;
+
+    color:#334766;
+}
+
+
+:host-context(.appearance-light) .bell-button:hover,
+:host-context(.appearance-light) .bell-button[aria-expanded="true"]
+{
+    border-color:#bfd0ec;
+
+    background:#e1eafa;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .bell-count
+{
+    border-color:#ffffff;
+
+    background:#2563eb;
+}
+
+
 @keyframes panel-rise
 {
     from { opacity:0; transform:translateY(-4px); }

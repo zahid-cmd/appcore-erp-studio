@@ -107,18 +107,23 @@
 
             <tbody>
 
-                <tr
+                <ng-container
                     *ngFor="
                         let row of rows;
                         let i=index;
                         trackBy:trackRow
-                    "
-                    class="list-table-row">
+                    ">
+
+                <tr
+                    class="list-table-row"
+                    [class.detail-open]="isDetailOpen(row)">
 
 
                     <td
                         *ngFor="let column of columns"
                         [style.width]="column.width"
+                        [class.status-cell]="column.type==='status'"
+                        [attr.title]="getCellTitle(row, column)"
                         [class.left]="(column.cellAlign || column.align)==='left'"
                         [class.center]="(column.cellAlign || column.align)==='center'"
                         [class.right]="(column.cellAlign || column.align)==='right'">
@@ -590,8 +595,36 @@
 
                         <ng-container
                             *ngIf="
-                                !column.type ||
-                                column.type==='text'
+                                (!column.type ||
+                                column.type==='text')
+                                &&
+                                column.link
+                            ">
+
+                            <button
+                                type="button"
+                                class="list-table-link"
+                                [class.is-open]="isDetailOpen(row)"
+                                [attr.title]="column.linkTitle || null"
+                                (click)="onCellClick(row, column, $event)">
+
+                                {{
+                                    getCellValue(
+                                        row,
+                                        column
+                                    )
+                                }}
+
+                            </button>
+
+                        </ng-container>
+
+                        <ng-container
+                            *ngIf="
+                                (!column.type ||
+                                column.type==='text')
+                                &&
+                                !column.link
                             ">
 
                             {{
@@ -616,10 +649,33 @@
 
                 </tr>
 
+                <!-- =================================================
+                     DETAIL ROW (page template, full width)
+                ================================================== -->
+
+                <tr
+                    *ngIf="isDetailOpen(row)"
+                    class="list-table-detail">
+
+                    <td [attr.colspan]="columns.length">
+
+                        <ng-container
+                            *ngTemplateOutlet="
+                                detailTemplate!;
+                                context:{ $implicit:row, data:detailContext }
+                            ">
+                        </ng-container>
+
+                    </td>
+
+                </tr>
+
+                </ng-container>
+
             </tbody>
 
         </table>
 
     </div>
 
-</div>
+</div>

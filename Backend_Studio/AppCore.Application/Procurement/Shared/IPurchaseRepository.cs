@@ -13,8 +13,9 @@ namespace AppCore.Application.Procurement.Shared;
 // Return   : Approved → Draft
 // Post     : Approved → Posted (journal, stock batches, VAT
 //            register, PO billed)
-// Cancel   : Approved / Posted, nothing received out / returned
-//            → Cancelled (reversing journal)
+// Cancel   : Approved / Posted, nothing received out / returned,
+//            supplier payable still covers it → Cancelled
+//            (reversing journal)
 //===============================================================
 
 public interface IPurchaseRepository
@@ -47,6 +48,10 @@ public interface IPurchaseRepository
         long branchId,
         DateOnly purchaseDate,
         long? purchaseId);
+
+    // Unit Desk : bike numbers already on another purchase
+    Task<List<PurchaseUnitTakenDto>> CheckUnitsAsync(
+        PurchaseUnitCheckDto dto);
 
     Task<PurchaseSavedDto> CreateAsync(
         CreatePurchaseDto dto,

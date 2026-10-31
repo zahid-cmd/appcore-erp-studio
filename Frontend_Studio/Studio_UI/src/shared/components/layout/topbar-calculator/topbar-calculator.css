@@ -1,0 +1,146 @@
+/* =====================================================
+   TOPBAR CALCULATOR (button)
+===================================================== */
+
+:host
+{
+    display:block;
+}
+
+
+.calc-button
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    min-width:40px;
+
+    height:40px;
+
+    padding:0 11px;
+
+    border:1px solid rgba(255,255,255,.12);
+
+    border-radius:11px;
+
+    background:rgba(255,255,255,.06);
+
+    color:#ffffff;
+
+    font-family:inherit;
+
+    cursor:pointer;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+
+.calc-button:hover
+{
+    background:rgba(255,255,255,.12);
+
+    border-color:rgba(147,180,245,.45);
+}
+
+
+.calc-button:focus-visible
+{
+    outline:2px solid #93b4f5;
+
+    outline-offset:2px;
+}
+
+
+.calc-button.open
+{
+    border-color:rgba(147,180,245,.55);
+
+    background:rgba(59,130,246,.24);
+
+    box-shadow:0 0 0 3px rgba(59,130,246,.18);
+}
+
+
+.calc-button svg
+{
+    flex:0 0 auto;
+}
+
+
+.calc-pill
+{
+    max-width:120px;
+
+    padding:1px 8px;
+
+    border-radius:999px;
+
+    background:rgba(245,158,11,.18);
+
+    color:#fcd34d;
+
+    font-size:12px;
+
+    font-weight:800;
+
+    font-variant-numeric:tabular-nums;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .calc-button
+{
+    border-color:#cbd6e7;
+
+    background:#f6f8fc;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .calc-button:hover
+{
+    border-color:#bfd0ec;
+
+    background:#e1eafa;
+}
+
+
+:host-context(.appearance-light) .calc-button.open
+{
+    border-color:#93b4f5;
+
+    background:#dbe6fb;
+
+    color:#1e40af;
+
+    box-shadow:0 0 0 3px rgba(37,99,235,.14);
+}
+
+
+:host-context(.appearance-light) .calc-pill
+{
+    background:#fff3d6;
+
+    color:#9a4a06;
+}

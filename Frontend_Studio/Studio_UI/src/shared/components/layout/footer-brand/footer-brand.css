@@ -88,3 +88,34 @@
 
     object-fit:contain;
 }
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .about-button
+{
+    border-color:#cbd6e7;
+
+    background:#ffffff;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .about-button:hover
+{
+    border-color:#bfd0ec;
+
+    background:#eef4ff;
+}
+
+
+:host-context(.appearance-light) .about-button i
+{
+    color:#2563eb;
+}

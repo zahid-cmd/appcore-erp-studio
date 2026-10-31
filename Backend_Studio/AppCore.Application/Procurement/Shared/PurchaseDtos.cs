@@ -227,6 +227,34 @@ public class PurchaseMushakCheckDto
 
 
 //===============================================================
+// Unit Desk live check : bike numbers already on another
+// purchase (Chassis / Engine always, Key / Battery when their
+// "unique" switch is ON)
+//===============================================================
+
+public class PurchaseUnitCheckDto
+{
+    // The purchase being edited (its own bikes are not a clash)
+    public long? PurchaseId { get; set; }
+
+    public List<PurchaseUnitDto> Units { get; set; } = new();
+}
+
+
+public class PurchaseUnitTakenDto
+{
+    // ChassisNo / EngineNo / KeyNo / BatteryNo
+    public string Field { get; set; } = string.Empty;
+
+    public string Value { get; set; } = string.Empty;
+
+    public string PurchaseNo { get; set; } = string.Empty;
+
+    public string Message { get; set; } = string.Empty;
+}
+
+
+//===============================================================
 // The page's switches, as the form needs them
 //===============================================================
 

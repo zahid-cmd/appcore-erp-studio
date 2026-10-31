@@ -1,0 +1,897 @@
+/* =====================================================
+   CALCULATOR WINDOW
+   -----------------------------------------------------
+   Deep : navy glass (default). Light : frosted white-blue
+   glass (LIGHT APPEARANCE section at the end).
+===================================================== */
+
+:host
+{
+    --c-panel:linear-gradient(160deg, rgba(27,48,96,.96) 0%, rgba(11,23,54,.97) 100%);
+    --c-head:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0));
+    --c-edge:rgba(255,255,255,.14);
+    --c-line:rgba(255,255,255,.08);
+    --c-sheen:rgba(255,255,255,.08);
+    --c-shadow:0 30px 70px -28px rgba(5,12,30,.95), 0 0 0 1px rgba(5,12,30,.25);
+    --c-text:#eef3ff;
+    --c-muted:#9fb1d1;
+    --c-accent:#93b4f5;
+    --c-screen:linear-gradient(180deg, rgba(5,12,30,.55), rgba(5,12,30,.35));
+    --c-chip:rgba(255,255,255,.07);
+    --c-tape:rgba(5,12,30,.28);
+    --c-tape-row:rgba(255,255,255,.05);
+    --c-num-bg:rgba(255,255,255,.08);
+    --c-num-fg:#ffffff;
+    --c-num-edge:rgba(255,255,255,.06);
+    --c-op-bg:rgba(59,130,246,.24);
+    --c-op-fg:#c9dafd;
+    --c-op-edge:rgba(147,180,245,.25);
+    --c-op-on:rgba(59,130,246,.5);
+    --c-fn-bg:rgba(255,255,255,.035);
+    --c-fn-fg:#a9bbd8;
+    --c-fn-edge:rgba(255,255,255,.06);
+    --c-biz-bg:rgba(245,158,11,.14);
+    --c-biz-fg:#fcd34d;
+    --c-biz-edge:rgba(245,158,11,.28);
+
+    display:contents;
+}
+
+
+.calc
+{
+    position:fixed;
+
+    z-index:1150;
+
+    display:flex;
+
+    flex-direction:column;
+
+    box-sizing:border-box;
+
+    border:1px solid var(--c-edge);
+
+    border-radius:20px;
+
+    background:var(--c-panel);
+
+    -webkit-backdrop-filter:blur(18px) saturate(150%);
+    backdrop-filter:blur(18px) saturate(150%);
+
+    box-shadow:var(--c-shadow);
+
+    color:var(--c-text);
+
+    font-family:inherit;
+
+    overflow:hidden;
+
+    outline:0;
+
+    animation:calc-in .16s ease-out;
+}
+
+
+.calc.dragging
+{
+    user-select:none;
+
+    cursor:grabbing;
+}
+
+
+@keyframes calc-in
+{
+    from { opacity:0; transform:translateY(-6px) scale(.985); }
+    to   { opacity:1; transform:none; }
+}
+
+
+@media (prefers-reduced-motion: reduce)
+{
+    .calc
+    {
+        animation:none;
+    }
+}
+
+
+button
+{
+    font-family:inherit;
+}
+
+
+.calc-spacer
+{
+    flex:1 1 auto;
+}
+
+
+/* =====================================================
+   TITLE BAR
+===================================================== */
+
+.calc-head
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    flex:0 0 46px;
+
+    box-sizing:border-box;
+
+    padding:0 10px 0 14px;
+
+    border-bottom:1px solid var(--c-line);
+
+    background:var(--c-head);
+
+    cursor:grab;
+
+    touch-action:none;
+}
+
+
+.calc.dragging .calc-head
+{
+    cursor:grabbing;
+}
+
+
+.calc-head-icon
+{
+    color:var(--c-accent);
+}
+
+
+.calc-title
+{
+    font-size:13px;
+
+    letter-spacing:.3px;
+}
+
+
+.calc-hint
+{
+    padding:1px 6px;
+
+    border:1px solid var(--c-line);
+
+    border-radius:6px;
+
+    color:var(--c-muted);
+
+    font-size:10.5px;
+
+    font-weight:700;
+}
+
+
+.calc-tape-toggle
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    height:28px;
+
+    padding:0 10px;
+
+    border:1px solid var(--c-edge);
+
+    border-radius:8px;
+
+    background:transparent;
+
+    color:var(--c-text);
+
+    font-size:11.5px;
+
+    font-weight:700;
+
+    cursor:pointer;
+}
+
+
+.calc-tape-toggle.on
+{
+    background:var(--c-op-bg);
+}
+
+
+.calc-icon-btn
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:28px;
+
+    height:28px;
+
+    border:0;
+
+    border-radius:8px;
+
+    background:transparent;
+
+    color:var(--c-muted);
+
+    cursor:pointer;
+}
+
+
+.calc-icon-btn:hover,
+.calc-tape-toggle:hover
+{
+    background:var(--c-chip);
+
+    color:var(--c-text);
+}
+
+
+.calc-head button:focus-visible,
+.calc-key:focus-visible,
+.calc-chip:focus-visible,
+.calc-tape-btn:focus-visible
+{
+    outline:2px solid var(--c-accent);
+
+    outline-offset:1px;
+}
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.calc-body
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    min-height:0;
+}
+
+
+.calc-main
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+    flex:1 1 auto;
+
+    min-width:0;
+
+    padding:14px;
+}
+
+
+/* =====================================================
+   SCREEN
+===================================================== */
+
+.calc-screen
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:4px;
+
+    padding:12px 14px;
+
+    border:1px solid var(--c-line);
+
+    border-radius:14px;
+
+    background:var(--c-screen);
+
+    box-shadow:inset 0 1px 0 var(--c-sheen);
+}
+
+
+.calc-screen-top,
+.calc-screen-bottom
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    min-height:18px;
+}
+
+
+.calc-mem
+{
+    padding:0 6px;
+
+    border-radius:5px;
+
+    background:var(--c-biz-bg);
+
+    color:var(--c-biz-fg);
+
+    font-size:10.5px;
+
+    font-weight:800;
+}
+
+
+.calc-expr
+{
+    flex:1 1 auto;
+
+    color:var(--c-muted);
+
+    font-size:13px;
+
+    font-variant-numeric:tabular-nums;
+
+    text-align:right;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.calc-value
+{
+    font-size:38px;
+
+    font-weight:800;
+
+    line-height:1.12;
+
+    letter-spacing:-.5px;
+
+    font-variant-numeric:tabular-nums;
+
+    text-align:right;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.calc-words
+{
+    flex:1 1 auto;
+
+    color:var(--c-muted);
+
+    font-size:11px;
+
+    font-style:italic;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.calc-flash
+{
+    color:var(--c-accent);
+
+    font-size:10.5px;
+
+    font-weight:800;
+
+    white-space:nowrap;
+}
+
+
+/* =====================================================
+   RATE CHIPS
+===================================================== */
+
+.calc-rates
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+}
+
+
+.calc-chip
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:5px;
+
+    height:26px;
+
+    padding:0 10px;
+
+    border:1px solid transparent;
+
+    border-radius:999px;
+
+    background:var(--c-chip);
+
+    color:var(--c-muted);
+
+    font-size:11px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    white-space:nowrap;
+}
+
+
+.calc-chip b
+{
+    color:var(--c-text);
+}
+
+
+button.calc-chip:hover
+{
+    border-color:var(--c-op-edge);
+}
+
+
+.calc-chip.static
+{
+    cursor:default;
+}
+
+
+.calc-chip.editing
+{
+    border-color:var(--c-accent);
+
+    cursor:text;
+}
+
+
+.calc-chip input
+{
+    width:46px;
+
+    padding:0;
+
+    border:0;
+
+    outline:0;
+
+    background:transparent;
+
+    color:var(--c-text);
+
+    font:inherit;
+
+    font-weight:800;
+
+    text-align:right;
+}
+
+
+/* =====================================================
+   KEYS
+===================================================== */
+
+.calc-biz
+{
+    display:grid;
+
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+
+    gap:6px;
+}
+
+
+.calc-pad
+{
+    display:grid;
+
+    flex:1 1 auto;
+
+    min-height:0;
+
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+
+    grid-auto-rows:minmax(0, 1fr);
+
+    gap:6px;
+}
+
+
+.calc-key
+{
+    min-height:0;
+
+    border:1px solid var(--c-fn-edge);
+
+    border-radius:12px;
+
+    background:var(--c-fn-bg);
+
+    color:var(--c-fn-fg);
+
+    font-size:13px;
+
+    font-weight:800;
+
+    cursor:pointer;
+
+    box-shadow:inset 0 1px 0 var(--c-sheen);
+
+    transition:
+        transform .08s ease,
+        filter .12s ease,
+        background .12s ease;
+}
+
+
+.calc-key:hover
+{
+    filter:brightness(1.14);
+}
+
+
+.calc-key:active,
+.calc-key.pressed
+{
+    transform:scale(.94);
+}
+
+
+/* Key typed on the keyboard */
+
+.calc-key.pressed
+{
+    filter:brightness(1.35);
+
+    box-shadow:0 0 0 2px var(--c-accent);
+}
+
+
+.calc-key.num
+{
+    border-color:var(--c-num-edge);
+
+    background:var(--c-num-bg);
+
+    color:var(--c-num-fg);
+
+    font-size:18px;
+}
+
+
+.calc-key.op
+{
+    border-color:var(--c-op-edge);
+
+    background:var(--c-op-bg);
+
+    color:var(--c-op-fg);
+
+    font-size:19px;
+}
+
+
+.calc-key.op.on
+{
+    background:var(--c-op-on);
+}
+
+
+.calc-key.eq
+{
+    border-color:rgba(147,180,245,.4);
+
+    background:linear-gradient(135deg, #1e40af, #2563eb);
+
+    color:#ffffff;
+
+    font-size:20px;
+
+    box-shadow:0 8px 18px -10px rgba(37,99,235,.9);
+}
+
+
+.calc-key.biz
+{
+    height:34px;
+
+    border-color:var(--c-biz-edge);
+
+    background:var(--c-biz-bg);
+
+    color:var(--c-biz-fg);
+
+    font-size:12px;
+}
+
+
+/* =====================================================
+   TAPE
+===================================================== */
+
+.calc-tape
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:0 0 196px;
+
+    width:196px;
+
+    box-sizing:border-box;
+
+    border-left:1px solid var(--c-line);
+
+    background:var(--c-tape);
+}
+
+
+.calc-tape-head
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:12px 12px 8px;
+
+    color:var(--c-muted);
+
+    font-size:11px;
+}
+
+
+.calc-tape-head span:first-child
+{
+    font-weight:800;
+
+    letter-spacing:.8px;
+}
+
+
+.calc-tape-list
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+    flex:1 1 auto;
+
+    min-height:0;
+
+    padding:0 10px 10px;
+
+    overflow:auto;
+
+    scrollbar-width:thin;
+}
+
+
+.calc-tape-row
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:2px;
+
+    padding:8px 10px;
+
+    border:1px solid var(--c-line);
+
+    border-radius:10px;
+
+    background:var(--c-tape-row);
+}
+
+
+.calc-tape-label
+{
+    color:var(--c-accent);
+
+    font-size:10.5px;
+
+    font-weight:800;
+}
+
+
+.calc-tape-detail
+{
+    color:var(--c-muted);
+
+    font-size:11px;
+
+    font-variant-numeric:tabular-nums;
+
+    overflow-wrap:anywhere;
+}
+
+
+.calc-tape-result
+{
+    font-size:14px;
+
+    font-variant-numeric:tabular-nums;
+
+    text-align:right;
+}
+
+
+.calc-tape-empty
+{
+    margin:0;
+
+    padding:18px 6px;
+
+    color:var(--c-muted);
+
+    font-size:12px;
+
+    text-align:center;
+}
+
+
+.calc-tape-foot
+{
+    display:flex;
+
+    gap:6px;
+
+    padding:10px;
+
+    border-top:1px solid var(--c-line);
+}
+
+
+.calc-tape-btn
+{
+    flex:1 1 auto;
+
+    height:30px;
+
+    border:1px solid var(--c-edge);
+
+    border-radius:8px;
+
+    background:var(--c-chip);
+
+    color:var(--c-text);
+
+    font-size:11.5px;
+
+    font-weight:700;
+
+    cursor:pointer;
+}
+
+
+.calc-tape-btn.ghost
+{
+    background:transparent;
+
+    color:var(--c-muted);
+}
+
+
+.calc-tape-btn:disabled
+{
+    opacity:.45;
+
+    cursor:default;
+}
+
+
+/* =====================================================
+   NARROW SCREENS : tape hides below 600px
+===================================================== */
+
+@media (max-width: 600px)
+{
+    .calc-tape
+    {
+        display:none;
+    }
+
+    .calc-hint
+    {
+        display:none;
+    }
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light)
+{
+    /* Same steel-blue family as the light shell, one step deeper */
+    --c-panel:linear-gradient(160deg, #dfe7f3 0%, #cbd8ec 100%);
+    --c-head:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 60%), linear-gradient(180deg, #c3d2ea, #cfdbee);
+    --c-edge:#b4c4dd;
+    --c-line:rgba(19,37,74,.12);
+    --c-sheen:rgba(255,255,255,.85);
+    --c-shadow:0 34px 70px -26px rgba(19,37,74,.62), 0 0 0 1px rgba(19,37,74,.14);
+    --c-text:#13254a;
+    --c-muted:#4b5a76;
+    --c-accent:#1d4ed8;
+    --c-screen:linear-gradient(180deg, #f7f9fd, #e9eff8);
+    --c-chip:#eef3fa;
+    --c-tape:#c4d2e8;
+    --c-tape-row:#eef3fa;
+    --c-num-bg:#f7f9fd;
+    --c-num-fg:#13254a;
+    --c-num-edge:#b9c8df;
+    --c-op-bg:#bcd0f3;
+    --c-op-fg:#173a9c;
+    --c-op-edge:#9fb9e8;
+    --c-op-on:#9db9ee;
+    --c-fn-bg:#d5e0f0;
+    --c-fn-fg:#33445f;
+    --c-fn-edge:#b9c8df;
+    --c-biz-bg:#fbe3ae;
+    --c-biz-fg:#7c3c05;
+    --c-biz-edge:#e9c072;
+}
+
+
+:host-context(.appearance-light) .calc-key:hover
+{
+    filter:brightness(.96);
+}
+
+
+:host-context(.appearance-light) .calc-screen
+{
+    border-color:#b9c8df;
+
+    box-shadow:
+        inset 0 1px 0 #ffffff,
+        inset 0 -1px 0 rgba(19,37,74,.06);
+}
+
+
+:host-context(.appearance-light) .calc-key.num
+{
+    box-shadow:
+        inset 0 1px 0 #ffffff,
+        0 1px 2px rgba(19,37,74,.12);
+}

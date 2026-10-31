@@ -14,6 +14,7 @@ import
 {
     Component,
     OnInit,
+    computed,
     inject,
     signal
 }
@@ -30,6 +31,12 @@ import
     SidebarService
 }
 from '../../../../core/sidebar/sidebar.service';
+
+import
+{
+    ShellService
+}
+from '../../../../core/shell/shell.service';
 
 import
 {
@@ -73,6 +80,9 @@ implements
     private readonly companyService =
         inject(CompanyService);
 
+    private readonly shellService =
+        inject(ShellService);
+
 
     //===========================================================
     // State
@@ -85,6 +95,29 @@ implements
                 initialValue:
                     false
             }
+        );
+
+    readonly isTopLayout =
+        computed(
+            () =>
+                this.shellService.layoutMode() === 'top'
+        );
+
+    // Logo mark only for a collapsed sidebar (Side layout).
+    readonly showMark =
+        computed(
+            () =>
+                this.isCollapsed()
+                &&
+                !this.isTopLayout()
+        );
+
+    readonly logoSrc =
+        computed(
+            () =>
+                this.shellService.appearance() === 'light'
+                ? 'assets/logo-light.png'
+                : 'assets/logo-dark.png'
         );
 
     readonly companyName =

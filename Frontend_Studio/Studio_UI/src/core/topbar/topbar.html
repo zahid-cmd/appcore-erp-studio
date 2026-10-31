@@ -4,7 +4,8 @@
      Left    logo block (same width as the sidebar) and
              sidebar toggle
      Center  page search (Ctrl K) and Branch / FY chips
-     Right   clock, notifications, profile
+     Right   Light / Deep and Side / Top switches, clock,
+             notifications, profile
 ===================================================== -->
 
 <div class="topbar">
@@ -44,6 +45,14 @@
     ================================================== -->
 
     <div class="topbar-right">
+
+        <app-topbar-switches>
+        </app-topbar-switches>
+
+        <!-- Calculator (Alt C) : opens the floating window -->
+
+        <app-topbar-calculator>
+        </app-topbar-calculator>
 
         <app-topbar-actions
             (profileClick)="onProfileClick()"

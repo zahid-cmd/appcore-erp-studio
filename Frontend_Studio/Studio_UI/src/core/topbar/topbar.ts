@@ -50,6 +50,18 @@ import
 }
 from '../../shared/components/layout/topbar-context/topbar-context';
 
+import
+{
+    TopbarSwitchesComponent
+}
+from '../../shared/components/layout/topbar-switches/topbar-switches';
+
+import
+{
+    TopbarCalculatorComponent
+}
+from '../../shared/components/layout/topbar-calculator/topbar-calculator';
+
 
 //===============================================================
 // Change Password
@@ -124,6 +136,10 @@ from '../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
         TopbarSearchComponent,
 
         TopbarContextComponent,
+
+        TopbarSwitchesComponent,
+
+        TopbarCalculatorComponent,
 
         ChangePasswordComponent,
 

@@ -222,3 +222,19 @@ export type ShellPanelTab =
     'favorites'
     |
     'recent';
+
+
+//===============================================================
+// Layout and Appearance (per user, in this browser)
+//===============================================================
+
+export type ShellLayoutMode =
+    'side'      // sidebar (default)
+    |
+    'top';      // modules bar under the top bar
+
+
+export type ShellAppearance =
+    'deep'      // navy top bar, sidebar and footer (default)
+    |
+    'light';    // white / light-blue top bar, sidebar and footer

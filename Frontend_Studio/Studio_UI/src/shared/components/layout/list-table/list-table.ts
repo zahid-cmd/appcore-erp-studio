@@ -12,7 +12,9 @@ import {
   Input,
   Output,
   OnChanges,
-  SimpleChanges
+  SimpleChanges,
+  ContentChild,
+  TemplateRef
 } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -81,6 +83,21 @@ export interface ListTableColumn
   flagField?: string;
   flagText?: string;
   flagTitleField?: string;
+  // Text cells : the value is a link; a click emits
+  // (cellClick) with { field, row } (e.g. open a detail row)
+  link?: boolean;
+  linkTitle?: string;
+}
+
+
+//===============================================================
+// CELL CLICK (link columns)
+//===============================================================
+
+export interface ListTableCellClickEvent
+{
+  field: string;
+  row: any;
 }
 
 
@@ -365,6 +382,79 @@ private readonly navigationContextSubscription =
   @Input()
   rowActions: ListTableRowAction[] = [];
 
+
+  /* =====================================================
+     LINK CELLS + DETAIL ROW (optional, page specific)
+
+     A column with link:true shows its value as a link; a
+     click emits (cellClick). The page may give a detail
+     template; it opens as a full-width row under the row
+     whose row[detailKey] equals detailValue :
+
+       <app-list-table
+           detailKey="ProductId"
+           [detailValue]="openId"
+           [detailContext]="detailData"
+           (cellClick)="onCellClick($event)">
+           <ng-template #rowDetail let-row let-data="data">
+               …
+           </ng-template>
+       </app-list-table>
+
+     detailContext reaches the template as "data"; give a
+     new object when it changes (the table is OnPush).
+     Pages without these are unchanged.
+  ====================================================== */
+
+  @ContentChild('rowDetail')
+  detailTemplate?: TemplateRef<any>;
+
+  @Input()
+  detailKey = '';
+
+  @Input()
+  detailValue: any = null;
+
+  @Input()
+  detailContext: any = null;
+
+  @Output()
+  cellClick =
+    new EventEmitter<ListTableCellClickEvent>();
+
+  isDetailOpen(
+    row: any
+  ):
+    boolean
+  {
+    return (
+      !!this.detailTemplate
+      &&
+      !!this.detailKey
+      &&
+      this.detailValue !== null
+      &&
+      this.detailValue !== undefined
+      &&
+      row?.[this.detailKey] === this.detailValue
+    );
+  }
+
+  onCellClick(
+    row: any,
+    column: ListTableColumn,
+    event: Event
+  ):
+    void
+  {
+    event.stopPropagation();
+
+    this.cellClick.emit({
+      field: column.field,
+      row
+    });
+  }
+
   @Output()
   rowAction =
     new EventEmitter<ListTableRowActionEvent>();
@@ -566,6 +656,43 @@ private readonly navigationContextSubscription =
 
 
   /* =====================================================
+     CELL TOOLTIP
+     Text cells show their full value on hover, so a value
+     cut short (…) by a narrow column can still be read.
+  ====================================================== */
+
+  getCellTitle(
+    row: any,
+    column: ListTableColumn
+  ):
+    string | null
+  {
+    if
+    (
+      (column.type && column.type !== 'text')
+      ||
+      column.link
+    )
+    {
+      return null;
+    }
+
+    const value =
+      this.getCellValue(
+        row,
+        column
+      );
+
+    const text =
+      value === null || value === undefined
+        ? ''
+        : String(value).trim();
+
+    return text || null;
+  }
+
+
+  /* =====================================================
      CELL FLAG (optional pill after a text value)
   ====================================================== */
 
@@ -743,6 +870,23 @@ private readonly navigationContextSubscription =
 
       case 'not applicable':
         return 'neutral';
+
+      // Inventory Status : stock of a product / a bike
+      case 'in stock':
+        return 'active';
+
+      case 'low stock':
+        return 'pending';
+
+      case 'critical':
+        return 'closed';
+
+      case 'out of stock':
+        return 'inactive';
+
+      case 'in transit':
+      case 'partly received':
+        return 'approved';
 
       default:
         return 'neutral';
@@ -1086,4 +1230,4 @@ private readonly navigationContextSubscription =
       ??
       index;
   }
-}
+}

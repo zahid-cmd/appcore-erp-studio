@@ -54,9 +54,21 @@ from '../footer/footer';
 
 import
 {
+    TopbarNavComponent
+}
+from '../../shared/components/layout/topbar-nav/topbar-nav';
+
+import
+{
     BreadcrumbComponent
 }
 from '../../shared/components/layout/breadcrumb/breadcrumb';
+
+import
+{
+    CalculatorWindowComponent
+}
+from '../../shared/components/layout/calculator-window/calculator-window';
 
 import
 {
@@ -119,9 +131,13 @@ from '../shell/shell.service';
 
         FooterComponent,
 
+        TopbarNavComponent,
+
         BreadcrumbComponent,
 
         ToastComponent,
+
+        CalculatorWindowComponent,
 
         AboutAppCoreComponent
     ],
@@ -193,6 +209,14 @@ implements
     // the starting width from layout.css.
     //===========================================================
 
+    // Side / Top layout and Deep / Light chrome (per user).
+    readonly layoutMode =
+        this.shellService.layoutMode;
+
+    readonly appearance =
+        this.shellService.appearance;
+
+
     readonly sidebarFitWidth =
         computed(
             () =>
@@ -217,6 +241,9 @@ implements
     ngOnInit():
         void
     {
+        // Layout and appearance before the first paint.
+        this.shellService.ensureUserState();
+
         this.loadUserPermissions();
 
         this.updateDashboardState(

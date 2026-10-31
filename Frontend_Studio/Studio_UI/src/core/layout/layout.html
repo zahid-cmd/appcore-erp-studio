@@ -1,6 +1,8 @@
 <div
     class="layout"
     [class.sidebar-is-collapsed]="isSidebarCollapsed"
+    [class.layout-top]="layoutMode() === 'top'"
+    [class.appearance-light]="appearance() === 'light'"
     [style.--sidebar-width]="sidebarFitWidth()">
 
 
@@ -14,6 +16,18 @@
 
 
     <!-- =====================================================
+         TOP NAVIGATION (Top layout only)
+    ====================================================== -->
+
+    @if (layoutMode() === 'top')
+    {
+        <app-topbar-nav>
+        </app-topbar-nav>
+    }
+
+
+
+    <!-- =====================================================
          LAYOUT BODY
     ====================================================== -->
 
@@ -22,6 +36,8 @@
 
         <!-- =================================================
              SIDEBAR
+             (kept loaded in Top layout, only hidden: it
+             feeds the page list, active page and favorites)
         ================================================== -->
 
         <app-sidebar
@@ -82,6 +98,13 @@
     </app-about-appcore>
 
 
+
+    <!-- =====================================================
+         CALCULATOR (floating, opened from the top bar)
+    ====================================================== -->
+
+    <app-calculator-window>
+    </app-calculator-window>
 
     <!-- =====================================================
          GLOBAL TOAST

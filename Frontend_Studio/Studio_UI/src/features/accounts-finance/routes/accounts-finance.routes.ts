@@ -80,4 +80,30 @@ export const accountsFinanceRoutes:
 
     // AUTO-END : MNU-004-002
 
+    // AUTO-BEGIN : MNU-004-003
+
+    //===========================================================
+    // Accounting Registers
+    //===========================================================
+
+    {
+        path:'accounting-registers',
+
+        data:
+        {
+            breadcrumb:'Accounting Registers'
+        },
+
+        loadChildren:() =>
+            import(
+                '../accounting-registers/routes/accounting-registers.routes'
+            )
+            .then(
+                m =>
+                    m.mnu004003Routes
+            )
+    },
+
+    // AUTO-END : MNU-004-003
+
 ];

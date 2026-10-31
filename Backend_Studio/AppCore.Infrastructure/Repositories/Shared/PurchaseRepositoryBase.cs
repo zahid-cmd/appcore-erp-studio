@@ -98,7 +98,8 @@ namespace AppCore.Infrastructure.Repositories.Procurement.Shared;
 //              Purchase" is ON), VAT register rows, motor bike
 //              units in stock.
 // Cancel   : Approved / Posted while nothing has left the batches,
-//            been received or returned → Cancelled (reversing
+//            been received or returned, and (Posted) the supplier's
+//            payable balance still covers it → Cancelled (reversing
 //            journal, batches cancelled, PO unbilled).
 //
 // Lines :
@@ -166,6 +167,11 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
     private const string MovePurchase = "Purchase";
 
     private const string MoveCancel = "PurchaseCancel";
+
+    // Product Receiving movements (In Transit → On Hand and back)
+    private const string MoveReceive = "Receive";
+
+    private const string MoveReceiveCancel = "ReceiveCancel";
 
     private const string SourcePurchase = "Purchase";
 
@@ -1032,6 +1038,117 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 )
                 .Select(x => x.PurchaseNo)
                 .FirstOrDefaultAsync();
+    }
+
+
+    //===========================================================
+    // Unit Desk check (live, from the form) : the numbers typed
+    // that live bikes of other purchases already carry. Same
+    // rule as the save : Chassis / Engine always, Key / Battery
+    // only when their "unique" switch is ON.
+    //===========================================================
+
+    public async Task<List<PurchaseUnitTakenDto>>
+        CheckUnitsAsync
+        (
+            PurchaseUnitCheckDto dto
+        )
+    {
+        List<PurchaseUnitTakenDto> result =
+            new();
+
+        List<PurchaseUnitDto> units =
+            dto?.Units ?? new List<PurchaseUnitDto>();
+
+        if (Page.PageType != "MB" || units.Count == 0)
+        {
+            return result;
+        }
+
+        bool uniqueKey =
+            await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false);
+
+        bool uniqueBattery =
+            await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false);
+
+        List<string> Pick(Func<PurchaseUnitDto, string?> pick) =>
+            units
+                .Select(x => Limit(pick(x), 50).ToUpperInvariant())
+                .Where(x => x.Length > 0)
+                .Distinct()
+                .Take(500)
+                .ToList();
+
+        List<string> chassis = Pick(x => x.ChassisNo);
+
+        List<string> engines = Pick(x => x.EngineNo);
+
+        List<string> keys = uniqueKey ? Pick(x => x.KeyNo) : new List<string>();
+
+        List<string> batteries = uniqueBattery ? Pick(x => x.BatteryNo) : new List<string>();
+
+        if (chassis.Count + engines.Count + keys.Count + batteries.Count == 0)
+        {
+            return result;
+        }
+
+        long current =
+            dto?.PurchaseId ?? 0;
+
+        var rows =
+            await _context
+                .Set<MotorBikeUnitsEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.PurchaseId != current
+                        &&
+                        (
+                            chassis.Contains(x.ChassisNo.ToUpper())
+                            ||
+                            engines.Contains(x.EngineNo.ToUpper())
+                            ||
+                            keys.Contains(x.KeyNo.ToUpper())
+                            ||
+                            batteries.Contains(x.BatteryNo.ToUpper())
+                        )
+                )
+                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo })
+                .Take(500)
+                .ToListAsync();
+
+        void Add(string field, string label, string? value, List<string> typed, string purchaseNo)
+        {
+            string key =
+                (value ?? string.Empty).Trim().ToUpperInvariant();
+
+            if (key.Length == 0 || !typed.Contains(key) || result.Any(x => x.Field == field && x.Value == key))
+            {
+                return;
+            }
+
+            result.Add(
+                new PurchaseUnitTakenDto
+                {
+                    Field = field,
+                    Value = key,
+                    PurchaseNo = purchaseNo,
+                    Message = $"{label} {key} is already on purchase {purchaseNo}."
+                });
+        }
+
+        foreach (var row in rows)
+        {
+            Add("ChassisNo", "Chassis No", row.ChassisNo, chassis, row.PurchaseNo);
+            Add("EngineNo", "Engine No", row.EngineNo, engines, row.PurchaseNo);
+            Add("KeyNo", "Key No", row.KeyNo, keys, row.PurchaseNo);
+            Add("BatteryNo", "Battery No", row.BatteryNo, batteries, row.PurchaseNo);
+        }
+
+        return result;
     }
 
 
@@ -4537,7 +4654,10 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
     //   Posted : only while nothing has left its batches, been
     //   received or returned. Reversing journal dated today,
     //   batches cancelled, VAT register reversed, bikes removed.
-    //   Payments against the supplier are not linked yet.
+    //   Payments are not linked to invoices, so the supplier's
+    //   payable ledger must still hold at least this purchase
+    //   (credit balance ≥ Total Payable); otherwise payments /
+    //   adjustments already used it and they come first.
     //===========================================================
 
     public async Task
@@ -4598,6 +4718,9 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                             .Select(x => x.StockBatchId)
                             .ToList();
 
+                    // Product Receiving moves stock In Transit → On
+                    // Hand (and back on its cancel); anything else
+                    // means the stock was used
                     bool moved =
                         batches.Any(x => x.QuantityOut > 0)
                         ||
@@ -4609,13 +4732,43 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                                     batchIds.Contains(x.StockBatchId)
                                     &&
                                     x.MovementType != MovePurchase
+                                    &&
+                                    x.MovementType != MoveReceive
+                                    &&
+                                    x.MovementType != MoveReceiveCancel
                             );
 
                     if (moved)
                     {
                         throw new InvalidOperationException(
-                            $"Purchase {entity.PurchaseNo} has stock already received, moved or sold; it cannot be cancelled.");
+                            $"Purchase {entity.PurchaseNo} has stock already moved or sold; it cannot be cancelled.");
                     }
+
+                    // Received (and not cancelled) : cancel the
+                    // receiving first
+                    decimal received =
+                        await _context
+                            .Set<StockMovementsEntity>()
+                            .Where
+                            (
+                                x =>
+                                    batchIds.Contains(x.StockBatchId)
+                                    &&
+                                    x.Bucket == BatchOnHand
+                                    &&
+                                    (x.MovementType == MoveReceive || x.MovementType == MoveReceiveCancel)
+                            )
+                            .SumAsync(x => (decimal?)(x.QuantityIn - x.QuantityOut))
+                        ??
+                        0m;
+
+                    if (received != 0)
+                    {
+                        throw new InvalidOperationException(
+                            $"Purchase {entity.PurchaseNo} has been received into stock; cancel its Product Receiving first.");
+                    }
+
+                    await RequirePayableCoversAsync(entity);
 
                     await _postingService.ReverseAsync(
                         entity.VoucherNo.Length > 0 ? entity.VoucherNo : entity.PurchaseNo,
@@ -4723,6 +4876,68 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
                 await _context.SaveChangesAsync();
             });
+    }
+
+
+    //===========================================================
+    // Cancel guard : the supplier's payable ledger (the one this
+    // purchase was posted to) must still have a credit balance
+    // of at least the purchase's Total Payable. Less means
+    // payments / debit adjustments have used it : reverse or
+    // adjust them before cancelling.
+    //===========================================================
+
+    private async Task
+        RequirePayableCoversAsync
+        (
+            THeader entity
+        )
+    {
+        string? ledger =
+            await _context
+                .Set<VoucherEntries>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.VoucherType == Page.Prefix
+                        &&
+                        x.VoucherId == entity.PurchaseId
+                        &&
+                        !x.IsReversal
+                        &&
+                        x.PartyType == "Supplier"
+                        &&
+                        x.Credit > 0
+                )
+                .Select(x => x.LedgerCode)
+                .FirstOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(ledger))
+        {
+            // Nothing posted to a supplier ledger : nothing to guard
+            return;
+        }
+
+        decimal credit =
+            await _context
+                .Set<VoucherEntries>()
+                .AsNoTracking()
+                .Where(x => x.LedgerCode == ledger)
+                .SumAsync(x => (decimal?)(x.Credit - x.Debit))
+            ??
+            0m;
+
+        if (credit < entity.TotalPayable)
+        {
+            string balance =
+                credit >= 0
+                    ? $"{credit:N2} Cr"
+                    : $"{-credit:N2} Dr";
+
+            throw new InvalidOperationException(
+                $"Purchase {entity.PurchaseNo} cannot be cancelled : {entity.SupplierName}'s payable balance is {balance}, less than this purchase ({entity.TotalPayable:N2}). Payments or adjustments to the supplier have used it; reverse or adjust them first.");
+        }
     }
 
 

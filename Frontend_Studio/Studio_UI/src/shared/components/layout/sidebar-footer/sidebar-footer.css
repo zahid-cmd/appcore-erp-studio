@@ -554,6 +554,75 @@
 }
 
 
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .sidebar-footer
+{
+    border-top:1px solid rgba(255,255,255,.75);
+
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 42%),
+        linear-gradient(180deg, #ccd9ee 0%, #bccbe4 100%);
+
+    box-shadow:
+        inset 0 1px 0 rgba(19,37,74,.08),
+        0 -8px 18px -14px rgba(19,37,74,.55);
+
+    -webkit-backdrop-filter:blur(14px) saturate(160%);
+    backdrop-filter:blur(14px) saturate(160%);
+}
+
+
+:host-context(.appearance-light) .footer-command
+{
+    color:#3f4f6c;
+}
+
+
+:host-context(.appearance-light) .footer-command:hover:not(:disabled)
+{
+    background:rgba(255,255,255,.45);
+
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+
+    color:#13254a;
+}
+
+
+/* Open panel : frosted glass tile */
+
+:host-context(.appearance-light) .footer-command.active
+{
+    background:rgba(255,255,255,.72);
+
+    box-shadow:
+        inset 0 1px 0 #ffffff,
+        inset 0 0 0 1px rgba(255,255,255,.9),
+        0 4px 12px -6px rgba(19,37,74,.45);
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .footer-command.favorites i
+{
+    color:#e0a100;
+}
+
+
+:host-context(.appearance-light) .command-count
+{
+    background:#2563eb;
+
+    box-shadow:0 0 0 2px rgba(255,255,255,.85);
+}
+
+
 @keyframes panel-in
 {
     from { opacity:0; transform:translateX(-6px); }

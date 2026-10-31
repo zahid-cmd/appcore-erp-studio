@@ -746,6 +746,154 @@
 
 
 /* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .sidebar
+{
+    background:linear-gradient(180deg, #edf2f9 0%, #e4ebf6 55%, #dae3f1 100%);
+
+    border-right-color:#cdd7e6;
+
+    color:#334766;
+}
+
+
+:host-context(.appearance-light) .sidebar-body
+{
+    scrollbar-color:#b3c2da transparent;
+}
+
+
+:host-context(.appearance-light) .sidebar-body::-webkit-scrollbar-thumb
+{
+    background:#b3c2da;
+}
+
+
+:host-context(.appearance-light) .sidebar-caption
+{
+    color:#5d6c87;
+}
+
+
+:host-context(.appearance-light) .module-header,
+:host-context(.appearance-light) .menu-header
+{
+    color:#334766;
+}
+
+
+:host-context(.appearance-light) .module-header:hover,
+:host-context(.appearance-light) .menu-header:hover
+{
+    background:#d9e2f1;
+}
+
+
+:host-context(.appearance-light) .module-header.open,
+:host-context(.appearance-light) .menu-header.open
+{
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .module-header.open
+{
+    background:#d6e2f8;
+}
+
+
+:host-context(.appearance-light) .module-title i,
+:host-context(.appearance-light) .menu-title i
+{
+    color:#2563eb;
+}
+
+
+:host-context(.appearance-light) .chevron
+{
+    color:#71819c;
+}
+
+
+:host-context(.appearance-light) .module-header.open .chevron,
+:host-context(.appearance-light) .menu-header.open .chevron
+{
+    color:#2563eb;
+}
+
+
+:host-context(.appearance-light) .sidebar-menus
+{
+    border-left-color:#cbd6e7;
+}
+
+
+:host-context(.appearance-light) .page-button,
+:host-context(.appearance-light) .page-button:visited
+{
+    color:#334766;
+}
+
+
+:host-context(.appearance-light) .page-row:hover .page-button
+{
+    background:#d9e2f1;
+
+    color:#13254a;
+}
+
+
+/* The open page keeps the same strong blue bar */
+
+:host-context(.appearance-light) .page-button.active,
+:host-context(.appearance-light) .page-button.active:visited,
+:host-context(.appearance-light) .page-row:hover .page-button.active
+{
+    background:linear-gradient(90deg, #1e40af, #2563eb);
+
+    color:#ffffff;
+}
+
+
+:host-context(.appearance-light) .page-star
+{
+    color:#71819c;
+}
+
+
+:host-context(.appearance-light) .page-row.favorite .page-star
+{
+    color:#f5b301;
+}
+
+
+:host-context(.appearance-light) .page-star:hover
+{
+    background:#d3ddee;
+
+    color:#f5b301;
+}
+
+
+:host-context(.appearance-light) .page-row.active .page-star,
+:host-context(.appearance-light) .page-row.active.favorite .page-star
+{
+    color:#ffd166;
+}
+
+
+:host-context(.appearance-light) .rail-divider
+{
+    background:#cdd7e6;
+}
+
+
+/* =====================================================
    MOTION
 ===================================================== */
 

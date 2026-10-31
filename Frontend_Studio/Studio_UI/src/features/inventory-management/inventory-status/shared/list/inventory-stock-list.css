@@ -1,0 +1,388 @@
+@import '../../../../../shared/styles/app-list-page.css';
+
+/* =====================================================
+   INVENTORY STATUS LIST
+===================================================== */
+
+/* The page fills the shell's content area (full height, down
+   to the shell footer); this host adds no box */
+:host
+{
+    display:contents;
+}
+
+.is-page
+{
+    position:relative;
+}
+
+.app-list-page > .is-strip
+{
+    flex:0 0 auto;
+}
+
+
+/* =====================================================
+   TOOLBAR FILTERS
+===================================================== */
+
+.is-filters
+{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    min-width:0;
+}
+
+.is-filter
+{
+    --dropdown-width:210px;
+}
+
+
+/* =====================================================
+   SUMMARY STRIP (single line, 40px)
+   -----------------------------------------------------
+   One white bar split into cells by hairlines. Each
+   cell : dot + label, figure, note on one line; the
+   meter is a hairline on the bottom edge. The chosen
+   cell gets a tinted face and a tone underline.
+===================================================== */
+
+.is-strip
+{
+    display:flex;
+    align-items:stretch;
+    height:40px;
+    min-width:0;
+    border:1px solid #e3e9f2;
+    border-radius:12px;
+    background:#ffffff;
+    box-shadow:0 1px 2px rgba(15, 23, 42, 0.04);
+    overflow:hidden;
+}
+
+.is-cell
+{
+    --tone:#1e3a8a;
+    --tone-soft:rgba(30, 58, 138, 0.06);
+
+    position:relative;
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:8px;
+    flex:1 1 0;
+    min-width:0;
+    padding:0 14px;
+    border:0;
+    border-right:1px solid #eef2f7;
+    background:transparent;
+    color:#0f172a;
+    font-family:inherit;
+    text-align:left;
+    white-space:nowrap;
+    cursor:pointer;
+    transition:background .15s ease;
+}
+
+.is-cell:hover
+{
+    background:#fafcff;
+}
+
+.is-cell.is-static
+{
+    cursor:default;
+}
+
+.is-cell.is-static:hover
+{
+    background:transparent;
+}
+
+/* Chosen filter : tinted face + underline in its tone */
+.is-cell.is-on
+{
+    background:var(--tone-soft);
+}
+
+.is-cell.is-on::after
+{
+    content:'';
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:1;
+    height:2px;
+    background:var(--tone);
+}
+
+.is-cell-label
+{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex:0 0 auto;
+    color:#64748b;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+}
+
+.is-cell.is-on .is-cell-label
+{
+    color:var(--tone);
+}
+
+.is-dot
+{
+    flex:0 0 7px;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:var(--tone);
+}
+
+.is-cell-value
+{
+    flex:0 0 auto;
+    font-size:15px;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+}
+
+.is-cell-value.is-date
+{
+    font-size:13px;
+    font-weight:700;
+    color:#334155;
+}
+
+.is-cell-note
+{
+    flex:0 1 auto;
+    min-width:0;
+    color:#94a3b8;
+    font-size:11px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.is-cell-note.is-plain
+{
+    color:#64748b;
+}
+
+/* Meter : hairline on the bottom edge (share of the whole) */
+.is-meter
+{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:2px;
+    background:transparent;
+}
+
+.is-meter-fill
+{
+    display:block;
+    height:100%;
+    background:var(--tone);
+    opacity:.45;
+    transition:width .3s ease;
+}
+
+/* Info cell : quieter */
+.is-cell.is-info,
+.is-cell.is-info:hover
+{
+    flex:1.4 1 0;
+    border-right:0;
+    background:#f8fafc;
+    cursor:default;
+}
+
+.is-cell.is-info.is-wide
+{
+    flex:3 1 0;
+}
+
+.is-navy  { --tone:#1e3a8a; --tone-soft:rgba(30, 58, 138, 0.06); }
+.is-green { --tone:#15803d; --tone-soft:rgba(21, 128, 61, 0.07); }
+.is-blue  { --tone:#2563eb; --tone-soft:rgba(37, 99, 235, 0.07); }
+.is-amber { --tone:#d97706; --tone-soft:rgba(217, 119, 6, 0.08); }
+.is-red   { --tone:#dc2626; --tone-soft:rgba(220, 38, 38, 0.06); }
+
+
+/* =====================================================
+   NARROW SCREENS
+===================================================== */
+
+@media (max-width: 1280px)
+{
+    .is-cell.is-info
+    {
+        display:none;
+    }
+
+    .is-cell-note
+    {
+        display:none;
+    }
+}
+
+
+/* =====================================================
+   WHERE THE STOCK IS : row opened under a product
+===================================================== */
+
+.is-places
+{
+    margin:6px 16px 10px 66px;
+    border:1px solid #dbe4f3;
+    border-left:3px solid #1e3a8a;
+    border-radius:10px;
+    background:#ffffff;
+    box-shadow:0 6px 18px -14px rgba(15, 42, 90, 0.45);
+    overflow:hidden;
+}
+
+.is-places-head
+{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    height:36px;
+    padding:0 8px 0 14px;
+    border-bottom:1px solid #eef2f7;
+    background:linear-gradient(135deg, #eef4ff 0%, #f8fbff 100%);
+    font-size:12.5px;
+}
+
+.is-places-head > i
+{
+    color:#3b62b8;
+}
+
+.is-places-head b
+{
+    color:#0b2a5b;
+}
+
+.is-places-head span
+{
+    flex:1 1 auto;
+    min-width:0;
+    color:#64748b;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.is-places-x
+{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:26px;
+    height:26px;
+    border:0;
+    border-radius:50%;
+    background:transparent;
+    color:#64748b;
+    cursor:pointer;
+}
+
+.is-places-x:hover
+{
+    background:#fef2f2;
+    color:#b42318;
+}
+
+.is-places-note
+{
+    padding:12px 14px;
+    color:#64748b;
+    font-size:12.5px;
+}
+
+.is-places-error
+{
+    color:#b42318;
+}
+
+.is-places-table
+{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12.5px;
+}
+
+.is-places-table th
+{
+    height:32px;
+    padding:0 14px;
+    border-bottom:1px solid #e6ecf5;
+    background:#f8fafd;
+    color:#5b6b84;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.6px;
+    text-align:left;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+
+.is-places-table td
+{
+    height:32px;
+    padding:0 14px;
+    border-bottom:1px solid #f1f4f9;
+    color:#0f172a;
+    line-height:normal;
+    white-space:nowrap;
+}
+
+.is-places-table .r
+{
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+}
+
+.is-places-table tfoot td
+{
+    border-top:1px solid #1e3a8a;
+    border-bottom:0;
+    background:#f3f7ff;
+    color:#1e3a8a;
+    font-weight:800;
+}
+
+.is-places-table tbody tr:last-child td
+{
+    border-bottom:0;
+}
+
+.is-places-pill
+{
+    display:inline-block;
+    padding:1px 9px;
+    border:1px solid #86efac;
+    border-radius:999px;
+    background:#f0fdf4;
+    color:#15803d;
+    font-size:10.5px;
+    font-weight:700;
+}
+
+.is-places-pill.is-transit
+{
+    border-color:#bfdbfe;
+    background:#eff6ff;
+    color:#1d4ed8;
+}

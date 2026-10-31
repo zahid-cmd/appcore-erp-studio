@@ -52,6 +52,13 @@ public static class VoucherTypes
 
     public const string PurchaseAccessories = "PIAC";
 
+    // Product Receiving (no journal; numbers only)
+    public const string ReceivingMotorBikes = "RCMB";
+
+    public const string ReceivingSpareParts = "RCSP";
+
+    public const string ReceivingAccessories = "RCAC";
+
 
     public static readonly string[] All =
     {
@@ -66,7 +73,10 @@ public static class VoucherTypes
         PurchaseOrderAccessories,
         PurchaseMotorBikes,
         PurchaseSpareParts,
-        PurchaseAccessories
+        PurchaseAccessories,
+        ReceivingMotorBikes,
+        ReceivingSpareParts,
+        ReceivingAccessories
     };
 
 
@@ -78,4 +88,4 @@ public static class VoucherTypes
         return All.Contains(
             (prefix ?? string.Empty).Trim());
     }
-}
+}

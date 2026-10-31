@@ -6,9 +6,17 @@ import
 {
     Component,
     EventEmitter,
-    Output
+    Output,
+    computed,
+    inject
 }
 from '@angular/core';
+
+import
+{
+    ShellService
+}
+from '../../../../core/shell/shell.service';
 
 
 @Component(
@@ -37,6 +45,20 @@ export class FooterBrandComponent
     @Output()
     aboutClick =
         new EventEmitter<void>();
+
+
+    private readonly shellService =
+        inject(ShellService);
+
+
+    // Light footer: the logo made for light backgrounds.
+    readonly logoSrc =
+        computed(
+            () =>
+                this.shellService.appearance() === 'light'
+                ? 'assets/logo-light.png'
+                : 'assets/logo-dark.png'
+        );
 
 
     openAbout():

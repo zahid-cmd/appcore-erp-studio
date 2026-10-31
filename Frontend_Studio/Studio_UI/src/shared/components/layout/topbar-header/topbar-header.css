@@ -271,3 +271,89 @@
 
     text-overflow:ellipsis;
 }
+
+
+/* =====================================================
+   TOP LAYOUT : logo only, block fits the logo
+===================================================== */
+
+.topbar-header.top-layout .brand-block
+{
+    width:auto;
+
+    padding:0 22px;
+}
+
+
+.topbar-header.top-layout .brand-logo
+{
+    max-width:220px;
+}
+
+
+.topbar-header.top-layout .brand-divider
+{
+    margin-left:0;
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+===================================================== */
+
+:host-context(.appearance-light) .brand-block
+{
+    border-right-color:#cdd7e6;
+}
+
+
+:host-context(.appearance-light) .sidebar-toggle
+{
+    border-color:#cbd6e7;
+
+    background:#f6f8fc;
+
+    color:#334766;
+}
+
+
+:host-context(.appearance-light) .sidebar-toggle:hover
+{
+    border-color:#bfd0ec;
+
+    background:#e1eafa;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .brand-divider
+{
+    background:#cdd7e6;
+}
+
+
+/* On a white bar the logo plate gets a hairline instead of a shadow */
+
+:host-context(.appearance-light) .company-badge
+{
+    border:1px solid #cdd7e6;
+
+    box-shadow:none;
+}
+
+
+:host-context(.appearance-light) .company-badge.text-only
+{
+    border-color:#c3d4f2;
+
+    background:#e1eafa;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .company-badge.text-only i
+{
+    color:#2563eb;
+}

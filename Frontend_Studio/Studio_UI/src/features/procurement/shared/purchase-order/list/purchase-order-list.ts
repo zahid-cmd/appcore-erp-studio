@@ -521,7 +521,8 @@ implements OnInit, OnDestroy
             header:'Status',
             field:'Status',
             type:'status',
-            width:'110px',
+            // The pill is 110px wide : room for it and the cell padding
+            width:'140px',
             align:'center'
         },
         {

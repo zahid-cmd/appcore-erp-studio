@@ -428,6 +428,62 @@
 }
 
 
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .clock
+{
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .clock-date,
+:host-context(.appearance-light) .user-role,
+:host-context(.appearance-light) .menu-arrow
+{
+    color:#6b7a94;
+}
+
+
+:host-context(.appearance-light) .user-menu-button
+{
+    border-color:#cbd6e7;
+
+    background:#f6f8fc;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .user-menu-button:hover,
+:host-context(.appearance-light) .user-menu-button[aria-expanded="true"]
+{
+    border-color:#bfd0ec;
+
+    background:#e1eafa;
+}
+
+
+:host-context(.appearance-light) .user-menu-button:focus-visible
+{
+    outline-color:#2563eb;
+}
+
+
+/* Initials: blue chip with white letters on the white bar */
+
+:host-context(.appearance-light) .user-menu-button .avatar
+{
+    background:linear-gradient(145deg, #1e40af, #3b82f6);
+
+    color:#ffffff;
+}
+
+
 /* ============================================================
    Narrow screens : keep the avatar only
 ============================================================ */

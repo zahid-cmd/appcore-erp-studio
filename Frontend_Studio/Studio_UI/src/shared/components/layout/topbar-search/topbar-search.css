@@ -109,6 +109,45 @@
 
 
 /* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .search-trigger
+{
+    border-color:#cbd6e7;
+
+    background:#f6f8fc;
+
+    color:#6b7a94;
+}
+
+
+:host-context(.appearance-light) .search-trigger:hover
+{
+    border-color:#bfd0ec;
+
+    background:#e1eafa;
+}
+
+
+:host-context(.appearance-light) .search-trigger:focus-visible
+{
+    outline-color:#2563eb;
+}
+
+
+:host-context(.appearance-light) .search-trigger-key
+{
+    border-color:#d3dbe7;
+
+    color:#52627f;
+}
+
+
+/* =====================================================
    BACKDROP
 ===================================================== */
 

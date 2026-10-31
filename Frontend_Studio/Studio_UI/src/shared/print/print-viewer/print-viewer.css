@@ -526,4 +526,73 @@
         --dropdown-width: 180px;
         flex-basis: 180px;
     }
-}
+}
+
+
+/* Portrait / Landscape switch (sources with canRotate) */
+
+.pv-orient
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: 36px;
+    margin-right: 4px;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.pv-orient button
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 28px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.78);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.pv-orient button:hover:not(:disabled):not(.pv-orient-on)
+{
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
+.pv-orient button:disabled
+{
+    opacity: .55;
+    cursor: default;
+}
+
+.pv-orient button.pv-orient-on
+{
+    background: #ffffff;
+    color: #1e3a8a;
+    box-shadow: 0 2px 6px -2px rgba(10, 22, 49, 0.45);
+}
+
+/* Little sheet icon : tall (portrait) / wide (landscape) */
+.pv-orient-page
+{
+    display: inline-block;
+    width: 9px;
+    height: 12px;
+    border: 1.6px solid currentColor;
+    border-radius: 2px;
+}
+
+.pv-orient-page.pv-orient-wide
+{
+    width: 13px;
+    height: 9px;
+}

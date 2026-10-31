@@ -169,6 +169,11 @@ export interface PrintKit
 
     // QR Code as inline SVG (built in, no package)
     qr(text: string): string;
+
+    // Page orientation chosen in the viewer (sources with
+    // canRotate); templates may lay out wider tables. Missing =
+    // portrait.
+    landscape?: boolean;
 }
 
 
@@ -213,5 +218,10 @@ export interface PrintSourceDef<T = any>
     // Download name without extension
     fileName(data: T): string;
 
+    // true : the viewer shows a Portrait / Landscape switch; the
+    // documents are re-rendered with kit.landscape and their
+    // flows paginate on landscape A4
+    canRotate?: boolean;
+
     documents: PrintDocumentDef<T>[];
-}
+}

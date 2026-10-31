@@ -1209,7 +1209,7 @@ public class AppDbContext
 
     // AUTO-BEGIN : ProductPricing
 
-    public DbSet<AppCore.Domain.Entities.StoreManagement.PricingLabels.ProductPricing>
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.ProductPricing>
     ProductPricings
     {
     get;
@@ -1283,6 +1283,39 @@ public class AppDbContext
     } = null!;
 
     // AUTO-END : PurchaseReturnsSp
+
+    // AUTO-BEGIN : AccessoriesReceiving
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.ProductReceiving.AccessoriesReceiving>
+    AccessoriesReceivings
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : AccessoriesReceiving
+
+    // AUTO-BEGIN : MotorBikeReceiving
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.ProductReceiving.MotorBikeReceiving>
+    MotorBikeReceivings
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MotorBikeReceiving
+
+    // AUTO-BEGIN : SparePartsLubricantsReceiving
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.ProductReceiving.SparePartsLubricantsReceiving>
+    SparePartsLubricantsReceivings
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SparePartsLubricantsReceiving
 
     // AUTO-END : AUTO REGISTER DBSETS
 

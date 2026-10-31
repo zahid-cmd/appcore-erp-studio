@@ -265,6 +265,67 @@ implements AfterViewInit, OnDestroy
             );
     }
 
+    // Portrait / Landscape switch (sources with canRotate)
+    landscape:
+        boolean =
+        false;
+
+    get canRotate():
+        boolean
+    {
+        return !!this.source?.canRotate;
+    }
+
+    setOrientation
+    (
+        landscape:
+            boolean
+    ):
+        void
+    {
+        if
+        (
+            this.landscape === landscape
+            ||
+            this.loading
+            ||
+            !!this.busy
+        )
+        {
+            return;
+        }
+
+        this.landscape =
+            landscape;
+
+        this.cdr.detectChanges();
+
+        // Keep it in the address (refresh / share)
+        const url =
+            this.router.serializeUrl(
+                this.router.createUrlTree(
+                    [],
+                    {
+                        relativeTo:this.route,
+                        queryParams:{ orient:landscape ? 'landscape' : null },
+                        queryParamsHandling:'merge'
+                    }
+                )
+            );
+
+        window.history.replaceState(
+            window.history.state,
+            '',
+            url
+        );
+
+        setTimeout(
+            () =>
+                void this.render(),
+            0
+        );
+    }
+
     get pageCount():
         number
     {
@@ -353,6 +414,9 @@ implements AfterViewInit, OnDestroy
 
         this.choice =
             snapshot.queryParamMap.get('doc') || 'all';
+
+        this.landscape =
+            snapshot.queryParamMap.get('orient') === 'landscape';
 
         const loader =
             PRINT_SOURCES[key];
@@ -563,10 +627,21 @@ implements AfterViewInit, OnDestroy
         const documents =
             this.activeDocuments;
 
+        // The orientation reaches the templates through the kit
+        const landscape =
+            this.canRotate && this.landscape;
+
+        const kit:
+            PrintKit =
+            {
+                ...this.kit,
+                landscape
+            };
+
         const html =
             this.engine.buildHtml(
                 `${this.source.title} ${this.recordTitle}`,
-                documents.map(item => item.render(this.data, this.kit!)),
+                documents.map(item => item.render(this.data, kit)),
                 documents.map(item => item.css ?? '')
             );
 
@@ -578,6 +653,19 @@ implements AfterViewInit, OnDestroy
         doc.open();
         doc.write(html.replace('</head>', `<style>${VIEW_CSS}</style></head>`));
         doc.close();
+
+        // Rotatable sources : every flow on the chosen paper
+        if
+        (
+            this.canRotate
+        )
+        {
+            doc.querySelectorAll('.pv-flow').forEach
+            (
+                flow =>
+                    flow.classList.toggle('pv-landscape', landscape)
+            );
+        }
 
         const pages =
             await this.engine.paginate(
@@ -1164,7 +1252,8 @@ implements AfterViewInit, OnDestroy
                     [],
                     {
                         relativeTo:this.route,
-                        queryParams:{ doc:key }
+                        queryParams:{ doc:key },
+                        queryParamsHandling:'merge'
                     }
                 )
             );

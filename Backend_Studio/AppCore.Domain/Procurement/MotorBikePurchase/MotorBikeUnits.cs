@@ -30,6 +30,13 @@ public class MotorBikeUnits
     // Pending / InStock / Sold / Returned / Transferred
     public string Status { get; set; } = "Pending";
     public DateOnly? StockInDate { get; set; }
+
+    // Product Receiving that brought the bike on hand (null : the
+    // purchase itself, "Products Received on Purchase" ON)
+    public long? ReceivingId { get; set; }
+
+    // Warehouse the bike is in (null : in transit / not known)
+    public long? WarehouseId { get; set; }
     public bool IsDeleted { get; set; }
     public long? DeletedBy { get; set; }
     public DateTime? DeletedDate { get; set; }

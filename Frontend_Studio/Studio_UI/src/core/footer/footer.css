@@ -213,6 +213,74 @@
 }
 
 
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .footer
+{
+    border-top-color:#cdd7e6;
+
+    background:#e9eef7;
+
+    color:#4b5a76;
+}
+
+
+:host-context(.appearance-light) .status-value
+{
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .status-muted
+{
+    color:#4b5a76;
+}
+
+
+:host-context(.appearance-light) .status-divider
+{
+    background:#cdd7e6;
+}
+
+
+:host-context(.appearance-light) .server.online .status-dot
+{
+    background:#10b981;
+
+    box-shadow:0 0 0 3px rgba(16,185,129,.18);
+}
+
+
+:host-context(.appearance-light) .server.degraded .status-value
+{
+    color:#b45309;
+}
+
+
+:host-context(.appearance-light) .server.offline .status-value
+{
+    color:#b42318;
+}
+
+
+:host-context(.appearance-light) .session i
+{
+    color:#2563eb;
+}
+
+
+:host-context(.appearance-light) .session.warning i,
+:host-context(.appearance-light) .session.warning .status-value
+{
+    color:#b45309;
+}
+
+
 @keyframes dot-pulse
 {
     0%, 100% { opacity:1; }

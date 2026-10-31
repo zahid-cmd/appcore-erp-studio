@@ -60,3 +60,24 @@
 
     cursor:default;
 }
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .footer-version
+{
+    border-right-color:#cdd7e6;
+}
+
+
+:host-context(.appearance-light) .version-label
+{
+    background:#eef4ff;
+
+    color:#1d4ed8;
+}

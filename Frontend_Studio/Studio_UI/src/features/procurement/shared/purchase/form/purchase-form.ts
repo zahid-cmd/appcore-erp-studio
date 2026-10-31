@@ -1020,11 +1020,23 @@ implements OnInit, OnDestroy
         string =
         '';
 
-    // Numbers the server refused on save (already on another
-    // purchase / entered twice) : the line and the box show red
+    // Numbers the server refused (live check or save : already
+    // on another purchase / entered twice) : the line and the box
+    // show red
     unitClashes:
         { field:UnitField; value:string; text:string }[] =
         [];
+
+    // Live check of the desk numbers against other purchases
+    unitChecking:
+        boolean =
+        false;
+
+    private unitTimer?:
+        ReturnType<typeof setTimeout>;
+
+    private unitRequest =
+        0;
 
     reasonText:
         string =
@@ -7039,11 +7051,27 @@ implements OnInit, OnDestroy
             '';
 
         this.cdr.detectChanges();
+
+        // Numbers saved earlier may have been taken since
+        this.queueUnitCheck(0);
     }
 
     closeUnits():
         void
     {
+        if
+        (
+            this.unitTimer
+        )
+        {
+            clearTimeout(this.unitTimer);
+        }
+
+        this.unitRequest++;
+
+        this.unitChecking =
+            false;
+
         this.unitLineIndex =
             null;
 
@@ -7085,6 +7113,8 @@ implements OnInit, OnDestroy
 
         this.unitError =
             '';
+
+        this.queueUnitCheck();
     }
 
     // Clear one bike's four numbers
@@ -7118,6 +7148,8 @@ implements OnInit, OnDestroy
             '';
 
         this.cdr.detectChanges();
+
+        this.queueUnitCheck();
     }
 
     // Paste from Excel : the cells copied (tab between columns, a
@@ -7238,6 +7270,210 @@ implements OnInit, OnDestroy
                 : '';
 
         this.cdr.detectChanges();
+
+        this.queueUnitCheck(0);
+    }
+
+    // Check the desk a moment after typing stops
+    private queueUnitCheck
+    (
+        delay:
+            number = 400
+    ):
+        void
+    {
+        if
+        (
+            this.unitTimer
+        )
+        {
+            clearTimeout(this.unitTimer);
+        }
+
+        this.unitTimer =
+            setTimeout(
+                () =>
+                    this.checkUnits(),
+                delay
+            );
+    }
+
+    // Live check : numbers on the desk (and on the other lines)
+    // that bikes of other purchases already carry. A number found
+    // is marked red like a save refusal; one no longer taken is
+    // cleared.
+    private checkUnits():
+        void
+    {
+        const request =
+            ++this.unitRequest;
+
+        if
+        (
+            this.unitLineIndex === null
+            ||
+            this.isReadonly
+            ||
+            !this.unitDesk
+        )
+        {
+            this.unitChecking =
+                false;
+
+            return;
+        }
+
+        const fields:
+            UnitField[] =
+            ['ChassisNo', 'EngineNo', 'KeyNo', 'BatteryNo'];
+
+        const units =
+            [
+                ...this.unitRows,
+                ...this.lines
+                    .filter((_, i) => i !== this.unitLineIndex)
+                    .flatMap(line => line.Units ?? [])
+            ]
+            .map
+            (
+                x =>
+                ({
+                    ChassisNo:(x.ChassisNo ?? '').trim().toUpperCase(),
+                    EngineNo:(x.EngineNo ?? '').trim().toUpperCase(),
+                    KeyNo:(x.KeyNo ?? '').trim().toUpperCase(),
+                    BatteryNo:(x.BatteryNo ?? '').trim().toUpperCase()
+                })
+            )
+            .filter(x => x.ChassisNo || x.EngineNo || x.KeyNo || x.BatteryNo);
+
+        // Every number sent : its old "already on purchase" mark is
+        // replaced by the answer
+        const sent =
+            new Set(
+                units.flatMap(
+                    unit =>
+                        fields
+                            .filter(field => !!unit[field])
+                            .map(field => `${field}|${unit[field]}`)
+                )
+            );
+
+        const answer =
+            (taken: { field:UnitField; value:string; text:string }[]) =>
+            {
+                this.unitClashes =
+                [
+                    ...this.unitClashes.filter
+                    (
+                        x =>
+                            !x.text.includes('already on purchase')
+                            ||
+                            !sent.has(`${x.field}|${x.value}`)
+                    ),
+                    ...taken
+                ];
+
+                this.unitChecking =
+                    false;
+
+                // Say the first one under the desk (unless another
+                // problem is shown)
+                const first =
+                    taken.find
+                    (
+                        x =>
+                            this.unitRows.some(row => (row[x.field] ?? '').trim().toUpperCase() === x.value)
+                    );
+
+                if
+                (
+                    first
+                    &&
+                    !this.unitError
+                )
+                {
+                    this.unitError =
+                        first.text;
+                }
+                else if
+                (
+                    !first
+                    &&
+                    this.unitError.includes('already on purchase')
+                )
+                {
+                    this.unitError =
+                        '';
+                }
+
+                this.cdr.detectChanges();
+            };
+
+        if
+        (
+            units.length === 0
+        )
+        {
+            answer([]);
+
+            return;
+        }
+
+        this.unitChecking =
+            true;
+
+        this.cdr.detectChanges();
+
+        this.purchasesService
+            .checkUnits(
+                this.order?.PurchaseId ?? null,
+                units
+            )
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    rows =>
+                    {
+                        if
+                        (
+                            request !== this.unitRequest
+                        )
+                        {
+                            return;
+                        }
+
+                        answer(
+                            rows
+                                .filter(x => (fields as string[]).includes(x.Field) && !!x.Value)
+                                .map
+                                (
+                                    x =>
+                                    ({
+                                        field:x.Field as UnitField,
+                                        value:x.Value,
+                                        text:x.Message || `${x.Field.replace('No', '')} No ${x.Value} is already on purchase ${x.PurchaseNo}.`
+                                    })
+                                )
+                        );
+                    },
+
+                error:
+                    () =>
+                    {
+                        // The save checks again
+                        if
+                        (
+                            request === this.unitRequest
+                        )
+                        {
+                            this.unitChecking =
+                                false;
+
+                            this.cdr.detectChanges();
+                        }
+                    }
+            });
     }
 
     // Problem with the rows ('' = fine)
@@ -7341,6 +7577,20 @@ implements OnInit, OnDestroy
 
                 seen.add(value);
             }
+        }
+
+        // Already on another purchase (live check)
+        const taken =
+            this.unitRows
+                .flatMap(row => (['ChassisNo', 'EngineNo', 'KeyNo', 'BatteryNo'] as UnitField[]).map(field => this.clashOf(field, row[field])))
+                .find(text => text.includes('already on purchase'));
+
+        if
+        (
+            taken
+        )
+        {
+            return taken;
         }
 
         return '';

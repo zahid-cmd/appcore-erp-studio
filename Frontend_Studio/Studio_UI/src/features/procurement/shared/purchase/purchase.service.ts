@@ -531,6 +531,42 @@ export abstract class PurchaseService
 
     // Mushak 6.3 No : once per supplier in the financial year of
     // the purchase date ('' message = free)
+    // Unit Desk : bike numbers already on another purchase
+    checkUnits
+    (
+        purchaseId:
+            number | null,
+        units:
+            { ChassisNo:string; EngineNo:string; KeyNo:string; BatteryNo:string }[]
+    ):
+        Observable<{ Field:string; Value:string; PurchaseNo:string; Message:string }[]>
+    {
+        return this.http
+            .post<any[]>(
+                `${this.apiUrl}/unit-check`,
+                {
+                    PurchaseId:purchaseId,
+                    Units:units
+                }
+            )
+            .pipe(
+                map
+                (
+                    response =>
+                        (response ?? []).map
+                        (
+                            x =>
+                            ({
+                                Field:String(x?.Field ?? x?.field ?? ''),
+                                Value:String(x?.Value ?? x?.value ?? '').toUpperCase(),
+                                PurchaseNo:String(x?.PurchaseNo ?? x?.purchaseNo ?? ''),
+                                Message:String(x?.Message ?? x?.message ?? '')
+                            })
+                        )
+                )
+            );
+    }
+
     checkMushak
     (
         supplierCode:
