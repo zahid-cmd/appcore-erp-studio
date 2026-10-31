@@ -855,7 +855,7 @@
                     {
                         <div class="pof-hint">
                             <i class="fas fa-paste"></i>
-                            Copy the four columns from Excel (Chassis, Engine, Key, Battery) and paste into a Chassis box : every row fills at once, from that bike down.
+                            Copy the {{ d.keys ? 'four columns from Excel (Chassis, Engine, Key, Battery)' : 'two columns from Excel (Chassis, Engine)' }} and paste into a Chassis box : every row fills at once, from that bike down.
                         </div>
                     }
 
@@ -867,8 +867,11 @@
                                 <col class="pur-ud-c-sl">
                                 <col class="pur-ud-c-wide">
                                 <col class="pur-ud-c-wide">
-                                <col class="pur-ud-c-key">
-                                <col class="pur-ud-c-bat">
+                                @if (d.keys)
+                                {
+                                    <col class="pur-ud-c-key">
+                                    <col class="pur-ud-c-bat">
+                                }
                                 @if (!d.readonly)
                                 {
                                     <col class="pur-ud-c-act">
@@ -880,8 +883,11 @@
                                     <th class="pof-sl">SL</th>
                                     <th>Chassis No <b class="pof-req">*</b></th>
                                     <th>Engine No <b class="pof-req">*</b></th>
-                                    <th>Key No @if (defaults?.UnitsRequired) { <b class="pof-req">*</b> }</th>
-                                    <th>Battery No @if (defaults?.UnitsRequired) { <b class="pof-req">*</b> }</th>
+                                    @if (d.keys)
+                                    {
+                                        <th>Key No @if (keyBattery) { <b class="pof-req">*</b> }</th>
+                                        <th>Battery No @if (keyBattery) { <b class="pof-req">*</b> }</th>
+                                    }
                                     @if (!d.readonly)
                                     {
                                         <th class="pur-ud-act" aria-label="Clear"></th>
@@ -899,19 +905,22 @@
                                         {
                                             <td>{{ row.ChassisNo }}</td>
                                             <td>{{ row.EngineNo }}</td>
-                                            <td>{{ row.KeyNo || '—' }}</td>
-                                            <td>{{ row.BatteryNo || '—' }}</td>
+                                            @if (d.keys)
+                                            {
+                                                <td>{{ row.KeyNo || '—' }}</td>
+                                                <td>{{ row.BatteryNo || '—' }}</td>
+                                            }
                                         }
                                         @else
                                         {
-                                            @for (field of unitFields; track field; let c = $index)
+                                            @for (field of d.fields; track field; let c = $index)
                                             {
                                                 <td
                                                     [class.pur-ud-bad]="!!unitProblem(row, field)"
                                                     [attr.title]="unitProblem(row, field) || null"
                                                     (paste)="onUnitPaste($event, u, c)">
                                                     <app-textbox
-                                                        [placeholder]="unitPlaceholders[c]"
+                                                        [placeholder]="unitPlaceholders[field]"
                                                         textCase="upper"
                                                         [maxLength]="50"
                                                         [value]="row[field]"
@@ -923,7 +932,7 @@
                                                 <button
                                                     type="button"
                                                     class="pur-ud-clear"
-                                                    title="Clear this bike's four numbers"
+                                                    [title]="d.keys ? 'Clear this bike\'s four numbers' : 'Clear this bike\'s numbers'"
                                                     [attr.aria-label]="'Clear bike ' + (u + 1)"
                                                     [disabled]="!row.ChassisNo && !row.EngineNo && !row.KeyNo && !row.BatteryNo"
                                                     (click)="clearUnit(row)">
@@ -937,7 +946,7 @@
                                 @if (d.rows.length === 0)
                                 {
                                     <tr>
-                                        <td colspan="6" class="pof-empty">No bikes.</td>
+                                        <td [attr.colspan]="d.keys ? 6 : 4" class="pof-empty">No bikes.</td>
                                     </tr>
                                 }
 
@@ -960,7 +969,7 @@
                         @else
                         {
                             <i class="fas fa-circle-info"></i>
-                            {{ defaults?.UnitsRequired ? 'Every bike needs all four numbers.' : 'Chassis and Engine are required for each bike.' }}
+                            {{ keyBattery ? 'Every bike needs all four numbers.' : 'Every bike needs its Chassis No and Engine No.' }}
                         }
                     </span>
 

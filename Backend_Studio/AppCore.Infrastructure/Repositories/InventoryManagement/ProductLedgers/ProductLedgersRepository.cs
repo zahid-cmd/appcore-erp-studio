@@ -62,13 +62,15 @@ namespace AppCore.Infrastructure.Repositories.InventoryManagement.ProductLedgers
 //
 // Read from StockMovements (one row per batch movement, at the
 // batch's own cost). A document's movements of the product are
-// netted into one ledger row :
-//   purchase      In  (In Transit or On Hand)
-//   receiving     In Transit out + On Hand in : net 0, shown as a
-//                 transfer row (no change to the balance)
-//   cancel        Out (reversal)
-// Quantity = In Transit + On Hand. The warehouse filter applies
-// to On Hand only; In Transit stays with its branch.
+// netted into one ledger row, with In Transit in its own column :
+//   purchase      In Transit + (not received yet), or In when the
+//                 purchase also receives (On Hand)
+//   receiving     In Transit - and In (On Hand, the warehouse)
+//   cancel        Out / In Transit - (reversal)
+// Balance / Opening / Closing = stock = In Transit + On Hand.
+// In / Out = into / out of the warehouses (On Hand); In Transit
+// is its own running column. The warehouse filter applies to On
+// Hand only; In Transit stays with its branch.
 //
 // Cancelled purchases (batch status Cancelled) are left out
 // with their cancel rows unless "show cancelled" is on.
@@ -101,6 +103,11 @@ public class ProductLedgersRepository
     private const string MovePurchase = "Purchase";
 
     private const string MovePurchaseCancel = "PurchaseCancel";
+
+    // Product Receiving : In Transit → warehouse, and its cancel
+    private const string MoveReceive = "Receive";
+
+    private const string MoveReceiveCancel = "ReceiveCancel";
 
     private const string KindMotorBikes = "Motor Bikes";
 
@@ -170,6 +177,11 @@ public class ProductLedgersRepository
         public decimal InValue { get; set; }
 
         public decimal OutValue { get; set; }
+
+        // In Transit change (in - out) of the document, and its value
+        public decimal Transit { get; set; }
+
+        public decimal TransitValue { get; set; }
     }
 
 
@@ -529,6 +541,7 @@ public class ProductLedgersRepository
         // Opening : everything before the period
         //=======================================================
 
+        // Stock = In Transit + On Hand; In Transit also apart
         decimal openingQty =
             await moves
                 .Where(x => x.DocumentDate < start)
@@ -540,6 +553,13 @@ public class ProductLedgersRepository
             await moves
                 .Where(x => x.DocumentDate < start)
                 .SumAsync(x => (decimal?)(x.QuantityIn > 0 ? x.Value : -x.Value))
+            ??
+            0m;
+
+        decimal openingTransit =
+            await moves
+                .Where(x => x.DocumentDate < start && x.Bucket != BucketOnHand)
+                .SumAsync(x => (decimal?)(x.QuantityIn - x.QuantityOut))
             ??
             0m;
 
@@ -666,6 +686,9 @@ public class ProductLedgersRepository
         decimal balanceValue =
             openingValue;
 
+        decimal transitBalance =
+            openingTransit;
+
         decimal inQty = 0m, outQty = 0m, inValue = 0m, outValue = 0m;
 
         foreach (var document in documents)
@@ -673,17 +696,21 @@ public class ProductLedgersRepository
             List<StockMovementsEntity> of =
                 document.ToList();
 
+            // On Hand part : In / Out / Balance
+            List<StockMovementsEntity> hand =
+                of.Where(x => x.Bucket == BucketOnHand).ToList();
+
             decimal qtyIn =
-                of.Sum(x => x.QuantityIn);
+                hand.Sum(x => x.QuantityIn);
 
             decimal qtyOut =
-                of.Sum(x => x.QuantityOut);
+                hand.Sum(x => x.QuantityOut);
 
             decimal valIn =
-                of.Where(x => x.QuantityIn > 0).Sum(x => x.Value);
+                hand.Where(x => x.QuantityIn > 0).Sum(x => x.Value);
 
             decimal valOut =
-                of.Where(x => x.QuantityOut > 0).Sum(x => x.Value);
+                hand.Where(x => x.QuantityOut > 0).Sum(x => x.Value);
 
             decimal net =
                 qtyIn - qtyOut;
@@ -691,6 +718,19 @@ public class ProductLedgersRepository
             decimal netValue =
                 valIn - valOut;
 
+            // In Transit part : its own column
+            List<StockMovementsEntity> road =
+                of.Where(x => x.Bucket != BucketOnHand).ToList();
+
+            decimal transit =
+                road.Sum(x => x.QuantityIn - x.QuantityOut);
+
+            decimal transitValue =
+                road.Sum(x => x.QuantityIn > 0 ? x.Value : -x.Value);
+
+            transitBalance += transit;
+
+            // Between two warehouses of the branch : nets to nothing
             bool transfer =
                 qtyIn > 0 && qtyOut > 0 && net == 0;
 
@@ -706,9 +746,10 @@ public class ProductLedgersRepository
             decimal rowOutValue =
                 netValue < 0 ? -netValue : 0m;
 
-            balanceQty += net;
+            // Stock : both parts (a receiving moves it, no change)
+            balanceQty += net + transit;
 
-            balanceValue += netValue;
+            balanceValue += netValue + transitValue;
 
             inQty += rowIn;
 
@@ -750,9 +791,13 @@ public class ProductLedgersRepository
                     ? "Purchase"
                     : type == MovePurchaseCancel
                         ? "Purchase Cancelled"
-                        : transfer
+                        : type == MoveReceive
                             ? "Received Into Store"
-                            : Words(type);
+                            : type == MoveReceiveCancel
+                                ? "Receiving Cancelled"
+                                : transfer
+                                    ? "Moved Between Warehouses"
+                                    : Words(type);
 
             if (party.Length > 0 && (type == MovePurchase || type == MovePurchaseCancel))
             {
@@ -813,11 +858,13 @@ public class ProductLedgersRepository
                     InQty = rowIn,
                     OutQty = rowOut,
                     BalanceQty = balanceQty,
+                    TransitQty = transit,
+                    TransitBalance = transitBalance,
                     UnitCost = canViewCost && shownQty > 0 ? Cost(shownValue / shownQty) : 0m,
                     InValue = canViewCost ? Money(rowInValue) : 0m,
                     OutValue = canViewCost ? Money(rowOutValue) : 0m,
                     BalanceValue = canViewCost ? Money(balanceValue) : 0m,
-                    ShortNote = ShortNote(type, of, transfer, qtyIn, rowIn > 0 ? rowIn : rowOut, product.Unit),
+                    ShortNote = ShortNote(type, of, transit, rowIn > 0 ? rowIn : rowOut, product.Unit),
                     Bikes =
                         (type == MovePurchase || type == MovePurchaseCancel)
                         && bikes.TryGetValue(document.Key.DocumentId, out List<ProductLedgerBikeDto>? units)
@@ -832,7 +879,11 @@ public class ProductLedgersRepository
 
         result.OutQty = outQty;
 
-        result.ClosingQty = openingQty + inQty - outQty;
+        result.ClosingQty = balanceQty;
+
+        result.OpeningTransit = openingTransit;
+
+        result.ClosingTransit = transitBalance;
 
         if (canViewCost)
         {
@@ -842,7 +893,7 @@ public class ProductLedgersRepository
 
             result.OutValue = Money(outValue);
 
-            result.ClosingValue = Money(openingValue + inValue - outValue);
+            result.ClosingValue = Money(balanceValue);
         }
 
         return result;
@@ -864,8 +915,7 @@ public class ProductLedgersRepository
     (
         string type,
         List<StockMovementsEntity> moves,
-        bool transfer,
-        decimal moved,
+        decimal transit,
         decimal quantity,
         string unit
     )
@@ -885,9 +935,16 @@ public class ProductLedgersRepository
             Match invoice =
                 InvoiceNote.Match(narration);
 
+            // In Transit purchase : its quantity is in the In Transit
+            // column, not In
+            string bought =
+                quantity > 0
+                    ? qty
+                    : $"{Qty(transit)}{(unit.Length > 0 ? " " + unit : string.Empty)} in transit";
+
             return invoice.Success
-                ? $"Purchase - {qty} · Inv {invoice.Groups["no"].Value.Trim()}"
-                : $"Purchase - {qty}";
+                ? $"Purchase - {bought} · Inv {invoice.Groups["no"].Value.Trim()}"
+                : $"Purchase - {bought}";
         }
 
         if (type == MovePurchaseCancel)
@@ -900,9 +957,14 @@ public class ProductLedgersRepository
                 : string.Empty;
         }
 
-        if (transfer)
+        if (type == MoveReceive)
         {
-            return $"{Qty(moved)}{(unit.Length > 0 ? " " + unit : string.Empty)} In Transit → store";
+            return $"{qty} In Transit → store";
+        }
+
+        if (type == MoveReceiveCancel)
+        {
+            return $"{qty} store → In Transit";
         }
 
         return narration;
@@ -1037,7 +1099,8 @@ public class ProductLedgersRepository
                             {
                                 ProductId = g.Key,
                                 Qty = g.Sum(x => x.QuantityIn - x.QuantityOut),
-                                Value = g.Sum(x => x.QuantityIn > 0 ? x.Value : -x.Value)
+                                Value = g.Sum(x => x.QuantityIn > 0 ? x.Value : -x.Value),
+                                Transit = g.Sum(x => x.Bucket != BucketOnHand ? x.QuantityIn - x.QuantityOut : 0m)
                             }
                     )
                     .ToListAsync()
@@ -1069,10 +1132,12 @@ public class ProductLedgersRepository
                         new DocumentSums
                         {
                             ProductId = g.Key.ProductId,
-                            In = g.Sum(x => x.QuantityIn),
-                            Out = g.Sum(x => x.QuantityOut),
-                            InValue = g.Sum(x => x.QuantityIn > 0 ? x.Value : 0m),
-                            OutValue = g.Sum(x => x.QuantityOut > 0 ? x.Value : 0m)
+                            In = g.Sum(x => x.Bucket == BucketOnHand ? x.QuantityIn : 0m),
+                            Out = g.Sum(x => x.Bucket == BucketOnHand ? x.QuantityOut : 0m),
+                            InValue = g.Sum(x => x.Bucket == BucketOnHand && x.QuantityIn > 0 ? x.Value : 0m),
+                            OutValue = g.Sum(x => x.Bucket == BucketOnHand && x.QuantityOut > 0 ? x.Value : 0m),
+                            Transit = g.Sum(x => x.Bucket != BucketOnHand ? x.QuantityIn - x.QuantityOut : 0m),
+                            TransitValue = g.Sum(x => x.Bucket != BucketOnHand ? (x.QuantityIn > 0 ? x.Value : -x.Value) : 0m)
                         }
                 )
                 .ToListAsync();
@@ -1092,8 +1157,20 @@ public class ProductLedgersRepository
 
             decimal inQty = 0m, outQty = 0m, inValue = 0m, outValue = 0m;
 
+            decimal transit =
+                opening?.Transit ?? 0m;
+
+            // Stock change through In Transit (purchased, received)
+            decimal roadQty = 0m, roadValue = 0m;
+
             foreach (DocumentSums document in byProduct[product.ProductId])
             {
+                transit += document.Transit;
+
+                roadQty += document.Transit;
+
+                roadValue += document.TransitValue;
+
                 decimal net =
                     document.In - document.Out;
 
@@ -1119,7 +1196,7 @@ public class ProductLedgersRepository
                 }
             }
 
-            if (openingQty == 0 && inQty == 0 && outQty == 0 && openingValue == 0)
+            if (openingQty == 0 && inQty == 0 && outQty == 0 && openingValue == 0 && transit == 0 && !byProduct[product.ProductId].Any())
             {
                 continue;
             }
@@ -1142,8 +1219,9 @@ public class ProductLedgersRepository
                     InValue = canViewCost ? Money(inValue) : 0m,
                     OutQty = outQty,
                     OutValue = canViewCost ? Money(outValue) : 0m,
-                    ClosingQty = openingQty + inQty - outQty,
-                    ClosingValue = canViewCost ? Money(openingValue + inValue - outValue) : 0m
+                    ClosingQty = openingQty + inQty - outQty + roadQty,
+                    ClosingValue = canViewCost ? Money(openingValue + inValue - outValue + roadValue) : 0m,
+                    ClosingTransit = transit
                 });
         }
 
@@ -1167,6 +1245,8 @@ public class ProductLedgersRepository
         result.OutValue = result.Rows.Sum(x => x.OutValue);
 
         result.ClosingValue = result.Rows.Sum(x => x.ClosingValue);
+
+        result.ClosingTransit = result.Rows.Sum(x => x.ClosingTransit);
 
         return result;
     }

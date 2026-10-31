@@ -93,6 +93,10 @@ export interface ProductLedgerRow
     InQty:number;
     OutQty:number;
     BalanceQty:number;
+    // In Transit : this row's change (+ purchased, - received) and
+    // the running in-transit balance after it
+    TransitQty:number;
+    TransitBalance:number;
     UnitCost:number;
     InValue:number;
     OutValue:number;
@@ -111,6 +115,9 @@ export interface ProductLedgerFigures
     OutValue:number;
     ClosingQty:number;
     ClosingValue:number;
+    // In Transit (purchased, not yet received) at the end; part of
+    // Closing (stock = In Transit + On Hand)
+    ClosingTransit:number;
 }
 
 export interface ProductLedgerStatement
@@ -134,6 +141,7 @@ export interface ProductLedgerStatement
     WarehouseId:number;
     WarehouseName:string;
     ShowCancelled:boolean;
+    OpeningTransit:number;
     Truncated:boolean;
     Rows:ProductLedgerRow[];
 }
@@ -479,7 +487,8 @@ export function sumFigures
         OutQty:total('OutQty'),
         OutValue:total('OutValue'),
         ClosingQty:total('ClosingQty'),
-        ClosingValue:total('ClosingValue')
+        ClosingValue:total('ClosingValue'),
+        ClosingTransit:total('ClosingTransit')
     };
 }
 

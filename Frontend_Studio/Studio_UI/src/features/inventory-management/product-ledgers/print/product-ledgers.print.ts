@@ -170,9 +170,11 @@ const PRODUCT_LEDGER_PRINT_CSS = `
 .sh-meta i { margin-right: 1.4mm; font-style: normal; font-size: 6pt; font-weight: 700; letter-spacing: 0.6pt; text-transform: uppercase; color: #94a3b8; }
 
 /* Figures band */
-.lp-band { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 2.4mm; border: 1px solid #c7d5f0; border-radius: 1.8mm; overflow: hidden; }
+.lp-band { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0 0 2.4mm; border: 1px solid #c7d5f0; border-radius: 1.8mm; overflow: hidden; }
 .lp-band > div { display: flex; flex-direction: column; padding: 1.1mm 3mm; border-right: 1px solid #e2e8f0; min-width: 0; }
 .lp-band > div:last-child { border-right: 0; background: #f1f6ff; }
+.lp-band > div.lp-band-transit b, .lp-transit { color: #b45309; }
+.lp-transit small { margin-left: 1mm; font-size: 6.4pt; font-weight: 600; color: #d97706; }
 .lp-band span { font-size: 6pt; font-weight: 700; letter-spacing: 0.7pt; text-transform: uppercase; color: #64748b; }
 .lp-band b { font-size: 9.6pt; font-weight: 800; color: #0b2a5b; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .lp-band em { font-size: 7pt; font-style: normal; color: #475569; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -509,7 +511,8 @@ function ledgerHead
 <div class="sh-meta">${meta.filter(x => !!x[1]).map(([label, value]) => `<span><i>${e(label)}</i>${e(value)}</span>`).join('')}</div>`;
 }
 
-// Opening · In · Out · Closing (values under, when shown)
+// Opening · In · Out · In Transit · Closing (values under, when
+// shown; In Transit has no value : purchased, not yet received)
 function band
 (
     kit:
@@ -524,6 +527,7 @@ function band
             OutValue:number;
             ClosingQty:number;
             ClosingValue:number;
+            ClosingTransit:number;
         },
     values:
         boolean
@@ -543,7 +547,7 @@ function band
         cell('In', figures.InQty, figures.InValue)
     }${
         cell('Out', figures.OutQty, figures.OutValue)
-    }${
+    }<div class="lp-band-transit"><span>In Transit</span><b>${e(formatLedgerQty(figures.ClosingTransit))}</b>${values ? '<em>&nbsp;</em>' : ''}</div>${
         cell('Closing', figures.ClosingQty, figures.ClosingValue)
     }</div>`;
 }
@@ -613,6 +617,7 @@ function statementHtml
         ['Date', w.date, ''],
         ['Particulars', '', ''],
         ...(docCol ? [['Doc No', w.doc, '']] as [string, string, string][] : []),
+        ['In Transit', w.bal, 'vd-r'],
         ['In', w.qty, 'vd-r'],
         ['Out', w.qty, 'vd-r'],
         ['Balance', w.bal, 'vd-r'],
@@ -627,7 +632,7 @@ function statementHtml
         ...(notes ? [['Short Notes', w.note, '']] as [string, string, string][] : [])
     ];
 
-    // Columns before In : Date, Particulars, [Doc No]
+    // Columns before In Transit : Date, Particulars, [Doc No]
     const lead =
         docCol ? 3 : 2;
 
@@ -672,6 +677,7 @@ function statementHtml
   <td class="lp-date">${e(kit.date(row.Date))}</td>
   <td><div class="lp-main">${e(row.Particulars || '—')}${docCol ? '' : tag}</div>${under ? `<div class="lp-sub">${e(under)}</div>` : ''}</td>
   ${docCol ? `<td><span class="lp-no">${e(row.DocumentNo)}</span>${tag}</td>` : ''}
+  <td class="vd-r lp-transit">${row.TransitQty ? e(formatLedgerQty(row.TransitBalance)) : ''}</td>
   <td class="vd-r lp-amt">${qty(row.InQty)}</td>
   <td class="vd-r lp-amt">${qty(row.OutQty)}</td>
   <td class="vd-r lp-bal">${e(formatLedgerQty(row.BalanceQty))}</td>
@@ -705,12 +711,12 @@ ${band(kit, s, values)}
   <colgroup>${cols.map(x => x[1] ? `<col style="width:${x[1]}">` : '<col>').join('')}</colgroup>
   <thead><tr>${cols.map(x => `<th class="${x[2]}">${e(x[0])}</th>`).join('')}</tr></thead>
   <tbody>
-    <tr class="lp-open"><td class="lp-date">${e(kit.date(s.From))}</td><td colspan="${lead - 1}">Opening Balance</td><td></td><td></td><td class="vd-r lp-bal">${e(formatLedgerQty(s.OpeningQty))}</td>${values ? `${valueBlank}<td class="vd-r lp-bal">${kit.money(s.OpeningValue)}</td>` : ''}${noteCell}</tr>
+    <tr class="lp-open"><td class="lp-date">${e(kit.date(s.From))}</td><td colspan="${lead - 1}">Opening Balance</td><td class="vd-r lp-transit">${s.OpeningTransit ? e(formatLedgerQty(s.OpeningTransit)) : ''}</td><td></td><td></td><td class="vd-r lp-bal">${e(formatLedgerQty(s.OpeningQty))}</td>${values ? `${valueBlank}<td class="vd-r lp-bal">${kit.money(s.OpeningValue)}</td>` : ''}${noteCell}</tr>
     ${body || `<tr><td colspan="${cols.length}" class="lp-none">No movement in this period.</td></tr>`}
   </tbody>
   <tfoot>
-    <tr class="lp-total"><td colspan="${lead}" class="vd-r">Total · ${s.Rows.length} entr${s.Rows.length === 1 ? 'y' : 'ies'}</td><td class="vd-r">${e(formatLedgerQty(s.InQty))}</td><td class="vd-r">${e(formatLedgerQty(s.OutQty))}</td><td></td>${values ? `<td></td><td class="vd-r">${kit.money(s.InValue)}</td><td class="vd-r">${kit.money(s.OutValue)}</td><td></td>` : ''}${noteCell}</tr>
-    <tr class="lp-close"><td colspan="${lead}" class="vd-r">Closing Balance · ${e(kit.date(s.To))}</td><td></td><td></td><td class="vd-r">${e(formatLedgerQty(s.ClosingQty))}</td>${values ? `${valueBlank}<td class="vd-r">${kit.money(s.ClosingValue)}</td>` : ''}${noteCell}</tr>
+    <tr class="lp-total"><td colspan="${lead}" class="vd-r">Total · ${s.Rows.length} entr${s.Rows.length === 1 ? 'y' : 'ies'}</td><td></td><td class="vd-r">${e(formatLedgerQty(s.InQty))}</td><td class="vd-r">${e(formatLedgerQty(s.OutQty))}</td><td></td>${values ? `<td></td><td class="vd-r">${kit.money(s.InValue)}</td><td class="vd-r">${kit.money(s.OutValue)}</td><td></td>` : ''}${noteCell}</tr>
+    <tr class="lp-close"><td colspan="${lead}" class="vd-r">Closing Balance · ${e(kit.date(s.To))}</td><td class="vd-r lp-transit">${e(formatLedgerQty(s.ClosingTransit))}</td><td></td><td></td><td class="vd-r">${e(formatLedgerQty(s.ClosingQty))}</td>${values ? `${valueBlank}<td class="vd-r">${kit.money(s.ClosingValue)}</td>` : ''}${noteCell}</tr>
   </tfoot>
 </table>
 ${s.Truncated ? '<div class="lp-fine">Only the first entries are listed; totals and closing cover the whole period.</div>' : ''}
@@ -763,6 +769,7 @@ function summaryHtml
   ${cell(row.InQty, row.InValue, true, false)}
   ${cell(row.OutQty, row.OutValue, true, false)}
   ${cell(row.ClosingQty, row.ClosingValue, false, true)}
+  <td class="vd-r lp-transit">${row.ClosingTransit ? e(formatLedgerQty(row.ClosingTransit)) : ''}</td>
 </tr>`
             )
             .join('');
@@ -772,8 +779,8 @@ function summaryHtml
 
     const cols =
         landscape
-            ? ['8mm', '', '30%', width, width, width, width]
-            : ['8mm', '', width, width, width, width];
+            ? ['8mm', '', '26%', width, width, width, width, '18mm']
+            : ['8mm', '', width, width, width, width, '17mm'];
 
     const lead =
         landscape ? 3 : 2;
@@ -797,10 +804,10 @@ ${ledgerHead(kit, `${data.page.title} · Summary`, s.ScopePath, s.From, s.To,
 ${band(kit, s, values)}
 <table class="pv-split vd-lines">
   <colgroup>${cols.map(x => x ? `<col style="width:${x}">` : '<col>').join('')}</colgroup>
-  <thead><tr><th>SL</th><th>Product</th>${landscape ? '<th>Category · Sub Category</th>' : ''}<th class="vd-r">Opening</th><th class="vd-r">In</th><th class="vd-r">Out</th><th class="vd-r">Closing</th></tr></thead>
+  <thead><tr><th>SL</th><th>Product</th>${landscape ? '<th>Category · Sub Category</th>' : ''}<th class="vd-r">Opening</th><th class="vd-r">In</th><th class="vd-r">Out</th><th class="vd-r">Closing</th><th class="vd-r">In Transit</th></tr></thead>
   <tbody>${body || `<tr><td colspan="${cols.length}" class="lp-none">No stock or movement in this selection.</td></tr>`}</tbody>
   <tfoot>
-    <tr class="lp-close"><td colspan="${lead}" class="vd-r">Total · ${s.Rows.length} ${e(word)}</td>${cell(s.OpeningQty, s.OpeningValue, false, false)}${cell(s.InQty, s.InValue, false, false)}${cell(s.OutQty, s.OutValue, false, false)}${cell(s.ClosingQty, s.ClosingValue, false, false)}</tr>
+    <tr class="lp-close"><td colspan="${lead}" class="vd-r">Total · ${s.Rows.length} ${e(word)}</td>${cell(s.OpeningQty, s.OpeningValue, false, false)}${cell(s.InQty, s.InValue, false, false)}${cell(s.OutQty, s.OutValue, false, false)}${cell(s.ClosingQty, s.ClosingValue, false, false)}<td class="vd-r lp-transit">${e(formatLedgerQty(s.ClosingTransit))}</td></tr>
   </tfoot>
 </table>
 </div>
@@ -837,8 +844,8 @@ function statementSheet
     return {
         name:'Ledger',
         columns:values
-            ? [13, 40, 24, 26, 30, 10, 10, 12, 14, 16, 16, 18, 30, 40]
-            : [13, 40, 24, 26, 30, 10, 10, 12, 30, 40],
+            ? [13, 40, 24, 26, 30, 12, 10, 10, 12, 14, 16, 16, 18, 30, 40]
+            : [13, 40, 24, 26, 30, 12, 10, 10, 12, 30, 40],
         rows:
         [
             [{ v:kit.company?.CompanyName ?? '', s:'title' }],
@@ -847,12 +854,12 @@ function statementSheet
             [],
             [
                 bold('Date'), bold('Particulars'), bold('Doc No'), bold('Batch'), bold('Location'),
-                bold('In'), bold('Out'), bold('Balance'),
+                bold('In Transit'), bold('In'), bold('Out'), bold('Balance'),
                 ...(values ? [bold('Unit Cost'), bold('In Value'), bold('Out Value'), bold('Balance Value')] : []),
                 bold('Short Notes'), bold('Chassis / Engine')
             ],
             [
-                kit.date(s.From), 'Opening Balance', null, null, null, null, null, s.OpeningQty,
+                kit.date(s.From), 'Opening Balance', null, null, null, s.OpeningTransit || null, null, null, s.OpeningQty,
                 ...(values ? [null, null, null, { v:s.OpeningValue, s:'money' } as ExcelCell] : [])
             ],
             ...s.Rows.map
@@ -864,6 +871,7 @@ function statementSheet
                     row.DocumentNo,
                     row.Batches,
                     row.Location,
+                    row.TransitQty ? row.TransitBalance : null,
                     row.InQty || null,
                     row.OutQty || null,
                     row.BalanceQty,
@@ -880,11 +888,11 @@ function statementSheet
                 ]
             ),
             [
-                null, null, null, null, bold('Total'), s.InQty, s.OutQty, null,
+                null, null, null, null, bold('Total'), null, s.InQty, s.OutQty, null,
                 ...(values ? [null, { v:s.InValue, s:'boldMoney' } as ExcelCell, { v:s.OutValue, s:'boldMoney' } as ExcelCell, null] : [])
             ],
             [
-                null, null, null, null, bold('Closing Balance'), null, null, s.ClosingQty,
+                null, null, null, null, bold('Closing Balance'), s.ClosingTransit, null, null, s.ClosingQty,
                 ...(values ? [null, null, null, { v:s.ClosingValue, s:'boldMoney' } as ExcelCell] : [])
             ]
         ]
@@ -913,8 +921,8 @@ function summarySheet
     return {
         name:'Summary',
         columns:values
-            ? [6, 22, 40, 26, 26, 12, 16, 12, 16, 12, 16, 12, 16]
-            : [6, 22, 40, 26, 26, 12, 12, 12, 12],
+            ? [6, 22, 40, 26, 26, 12, 16, 12, 16, 12, 16, 12, 16, 12]
+            : [6, 22, 40, 26, 26, 12, 12, 12, 12, 12],
         rows:
         [
             [{ v:kit.company?.CompanyName ?? '', s:'title' }],
@@ -924,8 +932,8 @@ function summarySheet
             [
                 bold('SL'), bold('Code'), bold('Product'), bold('Category'), bold('Sub Category'),
                 ...(values
-                    ? [bold('Opening'), bold('Opening Value'), bold('In'), bold('In Value'), bold('Out'), bold('Out Value'), bold('Closing'), bold('Closing Value')]
-                    : [bold('Opening'), bold('In'), bold('Out'), bold('Closing')])
+                    ? [bold('Opening'), bold('Opening Value'), bold('In'), bold('In Value'), bold('Out'), bold('Out Value'), bold('Closing'), bold('Closing Value'), bold('In Transit')]
+                    : [bold('Opening'), bold('In'), bold('Out'), bold('Closing'), bold('In Transit')])
             ],
             ...s.Rows.map
             (
@@ -941,9 +949,10 @@ function summarySheet
                             row.OpeningQty, { v:row.OpeningValue, s:'money' } as ExcelCell,
                             row.InQty, { v:row.InValue, s:'money' } as ExcelCell,
                             row.OutQty, { v:row.OutValue, s:'money' } as ExcelCell,
-                            row.ClosingQty, { v:row.ClosingValue, s:'money' } as ExcelCell
+                            row.ClosingQty, { v:row.ClosingValue, s:'money' } as ExcelCell,
+                            row.ClosingTransit
                         ]
-                        : [row.OpeningQty, row.InQty, row.OutQty, row.ClosingQty])
+                        : [row.OpeningQty, row.InQty, row.OutQty, row.ClosingQty, row.ClosingTransit])
                 ]
             ),
             [
@@ -953,9 +962,10 @@ function summarySheet
                         s.OpeningQty, { v:s.OpeningValue, s:'boldMoney' } as ExcelCell,
                         s.InQty, { v:s.InValue, s:'boldMoney' } as ExcelCell,
                         s.OutQty, { v:s.OutValue, s:'boldMoney' } as ExcelCell,
-                        s.ClosingQty, { v:s.ClosingValue, s:'boldMoney' } as ExcelCell
+                        s.ClosingQty, { v:s.ClosingValue, s:'boldMoney' } as ExcelCell,
+                        s.ClosingTransit
                     ]
-                    : [s.OpeningQty, s.InQty, s.OutQty, s.ClosingQty])
+                    : [s.OpeningQty, s.InQty, s.OutQty, s.ClosingQty, s.ClosingTransit])
             ]
         ]
     };

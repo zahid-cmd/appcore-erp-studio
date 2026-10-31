@@ -312,6 +312,10 @@
                                     <em>{{ amount(statement.OutValue) }}</em>
                                 }
                             </div>
+                            <div title="Purchased, not yet received into a warehouse">
+                                <span>In Transit</span>
+                                <b class="pl-transit">{{ total(statement.ClosingTransit) }}</b>
+                            </div>
                             <div class="pl-fig-main">
                                 <span>Closing</span>
                                 <b>{{ total(statement.ClosingQty) }}</b>
@@ -358,6 +362,7 @@
                                 <col class="c-doc">
                                 <col class="c-qty">
                                 <col class="c-qty">
+                                <col class="c-qty">
                                 <col class="c-bal">
                                 @if (values)
                                 {
@@ -375,6 +380,7 @@
                                     <th>Date</th>
                                     <th>Particulars</th>
                                     <th>Doc No</th>
+                                    <th class="r b-l" title="Purchased, not yet received into a warehouse (running); Balance = In Transit + On Hand">In Transit</th>
                                     <th class="r b-l">In</th>
                                     <th class="r">Out</th>
                                     <th class="r">Balance</th>
@@ -395,6 +401,7 @@
                                     <td></td>
                                     <td class="pl-nowrap">{{ date(statement.From) }}</td>
                                     <td colspan="2"><b>Opening Balance</b></td>
+                                    <td class="r b-l pl-transit">{{ qty(statement.OpeningTransit) }}</td>
                                     <td class="b-l"></td>
                                     <td></td>
                                     <td class="r pl-bal">{{ total(statement.OpeningQty) }}</td>
@@ -442,6 +449,15 @@
                                             }
                                         </td>
 
+                                        <td
+                                            class="r b-l pl-transit"
+                                            [title]="row.TransitQty ? (row.TransitQty > 0 ? '+' : '') + total(row.TransitQty) + ' in transit' : ''">
+                                            @if (row.TransitQty)
+                                            {
+                                                {{ total(row.TransitBalance) }}
+                                            }
+                                        </td>
+
                                         <td class="r b-l pl-in">{{ qty(row.InQty) }}</td>
 
                                         <td class="r pl-out">{{ qty(row.OutQty) }}</td>
@@ -486,6 +502,7 @@
                             <tfoot>
                                 <tr class="pl-total">
                                     <td colspan="4" class="r">Total</td>
+                                    <td class="b-l"></td>
                                     <td class="r b-l">{{ total(statement.InQty) }}</td>
                                     <td class="r">{{ total(statement.OutQty) }}</td>
                                     <td></td>
@@ -500,6 +517,7 @@
                                 </tr>
                                 <tr class="pl-close">
                                     <td colspan="4" class="r">Closing Balance · {{ date(statement.To) }}</td>
+                                    <td class="r b-l pl-transit">{{ total(statement.ClosingTransit) }}</td>
                                     <td class="b-l"></td>
                                     <td></td>
                                     <td class="r pl-bal">{{ total(statement.ClosingQty) }}</td>
@@ -566,6 +584,10 @@
                                     <em>{{ amount(sumTotals.OutValue) }}</em>
                                 }
                             </div>
+                            <div title="Purchased, not yet received into a warehouse">
+                                <span>In Transit</span>
+                                <b class="pl-transit">{{ total(sumTotals.ClosingTransit) }}</b>
+                            </div>
                             <div class="pl-fig-main">
                                 <span>Closing</span>
                                 <b>{{ total(sumTotals.ClosingQty) }}</b>
@@ -595,6 +617,7 @@
                                 <col class="c-sq">
                                 <col class="c-sq">
                                 <col class="c-sq">
+                                <col class="c-sq">
                             </colgroup>
 
                             <thead>
@@ -606,6 +629,7 @@
                                     <th class="r">In</th>
                                     <th class="r">Out</th>
                                     <th class="r">Closing</th>
+                                    <th class="r b-l" title="Purchased, not yet received into a warehouse">In Transit</th>
                                 </tr>
                             </thead>
 
@@ -643,13 +667,14 @@
                                             {{ total(row.ClosingQty) }}
                                             @if (values) { <em class="pl-val">{{ amount(row.ClosingValue) }}</em> }
                                         </td>
+                                        <td class="r b-l pl-transit">{{ qty(row.ClosingTransit) }}</td>
                                     </tr>
                                 }
 
                                 @if (summaryRows.length === 0)
                                 {
                                     <tr class="pl-none">
-                                        <td colspan="7">{{ searchText ? 'No ' + page.itemWord + ' matches the search.' : 'No stock or movement in this selection.' }}</td>
+                                        <td colspan="8">{{ searchText ? 'No ' + page.itemWord + ' matches the search.' : 'No stock or movement in this selection.' }}</td>
                                     </tr>
                                 }
                             </tbody>
@@ -673,6 +698,7 @@
                                         {{ total(sumTotals.ClosingQty) }}
                                         @if (values) { <em class="pl-val">{{ amount(sumTotals.ClosingValue) }}</em> }
                                     </td>
+                                    <td class="r b-l pl-transit">{{ total(sumTotals.ClosingTransit) }}</td>
                                 </tr>
                             </tfoot>
 

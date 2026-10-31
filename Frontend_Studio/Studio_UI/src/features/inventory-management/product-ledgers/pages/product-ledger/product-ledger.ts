@@ -1056,7 +1056,7 @@ export class ProductLedger
     get colCount():
         number
     {
-        return 8 + (this.values ? 4 : 0);
+        return 9 + (this.values ? 4 : 0);
     }
 
     get statementPath():

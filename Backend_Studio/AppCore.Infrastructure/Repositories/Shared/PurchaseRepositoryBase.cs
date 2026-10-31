@@ -773,9 +773,11 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         {
             PoRequired = await IsSwitchOnAsync(Page.SwitchPoRequired, false),
             ReceivedOnPurchase = await IsSwitchOnAsync(Page.SwitchReceivedOnPurchase, false),
-            UnitsRequired = await IsSwitchOnAsync(Page.SwitchUnitsRequired, false),
-            UniqueKeyNo = await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false),
-            UniqueBatteryNo = await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false),
+            // Key & Battery Required (MB) : ON = asked and required;
+            // OFF = not kept (Unit Desk columns hidden)
+            UnitsRequired = await KeyBatteryOnAsync(),
+            UniqueKeyNo = await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false),
+            UniqueBatteryNo = await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false),
             MushakRequired = await IsSwitchOnAsync(Page.SwitchMushakRequired, false),
             SupplierInvoiceRequired = await IsSwitchOnAsync(Page.SwitchInvoiceNoRequired, false),
             DoReferenceRequired = await IsSwitchOnAsync(Page.SwitchDoRequired, false),
@@ -1066,10 +1068,10 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         }
 
         bool uniqueKey =
-            await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false);
+            await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false);
 
         bool uniqueBattery =
-            await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false);
+            await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false);
 
         List<string> Pick(Func<PurchaseUnitDto, string?> pick) =>
             units
@@ -2443,6 +2445,10 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         bool received =
             await IsSwitchOnAsync(page.SwitchReceivedOnPurchase, false);
 
+        // Key & Battery Required (MB) : OFF = not kept on the bikes
+        bool keyBattery =
+            await KeyBatteryOnAsync();
+
         if (received)
         {
             if (!dto.WarehouseId.HasValue || dto.WarehouseId.Value <= 0)
@@ -2895,7 +2901,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                     NormalizeUnits(
                         row.Units,
                         row.Quantity + row.FreeQuantity,
-                        label);
+                        label,
+                        keyBattery);
             }
         }
 
@@ -2915,6 +2922,23 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
 
     //===========================================================
+    // Key & Battery Required (MB only; switch CFG-MOD-007-0048) :
+    // ON  : every bike's Key No and Battery No are asked and needed
+    // OFF : the dealer does not keep them (Unit Desk columns
+    //       hidden, never saved, Unique Key / Battery No not checked)
+    // Chassis No and Engine No are always required.
+    //===========================================================
+
+    private async Task<bool>
+        KeyBatteryOnAsync()
+    {
+        return Page.PageType == "MB"
+            &&
+            await IsSwitchOnAsync(Page.SwitchUnitsRequired, true);
+    }
+
+
+    //===========================================================
     // Unit Desk rows of one line : trimmed, capitals, empty rows
     // dropped; chassis and engine needed on every row given; not
     // more rows than bikes; no repeat inside the line
@@ -2925,7 +2949,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         (
             List<PurchaseUnitDto>? rows,
             decimal bikes,
-            string label
+            string label,
+            bool keyBattery
         )
     {
         List<PurchaseUnitDto> result =
@@ -2937,8 +2962,9 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                         {
                             ChassisNo = Limit(x.ChassisNo, 50).ToUpperInvariant(),
                             EngineNo = Limit(x.EngineNo, 50).ToUpperInvariant(),
-                            KeyNo = Limit(x.KeyNo, 50).ToUpperInvariant(),
-                            BatteryNo = Limit(x.BatteryNo, 50).ToUpperInvariant()
+                            // Key & Battery Required OFF : not kept
+                            KeyNo = keyBattery ? Limit(x.KeyNo, 50).ToUpperInvariant() : string.Empty,
+                            BatteryNo = keyBattery ? Limit(x.BatteryNo, 50).ToUpperInvariant() : string.Empty
                         }
                 )
                 .Where
@@ -2986,10 +3012,10 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         )
     {
         bool uniqueKey =
-            await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false);
+            await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false);
 
         bool uniqueBattery =
-            await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false);
+            await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false);
 
         void Repeats(Func<PurchaseUnitDto, string> pick, string name)
         {
@@ -3924,13 +3950,10 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             return;
         }
 
-        bool unitsRequired =
-            await IsSwitchOnAsync(Page.SwitchUnitsRequired, false);
-
-        if (!unitsRequired)
-        {
-            return;
-        }
+        // Chassis and Engine of every bike : always (the bike's
+        // identity). Key and Battery : Key & Battery Required.
+        bool keyBattery =
+            await KeyBatteryOnAsync();
 
         List<MotorBikeUnitsEntity> units =
             await _context
@@ -3952,13 +3975,13 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             if (mine.Count != bikes)
             {
                 throw new InvalidOperationException(
-                    $"Line {line.LineNo} ({line.ProductName}) : {mine.Count} of {bikes:0} bikes entered on the Unit Desk (System Configuration › Units Required is ON).");
+                    $"Line {line.LineNo} ({line.ProductName}) : {mine.Count} of {bikes:0} bikes entered on the Unit Desk. Every bike needs its Chassis No and Engine No.");
             }
 
-            if (mine.Any(x => x.KeyNo.Length == 0 || x.BatteryNo.Length == 0))
+            if (keyBattery && mine.Any(x => x.KeyNo.Length == 0 || x.BatteryNo.Length == 0))
             {
                 throw new InvalidOperationException(
-                    $"Line {line.LineNo} ({line.ProductName}) : every bike needs Chassis, Engine, Key and Battery No (System Configuration › Units Required is ON).");
+                    $"Line {line.LineNo} ({line.ProductName}) : every bike needs Chassis, Engine, Key and Battery No (System Configuration › Key & Battery Required is ON).");
             }
         }
     }

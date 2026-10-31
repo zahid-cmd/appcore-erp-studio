@@ -880,6 +880,27 @@
     color:#b42318;
 }
 
+/* In Transit : purchased, not yet received (amber); the row's
+   change after the running balance (+ purchased, − received) */
+.pl-table td.pl-transit,
+.pl-figs b.pl-transit
+{
+    color:#b45309;
+}
+
+.pl-table td.pl-transit small
+{
+    margin-left:4px;
+    font-size:11px;
+    font-weight:600;
+    color:#d97706;
+}
+
+.pl-table td.pl-transit small.pl-tr-down
+{
+    color:#15803d;
+}
+
 /* Value under a figure (header cards / summary cells) */
 .pl-figs em
 {

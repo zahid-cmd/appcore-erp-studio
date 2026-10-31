@@ -178,6 +178,11 @@ interface Desk
     name:string;
     code:string;
     readonly:boolean;
+    // Key / Battery columns : Key & Battery Required ON (view :
+    // also when a bike has them)
+    keys:boolean;
+    // The columns typed / pasted into, left to right
+    fields:UnitField[];
     rows:UnitRow[];
 }
 
@@ -390,8 +395,28 @@ export class ReceivingForm
         ['ChassisNo', 'EngineNo', 'KeyNo', 'BatteryNo'];
 
     readonly unitPlaceholders:
-        string[] =
-        ['Chassis', 'Engine', 'Key', 'Battery'];
+        Record<UnitField, string> =
+        { ChassisNo:'Chassis', EngineNo:'Engine', KeyNo:'Key', BatteryNo:'Battery' };
+
+    // Key & Battery Required (System Configuration, MB) : ON =
+    // asked and required; OFF = not kept (columns hidden)
+    get keyBattery():
+        boolean
+    {
+        return !!this.defaults?.UnitsRequired;
+    }
+
+    private fieldsOf
+    (
+        keys:
+            boolean
+    ):
+        UnitField[]
+    {
+        return keys
+            ? ['ChassisNo', 'EngineNo', 'KeyNo', 'BatteryNo']
+            : ['ChassisNo', 'EngineNo'];
+    }
 
     // Live bike-number check (MB)
     taken:
@@ -1395,6 +1420,8 @@ export class ReceivingForm
             name:line.ProductName,
             code:line.ProductCode,
             readonly:false,
+            keys:this.keyBattery,
+            fields:this.fieldsOf(this.keyBattery),
             rows:line.Units.map(x => ({ ...x }))
         };
 
@@ -1408,13 +1435,21 @@ export class ReceivingForm
     ):
         void
     {
+        const rows =
+            this.unitsOfLine(line.PurchaseLineId).map(x => ({ ChassisNo:x.ChassisNo, EngineNo:x.EngineNo, KeyNo:x.KeyNo, BatteryNo:x.BatteryNo }));
+
+        const keys =
+            this.keyBattery || rows.some(x => !!x.KeyNo || !!x.BatteryNo);
+
         this.desk =
         {
             line:null,
             name:line.ProductName,
             code:line.ProductCode,
             readonly:true,
-            rows:this.unitsOfLine(line.PurchaseLineId).map(x => ({ ChassisNo:x.ChassisNo, EngineNo:x.EngineNo, KeyNo:x.KeyNo, BatteryNo:x.BatteryNo }))
+            keys,
+            fields:this.fieldsOf(keys),
+            rows
         };
     }
 
@@ -1449,8 +1484,8 @@ export class ReceivingForm
                 ({
                     ChassisNo:x.ChassisNo.trim().toUpperCase(),
                     EngineNo:x.EngineNo.trim().toUpperCase(),
-                    KeyNo:x.KeyNo.trim().toUpperCase(),
-                    BatteryNo:x.BatteryNo.trim().toUpperCase()
+                    KeyNo:desk.keys ? x.KeyNo.trim().toUpperCase() : '',
+                    BatteryNo:desk.keys ? x.BatteryNo.trim().toUpperCase() : ''
                 })
             );
 
@@ -1567,7 +1602,7 @@ export class ReceivingForm
                     (value, c) =>
                     {
                         const target =
-                            this.unitFields[start + c];
+                            desk.fields[start + c];
 
                         if
                         (
@@ -1695,8 +1730,8 @@ export class ReceivingForm
                     PurchaseLineId:x.line.PurchaseLineId,
                     ChassisNo:x.unit.ChassisNo.trim().toUpperCase(),
                     EngineNo:x.unit.EngineNo.trim().toUpperCase(),
-                    KeyNo:x.unit.KeyNo.trim().toUpperCase(),
-                    BatteryNo:x.unit.BatteryNo.trim().toUpperCase()
+                    KeyNo:this.keyBattery ? x.unit.KeyNo.trim().toUpperCase() : '',
+                    BatteryNo:this.keyBattery ? x.unit.BatteryNo.trim().toUpperCase() : ''
                 })
             );
     }

@@ -1141,15 +1141,37 @@ implements OnInit, OnDestroy
         );
     }
 
-    // MB : every bike with Chassis, Engine, Key, Battery No
+    // MB : Key & Battery Required (CFG-MOD-007-0048). ON = every
+    // bike's Key No and Battery No asked and required; OFF = not
+    // kept (Unit Desk columns hidden). Chassis No and Engine No
+    // are always required.
     get unitsRequired():
         boolean
     {
         return switchOn(
             this.switches,
             this.page.switches.UNITS_REQUIRED,
-            false
+            true
         );
+    }
+
+    // Unit Desk columns typed / pasted into, left to right
+    get unitFields():
+        UnitField[]
+    {
+        return this.unitsRequired
+            ? ['ChassisNo', 'EngineNo', 'KeyNo', 'BatteryNo']
+            : ['ChassisNo', 'EngineNo'];
+    }
+
+    // Key / Battery columns on the desk : the switch ON, or (read
+    // only) a bike saved with them
+    get unitKeysShown():
+        boolean
+    {
+        return this.unitsRequired
+            ||
+            (this.isReadonly && this.unitRows.some(x => !!x.KeyNo || !!x.BatteryNo));
     }
 
     // Unit Desk on this page (MB, received here)
@@ -7192,8 +7214,8 @@ implements OnInit, OnDestroy
         event.preventDefault();
 
         const fields:
-            ('ChassisNo' | 'EngineNo' | 'KeyNo' | 'BatteryNo')[] =
-            ['ChassisNo', 'EngineNo', 'KeyNo', 'BatteryNo'];
+            UnitField[] =
+            this.unitFields;
 
         let rows =
             text
@@ -7531,8 +7553,8 @@ implements OnInit, OnDestroy
             [
                 ['ChassisNo', 'Chassis No', true],
                 ['EngineNo', 'Engine No', true],
-                ['KeyNo', 'Key No', switchOn(this.switches, this.page.switches.UNIQUE_KEY_NO, false)],
-                ['BatteryNo', 'Battery No', switchOn(this.switches, this.page.switches.UNIQUE_BATTERY_NO, false)]
+                ['KeyNo', 'Key No', this.unitsRequired && switchOn(this.switches, this.page.switches.UNIQUE_KEY_NO, false)],
+                ['BatteryNo', 'Battery No', this.unitsRequired && switchOn(this.switches, this.page.switches.UNIQUE_BATTERY_NO, false)]
             ];
 
         for
@@ -7654,11 +7676,15 @@ implements OnInit, OnDestroy
         this.unitClashes =
             this.unitClashes.filter(x => kept.has(`${x.field}|${x.value}`) || others.has(`${x.field}|${x.value}`));
 
-        // Only the rows filled in are kept
+        // Only the rows filled in are kept; Key & Battery Required
+        // OFF : their numbers are not kept
+        const keys =
+            this.unitsRequired;
+
         const units =
             this.unitRows
                 .filter(x => x.ChassisNo || x.EngineNo)
-                .map(x => ({ ...x }));
+                .map(x => ({ ...x, KeyNo:keys ? x.KeyNo : '', BatteryNo:keys ? x.BatteryNo : '' }));
 
         this.lines =
             this.lines.map
@@ -7939,11 +7965,10 @@ implements OnInit, OnDestroy
         }
 
         // Unit Desk : every bike received needs its chassis and engine
+        // (always; Key & Battery Required adds those two)
         if
         (
             this.unitDesk
-            &&
-            this.unitsRequired
         )
         {
             const short =
@@ -8400,9 +8425,9 @@ implements OnInit, OnDestroy
             ||
             field === 'EngineNo'
             ||
-            (field === 'KeyNo' && switchOn(this.switches, this.page.switches.UNIQUE_KEY_NO, false))
+            (field === 'KeyNo' && this.unitsRequired && switchOn(this.switches, this.page.switches.UNIQUE_KEY_NO, false))
             ||
-            (field === 'BatteryNo' && switchOn(this.switches, this.page.switches.UNIQUE_BATTERY_NO, false));
+            (field === 'BatteryNo' && this.unitsRequired && switchOn(this.switches, this.page.switches.UNIQUE_BATTERY_NO, false));
 
         if
         (

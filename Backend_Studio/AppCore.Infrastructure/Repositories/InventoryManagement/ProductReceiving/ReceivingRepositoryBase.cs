@@ -574,9 +574,11 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                 BackDatedAllowed = backOn,
                 BackDatedDays = backOn ? backDays : 0,
                 ShelfRequired = Page.HasShelves && await IsSwitchOnAsync(Page.SwitchShelfRequired, false),
-                UnitsRequired = Page.PageType == "MB" && await IsSwitchOnAsync(Page.SwitchUnitsRequired, true),
-                UniqueKeyNo = Page.PageType == "MB" && await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false),
-                UniqueBatteryNo = Page.PageType == "MB" && await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false)
+                // Key & Battery Required (MB) : ON = Key No and Battery No
+                // asked and required; OFF = not kept (columns hidden)
+                UnitsRequired = await KeyBatteryOnAsync(),
+                UniqueKeyNo = await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false),
+                UniqueBatteryNo = await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false)
             };
 
         result.Warehouses =
@@ -701,6 +703,23 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                     next);
 
         return result;
+    }
+
+
+    //===========================================================
+    // Key & Battery Required (MB only; switch CFG-MOD-007-0048) :
+    // ON  : every bike's Key No and Battery No are asked and needed
+    // OFF : the dealer does not keep them (columns hidden, never
+    //       saved, Unique Key / Battery No not checked)
+    // Chassis No and Engine No are always required.
+    //===========================================================
+
+    private async Task<bool>
+        KeyBatteryOnAsync()
+    {
+        return Page.PageType == "MB"
+            &&
+            await IsSwitchOnAsync(Page.SwitchUnitsRequired, true);
     }
 
 
@@ -963,10 +982,10 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
         }
 
         bool uniqueKey =
-            await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false);
+            await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false);
 
         bool uniqueBattery =
-            await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false);
+            await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false);
 
         List<long> lineIds =
             units.Select(x => x.PurchaseLineId).Distinct().ToList();
@@ -1301,14 +1320,16 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
 
         if (Page.PageType == "MB")
         {
-            bool unitsRequired =
-                await IsSwitchOnAsync(Page.SwitchUnitsRequired, true);
+            // Chassis and Engine : always. Key and Battery : only when
+            // Key & Battery Required is ON (OFF : not kept at all)
+            bool keyBattery =
+                await KeyBatteryOnAsync();
 
             bool uniqueKey =
-                await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false);
+                await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueKeyNo, false);
 
             bool uniqueBattery =
-                await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false);
+                await KeyBatteryOnAsync() && await IsSwitchOnAsync(Page.SwitchUniqueBatteryNo, false);
 
             units =
                 (dto.Units ?? new List<ReceivingUnitDto>())
@@ -1320,8 +1341,8 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                                 PurchaseLineId = x.PurchaseLineId,
                                 ChassisNo = Limit(x.ChassisNo, 50).ToUpperInvariant(),
                                 EngineNo = Limit(x.EngineNo, 50).ToUpperInvariant(),
-                                KeyNo = Limit(x.KeyNo, 50).ToUpperInvariant(),
-                                BatteryNo = Limit(x.BatteryNo, 50).ToUpperInvariant()
+                                KeyNo = keyBattery ? Limit(x.KeyNo, 50).ToUpperInvariant() : string.Empty,
+                                BatteryNo = keyBattery ? Limit(x.BatteryNo, 50).ToUpperInvariant() : string.Empty
                             }
                     )
                     .Where(x => x.ChassisNo.Length + x.EngineNo.Length + x.KeyNo.Length + x.BatteryNo.Length > 0)
@@ -1349,10 +1370,10 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                             $"{line.ProductName} : every bike needs its Chassis No and Engine No.");
                     }
 
-                    if (unitsRequired && (unit.KeyNo.Length == 0 || unit.BatteryNo.Length == 0))
+                    if (keyBattery && (unit.KeyNo.Length == 0 || unit.BatteryNo.Length == 0))
                     {
                         throw new InvalidOperationException(
-                            $"{line.ProductName} : every bike needs its Key No and Battery No (System Configuration : Units Required).");
+                            $"{line.ProductName} : every bike needs its Key No and Battery No (System Configuration : Key & Battery Required).");
                     }
                 }
             }

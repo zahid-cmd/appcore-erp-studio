@@ -211,6 +211,7 @@ export class ProductLedgersService
                         WarehouseId:num(pick(x, 'WarehouseId')),
                         WarehouseName:text(pick(x, 'WarehouseName')),
                         ShowCancelled:!!pick(x, 'ShowCancelled'),
+                        OpeningTransit:num(pick(x, 'OpeningTransit')),
                         Truncated:!!pick(x, 'Truncated'),
                         Rows:list(pick(x, 'Rows')).map(toRow)
                     })
@@ -346,7 +347,8 @@ function toFigures
         OutQty:num(pick(x, 'OutQty')),
         OutValue:num(pick(x, 'OutValue')),
         ClosingQty:num(pick(x, 'ClosingQty')),
-        ClosingValue:num(pick(x, 'ClosingValue'))
+        ClosingValue:num(pick(x, 'ClosingValue')),
+        ClosingTransit:num(pick(x, 'ClosingTransit'))
     };
 }
 
@@ -372,6 +374,8 @@ function toRow
         InQty:num(pick(x, 'InQty')),
         OutQty:num(pick(x, 'OutQty')),
         BalanceQty:num(pick(x, 'BalanceQty')),
+        TransitQty:num(pick(x, 'TransitQty')),
+        TransitBalance:num(pick(x, 'TransitBalance')),
         UnitCost:num(pick(x, 'UnitCost')),
         InValue:num(pick(x, 'InValue')),
         OutValue:num(pick(x, 'OutValue')),

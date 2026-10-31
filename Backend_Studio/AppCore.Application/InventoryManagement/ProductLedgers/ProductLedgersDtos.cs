@@ -169,6 +169,14 @@ public class ProductLedgerStatementDto
 
     public decimal ClosingValue { get; set; }
 
+    // In Transit (purchased, not yet received into a warehouse) :
+    // before and after the period. Opening / Closing / balances =
+    // stock (In Transit + On Hand); In / Out = into / out of the
+    // warehouses.
+    public decimal OpeningTransit { get; set; }
+
+    public decimal ClosingTransit { get; set; }
+
     // More rows than listed (totals cover the whole period)
     public bool Truncated { get; set; }
 
@@ -206,9 +214,15 @@ public class ProductLedgerRowDto
     // The purchase was cancelled later (shown on request)
     public bool IsCancelled { get; set; }
 
-    // Stock moved inside the branch (In Transit → warehouse) :
-    // nothing in or out of the total
+    // Stock moved between warehouses of the branch : nothing in
+    // or out of the total
     public bool IsTransfer { get; set; }
+
+    // In Transit : this row's change (+ purchased, - received into
+    // a warehouse) and the running in-transit balance after it
+    public decimal TransitQty { get; set; }
+
+    public decimal TransitBalance { get; set; }
 
     public decimal InQty { get; set; }
 
@@ -288,6 +302,9 @@ public class ProductLedgerSummaryDto
 
     public decimal ClosingValue { get; set; }
 
+    // In Transit at the end of the period (part of Closing)
+    public decimal ClosingTransit { get; set; }
+
     public List<ProductLedgerSummaryRowDto> Rows { get; set; } = new();
 }
 
@@ -323,4 +340,7 @@ public class ProductLedgerSummaryRowDto
     public decimal ClosingQty { get; set; }
 
     public decimal ClosingValue { get; set; }
+
+    // In Transit at the end of the period
+    public decimal ClosingTransit { get; set; }
 }

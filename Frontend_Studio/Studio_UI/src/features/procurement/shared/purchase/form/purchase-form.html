@@ -1572,7 +1572,7 @@
                     {
                         <div class="pof-hint">
                             <i class="fas fa-paste"></i>
-                            Copy the four columns from Excel (Chassis, Engine, Key, Battery) and paste into a Chassis box : every row fills at once, from that bike down.
+                            Copy the {{ unitsRequired ? 'four columns from Excel (Chassis, Engine, Key, Battery)' : 'two columns from Excel (Chassis, Engine)' }} and paste into a Chassis box : every row fills at once, from that bike down.
                         </div>
                     }
 
@@ -1585,8 +1585,11 @@
                                 <col class="pur-ud-c-sl">
                                 <col class="pur-ud-c-wide">
                                 <col class="pur-ud-c-wide">
-                                <col class="pur-ud-c-key">
-                                <col class="pur-ud-c-bat">
+                                @if (unitKeysShown)
+                                {
+                                    <col class="pur-ud-c-key">
+                                    <col class="pur-ud-c-bat">
+                                }
                                 @if (isReadonly)
                                 {
                                     <col class="pur-ud-c-status">
@@ -1602,8 +1605,11 @@
                                     <th class="pof-sl">SL</th>
                                     <th>Chassis No <b class="pof-req">*</b></th>
                                     <th>Engine No <b class="pof-req">*</b></th>
-                                    <th>Key No @if (unitsRequired) { <b class="pof-req">*</b> }</th>
-                                    <th>Battery No @if (unitsRequired) { <b class="pof-req">*</b> }</th>
+                                    @if (unitKeysShown)
+                                    {
+                                        <th>Key No @if (unitsRequired) { <b class="pof-req">*</b> }</th>
+                                        <th>Battery No @if (unitsRequired) { <b class="pof-req">*</b> }</th>
+                                    }
                                     @if (isReadonly)
                                     {
                                         <th>Status</th>
@@ -1625,8 +1631,11 @@
                                         {
                                             <td>{{ row.ChassisNo }}</td>
                                             <td>{{ row.EngineNo }}</td>
-                                            <td>{{ row.KeyNo || '—' }}</td>
-                                            <td>{{ row.BatteryNo || '—' }}</td>
+                                            @if (unitKeysShown)
+                                            {
+                                                <td>{{ row.KeyNo || '—' }}</td>
+                                                <td>{{ row.BatteryNo || '—' }}</td>
+                                            }
                                             <td>{{ row.Status || '—' }}</td>
                                         }
                                         @else
@@ -1655,30 +1664,33 @@
                                                     (valueChange)="onUnitChange($index, 'EngineNo', $event)">
                                                 </app-textbox>
                                             </td>
-                                            <td
-                                                [class.pur-ud-bad]="!!unitBad($index, 'KeyNo')"
-                                                [attr.title]="unitBad($index, 'KeyNo') || null"
-                                                (paste)="onUnitPaste($event, $index, 2)">
-                                                <app-textbox
-                                                    placeholder="Key"
-                                                    textCase="upper"
-                                                    [maxLength]="50"
-                                                    [value]="row.KeyNo"
-                                                    (valueChange)="onUnitChange($index, 'KeyNo', $event)">
-                                                </app-textbox>
-                                            </td>
-                                            <td
-                                                [class.pur-ud-bad]="!!unitBad($index, 'BatteryNo')"
-                                                [attr.title]="unitBad($index, 'BatteryNo') || null"
-                                                (paste)="onUnitPaste($event, $index, 3)">
-                                                <app-textbox
-                                                    placeholder="Battery"
-                                                    textCase="upper"
-                                                    [maxLength]="50"
-                                                    [value]="row.BatteryNo"
-                                                    (valueChange)="onUnitChange($index, 'BatteryNo', $event)">
-                                                </app-textbox>
-                                            </td>
+                                            @if (unitsRequired)
+                                            {
+                                                <td
+                                                    [class.pur-ud-bad]="!!unitBad($index, 'KeyNo')"
+                                                    [attr.title]="unitBad($index, 'KeyNo') || null"
+                                                    (paste)="onUnitPaste($event, $index, 2)">
+                                                    <app-textbox
+                                                        placeholder="Key"
+                                                        textCase="upper"
+                                                        [maxLength]="50"
+                                                        [value]="row.KeyNo"
+                                                        (valueChange)="onUnitChange($index, 'KeyNo', $event)">
+                                                    </app-textbox>
+                                                </td>
+                                                <td
+                                                    [class.pur-ud-bad]="!!unitBad($index, 'BatteryNo')"
+                                                    [attr.title]="unitBad($index, 'BatteryNo') || null"
+                                                    (paste)="onUnitPaste($event, $index, 3)">
+                                                    <app-textbox
+                                                        placeholder="Battery"
+                                                        textCase="upper"
+                                                        [maxLength]="50"
+                                                        [value]="row.BatteryNo"
+                                                        (valueChange)="onUnitChange($index, 'BatteryNo', $event)">
+                                                    </app-textbox>
+                                                </td>
+                                            }
                                             <td class="pur-ud-act">
                                                 <button
                                                     type="button"
@@ -1697,7 +1709,7 @@
                                 @if (unitRows.length === 0)
                                 {
                                     <tr>
-                                        <td colspan="6" class="pof-empty">No bikes entered.</td>
+                                        <td [attr.colspan]="unitKeysShown ? 6 : 4" class="pof-empty">No bikes entered.</td>
                                     </tr>
                                 }
 
@@ -1728,7 +1740,7 @@
                         @else
                         {
                             <i class="fas fa-circle-info"></i>
-                            {{ unitsRequired ? 'Every bike needs all four numbers.' : 'Chassis and Engine are required for each bike entered.' }}
+                            {{ unitsRequired ? 'Every bike needs all four numbers.' : 'Every bike needs its Chassis No and Engine No.' }}
                         }
                     </span>
 
