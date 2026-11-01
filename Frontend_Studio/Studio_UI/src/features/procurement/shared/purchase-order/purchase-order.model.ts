@@ -477,12 +477,35 @@ export interface PurchaseOrderProductOption
     OnOrder:
         number;
 
-    // Company stock (all branches); null = not tracked yet
+    // Company stock (all branches) = In Transit + On Hand; null =
+    // nothing ever received of it
     TotalStock:
         number | null;
 
+    // The same by branch (the 📍 list); only branches holding it
+    StockByBranch:
+        PurchaseOrderStockBranch[];
+
     IsActive:
         boolean;
+}
+
+// One branch's stock of a product
+export interface PurchaseOrderStockBranch
+{
+    BranchId:
+        number;
+
+    BranchName:
+        string;
+
+    // Purchased, not yet received into a warehouse
+    InTransit:
+        number;
+
+    // In the branch's warehouses
+    OnHand:
+        number;
 }
 
 

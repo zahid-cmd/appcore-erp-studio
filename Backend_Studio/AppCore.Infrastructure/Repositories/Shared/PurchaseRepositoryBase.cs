@@ -1649,8 +1649,11 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         Dictionary<string, decimal> onOrder =
             await OnOrderAsync(page);
 
+        Dictionary<string, List<PurchaseOrderStockBranchDto>> byBranch =
+            await CompanyStock.LoadAsync(_context, page.PageType);
+
         Dictionary<string, decimal> stock =
-            await CompanyStockAsync(page);
+            CompanyStock.Totals(byBranch);
 
         return (
             await ProductRowsAsync(
@@ -1678,6 +1681,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                     MaxStockLevel = x.MaxStockLevel,
                     OnOrder = onOrder.GetValueOrDefault(x.ProductCode),
                     TotalStock = stock.TryGetValue(x.ProductCode, out decimal held) ? held : null,
+                    StockByBranch = byBranch.GetValueOrDefault(x.ProductCode) ?? new List<PurchaseOrderStockBranchDto>(),
                     IsActive = x.IsActive
                 }
         )
@@ -1729,8 +1733,9 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
 
     //===========================================================
-    // Company stock per product : in transit + on hand of the
-    // page type's open stock batches (all branches)
+    // Company stock per product (all branches) : In Transit + On
+    // Hand, from the stock movements (CompanyStock, shared with
+    // the Purchase Order page)
     //===========================================================
 
     private async Task<Dictionary<string, decimal>>
@@ -1739,26 +1744,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             PurchasePage page
         )
     {
-        var rows =
-            await _context
-                .Set<StockBatchesEntity>()
-                .AsNoTracking()
-                .Where
-                (
-                    x =>
-                        x.ProductType == page.PageType
-                        &&
-                        (x.Status == BatchInTransit || x.Status == BatchOnHand)
-                )
-                .Select(x => new { x.ProductCode, Held = x.QuantityInTransit + x.QuantityOnHand })
-                .ToListAsync();
-
-        return rows
-            .GroupBy(x => x.ProductCode, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Sum(x => x.Held),
-                StringComparer.OrdinalIgnoreCase);
+        return CompanyStock.Totals(
+            await CompanyStock.LoadAsync(_context, page.PageType));
     }
 
 

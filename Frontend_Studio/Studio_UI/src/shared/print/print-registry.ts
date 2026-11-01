@@ -175,5 +175,12 @@ export const PRINT_SOURCES:
     'accessories-receiving':
         () =>
             import('../../features/inventory-management/product-receiving/shared/print/receiving.print')
-                .then(module => module.ACCESSORIES_RECEIVING_PRINT)
+                .then(module => module.ACCESSORIES_RECEIVING_PRINT),
+
+    // Inventory Management : Opening Stock (the note of one
+    // document; the id is the document)
+    'opening-stock':
+        () =>
+            import('../../features/inventory-management/store-setup/print/opening-stock.print')
+                .then(module => module.OPENING_STOCK_PRINT)
 };

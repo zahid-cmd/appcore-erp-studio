@@ -59,6 +59,15 @@ public static class VoucherTypes
 
     public const string ReceivingAccessories = "RCAC";
 
+    // Opening Stock (journal Dr Inventory / Cr Opening Stock,
+    // posted under the opening number) : Motor Bikes / Spare
+    // Parts & Lubricants / Accessories
+    public const string OpeningMotorBikes = "OPMB";
+
+    public const string OpeningSpareParts = "OPSP";
+
+    public const string OpeningAccessories = "OPAC";
+
 
     public static readonly string[] All =
     {
@@ -76,7 +85,10 @@ public static class VoucherTypes
         PurchaseAccessories,
         ReceivingMotorBikes,
         ReceivingSpareParts,
-        ReceivingAccessories
+        ReceivingAccessories,
+        OpeningMotorBikes,
+        OpeningSpareParts,
+        OpeningAccessories
     };
 
 

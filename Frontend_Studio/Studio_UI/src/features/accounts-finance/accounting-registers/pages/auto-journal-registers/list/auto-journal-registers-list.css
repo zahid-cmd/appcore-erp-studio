@@ -46,10 +46,13 @@
     text-transform:uppercase;
 }
 
-.aj-date
+app-datepicker.aj-date
 {
     display:block;
-    width:150px;
+    /* Full date (01-Nov-2026) with the calendar icon */
+    width:172px;
+    min-width:172px;
+    flex:0 0 172px;
 }
 
 .aj-branch

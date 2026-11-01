@@ -873,10 +873,48 @@
                                             <i class="fas fa-xmark"></i>
                                         </button>
                                     </div>
-                                    <div class="pof-stock-pop-empty">
-                                        <i class="fas fa-warehouse"></i>
-                                        Branch-wise stock shows here once Product Receiving is built.
-                                    </div>
+                                    @if (stockBranches.length)
+                                    {
+                                        <table class="pof-stock-pop-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Branch</th>
+                                                    <th title="Purchased, not yet received">In Transit</th>
+                                                    <th>On Hand</th>
+                                                    <th>Stock</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @for (b of stockBranches; track b.BranchId)
+                                                {
+                                                    <tr>
+                                                        <td [title]="b.BranchName">{{ b.BranchName || '—' }}</td>
+                                                        <td class="pof-stock-pop-tr">{{ b.InTransit || '' }}</td>
+                                                        <td>{{ b.OnHand || '' }}</td>
+                                                        <td><b>{{ b.InTransit + b.OnHand }}</b></td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                            @if (stockBranches.length > 1)
+                                            {
+                                                <tfoot>
+                                                    <tr>
+                                                        <td>Total</td>
+                                                        <td class="pof-stock-pop-tr">{{ stockBranchTotal('InTransit') || '' }}</td>
+                                                        <td>{{ stockBranchTotal('OnHand') || '' }}</td>
+                                                        <td><b>{{ stockBranchTotal('InTransit') + stockBranchTotal('OnHand') }}</b></td>
+                                                    </tr>
+                                                </tfoot>
+                                            }
+                                        </table>
+                                    }
+                                    @else
+                                    {
+                                        <div class="pof-stock-pop-empty">
+                                            <i class="fas fa-warehouse"></i>
+                                            No stock of this item in any branch.
+                                        </div>
+                                    }
                                 </div>
                             }
 

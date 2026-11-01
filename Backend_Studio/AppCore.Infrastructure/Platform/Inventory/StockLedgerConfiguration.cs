@@ -80,6 +80,10 @@ public class StockBatchesConfiguration
                .HasPrecision(18, 2);
         builder.Property(x => x.RemainingValue)
                .HasPrecision(18, 2);
+        builder.Property(x => x.SalePrice)
+               .HasPrecision(18, 2);
+        builder.Property(x => x.Mrp)
+               .HasPrecision(18, 2);
         builder.Property(x => x.Status)
                .IsRequired()
                .HasMaxLength(20);

@@ -1100,28 +1100,19 @@ public class BackendCodeSynchronizationEngine
 
 
         //=======================================================
-        // Validate Existing Backup Folder
+        // Backup Folder
         //
-        // IMPORTANT:
-        //
-        // The Backend Module Synchronization Engine creates
-        // the module folder.
-        //
-        // This engine must NEVER create that folder.
-        //
+        // The Backend Module Synchronization Engine normally
+        // creates the module folder. A module made (or renamed)
+        // without it left the sync failing every time, so a
+        // missing folder is now created here - but only inside
+        // an existing Development_Backup folder of the project
+        // (a wrong path still stops the sync).
         //=======================================================
 
-        if
-        (
-            !Directory.Exists(
-                backupFolder
-            )
-        )
-        {
-            throw new DirectoryNotFoundException(
-                $"Development backup folder was not found: {backupFolder}"
-            );
-        }
+        EnsureBackupFolder(
+            backupFolder
+        );
 
 
         //=======================================================
@@ -2873,4 +2864,60 @@ public class BackendCodeSynchronizationEngine
             string.Empty;
     }
 
+
+    //===========================================================
+    // Ensure Backup Folder
+    //
+    // Creates <...>\Development_Backup\<Module> when the
+    // Development_Backup folder itself exists; otherwise the
+    // path is wrong and the sync stops.
+    //===========================================================
+
+    private static void
+        EnsureBackupFolder
+    (
+        string backupFolder
+    )
+    {
+        if
+        (
+            Directory.Exists(
+                backupFolder
+            )
+        )
+        {
+            return;
+        }
+
+        var root =
+            new DirectoryInfo(
+                backupFolder
+            );
+
+        while
+        (
+            root != null
+            &&
+            !string.Equals(root.Name, "Development_Backup", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            root = root.Parent;
+        }
+
+        if
+        (
+            root == null
+            ||
+            !root.Exists
+        )
+        {
+            throw new DirectoryNotFoundException(
+                $"Development backup folder was not found (no Development_Backup folder above it): {backupFolder}"
+            );
+        }
+
+        Directory.CreateDirectory(
+            backupFolder
+        );
+    }
 }

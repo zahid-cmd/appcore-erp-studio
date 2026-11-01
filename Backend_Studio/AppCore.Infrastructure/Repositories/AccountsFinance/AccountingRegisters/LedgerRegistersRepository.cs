@@ -120,6 +120,24 @@ public class LedgerRegistersRepository
             AppCore.Domain.Platform.Accounting.VoucherTypes.PurchaseAccessories
         };
 
+    // Opening Stock voucher types (by code : OPMB / OPSP / OPAC) :
+    // line notes as "Opening Stock - Reve A04 - White : 1 Pcs",
+    // "Opening Stock - Unclaimed input VAT"
+    private static readonly HashSet<string> OpeningTypes =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            AppCore.Domain.Platform.Accounting.VoucherTypes.OpeningMotorBikes,
+            AppCore.Domain.Platform.Accounting.VoucherTypes.OpeningSpareParts,
+            AppCore.Domain.Platform.Accounting.VoucherTypes.OpeningAccessories
+        };
+
+    // " on opening stock OS-…" at the end of a line text : the
+    // number is in the Ref No column already
+    private static readonly System.Text.RegularExpressions.Regex OpeningRef =
+        new(
+            @"\s+on opening stock\s+\S+$",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
     // Statement rows sent per load (totals stay complete)
     private const int MaxRows = 5000;
 
@@ -908,6 +926,9 @@ public class LedgerRegistersRepository
             bool purchase =
                 PurchaseTypes.Contains(first.VoucherType);
 
+            bool openingStock =
+                OpeningTypes.Contains(first.VoucherType);
+
             // Typed notes exist only on manual vouchers; the line
             // texts of other posting pages (reconciliations …) are
             // made by the system and repeat the row
@@ -936,6 +957,19 @@ public class LedgerRegistersRepository
                 {
                     return note.Length > 0
                         ? $"Purchase - {note}"
+                        : string.Empty;
+                }
+
+                if
+                (
+                    openingStock
+                )
+                {
+                    note =
+                        OpeningRef.Replace(note, string.Empty).Trim();
+
+                    return note.Length > 0
+                        ? $"Opening Stock - {note}"
                         : string.Empty;
                 }
 

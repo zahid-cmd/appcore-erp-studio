@@ -1489,21 +1489,10 @@ public class FrontendCodeSynchronizationEngine
             );
 
 
-        if
-        (
-            string.IsNullOrWhiteSpace(
-                baselineDirectory
-            )
-            ||
-            !Directory.Exists(
-                baselineDirectory
-            )
-        )
-        {
-            throw new DirectoryNotFoundException(
-                $"Frontend baseline backup directory was not found: {baselineDirectory}"
-            );
-        }
+        EnsureBackupDirectory(
+            baselineDirectory,
+            "baseline"
+        );
 
 
         //=======================================================
@@ -1516,21 +1505,82 @@ public class FrontendCodeSynchronizationEngine
             );
 
 
+        EnsureBackupDirectory(
+            restoreDirectory,
+            "restore"
+        );
+    }
+
+
+
+    //===========================================================
+    // Ensure Backup Directory
+    //
+    // A module / menu made or renamed without its backup folders
+    // left the sync failing every time. A missing folder is now
+    // created - only inside an existing development_backup folder
+    // of the project (a wrong path still stops the sync).
+    //===========================================================
+
+    private static void
+        EnsureBackupDirectory
+    (
+        string? directory,
+        string kind
+    )
+    {
         if
         (
             string.IsNullOrWhiteSpace(
-                restoreDirectory
-            )
-            ||
-            !Directory.Exists(
-                restoreDirectory
+                directory
             )
         )
         {
             throw new DirectoryNotFoundException(
-                $"Frontend restore backup directory was not found: {restoreDirectory}"
+                $"Frontend {kind} backup directory is not set."
             );
         }
+
+        if
+        (
+            Directory.Exists(
+                directory
+            )
+        )
+        {
+            return;
+        }
+
+        var root =
+            new DirectoryInfo(
+                directory
+            );
+
+        while
+        (
+            root != null
+            &&
+            !string.Equals(root.Name, "development_backup", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            root = root.Parent;
+        }
+
+        if
+        (
+            root == null
+            ||
+            !root.Exists
+        )
+        {
+            throw new DirectoryNotFoundException(
+                $"Frontend {kind} backup directory was not found (no development_backup folder above it): {directory}"
+            );
+        }
+
+        Directory.CreateDirectory(
+            directory
+        );
     }
 
 
@@ -3011,4 +3061,4 @@ $@"id:
         };
     }
 
-}
+}

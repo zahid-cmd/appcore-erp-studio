@@ -202,6 +202,7 @@ import
 {
     PurchaseOrderSupplierOption,
     PurchaseOrderProductOption,
+    PurchaseOrderStockBranch,
     PurchaseOrderInvoicePrice,
     PurchaseOrderProfitBasis,
     PurchaseOrderDiscountType,
@@ -5620,6 +5621,28 @@ implements OnInit, OnDestroy
     // Branch list (Total Stock) : shown on demand
     stockListOpen =
         false;
+
+    // The picked item's stock by branch (📍 list)
+    get stockBranches():
+        PurchaseOrderStockBranch[]
+    {
+        const code =
+            this.productCode;
+
+        return code
+            ? ((this.defaults?.Products ?? []).find(x => x.ProductCode === code)?.StockByBranch ?? [])
+            : [];
+    }
+
+    stockBranchTotal
+    (
+        field:
+            'InTransit' | 'OnHand'
+    ):
+        number
+    {
+        return this.stockBranches.reduce((t, x) => t + (x[field] || 0), 0);
+    }
 
     toggleStockList():
         void

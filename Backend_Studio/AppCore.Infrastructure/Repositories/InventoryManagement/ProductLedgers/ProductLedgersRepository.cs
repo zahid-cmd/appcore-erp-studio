@@ -795,9 +795,13 @@ public class ProductLedgersRepository
                             ? "Received Into Store"
                             : type == MoveReceiveCancel
                                 ? "Receiving Cancelled"
-                                : transfer
-                                    ? "Moved Between Warehouses"
-                                    : Words(type);
+                                : type == "Opening"
+                                    ? "Opening Stock"
+                                    : type == "OpeningCancel"
+                                        ? "Opening Stock Cancelled"
+                                        : transfer
+                                            ? "Moved Between Warehouses"
+                                            : Words(type);
 
             if (party.Length > 0 && (type == MovePurchase || type == MovePurchaseCancel))
             {

@@ -388,10 +388,29 @@ public class PurchaseOrderProductOptionDto
     // On this page's approved / placed orders, not yet billed
     public decimal OnOrder { get; set; }
 
-    // Company stock (all branches); null = not tracked yet
+    // Company stock (all branches) = In Transit + On Hand; null =
+    // nothing ever received of it
     public decimal? TotalStock { get; set; }
 
+    // The same by branch (the 📍 list); only branches holding it
+    public List<PurchaseOrderStockBranchDto> StockByBranch { get; set; } = new();
+
     public bool IsActive { get; set; }
+}
+
+
+// One branch's stock of a product
+public class PurchaseOrderStockBranchDto
+{
+    public long BranchId { get; set; }
+
+    public string BranchName { get; set; } = string.Empty;
+
+    // Purchased, not yet received into a warehouse
+    public decimal InTransit { get; set; }
+
+    // In the branch's warehouses
+    public decimal OnHand { get; set; }
 }
 
 

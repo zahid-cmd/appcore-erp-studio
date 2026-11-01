@@ -108,6 +108,10 @@ import
     AutoJournalNode,
     formatJournalDate,
     journalMatches,
+    journalShowsNotes,
+    journalShowsParty,
+    lineNote,
+    lineParty,
     partyText,
     toIsoDate
 }
@@ -792,6 +796,65 @@ export class AutoJournalRegistersList
         string
     {
         return partyText(type, code, name);
+    }
+
+    // No repeats : a line's party / narration only when it adds
+    // something; the column is left out when no line has any
+    partyOf
+    (
+        line:
+            AutoJournalLine,
+        journal:
+            AutoJournal
+    ):
+        string
+    {
+        return lineParty(line, journal);
+    }
+
+    noteOf
+    (
+        line:
+            AutoJournalLine,
+        journal:
+            AutoJournal,
+        reversal:
+            boolean
+    ):
+        string
+    {
+        return lineNote(line, journal, reversal);
+    }
+
+    showParty
+    (
+        journal:
+            AutoJournal
+    ):
+        boolean
+    {
+        return journalShowsParty(journal);
+    }
+
+    showNotes
+    (
+        journal:
+            AutoJournal
+    ):
+        boolean
+    {
+        return journalShowsNotes(journal);
+    }
+
+    // Columns before Debit : Particulars, L.F., [Party], [Narration]
+    leadCols
+    (
+        journal:
+            AutoJournal
+    ):
+        number
+    {
+        return 2 + (this.showParty(journal) ? 1 : 0) + (this.showNotes(journal) ? 1 : 0);
     }
 
     // Credit line : "To …" (classic journal); debit : "… Dr."

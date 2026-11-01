@@ -1317,6 +1317,17 @@ public class AppDbContext
 
     // AUTO-END : SparePartsLubricantsReceiving
 
+    // AUTO-BEGIN : OpeningStock
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.StoreSetup.OpeningStock>
+    OpeningStocks
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : OpeningStock
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 

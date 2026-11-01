@@ -1,0 +1,90 @@
+/* ============================================================
+   Opening Stock
+============================================================ */
+
+export interface OpeningStock
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Opening Stock
+============================================================ */
+
+export interface CreateOpeningStock
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Opening Stock
+============================================================ */
+
+export interface UpdateOpeningStock
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Opening Stock Defaults
+============================================================ */
+
+export interface OpeningStockDefaults
+{
+    code:
+        string;
+}

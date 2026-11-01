@@ -165,6 +165,13 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : OpeningStock
+
+using AppCore.Application.InventoryManagement.StoreSetup;
+using AppCore.Infrastructure.Configurations.InventoryManagement.StoreSetup;
+
+// AUTO-END : OpeningStock
+
 // AUTO-BEGIN : AccessoriesReceiving
 
 using AppCore.Application.InventoryManagement.ProductReceiving;
@@ -786,6 +793,16 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : OpeningStock
+
+        services.AddScoped
+        <
+            IOpeningStockRepository,
+            OpeningStockRepository
+        >();
+
+        // AUTO-END : OpeningStock
 
         // AUTO-BEGIN : SparePartsLubricantsReceiving
 

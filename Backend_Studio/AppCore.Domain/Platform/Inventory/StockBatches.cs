@@ -36,6 +36,13 @@ public class StockBatches
     public decimal QuantityOnHand { get; set; }
     public decimal QuantityOut { get; set; }
     public decimal RemainingValue { get; set; }
+
+    // Selling price of the batch (0 = not priced yet : not
+    // saleable). Opening Stock may set it; Product Pricing later.
+    public decimal SalePrice { get; set; }
+
+    // Maximum retail price of the batch (VAT inclusive; 0 = none)
+    public decimal Mrp { get; set; }
     // InTransit / OnHand / Closed / Cancelled
     public string Status { get; set; } = "InTransit";
     public long CreatedBy { get; set; }

@@ -1001,6 +1001,13 @@ public class SubmenuFrontendSynchronizationEngine
                 );
 
 
+            //===================================================
+            // Menu-level folders (models / services / routes) :
+            // created when missing, as long as the menu folder
+            // itself exists (made by Menu Synchronization). A
+            // missing menu folder still stops the sync.
+            //===================================================
+
             if
             (
                 parentDirectoryMustExist
@@ -1012,9 +1019,30 @@ public class SubmenuFrontendSynchronizationEngine
                 )
             )
             {
-                throw new DirectoryNotFoundException
+                var menuDirectory =
+                    string.IsNullOrWhiteSpace(parentDirectory)
+                        ? null
+                        : Path.GetDirectoryName
+                        (
+                            parentDirectory
+                        );
+
+                if
                 (
-                    $"Required existing frontend folder was not found: {parentDirectory}"
+                    string.IsNullOrWhiteSpace(menuDirectory)
+                    ||
+                    !Directory.Exists(menuDirectory)
+                )
+                {
+                    throw new DirectoryNotFoundException
+                    (
+                        $"Menu folder was not found (run Menu Synchronization first): {menuDirectory ?? parentDirectory}"
+                    );
+                }
+
+                Directory.CreateDirectory
+                (
+                    parentDirectory!
                 );
             }
 
@@ -1705,4 +1733,4 @@ public class SubmenuFrontendSynchronizationEngine
         return route.Trim('-');
     }
 
-}
+}

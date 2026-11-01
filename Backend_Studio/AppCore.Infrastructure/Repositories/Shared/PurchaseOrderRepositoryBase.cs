@@ -1002,8 +1002,11 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
         Dictionary<string, decimal> onOrder =
             await OnOrderAsync(page);
 
+        Dictionary<string, List<PurchaseOrderStockBranchDto>> byBranch =
+            await CompanyStock.LoadAsync(_context, page.PageType);
+
         Dictionary<string, decimal> stock =
-            await CompanyStockAsync(page);
+            CompanyStock.Totals(byBranch);
 
         return (
             await ProductRowsAsync(
@@ -1031,6 +1034,7 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
                     MaxStockLevel = x.MaxStockLevel,
                     OnOrder = onOrder.GetValueOrDefault(x.ProductCode),
                     TotalStock = stock.TryGetValue(x.ProductCode, out decimal held) ? held : null,
+                    StockByBranch = byBranch.GetValueOrDefault(x.ProductCode) ?? new List<PurchaseOrderStockBranchDto>(),
                     IsActive = x.IsActive
                 }
         )
@@ -1082,22 +1086,18 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
 
 
     //===========================================================
-    // Company stock per product : not tracked yet. Product
-    // Receiving fills it (all warehouses of all branches); until
-    // then nothing is known (the page shows "—" and the Max
-    // Stock Level check counts the stock as 0).
+    // Company stock per product (all branches) : In Transit + On
+    // Hand, from the stock movements (CompanyStock)
     //===========================================================
 
-    private Task<Dictionary<string, decimal>>
+    private async Task<Dictionary<string, decimal>>
         CompanyStockAsync
         (
             PurchaseOrderPage page
         )
     {
-        _ = page;
-
-        return Task.FromResult(
-            new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase));
+        return CompanyStock.Totals(
+            await CompanyStock.LoadAsync(_context, page.PageType));
     }
 
 

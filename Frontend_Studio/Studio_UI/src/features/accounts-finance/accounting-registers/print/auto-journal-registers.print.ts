@@ -9,8 +9,10 @@
 // the viewer loads the journals again from the server. A token
 // that is no longer there prints this month, all journals.
 //
-// One document : Journal Register (A4 flow, Excel). Portrait :
-// Ledger · Party · Debit · Credit. Landscape adds Narration.
+// One document : Journal Register (A4 flow, Excel). Ledger ·
+// [Party] · [Narration, landscape] · Debit · Credit. A line's
+// party / narration shows only when it is not a repeat; a column
+// no line needs is left out (Excel keeps every field).
 //===============================================================
 
 import
@@ -47,6 +49,10 @@ import
     AutoJournalLine,
     AutoJournalList,
     journalMatches,
+    journalShowsNotes,
+    journalShowsParty,
+    lineNote,
+    lineParty,
     partyText,
     toIsoDate
 }
@@ -444,12 +450,25 @@ function registerHtml
     const e =
         kit.escape;
 
-    // Portrait : Ledger · Party · Debit · Credit
-    // Landscape : Ledger · Party · Narration · Debit · Credit
+    // No repeats : a line's party / narration only when it adds
+    // something (not the ledger's own party, not the journal's
+    // narration or reversal reason); a column nobody needs is left
+    // out. Portrait : the narration goes under the ledger.
+    const withParty =
+        data.journals.some(x => journalShowsParty(x));
+
+    const withNotes =
+        landscape && data.journals.some(x => journalShowsNotes(x));
+
+    // Ledger · [Party] · [Narration] · Debit · Credit
     const cols =
-        landscape
-            ? ['30%', '20%', '', '24mm', '24mm']
-            : ['48%', '', '24mm', '24mm'];
+        [
+            withParty || withNotes ? (landscape ? '34%' : '52%') : '',
+            ...(withParty ? [withNotes ? '22%' : ''] : []),
+            ...(withNotes ? [''] : []),
+            '24mm',
+            '24mm'
+        ];
 
     const colCount =
         cols.length;
@@ -462,18 +481,23 @@ function registerHtml
             value ? kit.money(value) : '';
 
     const lineRows =
-        (lines: AutoJournalLine[], reversal: boolean) =>
+        (journal: AutoJournal, lines: AutoJournalLine[], reversal: boolean) =>
             lines
                 .map
                 (
                     line =>
-                        `<tr class="jr-line${reversal ? ' jr-rev-line' : ''}${line.Credit > 0 && !line.Debit ? ' jr-cr' : ''}">
-  <td><div class="jr-ledger">${e(line.LedgerName)}</div><div class="jr-code">${e(line.LedgerCode)}${!landscape && line.Narration ? ` · ${e(line.Narration)}` : ''}</div></td>
-  <td class="jr-soft">${e(partyText(line.PartyType, line.PartyCode, line.PartyName))}</td>
-  ${landscape ? `<td class="jr-soft">${e(line.Narration)}</td>` : ''}
+                    {
+                        const note =
+                            lineNote(line, journal, reversal);
+
+                        return `<tr class="jr-line${reversal ? ' jr-rev-line' : ''}${line.Credit > 0 && !line.Debit ? ' jr-cr' : ''}">
+  <td><div class="jr-ledger">${e(line.LedgerName)}</div><div class="jr-code">${e(line.LedgerCode)}${!withNotes && note ? ` · ${e(note)}` : ''}</div></td>
+  ${withParty ? `<td class="jr-soft">${e(lineParty(line, journal))}</td>` : ''}
+  ${withNotes ? `<td class="jr-soft">${e(note)}</td>` : ''}
   <td class="vd-r">${money(line.Debit)}</td>
   <td class="vd-r">${money(line.Credit)}</td>
-</tr>`
+</tr>`;
+                    }
                 )
                 .join('');
 
@@ -502,7 +526,7 @@ function registerHtml
                     const reversal =
                         journal.IsReversed
                             ? `<tr class="jr-rev-head"><td colspan="${colCount}"><b>Reversal</b> ${e(kit.date(journal.ReversalDate))}${journal.ReversalReason ? ` · ${e(journal.ReversalReason)}` : ''}</td></tr>
-${lineRows(journal.ReversalLines, true)}
+${lineRows(journal, journal.ReversalLines, true)}
 <tr class="jr-total jr-rev-total"><td colspan="${lead}" class="vd-r">Reversal Total</td><td class="vd-r">${kit.money(sum(journal.ReversalLines, 'Debit'))}</td><td class="vd-r">${kit.money(sum(journal.ReversalLines, 'Credit'))}</td></tr>`
                             : '';
 
@@ -514,7 +538,7 @@ ${lineRows(journal.ReversalLines, true)}
   ${journal.IsReversed ? '<span class="jr-tag">Reversed</span>' : ''}
 </td></tr>
 ${journal.Narration ? `<tr class="jr-narr"><td colspan="${colCount}">${e(journal.Narration)}</td></tr>` : ''}
-${lineRows(journal.Lines, false)}
+${lineRows(journal, journal.Lines, false)}
 <tr class="jr-total"><td colspan="${lead}" class="vd-r">Total</td><td class="vd-r">${kit.money(journal.TotalDebit)}</td><td class="vd-r">${kit.money(journal.TotalCredit)}</td></tr>
 ${reversal}`;
                 }
@@ -539,8 +563,8 @@ ${registerHead(data, kit)}
   <colgroup>${cols.map(x => x ? `<col style="width:${x}">` : '<col>').join('')}</colgroup>
   <thead><tr>
     <th>Ledger</th>
-    <th>Party</th>
-    ${landscape ? '<th>Narration</th>' : ''}
+    ${withParty ? '<th>Party</th>' : ''}
+    ${withNotes ? '<th>Narration</th>' : ''}
     <th class="vd-r">Debit</th>
     <th class="vd-r">Credit</th>
   </tr></thead>

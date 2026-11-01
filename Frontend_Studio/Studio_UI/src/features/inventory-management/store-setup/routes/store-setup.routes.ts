@@ -59,6 +59,32 @@ Routes =
 
                 // AUTO-END : SUB-012-001-001
 
+            // AUTO-BEGIN : SUB-012-001-002
+
+                //===========================================================
+                // Opening Stock
+                //===========================================================
+
+                {
+                    path:'opening-stock',
+
+                    data:
+                    {
+                        breadcrumb:'Opening Stock'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './opening-stock.routes'
+                        )
+                        .then(
+                            m =>
+                                m.OpeningStockRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-012-001-002
+
         ]
 
     }

@@ -334,6 +334,17 @@ export abstract class PurchaseOrderService
                             this.pick(row, 'TotalStock') === null || this.pick(row, 'TotalStock') === undefined
                                 ? null
                                 : this.num(row, 'TotalStock'),
+                        StockByBranch:
+                            ((this.pick(row, 'StockByBranch') ?? []) as any[]).map
+                            (
+                                b =>
+                                ({
+                                    BranchId:this.num(b, 'BranchId'),
+                                    BranchName:this.text(b, 'BranchName'),
+                                    InTransit:this.num(b, 'InTransit'),
+                                    OnHand:this.num(b, 'OnHand')
+                                })
+                            ),
                         IsActive:Boolean(this.pick(row, 'IsActive') ?? true)
                     })
                 )

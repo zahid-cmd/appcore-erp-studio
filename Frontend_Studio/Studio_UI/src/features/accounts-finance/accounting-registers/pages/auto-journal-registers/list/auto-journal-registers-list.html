@@ -342,8 +342,14 @@
                                         <colgroup>
                                             <col class="c-part">
                                             <col class="c-lf">
-                                            <col class="c-party">
-                                            <col>
+                                            @if (showParty(journal))
+                                            {
+                                                <col class="c-party">
+                                            }
+                                            @if (showNotes(journal))
+                                            {
+                                                <col>
+                                            }
                                             <col class="c-amt">
                                             <col class="c-amt">
                                         </colgroup>
@@ -352,8 +358,14 @@
                                         <tr>
                                             <th>Particulars</th>
                                             <th>L.F.</th>
-                                            <th>Party</th>
-                                            <th>Narration</th>
+                                            @if (showParty(journal))
+                                            {
+                                                <th>Party</th>
+                                            }
+                                            @if (showNotes(journal))
+                                            {
+                                                <th>Narration</th>
+                                            }
                                             <th class="r">Debit</th>
                                             <th class="r">Credit</th>
                                         </tr>
@@ -375,8 +387,14 @@
                                                         }
                                                     </td>
                                                     <td class="aj-lf">{{ line.LedgerCode }}</td>
-                                                    <td class="aj-dim aj-clip" [title]="party(line.PartyType, line.PartyCode, line.PartyName)">{{ party(line.PartyType, line.PartyCode, line.PartyName) }}</td>
-                                                    <td class="aj-dim aj-clip" [title]="line.Narration">{{ line.Narration }}</td>
+                                                    @if (showParty(journal))
+                                                    {
+                                                        <td class="aj-dim aj-clip" [title]="partyOf(line, journal)">{{ partyOf(line, journal) }}</td>
+                                                    }
+                                                    @if (showNotes(journal))
+                                                    {
+                                                        <td class="aj-dim aj-clip" [title]="noteOf(line, journal, false)">{{ noteOf(line, journal, false) }}</td>
+                                                    }
                                                     <td class="aj-amt-c">{{ money(line.Debit) }}</td>
                                                     <td class="aj-amt-c">{{ money(line.Credit) }}</td>
                                                 </tr>
@@ -385,7 +403,7 @@
 
                                     <tfoot>
                                         <tr>
-                                            <td colspan="4" class="r">Total</td>
+                                            <td [attr.colspan]="leadCols(journal)" class="r">Total</td>
                                             <td class="aj-amt-c">{{ total2(journal.TotalDebit) }}</td>
                                             <td class="aj-amt-c">{{ total2(journal.TotalCredit) }}</td>
                                         </tr>
@@ -412,8 +430,14 @@
                                             <colgroup>
                                                 <col class="c-part">
                                                 <col class="c-lf">
-                                                <col class="c-party">
-                                                <col>
+                                                @if (showParty(journal))
+                                                {
+                                                    <col class="c-party">
+                                                }
+                                                @if (showNotes(journal))
+                                                {
+                                                    <col>
+                                                }
                                                 <col class="c-amt">
                                                 <col class="c-amt">
                                             </colgroup>
@@ -434,8 +458,14 @@
                                                             }
                                                         </td>
                                                         <td class="aj-lf">{{ line.LedgerCode }}</td>
-                                                        <td class="aj-dim aj-clip" [title]="party(line.PartyType, line.PartyCode, line.PartyName)">{{ party(line.PartyType, line.PartyCode, line.PartyName) }}</td>
-                                                        <td class="aj-dim aj-clip" [title]="line.Narration">{{ line.Narration }}</td>
+                                                        @if (showParty(journal))
+                                                        {
+                                                            <td class="aj-dim aj-clip" [title]="partyOf(line, journal)">{{ partyOf(line, journal) }}</td>
+                                                        }
+                                                        @if (showNotes(journal))
+                                                        {
+                                                            <td class="aj-dim aj-clip" [title]="noteOf(line, journal, true)">{{ noteOf(line, journal, true) }}</td>
+                                                        }
                                                         <td class="aj-amt-c">{{ money(line.Debit) }}</td>
                                                         <td class="aj-amt-c">{{ money(line.Credit) }}</td>
                                                     </tr>
@@ -444,7 +474,7 @@
 
                                             <tfoot>
                                                 <tr>
-                                                    <td colspan="4" class="r">Reversal Total</td>
+                                                    <td [attr.colspan]="leadCols(journal)" class="r">Reversal Total</td>
                                                     <td class="aj-amt-c">{{ total2(lineTotal(journal.ReversalLines, 'Debit')) }}</td>
                                                     <td class="aj-amt-c">{{ total2(lineTotal(journal.ReversalLines, 'Credit')) }}</td>
                                                 </tr>

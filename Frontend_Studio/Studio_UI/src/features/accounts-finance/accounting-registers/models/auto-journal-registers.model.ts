@@ -187,6 +187,172 @@ export function partyText
 }
 
 
+//===============================================================
+// No repeats on a journal (view and print) : a line shows its
+// party / narration only when it adds something
+//===============================================================
+
+// "RUNNER AUTOMOBILES PLC - REVOO - 01812114911 (SUP-000001)"
+// → its first part and its phone, to compare a ledger with a party
+function nameKey
+(
+    name:
+        string
+):
+    { full:string; first:string; phone:string }
+{
+    const clean =
+        (name ?? '')
+            .toUpperCase()
+            .replace(/\s*\([^)]*\)\s*$/, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+    return {
+        full:clean,
+        first:clean.split(' - ')[0].trim(),
+        phone:(/(\d{6,})\s*$/.exec(clean)?.[1]) ?? ''
+    };
+}
+
+function sameName
+(
+    a:
+        string,
+    b:
+        string
+):
+    boolean
+{
+    const x =
+        nameKey(a);
+
+    const y =
+        nameKey(b);
+
+    if
+    (
+        !x.full || !y.full
+    )
+    {
+        return false;
+    }
+
+    return x.full === y.full
+        ||
+        (x.first === y.first && x.phone === y.phone);
+}
+
+// The line's party, or '' when it repeats the ledger (the party's
+// own ledger) or the journal's party (shown in its header)
+export function lineParty
+(
+    line:
+        AutoJournalLine,
+    journal:
+        AutoJournal
+):
+    string
+{
+    if
+    (
+        !line.PartyCode
+    )
+    {
+        return '';
+    }
+
+    if
+    (
+        sameName(line.LedgerName, line.PartyName)
+        ||
+        (journal.PartyCode && journal.PartyCode === line.PartyCode && journal.PartyType === line.PartyType)
+    )
+    {
+        return '';
+    }
+
+    return partyText(line.PartyType, line.PartyCode, line.PartyName);
+}
+
+// The line's narration, or '' when it repeats the journal's
+// narration (journal lines) or the reversal reason (reversal)
+export function lineNote
+(
+    line:
+        AutoJournalLine,
+    journal:
+        AutoJournal,
+    reversal:
+        boolean
+):
+    string
+{
+    const note =
+        (line.Narration ?? '').trim();
+
+    const plain =
+        (value: string) =>
+            (value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+    if
+    (
+        !note
+        ||
+        plain(note) === plain(journal.Narration)
+    )
+    {
+        return '';
+    }
+
+    if
+    (
+        reversal
+    )
+    {
+        const reason =
+            plain(journal.ReversalReason);
+
+        const text =
+            plain(note).replace(/^(cancelled|reversed|reversal)\s*:?\s*/, '');
+
+        if
+        (
+            !text || text === reason || plain(note) === reason
+        )
+        {
+            return '';
+        }
+    }
+
+    return note;
+}
+
+// Does any line of the journal (and its reversal) show a party /
+// a narration? (the column is left out when none does)
+export function journalShowsParty
+(
+    journal:
+        AutoJournal
+):
+    boolean
+{
+    return [...journal.Lines, ...journal.ReversalLines].some(x => !!lineParty(x, journal));
+}
+
+export function journalShowsNotes
+(
+    journal:
+        AutoJournal
+):
+    boolean
+{
+    return journal.Lines.some(x => !!lineNote(x, journal, false))
+        ||
+        journal.ReversalLines.some(x => !!lineNote(x, journal, true));
+}
+
+
 // Search : every word must appear in the journal (voucher no,
 // type, date, page, branch, party, ref, narration, any line's
 // ledger name / code, party, narration or amount)

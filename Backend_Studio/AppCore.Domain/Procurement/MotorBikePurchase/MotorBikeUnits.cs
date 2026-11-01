@@ -37,6 +37,9 @@ public class MotorBikeUnits
 
     // Warehouse the bike is in (null : in transit / not known)
     public long? WarehouseId { get; set; }
+
+    // Opening Stock that brought the bike in (PurchaseId 0 then)
+    public long? OpeningStockId { get; set; }
     public bool IsDeleted { get; set; }
     public long? DeletedBy { get; set; }
     public DateTime? DeletedDate { get; set; }
