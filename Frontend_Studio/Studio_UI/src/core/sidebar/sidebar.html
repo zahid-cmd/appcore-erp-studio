@@ -1,162 +1,233 @@
-<!-- ========================================================== 
-     SIDEBAR 
-=========================================================== --> 
- 
-<div 
-    class="sidebar" 
-    [class.collapsed]="isCollapsed"> 
- 
-    <!-- ====================================================== 
-         SIDEBAR HEADER 
-    ======================================================= --> 
- 
-    <app-sidebar-header 
-        [isCollapsed]="isCollapsed"> 
-    </app-sidebar-header> 
- 
- 
-    <!-- ====================================================== 
-         SIDEBAR BODY 
-    ======================================================= --> 
- 
-    <div 
-        class="sidebar-body"> 
- 
-        <!-- ================================================== 
-             MODULES 
-        =================================================== --> 
- 
-        <div 
-            class="sidebar-module" 
-            *ngFor="let module of modules"> 
- 
-            <!-- ================================================== 
-                 MODULE HEADER 
-            =================================================== --> 
- 
-            <button 
-                type="button" 
-                class="module-header" 
-                (click)="toggleModule(module)" 
-                [title]="isCollapsed ? module.title : ''" 
-                [attr.aria-label]="module.title"> 
- 
-                <div class="module-title"> 
- 
-                    <i 
-                        [class]="module.icon" 
-                        [title]="isCollapsed ? module.title : ''"> 
-                    </i> 
- 
-                    <span> 
-                        {{ module.title }} 
-                    </span> 
- 
-                </div> 
- 
-                <i 
-                    class="fas" 
-                    [ngClass]=" 
-                    { 
-                        'fa-chevron-down': module.expanded, 
-                        'fa-chevron-right': !module.expanded 
-                    }"> 
-                </i> 
- 
-            </button> 
- 
- 
-            <!-- ================================================== 
-                 MENUS 
-            =================================================== --> 
- 
-            <div 
-                class="sidebar-menus" 
-                *ngIf="module.expanded"> 
- 
-                <div 
-                    class="sidebar-menu" 
-                    *ngFor="let menu of module.menus"> 
- 
-                    <!-- ========================================== 
-                         MENU HEADER 
-                    =========================================== --> 
- 
-                    <button 
-                        type="button" 
-                        class="menu-header" 
-                        (click)="toggleMenu(menu)" 
-                        [title]="isCollapsed ? menu.title : ''" 
-                        [attr.aria-label]="menu.title"> 
- 
-                        <div class="menu-title"> 
- 
-                            <i 
-                                [class]="menu.icon" 
-                                [title]="isCollapsed ? menu.title : ''"> 
-                            </i> 
- 
-                            <span> 
-                                {{ menu.title }} 
-                            </span> 
- 
-                        </div> 
- 
-                        <i 
-                            class="fas" 
-                            [ngClass]=" 
-                            { 
-                                'fa-chevron-down': menu.expanded, 
-                                'fa-chevron-right': !menu.expanded 
-                            }"> 
-                        </i> 
- 
-                    </button> 
- 
- 
-                    <!-- ========================================== 
-                         SUBMENUS 
-                    =========================================== --> 
- 
-                    <div 
-                        class="sidebar-pages" 
-                        *ngIf="menu.expanded"> 
- 
-                        <a 
-                            class="page-button" 
-                            *ngFor="let submenu of menu.submenus" 
-                            [class.active]="submenu.active" 
-                            [routerLink]="submenu.route" 
-                            [title]="isCollapsed ? submenu.title : ''" 
-                            [attr.aria-label]="submenu.title"> 
- 
-                            <i 
-                                [class]="submenu.icon" 
-                                [title]="isCollapsed ? submenu.title : ''"> 
-                            </i> 
- 
-                            <span> 
-                                {{ submenu.title }} 
-                            </span> 
- 
-                        </a> 
- 
-                    </div> 
- 
-                </div> 
- 
-            </div> 
- 
-        </div> 
- 
-    </div> 
- 
- 
-    <!-- ====================================================== 
-         SIDEBAR FOOTER 
-    ======================================================= --> 
- 
-    <app-sidebar-footer> 
-    </app-sidebar-footer> 
- 
+<!-- ==========================================================
+     SIDEBAR
+     ----------------------------------------------------------
+     Header  : Dashboard
+     Body    : module › menu › page tree (scrolls)
+               ★ on each page = Favorites
+     Footer  : Home · Favorites · Recent · Settings
+=========================================================== -->
+
+<div
+    class="sidebar"
+    [class.collapsed]="isCollapsed">
+
+
+    <!-- ======================================================
+         SIDEBAR HEADER
+    ======================================================= -->
+
+    <app-sidebar-header
+        [isCollapsed]="isCollapsed">
+    </app-sidebar-header>
+
+
+
+    <!-- ======================================================
+         SIDEBAR BODY
+    ======================================================= -->
+
+    <div
+        class="sidebar-body"
+        (scroll)="hideRailTip()">
+
+
+        @if (isCollapsed)
+        {
+            <span class="rail-divider"></span>
+        }
+        @else
+        {
+            <div class="sidebar-caption">
+                Modules
+            </div>
+        }
+
+
+
+        <!-- ==================================================
+             MODULES
+        =================================================== -->
+
+        @for (module of modules; track module.id)
+        {
+            <div class="sidebar-module">
+
+
+                <!-- MODULE HEADER -->
+
+                <button
+                    type="button"
+                    class="module-header"
+                    [class.open]="module.expanded"
+                    [class.has-active]="hasActivePage(module)"
+                    [attr.aria-label]="module.title"
+                    [attr.aria-expanded]="module.expanded"
+                    (mouseenter)="showRailTip($event, module.title)"
+                    (mouseleave)="hideRailTip()"
+                    (focus)="showRailTip($event, module.title)"
+                    (blur)="hideRailTip()"
+                    (click)="toggleModule(module)">
+
+                    <span class="module-title">
+
+                        <i [class]="module.icon"></i>
+
+                        <span>
+                            {{ module.title }}
+                        </span>
+
+                    </span>
+
+                    <i
+                        class="fas chevron"
+                        [class.fa-chevron-down]="module.expanded"
+                        [class.fa-chevron-right]="!module.expanded">
+                    </i>
+
+                </button>
+
+
+
+                <!-- MENUS -->
+
+                @if (module.expanded && !isCollapsed)
+                {
+                    <div class="sidebar-menus">
+
+                        @for (menu of module.menus; track menu.id)
+                        {
+                            <div class="sidebar-menu">
+
+
+                                <!-- MENU HEADER -->
+
+                                <button
+                                    type="button"
+                                    class="menu-header"
+                                    [class.open]="menu.expanded"
+                                    [attr.aria-label]="menu.title"
+                                    [attr.aria-expanded]="menu.expanded"
+                                    (click)="toggleMenu(menu)">
+
+                                    <span class="menu-title">
+
+                                        <i [class]="menu.icon"></i>
+
+                                        <span>
+                                            {{ menu.title }}
+                                        </span>
+
+                                    </span>
+
+                                    <i
+                                        class="fas chevron"
+                                        [class.fa-chevron-down]="menu.expanded"
+                                        [class.fa-chevron-right]="!menu.expanded">
+                                    </i>
+
+                                </button>
+
+
+
+                                <!-- PAGES -->
+
+                                @if (menu.expanded)
+                                {
+                                    <div class="sidebar-pages">
+
+                                        @for (submenu of menu.submenus; track submenu.id)
+                                        {
+                                            <div
+                                                class="page-row"
+                                                [class.active]="submenu.active"
+                                                [class.favorite]="isFavorite(submenu.id)">
+
+                                                <a
+                                                    class="page-button"
+                                                    [class.active]="submenu.active"
+                                                    [routerLink]="submenu.route"
+                                                    [attr.aria-label]="submenu.title"
+                                                    [attr.aria-current]="submenu.active ? 'page' : null">
+
+                                                    <i [class]="submenu.icon"></i>
+
+                                                    <span>
+                                                        {{ submenu.title }}
+                                                    </span>
+
+                                                </a>
+
+                                                <button
+                                                    type="button"
+                                                    class="page-star"
+                                                    [attr.aria-pressed]="isFavorite(submenu.id)"
+                                                    [attr.aria-label]="
+                                                        isFavorite(submenu.id)
+                                                        ? 'Remove ' + submenu.title + ' from Favorites'
+                                                        : 'Add ' + submenu.title + ' to Favorites'
+                                                    "
+                                                    [title]="
+                                                        isFavorite(submenu.id)
+                                                        ? 'Remove from Favorites'
+                                                        : 'Add to Favorites'
+                                                    "
+                                                    (click)="onStarClick($event, submenu)">
+
+                                                    <i
+                                                        [class]="
+                                                            isFavorite(submenu.id)
+                                                            ? 'fa-solid fa-star'
+                                                            : 'fa-regular fa-star'
+                                                        ">
+                                                    </i>
+
+                                                </button>
+
+                                            </div>
+                                        }
+
+                                    </div>
+                                }
+
+
+                            </div>
+                        }
+
+                    </div>
+                }
+
+
+            </div>
+        }
+
+
+    </div>
+
+
+
+    <!-- ======================================================
+         SIDEBAR FOOTER
+    ======================================================= -->
+
+    <app-sidebar-footer
+        [isCollapsed]="isCollapsed">
+    </app-sidebar-footer>
+
+
+
+    <!-- ======================================================
+         RAIL TOOLTIP (collapsed)
+    ======================================================= -->
+
+    @if (isCollapsed && railTip(); as tip)
+    {
+        <div
+            class="rail-tip"
+            role="tooltip"
+            [style.top.px]="tip.top">
+            {{ tip.text }}
+        </div>
+    }
+
+
 </div>

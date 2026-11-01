@@ -1001,6 +1001,20 @@ td.right .action-buttons
 
 
 /* =====================================================
+   STATUS CELL
+   The pill has a 110px minimum : less side padding and no
+   ellipsis, so it never shows "…" after it in a narrow column.
+===================================================== */
+
+.list-table-grid tbody td.status-cell
+{
+    padding: 0 6px;
+
+    text-overflow: clip;
+}
+
+
+/* =====================================================
    UTILITIES
 ===================================================== */
 
@@ -1025,4 +1039,55 @@ td.right .action-buttons
 .text-right
 {
     text-align: right;
+}
+
+
+/* =====================================================
+   LINK CELLS + DETAIL ROW (optional)
+===================================================== */
+
+.list-table-link
+{
+    padding:0;
+    border:0;
+    border-bottom:1px dotted #94a3b8;
+    background:transparent;
+    color:inherit;
+    font:inherit;
+    font-variant-numeric:tabular-nums;
+    line-height:1.25;
+    cursor:pointer;
+    transition:color .15s ease, border-color .15s ease;
+}
+
+.list-table-link:hover,
+.list-table-link.is-open
+{
+    border-bottom-color:#1e3a8a;
+    color:#1e3a8a;
+}
+
+.list-table-row.detail-open > td
+{
+    background:#f3f7ff;
+}
+
+.list-table-grid tbody tr.list-table-detail
+{
+    height:auto;
+    max-height:none;
+}
+
+.list-table-grid tbody tr.list-table-detail > td
+{
+    height:auto;
+    min-height:0;
+    max-height:none;
+    line-height:normal;
+    overflow:visible;
+    padding:0 !important;
+    border-bottom:1px solid #dbe4f3;
+    background:#f8fbff;
+    text-align:left;
+    white-space:normal;
 }

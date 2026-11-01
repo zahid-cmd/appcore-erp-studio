@@ -1,0 +1,203 @@
+<!-- =====================================================
+     TOPBAR SEARCH
+     -----------------------------------------------------
+     Trigger in the top bar + page search palette.
+     Opens with a click or Ctrl K (⌘K on Mac) from
+     anywhere. Only pages the user can open are listed.
+===================================================== -->
+
+
+<!-- =====================================================
+     TRIGGER
+===================================================== -->
+
+<button
+    type="button"
+    class="search-trigger"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="isOpen()"
+    (click)="open()">
+
+    <i class="fa-solid fa-magnifying-glass"></i>
+
+    <span class="search-trigger-text">
+        Search pages…
+    </span>
+
+    <kbd class="search-trigger-key">
+        {{ shortcutLabel }}
+    </kbd>
+
+</button>
+
+
+
+<!-- =====================================================
+     PALETTE
+===================================================== -->
+
+@if (isOpen())
+{
+    <div
+        class="search-backdrop"
+        (mousedown)="onBackdrop($event)">
+
+        <section
+            class="search-palette"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Search pages">
+
+
+            <!-- =========================================
+                 INPUT
+            ========================================== -->
+
+            <div class="search-input-row">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    #searchInput
+                    type="text"
+                    class="search-input"
+                    placeholder="Type a page name, menu or code"
+                    autocomplete="off"
+                    spellcheck="false"
+                    role="combobox"
+                    aria-label="Search pages"
+                    aria-controls="shell-search-results"
+                    [attr.aria-expanded]="results().length > 0"
+                    [attr.aria-activedescendant]="
+                        results().length > 0
+                        ? 'shell-search-item-' + activeIndex()
+                        : null
+                    "
+                    [value]="query()"
+                    (input)="onQuery($any($event.target).value)"
+                    (keydown)="onKeydown($event)">
+
+                <kbd class="search-key">
+                    Esc
+                </kbd>
+
+            </div>
+
+
+
+            <!-- =========================================
+                 RESULTS
+            ========================================== -->
+
+            <div
+                class="search-results"
+                id="shell-search-results"
+                role="listbox">
+
+                @if (pageCount() === 0)
+                {
+                    <div class="search-empty">
+                        Loading pages…
+                    </div>
+                }
+                @else if (results().length === 0)
+                {
+                    <div class="search-empty">
+
+                        @if (query().trim().length > 0)
+                        {
+                            No page matches “{{ query().trim() }}”.
+                        }
+                        @else
+                        {
+                            Type to search {{ pageCount() }} pages.
+                            Star a page in the menu to keep it here.
+                        }
+
+                    </div>
+                }
+                @else
+                {
+                    @for (result of results(); track result.page.submenuId + result.group; let i = $index)
+                    {
+                        @if (i === 0 || results()[i - 1].group !== result.group)
+                        {
+                            <div class="search-group">
+                                {{ result.group }}
+                            </div>
+                        }
+
+                        <a
+                            class="search-item"
+                            role="option"
+                            [id]="'shell-search-item-' + i"
+                            [class.active]="i === activeIndex()"
+                            [attr.aria-selected]="i === activeIndex()"
+                            [href]="result.page.route"
+                            (mouseenter)="activeIndex.set(i)"
+                            (click)="onItemClick($event, i)">
+
+                            <span class="search-badge">
+                                {{ result.badge }}
+                            </span>
+
+                            <span class="search-item-text">
+
+                                <b class="search-item-title">
+                                    @for (part of result.titleParts; track $index)
+                                    {
+                                        @if (part.hit)
+                                        {
+                                            <mark>{{ part.text }}</mark>
+                                        }
+                                        @else
+                                        {
+                                            {{ part.text }}
+                                        }
+                                    }
+                                </b>
+
+                                <span class="search-item-path">
+                                    {{ result.page.path }}
+                                </span>
+
+                            </span>
+
+                            @if (i === activeIndex())
+                            {
+                                <span class="search-item-enter">
+                                    Enter ↵
+                                </span>
+                            }
+
+                        </a>
+                    }
+                }
+
+            </div>
+
+
+
+            <!-- =========================================
+                 FOOTER
+            ========================================== -->
+
+            <div class="search-footer">
+
+                <span>↑ ↓ move</span>
+
+                <span>Enter open</span>
+
+                <span>{{ shortcutLabel }} from anywhere</span>
+
+                <span class="search-footer-note">
+                    Only pages you can open
+                </span>
+
+            </div>
+
+
+        </section>
+
+    </div>
+}

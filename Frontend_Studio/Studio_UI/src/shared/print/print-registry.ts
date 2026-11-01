@@ -88,5 +88,92 @@ export const PRINT_SOURCES:
     'purchase-orders-mb':
         () =>
             import('../../features/procurement/motor-bike-purchase/print/purchase-orders-mb.print')
-                .then(module => module.PURCHASE_ORDERS_MB_PRINT)
+                .then(module => module.PURCHASE_ORDERS_MB_PRINT),
+
+    // Procurement : Purchase Orders - SP
+    'purchase-orders-sp':
+        () =>
+            import('../../features/procurement/spare-parts-lubricant-purchase/print/purchase-orders-sp.print')
+                .then(module => module.PURCHASE_ORDERS_SP_PRINT),
+
+    // Procurement : Purchase Orders - AC
+    'purchase-orders-ac':
+        () =>
+            import('../../features/procurement/accessories-purchase/print/purchase-orders-ac.print')
+                .then(module => module.PURCHASE_ORDERS_AC_PRINT),
+
+    // Procurement : Purchases - MB
+    'purchases-mb':
+        () =>
+            import('../../features/procurement/motor-bike-purchase/print/purchases-mb.print')
+                .then(module => module.PURCHASES_MB_PRINT),
+
+    // Procurement : Purchases - SP
+    'purchases-sp':
+        () =>
+            import('../../features/procurement/spare-parts-lubricant-purchase/print/purchases-sp.print')
+                .then(module => module.PURCHASES_SP_PRINT),
+
+    // Procurement : Purchases - AC
+    'purchases-ac':
+        () =>
+            import('../../features/procurement/accessories-purchase/print/purchases-ac.print')
+                .then(module => module.PURCHASES_AC_PRINT),
+
+    // Inventory Management : Inventory Status (Stock Position /
+    // Bike Units; the id is the list's filter token)
+    'motor-bike-stock':
+        () =>
+            import('../../features/inventory-management/inventory-status/print/motor-bike-stock.print')
+                .then(module => module.MOTOR_BIKE_STOCK_PRINT),
+
+    'spare-parts-lubricants-stock':
+        () =>
+            import('../../features/inventory-management/inventory-status/print/spare-parts-lubricants-stock.print')
+                .then(module => module.SPARE_PARTS_LUBRICANTS_STOCK_PRINT),
+
+    'accessories-stock':
+        () =>
+            import('../../features/inventory-management/inventory-status/print/accessories-stock.print')
+                .then(module => module.ACCESSORIES_STOCK_PRINT),
+
+    // Accounts & Finance : Auto Journal Registers (Journal
+    // Register; the id is the page's filter token)
+    'auto-journal-registers':
+        () =>
+            import('../../features/accounts-finance/accounting-registers/print/auto-journal-registers.print')
+                .then(module => module.AUTO_JOURNAL_REGISTERS_PRINT),
+
+    // Accounts & Finance : Ledger Statements and Cash / Bank /
+    // MFS / POS / EMI Registers (Statement / Summary; the id is
+    // the page's token)
+    'ledger-registers':
+        () =>
+            import('../../features/accounts-finance/accounting-registers/print/ledger-registers.print')
+                .then(module => module.LEDGER_REGISTERS_PRINT),
+
+    // Inventory Management : Product Ledgers (Ledger / Summary of
+    // Motor Bikes / Spare Parts & Lubricants / Accessories; the
+    // id is the page's token)
+    'product-ledgers':
+        () =>
+            import('../../features/inventory-management/product-ledgers/print/product-ledgers.print')
+                .then(module => module.PRODUCT_LEDGERS_PRINT),
+
+    // Inventory Management : Product Receiving (Goods Received
+    // Note of one receiving; the id is the receiving)
+    'motor-bike-receiving':
+        () =>
+            import('../../features/inventory-management/product-receiving/shared/print/receiving.print')
+                .then(module => module.MOTOR_BIKE_RECEIVING_PRINT),
+
+    'spare-parts-lubricants-receiving':
+        () =>
+            import('../../features/inventory-management/product-receiving/shared/print/receiving.print')
+                .then(module => module.SPARE_PARTS_LUBRICANTS_RECEIVING_PRINT),
+
+    'accessories-receiving':
+        () =>
+            import('../../features/inventory-management/product-receiving/shared/print/receiving.print')
+                .then(module => module.ACCESSORIES_RECEIVING_PRINT)
 };

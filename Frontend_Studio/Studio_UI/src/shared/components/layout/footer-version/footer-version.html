@@ -1,22 +1,18 @@
-<div class="footer-version">
+<!-- ==========================================================
+     FOOTER VERSION
+     ----------------------------------------------------------
+     Same width as the sidebar (open or collapsed), so its
+     edge lines up with the sidebar above it.
+=========================================================== -->
 
-    <span class="version-label">
+<div
+    class="footer-version"
+    [class.collapsed]="isCollapsed()">
 
+    <span
+        class="version-label"
+        [title]="'AppCore ERP ' + version">
         {{ version }}
-
     </span>
-
-    <!-- SIDEBAR TOGGLE -->
-
-    <button
-        type="button"
-        class="footer-sidebar-toggle"
-        aria-label="Toggle Sidebar"
-        title="Toggle Sidebar"
-        (click)="toggleSidebar()">
-
-        <i class="fa-solid fa-bars"></i>
-
-    </button>
 
 </div>

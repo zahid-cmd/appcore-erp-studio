@@ -102,6 +102,13 @@ export interface Accessories
 
     RedLevel: number;
 
+
+    // 0 = not set : a purchase order cannot take the
+
+    // company stock above it
+
+    MaxStockLevel: number;
+
     Remarks: string;
 
     IsActive: boolean;
@@ -151,6 +158,13 @@ export interface CreateAccessories
     ReorderLevel: number;
 
     RedLevel: number;
+
+
+    // 0 = not set : a purchase order cannot take the
+
+    // company stock above it
+
+    MaxStockLevel: number;
 
     Remarks: string;
 

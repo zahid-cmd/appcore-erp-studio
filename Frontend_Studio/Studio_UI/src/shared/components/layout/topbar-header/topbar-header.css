@@ -1,454 +1,359 @@
 /* =====================================================
-   HOST
+   TOPBAR HEADER
+   -----------------------------------------------------
+   Width of the brand block = --sidebar-current-width
+   (layout.css), so it follows the sidebar open and
+   collapsed.
 ===================================================== */
 
 :host
 {
-    display:block;
-
-    height:64px;
-
-    width:280px;
-    
-    min-width:280px;
-
-    max-width:280px;
-
-    min-height:64px;
-
-    max-height:64px;
-
-    box-sizing:border-box;
-}
-
-
-
-/* =====================================================
-   TOPBAR HEADER
-===================================================== */
-
-.topbar-header
-{
-    height:64px;
-
-    width:280px;
-    
-    min-width:280px;
-
-    max-width:280px;
-
-    min-height:64px;
-
-    max-height:64px;
-
     display:flex;
 
     align-items:center;
 
-    justify-content:flex-start;
+    height:100%;
+}
 
-    padding:
-        0
-        8px
-        0
-        0;
+
+.topbar-header
+{
+    display:flex;
+
+    align-items:center;
+
+    height:100%;
+}
+
+
+/* =====================================================
+   BRAND BLOCK
+===================================================== */
+
+.brand-block
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:12px;
+
+    width:var(--sidebar-current-width, 300px);
+
+    height:100%;
+
+    padding:0 16px 0 22px;
+
+    border-right:1px solid rgba(255,255,255,.06);
 
     box-sizing:border-box;
 
-    background:
-        linear-gradient(
-            135deg,
-            #0f1738 0%,
-            #080d22 48%,
-            #080d1f 100%
-        );
-
-    color:#ffffff;
-
     overflow:hidden;
+
+    transition:
+        width .25s ease,
+        padding .25s ease;
 }
 
+
+.topbar-header.collapsed .brand-block
+{
+    justify-content:center;
+
+    padding:0;
+}
 
 
 /* =====================================================
    LOGO
 ===================================================== */
 
-.topbar-header-logo
+.brand-logo
 {
-    width:200px;
+    display:block;
 
-    height:64px;
+    height:40px;
 
-    min-width:200px;
+    max-width:calc(100% - 52px);
 
-    max-width:200px;
+    object-fit:contain;
 
-    display:flex;
-
-    align-items:center;
-
-    justify-content:flex-start;
-
-    flex:0 0 200px;
-
-    box-sizing:border-box;
+    object-position:left center;
 }
 
 
-
-.topbar-header-logo img
+.brand-mark
 {
-    width:240px;
-
-    height:auto;
-
-    max-width:240px;
-
     display:block;
+
+    width:36px;
+
+    height:36px;
+
+    border-radius:10px;
 
     object-fit:contain;
 }
 
 
-
 /* =====================================================
-   TOGGLE BUTTON
+   SIDEBAR TOGGLE
 ===================================================== */
 
-.topbar-header-toggle
+.sidebar-toggle
 {
-    width:15px;
-
-    height:40px;
-
-    min-width:15px;
-
-    max-width:15px;
-
     display:flex;
 
     align-items:center;
 
     justify-content:center;
 
-    flex:0 0 40px;
+    flex:0 0 36px;
 
-    margin-left:auto;
+    width:36px;
+
+    height:36px;
 
     padding:0;
 
-    border:none;
+    border:1px solid rgba(255,255,255,.12);
 
-    outline:none;
+    border-radius:10px;
 
-    border-radius:8px;
+    background:rgba(255,255,255,.06);
 
-    background:transparent;
+    color:#d6e0f0;
 
-    color:#ffffff;
+    font-size:15px;
 
     cursor:pointer;
 
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease;
+}
+
+
+.sidebar-toggle:hover
+{
+    background:rgba(255,255,255,.12);
+
+    border-color:rgba(147,180,245,.45);
+
+    color:#ffffff;
+}
+
+
+.sidebar-toggle:focus-visible
+{
+    outline:2px solid #93b4f5;
+
+    outline-offset:2px;
+}
+
+
+.sidebar-toggle.outside
+{
+    margin-left:14px;
+}
+
+
+
+/* =====================================================
+   COMPANY LOGO
+   -----------------------------------------------------
+   Divider, then the logo on a white plate so any logo
+   (dark or coloured) reads on the navy bar.
+===================================================== */
+
+.brand-divider
+{
+    flex:0 0 1px;
+
+    width:1px;
+
+    height:28px;
+
+    margin:0 14px 0 14px;
+
+    background:rgba(255,255,255,.18);
+}
+
+
+/* Open sidebar: the divider sits on the brand-block edge */
+
+.topbar-header:not(.collapsed) .brand-divider
+{
+    margin-left:-1px;
+}
+
+
+.company-badge
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    flex:0 0 auto;
+
+    height:40px;
+
+    max-width:200px;
+
+    padding:4px 12px;
+
+    border-radius:10px;
+
+    background:#ffffff;
+
+    box-shadow:0 4px 12px -6px rgba(0,0,0,.45);
+
     box-sizing:border-box;
 
-    transition:
-        background-color .20s ease,
-        transform .20s ease;
+    cursor:default;
 }
 
 
-
-/* =====================================================
-   TOGGLE BUTTON HOVER
-===================================================== */
-
-.topbar-header-toggle:hover
+.company-logo
 {
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            .12
-        );
+    display:block;
+
+    max-width:176px;
+
+    max-height:32px;
+
+    width:auto;
+
+    height:auto;
+
+    object-fit:contain;
 }
 
 
+/* No logo uploaded: company name instead */
 
-/* =====================================================
-   TOGGLE BUTTON ACTIVE
-===================================================== */
-
-.topbar-header-toggle:active
+.company-badge.text-only
 {
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            .20
-        );
+    border:1px solid rgba(255,255,255,.10);
 
-    transform:
-        scale(.96);
+    background:rgba(255,255,255,.06);
+
+    box-shadow:none;
+
+    color:#ffffff;
 }
 
 
-
-/* =====================================================
-   TOGGLE BUTTON FOCUS
-===================================================== */
-
-.topbar-header-toggle:focus-visible
+.company-badge.text-only i
 {
-    outline:none;
+    color:#93b4f5;
 
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            .12
-        );
-
-    box-shadow:
-        0
-        0
-        0
-        3px
-        rgba(
-            96,
-            165,
-            250,
-            .20
-        );
+    font-size:13px;
 }
 
 
-
-/* =====================================================
-   TOGGLE ICON
-===================================================== */
-
-.topbar-header-toggle i
+.company-name
 {
-    font-size:18px;
+    min-width:0;
 
-    line-height:1;
+    font-size:12.5px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
 }
 
 
-
 /* =====================================================
-   USER SELECTION
+   TOP LAYOUT : logo only, block fits the logo
 ===================================================== */
 
-.topbar-header-toggle *
+.topbar-header.top-layout .brand-block
 {
-    user-select:none;
+    width:auto;
 
-    -webkit-user-select:none;
+    padding:0 22px;
 }
 
 
-
-/* =====================================================
-   RESPONSIVE : 1200
-===================================================== */
-
-@media (max-width:1200px)
+.topbar-header.top-layout .brand-logo
 {
-    :host
-    {
-        width:240px;
-
-        min-width:240px;
-
-        max-width:240px;
-    }
-
-    .topbar-header
-    {
-        width:240px;
-
-        min-width:240px;
-
-        max-width:240px;
-    }
-
-    .topbar-header-logo
-    {
-        width:170px;
-
-        min-width:170px;
-
-        max-width:170px;
-
-        flex-basis:170px;
-    }
-
-    .topbar-header-logo img
-    {
-        width:155px;
-
-        max-width:155px;
-    }
+    max-width:220px;
 }
 
 
-
-/* =====================================================
-   RESPONSIVE : 992
-===================================================== */
-
-@media (max-width:992px)
+.topbar-header.top-layout .brand-divider
 {
-    :host
-    {
-        width:220px;
-
-        min-width:220px;
-
-        max-width:220px;
-    }
-
-    .topbar-header
-    {
-        width:220px;
-
-        min-width:220px;
-
-        max-width:220px;
-    }
-
-    .topbar-header-logo
-    {
-        width:155px;
-
-        min-width:155px;
-
-        max-width:155px;
-
-        flex-basis:155px;
-    }
-
-    .topbar-header-logo img
-    {
-        width:145px;
-
-        max-width:145px;
-    }
+    margin-left:0;
 }
 
 
-
 /* =====================================================
-   RESPONSIVE : 768
+   LIGHT APPEARANCE
 ===================================================== */
 
-@media (max-width:768px)
+:host-context(.appearance-light) .brand-block
 {
-    :host
-    {
-        width:200px;
-
-        min-width:200px;
-
-        max-width:200px;
-    }
-
-    .topbar-header
-    {
-        width:200px;
-
-        min-width:200px;
-
-        max-width:200px;
-
-        padding:
-            0
-            4px;
-    }
-
-    .topbar-header-logo
-    {
-        width:150px;
-
-        min-width:150px;
-
-        max-width:150px;
-
-        flex-basis:150px;
-    }
-
-    .topbar-header-logo img
-    {
-        width:140px;
-
-        max-width:140px;
-    }
+    border-right-color:#cdd7e6;
 }
 
 
-
-/* =====================================================
-   RESPONSIVE : 576
-===================================================== */
-
-@media (max-width:576px)
+:host-context(.appearance-light) .sidebar-toggle
 {
-    :host
-    {
-        width:170px;
+    border-color:#cbd6e7;
 
-        min-width:170px;
+    background:#f6f8fc;
 
-        max-width:170px;
-    }
+    color:#334766;
+}
 
-    .topbar-header
-    {
-        width:170px;
 
-        min-width:170px;
+:host-context(.appearance-light) .sidebar-toggle:hover
+{
+    border-color:#bfd0ec;
 
-        max-width:170px;
-    }
+    background:#e1eafa;
 
-    .topbar-header-logo
-    {
-        width:125px;
+    color:#13254a;
+}
 
-        min-width:125px;
 
-        max-width:125px;
+:host-context(.appearance-light) .brand-divider
+{
+    background:#cdd7e6;
+}
 
-        flex-basis:125px;
-    }
 
-    .topbar-header-logo img
-    {
-        width:120px;
+/* On a white bar the logo plate gets a hairline instead of a shadow */
 
-        max-width:120px;
-    }
+:host-context(.appearance-light) .company-badge
+{
+    border:1px solid #cdd7e6;
 
-    .topbar-header-toggle
-    {
-        width:36px;
+    box-shadow:none;
+}
 
-        height:36px;
 
-        min-width:36px;
+:host-context(.appearance-light) .company-badge.text-only
+{
+    border-color:#c3d4f2;
 
-        max-width:36px;
+    background:#e1eafa;
 
-        flex-basis:36px;
-    }
+    color:#13254a;
+}
 
-    .topbar-header-toggle i
-    {
-        font-size:16px;
-    }
+
+:host-context(.appearance-light) .company-badge.text-only i
+{
+    color:#2563eb;
 }

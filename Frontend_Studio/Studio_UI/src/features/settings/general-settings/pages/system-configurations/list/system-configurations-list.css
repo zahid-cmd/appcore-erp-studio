@@ -1843,3 +1843,81 @@
     gap: 22px 18px;
     padding: 4px 4px 10px;
 }
+
+
+/*---------------------------------------------------------------
+  Date value (Effective From) : calendar on the card
+---------------------------------------------------------------*/
+
+.sc-date
+{
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.sc-classic-date
+{
+    width: 150px;
+}
+
+.sc-cc-date
+{
+    width: 140px;
+}
+
+.sc-date app-datepicker
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    --datepicker-height: 28px;
+}
+
+.sc-cc-date app-datepicker
+{
+    --datepicker-height: 26px;
+}
+
+:host ::ng-deep .sc-date .datepicker-selector
+{
+    gap: 4px;
+    padding: 0 4px 0 8px;
+    border-radius: 8px;
+}
+
+:host ::ng-deep .sc-date .datepicker-value,
+:host ::ng-deep .sc-date .datepicker-placeholder
+{
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+:host ::ng-deep .sc-date .datepicker-icon
+{
+    font-size: 12px;
+}
+
+.sc-date-clear
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(148, 163, 184, 0.25);
+    color: #475569;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.sc-date-clear:hover
+{
+    background: rgba(239, 68, 68, 0.15);
+    color: #b91c1c;
+}

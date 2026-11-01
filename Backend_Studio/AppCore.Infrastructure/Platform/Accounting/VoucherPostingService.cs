@@ -61,10 +61,6 @@ public class VoucherPostingService : IVoucherPostingService
     // numeric(18,2)
     private const decimal MaxAmount = 9_999_999_999_999_999.99m;
 
-    // Inter-Branch Current Account (General Ledger, by code)
-    private const string InterBranchLedgerCode =
-        "GLR-002-002-010-00001";
-
 
     //===========================================================
     // Private Fields
@@ -76,6 +72,9 @@ public class VoucherPostingService : IVoucherPostingService
 
     private readonly IVoucherLedgerRepository _ledgerRepository;
 
+    // Inter-Branch Current Account comes from Posting Setup
+    private readonly IPostingLedgerService _postingLedgers;
+
 
     //===========================================================
     // Constructor
@@ -84,13 +83,16 @@ public class VoucherPostingService : IVoucherPostingService
     public VoucherPostingService(
         AppDbContext context,
         IVoucherNumberService numberService,
-        IVoucherLedgerRepository ledgerRepository)
+        IVoucherLedgerRepository ledgerRepository,
+        IPostingLedgerService postingLedgers)
     {
         _context = context;
 
         _numberService = numberService;
 
         _ledgerRepository = ledgerRepository;
+
+        _postingLedgers = postingLedgers;
     }
 
 
@@ -566,22 +568,11 @@ public class VoucherPostingService : IVoucherPostingService
                 });
         }
 
-        // Inter-Branch Current Account lines
-        Dictionary<string, VoucherLedgerDto> interBranch =
-            await _ledgerRepository.GetByCodesAsync(
-                new[] { InterBranchLedgerCode });
-
-        if (!interBranch.TryGetValue(InterBranchLedgerCode, out VoucherLedgerDto? interLedger))
-        {
-            throw new InvalidOperationException(
-                $"This voucher moves money between branches, but the Inter-Branch Current Account ({InterBranchLedgerCode}) was not found.");
-        }
-
-        if (!interLedger.IsActive)
-        {
-            throw new InvalidOperationException(
-                $"The Inter-Branch Current Account ({InterBranchLedgerCode}) is inactive.");
-        }
+        // Inter-Branch Current Account lines (ledger from Posting
+        // Setup : set, found and active, or a message)
+        VoucherLedgerDto interLedger =
+            await _postingLedgers.GetLedgerAsync(
+                PostingPurposes.InterBranch);
 
         Dictionary<long, string> branchNames =
             new()
@@ -902,4 +893,4 @@ public class VoucherPostingService : IVoucherPostingService
             ? text
             : text.Substring(0, maxLength);
     }
-}
+}

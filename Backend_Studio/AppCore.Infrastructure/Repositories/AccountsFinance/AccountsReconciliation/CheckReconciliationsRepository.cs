@@ -17,6 +17,9 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.Persistence;
 
+using PostingLedgerCodes =
+    AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
+
 using SystemConfigurationsEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations;
 
@@ -118,14 +121,14 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
     private const string DishonourRecoverySwitch =
         "CFG-MOD-004-0050";
 
-    // Ledgers (looked up by CODE)
+    // Ledgers (codes from Posting Setup)
     //   Bank Charges (expense)
-    private const string BankChargesLedger =
-        "GLR-004-001-001-00001";
+    private string BankChargesLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.BankCharges);
 
     //   Cheque Dishonour Charges Recovery (income)
-    private const string DishonourRecoveryLedger =
-        "GLR-011-001-001-00004";
+    private string DishonourRecoveryLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.DishonourRecovery);
 
     // Deposit slip prefix (not a posted voucher)
     private const string SlipPrefix =
@@ -3061,4 +3064,4 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
     {
         return decimal.Round(value, 2) == value;
     }
-}
+}

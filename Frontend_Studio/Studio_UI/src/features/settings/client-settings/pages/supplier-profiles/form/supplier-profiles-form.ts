@@ -441,6 +441,121 @@ implements OnInit, OnDestroy
         string =
         '0';
 
+    // Typed text of the Default Profit % ('' = not set)
+    defaultProfitText:
+        string =
+        '';
+
+    profitOnItems:
+        any[]
+        =
+        [
+            {
+                label:'Not set',
+                value:''
+            },
+            {
+                label:'on DP',
+                value:'DP'
+            },
+            {
+                label:'on MRP',
+                value:'MRP'
+            }
+        ];
+
+    priceEntryItems:
+        any[]
+        =
+        [
+            {
+                label:'Not set',
+                value:''
+            },
+            {
+                label:'Incl. VAT',
+                value:'Incl'
+            },
+            {
+                label:'Excl. VAT',
+                value:'Excl'
+            },
+            {
+                label:'No VAT',
+                value:'None'
+            }
+        ];
+
+    invoicePriceItems:
+        any[]
+        =
+        [
+            {
+                label:'Not set',
+                value:''
+            },
+            {
+                label:'DP',
+                value:'DP'
+            },
+            {
+                label:'MRP',
+                value:'MRP'
+            }
+        ];
+
+    // Supplier terms : Prices for every supply type
+    get showsTerms():
+        boolean
+    {
+        return !!this.entity.SupplyType;
+    }
+
+    // Invoice Price / profit : every supply type except Motor Bikes
+    get showsProfit():
+        boolean
+    {
+        return !!this.entity.SupplyType
+               &&
+               this.entity.SupplyType !== 'Motor Bikes';
+    }
+
+    // The % the supplier page keeps, by Invoice Price :
+    //   MRP : Margin % on MRP - the supplier bills MRP less it
+    //         (sets the DP / cost on the PO and the purchase)
+    //   DP  : Profit % on DP - for the Pricing page only (selling
+    //         price); POs and purchases never use it
+    get profitOn():
+        '' | 'MRP' | 'DP'
+    {
+        if
+        (
+            !this.showsProfit
+        )
+        {
+            return '';
+        }
+
+        return this.entity.DefaultInvoicePrice === 'MRP'
+            ? 'MRP'
+            : this.entity.DefaultInvoicePrice === 'DP'
+                ? 'DP'
+                : '';
+    }
+
+    // Invoice Price changed : the % meant something else, start empty
+    onInvoicePriceChange():
+        void
+    {
+        this.defaultProfitText =
+            '';
+
+        this.entity.DefaultProfitPercent =
+            null;
+
+        this.onValueChange();
+    }
+
     //===========================================================
     // Form State
     //===========================================================
@@ -513,6 +628,10 @@ implements OnInit, OnDestroy
             PayableLedgerCode:'',
             PayableLedgerName:'',
             CreditDays:0,
+            DefaultPriceEntry:'',
+            DefaultInvoicePrice:'',
+            DefaultProfitPercent:null,
+            DefaultProfitOn:'',
             Remarks:'',
             IsActive:true
         };
@@ -631,6 +750,9 @@ implements OnInit, OnDestroy
 
         this.creditDaysText =
             '0';
+
+        this.defaultProfitText =
+            '';
 
         this.applyCodePreview();
 
@@ -1026,6 +1148,37 @@ implements OnInit, OnDestroy
         this.onValueChange();
     }
 
+    // Default Profit % : digits and one point, 2 decimals
+    onDefaultProfitChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.defaultProfitText =
+            String(value ?? '');
+
+        this.cdr.detectChanges();
+
+        const parts =
+            String(value ?? '')
+                .replace(/[^0-9.]/g, '')
+                .split('.');
+
+        this.defaultProfitText =
+            parts.length > 1
+                ? `${parts[0].slice(0, 3)}.${parts.slice(1).join('').slice(0, 2)}`
+                : parts[0].slice(0, 3);
+
+        this.entity.DefaultProfitPercent =
+            this.defaultProfitText && this.defaultProfitText !== '.'
+                ? Number(this.defaultProfitText)
+                : null;
+
+        this.onValueChange();
+    }
+
     onCreditDaysChange
     (
         value:
@@ -1185,6 +1338,11 @@ implements OnInit, OnDestroy
                     this.creditDaysText =
                         String(this.entity.CreditDays ?? 0);
 
+                    this.defaultProfitText =
+                        this.entity.DefaultProfitPercent === null
+                            ? ''
+                            : String(this.entity.DefaultProfitPercent);
+
                     this.buildBrandItems();
 
                     this.setInitialFormState();
@@ -1338,6 +1496,38 @@ implements OnInit, OnDestroy
             },
             {
                 failed:
+                    this.showsProfit
+                    &&
+                    this.entity.DefaultInvoicePrice === 'MRP'
+                    &&
+                    this.entity.DefaultProfitPercent !== null
+                    &&
+                    this.entity.DefaultProfitPercent >= 100,
+                message:
+                    'Margin % on MRP must be less than 100%.'
+            },
+            {
+                failed:
+                    this.profitOn === 'DP'
+                    &&
+                    this.entity.DefaultProfitPercent !== null
+                    &&
+                    this.entity.DefaultProfitPercent > 999.99,
+                message:
+                    'Profit % on DP can be at most 999.99%.'
+            },
+            {
+                failed:
+                    this.showsProfit
+                    &&
+                    this.entity.DefaultInvoicePrice === 'MRP'
+                    &&
+                    this.entity.DefaultPriceEntry === 'Excl',
+                message:
+                    'An MRP invoice is always VAT inclusive : choose Incl. VAT (or No VAT) for Prices.'
+            },
+            {
+                failed:
                     !!this.defaults?.PayableSubGroupMessage,
                 message:
                     this.defaults?.PayableSubGroupMessage ?? ''
@@ -1434,6 +1624,20 @@ implements OnInit, OnDestroy
 
             CreditDays:
                 this.entity.CreditDays,
+
+            DefaultPriceEntry:
+                this.entity.DefaultPriceEntry ?? '',
+
+            DefaultInvoicePrice:
+                this.showsProfit ? (this.entity.DefaultInvoicePrice ?? '') : '',
+
+            // MRP invoice : Margin % on MRP ; DP invoice : Profit % on
+            // DP (Pricing page)
+            DefaultProfitPercent:
+                this.profitOn ? this.entity.DefaultProfitPercent : null,
+
+            DefaultProfitOn:
+                this.profitOn && this.entity.DefaultProfitPercent !== null ? this.profitOn : '',
 
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
@@ -2000,4 +2204,4 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
-}
+}

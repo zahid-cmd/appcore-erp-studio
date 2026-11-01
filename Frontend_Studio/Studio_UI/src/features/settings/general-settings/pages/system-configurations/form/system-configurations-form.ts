@@ -108,6 +108,12 @@ from '../../../../../../shared/components/controls/textbox/textbox';
 
 import
 {
+    DatepickerComponent
+}
+from '../../../../../../shared/components/controls/datepicker/datepicker';
+
+import
+{
     TextareaComponent
 }
 from '../../../../../../shared/components/controls/textarea/textarea';
@@ -175,7 +181,9 @@ import
     UpdateSystemConfiguration,
     ConfigurationWorkspace,
     ConfigurationScope,
-    ConfigurationValueType
+    ConfigurationValueType,
+    parseConfigurationDate,
+    toConfigurationDate
 }
 from '../../../models/system-configurations.model';
 
@@ -318,6 +326,7 @@ interface ModuleOption
         //=======================================================
 
         TextboxComponent,
+        DatepickerComponent,
         TextareaComponent,
         DropdownComponent,
         SearchDropdownComponent,
@@ -474,7 +483,8 @@ implements OnInit, OnDestroy
         [
             { id:'None', label:'On / Off', disabled:locked && type !== 'None' },
             { id:'Number', label:'Whole Number', disabled:locked && type !== 'Number' },
-            { id:'Text', label:'Short Text', disabled:locked && type !== 'Text' }
+            { id:'Text', label:'Short Text', disabled:locked && type !== 'Text' },
+            { id:'Date', label:'Date', disabled:locked && type !== 'Date' }
         ];
 
         return this.tabsCache;
@@ -566,7 +576,8 @@ implements OnInit, OnDestroy
     [
         { label:'No value (ON / OFF only)', value:'None' },
         { label:'Whole number', value:'Number' },
-        { label:'Short text', value:'Text' }
+        { label:'Short text', value:'Text' },
+        { label:'Date', value:'Date' }
     ];
 
     yesNoItems:
@@ -677,6 +688,38 @@ implements OnInit, OnDestroy
         boolean
     {
         return this.entity.ValueType === 'Number';
+    }
+
+    //===========================================================
+    // Date value : picked on a calendar, kept as yyyy-MM-dd;
+    // empty = the day the change is applied
+    //===========================================================
+
+    get currentDate():
+        Date | null
+    {
+        return parseConfigurationDate(this.entity.Value ?? '');
+    }
+
+    onCurrentDate
+    (
+        date:
+            Date | null
+    ):
+        void
+    {
+        this.entity.Value =
+            toConfigurationDate(date);
+
+        this.onValueChange();
+    }
+
+    clearCurrentDate():
+        void
+    {
+        this.entity.Value = '';
+
+        this.onValueChange();
     }
 
     // Reason box : Update of a critical switch whose ON / OFF or
@@ -1082,6 +1125,32 @@ implements OnInit, OnDestroy
             this.entity.ValueMin = null;
             this.entity.ValueMax = null;
             this.entity.ValueEmptyText = '';
+        }
+        else if
+        (
+            this.entity.ValueType === 'Date'
+        )
+        {
+            this.entity.ValueUnit = '';
+            this.entity.ValueMin = null;
+            this.entity.ValueMax = null;
+            this.entity.DefaultValue = '';
+
+            if
+            (
+                !parseConfigurationDate(this.entity.Value ?? '')
+            )
+            {
+                this.entity.Value = '';
+            }
+
+            if
+            (
+                !this.entity.ValueEmptyText
+            )
+            {
+                this.entity.ValueEmptyText = 'From the day it is applied';
+            }
         }
 
         this.onValueChange();
@@ -1994,17 +2063,17 @@ implements OnInit, OnDestroy
             ValueType:
                 valueType,
             ValueUnit:
-                valueType === 'None' ? '' : (this.entity.ValueUnit?.trim() ?? ''),
+                valueType === 'None' || valueType === 'Date' ? '' : (this.entity.ValueUnit?.trim() ?? ''),
             ValueMin:
                 valueType === 'Number' ? this.entity.ValueMin : null,
             ValueMax:
                 valueType === 'Number' ? this.entity.ValueMax : null,
             ValueEmptyText:
-                valueType === 'Number' ? (this.entity.ValueEmptyText?.trim() ?? '') : '',
+                valueType === 'Number' || valueType === 'Date' ? (this.entity.ValueEmptyText?.trim() ?? '') : '',
             DefaultEnabled:
                 this.entity.DefaultEnabled,
             DefaultValue:
-                valueType === 'None' ? '' : String(this.entity.DefaultValue ?? '').trim(),
+                valueType === 'None' || valueType === 'Date' ? '' : String(this.entity.DefaultValue ?? '').trim(),
             ParentConfigurationCode:
                 this.entity.ParentConfigurationCode || null,
             IsCritical:

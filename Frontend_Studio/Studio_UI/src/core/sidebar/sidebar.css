@@ -1,15 +1,14 @@
 /* =====================================================
-   SIDEBAR WIDTH
-   -----------------------------------------------------
-   Set once at the top of layout.css (--sidebar-width,
-   --sidebar-collapsed-width). The layout sizes this
-   sidebar from it, and the labels below follow it, so
-   long names show in full when the sidebar is wider.
-===================================================== */
-
-
-/* =====================================================
    SIDEBAR
+   -----------------------------------------------------
+   Width is set once at the top of layout.css
+   (--sidebar-width, --sidebar-collapsed-width). The
+   layout sizes this sidebar from it.
+
+   Layout (top to bottom, no overlap):
+       header  : Dashboard
+       body    : module tree, scrolls
+       footer  : Home · Favorites · Recent · Settings
 ===================================================== */
 
 .sidebar
@@ -26,60 +25,28 @@
 
     min-height:0;
 
-    padding-bottom:50px;
-
     background:
         linear-gradient(
             180deg,
-            #071328 0%,
-            #0c1d42 45%,
-            #153067 100%
+            #0a1631 0%,
+            #0d1c40 50%,
+            #132b5f 100%
         );
 
-    border-right:1px solid rgba(255,255,255,.08);
+    border-right:1px solid rgba(255,255,255,.05);
+
+    color:#c7d3e7;
 
     overflow:hidden;
 
     box-sizing:border-box;
 
     user-select:none;
-
-    transition:
-        width .25s ease;
 }
 
 
 /* =====================================================
-   SCROLLBAR
-===================================================== */
-
-.sidebar::-webkit-scrollbar
-{
-    width:5px;
-}
-
-.sidebar::-webkit-scrollbar-track
-{
-    background:transparent;
-}
-
-.sidebar::-webkit-scrollbar-thumb
-{
-    background:rgba(255,255,255,.18);
-
-    border-radius:20px;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover
-{
-    background:rgba(255,255,255,.35);
-}
-
-
-/* =====================================================
-   SIDEBAR BODY : takes the height between the header and
-   the footer and scrolls when the open menus are taller
-   (the last submenu is never hidden behind the footer)
+   HEADER / FOOTER HOSTS
 ===================================================== */
 
 .sidebar > app-sidebar-header
@@ -89,17 +56,30 @@
     flex:0 0 auto;
 }
 
+
+.sidebar > app-sidebar-footer
+{
+    display:block;
+
+    flex:0 0 auto;
+}
+
+
+/* =====================================================
+   BODY : scrolls between header and footer
+===================================================== */
+
 .sidebar-body
 {
     flex:1 1 auto;
 
     min-height:0;
 
+    padding:0 0 12px 12px;
+
     overflow-y:auto;
 
     overflow-x:hidden;
-
-    padding-bottom:12px;
 
     box-sizing:border-box;
 
@@ -110,15 +90,18 @@
     scrollbar-color:rgba(255,255,255,.18) transparent;
 }
 
+
 .sidebar-body::-webkit-scrollbar
 {
     width:5px;
 }
 
+
 .sidebar-body::-webkit-scrollbar-track
 {
     background:transparent;
 }
+
 
 .sidebar-body::-webkit-scrollbar-thumb
 {
@@ -127,9 +110,30 @@
     border-radius:20px;
 }
 
+
 .sidebar-body::-webkit-scrollbar-thumb:hover
 {
     background:rgba(255,255,255,.35);
+}
+
+
+/* =====================================================
+   CAPTION
+===================================================== */
+
+.sidebar-caption
+{
+    margin:12px 12px 6px;
+
+    color:#6f86ad;
+
+    font-size:10.5px;
+
+    font-weight:800;
+
+    letter-spacing:1.4px;
+
+    text-transform:uppercase;
 }
 
 
@@ -139,13 +143,9 @@
 
 .sidebar-module
 {
-    margin-bottom:8px;
+    margin-bottom:2px;
 }
 
-
-/* =====================================================
-   MODULE HEADER
-===================================================== */
 
 .module-header
 {
@@ -155,11 +155,13 @@
 
     justify-content:space-between;
 
+    gap:6px;
+
     width:100%;
 
-    height:42px;
+    height:40px;
 
-    padding:0 14px;
+    padding:0 8px 0 12px;
 
     border:none;
 
@@ -169,12 +171,15 @@
 
     color:#d7e3f7;
 
+    font-family:inherit;
+
     cursor:pointer;
 
     transition:
         background .18s ease,
-        padding .25s ease;
+        color .18s ease;
 }
+
 
 .module-header:hover
 {
@@ -182,9 +187,22 @@
 }
 
 
-/* =====================================================
-   MODULE TITLE
-===================================================== */
+.module-header.open
+{
+    color:#ffffff;
+}
+
+
+.module-header:focus-visible,
+.menu-header:focus-visible,
+.page-button:focus-visible,
+.page-star:focus-visible
+{
+    outline:2px solid #93b4f5;
+
+    outline-offset:-2px;
+}
+
 
 .module-title
 {
@@ -195,19 +213,14 @@
     gap:12px;
 
     min-width:0;
-
-    overflow:hidden;
-
-    transition:
-        gap .25s ease,
-        width .25s ease;
 }
+
 
 .module-title i
 {
-    width:18px;
+    flex:0 0 18px;
 
-    min-width:18px;
+    width:18px;
 
     text-align:center;
 
@@ -216,9 +229,16 @@
     color:#7fb6ff;
 
     transition:
-        transform .25s ease,
+        transform .2s ease,
         color .18s ease;
 }
+
+
+.module-header.open .module-title i
+{
+    color:#93b4f5;
+}
+
 
 .module-title span
 {
@@ -230,16 +250,34 @@
 
     overflow:hidden;
 
-    opacity:1;
+    text-overflow:ellipsis;
+}
 
-    max-width:var(--sidebar-width, 300px);
 
-    transform:translateX(0);
+/* =====================================================
+   CHEVRON
+===================================================== */
 
-    transition:
-        opacity .18s ease,
-        max-width .25s ease,
-        transform .25s ease;
+.chevron
+{
+    flex:0 0 8px;
+
+    width:8px;
+
+    text-align:center;
+
+    font-size:11px;
+
+    color:#6f86ad;
+
+    transition:color .18s ease;
+}
+
+
+.module-header.open .chevron,
+.menu-header.open .chevron
+{
+    color:#93b4f5;
 }
 
 
@@ -249,41 +287,21 @@
 
 .sidebar-menus
 {
-    margin-top:4px;
+    display:flex;
 
-    margin-left:18px;
+    flex-direction:column;
+
+    gap:2px;
+
+    margin:2px 0 6px 16px;
 
     padding-left:12px;
 
     border-left:1px solid rgba(255,255,255,.08);
 
-    overflow:hidden;
-
-    opacity:1;
-
-    max-height:1000px;
-
-    transition:
-        opacity .2s ease,
-        max-height .25s ease,
-        margin .25s ease,
-        padding .25s ease;
+    animation:tree-open .18s ease;
 }
 
-
-/* =====================================================
-   MENU
-===================================================== */
-
-.sidebar-menu
-{
-    margin-bottom:4px;
-}
-
-
-/* =====================================================
-   MENU HEADER
-===================================================== */
 
 .menu-header
 {
@@ -293,26 +311,31 @@
 
     justify-content:space-between;
 
+    gap:6px;
+
     width:100%;
 
-    height:40px;
+    height:36px;
 
-    padding:0 14px;
+    padding:0 8px 0 12px;
 
     border:none;
 
-    border-radius:10px;
+    border-radius:9px;
 
     background:transparent;
 
     color:#c7d3e7;
 
+    font-family:inherit;
+
     cursor:pointer;
 
     transition:
         background .18s ease,
-        padding .25s ease;
+        color .18s ease;
 }
+
 
 .menu-header:hover
 {
@@ -320,9 +343,11 @@
 }
 
 
-/* =====================================================
-   MENU TITLE
-===================================================== */
+.menu-header.open
+{
+    color:#ffffff;
+}
+
 
 .menu-title
 {
@@ -333,28 +358,22 @@
     gap:11px;
 
     min-width:0;
-
-    overflow:hidden;
-
-    transition:
-        gap .25s ease,
-        width .25s ease;
 }
+
 
 .menu-title i
 {
-    width:18px;
+    flex:0 0 18px;
 
-    min-width:18px;
+    width:18px;
 
     text-align:center;
 
-    color:#88b9ff;
+    font-size:14px;
 
-    transition:
-        transform .25s ease,
-        color .18s ease;
+    color:#88b9ff;
 }
+
 
 .menu-title span
 {
@@ -366,16 +385,7 @@
 
     overflow:hidden;
 
-    opacity:1;
-
-    max-width:var(--sidebar-width, 300px);
-
-    transform:translateX(0);
-
-    transition:
-        opacity .18s ease,
-        max-width .25s ease,
-        transform .25s ease;
+    text-overflow:ellipsis;
 }
 
 
@@ -389,27 +399,27 @@
 
     flex-direction:column;
 
-    gap:3px;
+    gap:2px;
 
-    margin-top:4px;
+    margin:2px 0 4px 12px;
 
-    margin-left:18px;
-
-    overflow:hidden;
-
-    opacity:1;
-
-    max-height:1000px;
-
-    transition:
-        opacity .2s ease,
-        max-height .25s ease;
+    animation:tree-open .18s ease;
 }
 
 
 /* =====================================================
-   PAGE BUTTON
+   PAGE ROW : link + favorite star
 ===================================================== */
+
+.page-row
+{
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+}
+
 
 .page-button
 {
@@ -421,21 +431,23 @@
 
     width:100%;
 
-    height:36px;
+    min-width:0;
 
-    padding:0 14px;
+    height:34px;
+
+    padding:0 34px 0 14px;
 
     box-sizing:border-box;
-
-    border:none;
 
     border-radius:9px;
 
     background:transparent;
 
-    color:#9eb3d3;
+    color:#b4c4de;
 
-    cursor:pointer;
+    font-size:13.5px;
+
+    font-weight:500;
 
     text-decoration:none;
 
@@ -443,49 +455,28 @@
 
     transition:
         background .18s ease,
-        color .18s ease,
-        transform .15s ease;
+        color .18s ease;
 }
 
-.page-button:hover
-{
-    background:rgba(255,255,255,.06);
-
-    color:#ffffff;
-
-    text-decoration:none;
-
-    transform:translateX(2px);
-}
-
-.page-button:focus
-{
-    text-decoration:none;
-
-    outline:none;
-}
 
 .page-button:visited
 {
-    color:#9eb3d3;
-
-    text-decoration:none;
+    color:#b4c4de;
 }
 
-.page-button:active
+
+.page-row:hover .page-button
 {
-    color:#ffffff;
+    background:rgba(255,255,255,.05);
 
-    text-decoration:none;
+    color:#ffffff;
 }
 
-
-/* =====================================================
-   PAGE ICON
-===================================================== */
 
 .page-button i
 {
+    flex:0 0 16px;
+
     width:16px;
 
     text-align:center;
@@ -496,31 +487,15 @@
 }
 
 
-/* =====================================================
-   PAGE TEXT
-===================================================== */
-
 .page-button span
 {
-    font-size:14px;
-
-    font-weight:500;
-
-    color:inherit;
-
-    text-decoration:none;
+    min-width:0;
 
     white-space:nowrap;
 
     overflow:hidden;
 
-    opacity:1;
-
-    max-width:var(--sidebar-width, 300px);
-
-    transition:
-        opacity .18s ease,
-        max-width .25s ease;
+    text-overflow:ellipsis;
 }
 
 
@@ -528,137 +503,34 @@
    ACTIVE PAGE
 ===================================================== */
 
-.page-button.active
+.page-button.active,
+.page-button.active:visited,
+.page-row:hover .page-button.active
 {
-    position:relative;
-
-    border-radius:0;
+    background:linear-gradient(90deg, #1e40af, #2563eb);
 
     color:#ffffff;
 
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255,255,255,.08) 0%,
-            rgba(255,255,255,0) 45%
-        ),
-        linear-gradient(
-            90deg,
-            #24364d 0%,
-            #1e40af 28%,
-            #2563eb 68%,
-            #3b82f6 100%
-        );
+    font-weight:700;
 
-    border-top:1px solid rgba(255,255,255,.08);
-
-    border-bottom:1px solid rgba(0,0,0,.18);
-
-    overflow:hidden;
-}
-
-.page-button.active::before
-{
-    content:"";
-
-    position:absolute;
-
-    left:0;
-
-    top:0;
-
-    bottom:0;
-
-    width:5px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #ffffff 0%,
-            #dbeafe 100%
-        );
-
-    box-shadow:
-        0 0 10px rgba(255,255,255,.45);
-}
-
-.page-button.active i
-{
-    color:#ffffff;
-}
-
-.page-button.active span
-{
-    color:#ffffff;
-
-    font-weight:600;
+    box-shadow:0 6px 14px -8px rgba(37,99,235,.9);
 }
 
 
 /* =====================================================
-   CHEVRON
+   FAVORITE STAR
+   -----------------------------------------------------
+   Gold and always shown when the page is a favorite;
+   an outline star appears on hover to add it.
 ===================================================== */
 
-.module-header .fas:last-child,
-.menu-header .fas:last-child
-{
-    font-size:12px;
-
-    color:#93a8cb;
-
-    flex-shrink:0;
-
-    opacity:1;
-
-    transition:
-        opacity .18s ease,
-        transform .18s ease;
-}
-
-
-/* =====================================================
-   SIDEBAR FOOTER HOST
-===================================================== */
-
-.sidebar > app-sidebar-footer
+.page-star
 {
     position:absolute;
 
-    left:0;
+    right:3px;
 
-    right:0;
-
-    bottom:0;
-
-    z-index:100;
-
-    display:block;
-
-    width:100%;
-
-    height:50px;
-
-    min-height:50px;
-
-    max-height:50px;
-
-    margin:0;
-
-    padding:0;
-
-    box-sizing:border-box;
-
-    overflow:hidden;
-}
-
-
-/* =====================================================
-   SIDEBAR FOOTER
-===================================================== */
-
-.sidebar-footer
-{
-    position:relative;
+    top:50%;
 
     display:flex;
 
@@ -666,325 +538,385 @@
 
     justify-content:center;
 
-    width:100%;
+    width:28px;
 
-    height:50px;
-
-    min-height:50px;
-
-    max-height:50px;
-
-    margin:0;
+    height:28px;
 
     padding:0;
 
-    box-sizing:border-box;
+    border:0;
 
-    background:
-        linear-gradient(
-            135deg,
-            #111a3d 0%,
-            #182552 48%,
-            #202f67 100%
-        );
+    border-radius:7px;
 
-    border-top:
-        2px solid #dc2626;
+    background:transparent;
 
-    overflow:hidden;
+    color:#93b4f5;
+
+    font-size:13px;
+
+    cursor:pointer;
+
+    opacity:0;
+
+    transform:translateY(-50%);
+
+    transition:
+        opacity .15s ease,
+        background .15s ease,
+        color .15s ease;
 }
 
 
-/* =====================================================
-   COLLAPSED SIDEBAR
-===================================================== */
-
-.sidebar.collapsed
+.page-row:hover .page-star,
+.page-row:focus-within .page-star,
+.page-row.favorite .page-star
 {
-    width:100%;
+    opacity:1;
+}
 
-    padding-bottom:50px;
+
+.page-row.favorite .page-star
+{
+    color:#ffd166;
+}
+
+
+.page-star:hover
+{
+    background:rgba(255,255,255,.10);
+
+    color:#ffd166;
 }
 
 
 /* =====================================================
-   COLLAPSED MODULE
+   COLLAPSED : one centred column in the rail
 ===================================================== */
+
+.rail-divider
+{
+    display:block;
+
+    width:28px;
+
+    height:1px;
+
+    margin:8px auto;
+
+    background:rgba(255,255,255,.10);
+}
+
+
+.sidebar.collapsed .sidebar-body
+{
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:0 0 12px;
+
+    scrollbar-width:none;
+}
+
+
+.sidebar.collapsed .sidebar-body::-webkit-scrollbar
+{
+    display:none;
+}
+
 
 .sidebar.collapsed .sidebar-module
 {
-    width:100%;
-
-    overflow:hidden;
+    margin:0;
 }
+
 
 .sidebar.collapsed .module-header
 {
-    justify-content:flex-start;
+    justify-content:center;
 
-    padding:0 14px;
+    width:48px;
 
-    width:100%;
+    height:44px;
 
-    overflow:hidden;
+    padding:0;
+
+    border-radius:12px;
 }
+
 
 .sidebar.collapsed .module-title
 {
-    justify-content:flex-start;
+    justify-content:center;
 
-    gap:12px;
-
-    width:100%;
-
-    overflow:hidden;
+    gap:0;
 }
 
-.sidebar.collapsed .module-title i
+
+.sidebar.collapsed .module-title span,
+.sidebar.collapsed .module-header .chevron
 {
-    flex:0 0 18px;
-
-    width:18px;
-
-    min-width:18px;
-
-    transform:translateX(0);
-
-    transition:
-        transform .25s ease;
-}
-
-.sidebar.collapsed .module-title span
-{
-    max-width:0;
-
-    margin-left:0;
-
-    opacity:0;
-
-    transform:translateX(-12px);
-
-    pointer-events:none;
-
-    transition:
-        max-width .25s ease,
-        margin-left .25s ease,
-        opacity .18s ease,
-        transform .25s ease;
-}
-
-.sidebar.collapsed .module-header > .fas:last-child
-{
-    width:0;
-
-    max-width:0;
-
-    margin-left:0;
-
-    opacity:0;
-
-    overflow:hidden;
-
-    pointer-events:none;
-
-    transition:
-        width .25s ease,
-        max-width .25s ease,
-        opacity .18s ease;
+    display:none;
 }
 
 
-/* =====================================================
-   COLLAPSED MENUS
-===================================================== */
-
-.sidebar.collapsed .sidebar-menus
-{
-    opacity:0;
-
-    max-height:0;
-
-    margin-top:0;
-
-    margin-left:0;
-
-    padding-left:0;
-
-    border-left:none;
-
-    overflow:hidden;
-
-    pointer-events:none;
-
-    transition:
-        opacity .2s ease,
-        max-height .25s ease,
-        margin .25s ease,
-        padding .25s ease;
-}
-
-
-/* =====================================================
-   COLLAPSED MENU
-===================================================== */
-
-.sidebar.collapsed .menu-header
-{
-    justify-content:flex-start;
-
-    padding:0 14px;
-
-    overflow:hidden;
-}
-
-.sidebar.collapsed .menu-title
-{
-    justify-content:flex-start;
-
-    gap:12px;
-
-    width:100%;
-
-    overflow:hidden;
-}
-
-.sidebar.collapsed .menu-title i
-{
-    flex:0 0 18px;
-
-    width:18px;
-
-    min-width:18px;
-}
-
-.sidebar.collapsed .menu-title span
-{
-    max-width:0;
-
-    opacity:0;
-
-    transform:translateX(-12px);
-
-    pointer-events:none;
-}
-
-
-/* =====================================================
-   COLLAPSED PAGES
-===================================================== */
-
-.sidebar.collapsed .sidebar-pages
-{
-    opacity:0;
-
-    max-height:0;
-
-    overflow:hidden;
-
-    pointer-events:none;
-}
-
-.sidebar.collapsed .page-button
-{
-    justify-content:flex-start;
-
-    padding:0 14px;
-
-    overflow:hidden;
-}
-
-.sidebar.collapsed .page-button span
-{
-    max-width:0;
-
-    opacity:0;
-
-    transform:translateX(-12px);
-
-    pointer-events:none;
-}
-
-
-/* =====================================================
-   COLLAPSED ICON HOVER
-===================================================== */
-
-.sidebar.collapsed .module-header:hover .module-title i,
-.sidebar.collapsed .menu-header:hover .menu-title i,
-.sidebar.collapsed .page-button:hover i
+.sidebar.collapsed .module-header:hover .module-title i
 {
     transform:scale(1.08);
 }
 
-.sidebar.collapsed .page-button:hover
+
+/* Module holding the open page */
+
+.sidebar.collapsed .module-header.has-active
 {
-    transform:none;
+    background:linear-gradient(135deg, #1e40af, #2563eb);
+
+    box-shadow:0 6px 14px -8px rgba(37,99,235,.9);
+}
+
+
+.sidebar.collapsed .module-header.has-active .module-title i
+{
+    color:#ffffff;
 }
 
 
 /* =====================================================
-   COLLAPSED TOOLTIP
+   RAIL TOOLTIP (collapsed)
+   -----------------------------------------------------
+   position:fixed so the sidebar's own clipping never
+   cuts it.
 ===================================================== */
 
-.sidebar.collapsed .module-header
+.rail-tip
 {
-    position:relative;
-}
+    position:fixed;
 
-.sidebar.collapsed .module-header::after
-{
-    content:attr(data-tooltip);
+    left:calc(var(--sidebar-collapsed-width, 72px) + 10px);
 
-    position:absolute;
+    padding:7px 12px;
 
-    left:calc(100% + 10px);
+    border-radius:8px;
 
-    top:50%;
-
-    padding:7px 10px;
-
-    border-radius:7px;
-
-    background:#0b1730;
-
-    border:1px solid rgba(255,255,255,.12);
+    background:#0f172a;
 
     color:#ffffff;
 
     font-size:12px;
 
-    font-weight:500;
+    font-weight:700;
 
     white-space:nowrap;
 
-    box-shadow:
-        0 5px 18px rgba(0,0,0,.25);
+    box-shadow:0 8px 18px -8px rgba(15,23,42,.6);
 
-    opacity:0;
-
-    visibility:hidden;
+    transform:translateY(-50%);
 
     pointer-events:none;
 
-    transform:
-        translateY(-50%)
-        translateX(-5px);
-
-    transition:
-        opacity .15s ease,
-        transform .15s ease,
-        visibility .15s ease;
-
     z-index:2000;
+
+    animation:tip-in .12s ease;
 }
 
-.sidebar.collapsed .module-header:hover::after
+
+.rail-tip::before
 {
-    opacity:1;
+    content:"";
 
-    visibility:visible;
+    position:absolute;
 
-    transform:
-        translateY(-50%)
-        translateX(0);
+    left:-6px;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    border-top:6px solid transparent;
+
+    border-bottom:6px solid transparent;
+
+    border-right:6px solid #0f172a;
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .sidebar
+{
+    background:linear-gradient(180deg, #edf2f9 0%, #e4ebf6 55%, #dae3f1 100%);
+
+    border-right-color:#cdd7e6;
+
+    color:#334766;
+}
+
+
+:host-context(.appearance-light) .sidebar-body
+{
+    scrollbar-color:#b3c2da transparent;
+}
+
+
+:host-context(.appearance-light) .sidebar-body::-webkit-scrollbar-thumb
+{
+    background:#b3c2da;
+}
+
+
+:host-context(.appearance-light) .sidebar-caption
+{
+    color:#5d6c87;
+}
+
+
+:host-context(.appearance-light) .module-header,
+:host-context(.appearance-light) .menu-header
+{
+    color:#334766;
+}
+
+
+:host-context(.appearance-light) .module-header:hover,
+:host-context(.appearance-light) .menu-header:hover
+{
+    background:#d9e2f1;
+}
+
+
+:host-context(.appearance-light) .module-header.open,
+:host-context(.appearance-light) .menu-header.open
+{
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .module-header.open
+{
+    background:#d6e2f8;
+}
+
+
+:host-context(.appearance-light) .module-title i,
+:host-context(.appearance-light) .menu-title i
+{
+    color:#2563eb;
+}
+
+
+:host-context(.appearance-light) .chevron
+{
+    color:#71819c;
+}
+
+
+:host-context(.appearance-light) .module-header.open .chevron,
+:host-context(.appearance-light) .menu-header.open .chevron
+{
+    color:#2563eb;
+}
+
+
+:host-context(.appearance-light) .sidebar-menus
+{
+    border-left-color:#cbd6e7;
+}
+
+
+:host-context(.appearance-light) .page-button,
+:host-context(.appearance-light) .page-button:visited
+{
+    color:#334766;
+}
+
+
+:host-context(.appearance-light) .page-row:hover .page-button
+{
+    background:#d9e2f1;
+
+    color:#13254a;
+}
+
+
+/* The open page keeps the same strong blue bar */
+
+:host-context(.appearance-light) .page-button.active,
+:host-context(.appearance-light) .page-button.active:visited,
+:host-context(.appearance-light) .page-row:hover .page-button.active
+{
+    background:linear-gradient(90deg, #1e40af, #2563eb);
+
+    color:#ffffff;
+}
+
+
+:host-context(.appearance-light) .page-star
+{
+    color:#71819c;
+}
+
+
+:host-context(.appearance-light) .page-row.favorite .page-star
+{
+    color:#f5b301;
+}
+
+
+:host-context(.appearance-light) .page-star:hover
+{
+    background:#d3ddee;
+
+    color:#f5b301;
+}
+
+
+:host-context(.appearance-light) .page-row.active .page-star,
+:host-context(.appearance-light) .page-row.active.favorite .page-star
+{
+    color:#ffd166;
+}
+
+
+:host-context(.appearance-light) .rail-divider
+{
+    background:#cdd7e6;
+}
+
+
+/* =====================================================
+   MOTION
+===================================================== */
+
+@keyframes tree-open
+{
+    from { opacity:0; transform:translateY(-3px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+
+
+@keyframes tip-in
+{
+    from { opacity:0; margin-left:-4px; }
+    to   { opacity:1; margin-left:0; }
+}
+
+
+@media (prefers-reduced-motion: reduce)
+{
+    .sidebar-menus,
+    .sidebar-pages,
+    .rail-tip
+    {
+        animation:none;
+    }
 }

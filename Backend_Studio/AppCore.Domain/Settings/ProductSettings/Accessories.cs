@@ -80,6 +80,10 @@ public class Accessories
 
     public int RedLevel { get; set; }
 
+    // Highest stock wanted (0 = not set) : a purchase order
+    // cannot take the company stock above it
+    public int MaxStockLevel { get; set; }
+
 
     //===========================================================
     // Description / Status

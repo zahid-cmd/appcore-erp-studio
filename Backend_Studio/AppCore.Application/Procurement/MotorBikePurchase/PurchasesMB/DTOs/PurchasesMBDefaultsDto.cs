@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Procurement.Shared;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -6,20 +13,10 @@ namespace AppCore.Application.Procurement.MotorBikePurchase;
 
 
 //===============================================================
-// PurchasesMbDefaultsDto
+// Purchases - MB : defaults (every field is in the shared PurchaseDefaultsDto)
 //===============================================================
 
 public class PurchasesMbDefaultsDto
+    : PurchaseDefaultsDto
 {
-    //===========================================================
-    // Code
-    //===========================================================
-
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
 }

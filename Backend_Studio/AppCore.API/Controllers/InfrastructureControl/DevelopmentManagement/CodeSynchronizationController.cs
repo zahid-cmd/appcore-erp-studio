@@ -16,7 +16,6 @@ using AppCore.Application.Contracts.Persistence.InfrastructureControl.Developmen
 using AppCore.Application.InfrastructureControl.DevelopmentManagement.CodeSynchronization.DTOs;
 
 using AppCore.Application.Platform.SynchronizationEngineInterfaces.BackendRegistrationEngine;
-using AppCore.Application.Platform.SynchronizationEngineInterfaces.DatabaseEngine;
 
 
 //===============================================================
@@ -57,10 +56,6 @@ public class CodeSynchronizationController
         _backendRegistrationEngine;
 
 
-    private readonly IDatabaseCreationEngine
-        _databaseCreationEngine;
-
-
 
     //===========================================================
     // Constructor
@@ -72,9 +67,7 @@ public class CodeSynchronizationController
 
         IActivityHistoryRepository activityHistoryRepository,
 
-        IBackendRegistrationEngine backendRegistrationEngine,
-
-        IDatabaseCreationEngine databaseCreationEngine
+        IBackendRegistrationEngine backendRegistrationEngine
     )
     {
         _repository =
@@ -87,10 +80,6 @@ public class CodeSynchronizationController
 
         _backendRegistrationEngine =
             backendRegistrationEngine;
-
-
-        _databaseCreationEngine =
-            databaseCreationEngine;
     }
 
 
@@ -798,207 +787,6 @@ public class CodeSynchronizationController
 
 
             return NoContent();
-        }
-
-        catch
-        (
-            InvalidOperationException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-    }
-
-
-
-    //===========================================================
-    // Database Create
-    //===========================================================
-
-    [HttpPost("{id:long}/database/create")]
-
-    public async Task<ActionResult>
-        CreateDatabase
-    (
-        long id
-    )
-    {
-        try
-        {
-            var synchronization =
-                await _repository.GetByIdAsync
-                (
-                    id
-                );
-
-
-            if
-            (
-                synchronization == null
-            )
-            {
-                return NotFound();
-            }
-
-
-            await _databaseCreationEngine
-                .CreateAsync
-                (
-                    id
-                );
-
-
-            //=======================================================
-            // Database Create Success
-            //=======================================================
-
-            return Ok
-            (
-                new
-                {
-                    success = true,
-
-                    message =
-                        "Database table initialized successfully."
-                }
-            );
-        }
-
-        catch
-        (
-            InvalidOperationException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-    }
-
-
-
-    //===========================================================
-    // Database Initialize
-    //===========================================================
-
-    [HttpPost("{id:long}/database/initialize")]
-
-    public async Task<ActionResult>
-        InitializeDatabase
-    (
-        long id
-    )
-    {
-        try
-        {
-            var synchronization =
-                await _repository.GetByIdAsync
-                (
-                    id
-                );
-
-
-            if
-            (
-                synchronization == null
-            )
-            {
-                return NotFound();
-            }
-
-
-            await _databaseCreationEngine
-                .CreateAsync
-                (
-                    id
-                );
-
-
-            //=======================================================
-            // Database Initialize Success
-            //=======================================================
-
-            return Ok
-            (
-                new
-                {
-                    success = true,
-
-                    message =
-                        "Database table initialized successfully."
-                }
-            );
-        }
-
-        catch
-        (
-            InvalidOperationException exception
-        )
-        {
-            return BadRequest
-            (
-                exception.Message
-            );
-        }
-    }
-
-
-
-    //===========================================================
-    // Database Remove
-    //===========================================================
-
-    [HttpPost("{id:long}/database/remove")]
-
-    public async Task<ActionResult>
-        RemoveDatabase
-    (
-        long id
-    )
-    {
-        try
-        {
-            var synchronization =
-                await _repository.GetByIdAsync
-                (
-                    id
-                );
-
-
-            if
-            (
-                synchronization == null
-            )
-            {
-                return NotFound();
-            }
-
-
-            await _databaseCreationEngine
-                .RemoveAsync
-                (
-                    id
-                );
-
-
-            //=======================================================
-            // Database Remove Success
-            //=======================================================
-
-            return Ok
-            (
-                new
-                {
-                    success = true,
-
-                    message =
-                        "Database table removed successfully."
-                }
-            );
         }
 
         catch

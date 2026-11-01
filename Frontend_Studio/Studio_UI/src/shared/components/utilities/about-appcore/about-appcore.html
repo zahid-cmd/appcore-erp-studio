@@ -1,3 +1,12 @@
+<!-- =====================================================
+     ABOUT APPCORE
+     -----------------------------------------------------
+     Hero     logo, product name, version chips
+     Body     Product details · Contact
+     Footer   copyright · Okay
+     No blur behind the dialog (plain dim only).
+===================================================== -->
+
 <div
     class="about-overlay"
     *ngIf="visible"
@@ -5,32 +14,87 @@
 
     <div
         class="about-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="about-title"
         (click)="$event.stopPropagation()">
 
         <!-- ==================================================
-             HEADER
+             HERO
         =================================================== -->
 
-        <div class="about-header">
+        <header class="about-hero">
 
-            <span class="about-title">
+            <span class="hero-aurora aurora-a" aria-hidden="true"></span>
 
-                <i class="fas fa-circle-info"></i>
+            <span class="hero-aurora aurora-b" aria-hidden="true"></span>
 
-                About AppCore
-
-            </span>
+            <span class="hero-grid" aria-hidden="true"></span>
 
             <button
                 type="button"
                 class="close-button"
+                aria-label="Close"
                 (click)="closeDialog()">
 
-                <i class="fas fa-times"></i>
+                <i class="fas fa-xmark"></i>
 
             </button>
 
-        </div>
+            <div class="hero-logo">
+
+                <span class="logo-ring" aria-hidden="true"></span>
+
+                <img
+                    src="assets/logo-light.png"
+                    alt="AppCore Technologies"
+                    class="about-logo">
+
+            </div>
+
+            <h2
+                id="about-title"
+                class="hero-title">
+
+                AppCore ERP
+
+            </h2>
+
+            <p class="hero-tagline">
+
+                Enterprise Resource Planner
+
+            </p>
+
+            <div class="hero-chips">
+
+                <span class="chip chip-version">
+
+                    <i class="fas fa-code-branch"></i>
+
+                    Version 1.0.0
+
+                </span>
+
+                <span class="chip chip-live">
+
+                    <span class="live-dot"></span>
+
+                    Production
+
+                </span>
+
+                <span class="chip">
+
+                    <i class="fas fa-cube"></i>
+
+                    Build 2026.07.22
+
+                </span>
+
+            </div>
+
+        </header>
 
         <!-- ==================================================
              BODY
@@ -39,186 +103,143 @@
         <div class="about-body">
 
             <!-- ==========================================
-                 PRODUCT SECTION
+                 PRODUCT
             =========================================== -->
 
-            <div class="about-top">
+            <section class="about-card">
 
-                <!-- Brand -->
+                <h3 class="card-title">
 
-                <div class="logo-panel">
+                    <i class="fas fa-layer-group"></i>
 
-                    <img
-                        src="assets/logo-light.png"
-                        alt="AppCore Technologies"
-                        class="about-logo">
+                    Product
 
-                    <div class="company-name">
+                </h3>
 
-                        AppCore Technologies Limited
+                <dl class="spec-list">
 
+                    <div class="spec-row">
+                        <dt>Product</dt>
+                        <dd>AppCore ERP</dd>
                     </div>
 
-                    <div class="company-tagline">
-
-                        Enterprise Resource Planner
+                    <div class="spec-row">
+                        <dt>Version</dt>
+                        <dd>1.0.0</dd>
                     </div>
 
-                </div>
-
-                <!-- Product Information -->
-
-                <div class="version-panel">
-
-                    <div class="info-row">
-
-                        <span class="label">Product</span>
-
-                        <span class="value">AppCore ERP</span>
-
+                    <div class="spec-row">
+                        <dt>Build</dt>
+                        <dd>2026.07.22</dd>
                     </div>
 
-                    <div class="info-row">
-
-                        <span class="label">Version</span>
-
-                        <span class="value">1.0.0</span>
-
+                    <div class="spec-row">
+                        <dt>Release</dt>
+                        <dd>Production</dd>
                     </div>
 
-                    <div class="info-row">
-
-                        <span class="label">Build</span>
-
-                        <span class="value">2026.07.22</span>
-
+                    <div class="spec-row">
+                        <dt>Developer</dt>
+                        <dd>AppCore Technologies Limited</dd>
                     </div>
 
-                    <div class="info-row">
+                </dl>
 
-                        <span class="label">Release</span>
-
-                        <span class="value">Production</span>
-
-                    </div>
-
-                    <div class="info-row">
-
-                        <span class="label">Copyright</span>
-
-                        <span class="value">© 2026</span>
-
-                    </div>
-
-                </div>
-
-            </div>
+            </section>
 
             <!-- ==========================================
-                 CONTACT SECTION
+                 CONTACT
             =========================================== -->
 
-            <div class="contact-section">
+            <section class="about-card">
 
-                <div class="contact-title">
+                <h3 class="card-title">
 
                     <i class="fas fa-address-card"></i>
 
-                    <span>
+                    Contact
 
-                        Contact Information
+                </h3>
 
-                    </span>
+                <div class="contact-list">
 
-                </div>
+                    <div class="contact-row">
 
-                <div class="contact-grid">
-
-                    <!-- Left -->
-
-                    <div class="contact-card">
-
-                        <div class="contact-row">
-
+                        <span class="contact-icon">
                             <i class="fas fa-location-dot"></i>
+                        </span>
 
-                            <div>
+                        <div class="contact-text">
 
-                                <strong>Address</strong>
+                            <span class="contact-label">Address</span>
 
-                                <span>
-
-                                    Suite # 3C, Aungon Center, 2nd Floor,<br>
-                                    108 North Kalshi, New Shagufta Main<br>Road,
-                                    Mirpur DOHS, Dhaka-1216, Bangladesh
-
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                        <div class="contact-row">
-
-                            <i class="fas fa-phone"></i>
-
-                            <div>
-
-                                <strong>Phone</strong>
-
-                                <span>
-
-                                    +880-1812 114911
-
-                                </span>
-
-                            </div>
+                            <span class="contact-value">
+                                Suite # 3C, Aungon Center, 2nd Floor,
+                                108 North Kalshi, New Shagufta Main Road,
+                                Mirpur DOHS, Dhaka-1216, Bangladesh
+                            </span>
 
                         </div>
 
                     </div>
 
-                    <!-- Divider -->
+                    <div class="contact-row">
 
-                    <div class="contact-divider"></div>
+                        <span class="contact-icon">
+                            <i class="fas fa-phone"></i>
+                        </span>
 
-                    <!-- Right -->
+                        <div class="contact-text">
 
-                    <div class="contact-card">
+                            <span class="contact-label">Phone</span>
 
-                        <div class="contact-row">
-
-                            <i class="fas fa-envelope"></i>
-
-                            <div>
-
-                                <strong>Email</strong>
-
-                                <span>
-
-                                    info@appcoretechnologies.com
-
-                                </span>
-
-                            </div>
+                            <a
+                                class="contact-value contact-link"
+                                href="tel:+8801812114911">
+                                +880-1812 114911
+                            </a>
 
                         </div>
 
-                        <div class="contact-row">
+                    </div>
 
+                    <div class="contact-row">
+
+                        <span class="contact-icon">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+
+                        <div class="contact-text">
+
+                            <span class="contact-label">Email</span>
+
+                            <a
+                                class="contact-value contact-link"
+                                href="mailto:info@appcoretechnologies.com">
+                                info@appcoretechnologies.com
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                    <div class="contact-row">
+
+                        <span class="contact-icon">
                             <i class="fas fa-globe"></i>
+                        </span>
 
-                            <div>
+                        <div class="contact-text">
 
-                                <strong>Website</strong>
+                            <span class="contact-label">Website</span>
 
-                                <span>
-
-                                    www.appcoretechnologies.com
-
-                                </span>
-
-                            </div>
+                            <a
+                                class="contact-value contact-link"
+                                href="https://www.appcoretechnologies.com"
+                                target="_blank"
+                                rel="noopener">
+                                www.appcoretechnologies.com
+                            </a>
 
                         </div>
 
@@ -226,7 +247,7 @@
 
                 </div>
 
-            </div>
+            </section>
 
         </div>
 
@@ -234,11 +255,11 @@
              FOOTER
         =================================================== -->
 
-        <div class="about-footer">
+        <footer class="about-footer">
 
             <span class="footer-copyright">
 
-                © 2026 AppCore Technologies Limited
+                © 2026 AppCore Technologies Limited. All rights reserved.
 
             </span>
 
@@ -251,7 +272,7 @@
 
             </button>
 
-        </div>
+        </footer>
 
     </div>
 

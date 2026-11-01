@@ -138,6 +138,11 @@ public class AccessoriesConfiguration
         builder.Property(x => x.RedLevel)
                .IsRequired();
 
+        // 0 = not set
+        builder.Property(x => x.MaxStockLevel)
+               .IsRequired()
+               .HasDefaultValue(0);
+
 
         //===========================================================
         // Remarks

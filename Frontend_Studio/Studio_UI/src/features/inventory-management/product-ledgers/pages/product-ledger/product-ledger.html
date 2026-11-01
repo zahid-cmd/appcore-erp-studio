@@ -1,0 +1,718 @@
+<div class="app-list-page pl-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        [title]="page.title"
+        [subtitle]="page.subtitle"
+        [icon]="page.icon">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search product, code, document, supplier, batch, notes…"
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                command1Title="Back to the default filter : this month, all branches, nothing loaded"
+                (command1Click)="refresh()"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                command2Activity="Print"
+                (command2Click)="print()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         BODY : filter (full height) | canvas
+    ====================================================== -->
+
+    <div class="pl-body">
+
+        <!-- ---------------- FILTER ---------------- -->
+
+        <aside class="pl-filter">
+
+            <div class="pl-filter-head">
+                <span>Ledger Filter</span>
+                <b>{{ productCount }} {{ productCount === 1 ? page.itemWord : page.itemWords }}</b>
+            </div>
+
+            <div class="pl-filter-body appcore-scrollbar">
+
+                <div class="pl-field">
+                    <label>From</label>
+                    <app-datepicker
+                        class="pl-date"
+                        [value]="fromDate"
+                        (valueChange)="onFromChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="pl-field">
+                    <label>To</label>
+                    <app-datepicker
+                        class="pl-date"
+                        [value]="toDate"
+                        [minDate]="fromDate"
+                        (valueChange)="onToChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="pl-field">
+                    <label>Branch</label>
+                    <app-search-dropdown
+                        class="pl-dd"
+                        placeholder="All Branches"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(branchId)"
+                        (valueChange)="onBranchChange($event)">
+                    </app-search-dropdown>
+                </div>
+
+                <div class="pl-field">
+                    <label>Warehouse</label>
+                    <app-search-dropdown
+                        class="pl-dd"
+                        placeholder="All Warehouses"
+                        [items]="warehouseItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(warehouseId)"
+                        (valueChange)="onWarehouseChange($event)">
+                    </app-search-dropdown>
+                    <span class="pl-hint">In Transit stock stays with its branch.</span>
+                </div>
+
+                <div class="pl-sep"></div>
+
+                @if (isSpareParts)
+                {
+                    <div class="pl-field">
+                        <label>Stock Type</label>
+                        <app-search-dropdown
+                            class="pl-dd"
+                            placeholder="Spare Parts & Lubricants"
+                            [items]="kindItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="$any(kind)"
+                            (valueChange)="onKindChange($event)">
+                        </app-search-dropdown>
+                    </div>
+                }
+
+                <div class="pl-field">
+                    <label>Category</label>
+                    <app-search-dropdown
+                        class="pl-dd"
+                        placeholder="All Categories"
+                        [items]="categoryItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(categoryId)"
+                        (valueChange)="onCategoryChange($event)">
+                    </app-search-dropdown>
+                </div>
+
+                <div class="pl-field">
+                    <label>Sub Category</label>
+                    <app-search-dropdown
+                        class="pl-dd"
+                        placeholder="All Sub Categories"
+                        [items]="subCategoryItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(subCategoryId)"
+                        (valueChange)="onSubCategoryChange($event)">
+                    </app-search-dropdown>
+                </div>
+
+                <div class="pl-field">
+                    <label>Product</label>
+                    <app-search-dropdown
+                        class="pl-dd"
+                        placeholder="Summary Of The Products"
+                        [items]="productItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(productId)"
+                        (valueChange)="onProductChange($event)">
+                    </app-search-dropdown>
+                    <span class="pl-hint">
+                        @if (productId)
+                        {
+                            Submit shows the ledger of this {{ page.itemWord }}.
+                        }
+                        @else
+                        {
+                            No product chosen : Submit shows one row per {{ page.itemWord }}.
+                        }
+                    </span>
+                </div>
+
+                @if (filtersError)
+                {
+                    <div class="pl-note pl-error">{{ filtersError }}</div>
+                }
+
+            </div>
+
+            <div class="pl-filter-foot">
+
+                <button
+                    type="button"
+                    class="pl-btn pl-btn-primary"
+                    [disabled]="filtersLoading || loading"
+                    (click)="load()">
+                    Submit
+                </button>
+
+            </div>
+
+        </aside>
+
+        <!-- ---------------- CANVAS ---------------- -->
+
+        <section class="pl-canvas">
+
+            <!-- Switch bar : one line over the canvas -->
+            <div class="pl-switchbar">
+
+                <span class="pl-switchbar-title"><i class="fas fa-sliders"></i> View</span>
+
+                <label class="pl-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="showCancelled"
+                        (change)="onSwitch('showCancelled', $event)">
+                    <span class="pl-switch-track"><i></i></span>
+                    <span>Show cancelled purchases <em>(on Submit)</em></span>
+                </label>
+                <label class="pl-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="showBatch"
+                        (change)="onSwitch('showBatch', $event)">
+                    <span class="pl-switch-track"><i></i></span>
+                    <span>Show batch</span>
+                </label>
+                <label class="pl-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="showLocation"
+                        (change)="onSwitch('showLocation', $event)">
+                    <span class="pl-switch-track"><i></i></span>
+                    <span>Show location</span>
+                </label>
+
+                @if (canViewCost)
+                {
+                    <label class="pl-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showValue"
+                            (change)="onSwitch('showValue', $event)">
+                        <span class="pl-switch-track"><i></i></span>
+                        <span>Show value <em>(FIFO cost · prints landscape)</em></span>
+                    </label>
+                }
+
+                @if (isMotorBikes)
+                {
+                    <label class="pl-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showBikes"
+                            (change)="onSwitch('showBikes', $event)">
+                        <span class="pl-switch-track"><i></i></span>
+                        <span>Show chassis / engine</span>
+                    </label>
+                }
+
+            </div>
+
+            @if (view === 'none')
+            {
+                <div class="pl-empty">
+                    <i [class]="page.icon + ' pl-empty-ico'"></i>
+                    <b>Choose a {{ page.itemWord }} and press Submit</b>
+                    <span>Leave the product empty to see one row per {{ page.itemWord }}.</span>
+                </div>
+            }
+            @else if (loading)
+            {
+                <div class="pl-empty"><i class="fas fa-spinner fa-spin"></i> Loading…</div>
+            }
+            @else if (loadError)
+            {
+                <div class="pl-empty pl-error"><i class="fas fa-triangle-exclamation"></i> {{ loadError }}</div>
+            }
+            @else if (view === 'statement' && statement)
+            {
+                <div class="pl-view">
+
+                    <!-- Head (fixed) : two lines | figures | period -->
+                    <div class="pl-card pl-head">
+
+                        <div class="pl-head-info">
+                            <div class="pl-head-title">
+                                <b [title]="statement.ProductName">{{ statement.ProductName }}</b>
+                                <span class="pl-pill">{{ statement.Unit || 'Pcs' }}</span>
+                                @if (statement.ShowCancelled)
+                                {
+                                    <span class="pl-pill pl-pill-warn">Cancelled shown</span>
+                                }
+                            </div>
+                            <div class="pl-head-sub">
+                                <span class="pl-code">{{ statement.ProductCode }}</span>
+                                <span class="pl-clip" [title]="statementPath">{{ statementPath }}</span>
+                            </div>
+                        </div>
+
+                        <div class="pl-figs">
+                            <div>
+                                <span>Opening</span>
+                                <b>{{ total(statement.OpeningQty) }}</b>
+                                @if (values)
+                                {
+                                    <em>{{ amount(statement.OpeningValue) }}</em>
+                                }
+                            </div>
+                            <div>
+                                <span>In</span>
+                                <b class="pl-in">{{ total(statement.InQty) }}</b>
+                                @if (values)
+                                {
+                                    <em>{{ amount(statement.InValue) }}</em>
+                                }
+                            </div>
+                            <div>
+                                <span>Out</span>
+                                <b class="pl-out">{{ total(statement.OutQty) }}</b>
+                                @if (values)
+                                {
+                                    <em>{{ amount(statement.OutValue) }}</em>
+                                }
+                            </div>
+                            <div title="Purchased, not yet received into a warehouse">
+                                <span>In Transit</span>
+                                <b class="pl-transit">{{ total(statement.ClosingTransit) }}</b>
+                            </div>
+                            <div class="pl-fig-main">
+                                <span>Closing</span>
+                                <b>{{ total(statement.ClosingQty) }}</b>
+                                @if (values)
+                                {
+                                    <em>{{ amount(statement.ClosingValue) }}</em>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="pl-head-period">
+                            <b>{{ date(statement.From) }} – {{ date(statement.To) }}</b>
+                            <span>
+                                {{ placeText }} ·
+                                <button
+                                    type="button"
+                                    class="pl-link"
+                                    (click)="backToSummary()">
+                                    Summary
+                                </button>
+                            </span>
+                        </div>
+
+                    </div>
+
+                    @if (statement.Truncated)
+                    {
+                        <div class="pl-note">
+                            The first {{ statement.Rows.length }} entries are listed; totals and closing cover the whole period. Narrow the period to see the rest.
+                        </div>
+                    }
+
+                    <!-- Ledger card (scrolls; its header stays) -->
+                    <div class="pl-card pl-tcard appcore-scrollbar">
+
+                        <table
+                            class="pl-table"
+                            [class.pl-wide]="values">
+
+                            <colgroup>
+                                <col class="c-sl">
+                                <col class="c-date">
+                                <col>
+                                <col class="c-doc">
+                                <col class="c-qty">
+                                <col class="c-qty">
+                                <col class="c-qty">
+                                <col class="c-bal">
+                                @if (values)
+                                {
+                                    <col class="c-cost">
+                                    <col class="c-val">
+                                    <col class="c-val">
+                                    <col class="c-val">
+                                }
+                                <col class="c-note">
+                            </colgroup>
+
+                            <thead>
+                                <tr>
+                                    <th>SL</th>
+                                    <th>Date</th>
+                                    <th>Particulars</th>
+                                    <th>Doc No</th>
+                                    <th class="r b-l" title="Purchased, not yet received into a warehouse (running); Balance = In Transit + On Hand">In Transit</th>
+                                    <th class="r b-l">In</th>
+                                    <th class="r">Out</th>
+                                    <th class="r">Balance</th>
+                                    @if (values)
+                                    {
+                                        <th class="r b-l">Unit Cost</th>
+                                        <th class="r">In Value</th>
+                                        <th class="r">Out Value</th>
+                                        <th class="r">Balance Value</th>
+                                    }
+                                    <th class="b-l">Short Notes</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                <tr class="pl-open">
+                                    <td></td>
+                                    <td class="pl-nowrap">{{ date(statement.From) }}</td>
+                                    <td colspan="2"><b>Opening Balance</b></td>
+                                    <td class="r b-l pl-transit">{{ qty(statement.OpeningTransit) }}</td>
+                                    <td class="b-l"></td>
+                                    <td></td>
+                                    <td class="r pl-bal">{{ total(statement.OpeningQty) }}</td>
+                                    @if (values)
+                                    {
+                                        <td class="b-l"></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="r pl-bal">{{ amount(statement.OpeningValue) }}</td>
+                                    }
+                                    <td class="b-l"></td>
+                                </tr>
+
+                                @for (row of rows; track $index; let i = $index)
+                                {
+                                    <tr
+                                        class="pl-row"
+                                        [class.is-rev]="row.IsReversal"
+                                        [class.is-cancelled]="row.IsCancelled"
+                                        [class.is-transfer]="row.IsTransfer">
+
+                                        <td class="pl-sl">{{ i + 1 }}</td>
+
+                                        <td class="pl-nowrap">{{ date(row.Date) }}</td>
+
+                                        <td class="pl-part">
+                                            <div class="pl-clip" [title]="row.Particulars">
+                                                <span class="pl-main">{{ row.Particulars || '—' }}</span>
+                                            </div>
+                                            @if (subLine(row))
+                                            {
+                                                <div class="pl-sub pl-clip" [title]="subLine(row)">{{ subLine(row) }}</div>
+                                            }
+                                        </td>
+
+                                        <td class="pl-nowrap">
+                                            <span class="pl-doc">{{ row.DocumentNo }}</span>
+                                            @if (row.IsReversal)
+                                            {
+                                                <span class="pl-tag">Reversal</span>
+                                            }
+                                            @else if (row.IsCancelled)
+                                            {
+                                                <span class="pl-tag">Cancelled</span>
+                                            }
+                                        </td>
+
+                                        <td
+                                            class="r b-l pl-transit"
+                                            [title]="row.TransitQty ? (row.TransitQty > 0 ? '+' : '') + total(row.TransitQty) + ' in transit' : ''">
+                                            @if (row.TransitQty)
+                                            {
+                                                {{ total(row.TransitBalance) }}
+                                            }
+                                        </td>
+
+                                        <td class="r b-l pl-in">{{ qty(row.InQty) }}</td>
+
+                                        <td class="r pl-out">{{ qty(row.OutQty) }}</td>
+
+                                        <td class="r pl-bal">{{ total(row.BalanceQty) }}</td>
+
+                                        @if (values)
+                                        {
+                                            <td class="r b-l pl-dim">{{ money(row.UnitCost) }}</td>
+                                            <td class="r">{{ money(row.InValue) }}</td>
+                                            <td class="r">{{ money(row.OutValue) }}</td>
+                                            <td class="r pl-bal">{{ amount(row.BalanceValue) }}</td>
+                                        }
+
+                                        <td class="b-l pl-note-c pl-clip" [title]="row.ShortNote">{{ row.ShortNote }}</td>
+
+                                    </tr>
+
+                                    @if (bikesLine(row))
+                                    {
+                                        <tr
+                                            class="pl-bikes"
+                                            [class.is-rev]="row.IsReversal"
+                                            [class.is-cancelled]="row.IsCancelled">
+                                            <td></td>
+                                            <td [attr.colspan]="colCount - 1">
+                                                <i>Chassis / Engine</i>{{ bikesLine(row) }}
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+
+                                @if (rows.length === 0)
+                                {
+                                    <tr class="pl-none">
+                                        <td [attr.colspan]="colCount">{{ searchText ? 'No entry matches the search.' : 'No movement in this period.' }}</td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                            <tfoot>
+                                <tr class="pl-total">
+                                    <td colspan="4" class="r">Total</td>
+                                    <td class="b-l"></td>
+                                    <td class="r b-l">{{ total(statement.InQty) }}</td>
+                                    <td class="r">{{ total(statement.OutQty) }}</td>
+                                    <td></td>
+                                    @if (values)
+                                    {
+                                        <td class="b-l"></td>
+                                        <td class="r">{{ amount(statement.InValue) }}</td>
+                                        <td class="r">{{ amount(statement.OutValue) }}</td>
+                                        <td></td>
+                                    }
+                                    <td class="b-l"></td>
+                                </tr>
+                                <tr class="pl-close">
+                                    <td colspan="4" class="r">Closing Balance · {{ date(statement.To) }}</td>
+                                    <td class="r b-l pl-transit">{{ total(statement.ClosingTransit) }}</td>
+                                    <td class="b-l"></td>
+                                    <td></td>
+                                    <td class="r pl-bal">{{ total(statement.ClosingQty) }}</td>
+                                    @if (values)
+                                    {
+                                        <td class="b-l"></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="r pl-bal">{{ amount(statement.ClosingValue) }}</td>
+                                    }
+                                    <td class="b-l"></td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+
+                    </div>
+
+                </div>
+            }
+            @else if (view === 'summary' && summary)
+            {
+                <div class="pl-view">
+
+                    <!-- Head (fixed) : two lines | figures | period -->
+                    <div class="pl-card pl-head">
+
+                        <div class="pl-head-info">
+                            <div class="pl-head-title">
+                                <b [title]="summary.ScopePath">{{ summary.ScopePath }}</b>
+                                @if (summary.ShowCancelled)
+                                {
+                                    <span class="pl-pill pl-pill-warn">Cancelled shown</span>
+                                }
+                            </div>
+                            <div class="pl-head-sub">
+                                <span class="pl-pill">Summary · {{ summaryRows.length }} {{ summaryRows.length === 1 ? page.itemWord : page.itemWords }}</span>
+                                <span class="pl-clip">Click a {{ page.itemWord }} to open its ledger</span>
+                            </div>
+                        </div>
+
+                        <div class="pl-figs">
+                            <div>
+                                <span>Opening</span>
+                                <b>{{ total(sumTotals.OpeningQty) }}</b>
+                                @if (values)
+                                {
+                                    <em>{{ amount(sumTotals.OpeningValue) }}</em>
+                                }
+                            </div>
+                            <div>
+                                <span>In</span>
+                                <b class="pl-in">{{ total(sumTotals.InQty) }}</b>
+                                @if (values)
+                                {
+                                    <em>{{ amount(sumTotals.InValue) }}</em>
+                                }
+                            </div>
+                            <div>
+                                <span>Out</span>
+                                <b class="pl-out">{{ total(sumTotals.OutQty) }}</b>
+                                @if (values)
+                                {
+                                    <em>{{ amount(sumTotals.OutValue) }}</em>
+                                }
+                            </div>
+                            <div title="Purchased, not yet received into a warehouse">
+                                <span>In Transit</span>
+                                <b class="pl-transit">{{ total(sumTotals.ClosingTransit) }}</b>
+                            </div>
+                            <div class="pl-fig-main">
+                                <span>Closing</span>
+                                <b>{{ total(sumTotals.ClosingQty) }}</b>
+                                @if (values)
+                                {
+                                    <em>{{ amount(sumTotals.ClosingValue) }}</em>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="pl-head-period">
+                            <b>{{ date(summary.From) }} – {{ date(summary.To) }}</b>
+                            <span>{{ placeText }}</span>
+                        </div>
+
+                    </div>
+
+                    <div class="pl-card pl-tcard appcore-scrollbar">
+
+                        <table class="pl-table pl-sum">
+
+                            <colgroup>
+                                <col class="c-sl">
+                                <col>
+                                <col class="c-sub">
+                                <col class="c-sq">
+                                <col class="c-sq">
+                                <col class="c-sq">
+                                <col class="c-sq">
+                                <col class="c-sq">
+                            </colgroup>
+
+                            <thead>
+                                <tr>
+                                    <th>SL</th>
+                                    <th>Product</th>
+                                    <th>Category · Sub Category</th>
+                                    <th class="r b-l">Opening</th>
+                                    <th class="r">In</th>
+                                    <th class="r">Out</th>
+                                    <th class="r">Closing</th>
+                                    <th class="r b-l" title="Purchased, not yet received into a warehouse">In Transit</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (row of summaryRows; track row.ProductId; let i = $index)
+                                {
+                                    <tr
+                                        class="pl-row pl-click"
+                                        [class.is-inactive]="!row.IsActive"
+                                        title="Open the ledger"
+                                        (click)="openLedger(row.ProductId)">
+                                        <td class="pl-sl">{{ i + 1 }}</td>
+                                        <td class="pl-clip">
+                                            <span class="pl-main">{{ row.ProductName }}</span>
+                                            <span class="pl-dim pl-mono"> {{ row.ProductCode }}</span>
+                                            @if (!row.IsActive)
+                                            {
+                                                <span class="pl-tag">Inactive</span>
+                                            }
+                                        </td>
+                                        <td class="pl-dim pl-clip">{{ row.CategoryName }} · {{ row.SubCategoryName }}</td>
+                                        <td class="r b-l">
+                                            {{ total(row.OpeningQty) }}
+                                            @if (values) { <em class="pl-val">{{ amount(row.OpeningValue) }}</em> }
+                                        </td>
+                                        <td class="r pl-in">
+                                            {{ qty(row.InQty) }}
+                                            @if (values && row.InValue) { <em class="pl-val">{{ amount(row.InValue) }}</em> }
+                                        </td>
+                                        <td class="r pl-out">
+                                            {{ qty(row.OutQty) }}
+                                            @if (values && row.OutValue) { <em class="pl-val">{{ amount(row.OutValue) }}</em> }
+                                        </td>
+                                        <td class="r pl-bal">
+                                            {{ total(row.ClosingQty) }}
+                                            @if (values) { <em class="pl-val">{{ amount(row.ClosingValue) }}</em> }
+                                        </td>
+                                        <td class="r b-l pl-transit">{{ qty(row.ClosingTransit) }}</td>
+                                    </tr>
+                                }
+
+                                @if (summaryRows.length === 0)
+                                {
+                                    <tr class="pl-none">
+                                        <td colspan="8">{{ searchText ? 'No ' + page.itemWord + ' matches the search.' : 'No stock or movement in this selection.' }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <tfoot>
+                                <tr class="pl-close">
+                                    <td colspan="3" class="r">Total · {{ summaryRows.length }} {{ summaryRows.length === 1 ? page.itemWord : page.itemWords }}</td>
+                                    <td class="r b-l">
+                                        {{ total(sumTotals.OpeningQty) }}
+                                        @if (values) { <em class="pl-val">{{ amount(sumTotals.OpeningValue) }}</em> }
+                                    </td>
+                                    <td class="r">
+                                        {{ total(sumTotals.InQty) }}
+                                        @if (values) { <em class="pl-val">{{ amount(sumTotals.InValue) }}</em> }
+                                    </td>
+                                    <td class="r">
+                                        {{ total(sumTotals.OutQty) }}
+                                        @if (values) { <em class="pl-val">{{ amount(sumTotals.OutValue) }}</em> }
+                                    </td>
+                                    <td class="r pl-bal">
+                                        {{ total(sumTotals.ClosingQty) }}
+                                        @if (values) { <em class="pl-val">{{ amount(sumTotals.ClosingValue) }}</em> }
+                                    </td>
+                                    <td class="r b-l pl-transit">{{ total(sumTotals.ClosingTransit) }}</td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+
+                    </div>
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

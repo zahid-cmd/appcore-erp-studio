@@ -17,6 +17,9 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.Persistence;
 
+using PostingLedgerCodes =
+    AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
+
 using BankAccountsEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.BankAccounts;
 
@@ -134,14 +137,14 @@ public class MfsReconciliationsRepository : IMfsReconciliationsRepository
     private const string EditChargesSwitch =
         "CFG-MOD-004-0052";
 
-    // Ledgers (looked up by CODE)
+    // Ledgers (codes from Posting Setup)
     //   MFS Charges (expense)
-    private const string MfsChargesLedger =
-        "GLR-004-001-001-00003";
+    private string MfsChargesLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.MfsCharges);
 
     //   MFS Charges Recovery (income; the RV credited it)
-    private const string MfsRecoveryLedger =
-        "GLR-011-001-001-00001";
+    private string MfsRecoveryLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.MfsRecovery);
 
     // The nightly job posts as
     private const long SystemUserId = 1;
@@ -2989,4 +2992,4 @@ public class MfsReconciliationsRepository : IMfsReconciliationsRepository
     {
         return decimal.Round(value, 2) == value;
     }
-}
+}

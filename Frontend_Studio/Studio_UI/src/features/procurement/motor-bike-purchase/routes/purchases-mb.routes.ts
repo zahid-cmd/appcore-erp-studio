@@ -10,18 +10,12 @@ from '@angular/router';
 
 
 //===============================================================
-// Submenu Routes
+// Submenu Routes : Motor Bike Purchase › Purchases
 //===============================================================
 
 export const PurchasesMbRoutes:
 Routes =
 [
-
-
-    //===========================================================
-    // Default
-    //===========================================================
-
     {
         path:'',
 
@@ -30,17 +24,12 @@ Routes =
         pathMatch:'full'
     },
 
-
-    //===========================================================
-    // List
-    //===========================================================
-
     {
         path:'list',
 
         data:
         {
-            breadcrumb:'Purchases - MB'
+            breadcrumb:'Purchases'
         },
 
         loadComponent:() =>
@@ -53,17 +42,12 @@ Routes =
             )
     },
 
-
-    //===========================================================
-    // Add
-    //===========================================================
-
     {
         path:'add',
 
         data:
         {
-            breadcrumb:'Add Purchases - MB'
+            breadcrumb:'Add Purchase'
         },
 
         loadComponent:() =>
@@ -75,18 +59,13 @@ Routes =
                     m.PurchasesMbForm
             )
     },
-
-
-    //===========================================================
-    // Edit
-    //===========================================================
 
     {
         path:'edit/:id',
 
         data:
         {
-            breadcrumb:'Edit Purchases - MB'
+            breadcrumb:'Edit Purchase'
         },
 
         loadComponent:() =>
@@ -99,17 +78,12 @@ Routes =
             )
     },
 
-
-    //===========================================================
-    // View
-    //===========================================================
-
     {
         path:'view/:id',
 
         data:
         {
-            breadcrumb:'View Purchases - MB'
+            breadcrumb:'View Purchase'
         },
 
         loadComponent:() =>
@@ -121,5 +95,4 @@ Routes =
                     m.PurchasesMbForm
             )
     }
-
 ];

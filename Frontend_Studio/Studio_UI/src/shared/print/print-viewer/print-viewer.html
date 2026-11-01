@@ -51,6 +51,38 @@
 
         <div class="pv-bar-right">
 
+            @if (canRotate)
+            {
+                <div
+                    class="pv-orient"
+                    role="group"
+                    aria-label="Page orientation">
+
+                    <button
+                        type="button"
+                        title="Portrait"
+                        [class.pv-orient-on]="!landscape"
+                        [attr.aria-pressed]="!landscape"
+                        [disabled]="loading || !!busy"
+                        (click)="setOrientation(false)">
+                        <span class="pv-orient-page"></span>
+                        Portrait
+                    </button>
+
+                    <button
+                        type="button"
+                        title="Landscape"
+                        [class.pv-orient-on]="landscape"
+                        [attr.aria-pressed]="landscape"
+                        [disabled]="loading || !!busy"
+                        (click)="setOrientation(true)">
+                        <span class="pv-orient-page pv-orient-wide"></span>
+                        Landscape
+                    </button>
+
+                </div>
+            }
+
             @if (documents.length > 1)
             {
                 <app-search-dropdown
@@ -322,4 +354,4 @@
 
     </div>
 
-</div>
+</div>

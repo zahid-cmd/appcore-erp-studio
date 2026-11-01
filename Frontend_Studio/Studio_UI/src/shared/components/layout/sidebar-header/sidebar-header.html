@@ -1,25 +1,28 @@
 <!-- ==========================================================
-     DASHBOARD HEADER
+     SIDEBAR HEADER : Dashboard
 =========================================================== -->
 
-<a
-    class="dashboard-header"
-    [class.active]="isActive"
-    [routerLink]="'/dashboard'"
-    [title]="isCollapsed ? 'Dashboard' : ''"
-    aria-label="Dashboard">
+<div
+    class="sidebar-header"
+    [class.collapsed]="isCollapsed">
 
-    <div class="dashboard-title">
+    <a
+        class="dashboard-header"
+        [class.active]="isActive"
+        [routerLink]="'/dashboard'"
+        [attr.aria-current]="isActive ? 'page' : null"
+        aria-label="Dashboard"
+        (mouseenter)="showTip($event)"
+        (mouseleave)="hideTip()"
+        (focus)="showTip($event)"
+        (blur)="hideTip()">
 
-        <i
-            class="fas fa-house"
-            [title]="isCollapsed ? 'Dashboard' : ''">
-        </i>
+        <i class="fas fa-house"></i>
 
-        <span>
+        <span class="dashboard-label">
             Dashboard
         </span>
 
-    </div>
+    </a>
 
-</a>
+</div>

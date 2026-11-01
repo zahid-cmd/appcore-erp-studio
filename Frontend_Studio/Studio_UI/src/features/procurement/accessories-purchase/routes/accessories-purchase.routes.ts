@@ -33,6 +33,110 @@ Routes =
 
             // SUBMENU ROUTE PLACEHOLDER
 
+            // AUTO-BEGIN : SUB-007-003-004
+
+                //===========================================================
+                // Purchase Adjustments - AC
+                //===========================================================
+
+                {
+                    path:'purchase-adjustments-ac',
+
+                    data:
+                    {
+                        breadcrumb:'Purchase Adjustments - AC'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './purchase-adjustments-ac.routes'
+                        )
+                        .then(
+                            m =>
+                                m.PurchaseAdjustmentsAcRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-007-003-004
+
+            // AUTO-BEGIN : SUB-007-003-001
+
+                //===========================================================
+                // Purchase Orders - AC
+                //===========================================================
+
+                {
+                    path:'purchase-orders-ac',
+
+                    data:
+                    {
+                        breadcrumb:'Purchase Orders - AC'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './purchase-orders-ac.routes'
+                        )
+                        .then(
+                            m =>
+                                m.PurchaseOrdersAcRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-007-003-001
+
+            // AUTO-BEGIN : SUB-007-003-003
+
+                //===========================================================
+                // Purchase Returns - AC
+                //===========================================================
+
+                {
+                    path:'purchase-returns-ac',
+
+                    data:
+                    {
+                        breadcrumb:'Purchase Returns - AC'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './purchase-returns-ac.routes'
+                        )
+                        .then(
+                            m =>
+                                m.PurchaseReturnsAcRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-007-003-003
+
+            // AUTO-BEGIN : SUB-007-003-002
+
+                //===========================================================
+                // Purchases - AC
+                //===========================================================
+
+                {
+                    path:'purchases-ac',
+
+                    data:
+                    {
+                        breadcrumb:'Purchases - AC'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './purchases-ac.routes'
+                        )
+                        .then(
+                            m =>
+                                m.PurchasesAcRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-007-003-002
+
         ]
 
     }

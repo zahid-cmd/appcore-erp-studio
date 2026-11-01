@@ -4,42 +4,28 @@
 
 import
 {
-    Injectable,
-    inject
+    Injectable
 }
 from '@angular/core';
 
 import
 {
-    HttpClient
+    PurchaseService
 }
-from '@angular/common/http';
+from '../../shared/purchase/purchase.service';
 
 import
 {
-    Observable
+    PUR_MB_PAGE
 }
-from 'rxjs';
-
-import
-{
-    environment
-}
-from '../../../../environments/environment';
-
-import
-{
-    PurchasesMb,
-
-    CreatePurchasesMb,
-
-    UpdatePurchasesMb
-}
-from '../models/purchases-mb.model';
+from '../../shared/purchase/purchase.config';
 
 
 //===============================================================
-// Purchases - MB Service
+// Purchases - MB Service (Motor Bike Purchase)
+//
+// Everything is in the shared PurchaseService; this page only
+// gives its API path.
 //===============================================================
 
 @Injectable(
@@ -47,162 +33,10 @@ from '../models/purchases-mb.model';
     providedIn:'root'
 })
 
-
 export class PurchasesMbService
+    extends PurchaseService
 {
-
-    //===========================================================
-    // Injection
-    //===========================================================
-
-    private readonly http =
-        inject(HttpClient);
-
-
-
-    //===========================================================
-    // API
-    //===========================================================
-
-    private readonly apiUrl =
-        `${environment.apiUrl}/procurement/motor-bike-purchase/purchases-mb`;
-
-
-
-    //===========================================================
-    // Get All
-    //===========================================================
-
-    getAll():
-        Observable<PurchasesMb[]>
-    {
-        return this.http.get<PurchasesMb[]>(
-            this.apiUrl
-        );
-    }
-
-
-
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
-    getById
-    (
-        id:
-            number
-    ):
-        Observable<PurchasesMb>
-    {
-        return this.http.get<PurchasesMb>(
-            `${this.apiUrl}/${id}`
-        );
-    }
-
-
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    create
-    (
-        model:
-            CreatePurchasesMb
-    ):
-        Observable<number>
-    {
-        return this.http.post<number>(
-            this.apiUrl,
-
-            model
-        );
-    }
-
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    update
-    (
-        model:
-            UpdatePurchasesMb
-    ):
-        Observable<void>
-    {
-        return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
-
-            model
-        );
-    }
-
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    delete
-    (
-        id:
-            number
-    ):
-        Observable<void>
-    {
-        return this.http.delete<void>(
-            `${this.apiUrl}/${id}`
-        );
-    }
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    restore():
-        Observable<void>
-    {
-        return this.http.put<void>(
-            `${this.apiUrl}/restore`,
-
-            {}
-        );
-    }
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    getHistory():
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/history`
-        );
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    getEntityHistory
-    (
-        id:
-            number
-    ):
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
-        );
-    }
-
+    protected readonly apiPath:
+        string =
+        PUR_MB_PAGE.apiPath;
 }

@@ -291,7 +291,30 @@
                                         <div class="sc-cc-bottom">
                                             <div class="sc-cc-left">
                                                 <div class="sc-cc-valrow">
-                                                    @if (card.hasValue && !card.isText)
+                                                    @if (card.isDate)
+                                                    {
+                                                        <span class="sc-cc-lbl">Effective<br>From</span>
+                                                        <div class="sc-date sc-cc-date" [title]="card.dateValue ? card.valueText : 'Leave empty : from the day you apply the change'">
+                                                            <app-datepicker
+                                                                [value]="$any(card.dateValue)"
+                                                                [placeholder]="card.datePlaceholder"
+                                                                [disabled]="card.valueLocked"
+                                                                (valueChange)="onDateValue(card, $event)">
+                                                            </app-datepicker>
+                                                            @if (card.dateValue && !card.valueLocked)
+                                                            {
+                                                                <button
+                                                                    type="button"
+                                                                    class="sc-date-clear"
+                                                                    aria-label="Clear the date (from today)"
+                                                                    title="Clear : from the day it is applied"
+                                                                    (click)="clearDate(card)">
+                                                                    <i class="fas fa-xmark"></i>
+                                                                </button>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    @else if (card.hasValue && !card.isText)
                                                     {
                                                         <span class="sc-cc-lbl">Value<br>Set</span>
                                                         <div class="sc-cc-step" [class.sc-cc-step-locked]="card.valueLocked">
@@ -444,7 +467,30 @@
 
                                             <span class="sc-meta-gap"></span>
 
-                                            @if (card.hasValue && !card.isText)
+                                            @if (card.isDate)
+                                            {
+                                                <div class="sc-date sc-classic-date" [title]="card.dateValue ? card.valueText : 'Leave empty : from the day you apply the change'">
+                                                    <app-datepicker
+                                                        [value]="$any(card.dateValue)"
+                                                        [placeholder]="card.datePlaceholder"
+                                                        [disabled]="card.valueLocked"
+                                                        (valueChange)="onDateValue(card, $event)">
+                                                    </app-datepicker>
+                                                    @if (card.dateValue && !card.valueLocked)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="sc-date-clear"
+                                                            aria-label="Clear the date (from today)"
+                                                            title="Clear : from the day it is applied"
+                                                            (click)="clearDate(card)">
+                                                            <i class="fas fa-xmark"></i>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            }
+
+                                            @if (card.hasValue && !card.isText && !card.isDate)
                                             {
                                                 <div class="sc-stepper" [class.sc-stepper-locked]="card.valueLocked">
                                                     <button

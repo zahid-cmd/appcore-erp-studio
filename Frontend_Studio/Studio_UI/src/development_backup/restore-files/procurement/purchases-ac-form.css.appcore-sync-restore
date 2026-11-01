@@ -1,0 +1,1 @@
+@import '../../../../../../shared/styles/app-form-page.css';

@@ -1,588 +1,360 @@
-/* =====================================================
-   HOST
-===================================================== */
+/* ============================================================
+   Topbar Actions : clock, notifications, profile
+============================================================ */
 
 :host
 {
     display:block;
-
-    width:100%;
-
-    height:64px;
-
-    min-width:0;
-
-    max-width:none;
-
-    min-height:64px;
-
-    max-height:64px;
-
-    box-sizing:border-box;
-
-    position:relative;
-
-    z-index:301;
 }
 
-
-
-/* =====================================================
-   CONTAINER
-===================================================== */
 
 .topbar-actions
 {
-    position:relative;
-
-    z-index:301;
-
-    width:100%;
-
-    height:64px;
-
-    min-width:0;
-
-    max-width:none;
-
-    min-height:64px;
-
-    max-height:64px;
-
     display:flex;
 
     align-items:center;
 
-    justify-content:flex-end;
+    gap:10px;
 
-    gap:20px;
-
-    padding:
-        0
-        18px;
-
-    box-sizing:border-box;
-
-    background:
-        linear-gradient(
-            135deg,
-            #0f1738 0%,
-            #111c48 48%,
-            #18255a 100%
-        );
-
-    color:#ffffff;
-
-    overflow:visible;
+    height:100%;
 }
 
 
-
-/* =====================================================
-   LEFT : GLOBAL SEARCH
-===================================================== */
-
-.actions-left
-{
-    flex:0 1 auto;
-
-    min-width:0;
-
-    height:64px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:flex-end;
-}
-
-
-
-/* =====================================================
-   GLOBAL SEARCH
-===================================================== */
-
-.global-search
-{
-    display:block;
-
-    width:300px;
-
-    min-width:0;
-
-    max-width:300px;
-}
-
-
-
-.actions-left app-search-box
-{
-    display:block;
-
-    width:300px;
-
-    min-width:0;
-
-    max-width:300px;
-}
-
-
-
-/* =====================================================
-   RIGHT : USER MENU
-===================================================== */
-
-.actions-right
-{
-    display:flex;
-
-    align-items:center;
-
-    justify-content:flex-end;
-
-    height:64px;
-
-    flex:0 0 auto;
-
-    min-width:0;
-
-    position:relative;
-
-    z-index:302;
-}
-
-
-
-/* =====================================================
-   USER ACCOUNT
-===================================================== */
-
-.user-account
-{
-    position:relative;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:flex-end;
-
-    height:64px;
-
-    flex:0 0 auto;
-
-    z-index:303;
-}
-
-
-
-/* =====================================================
-   USER MENU BUTTON
-===================================================== */
-
-.user-menu-button
-{
-    width:auto;
-
-    height:50px;
-
-    min-width:0;
-
-    display:flex;
-
-    align-items:center;
-
-    gap:16px;
-
-    padding:
-        0
-        18px;
-
-    border:
-        1px solid
-        rgba(
-            255,
-            255,
-            255,
-            .08
-        );
-
-    border-radius:12px;
-
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            .04
-        );
-
-    color:#ffffff;
-
-    cursor:pointer;
-
-    transition:
-        background .20s ease,
-        border-color .20s ease,
-        box-shadow .20s ease,
-        transform .20s ease;
-
-    box-sizing:border-box;
-
-    position:relative;
-
-    z-index:304;
-}
-
-
-
-/* =====================================================
-   USER MENU BUTTON HOVER
-===================================================== */
-
-.user-menu-button:hover
-{
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            .08
-        );
-
-    border-color:
-        rgba(
-            255,
-            255,
-            255,
-            .15
-        );
-
-    transform:
-        translateY(-1px);
-
-    box-shadow:
-        0
-        8px
-        18px
-        rgba(
-            0,
-            0,
-            0,
-            .20
-        );
-}
-
-
-
-/* =====================================================
-   USER MENU BUTTON ACTIVE
-===================================================== */
-
-.user-menu-button:active
-{
-    transform:
-        scale(.98);
-}
-
-
-
-/* =====================================================
-   AVATAR
-===================================================== */
-
-.avatar
-{
-    width:44px;
-
-    height:44px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    flex-shrink:0;
-
-    border-radius:50%;
-
-    background:
-        rgba(
-            37,
-            99,
-            235,
-            .18
-        );
-
-    border:
-        1px solid
-        rgba(
-            255,
-            255,
-            255,
-            .10
-        );
-
-    color:#ffffff;
-
-    transition:
-        background .20s ease,
-        transform .20s ease;
-}
-
-
-
-/* =====================================================
-   AVATAR HOVER
-===================================================== */
-
-.user-menu-button:hover .avatar
-{
-    background:#2563eb;
-
-    transform:
-        scale(1.05);
-}
-
-
-
-/* =====================================================
-   AVATAR ICON
-===================================================== */
-
-.avatar i
-{
-    font-size:20px;
-}
-
-
-
-/* =====================================================
-   USER DETAILS
-===================================================== */
-
-.user-details
+/* ============================================================
+   Clock
+============================================================ */
+
+.clock
 {
     display:flex;
 
     flex-direction:column;
 
-    justify-content:center;
+    align-items:flex-end;
 
-    min-width:0;
+    padding-right:6px;
 
-    text-align:left;
-}
+    line-height:1.2;
 
-
-
-/* =====================================================
-   USER NAME
-===================================================== */
-
-.user-name
-{
     color:#ffffff;
 
+    white-space:nowrap;
+
+    cursor:default;
+}
+
+
+.clock-time
+{
     font-size:15px;
 
-    font-weight:600;
+    font-weight:800;
 
-    line-height:1.25;
-
-    letter-spacing:.2px;
-
-    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
 }
 
 
-
-/* =====================================================
-   USER ROLE
-===================================================== */
-
-.user-role
+.clock-date
 {
-    margin-top:2px;
+    font-size:11px;
 
-    color:
-        rgba(
-            255,
-            255,
-            255,
-            .72
-        );
-
-    font-size:12px;
-
-    font-weight:500;
-
-    letter-spacing:.2px;
-
-    white-space:nowrap;
+    color:#a9bbd8;
 }
 
 
+/* ============================================================
+   User Account
+============================================================ */
 
-/* =====================================================
-   MENU ARROW
-===================================================== */
-
-.menu-arrow
+.user-account
 {
-    width:28px;
+    /* Profile button and dropdown share one width */
+    --user-menu-width:260px;
 
-    height:28px;
+    position:relative;
+}
 
+
+.user-menu-button
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    width:var(--user-menu-width);
+
+    height:44px;
+
+    box-sizing:border-box;
+
+    padding:0 12px 0 5px;
+
+    border:1px solid rgba(255,255,255,.12);
+
+    border-radius:13px;
+
+    background:rgba(255,255,255,.06);
+
+    color:#ffffff;
+
+    font-family:inherit;
+
+    cursor:pointer;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease;
+}
+
+
+.user-menu-button:hover,
+.user-menu-button[aria-expanded="true"]
+{
+    background:rgba(255,255,255,.12);
+
+    border-color:rgba(147,180,245,.45);
+}
+
+
+.user-menu-button:focus-visible
+{
+    outline:2px solid #93b4f5;
+
+    outline-offset:2px;
+}
+
+
+/* ============================================================
+   Avatar (initials)
+============================================================ */
+
+.avatar
+{
     display:flex;
 
     align-items:center;
 
     justify-content:center;
 
-    flex-shrink:0;
+    flex:0 0 34px;
 
-    color:
-        rgba(
-            255,
-            255,
-            255,
-            .70
-        );
+    width:34px;
 
-    transition:
-        color .20s ease,
-        transform .20s ease;
+    height:34px;
+
+    border-radius:10px;
+
+    background:linear-gradient(145deg, #dbe6f8, #a9c2ec);
+
+    color:#13254a;
+
+    font-size:13px;
+
+    font-weight:800;
+
+    letter-spacing:.3px;
+
+    overflow:hidden;
 }
 
 
-
-/* =====================================================
-   MENU ARROW ICON
-===================================================== */
-
-.menu-arrow i
+.avatar-photo
 {
-    font-size:10px;
+    display:block;
 
-    transition:
-        transform .20s ease;
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
 }
 
 
+.avatar.large
+{
+    flex-basis:42px;
 
-/* =====================================================
-   MENU ARROW OPEN
-===================================================== */
+    width:42px;
+
+    height:42px;
+
+    border-radius:12px;
+
+    font-size:15px;
+}
+
+
+/* ============================================================
+   Name / Role
+============================================================ */
+
+.user-text
+{
+    flex:1 1 auto;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    min-width:0;
+
+    line-height:1.15;
+}
+
+
+.user-name
+{
+    max-width:100%;
+
+    font-size:13px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.user-role
+{
+    max-width:100%;
+
+    color:#a9bbd8;
+
+    font-size:11px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.menu-arrow
+{
+    flex:0 0 auto;
+
+    color:#a9bbd8;
+
+    font-size:11px;
+
+    transition:transform .18s ease;
+}
+
 
 .menu-arrow.open
 {
-    color:#ffffff;
+    transform:rotate(180deg);
 }
 
 
-
-.menu-arrow.open i
-{
-    transform:
-        rotate(180deg);
-}
-
-
-
-/* =====================================================
-   MENU ARROW HOVER
-===================================================== */
-
-.user-menu-button:hover .menu-arrow
-{
-    color:#ffffff;
-}
-
-
-
-/* =====================================================
-   USER ACCOUNT DROPDOWN
-===================================================== */
+/* ============================================================
+   Dropdown
+============================================================ */
 
 .user-dropdown
 {
     position:absolute;
 
-    top:
-        calc(
-            100%
-            +
-            8px
-        );
+    top:calc(100% + 12px);
 
     right:0;
 
-    width:260px;
-
-    min-width:260px;
-
-    padding:
-        8px;
+    width:var(--user-menu-width);
 
     box-sizing:border-box;
 
-    border:
-        1px solid
-        rgba(
-            15,
-            23,
-            56,
-            .10
-        );
+    padding:6px;
+
+    border:1px solid #e2e8f1;
 
     border-radius:14px;
 
-    background:
-        #ffffff;
+    background:#ffffff;
 
-    box-shadow:
-        0
-        16px
-        40px
-        rgba(
-            15,
-            23,
-            56,
-            .18
-        );
+    box-shadow:0 24px 60px -24px rgba(10,22,49,.5);
 
-    z-index:305;
+    color:#13254a;
 
-    animation:
-        userDropdownOpen
-        .16s
-        ease-out;
+    z-index:400;
+
+    animation:menu-rise .14s ease;
 }
 
 
-
-/* =====================================================
-   USER DROPDOWN ITEM
-===================================================== */
-
-.user-dropdown-item
+.dropdown-head
 {
-    width:100%;
-
-    min-height:46px;
-
     display:flex;
 
     align-items:center;
 
     gap:12px;
 
-    padding:
-        0
-        12px;
+    padding:10px 10px 12px;
+
+    margin-bottom:4px;
+
+    border-bottom:1px solid #eef2f7;
+}
+
+
+.dropdown-head-text
+{
+    display:flex;
+
+    flex-direction:column;
+
+    min-width:0;
+
+    line-height:1.3;
+}
+
+
+.dropdown-head-text b
+{
+    font-size:13.5px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.dropdown-head-text span
+{
+    color:#6b7a94;
+
+    font-size:11.5px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+.user-dropdown-item
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    width:100%;
+
+    height:38px;
+
+    padding:0 10px;
 
     border:0;
 
@@ -590,476 +362,142 @@
 
     background:transparent;
 
-    color:#18233f;
+    color:#13254a;
 
-    cursor:pointer;
+    font-family:inherit;
+
+    font-size:13px;
+
+    font-weight:600;
 
     text-align:left;
 
-    box-sizing:border-box;
+    cursor:pointer;
 
-    transition:
-        background .18s ease,
-        color .18s ease,
-        transform .18s ease;
+    transition:background .15s ease;
 }
 
-
-
-/* =====================================================
-   USER DROPDOWN ITEM HOVER
-===================================================== */
 
 .user-dropdown-item:hover
 {
-    background:
-        #f1f5ff;
-
-    color:#2563eb;
-
-    transform:
-        translateX(2px);
+    background:#eef4ff;
 }
 
 
-
-/* =====================================================
-   DROPDOWN ICON
-===================================================== */
-
 .dropdown-icon
 {
-    width:32px;
-
-    height:32px;
-
     display:flex;
 
     align-items:center;
 
     justify-content:center;
 
-    flex-shrink:0;
+    width:18px;
 
-    border-radius:8px;
-
-    background:
-        #eef2ff;
-
-    color:#2563eb;
-
-    transition:
-        background .18s ease,
-        color .18s ease;
+    color:#52627f;
 }
 
-
-
-.user-dropdown-item:hover .dropdown-icon
-{
-    background:#2563eb;
-
-    color:#ffffff;
-}
-
-
-
-/* =====================================================
-   DROPDOWN ICON FONT
-===================================================== */
-
-.dropdown-icon i
-{
-    font-size:13px;
-}
-
-
-
-/* =====================================================
-   DROPDOWN LABEL
-===================================================== */
-
-.dropdown-label
-{
-    flex:1;
-
-    min-width:0;
-
-    color:inherit;
-
-    font-size:14px;
-
-    font-weight:600;
-
-    line-height:1.2;
-
-    letter-spacing:.1px;
-}
-
-
-
-/* =====================================================
-   DROPDOWN DIVIDER
-===================================================== */
 
 .dropdown-divider
 {
-    width:100%;
-
     height:1px;
 
-    margin:
-        7px
-        0;
+    margin:4px 6px;
 
-    background:
-        #e8ebf2;
+    background:#eef2f7;
 }
 
 
-
-/* =====================================================
-   LOGOUT ITEM
-===================================================== */
-
-.logout-item
+.logout-item,
+.logout-item .dropdown-icon
 {
-    color:#475569;
+    color:#b42318;
 }
 
-
-
-/* =====================================================
-   LOGOUT ITEM HOVER
-===================================================== */
 
 .logout-item:hover
 {
-    background:
-        #fff1f2;
-
-    color:#dc2626;
+    background:#fef3f2;
 }
 
 
-
-.logout-item:hover .dropdown-icon
+@keyframes menu-rise
 {
-    background:#dc2626;
+    from { opacity:0; transform:translateY(-4px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .clock
+{
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .clock-date,
+:host-context(.appearance-light) .user-role,
+:host-context(.appearance-light) .menu-arrow
+{
+    color:#6b7a94;
+}
+
+
+:host-context(.appearance-light) .user-menu-button
+{
+    border-color:#cbd6e7;
+
+    background:#f6f8fc;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .user-menu-button:hover,
+:host-context(.appearance-light) .user-menu-button[aria-expanded="true"]
+{
+    border-color:#bfd0ec;
+
+    background:#e1eafa;
+}
+
+
+:host-context(.appearance-light) .user-menu-button:focus-visible
+{
+    outline-color:#2563eb;
+}
+
+
+/* Initials: blue chip with white letters on the white bar */
+
+:host-context(.appearance-light) .user-menu-button .avatar
+{
+    background:linear-gradient(145deg, #1e40af, #3b82f6);
 
     color:#ffffff;
 }
 
 
+/* ============================================================
+   Narrow screens : keep the avatar only
+============================================================ */
 
-/* =====================================================
-   DROPDOWN ANIMATION
-===================================================== */
-
-@keyframes userDropdownOpen
+@media (max-width: 1100px)
 {
-    from
-    {
-        opacity:0;
-
-        transform:
-            translateY(-6px)
-            scale(.98);
-    }
-
-    to
-    {
-        opacity:1;
-
-        transform:
-            translateY(0)
-            scale(1);
-    }
-}
-
-
-
-/* =====================================================
-   FOCUS
-===================================================== */
-
-.user-menu-button:focus-visible
-{
-    outline:none;
-
-    border-color:
-        rgba(
-            96,
-            165,
-            250,
-            .70
-        );
-
-    box-shadow:
-        0
-        0
-        0
-        3px
-        rgba(
-            37,
-            99,
-            235,
-            .18
-        ),
-
-        0
-        8px
-        18px
-        rgba(
-            0,
-            0,
-            0,
-            .20
-        );
-}
-
-
-
-/* =====================================================
-   USER SELECTION
-===================================================== */
-
-.user-menu-button *,
-.user-dropdown *
-{
-    user-select:none;
-
-    -webkit-user-select:none;
-}
-
-
-
-/* =====================================================
-   RESPONSIVE : 1400
-===================================================== */
-
-@media (max-width:1400px)
-{
-    .global-search
-    {
-        width:420px;
-
-        max-width:420px;
-    }
-
-    .actions-left app-search-box
-    {
-        width:420px;
-
-        max-width:420px;
-    }
-}
-
-
-
-/* =====================================================
-   RESPONSIVE : 1200
-===================================================== */
-
-@media (max-width:1200px)
-{
-    .topbar-actions
-    {
-        gap:18px;
-
-        padding:
-            0
-            16px;
-    }
-
-    .global-search
-    {
-        width:380px;
-
-        max-width:380px;
-    }
-
-    .actions-left app-search-box
-    {
-        width:380px;
-
-        max-width:380px;
-    }
-
-    .user-menu-button
-    {
-        padding:
-            0
-            16px;
-    }
-}
-
-
-
-/* =====================================================
-   RESPONSIVE : 992
-===================================================== */
-
-@media (max-width:992px)
-{
-    .topbar-actions
-    {
-        gap:16px;
-
-        padding:
-            0
-            14px;
-    }
-
-    .global-search
-    {
-        width:320px;
-
-        max-width:320px;
-    }
-
-    .actions-left app-search-box
-    {
-        width:320px;
-
-        max-width:320px;
-    }
-
-    .user-role
-    {
-        display:none;
-    }
-}
-
-
-
-/* =====================================================
-   RESPONSIVE : 768
-===================================================== */
-
-@media (max-width:768px)
-{
-    .topbar-actions
-    {
-        gap:12px;
-
-        padding:
-            0
-            12px;
-    }
-
-    .actions-left
-    {
-        flex:1;
-
-        min-width:0;
-
-        justify-content:flex-end;
-    }
-
-    .global-search
-    {
-        width:100%;
-
-        max-width:100%;
-    }
-
-    .actions-left app-search-box
-    {
-        width:100%;
-
-        max-width:100%;
-    }
-
-    .user-name
-    {
-        display:none;
-    }
-
-    .menu-arrow
+    .clock,
+    .user-text
     {
         display:none;
     }
 
     .user-menu-button
     {
-        width:48px;
-
-        height:48px;
-
-        padding:0;
-
-        gap:0;
-
-        justify-content:center;
-
-        border-radius:50%;
+        width:auto;
     }
-
-    .user-details
-    {
-        display:none;
-    }
-
-    .user-dropdown
-    {
-        right:0;
-
-        width:220px;
-
-        min-width:220px;
-    }
-}
-
-
-
-/* =====================================================
-   RESPONSIVE : 576
-===================================================== */
-
-@media (max-width:576px)
-{
-    .topbar-actions
-    {
-        gap:10px;
-
-        padding:
-            0
-            10px;
-    }
-
-    .global-search
-    {
-        width:100%;
-
-        max-width:250px;
-    }
-
-    .actions-left app-search-box
-    {
-        width:100%;
-
-        max-width:250px;
-    }
-
-    .avatar
-    {
-        width:40px;
-
-        height:40px;
-    }
-
-    .avatar i
-    {
-        font-size:18px;
-    }
-
-    .user-dropdown
-    {
-        right:-4px;
-
-        width:210px;
-
-        min-width:210px;
-    }
-}
+}

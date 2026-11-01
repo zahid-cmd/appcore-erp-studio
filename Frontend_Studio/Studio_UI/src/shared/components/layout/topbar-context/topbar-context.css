@@ -1,0 +1,154 @@
+/* =====================================================
+   TOPBAR CONTEXT : Branch and FY chips
+===================================================== */
+
+:host
+{
+    display:block;
+
+    min-width:0;
+}
+
+
+.context-chips
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    min-width:0;
+}
+
+
+.context-chip
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    flex:0 1 auto;
+
+    min-width:0;
+
+    height:32px;
+
+    padding:0 12px;
+
+    border:1px solid rgba(255,255,255,.10);
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.06);
+
+    color:#ffffff;
+
+    font-size:12px;
+
+    white-space:nowrap;
+
+    box-sizing:border-box;
+
+    cursor:default;
+}
+
+
+.context-chip > i
+{
+    color:#93b4f5;
+
+    font-size:13px;
+}
+
+
+.context-label
+{
+    color:#a9bbd8;
+}
+
+
+.context-value
+{
+    min-width:0;
+
+    font-weight:700;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+
+/* No financial year for today */
+
+.context-chip.warning
+{
+    border-color:rgba(251,191,36,.45);
+
+    background:rgba(251,191,36,.10);
+}
+
+
+.context-chip.warning > i
+{
+    color:#fbbf24;
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .context-chip
+{
+    border-color:#c3d4f2;
+
+    background:#f4f8ff;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .context-chip > i
+{
+    color:#2563eb;
+}
+
+
+:host-context(.appearance-light) .context-label
+{
+    color:#52627f;
+}
+
+
+:host-context(.appearance-light) .context-chip.warning
+{
+    border-color:#fcd34d;
+
+    background:#fffbeb;
+}
+
+
+:host-context(.appearance-light) .context-chip.warning > i
+{
+    color:#d97706;
+}
+
+
+/* =====================================================
+   NARROW SCREENS : drop the chips
+===================================================== */
+
+@media (max-width: 1280px)
+{
+    .context-chip
+    {
+        display:none;
+    }
+}

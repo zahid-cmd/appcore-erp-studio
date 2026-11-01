@@ -27,6 +27,10 @@ public class CreateSparePartsDto
 
     public int RedLevel { get; set; }
 
+    // Highest stock wanted (0 = not set) : a purchase order
+    // cannot take the company stock above it
+    public int MaxStockLevel { get; set; }
+
     public string Remarks { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;

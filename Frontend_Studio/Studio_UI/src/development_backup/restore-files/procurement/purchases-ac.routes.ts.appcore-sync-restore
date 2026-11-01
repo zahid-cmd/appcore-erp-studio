@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const PurchasesAcRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Purchases - AC'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases-ac/list/purchases-ac-list'
+            )
+            .then(
+                m =>
+                    m.PurchasesAcList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Purchases - AC'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases-ac/form/purchases-ac-form'
+            )
+            .then(
+                m =>
+                    m.PurchasesAcForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Purchases - AC'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases-ac/form/purchases-ac-form'
+            )
+            .then(
+                m =>
+                    m.PurchasesAcForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Purchases - AC'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/purchases-ac/form/purchases-ac-form'
+            )
+            .then(
+                m =>
+                    m.PurchasesAcForm
+            )
+    }
+
+];

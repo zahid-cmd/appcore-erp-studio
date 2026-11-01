@@ -465,6 +465,55 @@
                 </app-form-section>
 
                 }
+                @else if (entity.ValueType === 'Date')
+                {
+                <!-- =============================================
+                     SECTION 03 : DATE (e.g. Effective From)
+                ============================================== -->
+
+                <app-form-section
+                    title="Date"
+                    icon="fas fa-calendar-day">
+
+                    <app-textbox
+                        label="When Empty, Show"
+                        placeholder="e.g. From the day it is applied"
+                        textCase="none"
+                        [maxLength]="40"
+                        [(value)]="entity.ValueEmptyText"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-textbox>
+
+                    <div class="sc-date-row">
+                        <app-datepicker
+                            label="Current Date"
+                            placeholder="From the day it is applied"
+                            [value]="$any(currentDate)"
+                            (valueChange)="onCurrentDate($event)"
+                            [disabled]="isViewMode || isSaving">
+                        </app-datepicker>
+
+                        @if (currentDate && !isViewMode && !isSaving)
+                        {
+                            <button
+                                type="button"
+                                class="sc-date-clear"
+                                aria-label="Clear the date"
+                                title="Clear : from the day it is applied"
+                                (click)="clearCurrentDate()">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        }
+                    </div>
+
+                    <p class="sc-date-note">
+                        Left empty, turning the switch ON or OFF counts from the day the change is applied, and that day is written in.
+                    </p>
+
+                </app-form-section>
+
+                }
                 @else
                 {
                 <!-- =============================================

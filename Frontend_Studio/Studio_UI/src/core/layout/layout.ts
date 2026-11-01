@@ -8,6 +8,7 @@ import
     OnInit,
     OnDestroy,
     ChangeDetectorRef,
+    computed,
     inject
 }
 from '@angular/core';
@@ -53,9 +54,21 @@ from '../footer/footer';
 
 import
 {
+    TopbarNavComponent
+}
+from '../../shared/components/layout/topbar-nav/topbar-nav';
+
+import
+{
     BreadcrumbComponent
 }
 from '../../shared/components/layout/breadcrumb/breadcrumb';
+
+import
+{
+    CalculatorWindowComponent
+}
+from '../../shared/components/layout/calculator-window/calculator-window';
 
 import
 {
@@ -87,6 +100,12 @@ import
 }
 from '../effective-access/effective-access.service';
 
+import
+{
+    ShellService
+}
+from '../shell/shell.service';
+
 
 //===============================================================
 // Component
@@ -112,9 +131,13 @@ from '../effective-access/effective-access.service';
 
         FooterComponent,
 
+        TopbarNavComponent,
+
         BreadcrumbComponent,
 
         ToastComponent,
+
+        CalculatorWindowComponent,
 
         AboutAppCoreComponent
     ],
@@ -158,6 +181,9 @@ implements
     private readonly effectiveAccessService =
         inject(EffectiveAccessService);
 
+    private readonly shellService =
+        inject(ShellService);
+
 
     //===========================================================
     // Properties
@@ -172,6 +198,38 @@ implements
     showAbout =
         false;
 
+
+    //===========================================================
+    // Sidebar Auto-fit Width
+    // ----------------------------------------------------------
+    // The sidebar measures its longest name and stores the
+    // width in ShellService. It is set on .layout as
+    // --sidebar-width, so the sidebar, the top bar logo block
+    // and the footer version block all follow it. null = keep
+    // the starting width from layout.css.
+    //===========================================================
+
+    // Side / Top layout and Deep / Light chrome (per user).
+    readonly layoutMode =
+        this.shellService.layoutMode;
+
+    readonly appearance =
+        this.shellService.appearance;
+
+
+    readonly sidebarFitWidth =
+        computed(
+            () =>
+            {
+                const width =
+                    this.shellService.sidebarWidth();
+
+                return width
+                    ? `${width}px`
+                    : null;
+            }
+        );
+
     private readonly subscriptions =
         new Subscription();
 
@@ -183,6 +241,9 @@ implements
     ngOnInit():
         void
     {
+        // Layout and appearance before the first paint.
+        this.shellService.ensureUserState();
+
         this.loadUserPermissions();
 
         this.updateDashboardState(

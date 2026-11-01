@@ -56,6 +56,32 @@ Routes =
 
                 // MANUAL-END : SUB-003-002-012
 
+            // MANUAL : SUB-003-002-015 (not managed by Submenu Synchronization)
+
+                //===========================================================
+                // Posting Setup (single custom page)
+                //===========================================================
+
+                {
+                    path:'posting-setup',
+
+                    data:
+                    {
+                        breadcrumb:'Posting Setup'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './posting-setup.routes'
+                        )
+                        .then(
+                            m =>
+                                m.PostingSetupRoutes
+                        )
+                },
+
+                // MANUAL-END : SUB-003-002-015
+
             // AUTO-BEGIN : SUB-003-002-002
 
                 //===========================================================
@@ -398,4 +424,4 @@ Routes =
 
     }
 
-];
+];

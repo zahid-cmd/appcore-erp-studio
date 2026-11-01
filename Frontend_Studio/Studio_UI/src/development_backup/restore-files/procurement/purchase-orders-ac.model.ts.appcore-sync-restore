@@ -1,0 +1,90 @@
+/* ============================================================
+   Purchase Orders - AC
+============================================================ */
+
+export interface PurchaseOrdersAc
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Purchase Orders - AC
+============================================================ */
+
+export interface CreatePurchaseOrdersAc
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Purchase Orders - AC
+============================================================ */
+
+export interface UpdatePurchaseOrdersAc
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Purchase Orders - AC Defaults
+============================================================ */
+
+export interface PurchaseOrdersAcDefaults
+{
+    code:
+        string;
+}

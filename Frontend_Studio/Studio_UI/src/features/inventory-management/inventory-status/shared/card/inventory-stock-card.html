@@ -1,0 +1,381 @@
+<div
+    class="sc-backdrop"
+    (click)="close()">
+</div>
+
+<aside
+    class="sc-panel"
+    role="dialog"
+    aria-label="Stock card">
+
+    <!-- =====================================================
+         HEAD
+    ====================================================== -->
+
+    <div class="sc-head">
+
+        <div class="sc-title">
+
+            <span class="sc-eyebrow">Stock Card</span>
+
+            <strong>
+                {{ card?.Product?.ProductName || 'Loading…' }}
+            </strong>
+
+            @if (card)
+            {
+                <span class="sc-sub">
+                    {{ card.Product.ProductCode }}
+                    @if (card.Product.ColorName) { · {{ card.Product.ColorName }} }
+                    @if (card.Product.BrandName) { · {{ card.Product.BrandName }} }
+                    @if (card.Product.CategoryName) { · {{ card.Product.CategoryName }} }
+                    @if (card.Product.Unit) { · {{ card.Product.Unit }} }
+                </span>
+            }
+
+        </div>
+
+        @if (card)
+        {
+            <span [class]="'sc-status ' + statusClass">
+                {{ card.Product.StockStatus }}
+            </span>
+        }
+
+        <button
+            type="button"
+            class="sc-x"
+            title="Close"
+            aria-label="Close"
+            (click)="close()">
+            <i class="fas fa-xmark"></i>
+        </button>
+
+    </div>
+
+    <!-- =====================================================
+         FIGURES
+    ====================================================== -->
+
+    @if (card)
+    {
+        <div class="sc-figures">
+
+            <div class="sc-fig">
+                <span>In Transit</span>
+                <b>{{ qty(card.Product.InTransit) }}</b>
+            </div>
+
+            <div class="sc-fig">
+                <span>On Hand</span>
+                <b>{{ qty(card.Product.OnHand) }}</b>
+            </div>
+
+            <div class="sc-fig sc-fig-total">
+                <span>Total</span>
+                <b>{{ qty(card.Product.Total) }}</b>
+            </div>
+
+            @if (card.CanViewCost)
+            {
+                <div class="sc-fig">
+                    <span>Avg. Cost</span>
+                    <b>{{ money(card.Product.AverageCost) }}</b>
+                </div>
+
+                <div class="sc-fig">
+                    <span>Stock Value</span>
+                    <b>{{ money(card.Product.StockValue) }}</b>
+                </div>
+            }
+
+            <div class="sc-fig sc-fig-levels">
+                <span>Re-order · Red · Max</span>
+                <b>
+                    {{ card.Product.ReorderLevel || '–' }}
+                    · {{ card.Product.RedLevel || '–' }}
+                    · {{ card.Product.MaxStockLevel || '–' }}
+                </b>
+            </div>
+
+        </div>
+
+        <!-- =================================================
+             TABS
+        ================================================== -->
+
+        <div class="sc-tabs">
+
+            @for (item of tabs; track item.id)
+            {
+                <button
+                    type="button"
+                    class="sc-tab"
+                    [class.sc-tab-on]="tab === item.id"
+                    (click)="setTab(item.id)">
+                    {{ item.label }}
+                    <span class="sc-count">{{ item.count }}</span>
+                </button>
+            }
+
+        </div>
+    }
+
+    <!-- =====================================================
+         BODY
+    ====================================================== -->
+
+    <div class="sc-body appcore-scrollbar">
+
+        @if (loading && !card)
+        {
+            <div class="sc-empty">
+                <i class="fas fa-spinner fa-spin"></i>
+                Loading the stock card…
+            </div>
+        }
+        @else if (error)
+        {
+            <div class="sc-empty sc-error">
+                <i class="fas fa-circle-exclamation"></i>
+                {{ error }}
+            </div>
+        }
+        @else if (card)
+        {
+            <!-- ================= BATCHES ================= -->
+
+            @if (tab === 'batches')
+            {
+                @if (card.Batches.length === 0)
+                {
+                    <div class="sc-empty">No batch holds stock here.</div>
+                }
+                @else
+                {
+                    <table class="sc-table">
+                        <thead>
+                            <tr>
+                                <th>Batch / Purchase</th>
+                                <th>Supplier</th>
+                                <th class="sc-r">In Transit</th>
+                                <th class="sc-r">On Hand</th>
+                                @if (card.CanViewCost)
+                                {
+                                    <th class="sc-r">Unit Cost</th>
+                                    <th class="sc-r">Value</th>
+                                }
+                                <th class="sc-r">Age</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (batch of card.Batches; track batch.StockBatchId; let first = $first)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="sc-main">
+                                            {{ batch.SourceNo || batch.BatchNo }}
+                                            @if (first)
+                                            {
+                                                <span class="sc-chip" title="Oldest batch : sold first">next out</span>
+                                            }
+                                        </div>
+                                        <div class="sc-dim">{{ batch.BatchNo }} · {{ date(batch.SourceDate) }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="sc-main sc-clip">{{ batch.SupplierName || batch.SourceType }}</div>
+                                        <div class="sc-dim">{{ batch.BranchName }}</div>
+                                    </td>
+                                    <td class="sc-r">{{ batch.InTransit ? qty(batch.InTransit) : '–' }}</td>
+                                    <td class="sc-r">{{ batch.OnHand ? qty(batch.OnHand) : '–' }}</td>
+                                    @if (card.CanViewCost)
+                                    {
+                                        <td class="sc-r">{{ money(batch.UnitCost) }}</td>
+                                        <td class="sc-r">{{ money(batch.Value) }}</td>
+                                    }
+                                    <td class="sc-r sc-dim">{{ batch.AgeDays }} d</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            }
+
+            <!-- ================= LEDGER ================== -->
+
+            @if (tab === 'ledger')
+            {
+                @if (card.Movements.length === 0)
+                {
+                    <div class="sc-empty">No stock movement yet.</div>
+                }
+                @else
+                {
+                    <table class="sc-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Document</th>
+                                <th>Bucket</th>
+                                <th class="sc-r">In</th>
+                                <th class="sc-r">Out</th>
+                                <th class="sc-r">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (move of card.Movements; track move.StockMovementId)
+                            {
+                                <tr [class.sc-rev]="move.IsReversal">
+                                    <td class="sc-nowrap">{{ date(move.DocumentDate) }}</td>
+                                    <td>
+                                        <div class="sc-main">{{ move.DocumentNo }}</div>
+                                        <div class="sc-dim">
+                                            {{ movementLabel(move.MovementType) }}
+                                            @if (move.BranchName) { · {{ move.BranchName }} }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>{{ move.Bucket }}</div>
+                                        @if (move.WarehouseName)
+                                        {
+                                            <div class="sc-dim">{{ move.WarehouseName }}</div>
+                                        }
+                                    </td>
+                                    <td class="sc-r sc-in">{{ move.QuantityIn ? qty(move.QuantityIn) : '' }}</td>
+                                    <td class="sc-r sc-out">{{ move.QuantityOut ? qty(move.QuantityOut) : '' }}</td>
+                                    <td class="sc-r sc-bal">{{ qty(move.Balance) }}</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            }
+
+            <!-- ================= WHERE =================== -->
+
+            @if (tab === 'places')
+            {
+                @if (card.Places.length === 0)
+                {
+                    <div class="sc-empty">Nothing in stock here.</div>
+                }
+                @else
+                {
+                    <table class="sc-table">
+                        <thead>
+                            <tr>
+                                <th>Branch</th>
+                                <th>Warehouse</th>
+                                @if (page.showLocation)
+                                {
+                                    <th>Location</th>
+                                }
+                                <th class="sc-r">Quantity</th>
+                                @if (card.CanViewCost)
+                                {
+                                    <th class="sc-r">Value</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (place of card.Places; track $index)
+                            {
+                                <tr>
+                                    <td>{{ place.BranchName }}</td>
+                                    <td>
+                                        @if (place.WarehouseName)
+                                        {
+                                            {{ place.WarehouseName }}
+                                        }
+                                        @else
+                                        {
+                                            <span class="sc-chip sc-chip-blue">In Transit</span>
+                                        }
+                                    </td>
+                                    @if (page.showLocation)
+                                    {
+                                        <td class="sc-dim">{{ place.Location || '–' }}</td>
+                                    }
+                                    <td class="sc-r sc-bal">{{ qty(place.Quantity) }}</td>
+                                    @if (card.CanViewCost)
+                                    {
+                                        <td class="sc-r">{{ money(place.Value) }}</td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            }
+
+            <!-- ================= BIKES =================== -->
+
+            @if (tab === 'bikes')
+            {
+                @if (card.Bikes.length === 0)
+                {
+                    <div class="sc-empty">No bike of this model on a posted purchase.</div>
+                }
+                @else
+                {
+                    <table class="sc-table">
+                        <thead>
+                            <tr>
+                                <th>Chassis / Engine</th>
+                                <th>Key / Battery</th>
+                                <th>Purchase</th>
+                                <th class="sc-c">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (bike of card.Bikes; track bike.MotorBikeUnitId)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="sc-main sc-mono">{{ bike.ChassisNo }}</div>
+                                        <div class="sc-dim sc-mono">{{ bike.EngineNo }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="sc-mono">{{ bike.KeyNo || '–' }}</div>
+                                        <div class="sc-dim sc-mono">{{ bike.BatteryNo || '–' }}</div>
+                                    </td>
+                                    <td>
+                                        <div>{{ bike.PurchaseNo }}</div>
+                                        <div class="sc-dim">{{ date(bike.StockInDate) }}</div>
+                                    </td>
+                                    <td class="sc-c">
+                                        <span [class]="'sc-pill ' + bikeClass(bike.Status)">{{ bike.Status }}</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            }
+        }
+
+    </div>
+
+    <div class="sc-foot">
+        <span>
+            <i class="fas fa-circle-info"></i>
+            Oldest batch goes out first. In Transit is purchased stock not yet received.
+        </span>
+        <button
+            type="button"
+            class="sc-btn sc-btn-ghost"
+            title="Open the full ledger of this product (Product Ledgers)"
+            (click)="openLedger()">
+            <i class="fas fa-book-open"></i>
+            Full Ledger
+        </button>
+        <button
+            type="button"
+            class="sc-btn"
+            (click)="close()">
+            <i class="fas fa-arrow-left"></i>
+            Close
+        </button>
+    </div>
+
+</aside>

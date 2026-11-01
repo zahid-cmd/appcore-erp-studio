@@ -223,7 +223,7 @@ function readValueType
     const value =
         readText(item, 'ValueType');
 
-    return value === 'Number' || value === 'Text'
+    return value === 'Number' || value === 'Text' || value === 'Date'
         ? value
         : 'None';
 }

@@ -539,6 +539,16 @@ implements OnInit, OnDestroy
         },
 
         {
+            header:'Max',
+
+            field:'MaxStockLevel',
+
+            width:'80px',
+
+            align:'center'
+        },
+
+        {
             header:'Status',
 
             field:'IsActive',

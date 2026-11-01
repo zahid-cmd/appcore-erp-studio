@@ -12,7 +12,9 @@ import {
   Input,
   Output,
   OnChanges,
-  SimpleChanges
+  SimpleChanges,
+  ContentChild,
+  TemplateRef
 } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -81,6 +83,21 @@ export interface ListTableColumn
   flagField?: string;
   flagText?: string;
   flagTitleField?: string;
+  // Text cells : the value is a link; a click emits
+  // (cellClick) with { field, row } (e.g. open a detail row)
+  link?: boolean;
+  linkTitle?: string;
+}
+
+
+//===============================================================
+// CELL CLICK (link columns)
+//===============================================================
+
+export interface ListTableCellClickEvent
+{
+  field: string;
+  row: any;
 }
 
 
@@ -268,39 +285,12 @@ private readonly navigationContextSubscription =
   /* =====================================================
      REGISTRATION STATE
 
-     Registration availability is determined only from
-     the actual synchronization workflow state.
+     Registration does not depend on the Database Engine.
 
-     A registration lock exists when another row is:
-
-         1. Synchronized
-         2. Registered
-         3. Database table not yet created
-
-     While that pending registration exists, all OTHER
-     unregistered registration controls are disabled.
-
-     IMPORTANT:
-
-         Migration state is completely independent.
-
-     Creating or removing a migration must not enable,
-     disable, register, deregister, or otherwise modify
-     registration controls.
-
-     IMPORTANT:
-
-         A currently registered row is NEVER blocked by
-         the global registration lock.
-
-     IMPORTANT:
-
-         A registered row must always be allowed to emit
-         the registration event so the parent can perform
-         DEREGISTRATION.
-
-     Database state does not block the registration /
-     deregistration button here.
+     The Register / Deregister button is disabled only
+     while the row's code is not synchronized. Any number
+     of rows may be registered at the same time, and a
+     registered row can always be deregistered.
   ====================================================== */
 
   isRegistrationDisabled(
@@ -308,166 +298,12 @@ private readonly navigationContextSubscription =
   ):
     boolean
   {
-    //=====================================================
-    // A registered row is performing DEREGISTRATION.
-    //
-    // It must ALWAYS remain clickable.
-    //
-    // The database state must not disable the
-    // registration / deregistration button.
-    //
-    // The parent component decides whether the event
-    // performs registration or deregistration.
-    //=====================================================
-
-    if (
-      row?.dbStatus
-        ?.toLowerCase()
-      ===
-      'registered'
-    )
-    {
-      return false;
-    }
-
-
-    //=====================================================
-    // An unregistered row with an existing database table
-    // cannot be registered.
-    //=====================================================
-
-    if (
-      row?.databaseCreated === true
-    )
-    {
-      return true;
-    }
-
-
-    //=====================================================
-    // GLOBAL REGISTRATION LOCK
-    //
-    // Only an UNREGISTERED row is subject to this lock.
-    //
-    // If another backend submenu is currently:
-    //
-    //     Synchronized
-    //     +
-    //     Registered
-    //     +
-    //     Database NOT Created
-    //
-    // registration of this unregistered row is blocked.
-    //
-    // Once that database is successfully created,
-    // databaseCreated becomes true and the lock is
-    // released for the other rows.
-    //=====================================================
-
-    return this.rows.some(
-      currentRow =>
-      {
-        if (
-          this.isSameRow(
-            currentRow,
-            row
-          )
-        )
-        {
-          return false;
-        }
-
-        return this.isPendingRegistration(
-          currentRow
-        );
-      }
-    );
-  }
-
-
-  /* =====================================================
-     PENDING REGISTRATION
-
-     A pending registration exists when a row is:
-
-         1. Synchronized
-         2. Registered
-         3. Database table not yet created
-
-     Migration state is intentionally not checked here.
-
-     Migration state and Database state are completely
-     independent.
-  ====================================================== */
-
-  private isPendingRegistration(
-    row: any
-  ):
-    boolean
-  {
     return (
       row?.status
         ?.toLowerCase()
-      ===
-      'synchronized'
-
-      &&
-
-      row?.dbStatus
-        ?.toLowerCase()
-      ===
-      'registered'
-
-      &&
-
-      row?.databaseCreated
       !==
-      true
+      'synchronized'
     );
-  }
-
-
-  /* =====================================================
-     SAME ROW
-
-     Uses object reference first.
-
-     If an ID is available, it is also used so the
-     registration lock remains correct when row objects
-     are refreshed or replaced.
-  ====================================================== */
-
-  private isSameRow(
-    firstRow: any,
-    secondRow: any
-  ):
-    boolean
-  {
-    if (
-      firstRow === secondRow
-    )
-    {
-      return true;
-    }
-
-    if (
-      firstRow?.id !== undefined
-      &&
-      firstRow?.id !== null
-      &&
-      secondRow?.id !== undefined
-      &&
-      secondRow?.id !== null
-    )
-    {
-      return (
-        firstRow.id
-        ===
-        secondRow.id
-      );
-    }
-
-    return false;
   }
 
 
@@ -504,100 +340,6 @@ private readonly navigationContextSubscription =
   @Output()
   registration =
     new EventEmitter<any>();
-
-
-  /* =====================================================
-     DATABASE
-
-     Database execution is handled by the parent
-     Code Synchronization component.
-
-     This component only emits the selected row.
-
-     Flow:
-
-         Database Button
-              ↓
-         onDatabaseClick()
-              ↓
-         database.emit(row)
-              ↓
-         Parent database(row)
-              ↓
-         Confirm Dialog
-              ↓
-         Backend Database Creation / Removal
-  ====================================================== */
-
-  @Output()
-  database =
-    new EventEmitter<any>();
-
-
-  /* =====================================================
-     INITIALIZE DATABASE
-
-     Initialize Database is handled by the parent
-     Code Synchronization component.
-
-     This component only emits the selected row.
-
-     Initialize DB is available ONLY when the physical
-     database table has already been created.
-
-     Therefore:
-
-         databaseCreated === false
-                  ↓
-               DISABLED
-
-         databaseCreated === true
-                  ↓
-               ENABLED
-
-     This is intentionally independent from:
-
-         migrationCreated
-         dbStatus
-         registration state
-         restore point state
-
-     The physical database state is the only condition
-     required to enable Initialize DB.
-  ====================================================== */
-
-  @Output()
-  initializeDatabase =
-    new EventEmitter<any>();
-
-
-  /* =====================================================
-     INITIALIZE DATABASE ENABLED
-
-     The Initialize DB button is enabled only after the
-     physical database table has been created.
-
-     IMPORTANT:
-
-         Do not use dbStatus here.
-
-         dbStatus means backend registration.
-
-         databaseCreated means the physical database
-         table exists.
-
-     Therefore databaseCreated is authoritative.
-  ====================================================== */
-
-  canInitializeDatabase(
-    row: any
-  ):
-    boolean
-  {
-    return (
-      row?.databaseCreated === true
-    );
-  }
 
 
   /* =====================================================
@@ -639,6 +381,79 @@ private readonly navigationContextSubscription =
 
   @Input()
   rowActions: ListTableRowAction[] = [];
+
+
+  /* =====================================================
+     LINK CELLS + DETAIL ROW (optional, page specific)
+
+     A column with link:true shows its value as a link; a
+     click emits (cellClick). The page may give a detail
+     template; it opens as a full-width row under the row
+     whose row[detailKey] equals detailValue :
+
+       <app-list-table
+           detailKey="ProductId"
+           [detailValue]="openId"
+           [detailContext]="detailData"
+           (cellClick)="onCellClick($event)">
+           <ng-template #rowDetail let-row let-data="data">
+               …
+           </ng-template>
+       </app-list-table>
+
+     detailContext reaches the template as "data"; give a
+     new object when it changes (the table is OnPush).
+     Pages without these are unchanged.
+  ====================================================== */
+
+  @ContentChild('rowDetail')
+  detailTemplate?: TemplateRef<any>;
+
+  @Input()
+  detailKey = '';
+
+  @Input()
+  detailValue: any = null;
+
+  @Input()
+  detailContext: any = null;
+
+  @Output()
+  cellClick =
+    new EventEmitter<ListTableCellClickEvent>();
+
+  isDetailOpen(
+    row: any
+  ):
+    boolean
+  {
+    return (
+      !!this.detailTemplate
+      &&
+      !!this.detailKey
+      &&
+      this.detailValue !== null
+      &&
+      this.detailValue !== undefined
+      &&
+      row?.[this.detailKey] === this.detailValue
+    );
+  }
+
+  onCellClick(
+    row: any,
+    column: ListTableColumn,
+    event: Event
+  ):
+    void
+  {
+    event.stopPropagation();
+
+    this.cellClick.emit({
+      field: column.field,
+      row
+    });
+  }
 
   @Output()
   rowAction =
@@ -841,6 +656,43 @@ private readonly navigationContextSubscription =
 
 
   /* =====================================================
+     CELL TOOLTIP
+     Text cells show their full value on hover, so a value
+     cut short (…) by a narrow column can still be read.
+  ====================================================== */
+
+  getCellTitle(
+    row: any,
+    column: ListTableColumn
+  ):
+    string | null
+  {
+    if
+    (
+      (column.type && column.type !== 'text')
+      ||
+      column.link
+    )
+    {
+      return null;
+    }
+
+    const value =
+      this.getCellValue(
+        row,
+        column
+      );
+
+    const text =
+      value === null || value === undefined
+        ? ''
+        : String(value).trim();
+
+    return text || null;
+  }
+
+
+  /* =====================================================
      CELL FLAG (optional pill after a text value)
   ====================================================== */
 
@@ -1018,6 +870,23 @@ private readonly navigationContextSubscription =
 
       case 'not applicable':
         return 'neutral';
+
+      // Inventory Status : stock of a product / a bike
+      case 'in stock':
+        return 'active';
+
+      case 'low stock':
+        return 'pending';
+
+      case 'critical':
+        return 'closed';
+
+      case 'out of stock':
+        return 'inactive';
+
+      case 'in transit':
+      case 'partly received':
+        return 'approved';
 
       default:
         return 'neutral';
@@ -1287,103 +1156,6 @@ private readonly navigationContextSubscription =
 
 
   /* =====================================================
-     DATABASE CLICK
-
-     Database state is controlled by the parent.
-
-     This method only emits the selected row.
-
-     The parent Code Synchronization component decides
-     whether the operation is:
-
-         Create Database
-
-     or
-
-         Remove Database
-
-     and opens the Confirm Dialog before execution.
-  ====================================================== */
-
-  onDatabaseClick(
-    row: any,
-    event: MouseEvent
-  ):
-    void
-  {
-    event.stopPropagation();
-
-    console.log(
-      'DATABASE CLICK',
-      row
-    );
-
-    this.database.emit(
-      row
-    );
-  }
-
-
-  /* =====================================================
-     INITIALIZE DATABASE CLICK
-
-     Initialization is controlled by the parent.
-
-     The Initialize DB operation MUST NOT emit while the
-     physical database table does not exist.
-
-     This guard is intentionally duplicated here even
-     though the HTML button is disabled.
-
-     Therefore:
-
-         databaseCreated !== true
-                  ↓
-               RETURN
-
-         databaseCreated === true
-                  ↓
-                EMIT
-  ====================================================== */
-
-  onInitializeDatabaseClick(
-    row: any,
-    event: MouseEvent
-  ):
-    void
-  {
-    event.stopPropagation();
-
-    //=====================================================
-    // INITIALIZE DATABASE GUARD
-    //
-    // The database must already exist before Initialize DB
-    // can be executed.
-    //
-    // This prevents the parent Initialize DB workflow from
-    // being triggered while the database is still in its
-    // initial / virgin state.
-    //=====================================================
-
-    if (
-      row?.databaseCreated !== true
-    )
-    {
-      return;
-    }
-
-    console.log(
-      'INITIALIZE DATABASE CLICK',
-      row
-    );
-
-    this.initializeDatabase.emit(
-      row
-    );
-  }
-
-
-  /* =====================================================
      EDIT CLICK
   ====================================================== */
 
@@ -1458,4 +1230,4 @@ private readonly navigationContextSubscription =
       ??
       index;
   }
-}
+}

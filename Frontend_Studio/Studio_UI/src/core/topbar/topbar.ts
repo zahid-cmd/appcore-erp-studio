@@ -38,6 +38,30 @@ import
 }
 from '../../shared/components/layout/topbar-actions/topbar-actions';
 
+import
+{
+    TopbarSearchComponent
+}
+from '../../shared/components/layout/topbar-search/topbar-search';
+
+import
+{
+    TopbarContextComponent
+}
+from '../../shared/components/layout/topbar-context/topbar-context';
+
+import
+{
+    TopbarSwitchesComponent
+}
+from '../../shared/components/layout/topbar-switches/topbar-switches';
+
+import
+{
+    TopbarCalculatorComponent
+}
+from '../../shared/components/layout/topbar-calculator/topbar-calculator';
+
 
 //===============================================================
 // Change Password
@@ -108,6 +132,14 @@ from '../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
         TopbarHeaderComponent,
 
         TopbarActionsComponent,
+
+        TopbarSearchComponent,
+
+        TopbarContextComponent,
+
+        TopbarSwitchesComponent,
+
+        TopbarCalculatorComponent,
 
         ChangePasswordComponent,
 

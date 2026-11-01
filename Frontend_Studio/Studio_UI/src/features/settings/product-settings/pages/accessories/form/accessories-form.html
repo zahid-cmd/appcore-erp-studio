@@ -410,6 +410,22 @@
 
                 </app-textbox>
 
+                <!-- Max Stock Level -->
+
+                <app-textbox
+
+                    label="Max Stock Level"
+
+                    placeholder="0 = not set"
+
+                    [value]="maxStockLevelText"
+
+                    (valueChange)="onMaxStockLevelChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
 
                 <!-- =========================================
                      STORAGE LOCATIONS

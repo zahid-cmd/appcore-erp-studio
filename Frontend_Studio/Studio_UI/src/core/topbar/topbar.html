@@ -1,10 +1,15 @@
 <!-- =====================================================
      TOPBAR
+     -----------------------------------------------------
+     Left    logo block (same width as the sidebar) and
+             sidebar toggle
+     Center  page search (Ctrl K) and Branch / FY chips
+     Right   Light / Deep and Side / Top switches, clock,
+             notifications, profile
 ===================================================== -->
 
-<div
-    class="topbar"
-    style="overflow: visible;">
+<div class="topbar">
+
 
     <!-- =================================================
          LEFT
@@ -12,7 +17,8 @@
 
     <div class="topbar-left">
 
-        <app-topbar-header></app-topbar-header>
+        <app-topbar-header>
+        </app-topbar-header>
 
     </div>
 
@@ -24,6 +30,11 @@
 
     <div class="topbar-center">
 
+        <app-topbar-search>
+        </app-topbar-search>
+
+        <app-topbar-context>
+        </app-topbar-context>
 
     </div>
 
@@ -35,12 +46,21 @@
 
     <div class="topbar-right">
 
+        <app-topbar-switches>
+        </app-topbar-switches>
+
+        <!-- Calculator (Alt C) : opens the floating window -->
+
+        <app-topbar-calculator>
+        </app-topbar-calculator>
+
         <app-topbar-actions
             (profileClick)="onProfileClick()"
             (changePasswordClick)="onChangePasswordClick()">
         </app-topbar-actions>
 
     </div>
+
 
 </div>
 
@@ -49,70 +69,38 @@
 <!-- =====================================================
      CONFIRMATION DIALOG
      -----------------------------------------------------
-     IMPORTANT:
-
-     This is outside the Topbar flex container so the
-     dialog cannot affect the position of the Topbar
-     actions.
+     The only confirm dialog in the shell (Change Password
+     and Logout both use it). Kept outside the Topbar flex
+     container so it cannot move the Topbar items.
 ===================================================== -->
 
-<app-confirm-dialog></app-confirm-dialog>
+<app-confirm-dialog>
+</app-confirm-dialog>
 
 
 
 <!-- =====================================================
      CHANGE PASSWORD
      -----------------------------------------------------
-     IMPORTANT:
+     changePasswordMounted : component lifetime
+     changePasswordOpened  : panel visibility
 
-     The component remains mounted while the confirmation
-     dialog is displayed.
-
-     changePasswordMounted:
-
-         Controls component lifetime.
-
-     changePasswordOpened:
-
-         Controls Change Password shell visibility.
-
-     The ChangePasswordComponent itself remains mounted
-     so its Progress Dialog can remain independently
-     visible during password update.
-
-     Therefore:
-
-         Change Password
-              ↓
-         Update Password
-              ↓
-         Change Password shell hidden
-              ↓
-         Confirm Dialog
-              ↓
-         Cancel
-              ↓
-         Change Password shell visible again
-
-     The same ChangePasswordComponent instance is retained,
-     so entered form values are preserved.
+     The component stays mounted while its confirmation
+     dialog is shown, so Cancel brings the same form back
+     with the values already typed.
 ===================================================== -->
 
 <app-change-password
     *ngIf="changePasswordMounted"
-
     [visible]="
         changePasswordOpened
     "
-
     (close)="
         onChangePasswordClose()
     "
-
     (reopen)="
         onChangePasswordReopen()
     "
-
     (update)="
         onChangePasswordUpdate()
     ">

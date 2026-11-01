@@ -1,30 +1,83 @@
+/* ==========================================================
+   FOOTER VERSION
+   ----------------------------------------------------------
+   Width = --sidebar-current-width (layout.css).
+=========================================================== */
+
+:host
+{
+    display:block;
+
+    height:100%;
+}
+
+
 .footer-version
 {
-    position:relative;
-
-    width:100%;
-
-    height:50px;
-
     display:flex;
 
     align-items:center;
 
-    justify-content:center;
+    width:var(--sidebar-current-width, 300px);
 
-    gap:8px;
+    height:100%;
 
-    padding:0;
+    padding-left:22px;
+
+    border-right:1px solid rgba(255,255,255,.06);
 
     box-sizing:border-box;
 
-    background:
-        linear-gradient(
-            135deg,
-            #e4e8ee 0%,
-            #dfe4eb 48%,
-            #d9dfe7 100%
-        );
+    transition:
+        width .25s ease,
+        padding .25s ease;
+}
 
-    overflow:hidden;
+
+.footer-version.collapsed
+{
+    justify-content:center;
+
+    padding-left:0;
+}
+
+
+.version-label
+{
+    padding:2px 8px;
+
+    border-radius:6px;
+
+    background:rgba(255,255,255,.08);
+
+    color:#ffffff;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    white-space:nowrap;
+
+    cursor:default;
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .footer-version
+{
+    border-right-color:#cdd7e6;
+}
+
+
+:host-context(.appearance-light) .version-label
+{
+    background:#eef4ff;
+
+    color:#1d4ed8;
 }

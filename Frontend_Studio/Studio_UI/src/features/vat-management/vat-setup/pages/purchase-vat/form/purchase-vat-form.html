@@ -273,11 +273,12 @@
                 icon="fas fa-book">
 
 
-                <!-- VAT Current Account (sub group SUB-002-002-011) -->
+                <!-- VAT Current Account : set on Posting Setup
+                     (Settings › Account Settings), read-only here -->
 
                 <app-search-dropdown
 
-                    label="VAT Current Account"
+                    label="VAT Current Account (Posting Setup)"
 
                     [items]="ledgerItems"
 
@@ -285,7 +286,7 @@
 
                     (valueChange)="onLedgerChange($event)"
 
-                    [disabled]="isViewMode || isSaving"
+                    [disabled]="true"
 
                     [required]="true">
 
@@ -325,4 +326,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

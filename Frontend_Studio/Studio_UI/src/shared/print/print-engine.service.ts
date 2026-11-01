@@ -1379,6 +1379,9 @@ const MONTHS:
 const BASE_CSS =
 `
 @page { size: A4; margin: 0; }
+/* Landscape pages print on landscape paper (named page) */
+@page pv-landscape-page { size: A4 landscape; margin: 0; }
+.pv-page.pv-landscape { page: pv-landscape-page; }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body { background: #e3e6eb; font-family: "Segoe UI", Arial, sans-serif; color: #111827; font-size: 10pt;
@@ -1395,6 +1398,7 @@ body { background: #e3e6eb; font-family: "Segoe UI", Arial, sans-serif; color: #
 .pv-page-body > .pv-end { margin-top: auto; }
 .pv-page-no { flex: 0 0 auto; min-height: 4mm; padding-top: 1.5mm; font-size: 7.5pt; color: #6b7280; text-align: center; }
 .pv-flow { width: 210mm; margin: 0 auto; background: #fff; }
+.pv-flow.pv-landscape { width: 297mm; }
 .pv-current { outline: 3px solid #3b82f6; outline-offset: 2px; }
 
 /* AppCore scrollbar (preview + thumbnails) */
@@ -1499,4 +1503,4 @@ table.pv-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .pv-page:last-child { break-after: auto; page-break-after: auto; }
     .pv-current { outline: none; }
 }
-`;
+`;

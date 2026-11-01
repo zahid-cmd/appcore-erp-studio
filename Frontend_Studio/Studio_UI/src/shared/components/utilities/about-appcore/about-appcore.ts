@@ -1,6 +1,7 @@
 import {
     Component,
     EventEmitter,
+    HostListener,
     Input,
     Output
 } from '@angular/core';
@@ -27,6 +28,18 @@ export class AboutAppCoreComponent {
     closeDialog(): void {
 
         this.close.emit();
+
+    }
+
+    // Esc closes the dialog
+    @HostListener('document:keydown.escape')
+    onEscape(): void {
+
+        if (this.visible) {
+
+            this.closeDialog();
+
+        }
 
     }
 

@@ -1,200 +1,212 @@
 <!-- ============================================================
      Topbar Actions
+     ------------------------------------------------------------
+     Clock · Notifications · Profile
 ============================================================ -->
 
 <div class="topbar-actions">
 
+
     <!-- ========================================================
-         Actions Left
+         Clock
     ========================================================= -->
 
-    <div class="actions-left">
+    <div
+        class="clock"
+        [title]="clockTitle()">
 
-        <app-search-box
-            class="global-search"
-            [placeholder]="searchPlaceholder"
-            (search)="onSearch($event)">
-        </app-search-box>
+        <span class="clock-time">
+            {{ clockTime() }}
+        </span>
+
+        <span class="clock-date">
+            {{ clockDate() }}
+        </span>
 
     </div>
 
 
 
     <!-- ========================================================
-         Actions Right
+         Notifications
     ========================================================= -->
 
-    <div class="actions-right">
+    <app-topbar-notifications>
+    </app-topbar-notifications>
+
+
+
+    <!-- ========================================================
+         User Account
+    ========================================================= -->
+
+    <div class="user-account">
+
 
         <!-- ====================================================
-             User Account
-        ==================================================== -->
+             User Menu Button
+        ===================================================== -->
 
-        <div class="user-account">
+        <button
+            class="user-menu-button"
+            type="button"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="isUserMenuOpen()"
+            (click)="onUserMenuClick()">
 
-            <!-- ==================================================
-                 User Menu Button
-            ================================================== -->
+            <span class="avatar">
+                @if (photoUrl())
+                {
+                    <img
+                        class="avatar-photo"
+                        [src]="photoUrl()"
+                        [alt]="userName()"
+                        (error)="onPhotoError()">
+                }
+                @else
+                {
+                    {{ initials() }}
+                }
+            </span>
 
-            <button
-                class="user-menu-button"
-                type="button"
-                (click)="onUserMenuClick()">
+            <span class="user-text">
 
-                <!-- ==============================================
-                     Avatar
-                ============================================== -->
+                <b class="user-name">
+                    {{ userName() }}
+                </b>
 
-                <div class="avatar">
+                @if (userRole())
+                {
+                    <span class="user-role">
+                        {{ userRole() }}
+                    </span>
+                }
 
-                    <i
-                        [class]="avatarIcon">
-                    </i>
+            </span>
 
-                </div>
+            <i
+                class="fas fa-chevron-down menu-arrow"
+                [class.open]="isUserMenuOpen()">
+            </i>
 
-
-
-                <!-- ==============================================
-                     User Name
-                ============================================== -->
-
-                <div class="user-name">
-
-                    {{ userName }}
-
-                </div>
-
-
-
-                <!-- ==============================================
-                     Menu Arrow
-                ============================================== -->
-
-                <div
-                    class="menu-arrow"
-                    [class.open]="isUserMenuOpen">
-
-                    <i
-                        class="fas fa-chevron-down">
-                    </i>
-
-                </div>
-
-            </button>
+        </button>
 
 
 
-            <!-- ==================================================
-                 User Account Dropdown
-            ================================================== -->
+        <!-- ====================================================
+             User Account Dropdown
+        ===================================================== -->
 
+        @if (isUserMenuOpen())
+        {
             <div
                 class="user-dropdown"
-                *ngIf="isUserMenuOpen">
+                role="menu">
 
-                <!-- ==============================================
-                     Profile
-                ============================================== -->
+
+                <!-- Signed-in user -->
+
+                <div class="dropdown-head">
+
+                    <span class="avatar large">
+                        @if (photoUrl())
+                        {
+                            <img
+                                class="avatar-photo"
+                                [src]="photoUrl()"
+                                [alt]="userName()"
+                                (error)="onPhotoError()">
+                        }
+                        @else
+                        {
+                            {{ initials() }}
+                        }
+                    </span>
+
+                    <span class="dropdown-head-text">
+
+                        <b>{{ userName() }}</b>
+
+                        @if (loginName())
+                        {
+                            <span>{{ loginName() }}</span>
+                        }
+
+                        @if (branchName())
+                        {
+                            <span>{{ branchName() }}</span>
+                        }
+
+                    </span>
+
+                </div>
+
+
+                <!-- Profile -->
 
                 <button
                     class="user-dropdown-item"
                     type="button"
+                    role="menuitem"
                     (click)="onProfileClick()">
 
                     <span class="dropdown-icon">
-
-                        <i
-                            class="fas fa-user">
-                        </i>
-
+                        <i class="fas fa-user"></i>
                     </span>
 
                     <span class="dropdown-label">
-
                         Profile
-
                     </span>
 
                 </button>
 
 
-
-                <!-- ==============================================
-                     Change Password
-                ============================================== -->
+                <!-- Change Password -->
 
                 <button
                     class="user-dropdown-item"
                     type="button"
+                    role="menuitem"
                     (click)="onChangePasswordClick()">
 
                     <span class="dropdown-icon">
-
-                        <i
-                            class="fas fa-key">
-                        </i>
-
+                        <i class="fas fa-key"></i>
                     </span>
 
                     <span class="dropdown-label">
-
                         Change Password
-
                     </span>
 
                 </button>
 
 
-
-                <!-- ==============================================
-                     Dropdown Divider
-                ============================================== -->
-
-                <div
-                    class="dropdown-divider">
-                </div>
+                <div class="dropdown-divider"></div>
 
 
-
-                <!-- ==============================================
-                     Logout
-                ============================================== -->
+                <!-- Logout -->
 
                 <button
                     class="user-dropdown-item logout-item"
                     type="button"
+                    role="menuitem"
                     (click)="onLogout()">
 
                     <span class="dropdown-icon">
-
-                        <i
-                            class="fas fa-sign-out-alt">
-                        </i>
-
+                        <i class="fas fa-sign-out-alt"></i>
                     </span>
 
                     <span class="dropdown-label">
-
                         Logout
-
                     </span>
 
                 </button>
 
-            </div>
 
-        </div>
+            </div>
+        }
+
 
     </div>
 
-</div>
 
-
-
-<!-- ============================================================
-     Confirm Dialog
-============================================================ -->
-
-<app-confirm-dialog>
-</app-confirm-dialog>
+</div>

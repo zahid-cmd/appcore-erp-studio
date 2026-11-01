@@ -70,6 +70,21 @@ export interface Supplier
     CreditDays:
         number;
 
+    // Supplier terms : what a new purchase order takes from this
+    // supplier ('' / null = not set). Invoice Price and profit are
+    // not for Motor Bikes suppliers.
+    DefaultPriceEntry:
+        '' | 'Incl' | 'Excl' | 'None';
+
+    DefaultInvoicePrice:
+        '' | 'DP' | 'MRP';
+
+    DefaultProfitPercent:
+        number | null;
+
+    DefaultProfitOn:
+        '' | 'DP' | 'MRP';
+
     Remarks:
         string;
 
@@ -151,6 +166,21 @@ export interface CreateSupplier
     // Required, 0 = pay on purchase
     CreditDays:
         number;
+
+    // Supplier terms : what a new purchase order takes from this
+    // supplier ('' / null = not set). Invoice Price and profit are
+    // not for Motor Bikes suppliers.
+    DefaultPriceEntry:
+        '' | 'Incl' | 'Excl' | 'None';
+
+    DefaultInvoicePrice:
+        '' | 'DP' | 'MRP';
+
+    DefaultProfitPercent:
+        number | null;
+
+    DefaultProfitOn:
+        '' | 'DP' | 'MRP';
 
     Remarks:
         string;

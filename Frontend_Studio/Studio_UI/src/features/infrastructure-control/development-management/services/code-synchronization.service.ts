@@ -77,38 +77,6 @@ export interface BackendMigrationResult
 
 
 //===============================================================
-// Backend Database Result
-//===============================================================
-
-export interface BackendDatabaseResult
-{
-    success:
-        boolean;
-
-    message:
-        string;
-
-    totalOperations?:
-        number;
-
-    successfulOperations?:
-        number;
-
-    failedOperations?:
-        number;
-
-    created?:
-        boolean;
-
-    removed?:
-        boolean;
-
-    migrationName?:
-        string;
-}
-
-
-//===============================================================
 // Service
 //===============================================================
 
@@ -429,66 +397,6 @@ export class CodeSynchronizationService
         return this.http.post<void>
         (
             `${this.apiUrl}/${id}/register/rollback`,
-
-            {}
-        );
-    }
-
-
-    //===========================================================
-    // Backend Database Create
-    //===========================================================
-
-    createDatabase
-    (
-        id:
-            number
-    ):
-        Observable<BackendDatabaseResult>
-    {
-        return this.http.post<BackendDatabaseResult>
-        (
-            `${this.apiUrl}/${id}/database/create`,
-
-            {}
-        );
-    }
-
-
-    //===========================================================
-    // Backend Database Initialize
-    //===========================================================
-
-    initializeDatabase
-    (
-        id:
-            number
-    ):
-        Observable<BackendDatabaseResult>
-    {
-        return this.http.post<BackendDatabaseResult>
-        (
-            `${this.apiUrl}/${id}/database/initialize`,
-
-            {}
-        );
-    }
-
-
-    //===========================================================
-    // Backend Database Remove
-    //===========================================================
-
-    removeDatabase
-    (
-        id:
-            number
-    ):
-        Observable<BackendDatabaseResult>
-    {
-        return this.http.post<BackendDatabaseResult>
-        (
-            `${this.apiUrl}/${id}/database/remove`,
 
             {}
         );

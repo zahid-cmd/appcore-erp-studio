@@ -99,6 +99,12 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
 
     private const string ValueText = "Text";
 
+    // A date (yyyy-MM-dd), e.g. an Effective From. Empty = the day
+    // the change is applied (the server writes that day in).
+    private const string ValueDate = "Date";
+
+    private const string DateFormat = "yyyy-MM-dd";
+
     // Request status
     private const string StatusPending = "Pending";
 
@@ -386,6 +392,13 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                 : $"{state} · {entity.ValueEmptyText}";
         }
 
+        if (entity.ValueType == ValueDate)
+        {
+            return DateTime.TryParseExact(clean, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date)
+                ? $"{state} · from {date.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture)}"
+                : $"{state} · {clean}";
+        }
+
         return string.IsNullOrWhiteSpace(entity.ValueUnit)
             ? $"{state} · {clean}"
             : $"{state} · {clean} {entity.ValueUnit}";
@@ -464,6 +477,26 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             return clean;
         }
 
+        if (entity.ValueType == ValueDate)
+        {
+            // Empty : the day the change is applied (StampDate)
+            if (clean.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            string datePart =
+                clean.Length > 10 ? clean.Substring(0, 10) : clean;
+
+            if (!DateTime.TryParseExact(datePart, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
+            {
+                throw new InvalidOperationException(
+                    $"'{entity.ConfigurationName}' needs a date (yyyy-MM-dd).");
+            }
+
+            return date.ToString(DateFormat, CultureInfo.InvariantCulture);
+        }
+
         // Number
         if (clean.Length == 0)
         {
@@ -495,6 +528,59 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
         }
 
         return number.ToString(CultureInfo.InvariantCulture);
+    }
+
+
+    //===========================================================
+    // Date value left empty
+    //
+    // Turning a Date switch ON / OFF with no date picked = from
+    // the day it is applied : that day (Bangladesh time) is
+    // written in, so the switch always shows its own date.
+    // Empty with no ON / OFF change = the date stays as it is.
+    //===========================================================
+
+    private static string StampDate
+    (
+        SystemConfigurationsEntity entity,
+        string valueType,
+        bool newEnabled,
+        string value
+    )
+    {
+        if (valueType != ValueDate || value.Length > 0)
+        {
+            return value;
+        }
+
+        return newEnabled != entity.IsEnabled
+            ? TodayText()
+            : (entity.ValueType == ValueDate ? entity.Value ?? string.Empty : string.Empty);
+    }
+
+    private static string TodayText()
+    {
+        TimeZoneInfo zone;
+
+        try
+        {
+            zone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Dhaka");
+        }
+        catch (Exception)
+        {
+            try
+            {
+                zone = TimeZoneInfo.FindSystemTimeZoneById("Bangladesh Standard Time");
+            }
+            catch (Exception)
+            {
+                zone = TimeZoneInfo.Local;
+            }
+        }
+
+        return TimeZoneInfo
+            .ConvertTimeFromUtc(DateTime.UtcNow, zone)
+            .ToString(DateFormat, CultureInfo.InvariantCulture);
     }
 
 
@@ -1180,10 +1266,23 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                     $"You do not have permission to change '{entity.ConfigurationName}'.");
             }
 
+            bool asRequest =
+                entity.IsCritical && !access.CanManage;
+
             string newValue =
                 NormalizeSwitchValue(
                     entity,
                     change.Value);
+
+            if (!asRequest)
+            {
+                newValue =
+                    StampDate(
+                        entity,
+                        entity.ValueType,
+                        change.IsEnabled,
+                        newValue);
+            }
 
             if (entity.IsEnabled == change.IsEnabled && (entity.Value ?? string.Empty) == newValue)
             {
@@ -1214,7 +1313,7 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                     NewEnabled = change.IsEnabled,
                     NewValue = newValue,
                     Reason = reason,
-                    AsRequest = entity.IsCritical && !access.CanManage
+                    AsRequest = asRequest
                 });
         }
 
@@ -1580,9 +1679,13 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
         try
         {
             approvedValue =
-                NormalizeSwitchValue(
+                StampDate(
                     entity,
-                    request.ToValue);
+                    entity.ValueType,
+                    request.ToEnabled,
+                    NormalizeSwitchValue(
+                        entity,
+                        request.ToValue));
         }
         catch (InvalidOperationException ex)
         {
@@ -2061,6 +2164,7 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
         valueType =
             string.Equals(valueType, ValueNumber, StringComparison.OrdinalIgnoreCase) ? ValueNumber
             : string.Equals(valueType, ValueText, StringComparison.OrdinalIgnoreCase) ? ValueText
+            : string.Equals(valueType, ValueDate, StringComparison.OrdinalIgnoreCase) ? ValueDate
             : ValueNone;
 
         int? min = valueType == ValueNumber ? dto.ValueMin : null;
@@ -2141,10 +2245,10 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             OnDescription = Limit(dto.OnDescription, DescriptionMaxLength, "ON text"),
             OffDescription = Limit(dto.OffDescription, DescriptionMaxLength, "OFF text"),
             ValueType = valueType,
-            ValueUnit = valueType == ValueNone ? string.Empty : Limit(dto.ValueUnit, UnitMaxLength, "Unit"),
+            ValueUnit = valueType == ValueNone || valueType == ValueDate ? string.Empty : Limit(dto.ValueUnit, UnitMaxLength, "Unit"),
             ValueMin = min,
             ValueMax = max,
-            ValueEmptyText = valueType == ValueNumber ? Limit(dto.ValueEmptyText, EmptyTextMaxLength, "Empty value text") : string.Empty,
+            ValueEmptyText = valueType == ValueNumber || valueType == ValueDate ? Limit(dto.ValueEmptyText, EmptyTextMaxLength, "Empty value text") : string.Empty,
             ParentCode = parentCode,
             Remarks = Limit(dto.Remarks, RemarksMaxLength, "Remarks")
         };
@@ -2393,7 +2497,11 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
         string value =
             definition.ValueType == ValueNone
                 ? (entity.ValueType == ValueNone ? entity.Value ?? string.Empty : string.Empty)
-                : NormalizeSwitchValue(probe, dto.Value);
+                : StampDate(
+                    entity,
+                    definition.ValueType,
+                    dto.IsEnabled,
+                    NormalizeSwitchValue(probe, dto.Value));
 
         string defaultValue =
             CheckValueForDefinition(definition, dto.DefaultValue, "default value");

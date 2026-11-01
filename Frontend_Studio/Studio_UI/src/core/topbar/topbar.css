@@ -1,241 +1,190 @@
 /* =====================================================
    TOPBAR
    -----------------------------------------------------
-   Application navigation layer.
+   Height comes from --topbar-height (layout.css).
 
    IMPORTANT:
 
-       Toasts must always appear above the Topbar.
-
-       Therefore the Topbar remains a stacking context,
-       but its z-index is deliberately kept below the
-       global Toast layer.
+       Toasts must always appear above the Topbar, so
+       the Topbar is a stacking context whose z-index
+       stays below the global Toast layer.
 
        When Login Page Preview is active, the Topbar is
-       completely hidden so that the Login Page Loader
-       can occupy the viewport.
+       hidden so the Login Page Loader can use the
+       viewport.
 ===================================================== */
+
+:host
+{
+    display:block;
+
+    width:100%;
+
+    height:100%;
+}
+
 
 .topbar
 {
-    position:
-        relative;
+    position:relative;
 
-    height:
-        70px;
+    display:flex;
 
-    display:
-        flex;
+    align-items:center;
 
-    align-items:
-        center;
+    width:100%;
+
+    height:var(--topbar-height, 64px);
 
     background:
         linear-gradient(
             90deg,
-            #08122f 0%,
-            #0c1b45 35%,
-            #13285f 70%,
-            #1a3778 100%
+            #0a1631 0%,
+            #0f1f45 55%,
+            #13275a 100%
         );
 
-    box-sizing:
-        border-box;
+    border-bottom:1px solid rgba(255,255,255,.06);
 
-    overflow:
-        visible;
+    box-shadow:0 6px 18px -10px rgba(5,12,30,.8);
 
-    /*
-        Topbar application layer.
+    color:#ffffff;
 
-        Above Layout Body
-        Below History Drawer
-        Below global Toast.
-    */
-    z-index:
-        300;
+    overflow:visible;
 
-    user-select:
-        none;
+    box-sizing:border-box;
 
-    border:
-        none;
+    user-select:none;
 
-    box-shadow:
-        none;
+    z-index:300;
 }
 
 
-
 /* =====================================================
-   APPCORE ACCENT
-===================================================== */
-
-.topbar::after
-{
-    content:
-        "";
-
-    position:
-        absolute;
-
-    left:
-        0;
-
-    right:
-        0;
-
-    bottom:
-        0;
-
-    height:
-        2px;
-
-    background:
-        linear-gradient(
-            90deg,
-            #2f80ed 0%,
-            #3fa9f5 20%,
-            #63c5ff 50%,
-            #3fa9f5 80%,
-            #2f80ed 100%
-        );
-
-    opacity:
-        .95;
-
-    pointer-events:
-        none;
-}
-
-
-
-/* =====================================================
-   LEFT
+   LEFT : logo block, same width as the sidebar
 ===================================================== */
 
 .topbar-left
 {
-    flex:
-        0 0 320px;
+    display:flex;
 
-    height:
-        100%;
+    align-items:center;
 
-    display:
-        flex;
+    flex:0 0 auto;
 
-    align-items:
-        center;
+    height:100%;
 
-    justify-content:
-        flex-start;
-
-    padding:
-        0 24px;
-
-    overflow:
-        hidden;
+    min-width:0;
 }
 
 
-
 /* =====================================================
-   CENTER
+   CENTER : search and chips
 ===================================================== */
 
 .topbar-center
 {
-    flex:
-        1;
+    display:flex;
 
-    min-width:
-        0;
+    align-items:center;
 
-    height:
-        100%;
+    gap:12px;
 
-    display:
-        flex;
+    flex:1 1 auto;
 
-    align-items:
-        center;
+    height:100%;
 
-    justify-content:
-        center;
+    min-width:0;
 
-    padding:
-        0 24px;
+    padding:0 20px;
 
-    overflow:
-        hidden;
+    box-sizing:border-box;
 }
 
 
+.topbar-center app-topbar-search
+{
+    display:block;
+
+    flex:0 1 380px;
+
+    min-width:180px;
+}
+
+
+.topbar-center app-topbar-context
+{
+    display:block;
+
+    flex:0 1 auto;
+
+    min-width:0;
+
+    overflow:hidden;
+}
+
+/* Chips hide on narrow screens; see topbar-context.css */
+
 
 /* =====================================================
-   RIGHT
+   RIGHT : clock, notifications, profile
 ===================================================== */
 
 .topbar-right
 {
-    flex:
-        0 0 560px;
+    display:flex;
 
-    height:
-        100%;
+    align-items:center;
 
-    display:
-        flex;
+    justify-content:flex-end;
 
-    align-items:
-        center;
+    flex:0 0 auto;
 
-    justify-content:
-        flex-end;
+    height:100%;
 
-    padding:
-        0 24px;
+    padding-right:18px;
 
-    overflow:
-        visible;
+    position:relative;
 
-    position:
-        relative;
-
-    /*
-        Topbar controls remain above the
-        application body.
-
-        Still below History Drawer
-        and global Toast.
-    */
-    z-index:
-        301;
+    z-index:301;
 }
 
+
+/* =====================================================
+   RIGHT : spacing between the switches and the actions
+===================================================== */
+
+.topbar-right
+{
+    gap:10px;
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch.
+===================================================== */
+
+:host-context(.appearance-light) .topbar
+{
+    background:#e9eef7;
+
+    border-bottom:1px solid #cdd7e6;
+
+    box-shadow:0 6px 18px -14px rgba(19,37,74,.45);
+
+    color:#13254a;
+}
 
 
 /* =====================================================
    LOGIN PAGE PREVIEW MODE
-   -----------------------------------------------------
-   STEP 1 ONLY
-
-   When LoginPageLoader activates:
-
-       body.login-page-preview-active
-
-   the application Topbar is completely hidden.
-
-   This allows us to test the Preview viewport behavior
-   one layer at a time.
-
-   Do NOT change Footer, Toast, Loader or global CSS yet.
 ===================================================== */
 
 :host-context(body.login-page-preview-active)
 .topbar
 {
-    display:
-        none !important;
+    display:none !important;
 }

@@ -1,0 +1,90 @@
+/* ============================================================
+   Purchases - AC
+============================================================ */
+
+export interface PurchasesAc
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Purchases - AC
+============================================================ */
+
+export interface CreatePurchasesAc
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Purchases - AC
+============================================================ */
+
+export interface UpdatePurchasesAc
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Purchases - AC Defaults
+============================================================ */
+
+export interface PurchasesAcDefaults
+{
+    code:
+        string;
+}

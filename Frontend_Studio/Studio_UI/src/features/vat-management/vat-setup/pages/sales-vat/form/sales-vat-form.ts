@@ -933,7 +933,7 @@ implements OnInit, OnDestroy
     }
 
 
-    // A new type pre-selects the ledger its latest rule used
+    // A type takes its VAT Current Account from Posting Setup
     onTypeChange
     (
         value:
@@ -952,16 +952,8 @@ implements OnInit, OnDestroy
         const suggested =
             this.defaults?.SuggestedLedgers?.[this.entity.VatType] ?? '';
 
-        if
-        (
-            suggested
-            &&
-            (this.defaults?.Ledgers ?? []).some(ledger => ledger.LedgerCode === suggested && ledger.IsActive)
-        )
-        {
-            this.entity.LedgerCode =
-                suggested;
-        }
+        this.entity.LedgerCode =
+            suggested;
 
         this.onValueChange();
     }
@@ -1398,7 +1390,7 @@ implements OnInit, OnDestroy
             !this.entity.LedgerCode
         )
         {
-            return 'VAT Current Account is required.';
+            return 'No VAT Current Account for this type on Posting Setup (Settings › Account Settings).';
         }
 
         return '';
@@ -2059,4 +2051,4 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
-}
+}

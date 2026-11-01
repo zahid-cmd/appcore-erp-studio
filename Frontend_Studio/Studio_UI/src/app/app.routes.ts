@@ -302,24 +302,24 @@ export const routes:
             // AUTO-BEGIN : MOD-012
 
             //===========================================================
-            // Store Management
+            // Inventory Management
             //===========================================================
 
             {
-                path:'store-management',
+                path:'inventory-management',
 
                 data:
                 {
-                    breadcrumb:'Store Management'
+                    breadcrumb:'Inventory Management'
                 },
 
                 loadChildren:() =>
                     import(
-                        '../features/store-management/routes/store-management.routes'
+                        '../features/inventory-management/routes/inventory-management.routes'
                     )
                     .then(
                         m =>
-                            m.storeManagementRoutes
+                            m.inventoryManagementRoutes
                     )
             },
 

@@ -4,9 +4,10 @@
 
 using Microsoft.AspNetCore.Mvc;
 
+using AppCore.Application.Common.ActivityHistory.Interfaces;
+using AppCore.Application.Platform.EffectiveAccess.Interfaces;
 using AppCore.Application.Procurement.MotorBikePurchase;
-
-using AppCore.Domain.Entities.Procurement.MotorBikePurchase;
+using AppCore.Api.Controllers.Procurement.Shared;
 
 
 //===============================================================
@@ -17,7 +18,7 @@ namespace AppCore.Api.Controllers.Procurement.MotorBikePurchase;
 
 
 //===============================================================
-// PurchasesMbController
+// Purchases - MB : the shared Purchases endpoints
 //===============================================================
 
 [ApiController]
@@ -25,292 +26,26 @@ namespace AppCore.Api.Controllers.Procurement.MotorBikePurchase;
 [Route("api/procurement/motor-bike-purchase/purchases-mb")]
 
 public class PurchasesMbController
-    : ControllerBase
+    : PurchaseControllerBase
 {
-    //===========================================================
-    // Repository
-    //===========================================================
-
-    private readonly IPurchasesMbRepository _repository;
-
-
-    //===========================================================
-    // Constructor
-    //===========================================================
-
-    public PurchasesMbController
-    (
-        IPurchasesMbRepository repository
-    )
+    public PurchasesMbController(
+        IPurchasesMbRepository repository,
+        IActivityHistoryRepository activityHistoryRepository,
+        IEffectiveAccessRepository effectiveAccess,
+        ILogger<PurchasesMbController> logger)
+        : base(
+            repository,
+            activityHistoryRepository,
+            effectiveAccess,
+            logger)
     {
-        _repository =
-            repository;
     }
 
 
-    //===========================================================
-    // Get All
-    //===========================================================
+    protected override string PageType =>
+        "MB";
 
-    [HttpGet]
 
-    public async Task<IActionResult> GetAll()
-    {
-        var entities =
-            await _repository
-                .GetAllAsync();
-
-
-        return Ok(
-            entities
-        );
-    }
-
-
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
-    [HttpGet("{id:long}")]
-
-    public async Task<IActionResult> GetById
-    (
-        long id
-    )
-    {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        return Ok(
-            entity
-        );
-    }
-
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    [HttpPost]
-
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreatePurchasesMbDto dto
-    )
-    {
-        var entity =
-            new PurchasesMb
-            {
-                Name =
-                    dto.Name,
-
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
-
-                SampleField =
-                    dto.SampleField,
-
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
-    }
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    [HttpPut("{id:long}")]
-
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdatePurchasesMbDto dto
-    )
-    {
-        if
-        (
-            id != dto.Id
-        )
-        {
-            return BadRequest();
-        }
-
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
-
-        return NoContent();
-    }
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    [HttpDelete("{id:long}")]
-
-    public async Task<IActionResult> Delete
-    (
-        long id
-    )
-    {
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        await _repository
-            .DeleteAsync(
-                id
-            );
-
-
-        return NoContent();
-    }
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    [HttpPut("{id:long}/restore")]
-
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
-    {
-        await _repository
-            .RestoreAsync(
-                id
-            );
-
-
-        return NoContent();
-    }
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    [HttpGet("history")]
-
-    public async Task<IActionResult> GetHistory()
-    {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
-        return Ok(
-            history
-        );
-    }
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    [HttpGet("{id:long}/history")]
-
-    public async Task<IActionResult> GetEntityHistory
-    (
-        long id
-    )
-    {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
-
-
-        return Ok(
-            history
-        );
-    }
+    protected override string PageRoute =>
+        "/procurement/%/purchases-mb";
 }

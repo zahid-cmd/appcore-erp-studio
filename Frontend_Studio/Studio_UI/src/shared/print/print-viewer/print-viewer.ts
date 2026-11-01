@@ -265,6 +265,67 @@ implements AfterViewInit, OnDestroy
             );
     }
 
+    // Portrait / Landscape switch (sources with canRotate)
+    landscape:
+        boolean =
+        false;
+
+    get canRotate():
+        boolean
+    {
+        return !!this.source?.canRotate;
+    }
+
+    setOrientation
+    (
+        landscape:
+            boolean
+    ):
+        void
+    {
+        if
+        (
+            this.landscape === landscape
+            ||
+            this.loading
+            ||
+            !!this.busy
+        )
+        {
+            return;
+        }
+
+        this.landscape =
+            landscape;
+
+        this.cdr.detectChanges();
+
+        // Keep it in the address (refresh / share)
+        const url =
+            this.router.serializeUrl(
+                this.router.createUrlTree(
+                    [],
+                    {
+                        relativeTo:this.route,
+                        queryParams:{ orient:landscape ? 'landscape' : null },
+                        queryParamsHandling:'merge'
+                    }
+                )
+            );
+
+        window.history.replaceState(
+            window.history.state,
+            '',
+            url
+        );
+
+        setTimeout(
+            () =>
+                void this.render(),
+            0
+        );
+    }
+
     get pageCount():
         number
     {
@@ -353,6 +414,9 @@ implements AfterViewInit, OnDestroy
 
         this.choice =
             snapshot.queryParamMap.get('doc') || 'all';
+
+        this.landscape =
+            snapshot.queryParamMap.get('orient') === 'landscape';
 
         const loader =
             PRINT_SOURCES[key];
@@ -563,10 +627,21 @@ implements AfterViewInit, OnDestroy
         const documents =
             this.activeDocuments;
 
+        // The orientation reaches the templates through the kit
+        const landscape =
+            this.canRotate && this.landscape;
+
+        const kit:
+            PrintKit =
+            {
+                ...this.kit,
+                landscape
+            };
+
         const html =
             this.engine.buildHtml(
                 `${this.source.title} ${this.recordTitle}`,
-                documents.map(item => item.render(this.data, this.kit!)),
+                documents.map(item => item.render(this.data, kit)),
                 documents.map(item => item.css ?? '')
             );
 
@@ -576,8 +651,21 @@ implements AfterViewInit, OnDestroy
         this.cdr.detectChanges();
 
         doc.open();
-        doc.write(html);
+        doc.write(html.replace('</head>', `<style>${VIEW_CSS}</style></head>`));
         doc.close();
+
+        // Rotatable sources : every flow on the chosen paper
+        if
+        (
+            this.canRotate
+        )
+        {
+            doc.querySelectorAll('.pv-flow').forEach
+            (
+                flow =>
+                    flow.classList.toggle('pv-landscape', landscape)
+            );
+        }
 
         const pages =
             await this.engine.paginate(
@@ -1164,7 +1252,8 @@ implements AfterViewInit, OnDestroy
                     [],
                     {
                         relativeTo:this.route,
-                        queryParams:{ doc:key }
+                        queryParams:{ doc:key },
+                        queryParamsHandling:'merge'
                     }
                 )
             );
@@ -1395,15 +1484,22 @@ const MM_TO_PX =
 const THUMB_PANEL_WIDTH =
     300;
 
+// Main pages on screen : the viewer's light glass shows around
+// the paper (print keeps white)
+const VIEW_CSS =
+`
+@media screen { html, body { background: transparent !important; } }
+`;
+
 // Thumbnail copy : small pages, a number badge, click to open
 const THUMB_CSS =
 `
 html { overflow-x: hidden; }
-body { background: #000000 !important; }
+html, body { background: transparent !important; }
 .pv-doc { padding: 60px 0; }
-.pv-page { margin: 0 auto 70px !important; cursor: pointer; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08) !important; }
+.pv-page { margin: 0 auto 70px !important; cursor: pointer; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 18px 40px -12px rgba(15, 23, 42, 0.35) !important; }
 .pv-page::after { content: attr(data-no); position: absolute; right: 18px; bottom: 18px; z-index: 5;
-                  min-width: 120px; padding: 10px 26px; border-radius: 40px; background: rgba(30, 41, 59, 0.85);
+                  min-width: 120px; padding: 10px 26px; border-radius: 40px; background: rgba(51, 65, 85, 0.88);
                   color: #fff; font: 700 64px/1 "Segoe UI", Arial, sans-serif; text-align: center; }
 .pv-page.pv-current { outline: 12px solid #3b82f6 !important; outline-offset: 10px; }
-`;
+`;

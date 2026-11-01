@@ -17,6 +17,9 @@ using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
 
+using PostingLedgerCodes =
+    AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
+
 using SystemConfigurationsEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations;
 
@@ -106,13 +109,18 @@ public class FundTransferRepository : IFundTransferRepository
         "MFS"
     };
 
-    // Charge expense (charge the company pays), looked up by CODE
-    private static readonly Dictionary<string, string> ChargeLedgers =
-        new(StringComparer.OrdinalIgnoreCase)
+    // Charge expense (charge the company pays), ledger codes
+    // from Posting Setup; null = no charge ledger for that type
+    private string? ChargeLedgerFor(
+        string accountType)
+    {
+        return (accountType ?? string.Empty).Trim().ToUpperInvariant() switch
         {
-            ["Bank"] = "GLR-004-001-001-00001",
-            ["MFS"] = "GLR-004-001-001-00003"
+            "BANK" => PostingLedgerCodes.Get(_context, PostingPurposes.BankCharges),
+            "MFS" => PostingLedgerCodes.Get(_context, PostingPurposes.MfsCharges),
+            _ => null
         };
+    }
 
 
     //===========================================================
@@ -1523,7 +1531,7 @@ public class FundTransferRepository : IFundTransferRepository
     //   Cr each From account : amount + its charge
     //===========================================================
 
-    private static List<VoucherPostingLine> BuildPostingLines
+    private List<VoucherPostingLine> BuildPostingLines
     (
         List<FundTransferLines> lines
     )
@@ -1563,9 +1571,9 @@ public class FundTransferRepository : IFundTransferRepository
                      .GroupBy(x => x.AccountType))
         {
             string ledger =
-                ChargeLedgers.TryGetValue(group.Key, out string? code)
-                    ? code
-                    : throw new InvalidOperationException(
+                ChargeLedgerFor(group.Key)
+                    ??
+                    throw new InvalidOperationException(
                         $"No charge expense ledger for {group.Key}.");
 
             result.Add(
@@ -1700,4 +1708,4 @@ public class FundTransferRepository : IFundTransferRepository
                     !x.IsDeleted
             );
     }
-}
+}

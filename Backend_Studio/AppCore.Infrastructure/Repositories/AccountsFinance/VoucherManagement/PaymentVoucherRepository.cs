@@ -19,6 +19,9 @@ using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
 
+using PostingLedgerCodes =
+    AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
+
 using CustomerProfilesEntity =
     AppCore.Domain.Entities.Settings.ClientSettings.CustomerProfiles;
 
@@ -101,10 +104,10 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
     private const string CheckMode =
         "Check";
 
-    // Charge expense (charge borne by the company), looked up by
-    // CODE
-    private const string MfsChargeLedger =
-        "GLR-004-001-001-00003";
+    // Charge expense (charge borne by the company), ledger code
+    // from Posting Setup
+    private string MfsChargeLedger =>
+        PostingLedgerCodes.Get(_context, PostingPurposes.MfsCharges);
 
     // Pay To (debit side) ledger types
     private static readonly string[] PayToLedgerTypes =
@@ -1935,7 +1938,7 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
     //    the company bears it)
     //===========================================================
 
-    private static List<VoucherPostingLine> BuildPostingLines
+    private List<VoucherPostingLine> BuildPostingLines
     (
         PaymentVoucher entity,
         List<PaymentVoucherLines> lines,
@@ -2162,4 +2165,4 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
                     !x.IsDeleted
             );
     }
-}
+}

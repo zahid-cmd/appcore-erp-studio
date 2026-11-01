@@ -10,6 +10,11 @@ using AppCore.Application.VatManagement.VatSetup;
 using AppCore.Domain.Common;
 using AppCore.Infrastructure.Persistence;
 
+using AppCore.Application.Platform.Accounting;
+
+using PostingLedgerCodes =
+    AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
+
 using RuleEntity =
     AppCore.Domain.Entities.VatManagement.VatSetup.PurchaseVat;
 
@@ -515,25 +520,15 @@ public class PurchaseVatRepository
                 )
                 .ToListAsync();
 
-        // Ledger of the latest live rule of each type
+        // VAT Current Account of each type : always the Posting
+        // Setup ledger ("" when not set there)
         Dictionary<string, string> suggested =
+            VatTypes.ToDictionary
             (
-                await _context
-                    .Set<RuleEntity>()
-                    .AsNoTracking()
-                    .Where(x => !x.IsDeleted)
-                    .Select(x => new { x.VatType, x.LedgerCode, x.EffectiveFrom, x.PurchaseVatId })
-                    .ToListAsync()
-            )
-            .GroupBy(x => x.VatType)
-            .ToDictionary
-            (
-                x => x.Key,
-                x => x
-                    .OrderByDescending(r => r.EffectiveFrom)
-                    .ThenByDescending(r => r.PurchaseVatId)
-                    .First()
-                    .LedgerCode
+                x => x,
+                x => PostingLedgerCodes.TryGet(
+                    _context,
+                    PostingPurposes.VatForVatType(x))
             );
 
         return new PurchaseVatDefaultsDto
@@ -974,6 +969,12 @@ public class PurchaseVatRepository
         RuleInput input =
             Normalize(dto);
 
+        // The ledger comes from Posting Setup, never from the page
+        input.LedgerCode =
+            PostingLedgerCodes.Get(
+                _context,
+                PostingPurposes.VatForVatType(type));
+
         await CheckLedgerAsync(
             input.LedgerCode,
             null);
@@ -1080,6 +1081,12 @@ public class PurchaseVatRepository
 
         RuleInput input =
             Normalize(dto);
+
+        // The ledger comes from Posting Setup, never from the page
+        input.LedgerCode =
+            PostingLedgerCodes.Get(
+                _context,
+                PostingPurposes.VatForVatType(entity.VatType));
 
         await CheckLedgerAsync(
             input.LedgerCode,
@@ -1337,4 +1344,4 @@ public class PurchaseVatRepository
                     !x.IsDeleted
             );
     }
-}
+}

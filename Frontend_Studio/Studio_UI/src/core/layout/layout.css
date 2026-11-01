@@ -5,21 +5,73 @@
    variables are inherited by everything inside the
    layout (top bar, sidebar, footer, pages).
 
-     --sidebar-width            open sidebar
+     --sidebar-width            open sidebar, used until
+                                the menu has loaded
+     --sidebar-min-width        auto-fit limits : once the
+     --sidebar-max-width        menu loads, the open sidebar
+                                takes the width of its
+                                longest name (module, menu
+                                or page, on one line),
+                                kept between these two
      --sidebar-collapsed-width  sidebar with icons only
      --topbar-height            top bar
+     --topnav-height            modules bar (Top layout)
      --footer-height            footer
+
+   Set by the layout itself (do not change):
+
+     --sidebar-current-width    the sidebar's width right
+                                now (open or collapsed). The
+                                top bar logo block and the
+                                footer version block use it,
+                                so their edges line up with
+                                the sidebar.
+
+   To switch auto-fit off, set --sidebar-min-width and
+   --sidebar-max-width to the same value.
 ===================================================== */
 
 :host
 {
-    --sidebar-width:320px;
+    --sidebar-width:300px;
 
-    --sidebar-collapsed-width:70px;
+    --sidebar-min-width:260px;
 
-    --topbar-height:70px;
+    --sidebar-max-width:480px;
 
-    --footer-height:50px;
+    --sidebar-collapsed-width:72px;
+
+    --topbar-height:64px;
+
+    --topnav-height:48px;
+
+    --footer-height:44px;
+}
+
+
+/*
+   Declared on .layout (not :host) so it follows the
+   auto-fit width the layout sets on this element.
+*/
+
+.layout
+{
+    --sidebar-current-width:var(--sidebar-width);
+}
+
+
+.layout.sidebar-is-collapsed
+{
+    --sidebar-current-width:var(--sidebar-collapsed-width);
+}
+
+
+/* Top layout: no sidebar, so the logo block and the footer
+   version block just fit their content. */
+
+.layout.layout-top
+{
+    --sidebar-current-width:auto;
 }
 
 
@@ -264,6 +316,35 @@ router-outlet
     min-width:0;
 
     min-height:0;
+}
+
+
+/* =====================================================
+   TOP NAVIGATION (Top layout)
+   -----------------------------------------------------
+   Above the layout body so its drop-down menus paint
+   over the page, below the top bar's own menus.
+===================================================== */
+
+app-topbar-nav
+{
+    display:block;
+
+    width:100%;
+
+    height:var(--topnav-height);
+
+    flex:0 0 var(--topnav-height);
+
+    position:relative;
+
+    z-index:250;
+}
+
+
+.layout.layout-top app-sidebar
+{
+    display:none;
 }
 
 

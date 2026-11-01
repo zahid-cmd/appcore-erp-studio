@@ -1,502 +1,121 @@
-/* ===================================================== 
-   FOOTER BRAND 
-   ----------------------------------------------------- 
-   Application footer brand area. 
- 
-   IMPORTANT: 
- 
-       The Footer remains part of the normal application 
-       shell. 
- 
-       Toasts must remain above the Footer. 
- 
-       When Login Page Preview is active, the Footer Brand 
-       is hidden so the Login Page can occupy the viewport. 
-===================================================== */ 
- 
-.footer-brand 
-{ 
-    position: 
-        relative; 
- 
-    width: 
-        280px; 
- 
-    min-width: 
-        280px; 
- 
-    max-width: 
-        280px; 
- 
-    height: 
-        100%; 
- 
-    display: 
-        flex; 
- 
-    align-items: 
-        center; 
- 
-    justify-content: 
-        space-between; 
- 
-    gap: 
-        12px; 
- 
-    padding: 
-        0 
-        10px; 
- 
-    box-sizing: 
-        border-box; 
- 
-    background: 
-        linear-gradient( 
-            135deg, 
-            #e4e8ee 0%, 
-            #dfe4eb 48%, 
-            #d9dfe7 100% 
-        ); 
- 
-    overflow: 
-        visible; 
- 
-    /* 
-        Footer application layer. 
- 
-        Keep this below Topbar and Toast. 
-    */ 
-    z-index: 
-        50; 
+/* ==========================================================
+   FOOTER BRAND : About + logo
+=========================================================== */
+
+:host
+{
+    display:block;
+
+    height:100%;
 }
- 
-/* ===================================================== 
-   TOP EDGE 
-===================================================== */ 
- 
-.footer-brand::before 
-{ 
-    content: 
-        ''; 
- 
-    position: 
-        absolute; 
- 
-    top: 
-        0; 
- 
-    left: 
-        0; 
- 
-    width: 
-        100%; 
- 
-    height: 
-        1px; 
- 
-    background: 
-        linear-gradient( 
-            90deg, 
-            rgba(255,255,255,.70) 0%, 
-            rgba(255,255,255,.98) 50%, 
-            rgba(255,255,255,.70) 100% 
-        ); 
- 
-    pointer-events: 
-        none; 
- 
-    z-index: 
-        1; 
-} 
- 
- 
- 
-/* ===================================================== 
-   ABOUT BUTTON 
-===================================================== */ 
- 
-.about-button 
-{ 
-    position: 
-        relative; 
- 
-    z-index: 
-        2; 
- 
-    flex-shrink: 
-        0; 
- 
-    display: 
-        inline-flex; 
- 
-    align-items: 
-        center; 
- 
-    justify-content: 
-        center; 
- 
-    gap: 
-        6px; 
- 
-    height: 
-        26px; 
- 
-    min-width: 
-        84px; 
- 
-    padding: 
-        0 
-        12px; 
- 
-    border: 
-        1px solid 
-        rgba( 
-            100, 
-            116, 
-            139, 
-            .22 
-        ); 
- 
-    border-radius: 
-        4px; 
- 
-    background: 
-        rgba( 
-            255, 
-            255, 
-            255, 
-            .68 
-        ); 
- 
-    color: 
-        #334155; 
- 
-    font-size: 
-        12px; 
- 
-    font-weight: 
-        600; 
- 
-    cursor: 
-        pointer; 
- 
-    white-space: 
-        nowrap; 
- 
-    box-sizing: 
-        border-box; 
- 
-    transition: 
-        background-color .20s ease, 
-        border-color .20s ease, 
-        color .20s ease, 
-        box-shadow .20s ease, 
-        transform .20s ease; 
-} 
- 
- 
- 
-/* ===================================================== 
-   ABOUT BUTTON HOVER 
-===================================================== */ 
- 
-.about-button:hover 
-{ 
-    background: 
-        #ffffff; 
- 
-    border-color: 
-        rgba( 
-            37, 
-            99, 
-            235, 
-            .35 
-        ); 
- 
-    color: 
-        #2563eb; 
- 
-    box-shadow: 
-        0 
-        0 
-        0 
-        2px 
-        rgba( 
-            37, 
-            99, 
-            235, 
-            .10 
-        ); 
-} 
- 
- 
- 
-/* ===================================================== 
-   ABOUT BUTTON ACTIVE 
-===================================================== */ 
- 
-.about-button:active 
-{ 
-    transform: 
-        scale(.98); 
-} 
- 
- 
- 
-/* ===================================================== 
-   ABOUT BUTTON FOCUS 
-===================================================== */ 
- 
-.about-button:focus-visible 
-{ 
-    outline: 
-        none; 
- 
-    border-color: 
-        rgba( 
-            37, 
-            99, 
-            235, 
-            .55 
-        ); 
- 
-    box-shadow: 
-        0 
-        0 
-        0 
-        2px 
-        rgba( 
-            37, 
-            99, 
-            235, 
-            .18 
-        ); 
-} 
- 
- 
- 
-/* ===================================================== 
-   ABOUT ICON 
-===================================================== */ 
- 
-.about-button i 
-{ 
-    font-size: 
-        13px; 
- 
-    line-height: 
-        1; 
-} 
- 
- 
- 
-/* ===================================================== 
-   BRAND AREA 
-===================================================== */ 
- 
-.footer-brand-content 
-{ 
-    position: 
-        relative; 
- 
-    z-index: 
-        2; 
- 
-    flex: 
-        1; 
- 
-    min-width: 
-        0; 
- 
-    height: 
-        100%; 
- 
-    display: 
-        flex; 
- 
-    align-items: 
-        center; 
- 
-    justify-content: 
-        flex-end; 
- 
-    overflow: 
-        hidden; 
-} 
- 
- 
- 
-/* ===================================================== 
-   LOGO 
-===================================================== */ 
- 
-.footer-brand-content img 
-{ 
-    display: 
-        block; 
- 
-    max-height: 
-        50px; 
- 
-    max-width: 
-        170px; 
- 
-    width: 
-        auto; 
- 
-    height: 
-        auto; 
- 
-    object-fit: 
-        contain; 
- 
-    user-select: 
-        none; 
- 
-    -webkit-user-select: 
-        none; 
- 
-    pointer-events: 
-        none; 
-} 
- 
- 
- 
-/* ===================================================== 
-   RESPONSIVE : 768 
-===================================================== */ 
- 
-@media (max-width:768px) 
-{ 
-    .footer-brand 
-    { 
-        width: 
-            300px; 
- 
-        min-width: 
-            300px; 
- 
-        max-width: 
-            300px; 
- 
-        padding: 
-            0 
-            8px; 
- 
-        gap: 
-            10px; 
-    } 
- 
- 
-    .about-button 
-    { 
-        height: 
-            25px; 
- 
-        min-width: 
-            78px; 
- 
-        padding: 
-            0 
-            10px; 
- 
-        font-size: 
-            11px; 
-    } 
- 
- 
-    .footer-brand-content img 
-    { 
-        max-width: 
-            150px; 
- 
-        max-height: 
-            46px; 
-    } 
-} 
- 
- 
- 
-/* ===================================================== 
-   RESPONSIVE : 576 
-===================================================== */ 
- 
-@media (max-width:576px) 
-{ 
-    .footer-brand 
-    { 
-        width: 
-            300px; 
- 
-        min-width: 
-            300px; 
- 
-        max-width: 
-            300px; 
- 
-        padding: 
-            0 
-            6px; 
- 
-        gap: 
-            8px; 
-    } 
- 
- 
-    .about-button 
-    { 
-        height: 
-            24px; 
- 
-        min-width: 
-            70px; 
- 
-        padding: 
-            0 
-            8px; 
- 
-        font-size: 
-            10px; 
-    } 
- 
- 
-    .about-button i 
-    { 
-        font-size: 
-            11px; 
-    } 
- 
- 
-    .footer-brand-content img 
-    { 
-        max-width: 
-            130px; 
- 
-        max-height: 
-            42px; 
-    } 
-} 
- 
- 
- 
-/* ===================================================== 
-   LOGIN PAGE PREVIEW MODE 
-   ----------------------------------------------------- 
-   STEP 2 ONLY 
- 
-   When LoginPageLoader activates: 
- 
-       body.login-page-preview-active 
- 
-   the Footer Brand is hidden. 
- 
-   This is intentionally limited to the Footer Brand. 
-   We are NOT changing Toast, Loader or global layout yet. 
-===================================================== */ 
- 
-:host-context(body.login-page-preview-active) 
-.footer-brand 
-{ 
-    display: 
-        none !important; 
+
+
+.footer-brand
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    height:100%;
+}
+
+
+.about-button
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    height:28px;
+
+    padding:0 12px;
+
+    border:1px solid rgba(255,255,255,.14);
+
+    border-radius:8px;
+
+    background:transparent;
+
+    color:#ffffff;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease;
+}
+
+
+.about-button:hover
+{
+    background:rgba(255,255,255,.08);
+
+    border-color:rgba(147,180,245,.45);
+}
+
+
+.about-button:focus-visible
+{
+    outline:2px solid #93b4f5;
+
+    outline-offset:2px;
+}
+
+
+.about-button i
+{
+    color:#93b4f5;
+}
+
+
+.footer-logo
+{
+    display:block;
+
+    height:22px;
+
+    width:auto;
+
+    object-fit:contain;
+}
+
+
+/* =====================================================
+   LIGHT APPEARANCE
+   -----------------------------------------------------
+   .appearance-light is set on the layout by the
+   Light / Deep switch in the top bar.
+===================================================== */
+
+:host-context(.appearance-light) .about-button
+{
+    border-color:#cbd6e7;
+
+    background:#ffffff;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .about-button:hover
+{
+    border-color:#bfd0ec;
+
+    background:#eef4ff;
+}
+
+
+:host-context(.appearance-light) .about-button i
+{
+    color:#2563eb;
 }
