@@ -559,7 +559,7 @@ export class OpeningStockList
             row?.OpeningStockId
         )
         {
-            this.router.navigate([OPENING_STOCK_ROUTE, 'view', row.OpeningStockId]);
+            this.router.navigate([OPENING_STOCK_ROUTE, 'view', row.PublicId]);
         }
     }
 
@@ -591,7 +591,7 @@ export class OpeningStockList
             return;
         }
 
-        this.router.navigate([OPENING_STOCK_ROUTE, 'edit', row.OpeningStockId]);
+        this.router.navigate([OPENING_STOCK_ROUTE, 'edit', row.PublicId]);
     }
 
     //===========================================================
@@ -645,7 +645,7 @@ export class OpeningStockList
                 'Deleting Opening Stock',
                 `Please wait while "${row.OpeningNo}" is being deleted...`,
                 'Opening stock deleted.',
-                this.service.delete(row.OpeningStockId))
+                this.service.delete(row.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -764,6 +764,35 @@ export class OpeningStockList
         this.historyOpened = false;
 
         this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Summary Line (below the canvas) : documents by status
+    // (all records, every type)
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.rows ?? []).length;
+    }
+
+    summaryCount(
+        status: string
+    ):
+        number
+    {
+        return (this.rows ?? [])
+            .filter(x => String((x as any)?.Status ?? '').toLowerCase() === status)
+            .length;
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 }
 

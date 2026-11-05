@@ -260,6 +260,15 @@ implements OnInit, OnDestroy
         ServiceCategory[] =
     [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredServiceCategories:
         ServiceCategory[] =
     [];
@@ -746,6 +755,9 @@ implements OnInit, OnDestroy
 
                     this.applyFilters();
 
+
+                    this.updateSummary();
+
                     this.loading =
                         false;
 
@@ -1095,7 +1107,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.ServiceCategoryId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1115,7 +1127,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.ServiceCategoryId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1175,7 +1187,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.serviceCategoryService.delete(
-                item.ServiceCategoryId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -1471,4 +1483,32 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.serviceCategories ?? [];
+
+        const active =
+            all.filter(x => !!x?.IsActive).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

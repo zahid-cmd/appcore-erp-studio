@@ -134,11 +134,21 @@ public class WingsController : ControllerBase
     // Get By Id
     //===============================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<WingDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         WingDto? wing =
             await _repository.GetByIdAsync(id);
 
@@ -155,9 +165,9 @@ public class WingsController : ControllerBase
     // Create
     //===============================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateWingDto dto)
     {
            long userId = this.CurrentUserId();
@@ -169,7 +179,10 @@ public class WingsController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            WingDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch
         (
@@ -192,11 +205,27 @@ public class WingsController : ControllerBase
     // Update
     //===============================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateWingDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.WingId =
+            id;
+
         if (!await _repository.ExistsAsync(
                 dto.WingId))
         {
@@ -234,11 +263,22 @@ public class WingsController : ControllerBase
     // Delete
     //===============================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         //===========================================================
         // Verify Wing Exists
         //===========================================================

@@ -87,7 +87,7 @@
 
             <app-list-table
                 [columns]="columns"
-                [rows]="pagedReceiptVouchers"
+                [rows]="receiptVouchers"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
@@ -106,7 +106,7 @@
 
         <app-pagination
             canvasFooter
-            [totalRecords]="filteredReceiptVouchers.length"
+            [totalRecords]="totalRecords"
             [currentPage]="currentPage"
             [pageSize]="pageSize"
             (pageChange)="onPageChange($event)"
@@ -115,6 +115,33 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (ledger type and search applied; not the tab)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="rv-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="rv-summary-item">
+                    <span class="rv-summary-label">{{ item.label }}</span>
+                    <b
+                        class="rv-summary-value"
+                        [class.rv-ok]="item.tone === 'ok'"
+                        [class.rv-bad]="item.tone === 'bad'"
+                        [class.rv-muted]="item.tone === 'muted'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="rv-summary-note">
+                Matching the ledger type and search
+            </span>
+
+        </div>
+    }
 
     <!-- =====================================================
          HISTORY

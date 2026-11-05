@@ -6,6 +6,13 @@ using AppCore.Application.Settings.ProductSettings.BrandManagement.DTOs;
 
 
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.Paging;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -19,6 +26,14 @@ namespace AppCore.Application.Settings.ProductSettings;
 public interface IBrandManagementRepository
 {
     Task<List<BrandManagementDto>> GetAllAsync();
+
+    // The list page : one page, filtered, sorted, with the counts
+    Task<PagedResult<BrandManagementDto>> GetPagedAsync(
+        BrandManagementPageRequest request);
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 
     Task<BrandManagementDto?> GetByIdAsync(
         long id);

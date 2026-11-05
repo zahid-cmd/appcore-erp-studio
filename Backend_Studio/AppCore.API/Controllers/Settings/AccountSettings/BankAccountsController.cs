@@ -156,11 +156,21 @@ public class BankAccountsController : ControllerBase
     // Get By Id
     //===============================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<BankAccountDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         try
         {
             BankAccountDto? bankAccount =
@@ -186,9 +196,9 @@ public class BankAccountsController : ControllerBase
     // Create
     //===============================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateBankAccountDto dto)
     {
            long userId = this.CurrentUserId();
@@ -200,7 +210,10 @@ public class BankAccountsController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            BankAccountDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (InvalidOperationException ex)
         {
@@ -223,11 +236,27 @@ public class BankAccountsController : ControllerBase
     // Update
     //===============================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateBankAccountDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.BankAccountId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try
@@ -267,11 +296,22 @@ public class BankAccountsController : ControllerBase
     // 409 while MFS / POS Accounts are linked to it.
     //===============================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

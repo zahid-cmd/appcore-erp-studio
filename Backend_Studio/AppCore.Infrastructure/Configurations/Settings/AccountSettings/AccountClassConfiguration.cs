@@ -42,6 +42,22 @@ public class AccountClassConfiguration
 
         builder.HasKey(x => x.AccountClassId);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_AccountClasses_PublicId");
+
         builder.Property(x => x.AccountClassId)
                .ValueGeneratedOnAdd();
 

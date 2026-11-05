@@ -113,7 +113,7 @@ export class BranchAssignmentService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<BranchAssignment>
     {
@@ -272,7 +272,7 @@ export class BranchAssignmentService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

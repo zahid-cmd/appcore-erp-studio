@@ -412,8 +412,8 @@ implements OnInit, OnDestroy
         'add';
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
     //===========================================================
     // Page Header
@@ -827,7 +827,7 @@ implements OnInit, OnDestroy
                                 .filter
                                 (
                                     account =>
-                                        account.EmiAccountId !==
+                                        account.PublicId !==
                                         this.entityId
                                 )
                                 .map
@@ -1417,7 +1417,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -1436,7 +1436,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -1448,13 +1448,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -1464,7 +1462,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
@@ -1618,7 +1616,7 @@ implements OnInit, OnDestroy
                         EmiAccountId:
                             response.EmiAccountId
                             ||
-                            this.entityId
+                            0
                     };
 
                     this.buildLinkedBankAccountItems();
@@ -2160,7 +2158,7 @@ implements OnInit, OnDestroy
             number =
             this.entity.EmiAccountId
             ||
-            this.entityId;
+            0;
 
         if
         (
@@ -2193,7 +2191,9 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.emiAccountsService.update(
-                model
+                this.entityId,
+
+model
             )
         )
         .subscribe

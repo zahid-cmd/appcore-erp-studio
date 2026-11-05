@@ -1,0 +1,559 @@
+/* =====================================================
+   FOLLOW-UP DIALOG (inside app-form-modal)
+   Left  : two cards (The Call · Update the Enquiry)
+   Right : Call History (where it stands + timeline)
+===================================================== */
+
+.fd-body
+{
+    display:grid;
+    grid-template-columns:minmax(0, 7fr) minmax(0, 5fr);
+    gap:18px;
+    align-items:stretch;
+}
+
+.fd-main
+{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    min-width:0;
+}
+
+
+/* ---------- cards ---------- */
+
+.fd-card
+{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    padding:14px 16px 16px;
+    border:1px solid #e3eaf5;
+    border-radius:14px;
+    background:#ffffff;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+
+.fd-card-head,
+.fd-history-head
+{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding-bottom:10px;
+    border-bottom:1px solid #eef2f8;
+    color:#0f172a;
+    font-size:14.5px;
+}
+
+.fd-card-head b,
+.fd-history-head b
+{
+    font-weight:800;
+}
+
+.fd-card-icon
+{
+    flex:none;
+    display:grid;
+    place-items:center;
+    width:28px;
+    height:28px;
+    border-radius:8px;
+    background:#eff4ff;
+    color:#2563eb;
+    font-size:13px;
+}
+
+
+/* ---------- fields ---------- */
+
+.fd-row
+{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+    gap:14px;
+    align-items:end;
+}
+
+.fd-field
+{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:0;
+}
+
+.fd-label
+{
+    color:#334155;
+    font-size:15px;
+    font-weight:600;
+    line-height:1.3;
+}
+
+.fd-label i
+{
+    color:#ef4444;
+    font-style:normal;
+}
+
+/* Every control fills its cell (the shared dropdown is 360px
+   by default; its flex basis would become its height) */
+.fd-body ::ng-deep app-search-dropdown,
+.fd-body ::ng-deep app-datepicker
+{
+    --dropdown-width:100%;
+    display:block;
+    flex:none;
+    width:100%;
+    min-width:0;
+}
+
+/* Note : the full width of the card, two lines */
+.fd-note ::ng-deep app-textarea
+{
+    --textarea-width:100% !important;
+    --textarea-height:66px !important;
+    display:block;
+    width:100%;
+}
+
+.fd-note ::ng-deep .textarea-container,
+.fd-note ::ng-deep .textarea
+{
+    width:100% !important;
+}
+
+.fd-note ::ng-deep .textarea
+{
+    height:66px !important;
+    min-height:66px !important;
+}
+
+.fd-note ::ng-deep textarea
+{
+    resize:none;
+}
+
+
+/* ---------- outcome : one row of equal tiles ---------- */
+
+.fd-outcomes
+{
+    display:grid;
+    grid-template-columns:repeat(5, minmax(0, 1fr));
+    gap:8px;
+}
+
+.fd-outcome
+{
+    --tone:#1e3a8a;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    min-width:0;
+    height:62px;
+    padding:6px 4px;
+    border:1px solid #dde5f0;
+    border-radius:12px;
+    background:#f8fafc;
+    color:#475569;
+    font:inherit;
+    font-size:12px;
+    font-weight:700;
+    line-height:1.15;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+.fd-outcome i
+{
+    color:var(--tone);
+    font-size:15px;
+}
+
+.fd-outcome:hover:not(:disabled)
+{
+    border-color:var(--tone);
+    background:#ffffff;
+    color:#0f172a;
+}
+
+.fd-outcome-on,
+.fd-outcome-on:hover:not(:disabled)
+{
+    border-color:var(--tone);
+    background:var(--tone);
+    color:#ffffff;
+    box-shadow:0 8px 16px -10px var(--tone);
+}
+
+.fd-outcome-on i
+{
+    color:#ffffff;
+}
+
+.fd-outcome:disabled
+{
+    cursor:default;
+    opacity:.6;
+}
+
+
+/* ---------- auto interest ---------- */
+
+.fd-auto
+{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+    padding:9px 12px;
+    border:1px solid #fed7aa;
+    border-radius:10px;
+    background:#fff7ed;
+    color:#9a3412;
+    font-size:13px;
+}
+
+.fd-auto small
+{
+    color:#c2410c;
+    font-size:12px;
+}
+
+
+/* ---------- next follow-up : date + quick picks ---------- */
+
+.fd-next
+{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1.35fr);
+    gap:10px;
+    align-items:center;
+}
+
+.fd-quick
+{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    height:36px;
+    overflow:hidden;
+    border:1px solid #d9e5f2;
+    border-radius:10px;
+    background:#f8fafc;
+}
+
+.fd-quick button
+{
+    min-width:0;
+    padding:0 4px;
+    border:0;
+    border-right:1px solid #e3eaf5;
+    background:transparent;
+    color:#475569;
+    font:inherit;
+    font-size:12.5px;
+    font-weight:700;
+    white-space:nowrap;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+}
+
+.fd-quick button:last-child
+{
+    border-right:0;
+}
+
+.fd-quick button:hover:not(:disabled)
+{
+    background:#eff4ff;
+    color:#1e3a8a;
+}
+
+.fd-quick button.on
+{
+    background:linear-gradient(135deg, #2563eb, #1e3a8a);
+    color:#ffffff;
+}
+
+.fd-quick button:disabled
+{
+    cursor:default;
+}
+
+
+/* =====================================================
+   RIGHT : CALL HISTORY
+===================================================== */
+
+.fd-history
+{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    min-width:0;
+    padding:14px;
+    border:1px solid #dfe7f3;
+    border-radius:14px;
+    background:
+        radial-gradient(260px 120px at 100% 0%, rgba(147,197,253,.18), transparent 70%),
+        linear-gradient(180deg, #f6f9ff 0%, #f8fafc 100%);
+}
+
+.fd-count
+{
+    min-width:22px;
+    height:22px;
+    margin-left:auto;
+    padding:0 7px;
+    border-radius:999px;
+    background:#1e3a8a;
+    color:#ffffff;
+    font-size:12px;
+    font-weight:700;
+    line-height:22px;
+    text-align:center;
+}
+
+/* where it stands */
+.fd-now
+{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:8px;
+}
+
+.fd-now > div
+{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    min-width:0;
+    padding:8px 10px;
+    border:1px solid #e3eaf5;
+    border-radius:10px;
+    background:#ffffff;
+}
+
+.fd-now span
+{
+    color:#64748b;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+
+.fd-now b
+{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    overflow:hidden;
+    color:#0f172a;
+    font-size:13.5px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.fd-dot
+{
+    flex:none;
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:#cbd5e1;
+}
+
+/* timeline */
+.fd-timeline
+{
+    position:relative;
+    display:flex;
+    flex:1 1 auto;
+    flex-direction:column;
+    gap:10px;
+    min-height:220px;
+    max-height:400px;
+    padding:4px 2px 4px 0;
+    overflow:auto;
+}
+
+.fd-entry
+{
+    --tone:#64748b;
+    position:relative;
+    display:grid;
+    grid-template-columns:28px minmax(0, 1fr);
+    gap:10px;
+}
+
+/* the line joining the dots */
+.fd-entry::before
+{
+    content:'';
+    position:absolute;
+    top:28px;
+    bottom:-10px;
+    left:13.5px;
+    width:1px;
+    background:#d6dfec;
+}
+
+.fd-entry:last-child::before
+{
+    display:none;
+}
+
+.fd-entry-dot
+{
+    display:grid;
+    place-items:center;
+    width:28px;
+    height:28px;
+    border:2px solid #ffffff;
+    border-radius:50%;
+    background:var(--tone);
+    color:#ffffff;
+    font-size:11px;
+    box-shadow:0 0 0 1px #d6dfec;
+}
+
+.fd-entry-card
+{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width:0;
+    padding:9px 11px;
+    border:1px solid #e3eaf5;
+    border-left:3px solid var(--tone);
+    border-radius:10px;
+    background:#ffffff;
+}
+
+.fd-entry-top
+{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+}
+
+.fd-entry-badge
+{
+    color:var(--tone);
+    font-size:13px;
+    font-weight:800;
+}
+
+.fd-entry-top small
+{
+    color:#64748b;
+    font-size:11.5px;
+    white-space:nowrap;
+}
+
+.fd-entry-card p
+{
+    margin:0;
+    color:#0f172a;
+    font-size:13px;
+    line-height:1.4;
+    overflow-wrap:anywhere;
+}
+
+.fd-entry-meta
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 12px;
+    color:#64748b;
+    font-size:11.5px;
+}
+
+.fd-entry-meta i
+{
+    margin-right:5px;
+    color:#94a3b8;
+    font-size:10px;
+}
+
+.fd-empty
+{
+    display:flex;
+    flex:1 1 auto;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:24px 12px;
+    border:1px dashed #cfdaea;
+    border-radius:12px;
+    color:#94a3b8;
+    font-size:12.5px;
+    text-align:center;
+}
+
+.fd-empty i
+{
+    margin-bottom:4px;
+    color:#a5b4cb;
+    font-size:26px;
+}
+
+.fd-empty b
+{
+    color:#475569;
+    font-size:13.5px;
+}
+
+
+/* ---------- footer : dial ---------- */
+
+.fd-dial
+{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    height:36px;
+    padding:0 14px;
+    border:1px solid #bbf7d0;
+    border-radius:999px;
+    background:#f0fdf4;
+    color:#047857;
+    font-size:13px;
+    font-weight:800;
+    text-decoration:none;
+    white-space:nowrap;
+}
+
+.fd-dial:hover
+{
+    background:#dcfce7;
+}
+
+
+@media (max-width:900px)
+{
+    .fd-body
+    {
+        grid-template-columns:minmax(0, 1fr);
+    }
+
+    .fd-outcomes
+    {
+        grid-template-columns:repeat(3, minmax(0, 1fr));
+    }
+
+    .fd-next
+    {
+        grid-template-columns:minmax(0, 1fr);
+    }
+}

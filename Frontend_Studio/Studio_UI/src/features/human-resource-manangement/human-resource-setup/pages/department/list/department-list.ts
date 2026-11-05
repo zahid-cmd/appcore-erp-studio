@@ -450,6 +450,16 @@ implements OnInit
         Department
     {
         return {
+            PublicId:
+                String
+                (
+                    item?.PublicId
+                    ??
+                    item?.publicId
+                    ??
+                    ''
+                ),
+
             DepartmentId:
                 Number
                 (
@@ -1009,7 +1019,7 @@ implements OnInit
             [
                 'view',
 
-                item.DepartmentId
+                item.PublicId
             ],
 
             {
@@ -1036,7 +1046,7 @@ implements OnInit
             [
                 'edit',
 
-                item.DepartmentId
+                item.PublicId
             ],
 
             {
@@ -1069,7 +1079,7 @@ implements OnInit
                 this.departmentservice
                     .delete
                     (
-                        item.DepartmentId
+                        item.PublicId ?? ''
                     )
                     .subscribe
                     ({
@@ -1383,5 +1393,46 @@ implements OnInit
     {
         this.historyOpened =
             false;
+    }
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.departments ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.departments ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 }

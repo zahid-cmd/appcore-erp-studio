@@ -1,0 +1,225 @@
+/* =====================================================
+   FIND YOUR RIDE
+===================================================== */
+
+.top
+{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+}
+
+
+.filters
+{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:10px;
+    margin-bottom:26px;
+}
+
+
+.filters .filter
+{
+    margin-bottom:0;
+}
+
+
+.filter
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-bottom:26px;
+    padding:4px;
+    border:1px solid var(--w-card-edge);
+    border-radius:14px;
+    background:var(--w-chip);
+}
+
+
+.filter-btn
+{
+    height:38px;
+    padding:0 16px;
+    border:0;
+    border-radius:10px;
+    background:transparent;
+    color:var(--w-nav);
+    font:inherit;
+    font-size:13.5px;
+    font-weight:800;
+    cursor:pointer;
+}
+
+
+.filter-btn.on
+{
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+}
+
+
+.grid
+{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(270px, 1fr));
+    gap:20px;
+}
+
+
+.bike
+{
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+
+
+.photo
+{
+    position:relative;
+    height:200px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--w-photo);
+    color:var(--w-photo-text);
+}
+
+
+.photo img
+{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:14px;
+    box-sizing:border-box;
+    transition:transform .35s ease;
+}
+
+
+.bike:hover .photo img
+{
+    transform:scale(1.04);
+}
+
+
+.cat
+{
+    position:absolute;
+    top:14px;
+    left:14px;
+}
+
+
+.stock
+{
+    position:absolute;
+    top:14px;
+    right:14px;
+}
+
+
+.body
+{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    padding:18px 20px 20px;
+}
+
+
+.name-row
+{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+}
+
+
+.model
+{
+    margin:0;
+    font-family:var(--w-display);
+    font-size:28px;
+    font-weight:800;
+    line-height:1;
+    text-transform:uppercase;
+}
+
+
+.model a
+{
+    color:var(--w-strong);
+    text-decoration:none;
+}
+
+
+.price
+{
+    white-space:nowrap;
+    color:var(--w-strong);
+}
+
+
+.specs
+{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:6px;
+    text-align:center;
+}
+
+
+.specs span
+{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:8px 4px;
+    border-radius:10px;
+    background:var(--w-chip);
+    color:var(--w-muted);
+    font-size:11.5px;
+}
+
+
+.specs b
+{
+    color:var(--w-strong);
+    font-size:14px;
+}
+
+
+.buttons
+{
+    display:flex;
+    gap:8px;
+}
+
+
+.buttons .btn
+{
+    flex:1 1 0;
+    height:42px;
+    font-size:13.5px;
+}
+
+
+@media (prefers-reduced-motion: reduce)
+{
+    .photo img
+    {
+        transition:none;
+    }
+
+    .bike:hover .photo img
+    {
+        transform:none;
+    }
+}

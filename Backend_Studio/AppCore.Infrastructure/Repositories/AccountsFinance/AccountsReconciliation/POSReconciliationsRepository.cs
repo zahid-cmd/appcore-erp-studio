@@ -281,6 +281,7 @@ public class PosReconciliationsRepository : IPosReconciliationsRepository
                 select new
                 {
                     PaymentId = p.ReceiptVoucherPaymentId,
+                    PaymentPublicId = p.PublicId,
                     VoucherId = v.ReceiptVoucherId,
                     v.VoucherNo,
                     v.VoucherDate,
@@ -338,6 +339,7 @@ public class PosReconciliationsRepository : IPosReconciliationsRepository
                 new()
                 {
                     PaymentId = x.PaymentId,
+                    PaymentPublicId = x.PaymentPublicId,
                     PosReconciliationId = state?.PosReconciliationId ?? 0,
                     SourceVoucherType = SourceType,
                     SourceVoucherId = x.VoucherId,
@@ -931,6 +933,8 @@ public class PosReconciliationsRepository : IPosReconciliationsRepository
 
                     result.VoucherNos.Add(voucher.VoucherNo);
                     result.VoucherIds.Add(voucher.PosReconciliationVoucherId);
+
+                    result.VoucherPublicIds.Add(voucher.PublicId);
                 }
 
                 await _context.SaveChangesAsync();
@@ -1359,6 +1363,8 @@ public class PosReconciliationsRepository : IPosReconciliationsRepository
 
                     result.VoucherNos.Add(voucher.VoucherNo);
                     result.VoucherIds.Add(voucher.PosReconciliationVoucherId);
+
+                    result.VoucherPublicIds.Add(voucher.PublicId);
                 }
 
                 await _context.SaveChangesAsync();
@@ -1519,6 +1525,8 @@ public class PosReconciliationsRepository : IPosReconciliationsRepository
 
                 result.VoucherNos.Add(voucher.VoucherNo);
                 result.VoucherIds.Add(voucher.PosReconciliationVoucherId);
+
+                result.VoucherPublicIds.Add(voucher.PublicId);
                 result.TransactionCount = states.Count;
                 result.Message =
                     $"{voucher.VoucherNo} reversed; {states.Count} transaction(s) back to Pending.";
@@ -2920,4 +2928,30 @@ public class PosReconciliationsRepository : IPosReconciliationsRepository
     {
         return decimal.Round(value, 2) == value;
     }
-}
+
+
+    //===========================================================
+    // uuid -> internal id (print links)
+    //===========================================================
+    public async Task<long?>
+        GetVoucherIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<PosReconciliationVouchers>()
+            .AsNoTracking()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.PosReconciliationVoucherId)
+            .FirstOrDefaultAsync();
+    }
+}

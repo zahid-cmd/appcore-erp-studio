@@ -3,6 +3,8 @@
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
+using AppCore.Application.Common.Paging;
+using AppCore.Infrastructure.Persistence.Paging;
 
 using AppCore.Application.SecurityPermission.UserManagement;
 using AppCore.Application.SecurityPermission.UserManagement.UserProfile.DTOs;
@@ -89,6 +91,9 @@ public class UserProfileRepository : IUserProfileRepository
                     {
                         UserProfileId =
                             x.UserProfileId,
+
+                        PublicId =
+                            x.PublicId,
 
                         ProfileCode =
                             x.ProfileCode,
@@ -1190,5 +1195,162 @@ public class UserProfileRepository : IUserProfileRepository
 
                     !x.IsDeleted
             );
+    }
+
+
+
+    //===========================================================
+    // Get Paged (list page : search, sort and page on the server)
+    //===========================================================
+
+    private static SortMap<UserProfileDto> ListSorts()
+    {
+        return new SortMap<UserProfileDto>("ProfileCode")
+            .Add("ProfileCode", x => x.ProfileCode)
+            .Add("UserName", x => x.UserName)
+            .Add("DisplayName", x => x.DisplayName)
+            .Add("FullName", x => x.FullName)
+            .Add("PrimaryRoleName", x => x.PrimaryRoleName)
+            .Add("Email", x => x.Email)
+            .Add("MobileNo", x => x.MobileNo)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.UserProfileId);
+    }
+
+
+    public async Task<PagedResult<UserProfileDto>>
+        GetPagedAsync
+        (
+            UserProfilesPageRequest request
+        )
+    {
+        IQueryable<UserProfileDto> query =
+            UserProfileQuery();
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.ProfileCode, like) ||
+                        EF.Functions.ILike(x.UserName, like) ||
+                        EF.Functions.ILike(x.DisplayName, like) ||
+                        EF.Functions.ILike(x.FullName, like) ||
+                        EF.Functions.ILike(x.PrimaryRoleName, like) ||
+                        EF.Functions.ILike(x.Email, like) ||
+                        EF.Functions.ILike(x.MobileNo, like)
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts (status not applied)
+        //-------------------------------------------------------
+
+        int countAll =
+            await query.CountAsync();
+
+        int countActive =
+            await query.CountAsync(x => x.IsActive);
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        string status =
+            (request.Status ?? string.Empty)
+                .Trim()
+                .ToLowerInvariant();
+
+        if
+        (
+            status == "active"
+        )
+        {
+            query =
+                query.Where(x => x.IsActive);
+        }
+        else if
+        (
+            status == "inactive"
+        )
+        {
+            query =
+                query.Where(x => !x.IsActive);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            status == "active"
+                ? countActive
+                : status == "inactive"
+                    ? countAll - countActive
+                    : countAll;
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<UserProfileDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        return new PagedResult<UserProfileDto>
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = new Dictionary<string, int>
+            {
+                ["Total"] = countAll,
+                ["Active"] = countActive,
+                ["Inactive"] = countAll - countActive
+            }
+        };
+    }
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.SecurityPermission.UserManagement.UserProfile>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.UserProfileId)
+            .FirstOrDefaultAsync();
     }
 }

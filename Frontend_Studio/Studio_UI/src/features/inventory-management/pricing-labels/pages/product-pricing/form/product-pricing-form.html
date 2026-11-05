@@ -1,273 +1,1922 @@
 <div class="app-form-page">
 
     <!-- =====================================================
-         PAGE HEADER
+         EXCEL IMPORT PAGE (replaces the form while open; the
+         unsaved price change stays as it is)
+         Top    : the source (file, paste from Excel)
+         Bottom : every row checked against its stock; the ticked
+                  ones load to the Price Change Summary
     ====================================================== -->
 
-    <app-page-header
+    @if (importOpen)
+    {
+        <app-page-header
+            icon="fas fa-file-excel"
+            title="Import Price List"
+            [subtitle]="importSubtitle">
 
-        icon="fas fa-list"
+            <div
+                pageHeaderCenter
+                class="pof-center">
 
-        [title]="pageTitle"
+              <div class="pof-ribbon">
 
-        subtitle="Manage productpricings">
+                <div class="pof-chip">
+                    <span class="pof-chip-icon pof-chip-icon-branch">
+                        <i [class]="info.icon"></i>
+                    </span>
+                    <span class="pof-chip-text">
+                        <span class="pof-chip-label">Product Type</span>
+                        <strong>{{ info.title }}</strong>
+                    </span>
+                </div>
 
-        <app-command-center
+                <span class="pof-ribbon-sep"></span>
 
-            pageHeaderRight
+                <div class="pof-chip">
+                    <span class="pof-chip-icon pof-chip-icon-year">
+                        <i class="fas fa-hashtag"></i>
+                    </span>
+                    <span class="pof-chip-text">
+                        <span class="pof-chip-label">Price Change No</span>
+                        <strong>{{ numberText || '—' }}</strong>
+                    </span>
+                </div>
 
-            [command1Text]="saveButtonText"
+                <span class="pof-ribbon-sep"></span>
 
-            command1Icon="fas fa-floppy-disk"
+                <div class="pof-state">
+                    <span class="pof-status pof-status-draft">{{ importIncluded.length }} to load</span>
+                </div>
 
-            (command1Click)="onSave()"
+              </div>
 
-            [command1Visible]="!isViewMode"
+            </div>
 
-            command2Text="Clear"
+            <app-command-center
+                pageHeaderRight
+                [command1Text]="importLoaded ? 'Reload' : 'Load'"
+                [command1Icon]="importLoaded ? 'fas fa-rotate' : 'fas fa-file-import'"
+                [command1Title]="importLoaded ? 'Reload : the summary takes the ticked rows as they are now (an unticked row leaves it)' : 'Load the ticked rows to the Price Change Summary (a product already there is replaced)'"
+                (command1Click)="loadImport()"
+                command2Text="Template"
+                command2Icon="fas fa-download"
+                command2Title="Download the Excel template : every product with its stock and current MRP"
+                (command2Click)="downloadTemplate()"
+                command3Text="Clear"
+                command3Icon="fas fa-broom"
+                command3Title="Clear the rows read"
+                [command3Visible]="importRows.length > 0 || !!importText"
+                (command3Click)="clearImport()"
+                rightCommandIcon="fas fa-arrow-left"
+                rightCommandTitle="Back to the price change"
+                (rightCommandClick)="closeImport()">
+            </app-command-center>
 
-            command2Icon="fas fa-broom"
+        </app-page-header>
 
-            (command2Click)="onClear()"
+        <div class="pof-body pp-im-body">
 
-            [command2Visible]="!isViewMode"
+            <!-- SOURCE : one line -->
+            <div class="pof-card pp-im-source">
 
-            [command3Visible]="false"
+                <div class="pp-im-line">
 
-            rightCommandIcon="fas fa-arrow-left"
+                    <span class="pur-tb-title">
+                        <i class="fas fa-file-excel"></i>
+                        Source
+                    </span>
 
-            (rightCommandClick)="onBackToList()">
+                    <span class="pur-tb-sep"></span>
 
-        </app-command-center>
+                    <label class="pof-btn pof-btn-light pp-im-btn" title="An .xlsx, .xls or .csv file (the first sheet is read)">
+                        <i class="fas fa-folder-open"></i>
+                        Choose File
+                        <input
+                            type="file"
+                            accept=".xlsx,.xlsm,.xls,.ods,.csv,.txt"
+                            (change)="onImportFile($event)">
+                    </label>
 
-    </app-page-header>
+                    @if (importFile)
+                    {
+                        <span class="pof-term-chip pp-im-file" [title]="importFile">
+                            <i class="fas fa-paperclip"></i>
+                            <span class="pp-im-fname">{{ importFile }}</span>
+                            <button
+                                type="button"
+                                class="pp-im-fx"
+                                title="Remove : clear the rows read from it"
+                                aria-label="Remove the attachment"
+                                (click)="removeAttachment()">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </span>
+                    }
 
+                    <!-- Paste box : Ctrl+V of cells copied from Excel is
+                         read at once; a file can be dropped on it -->
+                    <div
+                        class="pp-im-paste"
+                        [class.pp-im-drag]="importDragging"
+                        (dragover)="onImportDragOver($event)"
+                        (dragleave)="importDragging = false"
+                        (drop)="onImportDrop($event)">
+                        <i class="fas fa-paste"></i>
+                        <textarea
+                            rows="1"
+                            spellcheck="false"
+                            placeholder="Click here and press Ctrl+V : the cells copied from Excel go to the grid (or drop a file here); then press Check"
+                            [value]="importText"
+                            (paste)="onImportPaste($event)"
+                            (input)="onImportText($any($event.target).value)"></textarea>
+                    </div>
 
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-primary pp-im-btn"
+                        title="Analyze : match every row by part number, read its stock and find the parts not in the database"
+                        [disabled]="(!importText.trim() && !importRows.length) || importLoading"
+                        (click)="checkImport()">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        Analyze
+                    </button>
+
+                    <span class="pof-tip-wrap pof-tip-right">
+                        <button
+                            type="button"
+                            class="pof-info-btn"
+                            aria-label="Columns">
+                            <i class="fas fa-circle-info"></i>
+                        </button>
+                        <span class="pof-tip" role="tooltip">
+                            Columns : {{ importColumns.join(' · ') }} (a heading row is read by its names; a product is found by its part number, else its part name; Current MRP is for reference, and a row without a New MRP is skipped). The product code and the stock are internal : never in the template, the stock always from the system.
+                            The new MRP includes VAT and is the sale price. Its stock takes it by the rule : an increase always; a reduction only when switched on; never a batch costing more.
+                        </span>
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- The two grids : the price check / the parts not in the
+                 database (Spare Parts / Lubricants) -->
+            @if (type === 'SP')
+            {
+                <div class="pp-views" role="tablist">
+                    <button
+                        type="button"
+                        role="tab"
+                        class="pp-view-tab"
+                        [class.pp-view-on]="importView === 'check'"
+                        (click)="importView = 'check'">
+                        <i class="fas fa-list-check"></i>
+                        Price Check
+                        <span class="pp-im-badge">{{ importRows.length }}</span>
+                    </button>
+                    <button
+                        type="button"
+                        role="tab"
+                        class="pp-view-tab"
+                        [class.pp-view-on]="importView === 'new'"
+                        (click)="openNewItems()">
+                        <i class="fas fa-circle-plus"></i>
+                        New Items
+                        <span class="pp-im-badge" [class.pp-badge-violet]="newItemsPending.length > 0">{{ newItemsPending.length }}</span>
+                    </button>
+                </div>
+            }
+
+            @if (importView === 'check' || type !== 'SP')
+            {
+                <!-- CHECK GRID : full width, the rest of the canvas -->
+                <div class="pof-summary-slot">
+
+                    <div class="pof-card pof-summary pp-im-grid">
+
+                        <div class="pof-card-header pp-im-head">
+
+                            <i class="fas fa-list-check"></i>
+
+                            <span>Import Check</span>
+
+                            <!-- Tabs : the active one underlined -->
+                            <div class="pp-im-tabs" role="tablist">
+
+                                <button
+                                    type="button"
+                                    role="tab"
+                                    class="pp-im-tab"
+                                    [class.pp-im-tab-on]="importFilter === 'All'"
+                                    [attr.aria-selected]="importFilter === 'All'"
+                                    (click)="setImportFilter('All')">
+                                    All
+                                    <span class="pp-im-badge">{{ importRows.length }}</span>
+                                </button>
+
+                                @if (importReadyCount)
+                                {
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        class="pp-im-tab pp-tone-ok"
+                                        [class.pp-im-tab-on]="importFilter === 'Ready'"
+                                        [attr.aria-selected]="importFilter === 'Ready'"
+                                        (click)="setImportFilter('Ready')">
+                                        <i class="fas fa-circle-check"></i>
+                                        Ready
+                                        <span class="pp-im-badge">{{ importReadyCount }}</span>
+                                    </button>
+                                }
+
+                                @for (chip of importChips; track chip.status)
+                                {
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        [class]="'pp-im-tab ' + importTone(chip.status)"
+                                        [class.pp-im-tab-on]="importFilter === chip.status"
+                                        [attr.aria-selected]="importFilter === chip.status"
+                                        (click)="setImportFilter(chip.status)">
+                                        <i [class]="importIcon(chip.status)"></i>
+                                        {{ chip.text }}
+                                        <span class="pp-im-badge">{{ chip.count }}</span>
+                                    </button>
+                                }
+
+                            </div>
+
+                            <span class="pof-count">
+                                @if (importLoading) { <i class="fas fa-spinner fa-spin"></i> Checking the stock… }
+                                @else { {{ importIncluded.length }} of {{ importRows.length }} to load@if (importInSummary) { · {{ importInSummary }} in summary } }
+                            </span>
+
+                        </div>
+
+                        <div class="pof-table-scroll appcore-scrollbar">
+
+                            <table class="pof-table pp-table pp-im-table">
+
+                                <colgroup>
+                                    <col class="pp-im-c-tick">
+                                    <col class="pp-im-c-sl">
+                                    <col class="pp-im-c-row">
+                                    <col>
+                                    <col class="pp-im-c-num">
+                                    <col class="pp-im-c-num">
+                                    <col class="pp-im-c-mrp">
+                                    <col class="pp-im-c-chg">
+                                    <col class="pp-im-c-num">
+                                    <col class="pp-im-c-bat">
+                                    <col class="pp-im-c-notes">
+                                    <col class="pp-im-c-status">
+                                    <col class="pp-im-c-act">
+                                </colgroup>
+
+                                <thead>
+                                    <tr>
+                                        <th class="pp-im-tick">
+                                            <app-checkbox
+                                                title="Tick all the ready rows"
+                                                [value]="importAllTicked"
+                                                [disabled]="!importReadyCount"
+                                                (valueChange)="toggleImportAll()">
+                                            </app-checkbox>
+                                        </th>
+                                        <th class="pp-im-sl">SL</th>
+                                        <th class="pp-im-sl" title="Its row in the sheet">Row</th>
+                                        <th>{{ info.item }}</th>
+                                        <th class="pof-num">In Stock</th>
+                                        <th class="pof-num">Last MRP</th>
+                                        <th class="pof-num">New MRP</th>
+                                        <th class="pof-num">Change</th>
+                                        <th class="pof-num" [title]="profitLabel">{{ profitOnSale ? 'Profit (Sale)' : 'Profit (Cost)' }}</th>
+                                        <th class="pof-num" title="The batches taking the new MRP, by the rule">Batches</th>
+                                        <th>Notes</th>
+                                        <th>Status</th>
+                                        <th class="pp-im-act"></th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @for (row of importShown; track row.Key)
+                                    {
+                                        <tr
+                                            [class.pp-im-off]="!row.Include"
+                                            [class.pp-im-bad]="!importLoadable(row) && row.Status !== 'Loading' && row.Status !== 'Pending'">
+                                            <td class="pp-im-tick">
+                                                <app-checkbox
+                                                    [value]="row.Include"
+                                                    [disabled]="!importLoadable(row)"
+                                                    (valueChange)="toggleImport(row)">
+                                                </app-checkbox>
+                                            </td>
+                                            <td class="pp-im-sl">{{ $index + 1 }}</td>
+                                            <td class="pp-im-sl pp-im-dim">{{ row.Row }}</td>
+                                            <td class="pp-im-prod">
+                                                @if (row.Product)
+                                                {
+                                                    <div class="pp-im-name">{{ row.Product.Name }}</div>
+                                                    <div class="pp-im-code">
+                                                        {{ row.Product.Code }}
+                                                        @if (row.IsNew) { <span class="pp-im-newtag"><i class="fas fa-star"></i> New item</span> }
+                                                        @if (inSummary(row)) { <span class="pp-im-insum"><i class="fas fa-check"></i> In summary</span> }
+                                                    </div>
+                                                }
+                                                @else
+                                                {
+                                                    <div class="pp-im-name" [class.pp-im-missing]="row.Status !== 'NewItem'">{{ row.Code || '(no part number)' }}@if (row.Name) { <span class="pp-im-sheetname"> · {{ row.Name }}</span> }</div>
+                                                    <div class="pp-im-code">
+                                                        @if (row.Status === 'NewItem') { <span class="pp-im-notdb"><i class="fas fa-database"></i> Not in database</span> }
+                                                        @else if (row.Ambiguous) { part number of several brands }
+                                                        @else { not a {{ info.title }} product }
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td class="pof-num">
+                                                @if (row.Product) { {{ qty(row.Qty) }} <span class="pof-unit">{{ row.Product.Unit }}</span> }
+                                                @else { — }
+                                            </td>
+                                            <td class="pof-num pp-im-dim">{{ row.Product ? (row.LastMrp ? money(row.LastMrp) : 'none') : '—' }}</td>
+                                            <td class="pof-num">
+                                                <input
+                                                    class="pp-in pp-in-mrp"
+                                                    inputmode="decimal"
+                                                    placeholder="0.00"
+                                                    [class.pp-bad]="row.Status === 'BelowCost' || row.Status === 'BadMrp'"
+                                                    [disabled]="!row.Product || row.Duplicate"
+                                                    [value]="row.NewMrp"
+                                                    (change)="onImportMrp(row, $any($event.target).value)">
+                                            </td>
+                                            <td class="pof-num">
+                                                @if (row.Change === null) { <span class="pp-im-dim">—</span> }
+                                                @else
+                                                {
+                                                    <span
+                                                        class="pp-im-chg"
+                                                        [class.pp-im-up]="(row.Change ?? 0) > 0"
+                                                        [class.pp-im-down]="(row.Change ?? 0) < 0">
+                                                        <i [class]="(row.Change ?? 0) > 0 ? 'fas fa-caret-up' : ((row.Change ?? 0) < 0 ? 'fas fa-caret-down' : 'fas fa-minus')"></i>
+                                                        {{ changeText(row.Change) }}
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="pof-num">{{ pct(row.Profit) }}</td>
+                                            <td class="pof-num">{{ row.Status === 'Loading' || row.Status === 'Pending' || !row.Product ? '—' : row.Ticked.length }}</td>
+                                            <td>
+                                                <input
+                                                    class="pp-in pp-in-text"
+                                                    placeholder="—"
+                                                    maxlength="200"
+                                                    [value]="row.Notes"
+                                                    (change)="onImportNotes(row, $any($event.target).value)">
+                                            </td>
+                                            <td>
+                                                <span class="pof-tip-wrap pof-tip-right pp-im-stwrap">
+                                                    <span
+                                                        [class]="'pp-im-status ' + importTone(row.Status)"
+                                                        [attr.aria-label]="row.Message">
+                                                        <i [class]="importIcon(row.Status)"></i>
+                                                        {{ importStatusText[row.Status] }}
+                                                    </span>
+                                                    @if (row.Message)
+                                                    {
+                                                        <span class="pof-tip" role="tooltip">{{ row.Message }}</span>
+                                                    }
+                                                </span>
+                                                @if (row.Status === 'NewItem')
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="pp-setup-btn"
+                                                        title="Set it up on the New Items tab"
+                                                        (click)="openNewItems()">
+                                                        Set up <i class="fas fa-arrow-right"></i>
+                                                    </button>
+                                                }
+                                            </td>
+                                            <td class="pp-im-act">
+                                                <button
+                                                    type="button"
+                                                    class="pp-im-x"
+                                                    title="Remove the row"
+                                                    aria-label="Remove the row"
+                                                    (click)="removeImport(row)">
+                                                    <i class="fas fa-trash-can"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                    @empty
+                                    {
+                                        <tr>
+                                            <td colspan="13" class="pof-empty">
+                                                @if (importRows.length) { No row with this status. }
+                                                @else { Choose an Excel or CSV file, or copy the cells in Excel and paste them above (Ctrl+V). Download the Template : every product by its part number and name, with its current MRP. }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+            @else
+            {
+                <!-- NEW ITEMS : parts not in the database (Spare Parts /
+                     Lubricants); Validate creates them with the Spare
+                     Parts rules, then they are priceable -->
+                <div class="pof-summary-slot">
+
+                    <div class="pof-card pof-summary pp-im-grid">
+
+                        <div class="pof-card-header pp-im-head pp-nw-head">
+
+                            <i class="fas fa-circle-plus"></i>
+
+                            <span>New Items</span>
+
+                            <span class="pp-nw-where" title="Rack and shelf (optional) are of the current branch">
+                                <i class="fas fa-store"></i>
+                                {{ newItemSetup?.BranchName || 'Current branch' }}@if (newItemSetup?.WarehouseName) { · {{ newItemSetup?.WarehouseName }} }
+                            </span>
+
+                            <span class="pof-count">
+                                {{ newItemsReady.length }} of {{ newItemsPending.length }} to create@if (newItems.length - newItemsPending.length) { · {{ newItems.length - newItemsPending.length }} created }
+                            </span>
+
+                            <button
+                                type="button"
+                                class="pof-btn pof-btn-primary pp-nw-validate"
+                                title="Create the ticked parts with the Spare Parts rules (code, ledgers, location); then they can be priced"
+                                [disabled]="!newItemsReady.length || newItemsBusy || !newItemSetup"
+                                (click)="validateNewItems()">
+                                <i class="fas fa-check-double"></i>
+                                Validate
+                            </button>
+
+                        </div>
+
+                        <div class="pof-table-scroll appcore-scrollbar">
+
+                            <table class="pof-table pp-im-table pp-nw-table">
+
+                                <colgroup>
+                                    <col class="pp-im-c-tick">
+                                    <col class="pp-im-c-sl">
+                                    <col class="pp-im-c-row">
+                                    <col class="pp-nw-c-part">
+                                    <col>
+                                    <col class="pp-nw-c-group">
+                                    <col class="pp-nw-c-group">
+                                    <col class="pp-nw-c-unit">
+                                    <col class="pp-nw-c-rack">
+                                    <col class="pp-nw-c-shelf">
+                                    <col class="pp-nw-c-status">
+                                </colgroup>
+
+                                <thead>
+                                    <tr>
+                                        <th class="pp-im-tick">
+                                            <app-checkbox
+                                                title="Tick all"
+                                                [value]="newItemsAllTicked"
+                                                [disabled]="!newItemsPending.length"
+                                                (valueChange)="toggleNewItemsAll()">
+                                            </app-checkbox>
+                                        </th>
+                                        <th class="pp-im-sl">SL</th>
+                                        <th class="pp-im-sl" title="Its row in the sheet">Row</th>
+                                        <th>Part Number</th>
+                                        <th>Part Name</th>
+                                        <th title="Suggested from similar part numbers; change it if needed">Group</th>
+                                        <th>Sub-Group</th>
+                                        <th>Unit</th>
+                                        <th title="Optional : a rack of the current branch">Rack</th>
+                                        <th>Shelf</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @for (item of newItems; track item.Key)
+                                    {
+                                        <tr [class.pp-im-off]="!item.Include && !item.Created" [class.pp-nw-done]="item.Created">
+                                            <td class="pp-im-tick">
+                                                <app-checkbox
+                                                    [value]="item.Include && !item.Created"
+                                                    [disabled]="item.Created"
+                                                    (valueChange)="toggleNewItem(item)">
+                                                </app-checkbox>
+                                            </td>
+                                            <td class="pp-im-sl">{{ $index + 1 }}</td>
+                                            <td class="pp-im-sl pp-im-dim">{{ item.Row }}</td>
+                                            <td class="pp-nw-part">{{ item.PartNumber }}</td>
+                                            <td>
+                                                <input
+                                                    class="pp-in pp-in-text"
+                                                    placeholder="Part name"
+                                                    maxlength="140"
+                                                    [disabled]="item.Created"
+                                                    [value]="item.PartName"
+                                                    (change)="item.PartName = $any($event.target).value; item.Error = ''">
+                                            </td>
+                                            <td>
+                                                <select
+                                                    class="pp-in pp-sel"
+                                                    [disabled]="item.Created"
+                                                    [value]="item.CategoryId"
+                                                    (change)="onNewCategory(item, $any($event.target).value)">
+                                                    <option [value]="0">Choose…</option>
+                                                    @for (c of newItemSetup?.Categories ?? []; track c.Id)
+                                                    {
+                                                        <option [value]="c.Id" [selected]="c.Id === item.CategoryId">{{ c.Name }}</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select
+                                                    class="pp-in pp-sel"
+                                                    [disabled]="item.Created || !item.CategoryId"
+                                                    (change)="setNewSub(item, $any($event.target).value)">
+                                                    <option [value]="0">Choose…</option>
+                                                    @for (s of subCategoriesOf(item.CategoryId); track s.Id)
+                                                    {
+                                                        <option [value]="s.Id" [selected]="s.Id === item.SubCategoryId">{{ s.Name }}</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select
+                                                    class="pp-in pp-sel"
+                                                    [disabled]="item.Created"
+                                                    (change)="item.Unit = $any($event.target).value">
+                                                    @for (u of newItemSetup?.Units ?? ['Pcs']; track u)
+                                                    {
+                                                        <option [value]="u" [selected]="u === item.Unit">{{ u }}</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select
+                                                    class="pp-in pp-sel"
+                                                    [disabled]="item.Created || !(newItemSetup?.Racks?.length)"
+                                                    (change)="onNewRack(item, $any($event.target).value)">
+                                                    <option [value]="0" [selected]="!item.RackId">—</option>
+                                                    @for (r of newItemSetup?.Racks ?? []; track r.Id)
+                                                    {
+                                                        <option [value]="r.Id" [selected]="r.Id === item.RackId">{{ r.Name }}</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select
+                                                    class="pp-in pp-sel"
+                                                    [disabled]="item.Created || !item.RackId"
+                                                    (change)="setNewShelf(item, $any($event.target).value)">
+                                                    @if (!item.RackId) { <option [value]="0">—</option> }
+                                                    @for (n of shelvesOf(item); track n)
+                                                    {
+                                                        <option [value]="n" [selected]="n === item.Shelf">S-{{ n }}</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td>
+                                                @if (item.Created)
+                                                {
+                                                    <span class="pp-im-status pp-tone-ok"><i class="fas fa-circle-check"></i> Created · {{ item.ProductCode }}</span>
+                                                }
+                                                @else if (item.Error)
+                                                {
+                                                    <span class="pof-tip-wrap pof-tip-right pp-im-stwrap">
+                                                        <span class="pp-im-status pp-tone-red"><i class="fas fa-circle-xmark"></i> {{ item.Error }}</span>
+                                                        <span class="pof-tip" role="tooltip">{{ item.Error }}</span>
+                                                    </span>
+                                                }
+                                                @else
+                                                {
+                                                    <span class="pp-im-status pp-tone-violet"><i class="fas fa-circle-plus"></i> To create</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                    @empty
+                                    {
+                                        <tr>
+                                            <td colspan="11" class="pof-empty">
+                                                No new items : every part number of the sheet is in the database. (Press Analyze after loading the sheet.)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+    @else
+    {
+
+        <!-- =====================================================
+             SECTION 01 : PAGE HEADER
+             Center : Product Type, Price Change No, status
+             Right  : Add / Edit : Save, Post, Clear / Delete
+                      View       : Print, Post (draft) / Cancel (posted)
+        ====================================================== -->
+
+        <app-page-header
+            icon="fas fa-tags"
+            [title]="pageTitle"
+            subtitle="Pricing &amp; Labels : the MRP (VAT inclusive) is the sale price of the stock batches">
+
+            <div
+                pageHeaderCenter
+                class="pof-center">
+
+              <div class="pof-ribbon">
+
+                <div class="pof-chip">
+                    <span class="pof-chip-icon pof-chip-icon-branch">
+                        <i [class]="info.icon"></i>
+                    </span>
+                    <span class="pof-chip-text">
+                        <span class="pof-chip-label">Product Type</span>
+                        <strong>{{ info.title }}</strong>
+                    </span>
+                </div>
+
+                <span class="pof-ribbon-sep"></span>
+
+                <div class="pof-chip">
+                    <span class="pof-chip-icon pof-chip-icon-year">
+                        <i class="fas fa-hashtag"></i>
+                    </span>
+                    <span class="pof-chip-text">
+                        <span class="pof-chip-label">Price Change No</span>
+                        <strong>{{ numberText || '—' }}</strong>
+                    </span>
+                </div>
+
+                <span class="pof-ribbon-sep"></span>
+
+                <div class="pof-state">
+                    <span [class]="statusClass">{{ statusText }}</span>
+                </div>
+
+              </div>
+
+            </div>
+
+            <app-command-center
+                pageHeaderRight
+                [command1Text]="isView ? 'Print' : (mode === 'edit' ? 'Update' : 'Save')"
+                [command1Icon]="isView ? 'fas fa-print' : (mode === 'edit' ? 'fas fa-pen-to-square' : 'fas fa-floppy-disk')"
+                [command1Permission]="isView ? '' : (mode === 'edit' ? 'update' : 'add')"
+                [command1Activity]="isView ? 'Print' : ''"
+                [command1Title]="isView ? 'Print the price change' : (mode === 'edit' ? 'Update the draft' : 'Save as a draft (numbered on the first save)')"
+                [command1Visible]="!isView || !!doc"
+                (command1Click)="isView ? print() : save()"
+                [command2Text]="viewPosted ? 'Cancel' : 'Post'"
+                [command2Icon]="viewPosted ? 'fas fa-ban' : 'fas fa-check-double'"
+                [command2Activity]="viewPosted ? 'Cancel' : 'Post'"
+                [command2Title]="viewPosted ? 'Cancel : the batches get their old MRP back' : (isView ? 'Post the draft : the ticked batches take the new MRP' : 'Save and post : the ticked batches take the new MRP')"
+                [command2Visible]="isView ? (doc?.Status === 'Posted' || doc?.Status === 'Draft') : true"
+                (command2Click)="viewPosted ? openCancel() : (isView ? postDraft() : post())"
+                [command3Text]="mode === 'edit' ? 'Delete' : 'Clear'"
+                [command3Icon]="mode === 'edit' ? 'fas fa-trash-can' : 'fas fa-broom'"
+                [command3Activity]="mode === 'edit' ? 'Delete' : ''"
+                [command3Visible]="!isView"
+                (command3Click)="mode === 'edit' ? openDelete() : clear()"
+                rightCommandIcon="fas fa-arrow-left"
+                rightCommandTitle="Back to the list"
+                (rightCommandClick)="back()">
+            </app-command-center>
+
+        </app-page-header>
+
+        <!-- =====================================================
+             SECTION 02 : BODY
+        ====================================================== -->
+
+        <div class="pof-body">
+
+            @if (loading && !defaults && !doc)
+            {
+                <div class="pof-loading">
+                    <app-orbit-loader
+                        title="Loading Product Pricing"
+                        message="Please wait while the price change is being loaded."
+                        size="medium"
+                        [showMessage]="true"
+                        [overlay]="false">
+                    </app-orbit-loader>
+                </div>
+            }
+            @else
+            {
+                @if (error)
+                {
+                    <div class="pof-banner pof-banner-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>{{ error }}</span>
+                    </div>
+                }
+
+                @if (doc?.Status === 'Cancelled')
+                {
+                    <div class="pof-banner pof-banner-cancelled">
+                        <i class="fas fa-ban"></i>
+                        <span>
+                            <strong>Cancelled</strong>
+                            on {{ date(doc?.CancelledDate ?? '') }} : {{ doc?.CancelReason }}
+                        </span>
+                    </div>
+                }
+
+                <!-- Repricing (add / edit) : three sections on top (Price
+                     Change Information | Add <item> | Excel Import over
+                     Remarks), the summary full width below -->
+
+                <div
+                    class="pof-grid pur-grid"
+                    [class.pp-tri]="isView || !isNew"
+                    [class.pp-view]="isView"
+                    [class.pp-mb]="!isView && !isNew && !usesBasis">
+
+                  <!-- ================= Row 1 : left ================= -->
+
+                  <div class="pof-col pof-col-left pur-top pp-a-info">
+
+                    <div class="pof-card">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-tags"></i>
+                            <span>Price Change Information</span>
+                        </div>
+
+                        <div class="pof-grid-3 pof-fields">
+
+                            <app-textbox
+                                class="pof-order-no"
+                                label="Price Change No"
+                                [value]="numberText"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            @if (isView)
+                            {
+                                <app-textbox
+                                    label="Effective Date"
+                                    [value]="date(doc?.PricingDate ?? '')"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Product Type"
+                                    [value]="info.title"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Receiving Type"
+                                    [value]="isNew ? 'New Pricing' : 'Repricing'"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                @if (isNew)
+                                {
+                                    <app-textbox
+                                        class="pof-span-two"
+                                        label="Purchase Invoice"
+                                        [value]="(doc?.PurchaseNo ?? '') + ' · ' + (doc?.SupplierName ?? '')"
+                                        [readonly]="true">
+                                    </app-textbox>
+                                }
+                            }
+                            @else
+                            {
+                                <app-datepicker
+                                    label="Effective Date"
+                                    [required]="true"
+                                    [value]="pricingDate"
+                                    (valueChange)="onDateChange($event)">
+                                </app-datepicker>
+
+                                <app-search-dropdown
+                                    label="Product Type"
+                                    placeholder="Select type"
+                                    [items]="typeItems"
+                                    [value]="type"
+                                    [required]="true"
+                                    [disabled]="mode !== 'add' || lines.length > 0 || rows.length > 0"
+                                    (valueChange)="onTypeChange($event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Receiving Type"
+                                    placeholder="Select"
+                                    [items]="kindItems"
+                                    [value]="kind"
+                                    [required]="true"
+                                    [disabled]="mode !== 'add' || lines.length > 0 || rows.length > 0"
+                                    (valueChange)="onKindChange($event)">
+                                </app-search-dropdown>
+
+                                @if (isNew)
+                                {
+                                    <app-search-dropdown
+                                        class="pof-span-two"
+                                        label="Purchase Invoice"
+                                        [placeholder]="invoiceItems.length ? 'Search invoice no or supplier' : 'No received invoice to price'"
+                                        [items]="invoiceItems"
+                                        [value]="purchaseId || null"
+                                        [required]="true"
+                                        [disabled]="mode !== 'add'"
+                                        (valueChange)="onInvoiceChange($event)">
+                                    </app-search-dropdown>
+                                }
+
+                                <!-- Motor Bikes (Repricing) : Remarks here, no
+                                     third section -->
+                                @if (!isNew && !usesBasis)
+                                {
+                                    <app-textbox
+                                        class="pof-span-two"
+                                        label="Remarks"
+                                        placeholder="New price list of …, approved by …"
+                                        [maxLength]="500"
+                                        [value]="remarks"
+                                        (valueChange)="remarks = '' + $event">
+                                    </app-textbox>
+                                }
+                            }
+
+                        </div>
+
+                    </div>
+
+                    @if (!isNew && !isView && usesBasis)
+                    {
+                        <!-- The picked product : the suggestion and its stock
+                             (which batches take the new MRP, by the rule) -->
+                        <div class="pof-card pp-info-card">
+
+                            <div class="pof-card-header">
+                                <i class="fas fa-circle-info"></i>
+                                <span>Price Info</span>
+                            </div>
+
+                            <div class="pp-info-body">
+
+                                <!-- One line : the suggested MRP for the picked
+                                     product (its stock shows in the Add header) -->
+                                <div class="pp-info-line">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span class="pp-info-text">
+                                        @if (!pick) { Pick a product : its suggested MRP shows here. }
+                                        @else if (pickSuggested > 0)
+                                        {
+                                            Suggested {{ money(pickSuggested) }} : {{ pickNote }}.
+                                            @if (pickMrpValue !== pickSuggested) { <button type="button" class="pp-link" (click)="useSuggested()">Use it</button> }
+                                        }
+                                        @else { No suggestion for this product. }
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+                  </div>
+
+                  <!-- ================= Row 1 : right ================= -->
+
+                  <div class="pof-col pof-col-right pur-top pp-a-side">
+
+                    @if (isView)
+                    {
+                        <!-- View : Remarks only (the details sit in the
+                             middle section) -->
+                    }
+                    @else if (isNew && usesBasis)
+                    {
+                        <!-- PRICING BASIS : one line, as the Purchase page's
+                             Pricing Terms. Change opens Basis and % in the
+                             same line (no extra height) -->
+
+                        <div
+                            class="pof-card pur-tb"
+                            [class.pur-tb-open]="basisOpen">
+
+                            <div class="pur-tb-row">
+
+                                <span class="pur-tb-title">
+                                    <i class="fas fa-percent"></i>
+                                    Pricing Basis
+                                </span>
+
+                                <span class="pur-tb-sep"></span>
+
+                                @if (!basisOpen)
+                                {
+                                    <div class="pur-tb-body">
+
+                                        <span class="pof-term-chip">{{ basis === 'Margin' ? 'Margin on MRP' : 'Profit on Cost' }}</span>
+
+                                        <span class="pof-term-chip">{{ basisPercent || '0' }}%</span>
+
+                                        @if (invoice)
+                                        {
+                                            <span class="pof-term-chip">{{ invoice.Invoice.InvoicePriceBasis }} invoice</span>
+                                        }
+
+                                        <span
+                                            class="pof-terms-source"
+                                            [class.pof-terms-source-fixed]="basisFromSupplier">
+                                            @if (basisFromSupplier)
+                                            {
+                                                <i class="fas fa-user-tag"></i>
+                                            }
+                                            {{ basisSource }}
+                                        </span>
+
+                                    </div>
+                                }
+                                @else
+                                {
+                                    <!-- Open : label + control side by side -->
+                                    <div class="pur-tb-body pur-tb-edit">
+
+                                        <div class="pur-tb-term">
+                                            <span class="pur-tb-label">Basis</span>
+                                            <app-control-segment
+                                                name="pp-basis"
+                                                title="Profit % on Cost : MRP = cost × (1 + p%) + sales VAT · Margin % on MRP : MRP = (cost + sales VAT) ÷ (1 − m%)"
+                                                [items]="basisSegments"
+                                                [value]="basis"
+                                                (valueChange)="onBasisChange($event)">
+                                            </app-control-segment>
+                                        </div>
+
+                                        <div class="pur-tb-term">
+                                            <span class="pur-tb-label">{{ basis === 'Margin' ? 'Margin %' : 'Profit %' }}</span>
+                                            <div class="pof-default-profit pur-tb-margin">
+
+                                                <app-textbox
+                                                    placeholder="0"
+                                                    inputMode="decimal"
+                                                    [value]="basisPercent"
+                                                    (valueChange)="basisPercent = '' + $event"
+                                                    (enterPressed)="applyToAll()">
+                                                </app-textbox>
+
+                                                <button
+                                                    type="button"
+                                                    class="pof-apply"
+                                                    title="Apply to all lines : every line takes this % (its MRP worked out again)"
+                                                    aria-label="Apply the % to all lines"
+                                                    [disabled]="!rows.length"
+                                                    (click)="applyToAll()">
+                                                    <i class="fas fa-wand-magic-sparkles"></i>
+                                                </button>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                }
+
+                                <!-- Notes as a tip (keeps the line single) -->
+                                <span class="pof-tip-wrap pof-tip-right pur-tb-note">
+                                    <button
+                                        type="button"
+                                        class="pof-info-btn"
+                                        [attr.aria-label]="basisTip">
+                                        <i class="fas fa-circle-info"></i>
+                                    </button>
+                                    <span class="pof-tip" role="tooltip">{{ basisTip }}</span>
+                                </span>
+
+                                <button
+                                    type="button"
+                                    class="pof-terms-toggle"
+                                    [title]="basisOpen ? 'Close the pricing basis' : 'Change the basis or the %'"
+                                    (click)="basisOpen = !basisOpen">
+                                    <i [class]="basisOpen ? 'fas fa-check' : 'fas fa-pen'"></i>
+                                    {{ basisOpen ? 'Done' : 'Change' }}
+                                </button>
+
+                            </div>
+
+                        </div>
+                    }
+                    @else if (!isNew && usesBasis)
+                    {
+                        <div class="pof-card rc-inv-card">
+
+                            <div class="pof-card-header">
+                                <i class="fas fa-file-excel"></i>
+                                <span>Excel Import</span>
+                                <div class="pp-hd-actions">
+                                    <button
+                                        type="button"
+                                        class="pof-btn pof-btn-light"
+                                        title="Download the Excel template"
+                                        (click)="downloadTemplate()">
+                                        <i class="fas fa-download"></i>
+                                        Template
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="pof-btn pof-btn-primary"
+                                        [title]="importLoaded ? 'Open the imported list again : change the ticks or MRPs and reload' : 'Import the price list from Excel'"
+                                        [disabled]="!defaults"
+                                        (click)="openImport()">
+                                        <i [class]="importLoaded ? 'fas fa-rotate' : 'fas fa-file-import'"></i>
+                                        {{ importLoaded ? 'Recheck' : 'Import' }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="os-import">
+
+                                <div class="os-import-text">
+                                    <strong>{{ importColumns.join(' · ') }}</strong>
+                                    <span>One row per product. Its stock takes the new MRP by the rule (an increase always; a reduction only when switched on).</span>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+                    @if (!isView)
+                    {
+                        <div class="pof-card pur-narr-card">
+
+                            <div class="pof-card-header">
+                                <i class="fas fa-align-left"></i>
+                                <span>Remarks</span>
+                            </div>
+
+                            <div class="pof-narration pur-narr">
+                                <app-textarea
+                                    placeholder="New price list of …, approved by …"
+                                    [rows]="1"
+                                    [maxLength]="500"
+                                    [value]="isView ? (doc?.Remarks ?? '') : remarks"
+                                    [readonly]="isView"
+                                    (valueChange)="remarks = $event">
+                                </app-textarea>
+                            </div>
+
+                        </div>
+                    }
+
+                  </div>
+
+                  @if (isNew && !isView)
+                  {
+                    <!-- ================= Row 2 : the invoice grid ================= -->
+
+                    <div class="pof-col pp-wide">
+
+                      <!-- The card fills the slot (the page canvas below the
+                           top cards); its rows scroll inside -->
+                      <div class="pof-summary-slot">
+
+                        <div class="pof-card pof-summary pp-invoice">
+
+                            <div class="pof-card-header pp-inv-head">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                <span>Invoice Lines</span>
+                                @if (invoice)
+                                {
+                                    <span class="pp-inv-no">{{ invoice.Invoice.PurchaseNo }}</span>
+                                    <span class="pp-inv-supplier" [title]="invoice.Invoice.SupplierName">{{ invoice.Invoice.SupplierName }}</span>
+                                }
+                                <span class="pof-count">
+                                    {{ includedRows.length }} of {{ rows.length }} {{ rows.length === 1 ? 'line' : 'lines' }}
+                                    @if (invoice?.Invoice?.PendingLines) { · {{ invoice?.Invoice?.PendingLines }} not received yet }
+                                </span>
+                            </div>
+
+                            <div class="pof-table-scroll appcore-scrollbar">
+
+                                <table class="pof-table pp-im-table pp-inv-table">
+
+                                    <colgroup>
+                                        <col class="pp-im-c-tick">
+                                        <col class="pp-im-c-sl">
+                                        <col>
+                                        <col class="pp-inv-c-qty">
+                                        <col class="pp-inv-c-qty">
+                                        <col class="pp-inv-c-money">
+                                        <col class="pp-inv-c-qty">
+                                        <col class="pp-inv-c-money">
+                                        @if (usesBasis)
+                                        {
+                                            <col class="pp-inv-c-pct">
+                                            <col class="pp-inv-c-money">
+                                        }
+                                        @else
+                                        {
+                                            <col class="pp-inv-c-profit">
+                                        }
+                                        <col class="pp-inv-c-mrp">
+                                        <col class="pp-inv-c-profit">
+                                        <col class="pp-im-c-act">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="pp-im-tick">
+                                                <app-checkbox
+                                                    title="Tick all"
+                                                    [value]="allRowsIncluded"
+                                                    [disabled]="!rows.length"
+                                                    (valueChange)="toggleAllRows()">
+                                                </app-checkbox>
+                                            </th>
+                                            <th class="pp-im-sl">SL</th>
+                                            <th>{{ info.item }} · Batch</th>
+                                            <th class="pof-num">Invoiced</th>
+                                            <th class="pof-num">Received</th>
+                                            <th class="pof-num" title="Net unit cost of the batch">Cost</th>
+                                            <th class="pof-num" title="All branches, every batch">Stock</th>
+                                            <th class="pof-num" title="The declared MRP (price index)">Last MRP</th>
+                                            @if (usesBasis)
+                                            {
+                                                <th class="pof-num">{{ basis === 'Margin' ? 'Margin %' : 'Profit %' }}</th>
+                                                <th class="pof-num" [title]="basis === 'Margin' ? 'MRP from the cost and the margin % : (cost + sales VAT) ÷ (1 − m%), up to the whole taka' : 'MRP from the cost and the profit % : cost × (1 + p%) + sales VAT, up to the whole taka'">Calculated</th>
+                                            }
+                                            @else
+                                            {
+                                                <th class="pof-num" title="The profit the current MRP (Last MRP) gives on this batch's cost">Last Profit</th>
+                                            }
+                                            <th class="pof-num">New MRP</th>
+                                            <th class="pof-num" [title]="profitLabel">{{ profitOnSale ? 'Profit (Sale)' : 'Profit (Cost)' }}</th>
+                                            <th class="pp-im-act"></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @if (invoiceLoading)
+                                        {
+                                            <tr>
+                                                <td [attr.colspan]="usesBasis ? 13 : 12" class="pof-empty">Loading the invoice…</td>
+                                            </tr>
+                                        }
+                                        @else
+                                        {
+                                            @for (row of rows; track row.StockBatchId)
+                                            {
+                                                <tr [class.pp-im-off]="!row.Include">
+                                                    <td class="pp-im-tick">
+                                                        <app-checkbox
+                                                            [value]="row.Include"
+                                                            (valueChange)="toggleRow(row)">
+                                                        </app-checkbox>
+                                                    </td>
+                                                    <td class="pp-im-sl">{{ $index + 1 }}</td>
+                                                    <td class="pp-im-prod">
+                                                        <div class="pp-im-name">{{ row.ProductName }}</div>
+                                                        <div class="pp-im-code">{{ row.ProductCode }} · {{ row.BatchNo }}</div>
+                                                        <div class="pp-inv-tags">
+                                                            @if (row.BranchName) { <span class="pp-inv-tag"><i class="fas fa-store"></i> {{ row.BranchName }}</span> }
+                                                            @if (row.SalesVatRate) { <span class="pp-inv-tag"><i class="fas fa-percent"></i> Sales VAT {{ row.SalesVatRate }}%</span> }
+                                                            @if (row.Mrp > 0) { <span class="pp-inv-tag pp-inv-tag-blue"><i class="fas fa-tag"></i> MRP now {{ money(row.Mrp) }}</span> }
+                                                        </div>
+                                                    </td>
+                                                    <td class="pof-num">{{ qty(row.Quantity) }} <span class="pof-unit">{{ row.Unit }}</span></td>
+                                                    <td class="pof-num">
+                                                        <span [class.pp-inv-part]="row.ReceivedQuantity < row.Quantity">{{ qty(row.ReceivedQuantity) }}</span>
+                                                    </td>
+                                                    <td class="pof-num pp-im-dim">{{ cost(row.UnitCost) }}</td>
+                                                    <td class="pof-num">{{ qty(row.ProductStock) }}</td>
+                                                    <td class="pof-num" [title]="row.LastMrpDate ? 'Since ' + date(row.LastMrpDate) : ''">
+                                                        @if (row.LastMrp) { {{ money(row.LastMrp) }} }
+                                                        @else { <span class="pp-inv-none">none</span> }
+                                                    </td>
+                                                    @if (usesBasis)
+                                                    {
+                                                        <td class="pof-num">
+                                                            <input
+                                                                class="pp-in"
+                                                                inputmode="decimal"
+                                                                placeholder="0"
+                                                                [disabled]="!row.Include"
+                                                                [value]="row.Percent"
+                                                                (change)="onRowPercent(row, $any($event.target).value)">
+                                                        </td>
+                                                        <td class="pof-num pp-im-dim">{{ row.Suggested ? money(row.Suggested) : '—' }}</td>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <td class="pof-num pp-im-dim">{{ pct(lastProfit(row)) }}</td>
+                                                    }
+                                                    <td class="pof-num">
+                                                        <input
+                                                            class="pp-in pp-in-mrp"
+                                                            inputmode="decimal"
+                                                            placeholder="0.00"
+                                                            [class.pp-bad]="rowBelowCost(row)"
+                                                            [readonly]="!gridEditable"
+                                                            [disabled]="!row.Include"
+                                                            [value]="row.NewMrp"
+                                                            (input)="onRowMrp(row, $any($event.target).value)">
+                                                    </td>
+                                                    <td class="pof-num" [class.os-missing]="rowBelowCost(row)"><b>{{ pct(rowProfit(row)) }}</b></td>
+                                                    <td class="pp-im-act">
+                                                        <button
+                                                            type="button"
+                                                            class="pp-im-x"
+                                                            title="Remove : not priced in this document (choose the invoice again to bring it back)"
+                                                            aria-label="Remove the line"
+                                                            (click)="removeRow(row)">
+                                                            <i class="fas fa-trash-can"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            @empty
+                                            {
+                                                <tr>
+                                                    <td [attr.colspan]="usesBasis ? 13 : 12" class="pof-empty">
+                                                        Choose the purchase invoice above : its received lines load here with their cost, stock and last MRP. Lines not received yet are priced after their receiving.
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                            <!-- Totals of the ticked lines -->
+                            <div class="pp-inv-foot">
+
+                                <div class="pp-inv-stat">
+                                    <span>Ticked lines at cost</span>
+                                    <strong>{{ money(invoiceTotals.cost) }}</strong>
+                                </div>
+
+                                <i class="fas fa-arrow-right pp-inv-arrow"></i>
+
+                                <div class="pp-inv-stat pp-inv-stat-main">
+                                    <span>At the new MRP</span>
+                                    <strong>{{ money(invoiceTotals.sale) }}</strong>
+                                </div>
+
+                                @if (defaults?.RaiseOldStock)
+                                {
+                                    <span class="pp-inv-note">
+                                        <i class="fas fa-circle-info"></i>
+                                        Older stock with a lower MRP is raised to the new one on post.
+                                    </span>
+                                }
+
+                            </div>
+
+                        </div>
+
+                      </div>
+
+                    </div>
+                  }
+                  @else
+                  {
+                  <!-- ================= Row 2 : left (Repricing : top middle) ================= -->
+
+                  <div class="pof-col pof-col-left pp-a-add">
+
+                    @if (isView)
+                    {
+                        <!-- View : the document's details (its batches
+                             open under each product in the summary) -->
+                        <div class="pof-card rc-inv-card pp-view-details">
+
+                            <div class="pof-card-header">
+                                <i class="fas fa-clipboard-check"></i>
+                                <span>Price Change Details</span>
+                                @if (doc?.Status === 'Posted')
+                                {
+                                    <span class="rc-pill rc-pill-blue">On the batches</span>
+                                }
+                                @else if (doc?.Status === 'Cancelled')
+                                {
+                                    <span class="rc-pill rc-pill-amber">Old MRPs back</span>
+                                }
+                            </div>
+
+                            <div class="rc-facts">
+                                @for (fact of facts; track fact.label)
+                                {
+                                    <div class="rc-fact" [class.rc-fact-wide]="!!fact.wide">
+                                        <span>{{ fact.label }}</span>
+                                        <strong [title]="fact.value">{{ fact.value || '—' }}</strong>
+                                    </div>
+                                }
+                            </div>
+
+                        </div>
+
+                        <!-- Remarks : one line, below the details -->
+                        <div class="pof-card pp-view-remarks">
+                            <app-textbox
+                                label="Remarks"
+                                placeholder="—"
+                                [value]="doc?.Remarks ?? ''"
+                                [readonly]="true">
+                            </app-textbox>
+                        </div>
+                    }
+                    @else
+                    {
+                        <div
+                            class="pof-card pur-add-card"
+                            [class.pof-locked]="!defaults">
+
+                            <div class="pof-card-header">
+
+                                <i [class]="editingId ? 'fas fa-pen-to-square' : info.icon"></i>
+
+                                <span>{{ editingId ? 'Edit Product' : 'Add Products' }}</span>
+
+                                <!-- The picked product's stock : which batches
+                                     take the new MRP (the rule as a tip) -->
+                                @if (pick && !batchesLoading)
+                                {
+                                    <span class="pof-count pp-stock-chip" [title]="pickRuleText">
+                                        @if (!pickBatches.length) { No stock }
+                                        @else { {{ qty(quantityOf(pickBatches)) }} {{ pick.Unit }} · {{ pickBatches.length }} {{ pickBatches.length === 1 ? 'batch' : 'batches' }}@if (pickMrpValue > 0) { · {{ pickChanging.length }} take new MRP } }
+                                    </span>
+                                }
+
+                                <span class="pur-hd-notes">
+                                    @if (lineError)
+                                    {
+                                        <span class="pof-tip-wrap">
+                                            <span class="pur-hd-ico pur-hd-red" [attr.aria-label]="lineError">
+                                                <i class="fas fa-circle-exclamation"></i>
+                                            </span>
+                                            <span class="pof-tip" role="tooltip">{{ lineError }}</span>
+                                        </span>
+                                    }
+                                </span>
+
+                                @if (editingId)
+                                {
+                                    <button
+                                        type="button"
+                                        class="pof-cancel-edit"
+                                        title="Cancel edit"
+                                        aria-label="Cancel edit"
+                                        (click)="cancelEdit()">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+                                }
+
+                            </div>
+
+                            @if (!usesBasis)
+                            {
+                                <!-- Motor Bikes : Brand filters the models;
+                                     Add brings the model (or All models) to
+                                     the summary, priced there -->
+                                <div class="pof-fields pp-mb-fields">
+
+                                    <app-search-dropdown
+                                        label="Brand"
+                                        placeholder="Every brand"
+                                        [items]="brandItems"
+                                        [value]="brandId || null"
+                                        (valueChange)="onBrandChange($event)">
+                                    </app-search-dropdown>
+
+                                    <app-search-dropdown
+                                        [label]="info.item"
+                                        [placeholder]="mbItems.length ? 'All models, or search code or name' : 'Every model is on the summary'"
+                                        [items]="mbItems"
+                                        [value]="mbPickId || null"
+                                        [required]="true"
+                                        (valueChange)="onMbPickChange($event)">
+                                    </app-search-dropdown>
+
+                                    <div class="pp-mb-hint">
+                                        <i class="fas fa-circle-info"></i>
+                                        <span>Models come in at their MRP : type the new MRP and a short note in the summary. Only changed models are saved.</span>
+                                    </div>
+
+                                    <div class="pp-add-cell">
+                                        <button
+                                            type="button"
+                                            class="pof-add"
+                                            [disabled]="!defaults || !mbPickId"
+                                            (click)="addModels()">
+                                            <i class="fas fa-plus"></i>
+                                            {{ mbPickId === -1 ? 'Add All' : 'Add' }}
+                                        </button>
+                                    </div>
+
+                                </div>
+                            }
+                            @else
+                            {
+                            <div class="pof-grid-3 pof-fields">
+
+                                <app-search-dropdown
+                                    class="pof-span-two"
+                                    [label]="info.item"
+                                    [placeholder]="productItems.length ? 'Search code or name' : 'No product'"
+                                    [items]="productItems"
+                                    [value]="pickId || null"
+                                    [required]="true"
+                                    [disabled]="!!editingId"
+                                    (valueChange)="onPickChange($event)">
+                                </app-search-dropdown>
+
+                                <app-textbox
+                                    class="rc-num"
+                                    label="New MRP (incl. VAT)"
+                                    inputMode="decimal"
+                                    placeholder="0.00"
+                                    [required]="true"
+                                    [disabled]="!pick"
+                                    [value]="pickMrp"
+                                    (valueChange)="pickMrp = '' + $event"
+                                    (enterPressed)="onAddLine()">
+                                </app-textbox>
+
+                                <app-textbox
+                                    class="rc-num"
+                                    label="Last MRP"
+                                    placeholder="—"
+                                    [value]="pickLastMrp ? money(pickLastMrp) : ''"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    class="rc-num"
+                                    label="Net Sale (excl. VAT)"
+                                    placeholder="—"
+                                    [value]="pickNetSale ? money(pickNetSale) : ''"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    class="rc-num"
+                                    [label]="profitLabel"
+                                    placeholder="—"
+                                    [value]="pickProfit === null ? '' : pct(pickProfit)"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    class="pof-span-all"
+                                    label="Notes"
+                                    placeholder="Why the price changes …"
+                                    [maxLength]="200"
+                                    [disabled]="!pick"
+                                    [value]="pickNotes"
+                                    (valueChange)="pickNotes = '' + $event"
+                                    (enterPressed)="onAddLine()">
+                                </app-textbox>
+
+                                <!-- Add / Update : at the very bottom, after Notes -->
+                                <div class="pof-span-all pp-add-cell">
+                                    <button
+                                        type="button"
+                                        class="pof-add"
+                                        [disabled]="!defaults || batchesLoading"
+                                        (click)="onAddLine()">
+                                        <i [class]="editingId ? 'fas fa-check' : 'fas fa-plus'"></i>
+                                        {{ editingId ? 'Update' : 'Add' }}
+                                    </button>
+                                </div>
+
+                            </div>
+                            }
+
+                        </div>
+                    }
+
+                  </div>
+
+                  <!-- ================= Row 2 : right (Repricing : full width) ================= -->
+
+                  <div class="pof-col pof-col-right pp-a-sum">
+
+                    <div class="pof-summary-slot">
+
+                        <div class="pof-card pof-summary">
+
+                            <div class="pof-card-header">
+                                <i class="fas fa-list-check"></i>
+                                <span>Price Change Summary</span>
+                                <span class="pof-count">
+                                    {{ rowCount }} {{ rowCount === 1 ? 'product' : 'products' }} · {{ batchCount }} {{ batchCount === 1 ? 'batch' : 'batches' }}
+                                </span>
+                            </div>
+
+                            <div class="pof-table-scroll appcore-scrollbar">
+
+                                <table class="pof-table pp-im-table pp-sum-table">
+
+                                    <colgroup>
+                                        <col class="pp-im-c-sl">
+                                        <col>
+                                        <col class="pp-sum-c-bat">
+                                        <col class="pp-im-c-num">
+                                        <col class="pp-sum-c-old">
+                                        <col class="pp-im-c-num">
+                                        <col class="pp-sum-c-profit">
+                                        @if (!isView && !usesBasis)
+                                        {
+                                            <col class="pp-sum-c-notes">
+                                        }
+                                        @if (!isView)
+                                        {
+                                            <col class="pp-im-c-act">
+                                        }
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="pp-im-sl">SL</th>
+                                            <th>{{ info.item }}</th>
+                                            <th class="pof-num" title="Batches taking the new MRP / in stock">Batches</th>
+                                            <th class="pof-num">In Stock</th>
+                                            <th class="pof-num">Old MRP</th>
+                                            <th class="pof-num">New MRP</th>
+                                            <th class="pof-num" [title]="profitLabel">{{ profitOnSale ? 'Profit (Sale)' : 'Profit (Cost)' }}</th>
+                                            @if (!isView && !usesBasis)
+                                            {
+                                                <th>Notes</th>
+                                            }
+                                            @if (!isView)
+                                            {
+                                                <th class="pp-im-act"></th>
+                                            }
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @if (isView)
+                                        {
+                                            @for (group of viewGroups; track group.ProductId)
+                                            {
+                                                <tr
+                                                    class="pp-sum-open-row"
+                                                    [class.pp-sum-opened]="isViewOpen(group)"
+                                                    title="Click to show its batches"
+                                                    (click)="toggleViewOpen(group)">
+                                                    <td class="pp-im-sl">
+                                                        <i class="fas pp-sum-caret" [class.fa-chevron-right]="!isViewOpen(group)" [class.fa-chevron-down]="isViewOpen(group)"></i>
+                                                        {{ $index + 1 }}
+                                                    </td>
+                                                    <td class="pp-im-prod">
+                                                        <div class="pp-im-name">{{ group.ProductName }}</div>
+                                                        <div class="pp-im-code">
+                                                            {{ group.ProductCode }}
+                                                            @if (group.Notes) { <span class="pp-sum-note"><i class="fas fa-note-sticky"></i> {{ group.Notes }}</span> }
+                                                        </div>
+                                                    </td>
+                                                    <td class="pof-num">
+                                                        @if (group.Lines[0].StockBatchId > 0) { <span class="pp-sum-bat">{{ group.Lines.length }}</span> }
+                                                        @else { <span class="pp-sum-bat pp-sum-bat-none" title="A declared price : new purchases take it">Declared</span> }
+                                                    </td>
+                                                    <td class="pof-num">{{ qty(quantityOf(group.Lines)) }} <span class="pof-unit">{{ group.Unit }}</span></td>
+                                                    <td class="pof-num pp-im-dim">{{ mrpRange(viewOldMrps(group)) }}</td>
+                                                    <td class="pof-num"><span class="pp-sum-mrp">{{ money(group.NewMrp) }}</span></td>
+                                                    <td class="pof-num">{{ pct(viewProfit(group)) }}</td>
+                                                </tr>
+
+                                                @if (isViewOpen(group))
+                                                {
+                                                    <tr class="pp-sum-sub">
+                                                        <td></td>
+                                                        <td colspan="6">
+                                                            <table class="pp-sum-batches">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Batch</th>
+                                                                        <th>Branch</th>
+                                                                        <th>Source</th>
+                                                                        <th class="pof-num">Qty</th>
+                                                                        <th class="pof-num">Cost</th>
+                                                                        <th class="pof-num">Old MRP</th>
+                                                                        <th class="pof-num">New MRP</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @for (line of group.Lines; track line.ProductPricingLineId)
+                                                                    {
+                                                                        <tr>
+                                                                            <td class="pp-sum-bno">{{ line.StockBatchId > 0 ? line.BatchNo : 'Declared price' }}</td>
+                                                                            <td>{{ line.BranchName || '—' }}</td>
+                                                                            <td class="pp-im-dim">{{ line.StockBatchId > 0 ? line.SourceType + ' ' + line.SourceNo : 'New purchases take it' }}</td>
+                                                                            <td class="pof-num">{{ qty(line.Quantity) }} <span class="pof-unit">{{ group.Unit }}</span></td>
+                                                                            <td class="pof-num pp-im-dim">{{ cost(line.UnitCost) }}</td>
+                                                                            <td class="pof-num" [class.os-missing]="!line.OldMrp">{{ line.OldMrp ? money(line.OldMrp) : 'unpriced' }}</td>
+                                                                            <td class="pof-num"><span class="pp-sum-mrp">{{ money(line.NewMrp) }}</span></td>
+                                                                        </tr>
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        }
+                                        @else
+                                        {
+                                            @for (line of lines; track line.ProductId)
+                                            {
+                                                <tr
+                                                    class="pof-row-editable"
+                                                    [class.pof-row-editing]="editingId === line.ProductId"
+                                                    [class.pp-sum-same]="!lineChanged(line)"
+                                                    [title]="!usesBasis ? (lineChanged(line) ? 'Changed : saved' : 'At its MRP : not saved (type a new MRP to change it)') : (lineChanged(line) ? 'Double-click to edit' : 'At its MRP : not saved')"
+                                                    (dblclick)="usesBasis && startEdit(line)">
+                                                    <td class="pp-im-sl">{{ $index + 1 }}</td>
+                                                    <td class="pp-im-prod">
+                                                        <div class="pp-im-name">{{ line.ProductName }}</div>
+                                                        <div class="pp-im-code">
+                                                            {{ line.ProductCode }}
+                                                            @if (line.Notes && usesBasis) { <span class="pp-sum-note"><i class="fas fa-note-sticky"></i> {{ line.Notes }}</span> }
+                                                        </div>
+                                                    </td>
+                                                    <td class="pof-num">
+                                                        @if (!line.Batches.length)
+                                                        {
+                                                            <span class="pp-sum-bat pp-sum-bat-none" title="No stock : a declared price, new purchases take it">No stock</span>
+                                                        }
+                                                        @else if (!line.Ticked.length && lineChanged(line))
+                                                        {
+                                                            <span class="pp-sum-bat pp-sum-bat-part" title="Its stock keeps its MRP : a declared price, new purchases take it">New purchases</span>
+                                                        }
+                                                        @else
+                                                        {
+                                                            <span class="pp-sum-bat" [class.pp-sum-bat-part]="line.Ticked.length < line.Batches.length">{{ line.Ticked.length }} / {{ line.Batches.length }}</span>
+                                                        }
+                                                    </td>
+                                                    <td class="pof-num">{{ qty(quantityOf(line.Ticked.length ? tickedOf(line) : line.Batches)) }} <span class="pof-unit">{{ line.Unit }}</span></td>
+                                                    <td class="pof-num pp-im-dim">{{ line.Ticked.length ? mrpRange(oldMrps(line)) : (line.LastMrp ? money(line.LastMrp) : 'none') }}</td>
+                                                    <td class="pof-num">
+                                                        @if (!usesBasis)
+                                                        {
+                                                            <input
+                                                                class="pp-in pp-in-mrp"
+                                                                inputmode="decimal"
+                                                                placeholder="0.00"
+                                                                title="The new MRP : left at its MRP, the model is not saved"
+                                                                [value]="line.NewMrp || ''"
+                                                                (dblclick)="$event.stopPropagation()"
+                                                                (change)="onLineMrp(line, $any($event.target).value)">
+                                                        }
+                                                        @else
+                                                        {
+                                                            <span class="pp-sum-mrp">{{ money(line.NewMrp) }}</span>
+                                                        }
+                                                    </td>
+                                                    <td class="pof-num">{{ pct(lineProfit(line)) }}</td>
+                                                    @if (!usesBasis)
+                                                    {
+                                                        <td>
+                                                            <input
+                                                                class="pp-in pp-in-text"
+                                                                placeholder="Short note"
+                                                                maxlength="200"
+                                                                [value]="line.Notes"
+                                                                (dblclick)="$event.stopPropagation()"
+                                                                (change)="onLineNotes(line, $any($event.target).value)">
+                                                        </td>
+                                                    }
+                                                    <td class="pp-im-act">
+                                                        <button
+                                                            type="button"
+                                                            class="pp-im-x"
+                                                            title="Remove"
+                                                            aria-label="Remove"
+                                                            (click)="removeLine(line)">
+                                                            <i class="fas fa-trash-can"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+
+                                        @if (rowCount === 0)
+                                        {
+                                            <tr>
+                                                <td
+                                                    [attr.colspan]="isView ? 7 : (usesBasis ? 8 : 9)"
+                                                    class="pof-empty">
+                                                    @if (usesBasis) { No {{ info.itemLower }} yet. Pick one above, enter its new MRP and press Add, or import the list from Excel. Double-click a product to edit it. }
+                                                    @else { No motor bikes yet. Pick a brand and a model (or All models) above and press Add; then type the new MRPs here. }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                  </div>
+                  }
+
+                </div>
+            }
+
+        </div>
+    }
 
     <!-- =====================================================
-         PAGE TOOLBAR
+         DELETE (draft)
     ====================================================== -->
 
-    <app-page-toolbar>
+    @if (deleteOpen && doc)
+    {
+        <div class="pof-overlay">
 
-        <app-control-tabs
+            <div
+                class="pof-cx"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="pp-del-title">
 
-            pageToolbarLeft
+                <div class="pof-cx-head">
+                    <span class="pof-cx-icon">
+                        <i class="fas fa-trash-can"></i>
+                    </span>
+                    <div class="pof-cx-title">
+                        <strong id="pp-del-title">Delete Draft</strong>
+                        <span>{{ doc.PricingNo }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="deleteOpen = false">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
 
-            [tabs]="tabs"
+                <div class="pof-cx-body">
+                    <div class="pof-cx-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>
+                            The draft and its {{ doc.Lines.length }} {{ doc.Lines.length === 1 ? 'batch' : 'batches' }} are deleted. No MRP was changed by it.
+                        </span>
+                    </div>
+                </div>
 
-            [(selectedTab)]="selectedTab">
+                <div class="pof-modal-foot">
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="deleteOpen = false">
+                        <i class="fas fa-arrow-left"></i>
+                        Keep Draft
+                    </button>
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-danger"
+                        [disabled]="saving"
+                        (click)="confirmDelete()">
+                        <i class="fas fa-trash-can"></i>
+                        Delete Draft
+                    </button>
+                </div>
 
-        </app-control-tabs>
+            </div>
 
-    </app-page-toolbar>
-
-
+        </div>
+    }
 
     <!-- =====================================================
-         PAGE CANVAS
+         CANCEL (view, posted)
     ====================================================== -->
 
-    <app-page-canvas>
-
-        <app-form-grid
-
-            canvasBody
-
-            [columns]="4">
-
-
-            <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="General Information"
-
-                icon="fas fa-circle-info">
-
-
-                <!-- Code -->
-
-                <app-textbox
-
-                    label="Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.code"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- Name -->
-
-                <app-textbox
-
-                    label="Name"
-
-                    placeholder="Enter name"
-
-                    [(value)]="entity.name"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Sample Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- Sample Search Dropdown -->
-
-                <app-search-dropdown
-
-                    label="Sample Search Dropdown"
-
-                    [items]="items"
-
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.sampleSearchDropdownId"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-search-dropdown>
-
-
-
-                <!-- Sample Field -->
-
-                <app-textbox
-
-                    label="Sample Field"
-
-                    placeholder="Enter sample value"
-
-                    [(value)]="entity.sampleField"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status Information"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Additional Information"
-
-                icon="fas fa-clipboard">
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [(value)]="entity.remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-
-            </app-form-section>
-
-
-        </app-form-grid>
-
-    </app-page-canvas>
+    @if (cancelOpen && doc)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="pp-cx-title">
+
+                <div class="pof-cx-head">
+                    <span class="pof-cx-icon">
+                        <i class="fas fa-ban"></i>
+                    </span>
+                    <div class="pof-cx-title">
+                        <strong id="pp-cx-title">Cancel Price Change</strong>
+                        <span>{{ doc.PricingNo }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="cancelOpen = false">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="pof-cx-body">
+
+                    <div class="pof-cx-summary">
+                        <div>
+                            <span>Effective Date</span>
+                            <strong>{{ date(doc.PricingDate) }}</strong>
+                        </div>
+                        <div>
+                            <span>Products</span>
+                            <strong>{{ doc.ProductCount }}</strong>
+                        </div>
+                        <div class="pof-cx-amount">
+                            <span>Batches</span>
+                            <strong>{{ doc.BatchCount }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="pof-cx-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>
+                            Every batch gets the MRP it had before this price change.
+                            Refused when a later price change changed one of these batches (cancel that one first).
+                            This cannot be undone.
+                        </span>
+                    </div>
+
+                    <div class="pof-cx-fields">
+                        <app-textarea
+                            class="pof-cx-reason"
+                            label="Reason"
+                            placeholder="Why is this price change cancelled?"
+                            [required]="true"
+                            [rows]="4"
+                            [maxLength]="500"
+                            [value]="cancelReason"
+                            (valueChange)="cancelReason = $event">
+                        </app-textarea>
+                    </div>
+
+                </div>
+
+                <div class="pof-modal-foot">
+                    <span class="pof-modal-note">
+                        <i class="fas fa-circle-info"></i>
+                        Reason is required.
+                    </span>
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="cancelOpen = false">
+                        <i class="fas fa-arrow-left"></i>
+                        Keep It
+                    </button>
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-danger"
+                        [disabled]="saving"
+                        (click)="confirmCancel()">
+                        <i class="fas fa-ban"></i>
+                        Cancel Price Change
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    }
 
 </div>
 
-
-
-<!-- =====================================================
-     UTILITIES
-====================================================== -->
-
 <app-toast></app-toast>
 
-<app-confirm-dialog></app-confirm-dialog>
+<app-progress-dialog></app-progress-dialog>

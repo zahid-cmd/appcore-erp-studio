@@ -109,11 +109,22 @@ public class RoleProfileController : ControllerBase
     // Get By Id
     //===============================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
     public async Task<ActionResult<RoleProfileDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         RoleProfileDto? profile =
             await _repository.GetByIdAsync(id);
 
@@ -175,11 +186,22 @@ public class RoleProfileController : ControllerBase
     // Delete
     //===============================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         //===========================================================
         // Verify Role Profile Exists
         //===========================================================

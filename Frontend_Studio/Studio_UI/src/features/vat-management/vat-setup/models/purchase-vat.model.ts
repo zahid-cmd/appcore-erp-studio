@@ -13,6 +13,10 @@ export interface PurchaseVat
     PurchaseVatId:
         number;
 
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     // PVT-0001
     VatCode:
         string;

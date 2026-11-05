@@ -11,6 +11,9 @@ namespace AppCore.Application.InventoryManagement.StoreSetup;
 
 public class OpeningStockDto
 {
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     public long OpeningStockId { get; set; }
 
     public string PageType { get; set; } = string.Empty;
@@ -89,8 +92,6 @@ public class OpeningStockLineDto
 
     public decimal LineValue { get; set; }
 
-    public decimal SalePrice { get; set; }
-
     public decimal Mrp { get; set; }
 
     public decimal MarginPercent { get; set; }
@@ -106,6 +107,14 @@ public class OpeningStockLineDto
     public string RackCode { get; set; } = string.Empty;
 
     public int ShelfNumber { get; set; }
+
+    // 0 = no place
+    public int BinNumber { get; set; }
+
+    // SLF-A-03 / A-03-05 ('' = no place)
+    public string ShelfLabel { get; set; } = string.Empty;
+
+    public string BinCode { get; set; } = string.Empty;
 
     public bool SaveAsDefault { get; set; }
 
@@ -134,6 +143,9 @@ public class OpeningStockUnitDto
 // After save / post
 public class OpeningStockSavedDto
 {
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     public long OpeningStockId { get; set; }
 
     public string OpeningNo { get; set; } = string.Empty;

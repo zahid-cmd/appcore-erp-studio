@@ -332,8 +332,8 @@ implements OnInit, OnDestroy
         'add';
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
     //===========================================================
     // Page Header
@@ -668,7 +668,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -687,7 +687,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -699,13 +699,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -715,7 +713,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
@@ -744,7 +742,7 @@ implements OnInit, OnDestroy
     {
         if
         (
-            this.entityId > 0
+            !!this.entityId
         )
         {
             return;
@@ -1331,7 +1329,7 @@ implements OnInit, OnDestroy
             CardSetupId:
                 this.entity.CardSetupId
                 ||
-                this.entityId,
+                0,
 
             ...this.buildPayload()
         };
@@ -1343,7 +1341,9 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.cardSetupService.update(
-                model
+                this.entityId,
+
+model
             )
         )
         .subscribe

@@ -382,6 +382,15 @@ implements OnInit, OnDestroy
         BankAccountListItem[] =
         [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredBankAccounts:
         BankAccountListItem[] =
         [];
@@ -703,6 +712,10 @@ implements OnInit, OnDestroy
         return {
             BankAccountId:
                 this.num(item, 'BankAccountId'),
+
+            // The id used in links and API calls (uuid v7)
+            PublicId:
+                this.text(item, 'PublicId'),
 
             AccountSubGroupsId:
                 accountSubGroupsId,
@@ -1069,6 +1082,9 @@ implements OnInit, OnDestroy
                 );
 
                 this.applyFilters();
+
+
+                this.updateSummary();
 
                 this.loading =
                     false;
@@ -1489,7 +1505,7 @@ implements OnInit, OnDestroy
         action:
             'add' | 'view' | 'edit',
         id?:
-            number
+            string
     ):
         void
     {
@@ -1554,7 +1570,7 @@ implements OnInit, OnDestroy
 
         this.navigateTo(
             'view',
-            item.BankAccountId
+            item.PublicId
         );
     }
 
@@ -1581,7 +1597,7 @@ implements OnInit, OnDestroy
 
         this.navigateTo(
             'edit',
-            item.BankAccountId
+            item.PublicId
         );
     }
 
@@ -1628,7 +1644,7 @@ implements OnInit, OnDestroy
                 (
                     () =>
                         this.deleteItem(
-                            item.BankAccountId,
+                            item.PublicId ?? '',
                             name
                         ),
                     this.CONFIRM_CLOSE_DELAY_MS
@@ -1644,7 +1660,7 @@ implements OnInit, OnDestroy
     private deleteItem
     (
         id:
-            number,
+            string,
         name:
             string
     ):
@@ -2174,4 +2190,32 @@ implements OnInit, OnDestroy
         this.historyOpened =
             false;
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.bankAccounts ?? [];
+
+        const active =
+            all.filter(x => !!x?.Status).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

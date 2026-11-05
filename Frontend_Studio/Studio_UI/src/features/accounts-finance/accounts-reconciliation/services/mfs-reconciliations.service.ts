@@ -196,7 +196,7 @@ export class MfsReconciliationsService
     getVoucher
     (
         id:
-            number
+            number | string
     ):
         Observable<MfsReconciliationVoucher>
     {

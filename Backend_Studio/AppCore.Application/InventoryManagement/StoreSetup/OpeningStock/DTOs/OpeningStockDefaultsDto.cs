@@ -38,6 +38,10 @@ public class OpeningStockDefaultsDto
     // VAT Current Account
     public bool VatIncluded { get; set; }
 
+    // Profit % On Sale Price (CFG-MOD-012-0010) : OFF = profit on
+    // cost (markup), ON = margin on the net sale
+    public bool ProfitOnSale { get; set; }
+
     // Posting Setup › Opening Stock ('' = not set)
     public string DefaultLedgerCode { get; set; } = string.Empty;
 
@@ -116,6 +120,23 @@ public class OpeningStockRackDto
     public string Name { get; set; } = string.Empty;
 
     public int ShelfCount { get; set; }
+
+    public string ZoneCode { get; set; } = string.Empty;
+
+    public string ZoneName { get; set; } = string.Empty;
+
+    // Bins per shelf (free / held : rack-management/bins)
+    public List<OpeningStockRackShelfDto> Shelves { get; set; } = new();
+}
+
+
+public class OpeningStockRackShelfDto
+{
+    public int ShelfNumber { get; set; }
+
+    public string ShelfLabel { get; set; } = string.Empty;
+
+    public int BinCount { get; set; }
 }
 
 
@@ -136,10 +157,8 @@ public class OpeningStockProductDto
     // Has an Inventory ledger (needed to post)
     public bool HasLedger { get; set; }
 
-    // Cost / sale price of its latest batch (suggestions)
+    // Cost of its latest batch (suggestion; its MRP below)
     public decimal LastCost { get; set; }
-
-    public decimal LastSalePrice { get; set; }
 
     public decimal LastMrp { get; set; }
 
@@ -159,6 +178,11 @@ public class OpeningStockShelfDto
     public long RackManagementId { get; set; }
 
     public int ShelfNumber { get; set; }
+
+    public int BinNumber { get; set; }
+
+    // A-03-05
+    public string BinCode { get; set; } = string.Empty;
 }
 
 

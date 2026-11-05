@@ -12,17 +12,23 @@
 //                   • received cheques due for clearing today or
 //                     earlier, in the login branch, for users who
 //                     can open Check Reconciliation
+//                   • website enquiries (Enquire Now / test ride /
+//                     EMI) nobody has taken yet, login branch, for
+//                     users who can open Sales Enquiries; and
+//                     website repeats on the user's own enquiries
 // Context       : the financial year that covers today (Dhaka).
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Application.Platform.DataManagement;
 using AppCore.Application.Platform.EffectiveAccess.Interfaces;
 using AppCore.Application.Platform.Shell;
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Application.Settings.GeneralSettings.SystemConfigurations.DTOs;
 
 using AppCore.Domain.Entities.AccountsFinance.VoucherManagement;
+using AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles;
 using AppCore.Domain.Entities.InfrastructureControl.NavigationManagement;
 using AppCore.Domain.Entities.Settings.GeneralSettings;
 using AppCore.Domain.Platform.Accounting;
@@ -53,6 +59,24 @@ public class ShellRepository : IShellRepository
     private const string CheckReconciliationRoutePart =
         "check-reconciliations";
 
+    // Sales Enquiries : access check and the page a website
+    // enquiry opens (edit : saving it makes the user its executive)
+    private const string SalesEnquiriesRoutePart =
+        "sales-enquiries";
+
+    private const string SalesEnquiryEditRoute =
+        "/enquiry-management/enquiry-profiles/sales-enquiries/edit/";
+
+    private const string ServiceEnquiriesRoutePart =
+        "service-enquiries";
+
+    private const string ServiceEnquiryEditRoute =
+        "/enquiry-management/enquiry-profiles/service-enquiries/edit/";
+
+    // Most website items shown in the bell
+    private const int MaxWebsiteItems =
+        15;
+
 
     //===========================================================
     // Fields
@@ -63,6 +87,8 @@ public class ShellRepository : IShellRepository
     private readonly IEffectiveAccessRepository _effectiveAccess;
 
     private readonly ISystemConfigurationsRepository _configurations;
+
+    private readonly IDataManagementService _dataManagement;
 
 
     //===========================================================
@@ -75,7 +101,9 @@ public class ShellRepository : IShellRepository
 
         IEffectiveAccessRepository effectiveAccess,
 
-        ISystemConfigurationsRepository configurations
+        ISystemConfigurationsRepository configurations,
+
+        IDataManagementService dataManagement
     )
     {
         _context =
@@ -86,6 +114,9 @@ public class ShellRepository : IShellRepository
 
         _configurations =
             configurations;
+
+        _dataManagement =
+            dataManagement;
     }
 
 
@@ -288,6 +319,20 @@ public class ShellRepository : IShellRepository
             items.Add(cheques);
         }
 
+        items.AddRange(
+            await WebsiteEnquiriesAsync(userId, branchId));
+
+        items.AddRange(
+            await WebsiteServiceEnquiriesAsync(userId, branchId));
+
+        ShellNotificationDto? backup =
+            await BackupAlertAsync(userId);
+
+        if (backup != null)
+        {
+            items.Add(backup);
+        }
+
         return items
             .OrderByDescending(x => x.Date)
             .ToList();
@@ -401,6 +446,329 @@ public class ShellRepository : IShellRepository
             Route = CheckReconciliationRoute,
             Date = DateTime.UtcNow
         };
+    }
+
+
+    //-----------------------------------------------------------
+    // Website enquiries (one item each, newest first) :
+    //   • new ones nobody has taken yet (executive 0), open, in
+    //     the login branch → "New website enquiry" / "… test ride"
+    //     / "… EMI plan";
+    //   • the user's own open enquiries the same mobile asked
+    //     about again on the website in the last 3 days.
+    // The key holds the last change, so a repeat shows as new.
+    // Shown to users who can open Sales Enquiries.
+    //-----------------------------------------------------------
+
+    private async Task<List<ShellNotificationDto>> WebsiteEnquiriesAsync
+    (
+        long userId,
+        long? branchId
+    )
+    {
+        List<ShellNotificationDto> none =
+            new List<ShellNotificationDto>();
+
+        if (!await CanOpenPageAsync(userId, SalesEnquiriesRoutePart))
+        {
+            return none;
+        }
+
+        List<long> openStatusIds =
+            await _context.Set<EnquirySetups>()
+                .AsNoTracking()
+                .Where(x => x.SetupType == "Status" && x.Stage == "Open" && !x.IsDeleted)
+                .Select(x => x.EnquirySetupId)
+                .ToListAsync();
+
+        DateTime since =
+            DateTime.UtcNow.AddDays(-3);
+
+        var query =
+            _context.Set<SalesEnquiries>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted
+                            && !x.IsMatured
+                            && openStatusIds.Contains(x.StatusId)
+                            && (
+                                   (x.FromWebsite && x.ExecutiveUserId == 0)
+                                   ||
+                                   (x.ExecutiveUserId == userId
+                                    && x.ModifiedBy == 0
+                                    && x.ModifiedDate != null
+                                    && x.ModifiedDate > since)
+                               ));
+
+        if (branchId.HasValue && branchId.Value > 0)
+        {
+            long branch =
+                branchId.Value;
+
+            // Own repeats show in any branch; new ones in the login branch
+            query =
+                query.Where(x => x.BranchId == branch || x.ExecutiveUserId == userId);
+        }
+
+        var rows =
+            await query
+                .OrderByDescending(x => x.ModifiedDate ?? x.CreatedDate)
+                .Take(MaxWebsiteItems)
+                .Select(x => new
+                {
+                    x.SalesEnquiryId,
+                    x.EnquiryNo,
+                    x.EnquirerName,
+                    x.EnquirerMobile,
+                    x.ModelName,
+                    x.PreferredColor,
+                    x.PaymentMode,
+                    x.TestRideDate,
+                    x.TestRideSlot,
+                    x.ExecutiveUserId,
+                    x.CreatedDate,
+                    x.ModifiedDate
+                })
+                .ToListAsync();
+
+        return rows
+            .Select(x =>
+            {
+                bool repeat =
+                    x.ExecutiveUserId != 0;
+
+                string what =
+                    x.TestRideDate.HasValue
+                        ? "test ride request"
+                        : x.PaymentMode == "EMI"
+                            ? "EMI plan request"
+                            : "enquiry";
+
+                string title =
+                    repeat
+                        ? $"{x.EnquirerName} asked again on the website"
+                        : $"New website {what}";
+
+                string bike =
+                    x.ModelName
+                    + (string.IsNullOrWhiteSpace(x.PreferredColor) ? string.Empty : $" ({x.PreferredColor})");
+
+                string ride =
+                    x.TestRideDate.HasValue
+                        ? $" · ride {x.TestRideDate.Value:dd-MMM}{(string.IsNullOrWhiteSpace(x.TestRideSlot) ? string.Empty : " " + x.TestRideSlot)}"
+                        : string.Empty;
+
+                DateTime changed =
+                    x.ModifiedDate ?? x.CreatedDate;
+
+                return new ShellNotificationDto
+                {
+                    Key = $"web-{x.SalesEnquiryId}-{changed.Ticks}",
+                    Kind = "website",
+                    Title = title,
+                    Detail = $"{x.EnquirerName} · {x.EnquirerMobile} · {bike}{ride} · {x.EnquiryNo}",
+                    Route = SalesEnquiryEditRoute + x.SalesEnquiryId,
+                    Date = changed
+                };
+            })
+            .ToList();
+    }
+
+
+    //-----------------------------------------------------------
+    // Website service bookings / part requests : same rules as
+    // the sales ones (new and unassigned in the login branch; the
+    // user's own asked again in the last 3 days). Shown to users
+    // who can open Service Enquiries.
+    //-----------------------------------------------------------
+
+    private async Task<List<ShellNotificationDto>> WebsiteServiceEnquiriesAsync
+    (
+        long userId,
+        long? branchId
+    )
+    {
+        if (!await CanOpenPageAsync(userId, ServiceEnquiriesRoutePart))
+        {
+            return new List<ShellNotificationDto>();
+        }
+
+        List<long> openStatusIds =
+            await _context.Set<EnquirySetups>()
+                .AsNoTracking()
+                .Where(x => x.SetupType == "Status" && x.Stage == "Open" && !x.IsDeleted)
+                .Select(x => x.EnquirySetupId)
+                .ToListAsync();
+
+        DateTime since =
+            DateTime.UtcNow.AddDays(-3);
+
+        var query =
+            _context.Set<ServiceEnquiries>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted
+                            && !x.IsConverted
+                            && openStatusIds.Contains(x.StatusId)
+                            && (
+                                   (x.FromWebsite && x.ExecutiveUserId == 0)
+                                   ||
+                                   (x.ExecutiveUserId == userId
+                                    && x.ModifiedBy == 0
+                                    && x.ModifiedDate != null
+                                    && x.ModifiedDate > since)
+                               ));
+
+        if (branchId.HasValue && branchId.Value > 0)
+        {
+            long branch =
+                branchId.Value;
+
+            query =
+                query.Where(x => x.BranchId == branch || x.ExecutiveUserId == userId);
+        }
+
+        var rows =
+            await query
+                .OrderByDescending(x => x.ModifiedDate ?? x.CreatedDate)
+                .Take(MaxWebsiteItems)
+                .Select(x => new
+                {
+                    x.ServiceEnquiryId,
+                    x.EnquiryNo,
+                    x.EnquiryType,
+                    x.EnquirerName,
+                    x.EnquirerMobile,
+                    x.ModelName,
+                    x.RegistrationNo,
+                    x.PreferredDate,
+                    x.PreferredSlot,
+                    x.ExecutiveUserId,
+                    x.CreatedDate,
+                    x.ModifiedDate
+                })
+                .ToListAsync();
+
+        return rows
+            .Select(x =>
+            {
+                bool repeat =
+                    x.ExecutiveUserId != 0;
+
+                bool parts =
+                    x.EnquiryType == "Parts";
+
+                string bike =
+                    string.Join(" ", new[] { x.ModelName, x.RegistrationNo }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+                string when =
+                    x.PreferredDate.HasValue
+                        ? $" · {x.PreferredDate.Value:dd-MMM}{(string.IsNullOrWhiteSpace(x.PreferredSlot) ? string.Empty : " " + x.PreferredSlot)}"
+                        : string.Empty;
+
+                DateTime changed =
+                    x.ModifiedDate ?? x.CreatedDate;
+
+                return new ShellNotificationDto
+                {
+                    Key = $"websvc-{x.ServiceEnquiryId}-{changed.Ticks}",
+                    Kind = "website",
+                    Title =
+                        repeat
+                            ? $"{x.EnquirerName} asked again on the website"
+                            : parts
+                                ? "New website part request"
+                                : "New website service booking",
+                    Detail = $"{x.EnquirerName} · {x.EnquirerMobile}{(bike.Length > 0 ? " · " + bike : string.Empty)}{when} · {x.EnquiryNo}",
+                    Route = ServiceEnquiryEditRoute + x.ServiceEnquiryId,
+                    Date = changed
+                };
+            })
+            .ToList();
+    }
+
+
+    //-----------------------------------------------------------
+    // Nightly backup failed (or no good backup for a day) : for
+    // AppCore Admin (opens Database Backups) and for users with
+    // "Take Backup" on the Backup Center (opens the Backup Center)
+    //-----------------------------------------------------------
+
+    private async Task<ShellNotificationDto?> BackupAlertAsync
+    (
+        long userId
+    )
+    {
+        try
+        {
+            DataNightlyStatusDto status =
+                await _dataManagement.GetNightlyStatusAsync();
+
+            if (!status.Failing)
+            {
+                return null;
+            }
+
+            bool admin =
+                await _dataManagement.IsAppCoreAdminAsync(userId);
+
+            bool client =
+                !admin
+                && await _effectiveAccess.HasActivityAsync(userId, "/settings/%/backup-center", "Take Backup");
+
+            if (!admin && !client)
+            {
+                return null;
+            }
+
+            DateTime when =
+                status.LastRunDate ?? DateTime.Now;
+
+            return new ShellNotificationDto
+            {
+                Key = $"backup-{when:yyyyMMddHHmm}-{status.LastStatus}",
+                Kind = "backup",
+                Title = status.LastStatus == "Failed"
+                    ? "Last night's backup failed"
+                    : "No recent backup",
+                Detail = status.Message,
+                Route = admin
+                    ? "/infrastructure-control/data-management/database-backups"
+                    : "/settings/general-settings/backup-center",
+                Date = when
+            };
+        }
+        catch
+        {
+            // the bell never fails because of the backup check
+            return null;
+        }
+    }
+
+
+    // The user can open a page whose route contains this part
+    private async Task<bool> CanOpenPageAsync
+    (
+        long userId,
+        string routePart
+    )
+    {
+        List<long> pageIds =
+            await _context.Set<NavigationSubmenu>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted
+                            && x.IsActive
+                            && x.Route.ToLower().Contains(routePart))
+                .Select(x => x.Id)
+                .ToListAsync();
+
+        if (pageIds.Count == 0)
+        {
+            return false;
+        }
+
+        var access =
+            await _effectiveAccess.GetEffectiveAccessAsync(userId);
+
+        return access.Any(x => pageIds.Contains(x.SubMenuId));
     }
 
 

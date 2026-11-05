@@ -117,6 +117,9 @@ export class MembershipCardsService
             MembershipCardId:
                 num('MembershipCardId'),
 
+            PublicId:
+                text('PublicId'),
+
             CardCode:
                 text('CardCode'),
 
@@ -315,7 +318,7 @@ export class MembershipCardsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<MembershipCard>
     {
@@ -377,7 +380,7 @@ export class MembershipCardsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

@@ -1,0 +1,91 @@
+<div
+    class="combo"
+    [class.open]="open()"
+    [class.invalid]="invalid">
+
+    @if (current()?.img && !open())
+    {
+        <img class="combo-thumb" [src]="current()!.img" alt="" aria-hidden="true">
+    }
+
+    <input
+        #box
+        class="combo-box"
+        [class.with-thumb]="!!current()?.img && !open()"
+        type="text"
+        role="combobox"
+        autocomplete="off"
+        [id]="inputId"
+        [placeholder]="current() && open() ? current()!.label : placeholder"
+        [value]="boxText()"
+        [attr.aria-expanded]="open()"
+        [attr.aria-controls]="listId"
+        [attr.aria-activedescendant]="open() && filtered().length ? listId + '-' + active() : null"
+        [attr.aria-invalid]="invalid"
+        (focus)="openList()"
+        (click)="openList()"
+        (input)="onInput($event)"
+        (keydown)="onKey($event)">
+
+    <button
+        type="button"
+        class="combo-caret"
+        tabindex="-1"
+        aria-hidden="true"
+        (click)="toggle()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+
+    @if (open())
+    {
+        <ul
+            class="combo-list"
+            role="listbox"
+            [id]="listId">
+
+            @for (item of filtered(); track item.value; let i = $index)
+            {
+                <li
+                    role="option"
+                    class="combo-row"
+                    [id]="listId + '-' + i"
+                    [class.active]="i === active()"
+                    [class.chosen]="item.value === current()?.value"
+                    [attr.aria-selected]="item.value === current()?.value"
+                    (pointerenter)="active.set(i)"
+                    (pointerdown)="$event.preventDefault()"
+                    (click)="choose(item)">
+
+                    @if (item.img !== undefined)
+                    {
+                        <span class="combo-row-img">
+                            @if (item.img)
+                            {
+                                <img [src]="item.img" alt="" loading="lazy">
+                            }
+                        </span>
+                    }
+
+                    <span class="combo-row-text">
+                        <b>{{ item.label }}</b>
+                        @if (item.sub)
+                        {
+                            <small>{{ item.sub }}</small>
+                        }
+                    </span>
+
+                    @if (item.value === current()?.value)
+                    {
+                        <svg class="combo-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>
+                    }
+                </li>
+            }
+            @empty
+            {
+                <li class="combo-empty">No match. Try another word.</li>
+            }
+
+        </ul>
+    }
+
+</div>

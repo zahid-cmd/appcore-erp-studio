@@ -13,6 +13,9 @@ public class JournalVoucherDto
 {
     public long JournalVoucherId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     public string VoucherNo { get; set; } = string.Empty;
 
     // yyyy-MM-dd
@@ -101,6 +104,9 @@ public class JournalVoucherLineDto
 public class JournalVoucherSavedDto
 {
     public long JournalVoucherId { get; set; }
+
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
 
     public string VoucherNo { get; set; } = string.Empty;
 }

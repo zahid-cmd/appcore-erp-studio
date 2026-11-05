@@ -86,12 +86,12 @@ export class NavigationMenuService
     //===========================================================
 
     getById(
-        id:number
+        publicId: string
     ):
         Observable<NavigationMenu>
     {
         return this.http.get<NavigationMenu>(
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${publicId}`
         );
     }
 
@@ -207,12 +207,12 @@ export class NavigationMenuService
     //===========================================================
 
     delete(
-        id:number
+        publicId: string
     ):
         Observable<void>
     {
         return this.http.delete<void>(
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${publicId}`
         );
     }
 

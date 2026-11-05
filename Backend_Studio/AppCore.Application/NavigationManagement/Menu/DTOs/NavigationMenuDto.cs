@@ -20,6 +20,9 @@ public class NavigationMenuDto
         set;
     }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     //===============================================================
     // Foreign Key
     //===============================================================

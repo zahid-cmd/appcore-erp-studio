@@ -71,4 +71,9 @@ public interface IActivityAssignmentRepository
 
     Task<bool>
         RestoreLastDeletedAsync();
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

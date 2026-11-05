@@ -144,6 +144,32 @@
 
     </app-page-canvas>
 
+    <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="cmp-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="cmp-summary-item">
+                    <span class="cmp-summary-label">{{ item.label }}</span>
+                    <b
+                        class="cmp-summary-value"
+                        [class.cmp-ok]="item.tone === 'ok'"
+                        [class.cmp-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="cmp-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
 
 
     <!-- =====================================================

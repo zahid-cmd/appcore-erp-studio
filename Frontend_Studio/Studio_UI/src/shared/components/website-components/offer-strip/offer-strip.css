@@ -1,0 +1,98 @@
+/* =====================================================
+   OFFER STRIP
+===================================================== */
+
+:host
+{
+    display:block;
+    padding-top:40px;
+}
+
+
+.wrap
+{
+    max-width:1240px;
+    width:100%;
+    margin:0 auto;
+    padding:0 24px;
+    box-sizing:border-box;
+}
+
+
+.offer
+{
+    /* Narrow ribbon, centred on the moving strip */
+    max-width:780px;
+    margin:0 auto;
+    box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px 18px;
+    padding:18px 22px;
+    border:1px solid var(--w-offer-edge);
+    border-radius:18px;
+    /* Solid page colour under the tint : the moving strip
+       behind must not show through */
+    background:var(--w-offer-bg), var(--w-bg);
+    box-shadow:
+        0 18px 40px -18px rgba(0,0,0,.55),
+        0 0 0 6px var(--w-bg);
+}
+
+
+.offer-icon
+{
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+}
+
+
+.offer-text
+{
+    flex:1 1 280px;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+
+.offer-text b
+{
+    font-size:18px;
+}
+
+
+.offer-text span,
+.offer-ends
+{
+    color:var(--w-muted);
+    font-size:14px;
+}
+
+
+.offer-ends
+{
+    font-weight:700;
+}
+
+
+.offer-ask
+{
+    display:inline-flex;
+    align-items:center;
+    height:42px;
+    padding:0 18px;
+    border-radius:11px;
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+    font-size:14px;
+    font-weight:800;
+    text-decoration:none;
+}

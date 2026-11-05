@@ -79,6 +79,43 @@
 
         </app-control-tabs>
 
+        <!-- =================================================
+             FILTERS : Category → Sub Category
+        ================================================== -->
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Categories"
+
+            [items]="categoryFilterItems"
+
+            minWidth="230px"
+
+            [value]="selectedCategoryId"
+
+            (valueChange)="onCategoryFilterChange($event)">
+
+        </app-search-dropdown>
+
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Sub Categories"
+
+            [items]="subCategoryFilterItems"
+
+            minWidth="300px"
+
+            [value]="selectedSubCategoryId"
+
+            (valueChange)="onSubCategoryFilterChange($event)">
+
+        </app-search-dropdown>
+
     </app-page-toolbar>
 
 
@@ -102,7 +139,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedSpareParts"
+                [rows]="spareParts"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -132,7 +169,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredSpareParts.length"
+            [totalRecords]="totalRecords"
 
             [currentPage]="currentPage"
 
@@ -145,6 +182,34 @@
         </app-pagination>
 
     </app-page-canvas>
+
+
+
+    <!-- =====================================================
+         SUMMARY (search applied; not the tab)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="spp-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="spp-summary-item">
+                    <span class="spp-summary-label">{{ item.label }}</span>
+                    <b
+                        class="spp-summary-value"
+                        [class.spp-ok]="item.tone === 'ok'"
+                        [class.spp-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="spp-summary-note">
+                Matching the search
+            </span>
+
+        </div>
+    }
 
 
 
@@ -176,4 +241,4 @@
 
     <app-progress-dialog></app-progress-dialog>
 
-</div>
+</div>

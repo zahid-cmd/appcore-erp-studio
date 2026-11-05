@@ -97,6 +97,9 @@ public class PurchaseOrderDto
 {
     public long PurchaseOrderId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     // MB / SP / AC
     public string PageType { get; set; } = string.Empty;
 
@@ -252,6 +255,9 @@ public class PurchaseOrderLineDto
 public class PurchaseOrderSavedDto
 {
     public long PurchaseOrderId { get; set; }
+
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
 
     public string OrderNo { get; set; } = string.Empty;
 }
@@ -461,4 +467,30 @@ public class UpdatePurchaseOrderDto
     : CreatePurchaseOrderDto
 {
     public long PurchaseOrderId { get; set; }
+}
+
+
+//===============================================================
+// List page : paged request and the supplier filter options
+//---------------------------------------------------------------
+// GET .../paged?page=1&pageSize=10&search=&sort=&dir=&tab=&supplier=
+//
+// Tab      : all (default) / Draft / Approved / Placed / Completed / Closed (Closed Short + Cancelled).
+// Supplier : a supplier code ('' = all).
+// Sort     : the list column fields; empty = newest first.
+//===============================================================
+
+public class PurchaseOrderPageRequest : AppCore.Application.Common.Paging.PagedRequest
+{
+    public string? Tab { get; set; }
+
+    public string? Supplier { get; set; }
+}
+
+
+public class PurchaseOrderListSupplierDto
+{
+    public string SupplierCode { get; set; } = string.Empty;
+
+    public string SupplierName { get; set; } = string.Empty;
 }

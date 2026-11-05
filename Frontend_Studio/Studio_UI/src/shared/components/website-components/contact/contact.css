@@ -1,0 +1,105 @@
+/* =====================================================
+   TEST RIDE BAND
+===================================================== */
+
+.bottom
+{
+    padding-bottom:96px;
+}
+
+
+.band
+{
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+    padding:44px;
+    border-radius:30px;
+    background:
+        radial-gradient(70% 120% at 100% 0%, rgba(255,255,255,.28), rgba(255,255,255,0)),
+        linear-gradient(120deg, #f59e0b, #fbbf24);
+    color:#13254a;
+}
+
+
+.text
+{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-width:640px;
+}
+
+
+.band-title
+{
+    margin:0;
+    font-family:var(--w-display);
+    font-size:clamp(40px, 5vw, 64px);
+    line-height:.92;
+    font-weight:800;
+    text-transform:uppercase;
+}
+
+
+.text p
+{
+    margin:0;
+    font-size:16px;
+    font-weight:600;
+}
+
+
+.buttons
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+
+.band-btn
+{
+    height:54px;
+    display:inline-flex;
+    align-items:center;
+    padding:0 24px;
+    border-radius:14px;
+    font-size:15px;
+    font-weight:800;
+    text-decoration:none;
+}
+
+
+.band-btn.solid
+{
+    background:#13254a;
+    color:#ffffff;
+}
+
+
+.band-btn.outline
+{
+    border:2px solid #13254a;
+    color:#13254a;
+}
+
+
+.band-btn:focus-visible
+{
+    outline:2px solid #13254a;
+    outline-offset:3px;
+}
+
+
+@media (max-width: 640px)
+{
+    .band
+    {
+        padding:30px 24px;
+    }
+}

@@ -42,6 +42,22 @@ public class DesignationConfiguration
 
         builder.HasKey(x => x.DesignationId);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_Designations_PublicId");
+
         builder.Property(x => x.DesignationId)
                .ValueGeneratedOnAdd();
 

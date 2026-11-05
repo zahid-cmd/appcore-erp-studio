@@ -279,6 +279,15 @@ implements OnInit, OnDestroy
         Company[] =
     [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
 
     filteredCompanies:
         Company[] =
@@ -799,6 +808,10 @@ implements OnInit, OnDestroy
                     0
                 ),
 
+            // The id used in links and API calls (uuid v7)
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             CompanyCode:
                 item?.CompanyCode
                 ??
@@ -989,6 +1002,10 @@ implements OnInit, OnDestroy
 
 
                     this.applyFilters();
+
+
+
+                    this.updateSummary();
 
 
                     this.loading =
@@ -1456,7 +1473,7 @@ implements OnInit, OnDestroy
             [
                 'view',
 
-                item.CompanyId
+                item.PublicId
             ],
 
             {
@@ -1484,7 +1501,7 @@ implements OnInit, OnDestroy
             [
                 'edit',
 
-                item.CompanyId
+                item.PublicId
             ],
 
             {
@@ -1558,7 +1575,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.companyservice.delete(
-                item.CompanyId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -1918,6 +1935,34 @@ implements OnInit, OnDestroy
     {
         this.historyOpened =
             false;
+    }
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.companies ?? [];
+
+        const active =
+            all.filter(x => !!x?.IsActive).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
     }
 
 }

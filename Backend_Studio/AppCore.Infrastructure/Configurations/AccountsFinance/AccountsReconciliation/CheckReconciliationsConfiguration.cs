@@ -239,6 +239,15 @@ public class CheckReconciliationsConfiguration
 
         builder.HasKey(x => x.CheckReconciliationVoucherId);
 
+        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_CheckReconciliationVouchers_PublicId");
+
         builder.Property(x => x.CheckReconciliationVoucherId)
                .ValueGeneratedOnAdd();
 
@@ -388,6 +397,15 @@ public class CheckReconciliationsConfiguration
         builder.ToTable("CheckDepositSlips");
 
         builder.HasKey(x => x.CheckDepositSlipId);
+
+        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_CheckDepositSlips_PublicId");
 
         builder.Property(x => x.CheckDepositSlipId)
                .ValueGeneratedOnAdd();

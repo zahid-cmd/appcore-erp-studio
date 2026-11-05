@@ -1,0 +1,178 @@
+<div class="app-list-page dm-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Reset History"
+        subtitle="Every backup, restore and data reset"
+        icon="fa-solid fa-clock-rotate-left">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search database, file, reason, user..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="refresh()"
+                [command2Visible]="false"
+                [command3Visible]="false">
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    @if (!loading && !allowed)
+    {
+        <div class="dm-denied">
+            <i class="fa-solid fa-lock"></i>
+            <div>
+                <b>AppCore Admin only</b>
+                <span>The data management history is open only to the AppCore Admin role (RP-001).</span>
+            </div>
+        </div>
+    }
+
+    @if (allowed)
+    {
+        <app-page-toolbar leftFlex="1 1 auto">
+
+            <div pageToolbarLeft class="dm-toolbar">
+                @for (item of filters; track item)
+                {
+                    <button type="button" class="rh-chip" [class.rh-chip-on]="filter === item" (click)="setFilter(item)">
+                        {{ item }}
+                        <span>{{ count(item) }}</span>
+                    </button>
+                }
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas [config]="canvasConfig">
+
+            <div canvasBody class="dm-canvas-body">
+
+            @if (loading)
+            {
+                <div class="dm-loading">
+                    <app-orbit-loader title="Loading" message="Reading the history..." size="medium" [overlay]="false"></app-orbit-loader>
+                </div>
+            }
+            @else if (visible.length === 0)
+            {
+                <div class="dm-empty">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <span>Nothing here yet.</span>
+                </div>
+            }
+            @else
+            {
+                <div class="dm-table-wrap dm-canvas-table appcore-scrollbar">
+                    <table class="dm-table">
+                        <thead>
+                            <tr>
+                                <th class="dm-c dm-sl">#</th>
+                                <th>When</th>
+                                <th>Action</th>
+                                <th>Database</th>
+                                <th>Details</th>
+                                <th>Reason</th>
+                                <th>By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (item of pagedItems; track item.Id; let i = $index)
+                            {
+                                <tr [class.rh-clickable]="item.Tables?.length" (click)="toggle(item)">
+                                    <td class="dm-c dm-sl">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+                                    <td>
+                                        <div class="dm-main">{{ formatDateTime(item.Date) }}</div>
+                                        <div class="dm-sub">{{ item.Machine }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="rh-action" [class.rh-failed]="item.Status === 'Failed'">
+                                            <i [class]="actionIcon(item.Action)"></i>
+                                            {{ item.Action }}
+                                            @if (item.Status === 'Failed')
+                                            {
+                                                <em>failed</em>
+                                            }
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="dm-main">{{ item.Database || '-' }}</div>
+                                        <div class="dm-sub">{{ item.ConnectionName }}</div>
+                                    </td>
+                                    <td>
+                                        <div>{{ item.Details }}</div>
+                                        @if (item.FileName)
+                                        {
+                                            <div class="dm-sub dm-mono">{{ item.FileName }}</div>
+                                        }
+                                        @if (item.Error)
+                                        {
+                                            <div class="dm-sub dm-bad-text">{{ item.Error }}</div>
+                                        }
+                                        @if (item.Tables?.length)
+                                        {
+                                            <div class="dm-sub rh-more">
+                                                <i class="fa-solid" [class.fa-chevron-up]="openId === item.Id" [class.fa-chevron-down]="openId !== item.Id"></i>
+                                                {{ item.Tables.length }} tables · {{ formatCount(item.TotalRows) }} rows
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="rh-reason">{{ item.Reason || '-' }}</td>
+                                    <td>{{ item.By || '-' }}</td>
+                                </tr>
+
+                                @if (openId === item.Id)
+                                {
+                                    <tr class="rh-detail">
+                                        <td colspan="7">
+                                            <div class="rh-tables">
+                                                @for (table of item.Tables; track table.Name)
+                                                {
+                                                    <span>
+                                                        <b class="dm-mono">{{ table.Name }}</b>
+                                                        {{ formatCount(table.Rows) }}
+                                                    </span>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="visible.length"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+
+</div>

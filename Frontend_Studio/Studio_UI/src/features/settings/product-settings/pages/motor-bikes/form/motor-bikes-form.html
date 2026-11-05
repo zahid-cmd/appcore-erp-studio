@@ -185,6 +185,8 @@
 
                     [items]="colorItems"
 
+                    swatchField="swatch"
+
                     [(value)]="entity.ColorManagementId"
 
                     (valueChange)="onColorChange($event)"
@@ -240,6 +242,39 @@
                     [value]="reorderLevelText"
 
                     (valueChange)="onReorderLevelChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+
+                <!-- Red Level -->
+
+                <app-textbox
+
+                    label="Red Level"
+
+                    placeholder="0"
+
+                    [value]="redLevelText"
+
+                    (valueChange)="onRedLevelChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+                <!-- Max Stock Level -->
+
+                <app-textbox
+
+                    label="Max Stock Level"
+
+                    placeholder="0 = not set"
+
+                    [value]="maxStockLevelText"
+
+                    (valueChange)="onMaxStockLevelChange($event)"
 
                     [disabled]="isViewMode || isSaving">
 
@@ -311,37 +346,37 @@
 
                 </app-textbox>
 
-                <!-- Red Level -->
+
+                <!-- Sales Ledger Code (CLS-005 / 006 / 008) -->
 
                 <app-textbox
 
-                    label="Red Level"
+                    label="Sales Ledger Code"
 
-                    placeholder="0"
+                    placeholder="Auto generated"
 
-                    [value]="redLevelText"
+                    [value]="entity.SalesLedgerCode ?? ''"
 
-                    (valueChange)="onRedLevelChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
+                    [readonly]="true">
 
                 </app-textbox>
 
-                <!-- Max Stock Level -->
+
+                <!-- Sales Ledger Name ("Sales - <Product Name>") -->
 
                 <app-textbox
 
-                    label="Max Stock Level"
+                    label="Sales Ledger Name"
 
-                    placeholder="0 = not set"
+                    placeholder="Follows the product name"
 
-                    [value]="maxStockLevelText"
+                    [value]="salesLedgerName"
 
-                    (valueChange)="onMaxStockLevelChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
+                    [readonly]="true">
 
                 </app-textbox>
+
+
 
             </app-form-section>
 
@@ -395,8 +430,18 @@
                 </app-textarea>
 
             </app-form-section>
-
         </app-form-grid>
+
+
+        <!-- Canvas footer : the Motor Bike (Product) Name (read only) -->
+
+        <div canvasFooter class="mbk-footer">
+
+            <span class="mbk-footer-label">Motor Bike Name</span>
+
+            <b class="mbk-footer-name" [class.mbk-footer-empty]="!entity.ProductName">{{ entity.ProductName || 'Follows the product sub category and color' }}</b>
+
+        </div>
 
     </app-page-canvas>
 

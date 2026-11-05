@@ -30,6 +30,10 @@ export type JournalVoucherStatus =
 
 export interface JournalVoucher
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     JournalVoucherId:
         number;
 
@@ -145,6 +149,10 @@ export interface UpdateJournalVoucher
 
 export interface JournalVoucherSaved
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     JournalVoucherId:
         number;
 

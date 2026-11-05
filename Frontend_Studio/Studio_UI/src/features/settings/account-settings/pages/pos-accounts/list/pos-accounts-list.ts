@@ -398,6 +398,15 @@ implements OnInit, OnDestroy
         POSAccountListItem[] =
         [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredPOSAccounts:
         POSAccountListItem[] =
         [];
@@ -1039,6 +1048,9 @@ implements OnInit, OnDestroy
 
                 this.applyFilters();
 
+
+                this.updateSummary();
+
                 this.loading =
                     false;
 
@@ -1463,20 +1475,20 @@ implements OnInit, OnDestroy
         item:
             any
     ):
-        number
+        string
     {
         const id =
-            Number(
-                item?.POSAccountId
-                ||
-                this.num(item, 'POSAccountId')
-            );
+            String(
+                item?.PublicId
+                ??
+                item?.publicId
+                ??
+                ''
+            ).trim();
 
         if
         (
             !id
-            ||
-            id <= 0
         )
         {
             console.error(
@@ -1489,7 +1501,7 @@ implements OnInit, OnDestroy
                 'This POS account has no id from the server, so it cannot be opened.'
             );
 
-            return 0;
+            return '';
         }
 
         return id;
@@ -1504,7 +1516,7 @@ implements OnInit, OnDestroy
         action:
             'add' | 'view' | 'edit',
         id?:
-            number
+            string
     ):
         void
     {
@@ -1572,7 +1584,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.navigateTo(
@@ -1608,7 +1620,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.navigateTo(
@@ -1644,7 +1656,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id <= 0
+            !id
         )
         {
             return;
@@ -1686,7 +1698,7 @@ implements OnInit, OnDestroy
     private deleteItem
     (
         id:
-            number,
+            string,
         name:
             string
     ):
@@ -2216,4 +2228,32 @@ implements OnInit, OnDestroy
         this.historyOpened =
             false;
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.posAccounts ?? [];
+
+        const active =
+            all.filter(x => !!x?.Status).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

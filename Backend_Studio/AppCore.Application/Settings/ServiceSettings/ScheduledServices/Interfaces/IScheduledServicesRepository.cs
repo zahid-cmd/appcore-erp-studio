@@ -21,6 +21,13 @@ public interface IScheduledServicesRepository
     Task<List<ScheduledServicesDto>> GetAllAsync();
 
 
+    // Public Id -> internal id (live rows only; null = not found)
+
+    Task<long?> GetIdByPublicIdAsync(
+
+        Guid publicId);
+
+
     //===========================================================
     // Get By Id (with the sub category / code preview)
     //===========================================================

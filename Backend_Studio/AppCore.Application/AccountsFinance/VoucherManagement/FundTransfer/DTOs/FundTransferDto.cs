@@ -13,6 +13,9 @@ public class FundTransferDto
 {
     public long FundTransferId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     public string VoucherNo { get; set; } = string.Empty;
 
     // yyyy-MM-dd
@@ -114,6 +117,9 @@ public class FundTransferLineDto
 public class FundTransferSavedDto
 {
     public long FundTransferId { get; set; }
+
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
 
     public string VoucherNo { get; set; } = string.Empty;
 }

@@ -301,7 +301,7 @@ getApiBaseUrl():
     getById
     (
         id:
-            number
+            string
     ):
         Observable<Company>
     {
@@ -397,9 +397,9 @@ getApiBaseUrl():
         model:
             CreateCompany
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
 
             model
@@ -414,13 +414,16 @@ getApiBaseUrl():
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateCompany
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -435,7 +438,7 @@ getApiBaseUrl():
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -483,7 +486,7 @@ getApiBaseUrl():
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

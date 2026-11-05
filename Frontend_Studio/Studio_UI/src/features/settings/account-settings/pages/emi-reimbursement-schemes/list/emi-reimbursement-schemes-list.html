@@ -132,6 +132,32 @@
     </app-page-canvas>
 
     <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="ers-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="ers-summary-item">
+                    <span class="ers-summary-label">{{ item.label }}</span>
+                    <b
+                        class="ers-summary-value"
+                        [class.ers-ok]="item.tone === 'ok'"
+                        [class.ers-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="ers-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
+    <!-- =====================================================
          HISTORY
     ====================================================== -->
 

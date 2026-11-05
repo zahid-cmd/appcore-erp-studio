@@ -68,6 +68,31 @@ public static class VoucherTypes
 
     public const string OpeningAccessories = "OPAC";
 
+    // Price Adjustment (journal of the stock price adjustment;
+    // its own number PA-<branch>-<FY>-<MM>-00001, the Adjustment
+    // No PA-<MB|SP|AC>-0001 is its reference)
+    public const string PriceAdjustment = "PA";
+
+    // Product Transfer between branches (journal Dr inventory of
+    // the receiving branch / Cr inventory of the sending branch,
+    // Inter-Branch lines by the posting engine; its own number
+    // TRF-<branch>-<FY>-<MM>-00001, the Transfer No
+    // TRF-<MB|SP|AC>-0001 is its reference; same-branch transfers
+    // post no journal). Also the DocumentType of its stock
+    // movements.
+    public const string ProductTransfer = "TRF";
+
+    // Sales Invoices (posted under the invoice number; the
+    // payments become a Receipt Voucher of their own) : Spare
+    // Parts & Lubricants / Accessories / Motor Bikes. Also the
+    // DocumentType of their stock movements, allocations and VAT
+    // register rows.
+    public const string SalesInvoiceSpareParts = "SISP";
+
+    public const string SalesInvoiceAccessories = "SIAC";
+
+    public const string SalesInvoiceMotorBikes = "SIMB";
+
 
     public static readonly string[] All =
     {
@@ -88,7 +113,12 @@ public static class VoucherTypes
         ReceivingAccessories,
         OpeningMotorBikes,
         OpeningSpareParts,
-        OpeningAccessories
+        OpeningAccessories,
+        PriceAdjustment,
+        ProductTransfer,
+        SalesInvoiceSpareParts,
+        SalesInvoiceAccessories,
+        SalesInvoiceMotorBikes
     };
 
 

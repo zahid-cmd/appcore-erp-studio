@@ -26,6 +26,10 @@ export interface CheckReconciliations
     PaymentId:
         number;
 
+    // The payment line's uuid (print links)
+    PaymentPublicId?:
+        string;
+
     // 0 until the first action
     CheckReconciliationId:
         number;
@@ -328,8 +332,16 @@ export interface CheckActionResult
     VoucherIds:
         number[];
 
+    // The same vouchers by uuid (print links)
+    VoucherPublicIds?:
+        string[];
+
     DepositSlipId:
         number | null;
+
+    // The slip by uuid (print link)
+    DepositSlipPublicId?:
+        string | null;
 
     DepositSlipNo:
         string;

@@ -114,6 +114,9 @@ export class CustomizedServicesService
                 Number(this.pick(item, name) ?? 0);
 
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             CustomizedServiceId:
                 num('CustomizedServiceId'),
 
@@ -263,7 +266,7 @@ export class CustomizedServicesService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<CustomizedService>
     {
@@ -291,9 +294,9 @@ export class CustomizedServicesService
         model:
             CreateCustomizedService
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -306,13 +309,16 @@ export class CustomizedServicesService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateCustomizedService
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -325,7 +331,7 @@ export class CustomizedServicesService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

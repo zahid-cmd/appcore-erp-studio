@@ -58,6 +58,14 @@
     -webkit-backdrop-filter: blur(2px);
 
     z-index: 3000;
+
+    /* Centre over the page area, not the whole window : skip the
+       sidebar (its width comes from the app layout; Top layout has
+       none, so nothing is skipped) */
+    box-sizing: border-box;
+
+    padding-left: var(--sidebar-current-width, 0px);
+
 }
 
 /* =====================================================
@@ -366,4 +374,4 @@
 
         transform: scale(1.25);
     }
-}
+}

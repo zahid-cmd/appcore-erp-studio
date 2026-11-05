@@ -22,6 +22,14 @@ public class CustomerProfilesDto
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId
+    {
+        get;
+        set;
+    }
+
+
     //===========================================================
     // Customer Information
     //===========================================================
@@ -206,6 +214,14 @@ public class CustomerProfilesDto
     }
 
 
+    // Walk-in tag (quick customer made by a sales page)
+    public bool IsWalkIn
+    {
+        get;
+        set;
+    }
+
+
     //===========================================================
     // Remarks & Status
     //===========================================================
@@ -291,4 +307,4 @@ public class CustomerProfilesDto
         get;
         set;
     }
-}
+}

@@ -86,7 +86,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Edit Product Pricing'
+            breadcrumb:'Update Product Pricing'
         },
 
         loadComponent:() =>
@@ -122,4 +122,4 @@ Routes =
             )
     }
 
-];
+];

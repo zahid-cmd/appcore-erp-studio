@@ -76,4 +76,9 @@ public interface IMfsReconciliationsRepository
 
     Task<MfsAutoSettlementResultDto> RunAutoSettlementAsync(
         CancellationToken cancellationToken);
+
+
+    // Reconciliation voucher : uuid -> internal id (null = not found)
+    Task<long?> GetVoucherIdByPublicIdAsync(
+        Guid publicId);
 }

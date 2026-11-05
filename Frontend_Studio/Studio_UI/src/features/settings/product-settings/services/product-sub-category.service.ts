@@ -37,6 +37,20 @@ import
 }
 from '../models/product-sub-category.model';
 
+import
+{
+    ProductSubCategoryPageQuery
+}
+from '../models/product-sub-category.model';
+
+import
+{
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
 
 //===============================================================
 // Product Sub Category Service
@@ -119,6 +133,15 @@ export class ProductSubCategoryService
                                         0
                                     ),
 
+                                BikeModelId:
+                                    Number(
+                                        productSubCategory.BikeModelId
+                                        ??
+                                        productSubCategory.bikeModelId
+                                        ??
+                                        0
+                                    ) || null,
+
                                 SubCategoryCode:
                                     productSubCategory.SubCategoryCode
                                     ??
@@ -153,6 +176,12 @@ export class ProductSubCategoryService
                                     productSubCategory.cogsSubGroupCode
                                     ??
                                     '',
+
+                                SalesSubGroupCode:
+                                    productSubCategory.SalesSubGroupCode ?? productSubCategory.salesSubGroupCode ?? '',
+
+                                SalesSubGroupName:
+                                    productSubCategory.SalesSubGroupName ?? productSubCategory.salesSubGroupName ?? '',
 
                                 InventorySubGroupName:
                                     productSubCategory.InventorySubGroupName
@@ -200,6 +229,42 @@ export class ProductSubCategoryService
                                         true
                                     )
                             })
+                        )
+                )
+            );
+    }
+
+
+
+    //===========================================================
+    // Get Paged (the list page : one page from the server, with
+    // the summary counts; rows are normalized by the list)
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            ProductSubCategoryPageQuery
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams(
+                            { ...query }
+                        )
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                        toPagedResult(
+                            response,
+                            item =>
+                                item
                         )
                 )
             );
@@ -281,7 +346,10 @@ export class ProductSubCategoryService
                             ??
                             response.CogsSubGroupCode
                             ??
-                            ''
+                            '',
+
+                        SalesSubGroupCode:
+                            response.salesSubGroupCode ?? response.SalesSubGroupCode ?? ''
                     })
                 )
             );
@@ -294,7 +362,7 @@ export class ProductSubCategoryService
 
     getById(
         id:
-            number
+            string
     ):
         Observable<ProductSubCategory>
     {
@@ -312,9 +380,9 @@ export class ProductSubCategoryService
         model:
             CreateProductSubCategory
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -326,13 +394,16 @@ export class ProductSubCategoryService
     //===========================================================
 
     update(
+        publicId:
+            string,
+
         model:
             UpdateProductSubCategory
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -344,7 +415,7 @@ export class ProductSubCategoryService
 
     delete(
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -379,4 +450,4 @@ export class ProductSubCategoryService
             `${this.apiUrl}/history`
         );
     }
-}
+}

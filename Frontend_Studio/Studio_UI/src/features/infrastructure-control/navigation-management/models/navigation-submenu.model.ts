@@ -6,6 +6,9 @@ export interface NavigationSubmenu
 {
     id: number;
 
+    // The id used in links and API calls (uuid v7)
+    publicId?: string;
+
     navigationModuleId: number;
 
     navigationModuleCode: string;

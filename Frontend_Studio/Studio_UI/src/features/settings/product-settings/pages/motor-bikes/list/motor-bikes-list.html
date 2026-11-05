@@ -77,6 +77,63 @@
 
         </app-control-tabs>
 
+
+        <!-- =================================================
+             FILTERS : Category → Sub Category, Color
+        ================================================== -->
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Categories"
+
+            [items]="categoryFilterItems"
+
+            minWidth="230px"
+
+            [value]="selectedCategoryId"
+
+            (valueChange)="onCategoryFilterChange($event)">
+
+        </app-search-dropdown>
+
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Sub Categories"
+
+            [items]="subCategoryFilterItems"
+
+            minWidth="280px"
+
+            [value]="selectedSubCategoryId"
+
+            (valueChange)="onSubCategoryFilterChange($event)">
+
+        </app-search-dropdown>
+
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Colors"
+
+            [items]="colorFilterItems"
+
+            swatchField="swatch"
+
+            minWidth="200px"
+
+            [value]="selectedColorId"
+
+            (valueChange)="onColorFilterChange($event)">
+
+        </app-search-dropdown>
+
     </app-page-toolbar>
 
 
@@ -100,7 +157,9 @@
 
                 [columns]="columns"
 
-                [rows]="pagedMotorBikes"
+                [imagePreview]="imagePreviewEnabled"
+
+                [rows]="motorBikes"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -130,7 +189,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredMotorBikes.length"
+            [totalRecords]="totalRecords"
 
             [currentPage]="currentPage"
 
@@ -143,6 +202,34 @@
         </app-pagination>
 
     </app-page-canvas>
+
+
+
+    <!-- =====================================================
+         SUMMARY (search applied)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="mbk-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="mbk-summary-item">
+                    <span class="mbk-summary-label">{{ item.label }}</span>
+                    <b
+                        class="mbk-summary-value"
+                        [class.mbk-ok]="item.tone === 'ok'"
+                        [class.mbk-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="mbk-summary-note">
+                Matching the search
+            </span>
+
+        </div>
+    }
 
 
 
@@ -174,4 +261,4 @@
 
     <app-progress-dialog></app-progress-dialog>
 
-</div>
+</div>

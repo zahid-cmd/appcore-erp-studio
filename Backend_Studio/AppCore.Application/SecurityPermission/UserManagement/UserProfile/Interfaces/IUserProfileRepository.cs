@@ -2,6 +2,7 @@
 // Namespaces
 //===============================================================
 
+using AppCore.Application.Common.Paging;
 using AppCore.Application.SecurityPermission.UserManagement.UserProfile.DTOs;
 
 
@@ -140,4 +141,14 @@ public interface IUserProfileRepository
         (
             long id
         );
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
+
+
+    // One page of the list plus the summary counts
+    Task<PagedResult<UserProfileDto>> GetPagedAsync(
+        UserProfilesPageRequest request);
 }

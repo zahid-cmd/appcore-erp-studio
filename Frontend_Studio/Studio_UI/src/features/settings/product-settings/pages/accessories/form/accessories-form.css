@@ -264,9 +264,15 @@
 
 .ac-location-shelf
 {
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:5px;
+
     margin-left:6px;
 
-    padding:1px 7px;
+    padding:1px 8px;
 
     border:1px solid #cbd5e1;
 
@@ -274,9 +280,21 @@
 
     background:#ffffff;
 
-    font-size:11px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-    color:#334155;
+    font-size:12px;
+
+    font-weight:600;
+
+    color:#1e293b;
+}
+
+
+.ac-location-shelf i
+{
+    color:#64748b;
+
+    font-size:10px;
 }
 
 
@@ -669,4 +687,180 @@
     from { opacity:0; transform:translateY(4px); }
 
     to   { opacity:1; transform:translateY(0); }
+}
+
+
+/* -----------------------------------------------------
+   STORAGE LOCATION MODAL : plan note and footer line
+----------------------------------------------------- */
+
+/* The rack is assigned to another category (a hint only) */
+.ac-modal-plan
+{
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:7px;
+
+    margin-top:10px;
+
+    color:#475569;
+
+    font-size:12.5px;
+
+    line-height:1.4;
+}
+
+
+.ac-modal-plan i
+{
+    margin-top:2px;
+
+    color:#94a3b8;
+
+    font-size:11px;
+}
+
+
+.ac-modal-foot
+{
+    color:#334155;
+
+    font-size:12.5px;
+}
+
+
+.ac-modal-foot i
+{
+    margin-right:5px;
+
+    color:#64748b;
+}
+
+
+.ac-modal-foot-error
+{
+    color:#b42318;
+
+    font-weight:600;
+}
+
+
+.ac-modal-foot-error i
+{
+    color:#b42318;
+}
+
+
+/* -----------------------------------------------------
+   FITS MODELS : add dropdown + soft chips (home first)
+----------------------------------------------------- */
+
+.fit-box
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+    min-width:0;
+}
+
+.fit-chips
+{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:6px;
+
+    max-height:64px;
+
+    overflow-y:auto;
+}
+
+.fit-chip
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    height:26px;
+
+    padding:0 4px 0 10px;
+
+    box-sizing:border-box;
+
+    border:1px solid #c9dcfb;
+
+    border-radius:999px;
+
+    background:#eef4ff;
+
+    color:#3a63b8;
+
+    font-size:12.5px;
+
+    font-weight:700;
+}
+
+.fit-chip.is-home
+{
+    padding-right:10px;
+
+    border-color:#bfe3cf;
+
+    background:#e9f7f0;
+
+    color:#1f6b52;
+}
+
+.fit-chip.is-home i
+{
+    font-size:10.5px;
+}
+
+.fit-chip-x
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:18px;
+
+    height:18px;
+
+    padding:0;
+
+    border:0;
+
+    border-radius:50%;
+
+    background:#ffffff;
+
+    color:#6b7fa8;
+
+    font-size:10px;
+
+    cursor:pointer;
+}
+
+.fit-chip-x:hover:not(:disabled)
+{
+    background:#fde8ec;
+
+    color:#c2415d;
+}
+
+.fit-empty
+{
+    color:#94a3b8;
+
+    font-size:12.5px;
 }

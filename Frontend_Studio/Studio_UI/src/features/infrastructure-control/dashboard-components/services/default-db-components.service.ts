@@ -98,7 +98,7 @@ export class DefaultDashboardComponentsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<DefaultDashboardComponents>
     {
@@ -149,13 +149,16 @@ export class DefaultDashboardComponentsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateDefaultDashboardComponents
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -170,7 +173,7 @@ export class DefaultDashboardComponentsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -218,7 +221,7 @@ export class DefaultDashboardComponentsService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

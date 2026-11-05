@@ -9,6 +9,7 @@ using AppCore.Application.Common.ActivityHistory.DTOs;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.SecurityPermission.UserManagement;
+using AppCore.Application.Common.Paging;
 using AppCore.Application.SecurityPermission.UserManagement.UserProfile.DTOs;
 
 
@@ -86,6 +87,20 @@ public class UserProfileController : ControllerBase
 
 
     //===========================================================
+    // Get Paged (list page; no photos)
+    //===========================================================
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<UserProfileDto>>> GetPaged(
+        [FromQuery] UserProfilesPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new UserProfilesPageRequest()));
+    }
+
+
+    //===========================================================
     // Get Next Code
     //===========================================================
 
@@ -114,8 +129,30 @@ public class UserProfileController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<UserProfileDto>> GetById(
+        Guid publicId)
+    {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        return await GetByInternalId(
+            foundId.Value);
+    }
+
+
+    //===========================================================
+    // Get By Internal Id (the signed-in user's own profile :
+    // top bar, welcome widgets; never used in links)
+    //===========================================================
+
+    [HttpGet("by-id/{id:long}")]
+    public async Task<ActionResult<UserProfileDto>> GetByInternalId(
         long id)
     {
         UserProfileDto? profile =
@@ -882,10 +919,21 @@ public class UserProfileController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         //=======================================================
         // Verify User Profile Exists
         //=======================================================

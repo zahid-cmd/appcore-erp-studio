@@ -266,6 +266,8 @@ public class PurchaseVatRepository
                     {
                         PurchaseVatId = rule.PurchaseVatId,
 
+                        PublicId = rule.PublicId,
+
                         VatCode = rule.VatCode,
 
                         VatType = rule.VatType,
@@ -1344,4 +1346,31 @@ public class PurchaseVatRepository
                     !x.IsDeleted
             );
     }
-}
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<RuleEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.PurchaseVatId)
+            .FirstOrDefaultAsync();
+    }
+}

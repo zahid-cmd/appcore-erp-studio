@@ -238,6 +238,11 @@ implements OnInit
         'add' | 'edit' | 'view' =
         'add';
 
+    // uuid from the address bar (the record is loaded by it)
+    routePublicId:
+        string =
+        '';
+
     entityId:
         number =
         0;
@@ -442,10 +447,10 @@ implements OnInit
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
-            this.entityId =
+            this.routePublicId =
                 id;
 
             this.loadEntity();
@@ -467,7 +472,7 @@ implements OnInit
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -479,13 +484,12 @@ implements OnInit
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                currentRoute.snapshot.paramMap.get('id')
+                ?? '';
 
             if
             (
-                id > 0
+                id !== ''
             )
             {
                 return id;
@@ -495,7 +499,7 @@ implements OnInit
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
 
@@ -661,7 +665,7 @@ implements OnInit
     {
         this.departmentservice
             .getById(
-                this.entityId
+                this.routePublicId
             )
             .subscribe
             ({
@@ -671,6 +675,10 @@ implements OnInit
                         any
                 ): void =>
                 {
+                    // Internal id of the loaded record (links use the uuid)
+                    this.entityId =
+                        Number((response as any)?.departmentId ?? (response as any)?.DepartmentId ?? 0);
+
                     this.entity =
                     {
                         DepartmentId:

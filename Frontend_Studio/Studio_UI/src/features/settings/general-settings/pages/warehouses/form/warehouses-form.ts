@@ -305,8 +305,8 @@ implements OnInit
         'add';
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
 
 
@@ -879,7 +879,7 @@ implements OnInit
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -900,7 +900,7 @@ implements OnInit
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -912,13 +912,11 @@ implements OnInit
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -928,7 +926,7 @@ implements OnInit
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
 
@@ -989,7 +987,7 @@ implements OnInit
     {
         if
         (
-            this.entityId > 0
+            !!this.entityId
         )
         {
             return;
@@ -1763,7 +1761,9 @@ implements OnInit
 
         this.warehousesService
             .update(
-                model
+                this.entityId,
+
+model
             )
             .subscribe
             ({

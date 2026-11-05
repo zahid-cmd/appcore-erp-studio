@@ -47,7 +47,7 @@ public class ReorderShellFavoritesDto
 //
 // Key  : changes whenever the content changes, so the browser
 //        can remember which ones were read.
-// Kind : 'approval' | 'cheque'
+// Kind : 'approval' | 'cheque' | 'website'
 //===============================================================
 
 public class ShellNotificationDto

@@ -424,7 +424,7 @@ implements
         }
 
         this.userProfileService
-            .getById(
+            .getByInternalId(
                 userProfileId
             )
             .subscribe(
@@ -563,4 +563,4 @@ implements
         );
     }
 
-}
+}

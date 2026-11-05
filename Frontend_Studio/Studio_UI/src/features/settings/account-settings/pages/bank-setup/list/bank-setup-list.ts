@@ -292,6 +292,15 @@ implements OnInit, OnDestroy
         BankSetup[] =
         [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredBankSetup:
         BankSetup[] =
         [];
@@ -469,6 +478,9 @@ implements OnInit, OnDestroy
             BankSetupId:
                 Number(item?.BankSetupId ?? item?.bankSetupId ?? 0),
 
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             BankCode:
                 item?.BankCode ?? item?.bankCode ?? '',
 
@@ -526,6 +538,9 @@ implements OnInit, OnDestroy
                         );
 
                     this.applyFilters();
+
+
+                    this.updateSummary();
 
                     this.loading =
                         false;
@@ -926,7 +941,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.BankSetupId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -958,7 +973,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.BankSetupId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1025,7 +1040,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.bankSetupService.delete(
-                item.BankSetupId
+                item.PublicId ?? ''
             )
         )
         .subscribe
@@ -1552,4 +1567,32 @@ implements OnInit, OnDestroy
         this.historyOpened =
             false;
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.bankSetup ?? [];
+
+        const active =
+            all.filter(x => !!x?.Status).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

@@ -34,7 +34,12 @@ using WarehousesEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Warehouses;
 
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 using AppCore.Domain.Common;
+
+// RackLabels : bin codes, movement classes
+using AppCore.Infrastructure.Repositories.Settings.ProductSettings;
 
 // BusinessLineAccess : warehouses whose branch runs a business line
 using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
@@ -140,10 +145,28 @@ public class AccessoriesRepository : IAccessoriesRepository
 
     private IQueryable<AccessoriesDto> AccessoriesQuery()
     {
-        return
-            from x in _context.Set<AccessoriesEntity>().AsNoTracking()
+        return Project(
+            LiveRows());
+    }
 
-            where !x.IsDeleted
+    // Not deleted, no tracking
+    private IQueryable<AccessoriesEntity> LiveRows()
+    {
+        return _context
+            .Set<AccessoriesEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted);
+    }
+
+    // Rows -> DTOs (category / brand / sub category names)
+    private IQueryable<AccessoriesDto>
+        Project
+        (
+            IQueryable<AccessoriesEntity> source
+        )
+    {
+        return
+            from x in source
 
             join c in _context.Set<ProductCategoryEntity>().AsNoTracking()
                 on x.ProductCategoryId equals c.ProductCategoryId into cj
@@ -161,6 +184,9 @@ public class AccessoriesRepository : IAccessoriesRepository
             {
                 AccessoryId =
                     x.AccessoryId,
+
+                PublicId =
+                    x.PublicId,
 
                 ProductCategoryId =
                     x.ProductCategoryId,
@@ -204,6 +230,9 @@ public class AccessoriesRepository : IAccessoriesRepository
                 CogsLedgerCode =
                     x.CogsLedgerCode,
 
+                SalesLedgerCode =
+                    x.SalesLedgerCode,
+
                 ReorderLevel =
                     x.ReorderLevel,
 
@@ -212,6 +241,12 @@ public class AccessoriesRepository : IAccessoriesRepository
 
                 MaxStockLevel =
                     x.MaxStockLevel,
+
+                MovementClass =
+                    x.MovementClass,
+
+                MovementClassAuto =
+                    x.MovementClassAuto,
 
                 Remarks =
                     x.Remarks,
@@ -262,7 +297,282 @@ public class AccessoriesRepository : IAccessoriesRepository
         await AttachLocationsAsync(
             items);
 
+        await ProductFitments.AttachAccessoriesAsync(
+            _context,
+            items);
+
         return items;
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Filters on the accessory itself, the counts for the
+    // summary line, then the status, the total and one page. The
+    // locations are read for that page only.
+    //===========================================================
+
+    private SortMap<AccessoriesEntity> ListSorts()
+    {
+        return new SortMap<AccessoriesEntity>("ProductCode")
+            .Add("ProductCode", x => x.ProductCode)
+            .Add("PartNumber", x => x.PartNumber)
+            .Add("AccessoryName", x => x.AccessoryName)
+            .Add
+            (
+                "CategoryName",
+                x =>
+                    _context
+                        .Set<ProductCategoryEntity>()
+                        .Where(c => c.ProductCategoryId == x.ProductCategoryId)
+                        .Select(c => c.CategoryName)
+                        .FirstOrDefault()
+            )
+            .Add
+            (
+                "SubCategoryName",
+                x =>
+                    _context
+                        .Set<ProductSubCategoryEntity>()
+                        .Where(s => s.ProductSubCategoryId == x.ProductSubCategoryId)
+                        .Select(s => s.SubCategoryName)
+                        .FirstOrDefault()
+            )
+            .Add("Unit", x => x.Unit)
+            // Fastest first (Super Fast 1 ... Slow 5)
+            .Add
+            (
+                "MovementText",
+                x =>
+                    x.MovementClass == "SuperFast" ? 1 :
+                    x.MovementClass == "Fast" ? 2 :
+                    x.MovementClass == "Regular" ? 3 :
+                    x.MovementClass == "Periodic" ? 4 :
+                    5
+            )
+            .Add("ReorderLevel", x => x.ReorderLevel)
+            .Add("RedLevel", x => x.RedLevel)
+            .Add("MaxStockLevel", x => x.MaxStockLevel)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.AccessoryId);
+    }
+
+    public async Task<PagedResult<AccessoriesDto>>
+        GetPagedAsync
+        (
+            AccessoriesPageRequest request
+        )
+    {
+        IQueryable<AccessoriesEntity> query =
+            LiveRows();
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            // "Super Fast" finds SuperFast
+            string movementLike =
+                PagingQuery.LikePattern(search.Replace(" ", string.Empty));
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.ProductCode, like) ||
+                        EF.Functions.ILike(x.PartNumber, like) ||
+                        EF.Functions.ILike(x.AccessoryName, like) ||
+                        EF.Functions.ILike(x.Unit, like) ||
+                        EF.Functions.ILike(x.MovementClass, movementLike) ||
+                        EF.Functions.ILike(x.InventoryLedgerCode, like) ||
+                        EF.Functions.ILike(x.Remarks, like) ||
+                        _context
+                            .Set<ProductCategoryEntity>()
+                            .Any
+                            (
+                                c =>
+                                    c.ProductCategoryId == x.ProductCategoryId &&
+                                    (
+                                        EF.Functions.ILike(c.CategoryName, like) ||
+                                        EF.Functions.ILike(c.CategoryCode, like) ||
+                                        _context
+                                            .Set<BrandManagementEntity>()
+                                            .Any
+                                            (
+                                                b =>
+                                                    (long?)b.BrandManagementId == c.BrandManagementId &&
+                                                    EF.Functions.ILike(b.BrandName, like)
+                                            )
+                                    )
+                            ) ||
+                        _context
+                            .Set<ProductSubCategoryEntity>()
+                            .Any
+                            (
+                                s =>
+                                    s.ProductSubCategoryId == x.ProductSubCategoryId &&
+                                    EF.Functions.ILike(s.SubCategoryName, like)
+                            ) ||
+                        _context
+                            .Set<AccessoryLocationsEntity>()
+                            .Any
+                            (
+                                l =>
+                                    l.AccessoryId == x.AccessoryId &&
+                                    (
+                                        _context
+                                            .Set<WarehousesEntity>()
+                                            .Any
+                                            (
+                                                w =>
+                                                    w.WarehouseId == l.WarehouseId &&
+                                                    (
+                                                        EF.Functions.ILike(w.WarehouseCode, like) ||
+                                                        EF.Functions.ILike(w.WarehouseName, like)
+                                                    )
+                                            ) ||
+                                        _context
+                                            .Set<RackManagementEntity>()
+                                            .Any
+                                            (
+                                                r =>
+                                                    r.RackManagementId == l.RackManagementId &&
+                                                    (
+                                                        EF.Functions.ILike(r.RackCode, like) ||
+                                                        EF.Functions.ILike(r.RackName, like)
+                                                    )
+                                            )
+                                    )
+                            )
+                );
+        }
+
+        //-------------------------------------------------------
+        // Category / Sub Category filters
+        //-------------------------------------------------------
+
+        if (request.ProductCategoryId > 0)
+        {
+            long categoryId = request.ProductCategoryId.Value;
+
+            query = query.Where(x => x.ProductCategoryId == categoryId);
+        }
+
+        if (request.ProductSubCategoryId > 0)
+        {
+            long subCategoryId = request.ProductSubCategoryId.Value;
+
+            // Its own items and the ones that also fit it
+            IQueryable<long> fitting =
+                ProductFitments.AccessoriesFitting(_context, subCategoryId);
+
+            query = query.Where(x => x.ProductSubCategoryId == subCategoryId || fitting.Contains(x.AccessoryId));
+        }
+
+        //-------------------------------------------------------
+        // Summary counts : Total / Active / Inactive (search
+        // applied; not the status filter)
+        //-------------------------------------------------------
+
+        var byStatus =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { IsActive = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = byStatus.Sum(x => x.Count),
+                ["Active"] = byStatus.Where(x => x.IsActive).Sum(x => x.Count),
+                ["Inactive"] = byStatus.Where(x => !x.IsActive).Sum(x => x.Count)
+            };
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        if
+        (
+            request.Status.HasValue
+        )
+        {
+            bool active =
+                request.Status.Value;
+
+            query =
+                query.Where(x => x.IsActive == active);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page (with its locations)
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<AccessoriesDto> rows =
+            await Project(
+                    ListSorts()
+                        .Apply(query, request)
+                        .Page(request))
+                .ToListAsync();
+
+        await AttachLocationsAsync(
+            rows);
+
+        await ProductFitments.AttachAccessoriesAsync(
+            _context,
+            rows);
+
+        return new PagedResult<AccessoriesDto>
+        {
+            Items = rows,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await LiveRows()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.AccessoryId)
+            .FirstOrDefaultAsync();
     }
 
 
@@ -292,6 +602,10 @@ public class AccessoriesRepository : IAccessoriesRepository
         )
         {
             await AttachLocationsAsync(
+                new List<AccessoriesDto> { item });
+
+            await ProductFitments.AttachAccessoriesAsync(
+                _context,
                 new List<AccessoriesDto> { item });
         }
 
@@ -368,7 +682,10 @@ public class AccessoriesRepository : IAccessoriesRepository
                                 r != null ? r.RackName : string.Empty,
 
                             ShelfNumber =
-                                l.ShelfNumber
+                                l.ShelfNumber,
+
+                            BinNumber =
+                                l.BinNumber
                         }
                 }
             )
@@ -406,12 +723,20 @@ public class AccessoriesRepository : IAccessoriesRepository
                 in item.Locations
             )
             {
-                // "WH-001: Rack A / SLF-A-03"
-                location.LocationText =
-                    $"{location.WarehouseCode}: {location.RackName} / " +
-                    RackManagementRepository.ShelfLabel(
+                location.ShelfLabel =
+                    RackLabels.Shelf(
                         location.RackName,
                         location.ShelfNumber);
+
+                location.BinCode =
+                    RackLabels.BinCode(
+                        location.RackName,
+                        location.ShelfNumber,
+                        location.BinNumber);
+
+                // "WH-001: A-03-05"
+                location.LocationText =
+                    $"{location.WarehouseCode}: {location.BinCode}";
             }
 
             item.LocationsText =
@@ -431,12 +756,12 @@ public class AccessoriesRepository : IAccessoriesRepository
     // Storage Locations : validate
     //
     // Empty rows are ignored. Each row needs a warehouse, a rack
-    // of that warehouse and a shelf on that rack; one row per
-    // warehouse. An inactive warehouse / rack is refused unless
-    // the part already uses it.
+    // of that warehouse, a shelf on that rack and a bin on that
+    // shelf (0 = bin 1); one row per warehouse. An inactive
+    // warehouse / rack is refused unless the item already uses it.
     //
-    // A shelf holds ONE item only : a shelf already linked to
-    // another (not deleted) spare part or accessory is refused.
+    // A bin holds ONE item only : a bin already linked to another
+    // (not deleted) spare part or accessory is refused.
     //
     // Business line : a new warehouse must belong to a branch that
     // runs the Accessories business today (Business Configuration).
@@ -462,9 +787,28 @@ public class AccessoriesRepository : IAccessoriesRepository
                             x.RackManagementId > 0
                             ||
                             x.ShelfNumber > 0
+                            ||
+                            x.BinNumber > 0
                         )
                 )
                 .ToList();
+
+        // Bin 0 / missing = bin 1 (old clients, Excel import)
+        foreach
+        (
+            AccessoryLocationInputDto row
+            in rows
+        )
+        {
+            if
+            (
+                row.BinNumber < 1
+            )
+            {
+                row.BinNumber =
+                    1;
+            }
+        }
 
         if
         (
@@ -498,8 +842,8 @@ public class AccessoriesRepository : IAccessoriesRepository
                 "Each warehouse can have only one storage location for an accessory.");
         }
 
-        // The same shelf cannot be used twice by this part
-        bool sameShelfTwice =
+        // The same bin cannot be used twice by this item
+        bool sameBinTwice =
             rows
                 .GroupBy
                 (
@@ -507,7 +851,8 @@ public class AccessoriesRepository : IAccessoriesRepository
                         new
                         {
                             x.RackManagementId,
-                            x.ShelfNumber
+                            x.ShelfNumber,
+                            x.BinNumber
                         }
                 )
                 .Any
@@ -518,11 +863,11 @@ public class AccessoriesRepository : IAccessoriesRepository
 
         if
         (
-            sameShelfTwice
+            sameBinTwice
         )
         {
             throw new InvalidOperationException(
-                "The same shelf cannot be added twice for an accessory.");
+                "The same bin cannot be added twice for an accessory.");
         }
 
         long[] warehouseIds =
@@ -593,11 +938,16 @@ public class AccessoriesRepository : IAccessoriesRepository
                 _context,
                 BusinessLineAccess.Accessories);
 
-        // Shelves of these racks held by other items
-        List<ShelfHolder> taken =
-            await GetTakenShelvesAsync(
-                rackIds,
-                accessoryId);
+        // Bins of these racks with their holders (this item's own
+        // bins are free)
+        List<RackMapDto> map =
+            await BinOccupancy.GetRackMapAsync(
+                _context,
+                0,
+                0,
+                accessoryId,
+                false,
+                rackIds);
 
         int rowNumber =
             0;
@@ -664,39 +1014,24 @@ public class AccessoriesRepository : IAccessoriesRepository
                     $"{label}: rack {rack.RackCode} is not in {warehouse.WarehouseName}.");
             }
 
-            if
-            (
-                row.ShelfNumber < 1
-                ||
-                row.ShelfNumber > rack.ShelfCount
-            )
-            {
-                throw new InvalidOperationException(
-                    $"{label}: select a shelf between " +
-                    $"{RackManagementRepository.ShelfLabel(rack.RackName, 1)} and " +
-                    $"{RackManagementRepository.ShelfLabel(rack.RackName, rack.ShelfCount)} on {rack.RackName}.");
-            }
-
-            ShelfHolder? holder =
-                taken.FirstOrDefault
-                (
-                    x =>
-                        x.RackManagementId == row.RackManagementId
-                        &&
-                        x.ShelfNumber == row.ShelfNumber
-                );
+            // Shelf 1 … ShelfCount, bin 1 … that shelf's bins, bin free
+            string? binProblem =
+                BinOccupancy.CheckBin(
+                    BinOccupancy.FindRack(
+                        map,
+                        row.RackManagementId),
+                    warehouse.WarehouseId,
+                    row.ShelfNumber,
+                    row.BinNumber);
 
             if
             (
-                holder !=
+                binProblem !=
                 null
             )
             {
                 throw new InvalidOperationException(
-                    $"{label}: shelf " +
-                    $"{RackManagementRepository.ShelfLabel(rack.RackName, row.ShelfNumber)} " +
-                    $"on {rack.RackName} ({warehouse.WarehouseName}) is already used by " +
-                    $"{holder.ItemType.ToLowerInvariant()} {holder.ProductCode} - {holder.ItemName}. Choose another shelf.");
+                    $"{label} ({warehouse.WarehouseName}): {binProblem}");
             }
 
             bool alreadyUsed =
@@ -736,21 +1071,20 @@ public class AccessoriesRepository : IAccessoriesRepository
 
 
     //===========================================================
-    // Storage Locations : shelves held by other items
+    // Storage Locations : bins held by other items
     //
-    // A shelf holds ONE item only : a spare part OR an accessory
-    // (see ShelfOccupancy). This accessory's own shelves don't
-    // block it.
+    // A bin holds ONE item only : a spare part OR an accessory
+    // (see BinOccupancy). This accessory's own bins don't block it.
     //===========================================================
 
-    private Task<List<ShelfHolder>>
-        GetTakenShelvesAsync
+    private Task<List<BinHolderDto>>
+        GetTakenBinsAsync
         (
             long[] rackIds,
             long excludeAccessoryId
         )
     {
-        return ShelfOccupancy.GetHoldersAsync(
+        return BinOccupancy.GetHoldersAsync(
             _context,
             rackIds,
             0,
@@ -813,6 +1147,11 @@ public class AccessoriesRepository : IAccessoriesRepository
 
                         ShelfNumber =
                             row.ShelfNumber,
+
+                        BinNumber =
+                            row.BinNumber < 1
+                                ? 1
+                                : row.BinNumber,
 
                         CreatedBy =
                             userId,
@@ -1375,7 +1714,14 @@ public class AccessoriesRepository : IAccessoriesRepository
             CogsLedgerCode =
                 ChildCode(
                     parent.CogsSubGroup.SubGroupCode,
-                    number)
+                    number),
+
+            SalesLedgerCode =
+                ProductSalesAccounts.LedgerCodeOf(
+                    parent.Category.CategoryType,
+                    ChildCode(
+                        parent.InventorySubGroup.SubGroupCode,
+                        number))
         };
     }
 
@@ -1690,7 +2036,8 @@ public class AccessoriesRepository : IAccessoriesRepository
         AccessoriesEntity entity,
         string activityType,
         string verb,
-        long userId
+        long userId,
+        string detail = ""
     )
     {
         _context.ActivityHistories.Add(
@@ -1712,7 +2059,7 @@ public class AccessoriesRepository : IAccessoriesRepository
                     $"Accessory {verb}",
 
                 ActivityDescription =
-                    $"Accessory '{DisplayName(entity.PartNumber, entity.AccessoryName)}' ({entity.ProductCode}) {verb.ToLower()}.",
+                    $"Accessory '{DisplayName(entity.PartNumber, entity.AccessoryName)}' ({entity.ProductCode}) {verb.ToLower()}.{detail}",
 
                 PerformedBy =
                     userId,
@@ -1828,6 +2175,13 @@ public class AccessoriesRepository : IAccessoriesRepository
                 MaxStockLevel =
                     dto.MaxStockLevel,
 
+                MovementClass =
+                    RackLabels.NormalizeMovementClass(
+                        dto.MovementClass),
+
+                MovementClassAuto =
+                    false,
+
                 Remarks =
                     dto.Remarks?.Trim()
                     ??
@@ -1851,8 +2205,12 @@ public class AccessoriesRepository : IAccessoriesRepository
         // Part + its three ledgers in one transaction
         //=======================================================
 
+        // Joins an outer transaction (Parts & Accessories
+        // Onboarding) instead of opening its own
         await using var transaction =
-            await _context.Database.BeginTransactionAsync();
+            _context.Database.CurrentTransaction == null
+                ? await _context.Database.BeginTransactionAsync()
+                : null;
 
         _context
             .Set<AccessoriesEntity>()
@@ -1864,6 +2222,18 @@ public class AccessoriesRepository : IAccessoriesRepository
             parent,
             userId);
 
+        // Sales ledger (CLS-005 / 006 / 008)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Accessory",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
+
         await _context.SaveChangesAsync();
 
         await ReplaceLocationsAsync(
@@ -1871,15 +2241,31 @@ public class AccessoriesRepository : IAccessoriesRepository
             locations,
             userId);
 
+        // Fits Models (null = keep the saved links)
+        if (dto.FitSubCategoryIds != null)
+        {
+            await ProductFitments.ReplaceAccessoryAsync(
+                _context,
+                entity.AccessoryId,
+                entity.ProductCategoryId,
+                entity.ProductSubCategoryId,
+                dto.FitSubCategoryIds,
+                userId);
+        }
+
         AddHistory(
             entity,
             "Create",
             "Created",
-            userId);
+            userId,
+            $" Movement class: {RackLabels.MovementLabel(entity.MovementClass)}.");
 
         await _context.SaveChangesAsync();
 
-        await transaction.CommitAsync();
+        if (transaction != null)
+        {
+            await transaction.CommitAsync();
+        }
 
         return entity.AccessoryId;
     }
@@ -1984,6 +2370,18 @@ public class AccessoriesRepository : IAccessoriesRepository
         entity.MaxStockLevel =
             dto.MaxStockLevel;
 
+        string oldMovement =
+            entity.MovementClass;
+
+        entity.MovementClass =
+            RackLabels.NormalizeMovementClass(
+                dto.MovementClass);
+
+        string movementChange =
+            string.Equals(oldMovement, entity.MovementClass, StringComparison.Ordinal)
+                ? string.Empty
+                : $" Movement class: {RackLabels.MovementLabel(oldMovement)} -> {RackLabels.MovementLabel(entity.MovementClass)}.";
+
         entity.Remarks =
             dto.Remarks?.Trim()
             ??
@@ -2007,6 +2405,18 @@ public class AccessoriesRepository : IAccessoriesRepository
             parent,
             userId);
 
+        // Sales ledger (CLS-005 / 006 / 008)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Accessory",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
+
         await _context.SaveChangesAsync();
 
         await ReplaceLocationsAsync(
@@ -2014,11 +2424,24 @@ public class AccessoriesRepository : IAccessoriesRepository
             locations,
             userId);
 
+        // Fits Models (null = keep the saved links)
+        if (dto.FitSubCategoryIds != null)
+        {
+            await ProductFitments.ReplaceAccessoryAsync(
+                _context,
+                entity.AccessoryId,
+                entity.ProductCategoryId,
+                entity.ProductSubCategoryId,
+                dto.FitSubCategoryIds,
+                userId);
+        }
+
         AddHistory(
             entity,
             "Update",
             "Updated",
-            userId);
+            userId,
+            movementChange);
 
         await _context.SaveChangesAsync();
 
@@ -2092,6 +2515,18 @@ public class AccessoriesRepository : IAccessoriesRepository
             ledger.DeletedDate =
                 now;
         }
+
+        // Sales ledger follows (refused once it has postings)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Accessory",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
 
         await _context.SaveChangesAsync();
 
@@ -2224,6 +2659,18 @@ public class AccessoriesRepository : IAccessoriesRepository
             parent,
             userId);
 
+        // Sales ledger (CLS-005 / 006 / 008)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Accessory",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
+
         await _context.SaveChangesAsync();
 
         await DropInvalidLocationsAsync(
@@ -2245,7 +2692,7 @@ public class AccessoriesRepository : IAccessoriesRepository
 
     //===========================================================
     // Restore : drop locations whose rack was deleted, whose
-    // shelf no longer exists, or whose shelf was given to
+    // shelf / bin no longer exists, or whose bin was given to
     // another accessory while this part was deleted
     //===========================================================
 
@@ -2298,10 +2745,15 @@ public class AccessoriesRepository : IAccessoriesRepository
                         x.RackManagementId
                 );
 
-        List<ShelfHolder> taken =
-            await GetTakenShelvesAsync(
+        List<BinHolderDto> taken =
+            await GetTakenBinsAsync(
                 rackIds,
                 accessoryId);
+
+        Dictionary<(long RackId, int Shelf), int> binCounts =
+            await BinOccupancy.GetBinCountsAsync(
+                _context,
+                rackIds);
 
         List<AccessoryLocationsEntity> invalid =
             locations
@@ -2316,12 +2768,16 @@ public class AccessoriesRepository : IAccessoriesRepository
                         ||
                         x.ShelfNumber > rack.ShelfCount
                         ||
+                        x.BinNumber > BinOccupancy.BinCountOf(binCounts, x.RackManagementId, x.ShelfNumber)
+                        ||
                         taken.Any
                         (
                             t =>
                                 t.RackManagementId == x.RackManagementId
                                 &&
                                 t.ShelfNumber == x.ShelfNumber
+                                &&
+                                t.BinNumber == x.BinNumber
                         )
                 )
                 .ToList();
@@ -2354,4 +2810,4 @@ public class AccessoriesRepository : IAccessoriesRepository
                     !x.IsDeleted
             );
     }
-}
+}

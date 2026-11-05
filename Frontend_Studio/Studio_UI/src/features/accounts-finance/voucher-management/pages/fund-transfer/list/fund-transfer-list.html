@@ -87,7 +87,7 @@
 
             <app-list-table
                 [columns]="columns"
-                [rows]="pagedFundTransfers"
+                [rows]="fundTransfers"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
@@ -106,7 +106,7 @@
 
         <app-pagination
             canvasFooter
-            [totalRecords]="filteredFundTransfers.length"
+            [totalRecords]="totalRecords"
             [currentPage]="currentPage"
             [pageSize]="pageSize"
             (pageChange)="onPageChange($event)"
@@ -115,6 +115,33 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (transfer type and search applied; not the tab)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="ft-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="ft-summary-item">
+                    <span class="ft-summary-label">{{ item.label }}</span>
+                    <b
+                        class="ft-summary-value"
+                        [class.ft-ok]="item.tone === 'ok'"
+                        [class.ft-bad]="item.tone === 'bad'"
+                        [class.ft-muted]="item.tone === 'muted'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="ft-summary-note">
+                Matching the transfer type and search
+            </span>
+
+        </div>
+    }
 
     <!-- =====================================================
          HISTORY

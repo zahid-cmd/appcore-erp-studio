@@ -163,7 +163,7 @@ export class CardSetupService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<CardSetup>
     {
@@ -182,9 +182,9 @@ export class CardSetupService
         model:
             CreateCardSetup
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -197,13 +197,16 @@ export class CardSetupService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateCardSetup
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -216,7 +219,7 @@ export class CardSetupService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -260,7 +263,7 @@ export class CardSetupService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

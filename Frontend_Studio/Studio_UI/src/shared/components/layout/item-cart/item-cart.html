@@ -175,7 +175,26 @@
                             *ngIf="
                                 column.type === 'text'
                             ">
-                            {{ getCellValue(row, column) }}
+
+                            <!-- Sub menu : its menu name on a second line -->
+                            <ng-container
+                                *ngIf="
+                                    column.field === 'subMenu' && row.menu;
+                                    else plainText
+                                ">
+                                <div class="cart-submenu">
+                                    <span class="cart-submenu-name">{{ getCellValue(row, column) }}</span>
+                                    <span class="cart-submenu-menu">
+                                        <i class="fas fa-folder-tree"></i>
+                                        {{ row.menu }}
+                                    </span>
+                                </div>
+                            </ng-container>
+
+                            <ng-template #plainText>
+                                {{ getCellValue(row, column) }}
+                            </ng-template>
+
                         </ng-container>
 
                         <ng-container

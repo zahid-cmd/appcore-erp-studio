@@ -37,10 +37,39 @@ public class ProductCategoryConfiguration
 
 
         //===========================================================
+        // Sales account (2026-11-04)
+        //===========================================================
+
+        builder.Property(x => x.SalesGroupCode)
+               .IsRequired()
+               .HasMaxLength(50);
+
+        builder.Property(x => x.SalesGroupName)
+               .IsRequired()
+               .HasMaxLength(200);
+
+
+        //===========================================================
         // Primary Key
         //===========================================================
 
         builder.HasKey(x => x.ProductCategoryId);
+
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_ProductCategories_PublicId");
 
         builder.Property(x => x.ProductCategoryId)
                .ValueGeneratedOnAdd();

@@ -48,6 +48,33 @@ public static class PostingPurposes
 
     public const string EmiReserve = "EMI-RESERVE";
 
+    // Price Adjustment : the stock value change (released to zero
+    // as the adjusted units are sold), the dealer's side of an
+    // increase (reserve until sold / income), a reduction not
+    // compensated by the supplier, and the release on cost of
+    // sales
+    public const string StockPriceAdjustment = "STOCK-PRICE-ADJ";
+
+    public const string PriceIncreaseReserve = "PRICE-INC-RESERVE";
+
+    public const string PriceIncreaseIncome = "PRICE-INC-INCOME";
+
+    public const string PriceReductionExpense = "PRICE-RED-EXPENSE";
+
+    public const string PriceAdjustmentCost = "PRICE-ADJ-COST";
+
+    // Sales Invoices - SP : gross sales (excluding the VAT inside
+    // the MRP) and the discounts that have no ledger of their own
+    // (membership discounts post to the card's Discount ledger).
+    // AC / MB get their own purposes when their pages are built.
+    public const string SalesSpareParts = "SALES-SP";
+
+    public const string CampaignDiscountSpareParts = "CAMPAIGN-DISCOUNT-SP";
+
+    public const string SpecialDiscountSpareParts = "SPECIAL-DISCOUNT-SP";
+
+    public const string FractionalDiscountSpareParts = "FRACTIONAL-DISCOUNT-SP";
+
 
     //===========================================================
     // VAT purpose of a product / page type

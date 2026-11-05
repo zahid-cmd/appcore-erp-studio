@@ -30,10 +30,19 @@ from '../../../../environments/environment';
 
 import
 {
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     GeneralLedger,
     CreateGeneralLedger,
     UpdateGeneralLedger,
-    GeneralLedgerDefaults
+    GeneralLedgerDefaults,
+    GeneralLedgerPageQuery,
+    GeneralLedgerPage
 }
 from '../models/general-ledgers.model';
 
@@ -77,6 +86,66 @@ export class GeneralLedgerService
             .replace(
                 /\/+$/,
                 ''
+            );
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page : one page, server side)
+    //
+    // Rows come back raw; the list page normalizes them.
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            GeneralLedgerPageQuery
+    ):
+        Observable<GeneralLedgerPage>
+    {
+        const ids =
+            (raw: any, name: string): number[] =>
+            {
+                const value =
+                    raw?.[name]
+                    ??
+                    raw?.[name.charAt(0).toLowerCase() + name.slice(1)];
+
+                return Array.isArray(value)
+                    ? value.map((x: any) => Number(x))
+                    : [];
+            };
+
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams(
+                            query as unknown as Record<string, unknown>
+                        )
+                }
+            )
+            .pipe(
+                map(
+                    raw =>
+                    ({
+                        result:
+                            toPagedResult(
+                                raw,
+                                (item: any) => item
+                            ),
+
+                        classIds:
+                            ids(raw, 'ClassIds'),
+
+                        groupIds:
+                            ids(raw, 'GroupIds'),
+
+                        subGroupIds:
+                            ids(raw, 'SubGroupIds')
+                    })
+                )
             );
     }
 
@@ -279,7 +348,7 @@ export class GeneralLedgerService
 
     getById(
         id:
-            number
+            string
     ):
         Observable<GeneralLedger>
     {
@@ -297,9 +366,9 @@ export class GeneralLedgerService
         model:
             CreateGeneralLedger
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
 
             model
@@ -312,13 +381,16 @@ export class GeneralLedgerService
     //===========================================================
 
     update(
+        publicId:
+            string,
+
         model:
             UpdateGeneralLedger
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -331,7 +403,7 @@ export class GeneralLedgerService
 
     delete(
         id:
-            number
+            string
     ):
         Observable<void>
     {

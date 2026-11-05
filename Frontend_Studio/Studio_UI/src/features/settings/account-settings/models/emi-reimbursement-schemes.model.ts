@@ -18,6 +18,8 @@ export interface EmiReimbursementSchemes
 {
     EmiReimbursementSchemeId:
         number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     // ERS-0001
     SchemeCode:

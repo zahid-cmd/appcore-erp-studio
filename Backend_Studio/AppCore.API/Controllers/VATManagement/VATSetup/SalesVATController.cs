@@ -123,10 +123,21 @@ public class SalesVatController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<SalesVatDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         SalesVatDto? item =
             await _repository.GetByIdAsync(id);
 
@@ -258,10 +269,21 @@ public class SalesVatController : ControllerBase
     // 409 : in use (future : purchase / sale documents)
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = 1;
 
         try

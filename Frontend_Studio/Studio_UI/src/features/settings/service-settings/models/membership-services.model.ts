@@ -13,6 +13,8 @@ export interface MembershipService
 {
     MembershipServiceId:
         number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     // MSC-002-001-00001
     ServiceCode:

@@ -484,6 +484,16 @@ implements OnInit
         RoleProfile
     {
         return {
+            PublicId:
+                String
+                (
+                    item?.PublicId
+                    ??
+                    item?.publicId
+                    ??
+                    ''
+                ),
+
             RoleProfileId:
                 Number
                 (
@@ -1066,7 +1076,7 @@ implements OnInit
             [
                 'view',
 
-                item.RoleProfileId
+                item.PublicId
             ],
 
             {
@@ -1094,7 +1104,7 @@ implements OnInit
             [
                 'edit',
 
-                item.RoleProfileId
+                item.PublicId
             ],
 
             {
@@ -1128,7 +1138,7 @@ implements OnInit
                 this.roleprofileservice
                     .delete
                     (
-                        item.RoleProfileId
+                        item.PublicId ?? ''
                     )
                     .subscribe
                     ({
@@ -1408,4 +1418,44 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.roleprofiles ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.roleprofiles ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

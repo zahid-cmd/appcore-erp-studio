@@ -42,6 +42,20 @@ import
 }
 from '../models/color-management.model';
 
+import
+{
+    ColorManagementPageQuery
+}
+from '../models/color-management.model';
+
+import
+{
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
 
 //===============================================================
 // Color Management Service
@@ -99,6 +113,11 @@ export class ColorManagementService
                                 ColorManagementId:
                                     Number(colorManagement.ColorManagementId ?? colorManagement.colorManagementId ?? colorManagement.id ?? colorManagement.Id),
 
+
+                                PublicId:
+
+                                    String(colorManagement?.PublicId ?? colorManagement?.publicId ?? ''),
+
                                 ColorCode:
                                     colorManagement.ColorCode ?? colorManagement.colorCode ?? '',
 
@@ -111,6 +130,42 @@ export class ColorManagementService
                                 Status:
                                     Boolean(colorManagement.Status ?? colorManagement.status ?? true)
                             })
+                        )
+                )
+            );
+    }
+
+
+
+    //===========================================================
+    // Get Paged (the list page : one page from the server, with
+    // the summary counts; rows are normalized by the list)
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            ColorManagementPageQuery
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams(
+                            { ...query }
+                        )
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                        toPagedResult(
+                            response,
+                            item =>
+                                item
                         )
                 )
             );
@@ -167,7 +222,7 @@ export class ColorManagementService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<ColorManagement>
     {
@@ -187,9 +242,9 @@ export class ColorManagementService
         model:
             CreateColorManagement
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
 
             model
@@ -204,13 +259,16 @@ export class ColorManagementService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateColorManagement
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -225,7 +283,7 @@ export class ColorManagementService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -273,7 +331,7 @@ export class ColorManagementService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

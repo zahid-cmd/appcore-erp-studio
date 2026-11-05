@@ -358,7 +358,7 @@
                                     [disabled]="!purchase || productItems.length === 0"
                                     (click)="addAll()">
                                     <i class="fas fa-layer-group"></i>
-                                    All
+                                    Add All
                                 </button>
                             }
 
@@ -428,6 +428,7 @@
                                 <app-search-dropdown
                                     label="Rack"
                                     placeholder="No rack"
+                                    badgeField="count"
                                     [items]="rackItems"
                                     [value]="pickRackId || null"
                                     [required]="!!defaults?.ShelfRequired"
@@ -438,16 +439,26 @@
                                 <app-search-dropdown
                                     label="Shelf"
                                     placeholder="—"
+                                    badgeField="count"
                                     [items]="shelfItems"
                                     [value]="pickShelf || null"
                                     [disabled]="!pick || !pickRackId || shelfItems.length === 0"
-                                    (valueChange)="pickShelf = +$event || 0">
+                                    (valueChange)="onPickShelfChange($event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Bin"
+                                    [placeholder]="pickShelf && !binItems.length ? 'Full' : '—'"
+                                    [items]="binItems"
+                                    [value]="pickBin || null"
+                                    [disabled]="!pick || !pickShelf || binItems.length === 0"
+                                    (valueChange)="onPickBinChange($event)">
                                 </app-search-dropdown>
 
                                 <div class="rc-default">
                                     <span class="rc-default-label">Product Default</span>
                                     <app-checkbox
-                                        label="Save this place"
+                                        label="Save this location"
                                         appearance="switch"
                                         [value]="pickDefault"
                                         [disabled]="!pick || !pickRackId"
@@ -456,8 +467,9 @@
                                 </div>
                             }
 
+                            <!-- With a place : the notes share the row with the switch -->
                             <app-textbox
-                                class="pof-span-all"
+                                [class]="page.hasShelves ? 'pof-span-two' : 'pof-span-all'"
                                 label="Short Notes"
                                 placeholder="Damage, short, sealed carton …"
                                 [maxLength]="200"
@@ -531,7 +543,7 @@
                                         <th class="pof-num">Receive</th>
                                         @if (page.hasShelves)
                                         {
-                                            <th>Rack · Shelf</th>
+                                            <th>Location</th>
                                         }
                                         <th class="pof-action">Action</th>
                                     </tr>
@@ -556,7 +568,7 @@
                                                 <td class="pof-num rc-strong">{{ qty(line.Quantity) }}</td>
                                                 @if (page.hasShelves)
                                                 {
-                                                    <td>{{ line.RackCode ? line.RackCode + (line.ShelfNumber ? ' · Shelf ' + line.ShelfNumber : '') : '—' }}</td>
+                                                    <td>{{ line.RackCode ? (line.BinCode || line.ShelfLabel || line.RackCode) : '—' }}</td>
                                                 }
                                                 <td class="pof-action">
                                                     @if (isBikes)
@@ -647,7 +659,7 @@
                                             <td
                                                 [attr.colspan]="page.hasShelves ? 7 : 6"
                                                 class="pof-empty">
-                                                @if (!purchase) { Select the purchase invoice, then add its {{ page.itemLower }} on the left. } @else { No {{ page.itemLower }} yet. Pick a line on the left and press Add, or All for every line. Double-click a line to edit it. }
+                                                @if (!purchase) { Select the purchase invoice, then add its {{ page.itemLower }} on the left. } @else { No {{ page.itemLower }} yet. Pick a line on the left and press Add, or Add All for every line. Double-click a line to edit it. }
                                             </td>
                                         </tr>
                                     }

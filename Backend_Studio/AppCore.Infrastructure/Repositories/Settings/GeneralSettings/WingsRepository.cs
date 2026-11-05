@@ -87,6 +87,9 @@ public class WingsRepository : IWingsRepository
                         WingId =
                             x.WingId,
 
+                        PublicId =
+                            x.PublicId,
+
                         CompanyId =
                             x.CompanyId,
 
@@ -163,6 +166,33 @@ public class WingsRepository : IWingsRepository
             )
 
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<WingsEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.WingId)
+            .FirstOrDefaultAsync();
     }
 
 

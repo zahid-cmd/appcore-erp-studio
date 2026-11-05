@@ -29,6 +29,10 @@ public class MotorBikes
     public long MotorBikeId { get; set; }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
+
     //===========================================================
     // Parent (locked after saving)
     //===========================================================
@@ -58,6 +62,10 @@ public class MotorBikes
     public string WipLedgerCode { get; set; } = string.Empty;
 
     public string CogsLedgerCode { get; set; } = string.Empty;
+
+    // Sales ledger (2026-11-04) : GLR-ccc-ggg-sss-nnnnn under the
+    // sub category's sales sub group (CLS-005 / 006 / 008)
+    public string SalesLedgerCode { get; set; } = string.Empty;
 
 
     //===========================================================

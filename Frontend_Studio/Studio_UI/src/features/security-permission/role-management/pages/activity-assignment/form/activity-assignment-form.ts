@@ -251,6 +251,11 @@ implements OnInit
         'add' | 'edit' | 'view'
         =
         'add';
+    // uuid from the address bar (the record is loaded by it)
+    routePublicId:
+        string =
+        '';
+
     activityAssignmentId =
         0;
     //===========================================================
@@ -1584,10 +1589,10 @@ implements OnInit
             this.resolveEntityId();
         if
         (
-            id > 0
+            id !== ''
         )
         {
-            this.activityAssignmentId =
+            this.routePublicId =
                 id;
             this.loadActivityAssignment();
         }
@@ -1600,7 +1605,7 @@ implements OnInit
     // Resolve Entity Id
     //===========================================================
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -1611,14 +1616,13 @@ implements OnInit
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get(
+                currentRoute.snapshot.paramMap.get(
                         'id'
                     )
-                );
+                ?? '';
             if
             (
-                id > 0
+                id !== ''
             )
             {
                 return id;
@@ -1626,7 +1630,7 @@ implements OnInit
             currentRoute =
                 currentRoute.parent;
         }
-        return 0;
+        return '';
     }
     //===========================================================
     // Load Defaults
@@ -1672,12 +1676,16 @@ implements OnInit
             false;
         this.activityAssignmentService
             .getById(
-                this.activityAssignmentId
+                this.routePublicId
             )
             .subscribe(
             {
                 next:(response) =>
                 {
+                    // Internal id of the loaded record (links use the uuid)
+                    this.activityAssignmentId =
+                        Number((response as any)?.activityAssignmentId ?? (response as any)?.ActivityAssignmentId ?? 0);
+
                     this.bindActivityAssignment(
                         response
                     );
@@ -2760,7 +2768,7 @@ implements OnInit
             {
                 this.activityAssignmentService
                     .delete(
-                        this.activityAssignmentId
+                        this.routePublicId
                     )
                     .subscribe(
                     {

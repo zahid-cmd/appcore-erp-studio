@@ -136,6 +136,10 @@ export interface PurchaseOrderLine
 
 export interface PurchaseOrder
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     PurchaseOrderId:
         number;
 
@@ -360,6 +364,10 @@ export interface UpdatePurchaseOrder
 
 export interface PurchaseOrderSaved
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     PurchaseOrderId:
         number;
 

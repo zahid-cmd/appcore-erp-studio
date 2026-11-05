@@ -156,6 +156,34 @@ import
 }
 from '../../../services/opening-stock.service';
 
+import
+{
+    RackManagementService
+}
+from '../../../../../settings/product-settings/services/rack-management.service';
+
+import
+{
+    BinMapRack,
+    binItemType,
+    binKey,
+    mapBinCount,
+    mapBinFree,
+    mapBinItems,
+    mapFirstFree,
+    mapFreeBins,
+    mapRack,
+    mapRackFreeCount,
+    mapShelfItems
+}
+from '../../../../../../shared/inventory/bin-availability';
+
+import
+{
+    binCode
+}
+from '../../../../../../shared/inventory/storage-labels';
+
 
 //===============================================================
 // Form rows
@@ -195,12 +223,13 @@ interface FormLine
     UnitCost:number;
     // Incl. VAT (= UnitCost when no VAT is carried)
     GrossCost:number;
-    // VAT inclusive
-    SalePrice:number;
+    // VAT inclusive : MRP is the sale price
     Mrp:number;
     MarginPercent:number;
     RackId:number | null;
     Shelf:number;
+    // The bin (the location)
+    Bin:number;
     SaveDefault:boolean;
     Notes:string;
     Units:UnitRow[];
@@ -235,7 +264,7 @@ interface ImportResult
 //
 //   LEFT  : Opening Information (No, Date, Product Type,
 //           Warehouse, Credit Ledger); Add <item> : product,
-//           quantity, unit cost, sale price, rack · shelf (SP /
+//           quantity, unit cost, MRP, rack · shelf (SP /
 //           AC), notes. Add loads it into the summary on the
 //           right (MB : the bikes button on the line opens the
 //           Unit Desk for their numbers).
@@ -279,6 +308,20 @@ export class OpeningStockForm
 {
     private readonly service =
         inject(OpeningStockService);
+
+    // The warehouse's rack map (free / held bins)
+    private readonly rackService =
+        inject(RackManagementService);
+
+    private binMap:
+        BinMapRack[] = [];
+
+    // The warehouse the map belongs to (0 = none loaded)
+    private binMapOf:
+        number = 0;
+
+    private binCall:
+        number = 0;
 
     private readonly route =
         inject(ActivatedRoute);
@@ -386,6 +429,10 @@ export class OpeningStockForm
     shelfItems:
         Option[] = [];
 
+    // Free bins of the picked shelf
+    binItems:
+        Option[] = [];
+
     productItems:
         Option[] = [];
 
@@ -411,9 +458,6 @@ export class OpeningStockForm
     pickCost:
         string = '';
 
-    pickPrice:
-        string = '';
-
     pickMrp:
         string = '';
 
@@ -424,6 +468,9 @@ export class OpeningStockForm
         number = 0;
 
     pickShelf:
+        number = 0;
+
+    pickBin:
         number = 0;
 
     pickDefault:
@@ -518,15 +565,15 @@ export class OpeningStockForm
         void
     {
         const id =
-            Number(this.route.snapshot.paramMap.get('id')) || 0;
+            this.route.snapshot.paramMap.get('id') ?? '';
 
         // view/:id or edit/:id
         const viewing =
-            /\/view\/\d+/.test(this.router.url);
+            /\/view\//.test(this.router.url);
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
             this.mode = viewing ? 'view' : 'edit';
@@ -586,7 +633,7 @@ export class OpeningStockForm
     private loadDocument
     (
         id:
-            number
+            string
     ):
         void
     {
@@ -613,7 +660,7 @@ export class OpeningStockForm
                         {
                             this.mode = 'view';
 
-                            this.router.navigate([OPENING_STOCK_ROUTE, 'view', doc.OpeningStockId], { replaceUrl:true });
+                            this.router.navigate([OPENING_STOCK_ROUTE, 'view', doc.PublicId], { replaceUrl:true });
                         }
 
                         // Edit needs the products; view (MB) the bike rules
@@ -858,11 +905,11 @@ export class OpeningStockForm
                         Quantity:x.Quantity,
                         UnitCost:x.UnitCost,
                         GrossCost:x.GrossUnitCost || x.UnitCost,
-                        SalePrice:x.SalePrice,
                         Mrp:x.Mrp,
                         MarginPercent:x.MarginPercent,
                         RackId:x.RackManagementId,
                         Shelf:x.ShelfNumber,
+                        Bin:x.RackManagementId ? (x.BinNumber || 1) : 0,
                         SaveDefault:x.SaveAsDefault,
                         Notes:x.ShortNotes,
                         Units:
@@ -1072,7 +1119,16 @@ export class OpeningStockForm
         return Math.round(salePrice / (1 + rate / 100) * 100) / 100;
     }
 
-    // Profit on the net sale price (%) ; null = no price
+    // Profit % On Sale Price switch : true = on the net sale
+    get profitOnSale():
+        boolean
+    {
+        return !!this.defaults?.ProfitOnSale;
+    }
+
+    // Profit (%) of the net sale (MRP excl. sales VAT) over the cost:
+    // on cost (markup, default) or on the net sale (switch) ;
+    // null = no price
     profitPercent
     (
         salePrice:
@@ -1087,9 +1143,18 @@ export class OpeningStockForm
         const net =
             this.saleNet(salePrice, vatType);
 
-        return net > 0 && unitCost > 0
-            ? Math.round((net - unitCost) / net * 10000) / 100
-            : null;
+        if
+        (
+            !(net > 0 && unitCost > 0)
+        )
+        {
+            return null;
+        }
+
+        const base =
+            this.profitOnSale ? net : unitCost;
+
+        return Math.round((net - unitCost) / base * 10000) / 100;
     }
 
     lineProfit
@@ -1099,7 +1164,7 @@ export class OpeningStockForm
     ):
         number | null
     {
-        return this.profitPercent(line.SalePrice, line.UnitCost, this.productById(line.ProductId)?.VatType ?? '');
+        return this.profitPercent(line.Mrp, line.UnitCost, this.productById(line.ProductId)?.VatType ?? '');
     }
 
     // MRP basis : the lines' cost again (date / rule changed)
@@ -1217,20 +1282,169 @@ export class OpeningStockForm
     private buildRackItems():
         void
     {
+        const taken =
+            this.takenBins(this.pickId);
+
         this.rackItems =
             (this.defaults?.Racks ?? [])
                 .filter(x => x.WarehouseId === this.warehouseId)
-                .map(x => ({ label:`${x.Code}${x.Name && x.Name !== x.Code ? ' · ' + x.Name : ''}`, value:x.Id }));
+                .map
+                (
+                    x =>
+                    ({
+                        label:`${x.Code}${x.Name && x.Name !== x.Code ? ' · ' + x.Name : ''}${x.ZoneCode ? ' · ' + x.ZoneCode : ''}`,
+                        value:x.Id,
+                        count:String(mapRackFreeCount(this.binRack(x.Id), this.itemType, this.pickId, taken))
+                    })
+                );
+
+        this.loadBinMap();
+    }
+
+    // The rack map of the warehouse (who holds which bin), once
+    // per warehouse
+    private loadBinMap():
+        void
+    {
+        if
+        (
+            !this.info.hasShelves || !this.warehouseId || this.binMapOf === this.warehouseId
+        )
+        {
+            return;
+        }
+
+        const call =
+            ++this.binCall;
+
+        const warehouseId =
+            this.warehouseId;
+
+        this.binMapOf = warehouseId;
+
+        this.binMap = [];
+
+        this.rackService
+            .getWarehouseBins(warehouseId, { activeOnly:true })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    map =>
+                    {
+                        if
+                        (
+                            call !== this.binCall
+                        )
+                        {
+                            return;
+                        }
+
+                        this.binMap = map;
+
+                        this.buildRackItems();
+
+                        this.buildShelfItems();
+
+                        this.refreshView();
+                    },
+                error:
+                    () =>
+                    {
+                        // No map : every bin is offered; the server
+                        // checks on save
+                        if
+                        (
+                            call === this.binCall
+                        )
+                        {
+                            this.binMapOf = 0;
+                        }
+                    }
+            });
+    }
+
+    // The item type of the page (BinOccupancy names)
+    private get itemType():
+        string
+    {
+        return binItemType(this.info.type);
+    }
+
+    // A rack of the map, or (map not loaded) the defaults' rack
+    // with every bin free
+    private binRack
+    (
+        rackId:
+            number | null
+    ):
+        BinMapRack | null
+    {
+        const fromMap =
+            mapRack(this.binMap, rackId ?? 0);
+
+        if
+        (
+            fromMap
+        )
+        {
+            return fromMap;
+        }
+
+        const rack =
+            this.rackById(rackId);
+
+        return rack
+            ? {
+                RackManagementId:rack.Id,
+                RackName:rack.Name,
+                ShelfCount:rack.ShelfCount,
+                Shelves:rack.Shelves.map(x => ({ ShelfNumber:x.ShelfNumber, ShelfLabel:x.ShelfLabel, BinCount:x.BinCount, Bins:[] }))
+            }
+            : null;
+    }
+
+    // Bins the OTHER lines of the document take
+    private takenBins
+    (
+        exceptProductId:
+            number
+    ):
+        Set<string>
+    {
+        return new Set(
+            this.lines
+                .filter(x => x.ProductId !== exceptProductId && !!x.RackId && x.Shelf > 0 && x.Bin > 0)
+                .map(x => binKey(x.RackId ?? 0, x.Shelf, x.Bin)));
     }
 
     private buildShelfItems():
         void
     {
-        const count =
-            this.rackById(this.pickRackId)?.ShelfCount ?? 0;
+        const rack =
+            this.binRack(this.pickRackId);
+
+        const taken =
+            this.takenBins(this.pickId);
 
         this.shelfItems =
-            Array.from({ length:count }, (_, i) => ({ label:`Shelf ${i + 1}`, value:i + 1 }));
+            mapShelfItems(rack, this.rackById(this.pickRackId)?.Name ?? '', this.itemType, this.pickId, taken);
+
+        this.buildBinItems();
+    }
+
+    private buildBinItems():
+        void
+    {
+        this.binItems =
+            mapBinItems(
+                this.binRack(this.pickRackId),
+                this.rackById(this.pickRackId)?.Name ?? '',
+                this.pickShelf,
+                this.itemType,
+                this.pickId,
+                this.takenBins(this.pickId),
+                this.pickBin);
     }
 
     // Product dropdown : products not yet on the list (and the
@@ -1291,6 +1505,8 @@ export class OpeningStockForm
 
         line.Shelf = shelf ? shelf.ShelfNumber : 0;
 
+        line.Bin = shelf ? (shelf.BinNumber || 1) : 0;
+
         line.SaveDefault = false;
     }
 
@@ -1308,7 +1524,7 @@ export class OpeningStockForm
             shelf ? this.rackById(shelf.RackManagementId) : null;
 
         return rack && shelf
-            ? `${rack.Code}${shelf.ShelfNumber ? ' · Shelf ' + shelf.ShelfNumber : ''}`
+            ? (shelf.BinCode || binCode(rack.Name, shelf.ShelfNumber, shelf.BinNumber || 1))
             : '';
     }
 
@@ -1323,7 +1539,7 @@ export class OpeningStockForm
             this.rackById(line.RackId);
 
         return rack
-            ? `${rack.Code}${line.Shelf ? ' · Shelf ' + line.Shelf : ''}`
+            ? (binCode(rack.Name, line.Shelf, line.Bin) || rack.Code)
             : '—';
     }
 
@@ -1447,21 +1663,10 @@ export class OpeningStockForm
             : 0;
     }
 
-    // Sale price typed, else the MRP
+    // The sale price : the MRP (single source of truth)
     get pickSale():
         number
     {
-        const sale =
-            toNumber(this.pickPrice);
-
-        if
-        (
-            sale > 0
-        )
-        {
-            return sale;
-        }
-
         const mrp =
             toNumber(this.pickMrp);
 
@@ -1502,7 +1707,7 @@ export class OpeningStockForm
                 ? 'Sales VAT not applicable'
                 : sales === null
                     ? `No Sales VAT rule for ${product.VatType} on this date`
-                    : `Sales VAT ${sales}% (${product.VatType}) inside MRP and sale price`);
+                    : `Sales VAT ${sales}% (${product.VatType}) inside the MRP (the sale price)`);
 
         if
         (
@@ -1553,16 +1758,17 @@ export class OpeningStockForm
         this.pickId = 0;
         this.pickQty = '';
         this.pickCost = '';
-        this.pickPrice = '';
         this.pickMrp = '';
         this.pickMargin = '';
         this.pickRackId = 0;
         this.pickShelf = 0;
+        this.pickBin = 0;
         this.pickDefault = false;
         this.pickNotes = '';
         this.editingId = 0;
         this.lineError = '';
         this.shelfItems = [];
+        this.binItems = [];
     }
 
     onPickChange
@@ -1601,11 +1807,11 @@ export class OpeningStockForm
         {
             this.pickQty = String(line.Quantity);
             this.pickCost = String(this.vatIncluded ? line.GrossCost : line.UnitCost);
-            this.pickPrice = line.SalePrice ? String(line.SalePrice) : '';
             this.pickMrp = line.Mrp ? String(line.Mrp) : '';
             this.pickMargin = this.mrpBasis ? String(line.MarginPercent) : '';
             this.pickRackId = line.RackId ?? 0;
             this.pickShelf = line.Shelf;
+            this.pickBin = line.Bin;
             this.pickDefault = line.SaveDefault;
             this.pickNotes = line.Notes;
         }
@@ -1621,7 +1827,6 @@ export class OpeningStockForm
             {
                 this.pickQty = '';
                 this.pickCost = product.LastCost > 0 ? String(product.LastCost) : '';
-                this.pickPrice = product.LastSalePrice > 0 ? String(product.LastSalePrice) : '';
                 this.pickMrp = product.LastMrp > 0 ? String(product.LastMrp) : '';
                 this.pickMargin = '';
                 this.pickNotes = '';
@@ -1629,8 +1834,11 @@ export class OpeningStockForm
 
             this.pickRackId = shelf ? shelf.RackManagementId : 0;
             this.pickShelf = shelf ? shelf.ShelfNumber : 0;
+            this.pickBin = shelf ? (shelf.BinNumber || 1) : 0;
             this.pickDefault = false;
         }
+
+        this.buildRackItems();
 
         this.buildShelfItems();
 
@@ -1646,42 +1854,61 @@ export class OpeningStockForm
     {
         this.pickRackId = Number(value) || 0;
 
-        this.buildShelfItems();
+        // The first free bin of the rack (shelf-then-bin)
+        const first =
+            mapFirstFree(this.binRack(this.pickRackId), this.itemType, this.pickId, this.takenBins(this.pickId));
 
-        const count =
-            this.shelfItems.length;
+        this.pickShelf = first?.shelf ?? 0;
 
-        if
-        (
-            this.pickShelf > count || (!this.pickShelf && count > 0)
-        )
-        {
-            this.pickShelf = count > 0 ? 1 : 0;
-        }
+        this.pickBin = first?.bin ?? 0;
 
         if
         (
             !this.pickRackId
         )
         {
-            this.pickShelf = 0;
-
             this.pickDefault = false;
         }
+
+        this.buildShelfItems();
+    }
+
+    onPickShelfChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.pickShelf = Number(value) || 0;
+
+        this.pickBin =
+            mapFreeBins(this.binRack(this.pickRackId), this.pickShelf, this.itemType, this.pickId, this.takenBins(this.pickId))[0] ?? 0;
+
+        this.buildBinItems();
+    }
+
+    onPickBinChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.pickBin = Number(value) || 0;
+
+        this.buildBinItems();
     }
 
     // The Add card's figures checked : a message, or the values
     private pickFigures():
-        string | { quantity:number; cost:number; gross:number; price:number; mrp:number; margin:number }
+        string | { quantity:number; cost:number; gross:number; mrp:number; margin:number }
     {
         const quantity =
             toNumber(this.pickQty);
 
         const mrp =
             this.pickMrp.trim() === '' ? 0 : toNumber(this.pickMrp);
-
-        const typedPrice =
-            this.pickPrice.trim() === '' ? 0 : toNumber(this.pickPrice);
 
         const margin =
             this.pickMargin.trim() === '' ? 0 : toNumber(this.pickMargin);
@@ -1704,10 +1931,10 @@ export class OpeningStockForm
 
         if
         (
-            !Number.isFinite(mrp) || mrp < 0 || !Number.isFinite(typedPrice) || typedPrice < 0
+            !Number.isFinite(mrp) || mrp < 0
         )
         {
-            return 'MRP and sale price are numbers (or empty).';
+            return 'MRP is a number (or empty).';
         }
 
         if
@@ -1758,23 +1985,22 @@ export class OpeningStockForm
             return 'Enter the unit cost, excluding VAT (what one unit cost the business).';
         }
 
-        // Sale price : typed, else the MRP
-        const price =
-            typedPrice > 0 ? typedPrice : mrp;
+        // MRP (the sale price) is never below the cost : equal or more
+        const floor =
+            this.vatIncluded ? this.pickGrossCost : cost;
 
         if
         (
-            mrp > 0 && price > mrp
+            mrp > 0 && mrp < Math.round(floor * 100) / 100
         )
         {
-            return `The sale price ${formatOpeningMoney(price)} is above the MRP ${formatOpeningMoney(mrp)}.`;
+            return `The MRP ${formatOpeningMoney(mrp)} is below the cost ${formatOpeningCost(floor)}. MRP must be equal to or more than the cost.`;
         }
 
         return {
             quantity:Math.round(quantity * 100) / 100,
             cost:Math.round(cost * 10000) / 10000,
             gross:Math.round((this.vatIncluded ? this.pickGrossCost : cost) * 10000) / 10000,
-            price:Math.round(price * 100) / 100,
             mrp:Math.round(mrp * 100) / 100,
             margin:this.mrpBasis ? Math.round(margin * 10000) / 10000 : 0
         };
@@ -1813,6 +2039,40 @@ export class OpeningStockForm
             return;
         }
 
+        // A place : rack + shelf + a free bin (one item per bin)
+        if
+        (
+            this.info.hasShelves && this.pickRackId
+        )
+        {
+            const rack =
+                this.binRack(this.pickRackId);
+
+            if
+            (
+                !rack || !this.pickShelf || !this.pickBin
+            )
+            {
+                this.lineError = 'Choose the shelf and bin (or no rack).';
+
+                this.refreshView();
+
+                return;
+            }
+
+            if
+            (
+                !mapBinFree(rack, this.pickShelf, this.pickBin, this.itemType, product.Id, this.takenBins(product.Id))
+            )
+            {
+                this.lineError = `Bin ${binCode(rack.RackName, this.pickShelf, this.pickBin)} holds another item or another line uses it (one item per bin). Choose a free bin.`;
+
+                this.refreshView();
+
+                return;
+            }
+        }
+
         let line =
             this.lines.find(x => x.ProductId === product.Id);
 
@@ -1831,11 +2091,11 @@ export class OpeningStockForm
                 Quantity:0,
                 UnitCost:0,
                 GrossCost:0,
-                SalePrice:0,
                 Mrp:0,
                 MarginPercent:0,
                 RackId:null,
                 Shelf:0,
+                Bin:0,
                 SaveDefault:false,
                 Notes:'',
                 Units:[]
@@ -1847,11 +2107,11 @@ export class OpeningStockForm
         line.Quantity = figures.quantity;
         line.UnitCost = figures.cost;
         line.GrossCost = figures.gross;
-        line.SalePrice = figures.price;
         line.Mrp = figures.mrp;
         line.MarginPercent = figures.margin;
         line.RackId = this.info.hasShelves && this.pickRackId ? this.pickRackId : null;
         line.Shelf = line.RackId ? this.pickShelf : 0;
+        line.Bin = line.RackId ? this.pickBin : 0;
         line.SaveDefault = !!line.RackId && this.pickDefault;
         line.Notes = this.pickNotes.trim();
 
@@ -1948,11 +2208,11 @@ export class OpeningStockForm
         number
     {
         return this.isView
-            ? (this.doc?.Lines ?? []).reduce((t, x) => t + x.SalePrice * x.Quantity, 0)
-            : this.lines.reduce((t, x) => t + x.SalePrice * x.Quantity, 0);
+            ? (this.doc?.Lines ?? []).reduce((t, x) => t + x.Mrp * x.Quantity, 0)
+            : this.lines.reduce((t, x) => t + x.Mrp * x.Quantity, 0);
     }
 
-    // View : profit on the net sale price of a saved line
+    // View : profit on the net sale price (MRP) of a saved line
     viewProfit
     (
         line:
@@ -1960,7 +2220,7 @@ export class OpeningStockForm
     ):
         number | null
     {
-        return this.profitPercent(line.SalePrice, line.UnitCost, this.productById(line.ProductId)?.VatType ?? '');
+        return this.profitPercent(line.Mrp, line.UnitCost, this.productById(line.ProductId)?.VatType ?? '');
     }
 
     pct
@@ -2506,10 +2766,10 @@ export class OpeningStockForm
         string[]
     {
         return this.isBikes
-            ? ['Product Code', 'Unit Cost', 'MRP', 'Sale Price', 'Chassis No', 'Engine No', 'Key No', 'Battery No']
+            ? ['Product Code', 'Unit Cost', 'MRP', 'Chassis No', 'Engine No', 'Key No', 'Battery No']
             : this.mrpBasis
-                ? ['Product Code', 'Quantity', 'MRP', 'Margin %', 'Sale Price', 'Rack Code', 'Shelf', 'Notes']
-                : ['Product Code', 'Quantity', 'Unit Cost', 'MRP', 'Sale Price', 'Rack Code', 'Shelf', 'Notes'];
+                ? ['Product Code', 'Quantity', 'MRP', 'Margin %', 'Rack Code', 'Shelf', 'Bin', 'Notes']
+                : ['Product Code', 'Quantity', 'Unit Cost', 'MRP', 'Rack Code', 'Shelf', 'Bin', 'Notes'];
     }
 
     openImport():
@@ -2546,10 +2806,10 @@ export class OpeningStockForm
     {
         const example =
             this.isBikes
-                ? ['MB-0001', '125000', '150000', '145000', 'CH12345', 'EN12345', 'K-01', 'B-01']
+                ? ['MB-0001', '125000', '150000', 'CH12345', 'EN12345', 'K-01', 'B-01']
                 : this.mrpBasis
-                    ? ['SP-0001', '10', '320', '18', '320', 'R-01', '2', '']
-                    : ['SP-0001', '10', '250.50', '320', '310', 'R-01', '2', ''];
+                    ? ['SP-0001', '10', '320', '18', 'R-01', '2', '']
+                    : ['SP-0001', '10', '250.50', '320', 'R-01', '2', ''];
 
         const csv =
             [this.importColumns, example]
@@ -2637,13 +2897,26 @@ export class OpeningStockForm
     readImport():
         void
     {
-        const rows =
+        const all =
             parseRows(this.importText)
-                .filter(x => x.some(v => !!v.trim()))
-                .filter((x, i) => !(i === 0 && /product|code/i.test(x[0] ?? '') && !this.findProduct(x[0] ?? '')));
+                .filter(x => x.some(v => !!v.trim()));
+
+        // A heading row (not a product) : columns are read by their
+        // names, so an older file with extra columns (e.g. the old
+        // "Sale Price") still reads right; no heading : template order
+        const heading =
+            all.length > 0 && /product|code/i.test(all[0][0] ?? '') && !this.findProduct(all[0][0] ?? '');
+
+        const rows =
+            heading ? all.slice(1) : all;
+
+        const known =
+            this.importColumns;
 
         const columns =
-            this.importColumns;
+            heading
+                ? all[0].map(x => known.find(k => k.toLowerCase() === x.trim().toLowerCase()) ?? '')
+                : known;
 
         const errors:
             string[] = [];
@@ -2709,10 +2982,10 @@ export class OpeningStockForm
 
                 if
                 (
-                    !Number.isFinite(mrp) || mrp < 0 || !Number.isFinite(amount('Sale Price')) || amount('Sale Price') < 0
+                    !Number.isFinite(mrp) || mrp < 0
                 )
                 {
-                    errors.push(`${at} : ${product.Code} has a wrong MRP or sale price.`);
+                    errors.push(`${at} : ${product.Code} has a wrong MRP.`);
 
                     return;
                 }
@@ -2793,16 +3066,13 @@ export class OpeningStockForm
                     return;
                 }
 
-                // Sale price : typed, else the MRP
-                const price =
-                    amount('Sale Price') > 0 ? amount('Sale Price') : mrp;
-
+                // MRP (the sale price) is never below the cost
                 if
                 (
-                    mrp > 0 && price > mrp
+                    mrp > 0 && mrp < Math.round((this.vatIncluded ? gross : cost) * 100) / 100
                 )
                 {
-                    errors.push(`${at} : ${product.Code} sale price ${formatOpeningMoney(price)} is above its MRP ${formatOpeningMoney(mrp)}.`);
+                    errors.push(`${at} : ${product.Code} MRP ${formatOpeningMoney(mrp)} is below its cost ${formatOpeningCost(this.vatIncluded ? gross : cost)}.`);
 
                     return;
                 }
@@ -2822,10 +3092,10 @@ export class OpeningStockForm
 
                 if
                 (
-                    line && (Math.abs(line.UnitCost - cost) > 0.00005 || line.Mrp !== Math.round(mrp * 100) / 100 || line.SalePrice !== Math.round(price * 100) / 100)
+                    line && (Math.abs(line.UnitCost - cost) > 0.00005 || line.Mrp !== Math.round(mrp * 100) / 100)
                 )
                 {
-                    errors.push(`${at} : ${product.Code} has another cost or price than its first bike; one model has one cost and price on a document.`);
+                    errors.push(`${at} : ${product.Code} has another cost or MRP than its first bike; one model has one cost and MRP on a document.`);
 
                     return;
                 }
@@ -2845,11 +3115,11 @@ export class OpeningStockForm
                         Quantity:0,
                         UnitCost:Math.round(cost * 10000) / 10000,
                         GrossCost:Math.round(gross * 10000) / 10000,
-                        SalePrice:Math.round(price * 100) / 100,
                         Mrp:Math.round(mrp * 100) / 100,
                         MarginPercent:this.mrpBasis ? Math.round(margin * 10000) / 10000 : 0,
                         RackId:null,
                         Shelf:0,
+                        Bin:0,
                         SaveDefault:false,
                         Notes:'',
                         Units:[]
@@ -2935,9 +3205,41 @@ export class OpeningStockForm
                     }
                     else
                     {
-                        line.RackId = rack.Id;
+                        // Bin : 1 when the column is empty (old sheets)
+                        const bin =
+                            Math.floor(toNumber(cell('Bin')) || 0) || 1;
 
-                        line.Shelf = rack.ShelfCount > 0 ? shelf : 0;
+                        const map =
+                            this.binRack(rack.Id);
+
+                        const taken =
+                            new Set(
+                                [...this.lines, ...lines.values()]
+                                    .filter(x => x.ProductId !== product.Id && !!x.RackId && x.Shelf > 0 && x.Bin > 0)
+                                    .map(x => binKey(x.RackId ?? 0, x.Shelf, x.Bin)));
+
+                        if
+                        (
+                            bin > mapBinCount(map, shelf)
+                        )
+                        {
+                            errors.push(`${at} : shelf ${shelf} of rack ${rack.Code} has bins 1 to ${mapBinCount(map, shelf)}; ${product.Code} is loaded without a place.`);
+                        }
+                        else if
+                        (
+                            map && !mapBinFree(map, shelf, bin, this.itemType, product.Id, taken)
+                        )
+                        {
+                            errors.push(`${at} : bin ${binCode(rack.Name, shelf, bin)} holds another item (one item per bin); ${product.Code} is loaded without a place.`);
+                        }
+                        else
+                        {
+                            line.RackId = rack.Id;
+
+                            line.Shelf = rack.ShelfCount > 0 ? shelf : 0;
+
+                            line.Bin = line.Shelf ? bin : 0;
+                        }
                     }
                 }
                 else
@@ -3146,14 +3448,14 @@ export class OpeningStockForm
             }
 
             const unpriced =
-                this.lines.find(x => !(x.Mrp > 0) || !(x.SalePrice > 0));
+                this.lines.find(x => !(x.Mrp > 0));
 
             if
             (
                 unpriced
             )
             {
-                return `${unpriced.ProductName} : enter the MRP and the sale price (double-click the line). An unpriced batch cannot be sold.`;
+                return `${unpriced.ProductName} : enter the MRP, which is the sale price (double-click the line). An unpriced batch cannot be sold.`;
             }
         }
 
@@ -3179,11 +3481,11 @@ export class OpeningStockForm
                     Quantity:x.Quantity,
                     // Typed cost : incl. VAT when the type carries VAT
                     UnitCost:this.vatIncluded && !this.mrpBasis ? x.GrossCost : x.UnitCost,
-                    SalePrice:x.SalePrice,
                     Mrp:x.Mrp,
                     MarginPercent:this.mrpBasis ? x.MarginPercent : 0,
                     RackManagementId:this.info.hasShelves ? x.RackId : null,
                     ShelfNumber:this.info.hasShelves && x.RackId ? x.Shelf : 0,
+                    BinNumber:this.info.hasShelves && x.RackId && x.Shelf ? (x.Bin || 1) : 0,
                     SaveAsDefault:this.info.hasShelves && !!x.RackId && x.SaveDefault,
                     ShortNotes:x.Notes.trim()
                 })
@@ -3314,7 +3616,7 @@ export class OpeningStockForm
                             !this.doc
                         )
                         {
-                            this.doc = { OpeningStockId:saved.OpeningStockId } as OpeningStock;
+                            this.doc = { OpeningStockId:saved.OpeningStockId, PublicId:saved.PublicId } as OpeningStock;
                         }
 
                         return this.service.post(saved.OpeningStockId);
@@ -3355,7 +3657,7 @@ export class OpeningStockForm
                             this.mode === 'add' && this.doc?.OpeningStockId
                         )
                         {
-                            this.router.navigate([OPENING_STOCK_ROUTE, 'edit', this.doc.OpeningStockId], { replaceUrl:true });
+                            this.router.navigate([OPENING_STOCK_ROUTE, 'edit', this.doc.PublicId], { replaceUrl:true });
 
                             return;
                         }
@@ -3462,7 +3764,7 @@ export class OpeningStockForm
                 'Deleting Opening Stock',
                 `Please wait while "${doc.OpeningNo}" is being deleted...`,
                 'Opening stock deleted.',
-                this.service.delete(doc.OpeningStockId))
+                this.service.delete(doc.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -3507,7 +3809,7 @@ export class OpeningStockForm
 
         const url =
             this.router.serializeUrl(
-                this.router.createUrlTree(['/print-viewer', OPENING_STOCK_PRINT_KEY, this.doc.OpeningStockId])
+                this.router.createUrlTree(['/print-viewer', OPENING_STOCK_PRINT_KEY, this.doc.PublicId])
             );
 
         const tab =

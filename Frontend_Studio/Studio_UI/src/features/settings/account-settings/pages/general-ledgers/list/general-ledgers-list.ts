@@ -49,7 +49,9 @@ from 'rxjs';
 
 import
 {
-    GeneralLedger
+    GeneralLedger,
+    GeneralLedgerPage,
+    GeneralLedgerPageQuery
 }
 from '../../../models/general-ledgers.model';
 
@@ -204,18 +206,9 @@ from '../../../services/account-sub-group.service';
 
 import
 {
-    AutoAccountsService,
-    emptyAutoAccountCodes,
-    ledgerOrigin
+    Subscription
 }
-from '../../../services/auto-accounts.service';
-
-import
-{
-    AccountOrigin,
-    AutoAccountCodes
-}
-from '../../../models/auto-accounts.model';
+from 'rxjs';
 
 //===============================================================
 // Component
@@ -269,9 +262,6 @@ implements OnInit, OnDestroy
     private readonly accountSubGroupService =
         inject(AccountSubGroupService);
 
-    private readonly autoAccountsService =
-        inject(AutoAccountsService);
-
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
@@ -312,33 +302,56 @@ implements OnInit, OnDestroy
     ];
 
     //===========================================================
-    // Auto Accounts
-    //
-    // Codes of the ledgers created by other pages (from the
-    // server, matched by CODE only, never by name):
+    // Tabs (origin) : decided on the server by ledger CODE
+    // against the Auto Accounts registry
     //   all tab            : ledgers created on this page's form
     //   auto-inventory tab : ledgers of Motor Bikes / Spare Parts /
     //                        Accessories
-    //   auto-financial tab : ledgers of any other page (Service
-    //                        Policy, Scheduled Services, Labor
-    //                        Chart, Customized / Membership
-    //                        Services, …)
+    //   auto-financial tab : ledgers of any other page
     // Auto ledgers are read only here.
     //===========================================================
 
-    private autoCodes:
-        AutoAccountCodes =
-        emptyAutoAccountCodes();
+    // Classes / groups / sub groups holding ledgers of the tab
+    // (from the server; null = not known yet, no narrowing)
+    private tabClassIds:
+        Set<number> | null =
+        null;
 
-    // Rows are shown only once the auto codes are known (or failed
-    // to load), so auto records never flash on the first tab.
-    private autoCodesReady:
-        boolean =
-        false;
+    private tabGroupIds:
+        Set<number> | null =
+        null;
 
-    private itemsLoaded:
-        boolean =
-        false;
+    private tabSubGroupIds:
+        Set<number> | null =
+        null;
+
+    //===========================================================
+    // Server Paging
+    //===========================================================
+
+    // Rows matching the tab, filters and search, all pages
+    totalRecords:
+        number =
+        0;
+
+    private loadSubscription?:
+        Subscription;
+
+    // '' = the server's default (ledger code)
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer?:
+        number;
+
+    private readonly SEARCH_DELAY_MS:
+        number =
+        300;
 
     // Raw classes / groups / sub groups for the filters of the tab
     private accountClasses:
@@ -365,8 +378,13 @@ implements OnInit, OnDestroy
         GeneralLedger[] =
     [];
 
-    filteredGeneralLedgers:
-        GeneralLedger[] =
+    // Summary line below the canvas (tab, filters and search)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
     [];
 
     pagedGeneralLedgers:
@@ -686,116 +704,15 @@ implements OnInit, OnDestroy
         this.loadAccountClasses();
         this.loadAccountGroups();
         this.loadAccountSubGroups();
-        this.loadAutoCodes();
         this.loadItems();
     }
 
     //===========================================================
-    // Load Auto Codes (which accounts other pages created)
+    // Origin of the selected tab (sent to the server)
     //===========================================================
-
-    private loadAutoCodes():
-        void
-    {
-        this.autoCodesReady =
-            false;
-
-        this.autoAccountsService
-            .getCodes()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        AutoAccountCodes
-                ):
-                    void =>
-                {
-                    this.autoCodes =
-                        response;
-
-                    this.autoCodesReady =
-                        true;
-
-                    if
-                    (
-                        this.itemsLoaded
-                    )
-                    {
-                        this.loading =
-                            false;
-                    }
-
-                    // Re-split the tabs and filters now that the
-                    // origins are known
-                    this.buildFilterItems();
-
-                    this.applyFilters();
-
-                    this.cdr.detectChanges();
-                },
-
-                error:
-                (
-                    error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Load Auto Account Codes Error:',
-                        error
-                    );
-
-                    this.autoCodes =
-                        emptyAutoAccountCodes();
-
-                    this.autoCodesReady =
-                        true;
-
-                    if
-                    (
-                        this.itemsLoaded
-                    )
-                    {
-                        this.loading =
-                            false;
-                    }
-
-                    this.buildFilterItems();
-
-                    this.applyFilters();
-
-                    this.cdr.detectChanges();
-
-                    this.toast.error
-                    (
-                        'Load Failed',
-                        'Unable to load the auto ledger codes. Every ledger is shown on the first tab.'
-                    );
-                }
-            });
-    }
-
-    //===========================================================
-    // Origin / Tab
-    //===========================================================
-
-    private originOf
-    (
-        item:
-            GeneralLedger
-    ):
-        AccountOrigin
-    {
-        return ledgerOrigin(
-            this.autoCodes,
-            item.LedgerCode
-        );
-    }
 
     private get selectedOrigin():
-        AccountOrigin
+        'manual' | 'inventory' | 'financial'
     {
         return this.selectedTab === 'auto-inventory'
             ? 'inventory'
@@ -812,35 +729,18 @@ implements OnInit, OnDestroy
     private buildFilterItems():
         void
     {
-        const origin =
-            this.selectedOrigin;
-
-        const inTab =
-            this.generalLedgers
-                .filter
-                (
-                    item =>
-                        this.originOf(item) === origin
-                );
-
-        // ledgers not loaded yet : no narrowing
+        // choices of the tab not known yet : no narrowing
         const loaded =
-            this.generalLedgers.length > 0;
+            this.tabClassIds !== null;
 
         const classIds =
-            new Set<number>(
-                inTab.map(item => Number(item.AccountClassId))
-            );
+            this.tabClassIds ?? new Set<number>();
 
         const groupIds =
-            new Set<number>(
-                inTab.map(item => Number(item.AccountGroupId))
-            );
+            this.tabGroupIds ?? new Set<number>();
 
         const subGroupIds =
-            new Set<number>(
-                inTab.map(item => Number(item.AccountSubGroupId))
-            );
+            this.tabSubGroupIds ?? new Set<number>();
 
         this.accountClassFilterItems =
         [
@@ -992,6 +892,10 @@ implements OnInit, OnDestroy
         void
     {
         this.clearProgressTimer();
+
+        this.clearSearchTimer();
+
+        this.loadSubscription?.unsubscribe();
 
         if
         (
@@ -1216,6 +1120,9 @@ implements OnInit, OnDestroy
                     0
                 ),
 
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             AccountClassId:
                 Number(
                     item?.AccountClassId
@@ -1384,97 +1291,145 @@ implements OnInit, OnDestroy
     loadItems():
         void
     {
+        this.loadSubscription?.unsubscribe();
+
         this.loading =
             true;
-
-        this.itemsLoaded =
-            false;
 
         this.loadFailed =
             false;
 
-        this.generalLedgerService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        GeneralLedger[]
-                ):
-                    void =>
-                {
-                    console.log
-                    (
-                        'General Ledger API Response:',
-                        response
-                    );
+        this.cdr.detectChanges();
 
-                    this.generalLedgers =
-                        this.normalizeGeneralLedgers(
-                            response
+        const query:
+            GeneralLedgerPageQuery =
+        {
+            page:
+                this.currentPage,
+
+            pageSize:
+                this.pageSize,
+
+            search:
+                this.searchText.trim(),
+
+            sort:
+                this.sortField,
+
+            dir:
+                this.sortDirection,
+
+            origin:
+                this.selectedOrigin,
+
+            accountClassId:
+                this.selectedAccountClassId,
+
+            accountGroupId:
+                this.selectedAccountGroupId,
+
+            accountSubGroupId:
+                this.selectedAccountSubGroupId,
+
+            status:
+                this.selectedStatus === null
+                    ? ''
+                    : this.selectedStatus
+                        ? 'active'
+                        : 'inactive'
+        };
+
+        this.loadSubscription =
+            this.generalLedgerService
+                .getPaged(
+                    query
+                )
+                .subscribe
+                ({
+                    next:
+                    (
+                        response:
+                            GeneralLedgerPage
+                    ):
+                        void =>
+                    {
+                        this.generalLedgers =
+                            this.normalizeGeneralLedgers(
+                                response.result.items
+                            );
+
+                        this.pagedGeneralLedgers =
+                            this.generalLedgers;
+
+                        this.totalRecords =
+                            response.result.totalCount;
+
+                        // The server pulls the page back when rows got
+                        // fewer (e.g. the last row of a page deleted)
+                        this.currentPage =
+                            response.result.page;
+
+                        this.tabClassIds =
+                            new Set<number>(response.classIds);
+
+                        this.tabGroupIds =
+                            new Set<number>(response.groupIds);
+
+                        this.tabSubGroupIds =
+                            new Set<number>(response.subGroupIds);
+
+                        this.buildFilterItems();
+
+                        this.updateSummary(
+                            response.result.counts
                         );
 
-                    this.buildFilterItems();
+                        this.loading =
+                            false;
 
-                    console.log
-                    (
-                        'Normalized General Ledgers:',
-                        this.generalLedgers
-                    );
+                        this.loadFailed =
+                            false;
 
-                    this.itemsLoaded =
-                        true;
+                        this.cdr.detectChanges();
+                    },
 
-                    this.applyFilters();
-
-                    // keep the loader until the auto codes are known
-                    this.loading =
-                        !this.autoCodesReady;
-
-                    this.loadFailed =
-                        false;
-
-                    this.cdr.detectChanges();
-                },
-
-                error:
-                (
                     error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
                     (
-                        'Load General Ledgers Error:',
-                        error
-                    );
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error
+                        (
+                            'Load General Ledgers Error:',
+                            error
+                        );
 
-                    this.generalLedgers =
-                        [];
+                        this.generalLedgers =
+                            [];
 
-                    this.filteredGeneralLedgers =
-                        [];
+                        this.pagedGeneralLedgers =
+                            [];
 
-                    this.pagedGeneralLedgers =
-                        [];
+                        this.totalRecords =
+                            0;
 
-                    this.loading =
-                        false;
+                        this.loading =
+                            false;
 
-                    this.loadFailed =
-                        true;
+                        this.loadFailed =
+                            true;
 
-                    this.toast.error
-                    (
-                        'Load Failed',
-                        'Unable to load general ledgers.'
-                    );
+                        this.toast.error
+                        (
+                            'Load Failed',
+                            'Unable to load general ledgers.'
+                        );
 
-                    this.cdr.detectChanges();
-                }
-            });
+                        this.cdr.detectChanges();
+                    }
+                });
     }
 
     //===========================================================
@@ -1622,190 +1577,12 @@ implements OnInit, OnDestroy
     applyFilters():
         void
     {
-        // Tabs can only be split once the auto codes are known
-        if
-        (
-            !this.autoCodesReady
-        )
-        {
-            this.filteredGeneralLedgers =
-                [];
-
-            this.pagedGeneralLedgers =
-                [];
-
-            return;
-        }
-
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredGeneralLedgers =
-            this.generalLedgers.filter
-            (
-                (
-                    item:
-                        GeneralLedger
-                ):
-                    boolean =>
-                {
-                    const accountClassMatch =
-                        this.selectedAccountClassId === null
-                        ||
-                        item.AccountClassId ===
-                        this.selectedAccountClassId;
-
-                    const accountGroupMatch =
-                        this.selectedAccountGroupId === null
-                        ||
-                        item.AccountGroupId ===
-                        this.selectedAccountGroupId;
-
-                    const accountSubGroupMatch =
-                        this.selectedAccountSubGroupId === null
-                        ||
-                        item.AccountSubGroupId ===
-                        this.selectedAccountSubGroupId;
-
-                    //===================================================
-                    // Tab split (by origin, matched by ledger code)
-                    //   all tab            : ledgers created manually
-                    //   auto-inventory tab : ledgers of the product pages
-                    //   auto-financial tab : ledgers of other pages
-                    //===================================================
-
-                    const inventoryAutoLedgerMatch =
-                        this.originOf(item) ===
-                        this.selectedOrigin;
-
-                    const statusMatch =
-                        this.selectedStatus === null
-                        ||
-                        item.IsActive ===
-                        this.selectedStatus;
-
-                    const accountClass =
-                        item.AccountClassName
-                        ??
-                        '';
-
-                    const classCode =
-                        item.ClassCode
-                        ??
-                        '';
-
-                    const accountGroup =
-                        item.AccountGroupName
-                        ??
-                        '';
-
-                    const groupCode =
-                        item.GroupCode
-                        ??
-                        '';
-
-                    const accountSubGroup =
-                        item.AccountSubGroupName
-                        ??
-                        '';
-
-                    const subGroupCode =
-                        item.SubGroupCode
-                        ??
-                        '';
-
-                    const ledgerCode =
-                        item.LedgerCode
-                        ??
-                        '';
-
-                    const ledgerName =
-                        item.LedgerName
-                        ??
-                        '';
-
-                    const mode =
-                        item.Mode
-                        ??
-                        '';
-
-                    const remarks =
-                        item.Remarks
-                        ??
-                        '';
-
-                    const status =
-                        item.IsActive
-                            ? 'active'
-                            : 'inactive';
-
-                    return (
-                        inventoryAutoLedgerMatch
-                        &&
-                        accountClassMatch
-                        &&
-                        accountGroupMatch
-                        &&
-                        accountSubGroupMatch
-                        &&
-                        statusMatch
-                        &&
-                        (
-                            !keyword
-                            ||
-                            accountClass
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            classCode
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            accountGroup
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            groupCode
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            accountSubGroup
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            subGroupCode
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            ledgerCode
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            ledgerName
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            mode
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            remarks
-                                .toLowerCase()
-                                .includes(keyword)
-                            ||
-                            status
-                                .includes(keyword)
-                        )
-                    );
-                }
-            );
-
+        // The server filters, sorts and pages : ask again from
+        // page 1
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -1834,6 +1611,16 @@ implements OnInit, OnDestroy
         this.currentPage =
             1;
 
+        // filter choices of the new tab come with the answer
+        this.tabClassIds =
+            null;
+
+        this.tabGroupIds =
+            null;
+
+        this.tabSubGroupIds =
+            null;
+
         this.buildFilterItems();
 
         this.applyFilters();
@@ -1857,7 +1644,36 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        this.clearSearchTimer();
+
+        this.searchTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.applyFilters();
+                },
+                this.SEARCH_DELAY_MS
+            );
+    }
+
+    private clearSearchTimer():
+        void
+    {
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
+
+            this.searchTimer =
+                undefined;
+        }
     }
 
     //===========================================================
@@ -1877,106 +1693,15 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.filteredGeneralLedgers =
-        [
-            ...this.filteredGeneralLedgers
-        ];
+        this.sortField =
+            event.field;
 
-        this.filteredGeneralLedgers.sort
-        (
-            (
-                a:
-                    GeneralLedger,
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-                b:
-                    GeneralLedger
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof GeneralLedger
-                    ];
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof GeneralLedger
-                    ];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                            valueA.localeCompare(valueB)
-                        :
-                            valueB.localeCompare(valueA);
-                }
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                            -1
-                        :
-                            1;
-                }
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                            1
-                        :
-                            -1;
-                }
-
-                return 0;
-            }
-        );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.applyFilters();
     }
 
     //===========================================================
@@ -2104,8 +1829,17 @@ implements OnInit, OnDestroy
 
         this.loadAccountSubGroups();
 
-        this.loadAutoCodes();
-
+        this.clearSearchTimer();
+        this.sortField =
+            '';
+        this.sortDirection =
+            'asc';
+        this.tabClassIds =
+            null;
+        this.tabGroupIds =
+            null;
+        this.tabSubGroupIds =
+            null;
         this.loadItems();
     }
 
@@ -2116,22 +1850,7 @@ implements OnInit, OnDestroy
     updatePagination():
         void
     {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-        this.pagedGeneralLedgers =
-        [
-            ...this.filteredGeneralLedgers.slice
-            (
-                start,
-                start + this.pageSize
-            )
-        ];
+        // Paging is done by the server (loadItems)
     }
 
     //===========================================================
@@ -2148,7 +1867,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -2165,10 +1884,7 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.applyFilters();
     }
 
     //===========================================================
@@ -2205,7 +1921,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.GeneralLedgerId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -2229,7 +1945,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.GeneralLedgerId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -2294,7 +2010,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.generalLedgerService.delete(
-                item.GeneralLedgerId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -2613,4 +2329,33 @@ implements OnInit, OnDestroy
         this.historyOpened =
             false;
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of the tab, with the filters and search applied
+    //===========================================================
+
+    private updateSummary
+    (
+        counts:
+            Record<string, number>
+    ):
+        void
+    {
+        const value =
+            (
+                key:
+                    string
+            ):
+                string =>
+                    Number(counts[key] ?? 0).toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:value('Total'),    tone:'' },
+            { label:'Active',   value:value('Active'),   tone:'ok' },
+            { label:'Inactive', value:value('Inactive'), tone:'bad' }
+        ];
+    }
+
 }

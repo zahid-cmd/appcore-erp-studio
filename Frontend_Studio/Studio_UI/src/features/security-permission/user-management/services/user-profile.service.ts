@@ -38,6 +38,15 @@ import
 }
 from '../models/user-profile.model';
 
+import
+{
+    PagedQuery,
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
 
 //===============================================================
 // User Profile Service
@@ -263,7 +272,7 @@ export class UserProfileService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<UserProfile>
     {
@@ -526,6 +535,58 @@ export class UserProfileService
             );
     }
 
+
+    //===========================================================
+    // Get By Internal Id (the signed-in user's own profile :
+    // top bar, welcome widgets; never used in links)
+    //===========================================================
+
+    getByInternalId
+    (
+        id:
+            number
+    ):
+        Observable<UserProfile>
+    {
+        return this.getById(
+            `by-id/${id}`
+        );
+    }
+
+
+    //===========================================================
+    // Get Paged (list page : one page plus the summary counts)
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            PagedQuery &
+            {
+                status?:string;
+            }
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams({ ...query })
+                }
+            )
+            .pipe(
+                map(
+                    raw =>
+                        toPagedResult(
+                            raw,
+                            item => item
+                        )
+                )
+            );
+    }
+
     //===========================================================
     // Get User Profile Photo
     //===========================================================
@@ -672,7 +733,7 @@ export class UserProfileService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

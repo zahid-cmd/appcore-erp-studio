@@ -1,0 +1,694 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-motorcycle"
+
+        [title]="pageTitle"
+
+        subtitle="A bike sold from our outlet and its service schedule from the brand's Service Policy">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveText"
+
+            [command1Icon]="saveIcon"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isView"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="mode === 'add'"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            rightCommandTitle="Back to the list"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <div pageToolbarLeft>
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab">
+
+            </app-control-tabs>
+
+        </div>
+
+
+        <span
+
+            pageToolbarRight
+
+            class="sb-source"
+
+            [class.sb-source-sale]="fromSale">
+
+            <i [class]="fromSale ? 'fas fa-file-invoice' : 'fas fa-hand'"></i>
+
+            {{ fromSale ? 'From ' + entity.SaleDocType + ' ' + entity.SaleDocNo : 'Sold before the ERP (added by hand)' }}
+
+        </span>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : FORM BODY
+    ====================================================== -->
+
+    <div
+
+        #formBody
+
+        class="se-body sb-body"
+
+        [class.se-loading]="loading">
+
+        @if (loading)
+        {
+            <app-orbit-loader
+
+                title="Loading Sold Bike"
+
+                message="Please wait while the bike and its service schedule are loaded."
+
+                size="medium"
+
+                [showMessage]="true"
+
+                [overlay]="false">
+
+            </app-orbit-loader>
+        }
+        @else
+        {
+            <app-form-grid
+
+                [columns]="3">
+
+
+                <!-- =============================================
+                     SECTION 01 : THE BIKE
+                ============================================== -->
+
+                <app-form-section
+
+                    title="The Bike"
+
+                    icon="fas fa-motorcycle">
+
+
+                    <app-textbox
+
+                        label="Chassis No"
+
+                        placeholder="Enter chassis no"
+
+                        textCase="none"
+
+                        [maxLength]="50"
+
+                        [value]="entity.ChassisNo"
+
+                        (valueChange)="onText('ChassisNo', $event)"
+
+                        [disabled]="locked || fromSale"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Engine No"
+
+                        placeholder="Enter engine no"
+
+                        textCase="none"
+
+                        [maxLength]="50"
+
+                        [value]="entity.EngineNo"
+
+                        (valueChange)="onText('EngineNo', $event)"
+
+                        [disabled]="locked">
+
+                    </app-textbox>
+
+
+                    <app-search-dropdown
+
+                        label="Model"
+
+                        placeholder="Select model"
+
+                        [items]="modelItems"
+
+                        [value]="entity.ModelId || null"
+
+                        (valueChange)="onModelChange($event)"
+
+                        [disabled]="modelLocked"
+
+                        [required]="true">
+
+                    </app-search-dropdown>
+
+
+                    <app-textbox
+
+                        label="Registration No"
+
+                        placeholder="e.g. DHAKA METRO-LA 12-3456"
+
+                        textCase="none"
+
+                        [maxLength]="30"
+
+                        [value]="entity.RegistrationNo"
+
+                        (valueChange)="onText('RegistrationNo', $event)"
+
+                        [disabled]="locked">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Colour"
+
+                        placeholder="Enter colour"
+
+                        textCase="title"
+
+                        [maxLength]="50"
+
+                        [value]="entity.ColorName"
+
+                        (valueChange)="onText('ColorName', $event)"
+
+                        [disabled]="locked">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Last Known KM"
+
+                        placeholder="e.g. 4500"
+
+                        inputMode="numeric"
+
+                        [maxLength]="7"
+
+                        [value]="lastKmText"
+
+                        (valueChange)="onLastKmChange($event)"
+
+                        [disabled]="locked">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+
+                <!-- =============================================
+                     SECTION 02 : SALE & CUSTOMER
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Sale & Customer"
+
+                    icon="fas fa-user">
+
+
+                    <app-datepicker
+
+                        label="Sale Date"
+
+                        [required]="true"
+
+                        [value]="$any(saleDate)"
+
+                        [maxDate]="today"
+
+                        [disabled]="locked || fromSale"
+
+                        (valueChange)="onSaleDateChange($event)">
+
+                    </app-datepicker>
+
+
+                    <app-textbox
+
+                        label="Branch"
+
+                        [value]="entity.BranchName"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Mobile"
+
+                        placeholder="01XXXXXXXXX"
+
+                        inputMode="tel"
+
+                        [maxLength]="11"
+
+                        [value]="entity.Mobile"
+
+                        (valueChange)="onMobileChange($event)"
+
+                        [disabled]="locked"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                    @if (mobileWarning)
+                    {
+                        <span class="se-warning">
+
+                            <i class="fas fa-triangle-exclamation"></i>
+
+                            {{ mobileWarning }}
+
+                        </span>
+                    }
+
+
+                    <app-textbox
+
+                        label="Customer Name"
+
+                        placeholder="Enter name"
+
+                        textCase="title"
+
+                        [maxLength]="150"
+
+                        [value]="entity.CustomerName"
+
+                        (valueChange)="onText('CustomerName', $event)"
+
+                        [disabled]="locked"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    @if (entity.CustomerCode)
+                    {
+                        <app-textbox
+
+                            label="Customer Profile"
+
+                            [value]="entity.CustomerCode"
+
+                            [readonly]="true">
+
+                        </app-textbox>
+                    }
+
+
+                    <app-textbox
+
+                        label="Remarks"
+
+                        placeholder="Optional note"
+
+                        [maxLength]="500"
+
+                        [value]="entity.Remarks"
+
+                        (valueChange)="onText('Remarks', $event)"
+
+                        [disabled]="locked">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+
+                <!-- =============================================
+                     SECTION 03 : POLICY, WARRANTY, REMINDERS
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Policy & Reminders"
+
+                    icon="fas fa-shield-halved">
+
+
+                    <app-textbox
+
+                        label="Brand"
+
+                        placeholder="From the model"
+
+                        [value]="entity.BrandName"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Service Policy"
+
+                        placeholder="From the brand"
+
+                        [value]="entity.PolicyCode || (rows.length ? 'Brand policy' : '')"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Warranty"
+
+                        [value]="warrantyText"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-dropdown
+
+                        label="Reminders"
+
+                        [items]="statusItems"
+
+                        [value]="entity.IsActive"
+
+                        (valueChange)="onActiveChange($event)"
+
+                        [disabled]="locked">
+
+                    </app-dropdown>
+
+
+                    <div class="sb-hint">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        <span>7 days before a service is due, a Service Enquiry is raised for follow-up (Source "Scheduled"). After a service is taken, the next ones are counted again from that day.</span>
+
+                    </div>
+
+                </app-form-section>
+
+            </app-form-grid>
+
+
+
+            <!-- =================================================
+                 SERVICE SCHEDULE
+            ================================================== -->
+
+            <div class="sb-schedule">
+
+                <div class="sb-schedule-head">
+
+                    <span><i class="fas fa-calendar-days"></i> Service Schedule</span>
+
+                    <small>
+                        @if (previewing)
+                        {
+                            Working out the schedule…
+                        }
+                        @else if (rows.length)
+                        {
+                            {{ rows.length }} services · enter a taken date for services already done
+                        }
+                        @else
+                        {
+                            Choose the model and the sale date
+                        }
+                    </small>
+
+                </div>
+
+                @if (previewMessage)
+                {
+                    <span class="se-warning">
+
+                        <i class="fas fa-triangle-exclamation"></i>
+
+                        {{ previewMessage }}
+
+                    </span>
+                }
+
+                @if (rows.length)
+                {
+                    <div class="sb-table-wrap">
+
+                        <table class="sb-table">
+
+                            <thead>
+
+                                <tr>
+                                    <th class="sb-c-no">#</th>
+                                    <th>Service</th>
+                                    <th class="sb-c-date">Due Date</th>
+                                    <th class="sb-c-date">Last Day</th>
+                                    <th class="sb-c-km">Due KM</th>
+                                    <th class="sb-c-status">Status</th>
+                                    <th class="sb-c-date">Taken On</th>
+                                    <th class="sb-c-km">Taken KM</th>
+                                    <th class="sb-c-skip">Skip</th>
+                                    <th>Note</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                @for (item of rows; track item.row.SequenceNo)
+                                {
+                                    <tr [class.sb-done]="item.row.StatusText === 'Taken'">
+
+                                        <td class="sb-c-no">{{ item.row.SequenceNo }}</td>
+
+                                        <td>
+
+                                            <div class="sb-service">
+
+                                                <b>{{ item.row.ServiceName }}</b>
+
+                                                <small>
+
+                                                    <span class="sb-type" [class.sb-type-paid]="item.row.ServiceType === 'Paid'">{{ item.row.ServiceType }}</span>
+
+                                                    {{ item.row.ServiceCode || 'not priced yet' }} · {{ money(item.row.CustomerCharge) }}
+
+                                                </small>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td class="sb-c-date">
+
+                                            <div class="sb-due">
+
+                                                <input
+
+                                                    class="sb-input"
+
+                                                    type="date"
+
+                                                    [class.sb-edited]="item.dueEdited"
+
+                                                    [min]="saleIso"
+
+                                                    [value]="item.dueDate"
+
+                                                    [disabled]="rowLocked(item) || !!item.takenDate || item.skipped"
+
+                                                    (change)="onDueDate(item, $event)">
+
+                                                @if (item.dueEdited && !rowLocked(item))
+                                                {
+                                                    <button type="button" class="sb-reset" title="Back to the policy date" (click)="resetDue(item)">
+
+                                                        <i class="fas fa-rotate-left"></i>
+
+                                                    </button>
+                                                }
+
+                                            </div>
+
+                                        </td>
+
+                                        <td class="sb-c-date sb-muted">{{ formatDate(item.row.LastDate) }}</td>
+
+                                        <td class="sb-c-km sb-muted">{{ item.row.DueKm ? (item.row.DueKm | number) : '—' }}</td>
+
+                                        <td class="sb-c-status">
+
+                                            <span class="sb-status" [style.--tone]="statusColor(item.row.StatusText)">
+
+                                                {{ item.row.StatusText }}
+
+                                            </span>
+
+                                            @if (item.row.EnquiryNo)
+                                            {
+                                                <small class="sb-enq">{{ item.row.EnquiryNo }}</small>
+                                            }
+
+                                            @if (item.row.TakenDocNo)
+                                            {
+                                                <small class="sb-enq">{{ item.row.TakenDocType }} {{ item.row.TakenDocNo }}</small>
+                                            }
+
+                                        </td>
+
+                                        <td class="sb-c-date">
+
+                                            <input
+
+                                                class="sb-input"
+
+                                                type="date"
+
+                                                [min]="saleIso"
+
+                                                [max]="todayIso"
+
+                                                [value]="item.takenDate"
+
+                                                [disabled]="rowLocked(item)"
+
+                                                (change)="onTakenDate(item, $event)">
+
+                                        </td>
+
+                                        <td class="sb-c-km">
+
+                                            <input
+
+                                                class="sb-input sb-km"
+
+                                                type="text"
+
+                                                inputmode="numeric"
+
+                                                placeholder="km"
+
+                                                [value]="item.takenKm"
+
+                                                [disabled]="rowLocked(item) || !item.takenDate"
+
+                                                (input)="onTakenKm(item, $event)">
+
+                                        </td>
+
+                                        <td class="sb-c-skip">
+
+                                            <input
+
+                                                type="checkbox"
+
+                                                title="Not taken and not wanted (no reminder)"
+
+                                                [checked]="item.skipped"
+
+                                                [disabled]="rowLocked(item) || !!item.takenDate"
+
+                                                (change)="onSkip(item, $event)">
+
+                                        </td>
+
+                                        <td>
+
+                                            <input
+
+                                                class="sb-input"
+
+                                                type="text"
+
+                                                maxlength="200"
+
+                                                placeholder="Optional"
+
+                                                [value]="item.note"
+
+                                                [disabled]="rowLocked(item)"
+
+                                                (input)="onNote(item, $event)">
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+
+    <app-toast></app-toast>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

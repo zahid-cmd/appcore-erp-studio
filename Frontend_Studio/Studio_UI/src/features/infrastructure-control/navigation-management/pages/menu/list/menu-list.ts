@@ -834,7 +834,7 @@ implements OnInit
         [
             '/infrastructure-control/navigation-management/navigation-menus/view',
 
-            item.id
+            item.publicId
         ]);
     }
 
@@ -851,7 +851,7 @@ implements OnInit
         [
             '/infrastructure-control/navigation-management/navigation-menus/edit',
 
-            item.id
+            item.publicId
         ]);
     }
 
@@ -873,7 +873,7 @@ implements OnInit
             () =>
             {
                 this.navigationMenuService
-                    .delete(item.id)
+                    .delete(item.publicId ?? '')
                     .subscribe(
                     {
                         next: () =>
@@ -910,7 +910,7 @@ implements OnInit
         void
     {
         this.navigationMenuService
-            .delete(item.id)
+            .delete(item.publicId ?? '')
             .subscribe(
             {
                 next: () =>
@@ -1164,6 +1164,44 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.menus ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.menus ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }
-
-

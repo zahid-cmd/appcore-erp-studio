@@ -117,7 +117,7 @@
 
             <app-list-table
                 [columns]="columns"
-                [rows]="pagedSuppliers"
+                [rows]="suppliers"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
@@ -136,7 +136,7 @@
 
         <app-pagination
             canvasFooter
-            [totalRecords]="filteredSuppliers.length"
+            [totalRecords]="totalRecords"
             [currentPage]="currentPage"
             [pageSize]="pageSize"
             (pageChange)="onPageChange($event)"
@@ -145,6 +145,33 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (supply type, brand and search applied; not
+         the tab or the status filter)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="sp-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="sp-summary-item">
+                    <span class="sp-summary-label">{{ item.label }}</span>
+                    <b
+                        class="sp-summary-value"
+                        [class.sp-ok]="item.tone === 'ok'"
+                        [class.sp-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="sp-summary-note">
+                Matching the supply type, brand and search
+            </span>
+
+        </div>
+    }
 
     <!-- =====================================================
          HISTORY
@@ -168,4 +195,4 @@
 
     <app-progress-dialog></app-progress-dialog>
 
-</div>
+</div>

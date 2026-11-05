@@ -14,6 +14,10 @@ export interface Customer
     CustomerId:
         number;
 
+    // The id used in links and API calls (uuid); '' before save
+    PublicId:
+        string;
+
     // Inbound / Outside
     CustomerType:
         CustomerType;
@@ -92,6 +96,11 @@ export interface Customer
         string;
 
     IsActive:
+        boolean;
+
+    // Outside customer added at a sales counter (Add Customer on
+    // Sales Invoices); shown as a "Walk-in" tag, can be cleared
+    IsWalkIn:
         boolean;
 
     // Location display name (from the server)
@@ -187,6 +196,37 @@ export interface CreateCustomer
 
     IsActive:
         boolean;
+
+    // Create : kept only for Outside customers (normally false)
+    // Update : false = clear the tag; null / missing = keep it
+    IsWalkIn?:
+        boolean | null;
+}
+
+
+/* ============================================================
+   List page query (server-side pagination)
+============================================================ */
+
+export interface CustomerPageQuery
+{
+    page:number;
+
+    pageSize:number;
+
+    search:string;
+
+    sort:string;
+
+    dir:'asc' | 'desc';
+
+    // Inbound / Outside (the tab)
+    type:CustomerType;
+
+    locationId:number | null;
+
+    // true = Active, false = Inactive, null = all
+    status:boolean | null;
 }
 
 
@@ -242,4 +282,4 @@ export interface CustomerProfilesDefaults
 
     Locations:
         CustomerLocationOption[];
-}
+}

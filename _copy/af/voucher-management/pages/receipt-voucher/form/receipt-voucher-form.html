@@ -1,0 +1,677 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+         Center : Branch + Financial Year, status, step
+         Right  : commands (at most 3) + back to list
+           Add          : Next | Save*, Clear  (step 2 : Save, Back, Clear)
+           Edit (Draft) : Next | Update*, Approve, Clear
+                          (step 2 : Update, Back, Approve)
+           View Draft   : Edit, Approve, Next / Back
+           Approved     : Post, Return to Draft, Next / Back
+           Posted       : Cancel Voucher, Next / Back
+         * Save when every row is Cash / Bank; otherwise on step 2
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-file-invoice-dollar"
+
+        [title]="pageTitle"
+
+        subtitle="Money received : Draft → Approved → Posted">
+
+        <div
+
+            pageHeaderCenter
+
+            class="rv-center">
+
+          <div class="rv-ribbon">
+
+            <div class="rv-chip">
+
+                <span class="rv-chip-icon rv-chip-icon-branch">
+
+                    <i class="fas fa-building"></i>
+
+                </span>
+
+                <span class="rv-chip-text">
+
+                    <span class="rv-chip-label">Branch</span>
+
+                    <strong>{{ branchName || 'Not set' }}</strong>
+
+                </span>
+
+            </div>
+
+            <span class="rv-ribbon-sep"></span>
+
+            <div
+
+                class="rv-chip"
+
+                [class.rv-chip-error]="!!periodError && isEditable"
+
+                [title]="periodError">
+
+                <span class="rv-chip-icon rv-chip-icon-year">
+
+                    <i class="fas fa-calendar-days"></i>
+
+                </span>
+
+                <span class="rv-chip-text">
+
+                    <span class="rv-chip-label">Financial Year</span>
+
+                    <strong>{{ financialYearText }}</strong>
+
+                </span>
+
+            </div>
+
+            <span class="rv-ribbon-sep"></span>
+
+            <div class="rv-state">
+
+                <span [class]="statusClass">
+
+                    {{ voucher ? status : 'New Draft' }}
+
+                </span>
+
+                @if (needsDesk)
+                {
+                    <span class="rv-steps">
+
+                        Step {{ step }} of 2 · {{ step === 1 ? 'Entry' : 'Payment Desk' }}
+
+                    </span>
+                }
+
+                @if (hasChanges && isEditable)
+                {
+                    <span class="rv-unsaved">
+
+                        <i class="fas fa-circle"></i>
+
+                        Unsaved
+
+                    </span>
+                }
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="command1.text"
+
+            [command1Icon]="command1.icon"
+
+            [command1Visible]="!!command1.command"
+
+            (command1Click)="onCommand(0)"
+
+            [command2Text]="command2.text"
+
+            [command2Icon]="command2.icon"
+
+            [command2Visible]="!!command2.command"
+
+            (command2Click)="onCommand(1)"
+
+            [command3Text]="command3.text"
+
+            [command3Icon]="command3.icon"
+
+            [command3Visible]="!!command3.command"
+
+            (command3Click)="onCommand(2)"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : BODY (full available height, scrolls)
+    ====================================================== -->
+
+    <div class="rv-body">
+
+        @if (loading)
+        {
+            <!-- AppCore standard loader -->
+
+            <div class="rv-loading">
+
+                <app-orbit-loader
+
+                    title="Loading Receipt Voucher"
+
+                    message="Please wait while the voucher is being loaded."
+
+                    size="medium"
+
+                    [showMessage]="true"
+
+                    [overlay]="false">
+
+                </app-orbit-loader>
+
+            </div>
+        }
+        @else
+        {
+
+            <!-- Period problem (Add / Edit) -->
+
+            @if (periodError && isEditable)
+            {
+                <div class="rv-banner rv-banner-warn">
+
+                    <i class="fas fa-triangle-exclamation"></i>
+
+                    <span>{{ periodError }}</span>
+
+                </div>
+            }
+
+
+            <!-- Cancelled -->
+
+            @if (status === 'Cancelled' && voucher)
+            {
+                <div class="rv-banner rv-banner-cancelled">
+
+                    <i class="fas fa-ban"></i>
+
+                    <span>
+
+                        <strong>Cancelled</strong>
+
+                        on {{ displayDate(voucher.CancelDate) }}
+
+                        @if (voucher.CancelReason)
+                        {
+                            : {{ voucher.CancelReason }}
+                        }
+
+                    </span>
+
+                </div>
+            }
+
+
+            <!-- =============================================
+                 STEP 1 : VOUCHER MASTER DATA (always shown; the
+                 Payment Desk opens over it as a modal)
+            ============================================== -->
+
+            <app-voucher-master-data
+
+                mode="receipt"
+
+                [readonly]="isReadonly"
+
+                [multiMode]="multiMode"
+
+                [maxLines]="maxLines"
+
+                [minDate]="minVoucherDate"
+
+                [maxDate]="maxVoucherDate"
+
+                [voucherNo]="voucherNoText"
+
+                [branchName]="branchName"
+
+                [value]="entryInput"
+
+                (valueChange)="onEntryChange($event)"
+
+                (totalChange)="onTotalChange($event)"
+
+                (validChange)="onMasterValidChange($event)">
+
+            </app-voucher-master-data>
+
+
+
+        }
+
+    </div>
+
+
+
+    <!-- =====================================================
+         PAYMENT DESK MODAL (step 2)
+         Header : title, verified progress, X (close)
+         Body   : app-payment-desk
+         Footer : status note, Close, Okay
+           Okay  : keep the details, back to step 1
+           Close : leave without the changes made here (asks
+                   first when something changed)
+    ====================================================== -->
+
+    @if (step === 2)
+    {
+        <div class="rv-modal-backdrop">
+
+            <div
+
+                class="rv-modal"
+
+                role="dialog"
+
+                aria-modal="true"
+
+                aria-labelledby="rv-desk-title">
+
+
+                <!-- Header -->
+
+                <div class="rv-modal-head">
+
+                    <span class="rv-modal-icon">
+
+                        <i class="fas fa-cash-register"></i>
+
+                    </span>
+
+                    <div class="rv-modal-title">
+
+                        <strong id="rv-desk-title">Payment Desk</strong>
+
+                        <span>Fill each row's details, press Verify Row, then Okay.</span>
+
+                    </div>
+
+                    <div
+
+                        class="rv-modal-progress"
+
+                        [class.rv-modal-progress-done]="deskAllVerified">
+
+                        <span class="rv-modal-progress-text">
+
+                            <i [class]="deskAllVerified ? 'fas fa-circle-check' : 'fas fa-list-check'"></i>
+
+                            {{ deskVerifiedCount }} / {{ deskRowCount }} verified
+
+                        </span>
+
+                        <span class="rv-progress-track">
+
+                            <span
+
+                                class="rv-progress-bar"
+
+                                [style.width.%]="deskProgress">
+
+                            </span>
+
+                        </span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="rv-modal-x"
+
+                        title="Close"
+
+                        aria-label="Close"
+
+                        (click)="onDeskClose()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Body -->
+
+                <div class="rv-modal-body appcore-scrollbar">
+
+                    <app-payment-desk
+
+                        [readonly]="isReadonly"
+
+                        [lines]="deskInput"
+
+                        (linesChange)="onDeskChange($event)"
+
+                        (validChange)="onDeskValidChange($event)">
+
+                    </app-payment-desk>
+
+                </div>
+
+
+                <!-- Footer -->
+
+                <div
+
+                    class="rv-modal-foot"
+
+                    [class.rv-modal-foot-confirm]="deskConfirmClose">
+
+                    @if (deskConfirmClose)
+                    {
+                        <span class="rv-modal-note rv-modal-note-warn">
+
+                            <i class="fas fa-triangle-exclamation"></i>
+
+                            Discard the changes made in the Payment Desk?
+
+                        </span>
+
+                        <button
+
+                            type="button"
+
+                            class="rv-btn rv-btn-light"
+
+                            (click)="onDeskKeepEditing()">
+
+                            <i class="fas fa-pen"></i>
+
+                            Keep Editing
+
+                        </button>
+
+                        <button
+
+                            type="button"
+
+                            class="rv-btn rv-btn-danger"
+
+                            (click)="onDeskDiscard()">
+
+                            <i class="fas fa-trash-can"></i>
+
+                            Discard
+
+                        </button>
+                    }
+                    @else
+                    {
+                        <span
+
+                            class="rv-modal-note"
+
+                            [class.rv-modal-note-ok]="deskAllVerified && isEditable">
+
+                            <i [class]="deskAllVerified && isEditable ? 'fas fa-circle-check' : 'fas fa-circle-info'"></i>
+
+                            {{ deskFooterNote }}
+
+                        </span>
+
+                        <button
+
+                            type="button"
+
+                            class="rv-btn rv-btn-light"
+
+                            (click)="onDeskClose()">
+
+                            <i class="fas fa-xmark"></i>
+
+                            Close
+
+                        </button>
+
+                        @if (isEditable)
+                        {
+                            <button
+
+                                type="button"
+
+                                class="rv-btn rv-btn-primary"
+
+                                (click)="onBack()">
+
+                                <i class="fas fa-check"></i>
+
+                                Okay
+
+                            </button>
+                        }
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+
+    <!-- =====================================================
+         CANCEL VOUCHER MODAL (Posted)
+           Header : icon, title, voucher no, X
+           Body   : voucher summary, warning, Cancel Date, Reason
+           Footer : Keep Voucher, Cancel Voucher
+    ====================================================== -->
+
+    @if (cancelOpened)
+    {
+        <div class="rv-overlay">
+
+            <div
+
+                class="rv-cx"
+
+                role="dialog"
+
+                aria-modal="true"
+
+                aria-labelledby="rv-cx-title">
+
+
+                <!-- Header -->
+
+                <div class="rv-cx-head">
+
+                    <span class="rv-cx-icon">
+
+                        <i class="fas fa-ban"></i>
+
+                    </span>
+
+                    <div class="rv-cx-title">
+
+                        <strong id="rv-cx-title">Cancel Voucher</strong>
+
+                        <span>{{ voucher?.VoucherNo }}</span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="rv-modal-x"
+
+                        title="Close"
+
+                        aria-label="Close"
+
+                        (click)="closeCancel()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Body -->
+
+                <div class="rv-cx-body">
+
+                    <div class="rv-cx-summary">
+
+                        <div>
+
+                            <span>Voucher Date</span>
+
+                            <strong>{{ displayDate(voucher?.VoucherDate) }}</strong>
+
+                        </div>
+
+                        <div>
+
+                            <span>Received From</span>
+
+                            <strong [title]="voucher?.PartyName || ''">{{ voucher?.PartyName || '—' }}</strong>
+
+                        </div>
+
+                        <div class="rv-cx-amount">
+
+                            <span>Amount</span>
+
+                            <strong>{{ money(voucher?.TotalAmount ?? 0) }}</strong>
+
+                        </div>
+
+                    </div>
+
+                    <div class="rv-cx-warn">
+
+                        <i class="fas fa-triangle-exclamation"></i>
+
+                        <span>
+
+                            A reversing entry is posted on the cancel date and the
+                            voucher becomes <b>Cancelled</b>. This cannot be undone.
+                            Not allowed when a check is already cleared.
+
+                        </span>
+
+                    </div>
+
+                    <div class="rv-cx-fields">
+
+                        <app-datepicker
+
+                            class="rv-cx-date"
+
+                            label="Cancel Date"
+
+                            [required]="true"
+
+                            [value]="$any(cancelDateValue)"
+
+                            (valueChange)="onCancelDateChange($event)">
+
+                        </app-datepicker>
+
+                        <app-textarea
+
+                            class="rv-cx-reason"
+
+                            label="Reason"
+
+                            placeholder="Why is this voucher cancelled?"
+
+                            [required]="true"
+
+                            [rows]="4"
+
+                            [maxLength]="500"
+
+                            [value]="cancelReason"
+
+                            (valueChange)="onCancelReasonChange($event)">
+
+                        </app-textarea>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Footer -->
+
+                <div class="rv-modal-foot">
+
+                    <span class="rv-modal-note">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        Date and reason are required.
+
+                    </span>
+
+                    <button
+
+                        type="button"
+
+                        class="rv-btn rv-btn-light"
+
+                        (click)="closeCancel()">
+
+                        <i class="fas fa-arrow-left"></i>
+
+                        Keep Voucher
+
+                    </button>
+
+                    <button
+
+                        type="button"
+
+                        class="rv-btn rv-btn-danger"
+
+                        (click)="confirmCancel()">
+
+                        <i class="fas fa-ban"></i>
+
+                        Cancel Voucher
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+
+
+<!-- =========================================================
+     UTILITIES
+========================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

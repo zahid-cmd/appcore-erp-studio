@@ -104,7 +104,13 @@ export interface ShellRecentPage
 export type ShellNotificationKind =
     'approval'
     |
-    'cheque';
+    'cheque'
+    |
+    // Website enquiry / test ride / EMI request (Sales Enquiries)
+    'website'
+    |
+    // Nightly backup failed / overdue (Data Management)
+    'backup';
 
 
 export interface ShellNotificationDto

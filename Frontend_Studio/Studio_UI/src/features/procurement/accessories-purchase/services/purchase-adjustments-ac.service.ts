@@ -90,7 +90,7 @@ export class PurchaseAdjustmentsAcService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<PurchaseAdjustmentsAc>
     {
@@ -148,7 +148,7 @@ export class PurchaseAdjustmentsAcService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

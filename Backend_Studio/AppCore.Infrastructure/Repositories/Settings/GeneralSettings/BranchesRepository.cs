@@ -93,6 +93,9 @@ public class BranchesRepository : IBranchesRepository
                         BranchId =
                             x.BranchId,
 
+                        PublicId =
+                            x.PublicId,
+
                         CompanyId =
                             x.CompanyId,
 
@@ -211,6 +214,33 @@ public class BranchesRepository : IBranchesRepository
             )
 
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<BranchesEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.BranchId)
+            .FirstOrDefaultAsync();
     }
 
 

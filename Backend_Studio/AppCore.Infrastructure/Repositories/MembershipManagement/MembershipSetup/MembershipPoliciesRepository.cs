@@ -216,6 +216,9 @@ public class MembershipPoliciesRepository :
                         MembershipPolicyId =
                             x.MembershipPolicyId,
 
+                        PublicId =
+                            x.PublicId,
+
                         PolicyCode =
                             x.PolicyCode,
 
@@ -1279,5 +1282,32 @@ public class MembershipPoliciesRepository :
                     &&
                     !x.IsDeleted
             );
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.MembershipManagement.MembershipSetup.MembershipPolicies>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.MembershipPolicyId)
+            .FirstOrDefaultAsync();
     }
 }

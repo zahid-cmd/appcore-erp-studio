@@ -119,18 +119,69 @@ public class SubOrdinateComponentsController
 
 
     //===========================================================
-    // Get By Id
+    // Get By Internal Id (system use only : the login pages /
+    // git operation load a fixed record by its number)
     //===========================================================
 
     [AllowAnonymous]
-    [HttpGet("{id:long}")]
+    [HttpGet("by-id/{id:long}")]
 
     public async Task<IActionResult>
-        GetById
+        GetByInternalId
     (
         long id
     )
     {
+        var entity =
+            await _repository
+                .GetByIdAsync(
+                    id
+                );
+
+        if
+        (
+            entity is null
+        )
+        {
+            return NotFound(
+                new
+                {
+                    message =
+                        "Sub Ordinate Component not found."
+                }
+            );
+        }
+
+        return Ok(
+            entity
+        );
+    }
+
+
+    //===========================================================
+    // Get By Id
+    //===========================================================
+
+    [AllowAnonymous]
+    [HttpGet("{publicId:guid}")]
+
+    public async Task<IActionResult>
+        GetById
+    (
+        Guid publicId
+    )
+    {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         if
         (
             id <= 0
@@ -520,7 +571,7 @@ public class SubOrdinateComponentsController
     // Update
     //===========================================================
 
-    [HttpPut("{id:long}")]
+    [HttpPut("{publicId:guid}")]
 
     [Consumes(
         "multipart/form-data"
@@ -533,12 +584,23 @@ public class SubOrdinateComponentsController
     public async Task<IActionResult>
         Update
     (
-        long id,
+        Guid publicId,
 
         [FromForm]
         UpdateSubOrdinateComponentsDto dto
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         //=======================================================
         // Route Id Validation
         //=======================================================
@@ -1004,14 +1066,25 @@ public class SubOrdinateComponentsController
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult>
         Delete
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         if
         (
             id <= 0
@@ -1130,14 +1203,25 @@ public class SubOrdinateComponentsController
     // Get Entity History
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    [HttpGet("{publicId:guid}/history")]
 
     public async Task<IActionResult>
         GetEntityHistory
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         if
         (
             id <= 0

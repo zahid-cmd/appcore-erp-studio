@@ -114,6 +114,9 @@ export class ServiceSubCategoryService
                 Number(this.pick(item, name) ?? 0);
 
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             ServiceSubCategoryId:
                 num('ServiceSubCategoryId'),
 
@@ -295,7 +298,7 @@ export class ServiceSubCategoryService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<ServiceSubCategory>
     {
@@ -323,9 +326,9 @@ export class ServiceSubCategoryService
         model:
             CreateServiceSubCategory
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -338,13 +341,16 @@ export class ServiceSubCategoryService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateServiceSubCategory
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -357,7 +363,7 @@ export class ServiceSubCategoryService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

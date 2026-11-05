@@ -147,7 +147,7 @@ export class SpecialAssignmentService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<SpecialAssignment>
     {
@@ -309,7 +309,7 @@ export class SpecialAssignmentService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

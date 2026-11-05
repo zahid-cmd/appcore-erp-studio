@@ -2230,4 +2230,30 @@ public class DefaultDBComponentsRepository
             .ToListAsync();
     }
 
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.InfrastructureControl.DashboardComponents.DefaultDBComponents>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.Id)
+            .FirstOrDefaultAsync();
+    }
 }

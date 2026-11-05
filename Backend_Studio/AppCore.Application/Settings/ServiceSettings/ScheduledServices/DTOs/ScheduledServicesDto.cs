@@ -22,6 +22,10 @@ public class ScheduledServicesDto
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
+
     //===========================================================
     // Service Policy position (copied from the policy; kept in sync)
     //===========================================================

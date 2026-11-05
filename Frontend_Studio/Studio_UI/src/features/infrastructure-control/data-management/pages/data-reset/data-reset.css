@@ -1,0 +1,636 @@
+/* =====================================================
+   DATA RESET (shared look : database-backups.css)
+===================================================== */
+
+.dr-grid
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.dr-group
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 1px solid var(--dm-border);
+    border-radius: 12px;
+    background: var(--dm-surface);
+    box-shadow: var(--dm-shadow);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dr-group.dr-group-on
+{
+    border-color: #fda4af;
+    background: #fffafb;
+}
+
+.dr-group.dr-group-some
+{
+    border-color: #fcd34d;
+}
+
+.dr-group-head
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dr-group-icon
+{
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--dm-soft-blue);
+    color: var(--dm-blue);
+    font-size: 13px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.dr-group-on .dr-group-icon
+{
+    background: var(--dm-bad-soft);
+    color: var(--dm-bad);
+}
+
+.dr-group-title
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.dr-group-title b
+{
+    color: var(--dm-text);
+    font-size: 13px;
+}
+
+.dr-group-title span
+{
+    color: var(--dm-faint);
+    font-size: 11.5px;
+}
+
+.dr-group-title em
+{
+    font-style: normal;
+    color: var(--dm-amber);
+    font-weight: 600;
+}
+
+.dr-group-desc
+{
+    margin: 0;
+    color: var(--dm-muted);
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+.dr-tables
+{
+    display: flex;
+    flex-direction: column;
+    max-height: 196px;
+    margin-top: 4px;
+    border-top: 1px dashed var(--dm-border);
+    overflow-y: auto;
+}
+
+.dr-table-row
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 2px;
+    border-bottom: 1px solid var(--dm-hair);
+    color: var(--dm-text-2);
+}
+
+.dr-table-row span
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dr-table-row b
+{
+    color: var(--dm-text-3);
+    font-family: var(--dm-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+/* ---------- Groups : canvas body scrolls (AppCore scrollbar),
+   the action bar is the canvas footer ---------- */
+
+.dr-scroll
+{
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 14px 14px 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+/* ---------- Sections (Operations / Settings) and areas ---------- */
+
+.dr-section-head
+{
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-top: 4px;
+    padding: 10px 2px 2px;
+    border-top: 1px solid var(--dm-border);
+}
+
+.dr-section-head:first-of-type
+{
+    border-top: none;
+    padding-top: 2px;
+}
+
+.dr-section-head i
+{
+    color: var(--dm-blue);
+    font-size: 14px;
+}
+
+.dr-section-head b
+{
+    color: var(--dm-text);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.dr-section-head span
+{
+    min-width: 0;
+    overflow: hidden;
+    color: var(--dm-faint);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dr-area
+{
+    padding: 2px 2px 0;
+    color: var(--dm-text-3);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+/* Kept by Template clean : thin text, no fill */
+.dr-keep
+{
+    flex: 0 0 auto;
+    color: var(--dm-blue);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.dr-keep i
+{
+    margin-right: 3px;
+    font-size: 10px;
+}
+
+/* "Test data only" row */
+.dr-test-row
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 2px 2px;
+    border-top: 1px dashed var(--dm-border);
+    color: var(--dm-text-2);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.dr-test-row b
+{
+    margin-left: auto;
+    color: var(--dm-faint);
+    font-size: 11.5px;
+    font-weight: 500;
+}
+
+.dr-group.dr-group-test
+{
+    border-color: #a5b4fc;
+    background: #fafaff;
+}
+
+/* Locked Settings pages */
+.dr-locked
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.dr-locked-item
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 1px dashed var(--dm-border);
+    border-radius: 10px;
+    background: var(--dm-soft);
+}
+
+.dr-locked-item i
+{
+    margin-top: 2px;
+    color: var(--dm-faint);
+    font-size: 12px;
+}
+
+.dr-locked-item div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.dr-locked-item b
+{
+    color: var(--dm-text-3);
+    font-size: 12.5px;
+}
+
+.dr-locked-item span
+{
+    color: var(--dm-faint);
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+/* ---------- Loading : centred in a card as tall as the group grid ---------- */
+
+.dr-loading-card
+{
+    display: flex;
+    height: 560px;
+}
+
+.dr-loading-card .dm-loading
+{
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* ---------- Preview ---------- */
+
+.dr-blocks
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #fecdd3;
+    background: var(--dm-bad-soft);
+    color: var(--dm-bad);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.dr-blocks i
+{
+    margin-right: 6px;
+}
+
+.dr-summary
+{
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--dm-hair);
+}
+
+.dr-summary div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dr-summary span
+{
+    color: var(--dm-faint);
+    font-size: 11px;
+}
+
+.dr-summary b
+{
+    color: var(--dm-text);
+    font-size: 14px;
+}
+
+.dr-preview-wrap
+{
+    max-height: 300px;
+    min-height: 0;
+}
+
+.dr-auto
+{
+    margin-left: 8px;
+    color: var(--dm-amber);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.dr-blocks-card
+{
+    border: 1px solid #fecdd3;
+    border-radius: 10px;
+}
+
+
+/* ---------- Action bar ---------- */
+
+.dr-bar
+{
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 8px;
+    padding: 0 14px;
+}
+
+.dr-bar-text
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--dm-faint);
+    font-size: 11.5px;
+}
+
+.dr-bar-text i
+{
+    margin-right: 5px;
+    color: var(--dm-blue);
+}
+
+@media (max-width: 1400px)
+{
+    .dr-grid,
+    .dr-locked
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dr-summary
+    {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+
+/* ---------- Blocks notification (toolbar bell + panel) ---------- */
+
+.dr-toolbar-wrap
+{
+    position: relative;
+    flex: 0 0 auto;
+    z-index: 20;
+}
+
+.dr-bell
+{
+    position: relative;
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    margin-left: 4px;
+    border: 1px solid var(--dm-border);
+    border-radius: 10px;
+    background: var(--dm-surface);
+    color: var(--dm-faint);
+    font-size: 15px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.dr-bell:hover,
+.dr-bell.dr-bell-on
+{
+    border-color: #93c5fd;
+    color: var(--dm-blue);
+}
+
+.dr-bell.dr-bell-alert
+{
+    color: var(--dm-bad);
+}
+
+.dr-bell-count
+{
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border: 1px solid #fecdd3;
+    border-radius: 9px;
+    background: #ffffff;
+    color: var(--dm-bad);
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.dr-notes
+{
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    width: min(720px, 92%);
+    max-height: 420px;
+    border: 1px solid var(--dm-border);
+    border-radius: 12px;
+    background: var(--dm-surface);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+    overflow: hidden;
+}
+
+.dr-notes-head
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px 10px 16px;
+    border-bottom: 1px solid var(--dm-hair);
+    background: var(--dm-soft);
+}
+
+.dr-notes-head > i
+{
+    color: var(--dm-bad);
+}
+
+.dr-notes-head b
+{
+    color: var(--dm-text);
+    font-size: 13.5px;
+}
+
+.dr-notes-head span
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--dm-faint);
+    font-size: 12px;
+}
+
+.dr-notes-list
+{
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 6px 0;
+    overflow-y: auto;
+}
+
+.dr-note
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--dm-hair);
+    color: var(--dm-text-2);
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.dr-note:last-child
+{
+    border-bottom: none;
+}
+
+.dr-note-no
+{
+    flex: 0 0 22px;
+    color: var(--dm-bad);
+    font-weight: 700;
+    text-align: right;
+}
+
+.dr-note.dr-note-ok
+{
+    color: var(--dm-ok);
+}
+
+
+/* Suggested fix : groups to clear too */
+.dr-fix
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--dm-hair);
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.08), rgba(14, 165, 233, 0.02));
+}
+
+.dr-fix-row
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--dm-text-2);
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.dr-fix-row > i
+{
+    flex: 0 0 auto;
+    color: #0284c7;
+}
+
+.dr-fix-row > span
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.dr-fix-row b
+{
+    color: var(--dm-text);
+    font-weight: 600;
+}
+
+.dr-fix-kept > i
+{
+    color: var(--dm-faint);
+}
+
+.dr-fix-kept
+{
+    color: var(--dm-faint);
+}
+
+.dr-fix-btn
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border: 1px solid #0284c7;
+    border-radius: 8px;
+    background: transparent;
+    color: #0284c7;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.dr-fix-btn:hover:not(:disabled)
+{
+    background: rgba(2, 132, 199, 0.08);
+}
+
+.dr-fix-btn:disabled
+{
+    opacity: 0.5;
+    cursor: default;
+}

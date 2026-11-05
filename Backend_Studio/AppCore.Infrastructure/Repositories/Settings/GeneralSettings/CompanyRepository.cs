@@ -77,6 +77,9 @@ public class CompanyRepository : ICompanyRepository
                         CompanyId =
                             x.CompanyId,
 
+                        PublicId =
+                            x.PublicId,
+
                         CompanyCode =
                             x.CompanyCode,
 
@@ -199,6 +202,33 @@ public class CompanyRepository : ICompanyRepository
             )
 
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<CompanyEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.CompanyId)
+            .FirstOrDefaultAsync();
     }
 
 

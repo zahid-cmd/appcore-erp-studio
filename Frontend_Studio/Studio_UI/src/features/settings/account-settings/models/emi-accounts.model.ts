@@ -17,6 +17,8 @@ export interface EmiAccounts
 {
     EmiAccountId:
         number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     // Account Sub Group (always SUB-002-002-005)
     AccountSubGroupsId:

@@ -109,7 +109,7 @@ export class RoleAssignmentService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<RoleAssignment>
     {
@@ -268,7 +268,7 @@ export class RoleAssignmentService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

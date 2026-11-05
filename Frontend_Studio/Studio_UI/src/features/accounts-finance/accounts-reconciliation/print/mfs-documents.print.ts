@@ -182,7 +182,7 @@ export const MFS_RECEIVED_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<MfsDocumentsData>
     {
@@ -193,7 +193,7 @@ export const MFS_RECEIVED_PRINT:
             await firstValueFrom(service.getAll());
 
         const txn =
-            (txns ?? []).find(item => Number(item.PaymentId) === id);
+            (txns ?? []).find(item => String(item.PaymentPublicId ?? '') === String(id) || String(item.PaymentId) === String(id));
 
         if
         (

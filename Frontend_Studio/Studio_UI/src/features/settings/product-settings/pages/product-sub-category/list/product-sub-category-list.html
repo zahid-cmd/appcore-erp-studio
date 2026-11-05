@@ -79,6 +79,31 @@
 
 
         <!-- =================================================
+             PRODUCT CATEGORY FILTER
+        ================================================== -->
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Categories"
+
+            [items]="categoryFilterItems"
+
+            labelField="label"
+
+            valueField="value"
+
+            minWidth="280px"
+
+            [value]="selectedCategoryId"
+
+            (valueChange)="onCategoryFilterChange($event)">
+
+        </app-search-dropdown>
+
+
+        <!-- =================================================
              STATUS FILTER
         ================================================== -->
 
@@ -123,7 +148,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedProductSubCategories"
+                [rows]="productSubCategories"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -152,7 +177,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredProductSubCategories.length"
+            [totalRecords]="totalRecords"
 
             [currentPage]="currentPage"
 
@@ -165,6 +190,32 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (status filter and search)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="psc-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="psc-summary-item">
+                    <span class="psc-summary-label">{{ item.label }}</span>
+                    <b
+                        class="psc-summary-value"
+                        [class.psc-ok]="item.tone === 'ok'"
+                        [class.psc-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="psc-summary-note">
+                Matching the filters and search
+            </span>
+
+        </div>
+    }
 
 
 
@@ -196,4 +247,4 @@
 
     <app-progress-dialog></app-progress-dialog>
 
-</div>
+</div>

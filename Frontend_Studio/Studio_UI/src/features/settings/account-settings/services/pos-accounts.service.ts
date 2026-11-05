@@ -166,6 +166,10 @@ export function normalizePOSAccount
         POSAccountId:
             readNumber(item, 'POSAccountId'),
 
+        // The id used in links and API calls (uuid v7)
+        PublicId:
+            readText(item, 'PublicId'),
+
         AccountSubGroupsId:
             readNumber(item, 'AccountSubGroupsId'),
 
@@ -319,7 +323,7 @@ export class POSAccountsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<POSAccount>
     {
@@ -347,9 +351,9 @@ export class POSAccountsService
         model:
             CreatePOSAccount
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -362,13 +366,16 @@ export class POSAccountsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdatePOSAccount
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -381,7 +388,7 @@ export class POSAccountsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -425,7 +432,7 @@ export class POSAccountsService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

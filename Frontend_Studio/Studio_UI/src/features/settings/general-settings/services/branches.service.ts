@@ -226,7 +226,7 @@ export class BranchesService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<Branches>
     {
@@ -245,9 +245,9 @@ export class BranchesService
         model:
             CreateBranches
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -260,13 +260,16 @@ export class BranchesService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateBranches
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -279,7 +282,7 @@ export class BranchesService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -323,7 +326,7 @@ export class BranchesService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

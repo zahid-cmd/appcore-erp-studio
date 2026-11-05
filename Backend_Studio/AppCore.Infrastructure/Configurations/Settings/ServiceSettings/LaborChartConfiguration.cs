@@ -42,6 +42,22 @@ public class LaborChartConfiguration
 
         builder.HasKey(x => x.LaborChartId);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_LaborCharts_PublicId");
+
         builder.Property(x => x.LaborChartId)
                .ValueGeneratedOnAdd();
 

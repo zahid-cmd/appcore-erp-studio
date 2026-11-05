@@ -1,0 +1,54 @@
+<!-- ===========================================================
+     BRANCHES
+============================================================ -->
+
+<section class="wrap section">
+
+    <div class="head">
+        <span class="kicker">{{ t('branches.kicker') }}</span>
+        <h2 class="title">{{ t('branches.title') }}</h2>
+    </div>
+
+    <div class="grid">
+        @for (card of cards(); track card.branch.name)
+        {
+            <article class="card branch">
+                <div class="branch-head">
+                    <h3 class="name">{{ card.branch.name }}</h3>
+                    @if (card.branch.type)
+                    {
+                        <span class="chip type">{{ card.branch.type }}</span>
+                    }
+                </div>
+                @if (card.branch.address)
+                {
+                    <p class="line">{{ card.branch.address }}</p>
+                }
+                @if (card.branch.hours)
+                {
+                    <p class="line muted">{{ card.branch.hours }}</p>
+                }
+                @if (card.branch.brands.length)
+                {
+                    <div class="brands">
+                        @for (name of card.branch.brands; track name)
+                        {
+                            <span class="chip">{{ name }}</span>
+                        }
+                    </div>
+                }
+                <div class="buttons">
+                    @if (card.call)
+                    {
+                        <a class="btn btn-accent" [href]="card.call">Call {{ card.branch.phone }}</a>
+                    }
+                    @if (card.map)
+                    {
+                        <a class="btn" [href]="card.map" target="_blank" rel="noopener">Directions</a>
+                    }
+                </div>
+            </article>
+        }
+    </div>
+
+</section>

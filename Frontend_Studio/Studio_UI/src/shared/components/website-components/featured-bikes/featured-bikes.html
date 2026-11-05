@@ -1,0 +1,117 @@
+<!-- ===========================================================
+     FIND YOUR RIDE
+============================================================ -->
+
+<section class="wrap section">
+
+    <div class="top">
+        <div class="head">
+            <span class="kicker">{{ kicker() || t('bikes.kicker') }}</span>
+            <h2 class="title">{{ heading() || t('bikes.title') }}</h2>
+        </div>
+
+        @if (showFilter() && (brandNames().length || categories().length))
+        {
+        <div class="filters">
+        @if (brandNames().length)
+        {
+            <div class="filter" role="group" aria-label="Brand">
+                @for (name of brandNames(); track name)
+                {
+                    <button
+                        type="button"
+                        class="filter-btn"
+                        [class.on]="name === brand()"
+                        [attr.aria-pressed]="name === brand()"
+                        (click)="brand.set(name)">
+                        {{ name === 'All' ? 'All brands' : name }}
+                    </button>
+                }
+            </div>
+        }
+        @if (categories().length)
+        {
+            <div class="filter" role="group" aria-label="Category">
+                @for (cat of categories(); track cat)
+                {
+                    <button
+                        type="button"
+                        class="filter-btn"
+                        [class.on]="cat === category()"
+                        [attr.aria-pressed]="cat === category()"
+                        (click)="category.set(cat)">
+                        {{ cat }}
+                    </button>
+                }
+            </div>
+        }
+        </div>
+        }
+    </div>
+
+    <div class="grid">
+        @for (card of cards(); track card.bike.slug)
+        {
+            <article class="card lift bike">
+
+                <a class="photo" [routerLink]="['/bikes', card.bike.slug]" [attr.aria-label]="card.bike.model">
+                    @if (card.bike.photo)
+                    {
+                        <img [src]="card.bike.photo" [alt]="card.bike.model" loading="lazy">
+                    }
+                    @else
+                    {
+                        <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17" r="3.5"></circle><circle cx="18.5" cy="17" r="3.5"></circle><path d="M5.5 17l4-7h5l4 7M9.5 10l-1.5-3H5M14.5 10l1.5-3h3"></path></svg>
+                    }
+                    @if (card.tag)
+                    {
+                        <span class="chip cat">{{ card.tag }}</span>
+                    }
+                    @if (card.stock)
+                    {
+                        <span [class]="'chip stock ' + card.bike.stock">{{ card.stock }}</span>
+                    }
+                </a>
+
+                <div class="body">
+                    <div class="name-row">
+                        <h3 class="model">
+                            <a [routerLink]="['/bikes', card.bike.slug]">{{ card.bike.model }}</a>
+                        </h3>
+                        @if (card.price)
+                        {
+                            <b class="price">{{ card.price }}</b>
+                        }
+                    </div>
+
+                    @if (card.bike.engine || card.bike.mileage || card.bike.topSpeed)
+                    {
+                        <div class="specs">
+                            <span><b>{{ card.bike.engine || '–' }}</b>Engine</span>
+                            <span><b>{{ card.bike.mileage || '–' }}</b>Mileage</span>
+                            <span><b>{{ card.bike.topSpeed || '–' }}</b>Top speed</span>
+                        </div>
+                    }
+
+                    <div class="buttons">
+                        <a class="btn" [routerLink]="['/bikes', card.bike.slug]">Specifications</a>
+                        @if (card.bike.code)
+                        {
+                            <a class="btn btn-soft" routerLink="/enquire" [queryParams]="{ bike:card.bike.slug }">Enquire</a>
+                        }
+                        @else if (card.ask)
+                        {
+                            <a class="btn btn-soft" [href]="card.ask" target="_blank" rel="noopener">WhatsApp</a>
+                        }
+                    </div>
+                </div>
+
+            </article>
+        }
+        @empty
+        {
+            <p class="lead">No bikes match this choice yet.</p>
+        }
+    </div>
+
+</section>

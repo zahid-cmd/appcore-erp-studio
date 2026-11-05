@@ -90,7 +90,7 @@ export class LayoutComponentsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<LayoutComponents>
     {
@@ -127,13 +127,16 @@ export class LayoutComponentsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateLayoutComponents
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -148,7 +151,7 @@ export class LayoutComponentsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -196,7 +199,7 @@ export class LayoutComponentsService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

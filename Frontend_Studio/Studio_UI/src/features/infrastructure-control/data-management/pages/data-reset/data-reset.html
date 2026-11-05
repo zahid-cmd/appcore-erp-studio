@@ -1,0 +1,646 @@
+<div class="app-list-page dm-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        [title]="preview ? 'Data Reset : Preview' : 'Data Reset'"
+        [subtitle]="preview ? 'What the reset will clear in ' + (catalog?.Database || '') + ' (nothing is changed yet)' : 'Clear operational and Settings data for a fresh start or a template (one transaction)'"
+        icon="fa-solid fa-broom">
+
+        <div pageHeaderRight>
+
+            @if (preview)
+            {
+                <app-command-center
+                    command1Text="Back"
+                    command1Icon="fas fa-arrow-left"
+                    command1Title="Back to the groups (the selection stays)"
+                    (command1Click)="closePreview()"
+                    command2Text="Run Reset"
+                    command2Icon="fas fa-broom"
+                    [command2Title]="preview.CanRun ? 'Clear the tables of this preview' : (preview.BackupFresh ? 'Fix the blocks first' : 'Take a backup first')"
+                    (command2Click)="openRun()"
+                    [command3Visible]="false">
+                </app-command-center>
+            }
+            @else
+            {
+                <app-command-center
+                    command1Text="Refresh"
+                    command1Icon="fas fa-rotate-right"
+                    (command1Click)="refresh()"
+                    command2Text="Select All"
+                    command2Icon="fas fa-check-double"
+                    command2Title="Tick every Operations group"
+                    [command2Visible]="allowed"
+                    (command2Click)="selectAll()"
+                    command3Text="Clear"
+                    command3Icon="fas fa-eraser"
+                    [command3Visible]="allowed"
+                    (command3Click)="clearSelection()">
+                </app-command-center>
+            }
+
+        </div>
+
+    </app-page-header>
+
+    @if (!loading && !allowed)
+    {
+        <div class="dm-denied">
+            <i class="fa-solid fa-lock"></i>
+            <div>
+                <b>AppCore Admin only</b>
+                <span>Data reset is open only to the AppCore Admin role (RP-001).</span>
+            </div>
+        </div>
+    }
+
+    @if (allowed)
+    {
+        <!-- =================================================
+             TOOLBAR : DATABASE · SELECTION
+        ================================================== -->
+
+        <div class="dr-toolbar-wrap">
+
+        <app-page-toolbar leftFlex="1 1 auto">
+
+            <div pageToolbarLeft class="dm-toolbar">
+
+                <app-search-dropdown
+                    class="dm-db-dd"
+                    placeholder="Choose a database"
+                    [items]="connectionItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="$any(connectionName)"
+                    (valueChange)="onConnectionChange($event)">
+                </app-search-dropdown>
+
+                @if (preview)
+                {
+                <div class="dm-stats">
+                    <div class="dm-seg dm-seg-neutral">
+                        <i class="fa-solid fa-table dm-seg-icon"></i>
+                        <div class="dm-seg-text"><span>Tables</span><b>{{ preview.Tables.length }}</b></div>
+                    </div>
+                    <div class="dm-seg dm-seg-neutral">
+                        <i class="fa-solid fa-list-ol dm-seg-icon"></i>
+                        <div class="dm-seg-text"><span>Rows</span><b>{{ formatCount(preview.TotalRows) }}</b></div>
+                    </div>
+                    <div class="dm-seg dm-seg-neutral">
+                        <i class="fa-solid fa-book dm-seg-icon"></i>
+                        <div class="dm-seg-text"><span>Product ledgers</span><b>{{ formatCount(preview.ProductLedgers) }}</b></div>
+                    </div>
+                    <div class="dm-seg dm-seg-neutral">
+                        <i class="fa-solid fa-person-walking dm-seg-icon"></i>
+                        <div class="dm-seg-text"><span>Walk-in customers</span><b>{{ formatCount(preview.WalkInCustomers) }} · {{ formatCount(preview.WalkInLedgers) }} ledgers</b></div>
+                    </div>
+                    @if (preview.TestDataRows > 0 || preview.SettingsLedgers > 0 || preview.AccountGroups + preview.AccountSubGroups > 0)
+                    {
+                        <div class="dm-seg dm-seg-neutral"
+                             [title]="formatCount(preview.TestDataRows) + ' test data rows, ' + formatCount(preview.SettingsLedgers) + ' own ledgers, ' + formatCount(preview.AccountGroups) + ' account groups, ' + formatCount(preview.AccountSubGroups) + ' sub groups, ' + formatCount(preview.Unlinked) + ' links cleared'">
+                            <i class="fa-solid fa-sliders dm-seg-icon"></i>
+                            <div class="dm-seg-text"><span>Settings</span><b>{{ formatCount(preview.TestDataRows) }} test rows · {{ formatCount(preview.SettingsLedgers) }} ledgers</b></div>
+                        </div>
+                    }
+                    <div class="dm-seg" [class.dm-seg-ok]="preview.BackupFresh" [class.dm-seg-bad]="!preview.BackupFresh">
+                        <i class="fa-solid fa-floppy-disk dm-seg-icon"></i>
+                        <div class="dm-seg-text"><span>Backup</span><b>{{ preview.BackupFresh ? 'Ready' : 'Needed' }}</b></div>
+                    </div>
+                    <div class="dm-seg" [class.dm-seg-ok]="preview.Blocks.length === 0" [class.dm-seg-bad]="preview.Blocks.length > 0">
+                        <i class="fa-solid fa-shield-halved dm-seg-icon"></i>
+                        <div class="dm-seg-text"><span>Blocks</span><b>{{ preview.Blocks.length }}</b></div>
+                    </div>
+                </div>
+
+                <!-- Notifications : the blocks (opens by itself when
+                     the preview has any) -->
+                <button type="button"
+                        class="dr-bell"
+                        [class.dr-bell-on]="blocksOpen"
+                        [class.dr-bell-alert]="preview.Blocks.length > 0"
+                        [title]="preview.Blocks.length > 0 ? preview.Blocks.length + ' block(s) : click to show' : 'No blocks'"
+                        (click)="toggleBlocks()">
+                    <i class="fa-regular fa-bell"></i>
+                    @if (preview.Blocks.length > 0)
+                    {
+                        <span class="dr-bell-count">{{ preview.Blocks.length }}</span>
+                    }
+                </button>
+                }
+                @else
+                {
+                <div class="dm-stats">
+
+                    <div class="dm-seg" [class.dm-seg-ok]="backupFresh" [class.dm-seg-bad]="!backupFresh">
+                        <i class="fa-solid fa-floppy-disk dm-seg-icon"></i>
+                        <div class="dm-seg-text">
+                            <span>Last backup</span>
+                            <b>{{ catalog?.LastBackup ? formatDateTime(catalog?.LastBackup?.TakenDate) : 'None yet' }}</b>
+                        </div>
+                        <i class="fa-solid dm-seg-state" [class.fa-circle-check]="backupFresh" [class.fa-circle-xmark]="!backupFresh"></i>
+                    </div>
+
+                    <div class="dm-seg dm-seg-neutral">
+                        <i class="fa-solid fa-list-check dm-seg-icon"></i>
+                        <div class="dm-seg-text">
+                            <span>Selected</span>
+                            <b>{{ selected.size }} tables{{ walkIn ? ' + walk-ins' : '' }}{{ testData.size > 0 ? ' + ' + formatCount(selectedTestRows) + ' test rows' : '' }} · {{ formatCount(selectedRows) }} rows</b>
+                        </div>
+                    </div>
+
+                </div>
+
+                }
+
+            </div>
+
+        </app-page-toolbar>
+
+        @if (preview && blocksOpen)
+        {
+            <div class="dr-notes" role="dialog" aria-label="Blocks">
+
+                <div class="dr-notes-head">
+                    <i class="fa-regular fa-bell"></i>
+                    <b>Blocks</b>
+                    <span>{{ preview.Blocks.length }} : fix them, then Preview again</span>
+                    <button type="button" class="dm-icon-btn dr-notes-close" title="Close" (click)="closeBlocks()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                @if (fixGroups.length > 0 || fixKept.length > 0)
+                {
+                    <div class="dr-fix">
+                        @if (fixGroups.length > 0)
+                        {
+                            <div class="dr-fix-row">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span>
+                                    To clear the selected data, clear these too :
+                                    <b>{{ fixNames }}</b>
+                                </span>
+                                <button type="button" class="dr-fix-btn" [disabled]="!!busy" (click)="addFixes()">
+                                    <i class="fa-solid fa-plus"></i>
+                                    Clear these too
+                                </button>
+                            </div>
+                        }
+                        @if (fixKept.length > 0)
+                        {
+                            <div class="dr-fix-row dr-fix-kept">
+                                <i class="fa-solid fa-lock"></i>
+                                <span>
+                                    Cannot be cleared here : <b>{{ fixKept.join(' · ') }}</b>. Keep the data they use.
+                                </span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <div class="dr-notes-list appcore-scrollbar">
+                    @for (block of preview.Blocks; track block; let i = $index)
+                    {
+                        <div class="dr-note">
+                            <span class="dr-note-no">{{ i + 1 }}</span>
+                            <span>{{ block }}</span>
+                        </div>
+                    }
+                    @empty
+                    {
+                        <div class="dr-note dr-note-ok">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>No blocks : the reset can run.</span>
+                        </div>
+                    }
+                </div>
+
+            </div>
+        }
+
+        </div>
+
+        @if (catalog && !preview)
+        {
+            <div class="dm-warn" [class.dm-warn-ok]="backupFresh">
+                <i class="fa-solid" [class.fa-shield-halved]="backupFresh" [class.fa-triangle-exclamation]="!backupFresh"></i>
+                @if (backupFresh)
+                {
+                    <span>
+                        Backup ready : {{ catalog.LastBackup?.FileName }} ({{ formatDateTime(catalog.LastBackup?.TakenDate) }}).
+                    </span>
+                }
+                @else
+                {
+                    <span>
+                        A backup of {{ catalog.Database }} from the last {{ catalog.FreshMinutes }} minutes is needed before a reset.
+                    </span>
+                }
+                <button type="button" class="dm-btn dm-warn-action" [disabled]="!!busy" (click)="backupNow()">
+                    <i class="fa-solid fa-floppy-disk"></i> Backup
+                </button>
+            </div>
+        }
+
+        <!-- =================================================
+             GROUPS
+        ================================================== -->
+
+        @if (loading)
+        {
+            <section class="dm-card dr-loading-card">
+                <div class="dm-loading">
+                    <app-orbit-loader title="Loading" message="Counting the rows of every operational table..." size="medium" [overlay]="false"></app-orbit-loader>
+                </div>
+            </section>
+        }
+        @else if (preview)
+        {
+            <!-- =============================================
+                 PREVIEW PAGE
+            ============================================== -->
+
+            <app-page-canvas [config]="canvasConfig">
+
+                <div canvasBody class="dm-canvas-body">
+
+                    @if (preview.Tables.length === 0)
+                    {
+                        <div class="dm-empty">
+                            <i class="fa-solid fa-person-walking"></i>
+                            <span>No table is emptied : only {{ walkIn ? 'walk-in customers' : '' }}{{ walkIn && preview.TestDataRows > 0 ? ' and ' : '' }}{{ preview.TestDataRows > 0 ? formatCount(preview.TestDataRows) + ' test data rows' : '' }} go.</span>
+                        </div>
+                    }
+                    @else
+                    {
+                        <div class="dm-table-wrap dm-canvas-table appcore-scrollbar">
+                            <table class="dm-table">
+                                <thead>
+                                    <tr>
+                                        <th class="dm-c dm-sl">#</th>
+                                        <th>Table</th>
+                                        <th>Group</th>
+                                        <th>Why</th>
+                                        <th class="dm-r">Rows</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (table of pagedPreview; track table.Name; let i = $index)
+                                    {
+                                        <tr>
+                                            <td class="dm-c dm-sl">{{ (previewPage - 1) * previewSize + i + 1 }}</td>
+                                            <td class="dm-mono dm-main">{{ table.Name }}</td>
+                                            <td>{{ groupName(table.GroupKey) }}</td>
+                                            <td>
+                                                @if (table.AutoAdded)
+                                                {
+                                                    <span class="dr-auto">Added : linked to a ticked table</span>
+                                                }
+                                                @else
+                                                {
+                                                    <span class="dm-sub">Ticked</span>
+                                                }
+                                            </td>
+                                            <td class="dm-r dm-mono">{{ formatCount(table.Rows) }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                </div>
+
+                <app-pagination
+                    canvasFooter
+                    [totalRecords]="preview.Tables.length"
+                    [currentPage]="previewPage"
+                    [pageSize]="previewSize"
+                    (pageChange)="onPreviewPage($event)"
+                    (pageSizeChange)="onPreviewSize($event)">
+                </app-pagination>
+
+            </app-page-canvas>
+
+            @if (preview.Blocks.length > 0)
+            {
+                <div class="dm-warn">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>{{ preview.Blocks.length }} block(s) stop this reset : see the notifications (bell) on the toolbar.</span>
+                    <button type="button" class="dm-btn dm-warn-action" (click)="blocksOpen = true">
+                        <i class="fa-regular fa-bell"></i> Show
+                    </button>
+                </div>
+            }
+            @else if (!preview.BackupFresh)
+            {
+                <div class="dm-warn">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Take a backup of {{ catalog?.Database }} first (one from the last {{ catalog?.FreshMinutes }} minutes is needed).</span>
+                    <button type="button" class="dm-btn dm-warn-action" [disabled]="!!busy" (click)="backupNow()">
+                        <i class="fa-solid fa-floppy-disk"></i> Backup
+                    </button>
+                </div>
+            }
+            @else
+            {
+                <div class="dm-warn dm-warn-ok">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Ready : no blocks, backup {{ catalog?.LastBackup?.FileName }}. Click Run Reset to clear.</span>
+                </div>
+            }
+        }
+        @else
+        {
+            <!-- =============================================
+                 GROUP CARD (used by both sections)
+            ============================================== -->
+
+            <ng-template #groupCard let-group>
+
+                <section class="dr-group"
+                         [class.dr-group-on]="groupState(group) === 'all'"
+                         [class.dr-group-some]="groupState(group) === 'some'"
+                         [class.dr-group-test]="isTestData(group)">
+
+                    <div class="dr-group-head">
+
+                        <app-checkbox
+                            [value]="groupState(group) === 'all'"
+                            [disabled]="!group.IsSpecial && group.Tables.length === 0"
+                            (valueChange)="toggleGroup(group, $event)">
+                        </app-checkbox>
+
+                        <i [class]="'dr-group-icon ' + group.Icon"></i>
+
+                        <div class="dr-group-title">
+                            <b>{{ group.Name }}</b>
+                            <span>
+                                @if (group.IsSpecial)
+                                {
+                                    {{ formatCount(group.SpecialRows) }} customers
+                                }
+                                @else
+                                {
+                                    {{ group.Tables.length }} tables · {{ formatCount(groupRows(group)) }} rows
+                                    @if (isTestData(group))
+                                    {
+                                        <em>· test data only</em>
+                                    }
+                                    @else if (groupState(group) === 'some')
+                                    {
+                                        <em>· {{ groupSelectedCount(group) }} ticked</em>
+                                    }
+                                }
+                            </span>
+                        </div>
+
+                        @if (group.KeepInTemplate)
+                        {
+                            <span class="dr-keep" title="Shared reference data : kept by Template clean">
+                                <i class="fa-solid fa-thumbtack"></i> Template
+                            </span>
+                        }
+
+                        @if (!group.IsSpecial && group.Tables.length > 0)
+                        {
+                            <button type="button" class="dm-icon-btn" [title]="isExpanded(group) ? 'Hide tables' : 'Show tables'" (click)="toggleExpand(group)">
+                                <i class="fa-solid" [class.fa-chevron-up]="isExpanded(group)" [class.fa-chevron-down]="!isExpanded(group)"></i>
+                            </button>
+                        }
+
+                    </div>
+
+                    <p class="dr-group-desc">{{ group.Description }}</p>
+
+                    @if (group.SupportsTestData)
+                    {
+                        <div class="dr-test-row">
+                            <app-checkbox
+                                [value]="isTestData(group)"
+                                [disabled]="group.TestRows === 0 && !isTestData(group)"
+                                (valueChange)="toggleTestData(group, $event)">
+                            </app-checkbox>
+                            <span>Test data only</span>
+                            <b>{{ formatCount(group.TestRows) }} rows marked TEST DATA</b>
+                        </div>
+                    }
+
+                    @if (isExpanded(group))
+                    {
+                        <div class="dr-tables appcore-scrollbar">
+                            @for (table of group.Tables; track table.Name)
+                            {
+                                <div class="dr-table-row">
+                                    <app-checkbox
+                                        [value]="selected.has(table.Name)"
+                                        (valueChange)="toggleTable(table.Name, $event)">
+                                    </app-checkbox>
+                                    <span class="dm-mono">{{ table.Name }}</span>
+                                    <b>{{ formatCount(table.Rows) }}</b>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                </section>
+
+            </ng-template>
+
+            <!-- =============================================
+                 GROUPS : on the shared page canvas; the groups
+                 scroll inside it (AppCore scrollbar), the
+                 action bar is the canvas footer
+            ============================================== -->
+
+            <app-page-canvas [config]="groupsCanvasConfig">
+
+            <div canvasBody class="dr-scroll appcore-scrollbar">
+
+            <!-- =============================================
+                 OPERATIONS
+            ============================================== -->
+
+            <div class="dr-section-head">
+                <i class="fa-solid fa-gears"></i>
+                <b>Operations</b>
+                <span>Transactions, stock, vouchers and logs</span>
+            </div>
+
+            <div class="dr-grid">
+                @for (group of operationGroups; track group.Key)
+                {
+                    <ng-container *ngTemplateOutlet="groupCard; context: { $implicit: group }"></ng-container>
+                }
+            </div>
+
+            <!-- =============================================
+                 SETTINGS (by area) + LOCKED PAGES
+            ============================================== -->
+
+            <div class="dr-section-head">
+                <i class="fa-solid fa-sliders"></i>
+                <b>Settings</b>
+                <span>Set-up data of the Settings module; own ledgers / account groups go with it, rows still in use block the reset</span>
+            </div>
+
+            @for (area of settingsAreas; track area.area)
+            {
+                <div class="dr-area">{{ area.area }}</div>
+
+                <div class="dr-grid">
+                    @for (group of area.groups; track group.Key)
+                    {
+                        <ng-container *ngTemplateOutlet="groupCard; context: { $implicit: group }"></ng-container>
+                    }
+                </div>
+            }
+
+            @if (lockedPages.length > 0)
+            {
+                <div class="dr-area">Locked (never cleared)</div>
+
+                <div class="dr-locked">
+                    @for (page of lockedPages; track page.Name)
+                    {
+                        <div class="dr-locked-item" [title]="page.Reason">
+                            <i class="fa-solid fa-lock"></i>
+                            <div>
+                                <b>{{ page.Name }}</b>
+                                <span>{{ page.Reason }}</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            </div>
+
+            <!-- =============================================
+                 ACTION BAR
+            ============================================== -->
+
+            <div canvasFooter class="dr-bar">
+                <button type="button" class="dm-btn" [disabled]="!!busy" (click)="presetFreshTest()"
+                        title="Every Operations group + walk-ins + the test data of customers / suppliers">
+                    <i class="fa-solid fa-flask"></i> Fresh test start
+                </button>
+                <button type="button" class="dm-btn" [disabled]="!!busy" (click)="presetTemplateClean()"
+                        title="Every Operations group + every Settings group not kept in the template">
+                    <i class="fa-solid fa-layer-group"></i> Template clean
+                </button>
+                <button type="button" class="dm-btn" [disabled]="!!busy || !selectedConnection" (click)="saveTemplate()"
+                        title="Back up this database as a Template (the base of a new dealer's database; never deleted automatically)">
+                    <i class="fa-solid fa-box-archive"></i> Save as Template
+                </button>
+                <span class="dr-bar-text">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Users, roles, navigation and the locked Settings pages are never cleared.
+                </span>
+                <button type="button" class="dm-btn dm-btn-primary" [disabled]="selectionCount === 0 || !!busy" (click)="runPreview()">
+                    <i class="fa-solid fa-magnifying-glass"></i> Preview Reset
+                </button>
+            </div>
+
+            </app-page-canvas>
+        }
+    }
+
+    <!-- =====================================================
+         RUN
+    ====================================================== -->
+
+    @if (runOpen && preview)
+    {
+        <div class="dm-backdrop">
+            <div class="dm-modal dm-modal-wide" role="dialog" aria-modal="true">
+
+                <div class="dm-modal-head dm-head-danger">
+                    <i class="fa-solid fa-broom"></i>
+                    <span>Run Data Reset</span>
+                </div>
+
+                <div class="dm-modal-body">
+
+                    <div class="dm-facts">
+                        <div><span>Database</span><b>{{ selectedConnection?.Database }} @ {{ selectedConnection?.Host }}</b></div>
+                        <div><span>Clears</span><b>{{ preview.Tables.length }} tables · {{ formatCount(preview.TotalRows) }} rows</b></div>
+                        @if (preview.ProductLedgers > 0)
+                        {
+                            <div><span>Ledgers</span><b>{{ formatCount(preview.ProductLedgers) }} product ledgers</b></div>
+                        }
+                        @if (walkIn)
+                        {
+                            <div><span>Customers</span><b>{{ formatCount(preview.WalkInCustomers) }} walk-in customers</b></div>
+                        }
+                        @if (preview.TestDataRows > 0)
+                        {
+                            <div><span>Test data</span><b>{{ formatCount(preview.TestDataRows) }} rows marked TEST DATA</b></div>
+                        }
+                        @if (preview.SettingsLedgers > 0)
+                        {
+                            <div><span>Own ledgers</span><b>{{ formatCount(preview.SettingsLedgers) }} ledgers of the Settings rows</b></div>
+                        }
+                        @if (preview.AccountGroups + preview.AccountSubGroups > 0)
+                        {
+                            <div><span>Chart</span><b>{{ formatCount(preview.AccountGroups) }} account groups · {{ formatCount(preview.AccountSubGroups) }} sub groups</b></div>
+                        }
+                        @if (preview.Unlinked > 0)
+                        {
+                            <div><span>Links</span><b>{{ formatCount(preview.Unlinked) }} links cleared (e.g. a brand's supplier, website brands)</b></div>
+                        }
+                        <div><span>Backup</span><b>{{ catalog?.LastBackup?.FileName }}</b></div>
+                    </div>
+
+                    <div class="dm-danger-note">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>This deletes the rows for good; ids restart at 1. Only the backup can bring them back.</span>
+                    </div>
+
+                    <div class="dm-field">
+                        <label>Type <b class="dm-mono">{{ selectedConnection?.Database }}</b> to confirm</label>
+                        <app-textbox
+                            textCase="none"
+                            [value]="runConfirm"
+                            (valueChange)="runConfirm = $any($event)">
+                        </app-textbox>
+                    </div>
+
+                    <app-textarea
+                        class="dm-reason"
+                        placeholder="Reason (required)"
+                        [rows]="3"
+                        [value]="runReason"
+                        (valueChange)="runReason = $any($event)">
+                    </app-textarea>
+
+                </div>
+
+                <div class="dm-modal-foot">
+                    <button type="button" class="dm-btn" (click)="closeRun()">Close</button>
+                    <button type="button" class="dm-btn dm-btn-danger" [disabled]="!runReady" (click)="run()">
+                        <i class="fa-solid fa-broom"></i> Clear Data
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <!-- =====================================================
+         BUSY
+    ====================================================== -->
+
+    <!-- Shared progress dialog, centred on the page area (not the window) -->
+    <div class="dm-progress-host">
+        <app-progress-dialog></app-progress-dialog>
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

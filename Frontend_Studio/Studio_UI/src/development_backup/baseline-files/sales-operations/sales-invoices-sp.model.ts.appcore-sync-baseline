@@ -1,0 +1,90 @@
+/* ============================================================
+   Sales Invoices - SP
+============================================================ */
+
+export interface SalesInvoicesSp
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Sales Invoices - SP
+============================================================ */
+
+export interface CreateSalesInvoicesSp
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Sales Invoices - SP
+============================================================ */
+
+export interface UpdateSalesInvoicesSp
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Sales Invoices - SP Defaults
+============================================================ */
+
+export interface SalesInvoicesSpDefaults
+{
+    code:
+        string;
+}

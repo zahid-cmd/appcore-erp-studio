@@ -13,6 +13,9 @@ public class PurchaseVatDto
 {
     public long PurchaseVatId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     // PVT-0001
     public string VatCode { get; set; } = string.Empty;
 

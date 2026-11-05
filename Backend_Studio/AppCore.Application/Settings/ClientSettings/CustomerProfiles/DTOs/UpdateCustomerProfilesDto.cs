@@ -209,6 +209,15 @@ public class UpdateCustomerProfilesDto
     }
 
 
+    // Walk-in tag : can only be cleared here (false); null = keep
+    // it as it is; converting to Inbound clears it
+    public bool? IsWalkIn
+    {
+        get;
+        set;
+    }
+
+
     //===========================================================
     // Remarks & Status
     //===========================================================
@@ -225,4 +234,4 @@ public class UpdateCustomerProfilesDto
         get;
         set;
     } = true;
-}
+}

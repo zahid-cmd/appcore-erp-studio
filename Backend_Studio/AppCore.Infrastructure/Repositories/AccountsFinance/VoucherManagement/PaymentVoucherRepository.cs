@@ -18,6 +18,8 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 
 using PostingLedgerCodes =
     AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
@@ -257,6 +259,225 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
 
 
     //===========================================================
+    // Get Paged (the list page)
+    //
+    // Type filter and search on the header (and its modes), the
+    // status counts for the summary line, then the tab, the total
+    // and one page (newest first unless a column is sorted).
+    //===========================================================
+
+    private static SortMap<PaymentVoucher> ListSorts()
+    {
+        return new SortMap<PaymentVoucher>("VoucherDateText", defaultDescending: true)
+            .Add("VoucherNo", x => x.VoucherNo)
+            .Add("VoucherDateText", x => x.VoucherDate)
+            .Add("BranchName", x => x.BranchName)
+            .Add("PartyText", x => x.PartyName)
+            .Add("TotalAmountText", x => x.TotalAmount)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.VoucherNo, followDirection: true);
+    }
+
+    // "25-10-2026" or "2026-10-25" -> that date (else null)
+    private static DateOnly? SearchDate
+    (
+        string text
+    )
+    {
+        string[] formats =
+            { "dd-MM-yyyy", "d-M-yyyy", "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd" };
+
+        return DateOnly.TryParseExact(
+                text,
+                formats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out DateOnly date)
+            ? date
+            : null;
+    }
+
+    public async Task<PagedResult<PaymentVoucherDto>>
+        GetPagedAsync
+        (
+            VoucherPageRequest request
+        )
+    {
+        IQueryable<PaymentVoucher> query =
+            _context
+                .Set<PaymentVoucher>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+        //-------------------------------------------------------
+        // Type filter
+        //-------------------------------------------------------
+
+        string ledgerType =
+            (request.LedgerType ?? string.Empty).Trim();
+
+        if
+        (
+            ledgerType.Length > 0
+        )
+        {
+            query =
+                query.Where(x => x.LedgerType == ledgerType);
+        }
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains"; a typed date finds
+        // that voucher date)
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            DateOnly? date =
+                SearchDate(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        (date != null && x.VoucherDate == date) ||
+                        EF.Functions.ILike(x.VoucherNo, like) ||
+                        EF.Functions.ILike(x.BranchName, like) ||
+                        EF.Functions.ILike(x.LedgerType, like) ||
+                        EF.Functions.ILike(x.PartyName, like) ||
+                        EF.Functions.ILike(x.Narration, like) ||
+                        EF.Functions.ILike(x.Status, like) ||
+                        _context
+                            .Set<PaymentVoucherPayments>()
+                            .Any
+                            (
+                                m =>
+                                    m.PaymentVoucherId == x.PaymentVoucherId &&
+                                    EF.Functions.ILike(m.Mode, like)
+                            )
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts : Total / Draft / Approved / Posted /
+        // Cancelled (type filter and search applied; not the tab)
+        //-------------------------------------------------------
+
+        var byStatus =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = byStatus.Sum(x => x.Count)
+            };
+
+        foreach (string status in new[] { "Draft", "Approved", "Posted", "Cancelled" })
+        {
+            summaryCounts[status] =
+                byStatus.Where(x => x.Status == status).Sum(x => x.Count);
+        }
+
+        //-------------------------------------------------------
+        // Status (the tab)
+        //-------------------------------------------------------
+
+        string tab =
+            (request.Status ?? string.Empty).Trim();
+
+        if
+        (
+            tab.Length > 0 &&
+            !string.Equals(tab, "all", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            query =
+                query.Where(x => x.Status == tab);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<PaymentVoucher> rows =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        List<long> ids =
+            rows.Select(x => x.PaymentVoucherId).ToList();
+
+        var modes =
+            await _context
+                .Set<PaymentVoucherPayments>()
+                .AsNoTracking()
+                .Where(x => ids.Contains(x.PaymentVoucherId))
+                .Select(x => new { x.PaymentVoucherId, x.Mode, x.LineNo })
+                .ToListAsync();
+
+        Dictionary<long, string> modeText =
+            modes
+                .GroupBy(x => x.PaymentVoucherId)
+                .ToDictionary
+                (
+                    g => g.Key,
+                    g => string.Join(
+                        ", ",
+                        g.OrderBy(x => x.LineNo)
+                         .Select(x => x.Mode)
+                         .Distinct())
+                );
+
+        List<PaymentVoucherDto> items =
+            rows
+                .Select
+                (
+                    x =>
+                    {
+                        PaymentVoucherDto dto =
+                            ToDto(x);
+
+                        dto.PaymentModes =
+                            modeText.TryGetValue(x.PaymentVoucherId, out string? text)
+                                ? text
+                                : string.Empty;
+
+                        return dto;
+                    }
+                )
+                .ToList();
+
+        return new PagedResult<PaymentVoucherDto>
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
+    }
+
+
+    //===========================================================
     // Get Defaults (Add form) : next voucher number
     //
     // Sequence = the higher of
@@ -476,6 +697,7 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
         return new PaymentVoucherDto
         {
             PaymentVoucherId = x.PaymentVoucherId,
+            PublicId = x.PublicId,
             VoucherNo = x.VoucherNo,
             VoucherDate = x.VoucherDate.ToString(DateFormat, CultureInfo.InvariantCulture),
             BranchId = x.BranchId,
@@ -1398,6 +1620,7 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
         return new PaymentVoucherSavedDto
         {
             PaymentVoucherId = entity.PaymentVoucherId,
+            PublicId = entity.PublicId,
             VoucherNo = entity.VoucherNo
         };
     }
@@ -2165,4 +2388,31 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
                     !x.IsDeleted
             );
     }
-}
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<PaymentVoucher>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.PaymentVoucherId)
+            .FirstOrDefaultAsync();
+    }
+}

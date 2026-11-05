@@ -73,7 +73,6 @@ CREATE TABLE IF NOT EXISTS public."OpeningStockLines"
     "Quantity"           numeric(18,2)          NOT NULL,
     "UnitCost"           numeric(18,4)          NOT NULL,
     "LineValue"          numeric(18,2)          NOT NULL DEFAULT 0,
-    "SalePrice"          numeric(18,2)          NOT NULL DEFAULT 0,
     "Mrp"                numeric(18,2)          NOT NULL DEFAULT 0,
     "MarginPercent"      numeric(9,4)           NOT NULL DEFAULT 0,
     "GrossUnitCost"      numeric(18,4)          NOT NULL DEFAULT 0,

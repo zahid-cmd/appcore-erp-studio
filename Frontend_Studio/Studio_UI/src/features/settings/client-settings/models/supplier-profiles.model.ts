@@ -8,6 +8,10 @@ export interface Supplier
     SupplierId:
         number;
 
+    // The id used in links and API calls (uuid); '' before save
+    PublicId:
+        string;
+
     // SUP-000001 (central code generator)
     SupplierCode:
         string;
@@ -190,6 +194,35 @@ export interface CreateSupplier
 }
 
 
+/* ============================================================
+   List page query (server-side pagination)
+============================================================ */
+
+export interface SupplierPageQuery
+{
+    page:number;
+
+    pageSize:number;
+
+    search:string;
+
+    sort:string;
+
+    dir:'asc' | 'desc';
+
+    // Brand Distributor / Local Vendor / Service Provider ('' = all)
+    type:string;
+
+    // Motor Bikes / Spare Parts / Accessories / General (null = all)
+    supplyType:string | null;
+
+    brandId:number | null;
+
+    // true = Active, false = Inactive, null = all
+    status:boolean | null;
+}
+
+
 export interface UpdateSupplier
 extends CreateSupplier
 {
@@ -245,4 +278,4 @@ export interface SupplierProfilesDefaults
 
     Brands:
         SupplierBrandOption[];
-}
+}

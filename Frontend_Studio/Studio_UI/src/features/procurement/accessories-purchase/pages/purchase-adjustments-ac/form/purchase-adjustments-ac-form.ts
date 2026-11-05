@@ -267,6 +267,11 @@ implements OnInit
         'add';
 
 
+    // uuid from the address bar (the record is loaded by it)
+    routePublicId:
+        string =
+        '';
+
     entityId:
         number =
         0;
@@ -445,9 +450,8 @@ implements OnInit
         void
     {
         const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
+            this.route.snapshot.paramMap.get('id')
+            ?? '';
 
 
         const url =
@@ -499,10 +503,10 @@ implements OnInit
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
-            this.entityId =
+            this.routePublicId =
                 id;
 
 
@@ -568,12 +572,16 @@ implements OnInit
     {
         this.purchaseadjustmentsacservice
             .getById(
-                this.entityId
+                this.routePublicId
             )
             .subscribe(
             {
                 next:(response) =>
                 {
+                    // Internal id of the loaded record (links use the uuid)
+                    this.entityId =
+                        Number((response as any)?.id ?? (response as any)?.Id ?? 0);
+
                     this.entity =
                         response;
 

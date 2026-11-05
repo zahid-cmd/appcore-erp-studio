@@ -202,6 +202,32 @@
 
     </app-page-canvas>
 
+    <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="psa-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="psa-summary-item">
+                    <span class="psa-summary-label">{{ item.label }}</span>
+                    <b
+                        class="psa-summary-value"
+                        [class.psa-ok]="item.tone === 'ok'"
+                        [class.psa-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="psa-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
 
 
     <!-- =====================================================

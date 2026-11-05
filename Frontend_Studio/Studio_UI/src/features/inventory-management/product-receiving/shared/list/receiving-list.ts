@@ -106,8 +106,7 @@ import
     ReceivingPageConfig,
     formatReceivingDate,
     formatReceivingQty,
-    receivingConfig,
-    receivingMatches
+    receivingConfig
 }
 from '../receiving.model';
 
@@ -207,8 +206,27 @@ export class ReceivingList
     rows:
         ReceivingRow[] = [];
 
-    filteredRows:
-        ReceivingRow[] = [];
+    // Rows on all pages after the tab / type / search (server)
+    totalRecords:
+        number = 0;
+
+    // Tab / type / status counts from the server
+    counts:
+        Record<string, number> = {};
+
+    // Server sort ('' = newest first)
+    private sortField:
+        string = '';
+
+    private sortDirection:
+        'asc' | 'desc' = 'asc';
+
+    private searchTimer?:
+        number;
+
+    // A load that is out of date is ignored
+    private loadSeq:
+        number = 0;
 
     pagedRows:
         ReceivingRow[] = [];
@@ -293,43 +311,88 @@ export class ReceivingList
 
         this.loadFailed = false;
 
+        const seq =
+            ++this.loadSeq;
+
         this.cdr.detectChanges();
 
         this.service
-            .getAll(this.page.path)
+            .getPaged
+            (
+                this.page.path,
+                {
+                    page:
+                        this.currentPage,
+                    pageSize:
+                        this.pageSize,
+                    search:
+                        this.searchText,
+                    sort:
+                        this.sortField,
+                    dir:
+                        this.sortDirection,
+                    tab:
+                        this.selectedTab
+                }
+            )
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
-                    rows =>
+                    result =>
                     {
+                        if
+                        (
+                            seq !== this.loadSeq
+                        )
+                        {
+                            return;
+                        }
+
                         this.rows =
-                            rows.map
-                            (
-                                x =>
-                                ({
-                                    ...x,
-                                    DateText:formatReceivingDate(x.ReceivingDate),
-                                    QuantityText:formatReceivingQty(x.TotalQuantity),
-                                    DocumentText:[x.SupplierInvoiceNo, x.MushakNo].filter(v => !!v).join(' · ')
-                                })
-                            );
+                            result.items.map(x => this.toRow(x));
+
+                        this.pagedRows =
+                            this.rows;
+
+                        this.totalRecords =
+                            result.totalCount;
+
+                        this.currentPage =
+                            result.page || 1;
+
+                        this.counts =
+                            result.counts ?? {};
 
                         this.loading = false;
 
-                        this.applyFilters();
+                        this.cdr.detectChanges();
                     },
 
                 error:
                     () =>
                     {
+                        if
+                        (
+                            seq !== this.loadSeq
+                        )
+                        {
+                            return;
+                        }
+
                         this.loading = false;
 
                         this.loadFailed = true;
 
                         this.rows = [];
 
-                        this.applyFilters();
+                        this.pagedRows = [];
+
+                        this.totalRecords = 0;
+
+                        this.counts = {};
+
+                        this.cdr.detectChanges();
                     }
             });
 
@@ -372,8 +435,24 @@ export class ReceivingList
         ];
     }
 
+    // A list row with its display texts
+    private toRow
+    (
+        x:
+            any
+    ):
+        ReceivingRow
+    {
+        return ({
+            ...x,
+            DateText:formatReceivingDate(x.ReceivingDate),
+            QuantityText:formatReceivingQty(x.TotalQuantity),
+            DocumentText:[x.SupplierInvoiceNo, x.MushakNo].filter(v => !!v).join(' · ')
+        });
+    }
+
     //===========================================================
-    // Filters
+    // Filters (tab / type / search / sort / page on the server)
     //===========================================================
 
     onTabChange
@@ -385,9 +464,10 @@ export class ReceivingList
     {
         this.selectedTab = tab;
 
-        this.applyFilters();
+        this.reload();
     }
 
+    // Search after a short pause in typing
     onSearch
     (
         value:
@@ -397,24 +477,34 @@ export class ReceivingList
     {
         this.searchText = value ?? '';
 
-        this.applyFilters();
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(this.searchTimer);
+        }
+
+        this.searchTimer =
+            window.setTimeout
+            (
+                () =>
+                {
+                    this.searchTimer = undefined;
+
+                    this.reload();
+                },
+                300
+            );
     }
 
-    private applyFilters():
+    // Back to page 1 and load
+    private reload():
         void
     {
-        this.filteredRows =
-            this.rows.filter
-            (
-                x =>
-                    (this.selectedTab === 'all' || x.Status.toLowerCase() === this.selectedTab)
-                    &&
-                    receivingMatches(x, this.searchText)
-            );
-
         this.currentPage = 1;
 
-        this.paginate();
+        this.load();
     }
 
     onSort
@@ -424,32 +514,11 @@ export class ReceivingList
     ):
         void
     {
-        const field =
-            event.field === 'DateText'
-                ? 'ReceivingDate'
-                : event.field === 'QuantityText'
-                    ? 'TotalQuantity'
-                    : event.field;
+        this.sortField = event?.field ?? '';
 
-        const sign =
-            event.direction === 'asc' ? 1 : -1;
+        this.sortDirection = event?.direction === 'desc' ? 'desc' : 'asc';
 
-        this.filteredRows =
-            [...this.filteredRows].sort
-            (
-                (a: any, b: any) =>
-                {
-                    const x = a[field];
-
-                    const y = b[field];
-
-                    return (typeof x === 'number' && typeof y === 'number'
-                        ? x - y
-                        : String(x ?? '').localeCompare(String(y ?? ''))) * sign;
-                }
-            );
-
-        this.paginate();
+        this.reload();
     }
 
     onPageChange
@@ -461,7 +530,7 @@ export class ReceivingList
     {
         this.currentPage = page;
 
-        this.paginate();
+        this.load();
     }
 
     onPageSizeChange
@@ -473,21 +542,48 @@ export class ReceivingList
     {
         this.pageSize = size;
 
-        this.currentPage = 1;
-
-        this.paginate();
+        this.reload();
     }
 
-    private paginate():
-        void
+    //===========================================================
+    // Summary Line (below the canvas) : documents by status
+    // (search applied)
+    //===========================================================
+
+    get summaryTotal():
+        number
     {
-        const start =
-            (this.currentPage - 1) * this.pageSize;
+        return Number(this.counts['All'] ?? 0);
+    }
 
-        this.pagedRows =
-            this.filteredRows.slice(start, start + this.pageSize);
+    // A status count ; the server keys are the status names
+    countOf
+    (
+        status:
+            string
+    ):
+        number
+    {
+        const key =
+            Object.keys(this.counts).find(k => k.toLowerCase() === status.toLowerCase());
 
-        this.cdr.detectChanges();
+        return key ? Number(this.counts[key] ?? 0) : 0;
+    }
+
+    get summaryNote():
+        string
+    {
+        return this.searchText.trim()
+            ? 'Filtered records'
+            : 'All records';
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 
     //===========================================================
@@ -504,6 +600,10 @@ export class ReceivingList
         void
     {
         this.searchText = '';
+
+        this.sortField = '';
+
+        this.currentPage = 1;
 
         this.selectedTab = 'all';
 
@@ -522,7 +622,7 @@ export class ReceivingList
             row?.ReceivingId
         )
         {
-            this.router.navigate([this.page.route, 'view', row.ReceivingId]);
+            this.router.navigate([this.page.route, 'view', row.PublicId]);
         }
     }
 }

@@ -797,6 +797,7 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                     return new SystemConfigurationsDto
                     {
                         SystemConfigurationId = x.SystemConfigurationId,
+                        PublicId = x.PublicId,
                         NavigationModuleId = x.NavigationModuleId,
                         ModuleCode = module.Code ?? string.Empty,
                         ModuleName = module.Name ?? string.Empty,
@@ -1083,6 +1084,52 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
         return await BuildSwitchesAsync(
             await GetAccessAsync(userId),
             null);
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<SystemConfigurationsEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.SystemConfigurationId)
+            .FirstOrDefaultAsync();
+    }
+
+
+    //===========================================================
+    // Internal id -> Public Id
+    //===========================================================
+
+    public async Task<Guid>
+        GetPublicIdAsync
+        (
+            long id
+        )
+    {
+        return await _context
+            .Set<SystemConfigurationsEntity>()
+            .AsNoTracking()
+            .Where(x => x.SystemConfigurationId == id)
+            .Select(x => x.PublicId)
+            .FirstOrDefaultAsync();
     }
 
 

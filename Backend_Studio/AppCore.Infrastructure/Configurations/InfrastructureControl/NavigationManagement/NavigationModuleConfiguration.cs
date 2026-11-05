@@ -39,6 +39,22 @@ public class NavigationModuleConfiguration
 
         builder.HasKey(x => x.Id);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_NavigationModules_PublicId");
+
         //===========================================================
         // Code Information
         //===========================================================

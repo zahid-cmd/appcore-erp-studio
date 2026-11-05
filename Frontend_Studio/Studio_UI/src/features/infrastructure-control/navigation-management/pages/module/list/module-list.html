@@ -128,6 +128,38 @@
     </app-page-canvas>
 
     <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryTotal > 0)
+    {
+        <div class="ics-summary">
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Total</span>
+                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Active</span>
+                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Inactive</span>
+                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
+            </span>
+
+            <span class="ics-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
+
+
+    <!-- =====================================================
          HISTORY
     ====================================================== -->
 

@@ -38,4 +38,8 @@ public interface IOpeningStockRepository
     Task<IReadOnlyList<ActivityHistoryDto>> GetHistoryAsync();
 
     Task<IReadOnlyList<ActivityHistoryDto>> GetEntityHistoryAsync(long id);
+
+    // Public Id -> internal id (null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

@@ -1,0 +1,23 @@
+<!-- ===========================================================
+     TEST RIDE BAND
+============================================================ -->
+
+<section class="wrap section bottom">
+    <div class="band">
+        <div class="text">
+            <h2 class="band-title">{{ t('ride.title') }}</h2>
+            <p>{{ t('ride.text') }}</p>
+        </div>
+        <div class="buttons">
+            <a class="band-btn solid" routerLink="/enquire" [queryParams]="rideQuery()">Book online</a>
+            @if (book())
+            {
+                <a class="band-btn outline" [href]="book()" target="_blank" rel="noopener">WhatsApp</a>
+            }
+            @if (call())
+            {
+                <a class="band-btn outline" [href]="call()">Call {{ company().hotline }}</a>
+            }
+        </div>
+    </div>
+</section>

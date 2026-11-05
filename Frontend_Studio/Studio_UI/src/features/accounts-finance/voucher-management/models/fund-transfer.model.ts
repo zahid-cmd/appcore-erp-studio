@@ -31,6 +31,10 @@ export type FundTransferStatus =
 
 export interface FundTransfer
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     FundTransferId:
         number;
 
@@ -146,6 +150,10 @@ export interface UpdateFundTransfer
 
 export interface FundTransferSaved
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     FundTransferId:
         number;
 

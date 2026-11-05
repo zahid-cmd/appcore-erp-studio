@@ -14,6 +14,9 @@ public class PaymentVoucherDto
 {
     public long PaymentVoucherId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     public string VoucherNo { get; set; } = string.Empty;
 
     // yyyy-MM-dd
@@ -160,6 +163,9 @@ public class PaymentVoucherCreditDto
 public class PaymentVoucherSavedDto
 {
     public long PaymentVoucherId { get; set; }
+
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
 
     public string VoucherNo { get; set; } = string.Empty;
 }

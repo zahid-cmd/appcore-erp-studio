@@ -36,6 +36,15 @@ public class AccessoriesConfiguration
 
 
         //===========================================================
+        // Sales account (2026-11-04)
+        //===========================================================
+
+        builder.Property(x => x.SalesLedgerCode)
+               .IsRequired()
+               .HasMaxLength(50);
+
+
+        //===========================================================
         // Primary Key
         //===========================================================
 
@@ -43,6 +52,19 @@ public class AccessoriesConfiguration
 
         builder.Property(x => x.AccessoryId)
                .ValueGeneratedOnAdd();
+
+
+        //===========================================================
+        // Public Id (links and API calls; uuid v7)
+        //===========================================================
+
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_Accessories_PublicId");
 
 
         //===========================================================
@@ -142,6 +164,20 @@ public class AccessoriesConfiguration
         builder.Property(x => x.MaxStockLevel)
                .IsRequired()
                .HasDefaultValue(0);
+
+
+        //===========================================================
+        // Movement Class (CHECK constraint in StorageBins_Engine.sql)
+        //===========================================================
+
+        builder.Property(x => x.MovementClass)
+               .IsRequired()
+               .HasMaxLength(20)
+               .HasDefaultValue("Slow");
+
+        builder.Property(x => x.MovementClassAuto)
+               .IsRequired()
+               .HasDefaultValue(false);
 
 
         //===========================================================

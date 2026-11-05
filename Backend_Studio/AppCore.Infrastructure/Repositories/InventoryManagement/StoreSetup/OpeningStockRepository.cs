@@ -69,6 +69,21 @@ using VatRegisterEntity =
 using PurchaseVatEntity =
     AppCore.Domain.Entities.VatManagement.VatSetup.PurchaseVat;
 
+using BinOccupancy =
+    AppCore.Infrastructure.Configurations.Settings.ProductSettings.BinOccupancy;
+
+using RackLabels =
+    AppCore.Infrastructure.Repositories.Settings.ProductSettings.RackLabels;
+
+using RackMapDto =
+    AppCore.Application.Settings.ProductSettings.RackMapDto;
+
+using RackMapShelfDto =
+    AppCore.Application.Settings.ProductSettings.RackMapShelfDto;
+
+using RackMapBinDto =
+    AppCore.Application.Settings.ProductSettings.RackMapBinDto;
+
 using SalesVatEntity =
     AppCore.Domain.Entities.VatManagement.VatSetup.SalesVat;
 
@@ -173,6 +188,11 @@ public class OpeningStockRepository
     // (OPENING-STOCK); OFF = chosen per document
     private const string SwitchLedgerLocked = "CFG-MOD-012-0006";
 
+    // Profit % On Sale Price (all types). OFF (default) = profit on
+    // cost (markup : profit ÷ cost); ON = margin on the net sale
+    // (profit ÷ MRP excl. sales VAT)
+    private const string SwitchProfitOnSale = "CFG-MOD-012-0010";
+
     // Opening Stock Includes Unclaimed VAT, per type (critical).
     // ON = the cost is typed incl. VAT : the VAT part (Purchase VAT
     // rule, input credit allowed) goes Dr VAT Current Account and
@@ -252,6 +272,51 @@ public class OpeningStockRepository
             "SP" => "Spare Parts & Lubricants",
             _ => "Accessories"
         };
+
+    //===========================================================
+    // Bins (Rack -> Shelf -> Bin; one live item per bin across
+    // spare parts and accessories). The product's OWN current bin
+    // counts as free for it. null = OK, else the reason.
+    //===========================================================
+
+    private static string HolderTypeOf(string type) =>
+        type == "AC"
+            ? BinOccupancy.AccessoryType
+            : BinOccupancy.SparePartType;
+
+    private static string? BinProblem
+    (
+        RackMapDto? rack,
+        long warehouseId,
+        int shelf,
+        int bin,
+        string type,
+        long productId
+    )
+    {
+        RackMapBinDto? cell =
+            rack?.Shelves
+                .FirstOrDefault(x => x.ShelfNumber == shelf)?
+                .Bins
+                .FirstOrDefault(x => x.BinNumber == bin);
+
+        if (rack != null
+            && rack.WarehouseId == warehouseId
+            && cell != null
+            && cell.Holder != null
+            && cell.Holder.ItemType == HolderTypeOf(type)
+            && cell.Holder.ItemId == productId)
+        {
+            return null;
+        }
+
+        return BinOccupancy.CheckBin(rack, warehouseId, shelf, bin);
+    }
+
+    // 0 / missing with a rack and shelf = bin 1 (old clients)
+    private static int BinOf(int bin) =>
+        bin > 0 ? bin : 1;
+
 
     private static bool HasShelves(string type) =>
         type is "SP" or "AC";
@@ -577,7 +642,6 @@ public class OpeningStockRepository
                             Quantity = x.Quantity,
                             UnitCost = x.UnitCost,
                             LineValue = x.LineValue,
-                            SalePrice = x.SalePrice,
                             Mrp = x.Mrp,
                             MarginPercent = x.MarginPercent,
                             GrossUnitCost = x.GrossUnitCost,
@@ -586,12 +650,40 @@ public class OpeningStockRepository
                             RackManagementId = x.RackManagementId,
                             RackCode = x.RackCode,
                             ShelfNumber = x.ShelfNumber,
+                            BinNumber = x.BinNumber,
                             SaveAsDefault = x.SaveAsDefault,
                             ShortNotes = x.ShortNotes,
                             BatchNo = x.BatchNo
                         }
                 )
                 .ToListAsync();
+
+        // Shelf / bin labels from the racks' names
+        List<long> lineRackIds =
+            dto.Lines
+                .Where(x => x.RackManagementId.HasValue && x.ShelfNumber > 0)
+                .Select(x => x.RackManagementId!.Value)
+                .Distinct()
+                .ToList();
+
+        Dictionary<long, string> lineRackNames =
+            lineRackIds.Count == 0
+                ? new Dictionary<long, string>()
+                : await _context
+                    .Set<RackManagementEntity>()
+                    .AsNoTracking()
+                    .Where(x => lineRackIds.Contains(x.RackManagementId))
+                    .ToDictionaryAsync(x => x.RackManagementId, x => x.RackName);
+
+        foreach (OpeningStockLineDto line in dto.Lines.Where(x => x.RackManagementId.HasValue && x.ShelfNumber > 0))
+        {
+            string rackName =
+                lineRackNames.GetValueOrDefault(line.RackManagementId!.Value, string.Empty);
+
+            line.ShelfLabel = RackLabels.Shelf(rackName, line.ShelfNumber);
+
+            line.BinCode = RackLabels.BinCode(rackName, line.ShelfNumber, line.BinNumber);
+        }
 
         dto.LineCount =
             dto.Lines.Count;
@@ -637,6 +729,7 @@ public class OpeningStockRepository
         return new OpeningStockDto
         {
             OpeningStockId = x.OpeningStockId,
+            PublicId = x.PublicId,
             PageType = x.PageType,
             OpeningNo = x.OpeningNo,
             OpeningDate = DateText(x.OpeningDate),
@@ -687,6 +780,7 @@ public class OpeningStockRepository
                 DefaultLedgerCode = PostingLedgerCodes.TryGet(_context, PostingPurposes.OpeningStock) ?? string.Empty,
                 LedgerLocked = await LedgerLockedAsync(),
                 VatIncluded = await VatIncludedAsync(type),
+                ProfitOnSale = await IsSwitchOnAsync(SwitchProfitOnSale, false),
                 UnitsRequired = keyBattery,
                 UniqueKeyNo = keyBattery && await IsSwitchOnAsync(SwitchUniqueKeyNo, false),
                 UniqueBatteryNo = keyBattery && await IsSwitchOnAsync(SwitchUniqueBatteryNo, false)
@@ -832,6 +926,36 @@ public class OpeningStockRepository
                             }
                     )
                     .ToListAsync();
+
+            // Zone and bins per shelf of every rack
+            List<RackMapDto> rackMap =
+                await BinOccupancy.GetRackMapAsync(
+                    _context,
+                    0,
+                    0,
+                    0,
+                    true,
+                    result.Racks.Select(x => x.Id).ToArray());
+
+            foreach (OpeningStockRackDto rack in result.Racks)
+            {
+                RackMapDto? map =
+                    BinOccupancy.FindRack(rackMap, rack.Id);
+
+                if (map == null)
+                {
+                    continue;
+                }
+
+                rack.ZoneCode = map.ZoneCode;
+
+                rack.ZoneName = map.ZoneName;
+
+                rack.Shelves =
+                    map.Shelves
+                        .Select(s => new OpeningStockRackShelfDto { ShelfNumber = s.ShelfNumber, ShelfLabel = s.ShelfLabel, BinCount = s.BinCount })
+                        .ToList();
+            }
         }
 
         result.Products =
@@ -1028,10 +1152,13 @@ public class OpeningStockRepository
                 .AsNoTracking()
                 .ToDictionaryAsync(x => x.ProductSubCategoryId, x => x.SubCategoryName ?? string.Empty);
 
-        Dictionary<long, (decimal Cost, decimal Price, decimal Mrp)> last =
+        Dictionary<long, (decimal Cost, decimal Mrp)> last =
             new();
 
-        List<(long ProductId, long WarehouseId, long RackId, int Shelf)> shelves =
+        List<(long ProductId, long WarehouseId, long RackId, int Shelf, int Bin)> shelves =
+            new();
+
+        Dictionary<long, string> shelfRackNames =
             new();
 
         if (details)
@@ -1043,7 +1170,7 @@ public class OpeningStockRepository
                         .Set<StockBatchesEntity>()
                         .AsNoTracking()
                         .Where(x => x.ProductType == type && x.Status != BatchCancelled)
-                        .Select(x => new { x.ProductId, x.StockBatchId, x.UnitCost, x.SalePrice, x.Mrp })
+                        .Select(x => new { x.ProductId, x.StockBatchId, x.UnitCost, x.Mrp })
                         .ToListAsync()
                 )
                 .GroupBy(x => x.ProductId)
@@ -1054,12 +1181,24 @@ public class OpeningStockRepository
                     {
                         var row = g.OrderByDescending(x => x.StockBatchId).First();
 
-                        return (row.UnitCost, row.SalePrice, row.Mrp);
+                        return (row.UnitCost, row.Mrp);
                     }
                 );
 
             shelves =
                 await ShelvesAsync(type, rows.Select(x => x.Id).ToList());
+
+            List<long> shelfRackIds =
+                shelves.Select(s => s.RackId).Distinct().ToList();
+
+            shelfRackNames =
+                shelfRackIds.Count == 0
+                    ? new Dictionary<long, string>()
+                    : await _context
+                        .Set<RackManagementEntity>()
+                        .AsNoTracking()
+                        .Where(r => shelfRackIds.Contains(r.RackManagementId))
+                        .ToDictionaryAsync(r => r.RackManagementId, r => r.RackName);
         }
 
         return rows
@@ -1076,13 +1215,23 @@ public class OpeningStockRepository
                         SubCategoryName = subCategories.GetValueOrDefault(x.SubCategoryId, string.Empty),
                         HasLedger = !string.IsNullOrWhiteSpace(x.InventoryLedgerCode),
                         LastCost = last.TryGetValue(x.Id, out var figures) ? figures.Cost : 0m,
-                        LastSalePrice = last.TryGetValue(x.Id, out var prices) ? prices.Price : 0m,
                         LastMrp = last.TryGetValue(x.Id, out var mrps) ? mrps.Mrp : 0m,
                         VatType = x.VatType,
                         Shelves =
                             shelves
                                 .Where(s => s.ProductId == x.Id)
-                                .Select(s => new OpeningStockShelfDto { WarehouseId = s.WarehouseId, RackManagementId = s.RackId, ShelfNumber = s.Shelf })
+                                .Select
+                                (
+                                    s =>
+                                        new OpeningStockShelfDto
+                                        {
+                                            WarehouseId = s.WarehouseId,
+                                            RackManagementId = s.RackId,
+                                            ShelfNumber = s.Shelf,
+                                            BinNumber = s.Bin,
+                                            BinCode = RackLabels.BinCode(shelfRackNames.GetValueOrDefault(s.RackId, string.Empty), s.Shelf, s.Bin)
+                                        }
+                                )
                                 .ToList()
                     }
             )
@@ -1093,7 +1242,7 @@ public class OpeningStockRepository
     }
 
 
-    private async Task<List<(long ProductId, long WarehouseId, long RackId, int Shelf)>>
+    private async Task<List<(long ProductId, long WarehouseId, long RackId, int Shelf, int Bin)>>
         ShelvesAsync
         (
             string type,
@@ -1102,7 +1251,7 @@ public class OpeningStockRepository
     {
         if (!HasShelves(type) || productIds.Count == 0)
         {
-            return new List<(long, long, long, int)>();
+            return new List<(long, long, long, int, int)>();
         }
 
         if (type == "SP")
@@ -1113,10 +1262,10 @@ public class OpeningStockRepository
                         .Set<SparePartLocationsEntity>()
                         .AsNoTracking()
                         .Where(x => productIds.Contains(x.SparePartId))
-                        .Select(x => new { x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber })
+                        .Select(x => new { x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
                         .ToListAsync()
                 )
-                .Select(x => (x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber))
+                .Select(x => (x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber))
                 .ToList();
         }
 
@@ -1126,10 +1275,10 @@ public class OpeningStockRepository
                     .Set<AccessoryLocationsEntity>()
                     .AsNoTracking()
                     .Where(x => productIds.Contains(x.AccessoryId))
-                    .Select(x => new { x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber })
+                    .Select(x => new { x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
                     .ToListAsync()
             )
-            .Select(x => (x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber))
+            .Select(x => (x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber))
             .ToList();
     }
 
@@ -1487,6 +1636,9 @@ public class OpeningStockRepository
         Dictionary<long, RackManagementEntity> racks =
             new();
 
+        List<RackMapDto> rackMap =
+            new();
+
         if (HasShelves(type))
         {
             List<long> rackIds =
@@ -1502,7 +1654,22 @@ public class OpeningStockRepository
                     .AsNoTracking()
                     .Where(x => rackIds.Contains(x.RackManagementId) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.RackManagementId);
+
+            rackMap =
+                rackIds.Count == 0
+                    ? new List<RackMapDto>()
+                    : await BinOccupancy.GetRackMapAsync(
+                        _context,
+                        0,
+                        0,
+                        0,
+                        false,
+                        rackIds.ToArray());
         }
+
+        // Bins taken by the lines of this document
+        HashSet<(long RackId, int Shelf, int Bin)> takenBins =
+            new();
 
         Resolved result =
             new()
@@ -1546,28 +1713,23 @@ public class OpeningStockRepository
                     $"{product.Name} : the quantity can have at most 2 decimals.");
             }
 
-            if (input.Mrp < 0 || input.SalePrice < 0)
+            // MRP is the sale price (single source of truth)
+            if (input.Mrp < 0)
             {
                 throw new InvalidOperationException(
-                    $"{product.Name} : MRP and sale price cannot be below zero.");
+                    $"{product.Name} : MRP cannot be below zero.");
             }
 
-            if (input.Mrp != Math.Round(input.Mrp, 2) || input.SalePrice != Math.Round(input.SalePrice, 2))
+            if (input.Mrp != Math.Round(input.Mrp, 2))
             {
                 throw new InvalidOperationException(
-                    $"{product.Name} : MRP and sale price can have at most 2 decimals.");
+                    $"{product.Name} : MRP can have at most 2 decimals.");
             }
 
-            if (input.Mrp > 0 && input.SalePrice > input.Mrp)
+            if (posting && input.Mrp <= 0)
             {
                 throw new InvalidOperationException(
-                    $"{product.Name} : the sale price {input.SalePrice:N2} is above the MRP {input.Mrp:N2}.");
-            }
-
-            if (posting && (input.Mrp <= 0 || input.SalePrice <= 0))
-            {
-                throw new InvalidOperationException(
-                    $"{product.Name} : enter the MRP and the sale price (an unpriced batch cannot be sold).");
+                    $"{product.Name} : enter the MRP (it is the sale price; an unpriced batch cannot be sold).");
             }
 
             // Purchase VAT rate of the product on the date (input
@@ -1651,6 +1813,14 @@ public class OpeningStockRepository
                     $"{product.Name} : enter the unit cost (excl. VAT).");
             }
 
+            // MRP (the sale price) is never below the cost : equal or
+            // more. The cost as typed (incl. VAT when it carries VAT).
+            if (input.Mrp > 0 && input.Mrp < Math.Round(grossCost, 2, MidpointRounding.AwayFromZero))
+            {
+                throw new InvalidOperationException(
+                    $"{product.Name} : the MRP {input.Mrp:N2} is below the cost {grossCost:N2}. MRP must be equal to or more than the cost.");
+            }
+
             if (posting && string.IsNullOrWhiteSpace(product.InventoryLedgerCode))
             {
                 throw new InvalidOperationException(
@@ -1671,10 +1841,29 @@ public class OpeningStockRepository
                         $"{product.Name} : the rack is not in {warehouse.WarehouseName}.");
                 }
 
-                if (rack.ShelfCount > 0 && (input.ShelfNumber < 1 || input.ShelfNumber > rack.ShelfCount))
+                // Rack -> Shelf -> Bin : a free bin (or the product's own)
+                input.BinNumber =
+                    BinOf(input.BinNumber);
+
+                string? problem =
+                    BinProblem(
+                        BinOccupancy.FindRack(rackMap, rackId),
+                        warehouse.WarehouseId,
+                        input.ShelfNumber,
+                        input.BinNumber,
+                        type,
+                        product.Id);
+
+                if (problem != null)
                 {
                     throw new InvalidOperationException(
-                        $"{product.Name} : rack {rack.RackCode} has shelves 1 to {rack.ShelfCount}.");
+                        $"{product.Name} : {problem}");
+                }
+
+                if (!takenBins.Add((rackId, input.ShelfNumber, input.BinNumber)))
+                {
+                    throw new InvalidOperationException(
+                        $"{product.Name} : bin {RackLabels.BinCode(rack.RackName, input.ShelfNumber, input.BinNumber)} is chosen for another line too (one item per bin).");
                 }
             }
 
@@ -1884,12 +2073,12 @@ public class OpeningStockRepository
                     GrossUnitCost = line.GrossUnitCost,
                     VatRate = line.VatRate,
                     VatAmount = Money(line.Input.Quantity * line.GrossUnitCost) - Money(line.Input.Quantity * line.UnitCost),
-                    SalePrice = line.Input.SalePrice,
                     Mrp = line.Input.Mrp,
                     MarginPercent = input.CostBasis == BasisMrp ? line.Input.MarginPercent : 0m,
                     RackManagementId = line.Rack?.RackManagementId,
                     RackCode = Limit(line.Rack?.RackCode, 50),
                     ShelfNumber = line.Rack == null ? 0 : line.Input.ShelfNumber,
+                    BinNumber = line.Rack == null ? 0 : BinOf(line.Input.BinNumber),
                     SaveAsDefault = line.Rack != null && line.Input.SaveAsDefault,
                     ShortNotes = Limit(line.Input.ShortNotes, 200),
                     BatchNo = string.Empty
@@ -2001,6 +2190,7 @@ public class OpeningStockRepository
         return new OpeningStockSavedDto
         {
             OpeningStockId = entity.OpeningStockId,
+            PublicId = entity.PublicId,
             OpeningNo = entity.OpeningNo,
             Status = entity.Status
         };
@@ -2058,6 +2248,7 @@ public class OpeningStockRepository
         return new OpeningStockSavedDto
         {
             OpeningStockId = entity.OpeningStockId,
+            PublicId = entity.PublicId,
             OpeningNo = entity.OpeningNo,
             Status = entity.Status
         };
@@ -2174,11 +2365,11 @@ public class OpeningStockRepository
                                     // (incl. VAT) cost in GrossUnitCost. Sending
                                     // the net one took the VAT out a second time.
                                     UnitCost = x.GrossUnitCost > 0 ? x.GrossUnitCost : x.UnitCost,
-                                    SalePrice = x.SalePrice,
                                     Mrp = x.Mrp,
                                     MarginPercent = x.MarginPercent,
                                     RackManagementId = x.RackManagementId,
                                     ShelfNumber = x.ShelfNumber,
+                                    BinNumber = x.BinNumber,
                                     SaveAsDefault = x.SaveAsDefault,
                                     ShortNotes = x.ShortNotes
                                 }
@@ -2441,8 +2632,13 @@ public class OpeningStockRepository
                             QuantityOnHand = line.Quantity,
                             QuantityOut = 0m,
                             RemainingValue = line.LineValue,
-                            SalePrice = line.SalePrice,
                             Mrp = line.Mrp,
+                            // VAT paid at source (base VAT), per unit
+                            SourceVatRate = line.VatRate,
+                            SourceVatPerUnit =
+                                line.Quantity > 0m
+                                    ? Math.Round(line.VatAmount / line.Quantity, 4, MidpointRounding.AwayFromZero)
+                                    : 0m,
                             Status = BucketOnHand,
                             CreatedBy = userId,
                             CreatedDate = now
@@ -2451,6 +2647,21 @@ public class OpeningStockRepository
                     _context.Set<StockBatchesEntity>().Add(batch);
 
                     batches.Add((line, batch));
+
+                    // The product's declared MRP (price index)
+                    AppCore.Infrastructure.Platform.Inventory.ProductPriceIndexWriter.Add(
+                        _context,
+                        type,
+                        line.ProductId,
+                        line.ProductCode,
+                        line.ProductName,
+                        line.Mrp,
+                        entity.OpeningDate,
+                        AppCore.Infrastructure.Platform.Inventory.ProductPriceIndexWriter.SourceOpening,
+                        entity.OpeningStockId,
+                        entity.OpeningNo,
+                        userId,
+                        now);
                 }
 
                 await _context.SaveChangesAsync();
@@ -2488,7 +2699,7 @@ public class OpeningStockRepository
 
                     if (line.RackManagementId.HasValue && line.SaveAsDefault)
                     {
-                        await SaveShelfAsync(type, line.ProductId, entity.WarehouseId, line.RackManagementId.Value, line.ShelfNumber, userId, now);
+                        await SaveShelfAsync(type, line.ProductId, entity.WarehouseId, line.RackManagementId.Value, line.ShelfNumber, BinOf(line.BinNumber), userId, now);
                     }
                 }
 
@@ -2552,6 +2763,7 @@ public class OpeningStockRepository
         long warehouseId,
         long rackId,
         int shelf,
+        int bin,
         long userId,
         DateTime now
     )
@@ -2572,6 +2784,7 @@ public class OpeningStockRepository
                         WarehouseId = warehouseId,
                         RackManagementId = rackId,
                         ShelfNumber = shelf,
+                        BinNumber = bin,
                         CreatedBy = userId,
                         CreatedDate = now
                     });
@@ -2581,6 +2794,8 @@ public class OpeningStockRepository
                 row.RackManagementId = rackId;
 
                 row.ShelfNumber = shelf;
+
+                row.BinNumber = bin;
             }
 
             return;
@@ -2602,6 +2817,7 @@ public class OpeningStockRepository
                         WarehouseId = warehouseId,
                         RackManagementId = rackId,
                         ShelfNumber = shelf,
+                        BinNumber = bin,
                         CreatedBy = userId,
                         CreatedDate = now
                     });
@@ -2611,6 +2827,8 @@ public class OpeningStockRepository
                 row.RackManagementId = rackId;
 
                 row.ShelfNumber = shelf;
+
+                row.BinNumber = bin;
             }
         }
     }
@@ -2821,6 +3039,14 @@ public class OpeningStockRepository
                     bike.ModifiedDate = now;
                 }
 
+                // Its price index entries are cancelled too
+                await AppCore.Infrastructure.Platform.Inventory.ProductPriceIndexWriter.CancelAsync(
+                    _context,
+                    AppCore.Infrastructure.Platform.Inventory.ProductPriceIndexWriter.SourceOpening,
+                    entity.PageType,
+                    entity.OpeningStockId,
+                    now);
+
                 entity.Status = StatusCancelled;
 
                 entity.CancelReason = reason;
@@ -2991,5 +3217,32 @@ public class OpeningStockRepository
                     }
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (deleted drafts too : the Deleted tab opens them)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.InventoryManagement.StoreSetup.OpeningStock>()
+            .AsNoTracking()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.OpeningStockId)
+            .FirstOrDefaultAsync();
     }
 }

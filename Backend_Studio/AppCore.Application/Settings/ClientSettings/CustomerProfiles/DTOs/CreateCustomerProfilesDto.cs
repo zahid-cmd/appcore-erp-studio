@@ -197,6 +197,15 @@ public class CreateCustomerProfilesDto
     }
 
 
+    // Walk-in tag : kept only for an Outside customer (the sales
+    // pages' Add Customer sets it)
+    public bool IsWalkIn
+    {
+        get;
+        set;
+    }
+
+
     //===========================================================
     // Remarks & Status
     //===========================================================
@@ -213,4 +222,4 @@ public class CreateCustomerProfilesDto
         get;
         set;
     } = true;
-}
+}

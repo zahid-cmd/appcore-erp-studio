@@ -1,0 +1,923 @@
+<div class="app-list-page es-page">
+
+    <!-- =====================================================
+         PAGE HEADER (always full width)
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Enquiry Setup"
+
+        subtitle="Sources, statuses, interest levels, follow-up methods, suspend reasons and time slots"
+
+        icon="fas fa-sliders">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [value]="searchText"
+
+                [placeholder]="searchPlaceholder"
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Add"
+
+                command1Icon="fas fa-plus"
+
+                command1Permission="add"
+
+                [command1Title]="'Add a ' + info.noun.toLowerCase()"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                command3Permission="restore"
+
+                [command3Title]="'Restore the most recently deleted record of ' + info.tabLabel"
+
+                (command3Click)="restore()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                rightCommandTitle="History"
+
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         BODY : list (toolbar + canvas) | form panel
+         The list shrinks to the left while the form is open.
+    ====================================================== -->
+
+    <div
+
+        class="es-body"
+
+        [class.es-open]="panelOpened">
+
+
+        <!-- =================================================
+             LIST
+        ================================================== -->
+
+        <div class="es-main">
+
+            <!-- Toolbar : the five lists | hint and count -->
+
+            <app-page-toolbar>
+
+                <app-control-tabs
+
+                    pageToolbarLeft
+
+                    [tabs]="tabs"
+
+                    [selectedTab]="selectedTab"
+
+                    (selectedTabChange)="onTabChange($event)">
+
+                </app-control-tabs>
+
+
+                <div
+
+                    pageToolbarRight
+
+                    class="es-toolbar-right">
+
+                    @if (!panelOpened)
+                    {
+                        <span
+
+                            class="es-hint"
+
+                            [title]="info.hint">
+
+                            <i class="fas fa-circle-info"></i>
+
+                            {{ info.hint }}
+
+                        </span>
+                    }
+
+                    <span class="es-count">
+
+                        <i [class]="info.icon"></i>
+
+                        {{ tabCount }}
+
+                    </span>
+
+                </div>
+
+            </app-page-toolbar>
+
+
+            <!-- Canvas : the list table -->
+
+            <app-page-canvas
+
+                [config]="canvasConfig">
+
+                <div canvasBody>
+
+                    <app-list-table
+
+                        [columns]="columns"
+
+                        [rows]="pagedRows"
+
+                        [serialOffset]="(currentPage - 1) * pageSize"
+
+                        [loading]="loading"
+
+                        [error]="loadFailed"
+
+                        [actions]="{ view:true, edit:true, delete:true }"
+
+                        (view)="view($event)"
+
+                        (edit)="edit($event)"
+
+                        (delete)="delete($event)"
+
+                        (sortChange)="onSort($event)">
+
+                    </app-list-table>
+
+                </div>
+
+
+                <app-pagination
+
+                    canvasFooter
+
+                    [totalRecords]="filteredRows.length"
+
+                    [currentPage]="currentPage"
+
+                    [pageSize]="pageSize"
+
+                    (pageChange)="onPageChange($event)"
+
+                    (pageSizeChange)="onPageSizeChange($event)">
+
+                </app-pagination>
+
+            </app-page-canvas>
+
+
+            <!-- =====================================================
+                 SUMMARY (the open tab)
+            ====================================================== -->
+
+            @if (summaryTotal > 0)
+            {
+                <div class="ics-summary">
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Total</span>
+                        <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Active</span>
+                        <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Inactive</span>
+                        <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
+                    </span>
+
+                    <span class="ics-summary-note">
+                        {{ summaryNote }}
+                    </span>
+
+                </div>
+            }
+
+        </div>
+
+
+
+        <!-- =================================================
+             FORM PANEL (Add / Update / View)
+        ================================================== -->
+
+        <aside
+
+            class="es-panel"
+
+            [attr.aria-hidden]="!panelOpened">
+
+            <div class="es-panel-card">
+
+                <!-- Panel header : icon · title · hint -->
+
+                <div class="es-panel-head">
+
+                    <div class="es-panel-title">
+
+                        <span class="es-panel-icon">
+
+                            <i [class]="panelInfo.icon"></i>
+
+                        </span>
+
+                        <div class="es-panel-text">
+
+                            <span class="es-panel-name">{{ panelTitle }}</span>
+
+                            <span class="es-panel-sub" [title]="panelSubtitle">{{ panelSubtitle }}</span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Panel body : the form (scrolls) -->
+
+                @if (panelOpened)
+                {
+                    <div class="es-panel-body appcore-scrollbar">
+
+
+                        <!-- =========================================
+                             SECTION 01 : BASIC INFORMATION
+                        ========================================== -->
+
+                        <app-form-section
+
+                            [title]="panelInfo.noun"
+
+                            [icon]="panelInfo.icon">
+
+                            <div class="es-grid">
+
+                                <!-- Code (generated by the server) -->
+
+                                <app-textbox
+
+                                    label="Code"
+
+                                    placeholder="Auto generated"
+
+                                    [value]="draft.Code"
+
+                                    [readonly]="true"
+
+                                    [required]="true">
+
+                                </app-textbox>
+
+
+                                <!-- Display Order (Time Slots : the page instead) -->
+
+                                @if (panelInfo.hasTime)
+                                {
+                                    <app-dropdown
+
+                                        label="Used For"
+
+                                        [items]="usedForItems"
+
+                                        [value]="draft.UsedFor"
+
+                                        (valueChange)="onUsedForChange($event)"
+
+                                        [disabled]="panelMode !== 'add' || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+                                }
+                                @else
+                                {
+                                <app-textbox
+
+                                    label="Display Order"
+
+                                    placeholder="1"
+
+                                    inputMode="numeric"
+
+                                    [value]="displayOrderText"
+
+                                    (valueChange)="onDisplayOrderChange($event)"
+
+                                    [disabled]="isView || progress.busy"
+
+                                    [required]="true">
+
+                                </app-textbox>
+                                }
+
+
+                                <!-- Name (Time Slots : generated, read-only) -->
+
+                                @if (panelInfo.hasTime)
+                                {
+                                    <div class="es-wide">
+
+                                        <app-textbox
+
+                                            label="Slot Name"
+
+                                            placeholder="Generated on save"
+
+                                            textCase="none"
+
+                                            [value]="slotName"
+
+                                            [readonly]="true">
+
+                                        </app-textbox>
+
+                                    </div>
+
+
+                                    <app-dropdown
+
+                                        label="Time Interval"
+
+                                        [items]="intervalItems"
+
+                                        [value]="$any(draft.IntervalMinutes)"
+
+                                        (valueChange)="onIntervalChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+
+                                    <!-- Manual for now; later from Workshop
+                                         Configuration (online-booking bays) -->
+
+                                    <app-dropdown
+
+                                        label="Bookings per Slot"
+
+                                        [items]="capacityItems"
+
+                                        [value]="$any(draft.SlotCapacity)"
+
+                                        (valueChange)="onCapacityChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+                                }
+                                @else
+                                {
+                                <div class="es-wide">
+
+                                    <app-textbox
+
+                                        label="Name"
+
+                                        placeholder="Enter name"
+
+                                        textCase="none"
+
+                                        [maxLength]="100"
+
+                                        [value]="draft.Name"
+
+                                        (valueChange)="onNameChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                </div>
+                                }
+
+
+                                <!-- Stage (Enquiry Status only; locked on system rows) -->
+
+                                @if (panelInfo.hasStage)
+                                {
+                                    <div class="es-wide">
+
+                                        <app-dropdown
+
+                                            label="Stage"
+
+                                            [items]="stageItems"
+
+                                            [value]="draft.Stage"
+
+                                            (valueChange)="onStageChange($event)"
+
+                                            [disabled]="isView || draft.IsSystem || progress.busy"
+
+                                            [required]="true">
+
+                                        </app-dropdown>
+
+                                    </div>
+                                }
+
+                            </div>
+
+                        </app-form-section>
+
+
+
+                        <!-- =========================================
+                             SECTION 02 : COLOUR
+                             (Enquiry Status / Interest Levels)
+                        ========================================== -->
+
+                        @if (panelInfo.hasColor)
+                        {
+                            <app-form-section
+
+                                title="Colour"
+
+                                icon="fas fa-palette">
+
+                                <div class="es-swatches">
+
+                                    @for (color of colorPresets; track color)
+                                    {
+                                        <button
+
+                                            type="button"
+
+                                            class="es-swatch"
+
+                                            [class.es-swatch-on]="draft.ColorCode === color"
+
+                                            [style.background]="color"
+
+                                            [title]="color"
+
+                                            [disabled]="isView || progress.busy"
+
+                                            (click)="pickColor(color)">
+
+                                            @if (draft.ColorCode === color)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+
+                                        </button>
+                                    }
+
+                                </div>
+
+
+                                <div class="es-grid">
+
+                                    <app-textbox
+
+                                        label="Colour Code"
+
+                                        placeholder="#2563EB"
+
+                                        [maxLength]="7"
+
+                                        [value]="draft.ColorCode"
+
+                                        (valueChange)="onColorChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+
+                                    <!-- Preview : how the badge will look -->
+
+                                    <div class="es-preview-wrap">
+
+                                        <span
+
+                                            class="es-preview"
+
+                                            [style.color]="colorValid ? draft.ColorCode : '#64748b'"
+
+                                            [style.border-color]="colorValid ? draft.ColorCode : '#cbd5e1'">
+
+                                            <span
+
+                                                class="es-preview-dot"
+
+                                                [style.background]="colorValid ? draft.ColorCode : '#cbd5e1'">
+
+                                            </span>
+
+                                            {{ draft.Name.trim() || 'Preview' }}
+
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </app-form-section>
+                        }
+
+
+
+                        <!-- =========================================
+                             SECTION : DAYS TO PURCHASE
+                             (Interest Levels)
+                        ========================================== -->
+
+                        @if (panelInfo.hasDays)
+                        {
+                            <app-form-section
+
+                                title="Days to Purchase"
+
+                                icon="fas fa-hourglass-half">
+
+                                <div class="es-grid">
+
+                                    <app-textbox
+
+                                        label="Days From"
+
+                                        placeholder="e.g. 0"
+
+                                        inputMode="numeric"
+
+                                        [value]="daysFromText"
+
+                                        (valueChange)="onDaysFromChange($event)"
+
+                                        [disabled]="isView || progress.busy">
+
+                                    </app-textbox>
+
+
+                                    <app-textbox
+
+                                        label="Days To"
+
+                                        placeholder="Empty = and more"
+
+                                        inputMode="numeric"
+
+                                        [value]="daysToText"
+
+                                        (valueChange)="onDaysToChange($event)"
+
+                                        [disabled]="isView || progress.busy || draft.DaysFrom === null">
+
+                                    </app-textbox>
+
+                                </div>
+
+
+                                <p
+
+                                    class="es-note"
+
+                                    [class.es-note-error]="!!daysError">
+
+                                    <i [class]="daysError ? 'fas fa-triangle-exclamation' : 'fas fa-wand-magic-sparkles'"></i>
+
+                                    {{ daysError || daysPreview }}
+
+                                </p>
+
+                            </app-form-section>
+                        }
+
+
+
+                        <!-- =========================================
+                             SECTION : WORKING HOURS (Time Slots)
+                        ========================================== -->
+
+                        @if (panelInfo.hasTime)
+                        {
+                            <app-form-section
+
+                                title="Working Hours"
+
+                                icon="fas fa-clock">
+
+                                <div class="es-grid">
+
+                                    <app-dropdown
+
+                                        label="Start Time"
+
+                                        [items]="timeItems"
+
+                                        [value]="draft.TimeFrom"
+
+                                        (valueChange)="onTimeFromChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+
+                                    <app-dropdown
+
+                                        label="End Time"
+
+                                        [items]="timeItems"
+
+                                        [value]="draft.TimeTo"
+
+                                        (valueChange)="onTimeToChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+
+                                    <app-dropdown
+
+                                        label="Lunch From"
+
+                                        [items]="lunchItems"
+
+                                        [value]="draft.BreakFrom"
+
+                                        (valueChange)="onBreakFromChange($event)"
+
+                                        [disabled]="isView || progress.busy">
+
+                                    </app-dropdown>
+
+
+                                    <app-dropdown
+
+                                        label="Lunch To"
+
+                                        [items]="lunchItems"
+
+                                        [value]="draft.BreakTo"
+
+                                        (valueChange)="onBreakToChange($event)"
+
+                                        [disabled]="isView || progress.busy">
+
+                                    </app-dropdown>
+
+                                </div>
+
+
+                                <p
+
+                                    class="es-note"
+
+                                    [class.es-note-error]="!!timeError">
+
+                                    <i [class]="timeError ? 'fas fa-triangle-exclamation' : 'fas fa-calendar-check'"></i>
+
+                                    {{ timeError || timePreview }}
+
+                                </p>
+
+                            </app-form-section>
+                        }
+
+
+
+                        <!-- =========================================
+                             SECTION 03 : STATUS & CONTROL
+                        ========================================== -->
+
+                        <app-form-section
+
+                            title="Status & Control"
+
+                            icon="fas fa-toggle-on">
+
+                            <div class="es-grid">
+
+                                <!-- Default (one per list) -->
+
+                                <app-dropdown
+
+                                    label="Default"
+
+                                    [items]="defaultItems"
+
+                                    [value]="draft.IsDefault"
+
+                                    (valueChange)="onDefaultChange($event)"
+
+                                    [disabled]="isView || progress.busy">
+
+                                </app-dropdown>
+
+
+                                <!-- Status (system rows stay active) -->
+
+                                <app-dropdown
+
+                                    label="Status"
+
+                                    [items]="statusItems"
+
+                                    [value]="draft.IsActive"
+
+                                    (valueChange)="onStatusChange($event)"
+
+                                    [disabled]="isView || draft.IsSystem || draft.IsDefault || progress.busy"
+
+                                    [required]="true">
+
+                                </app-dropdown>
+
+
+                                <!-- Remarks -->
+
+                                <div class="es-wide">
+
+                                    <app-textbox
+
+                                        label="Remarks"
+
+                                        placeholder="Enter remarks"
+
+                                        textCase="none"
+
+                                        [maxLength]="500"
+
+                                        [value]="draft.Remarks"
+
+                                        (valueChange)="onRemarksChange($event)"
+
+                                        [disabled]="isView || progress.busy">
+
+                                    </app-textbox>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Notes -->
+
+                            @if (draft.IsSystem)
+                            {
+                                <p class="es-note">
+
+                                    <i class="fas fa-lock"></i>
+
+                                    System status : it cannot be deleted or deactivated and its stage is fixed. The name, colour and order can be changed.
+
+                                </p>
+                            }
+
+                            @if (draft.IsDefault)
+                            {
+                                <p class="es-note">
+
+                                    <i class="fas fa-star"></i>
+
+                                    @if (panelInfo.hasTime)
+                                    {
+                                        Default : the time slot this page books with. Saving it clears the old default of {{ draft.UsedFor === 'TestRide' ? 'Test Ride' : 'Service Appointment' }} only.
+                                    }
+                                    @else
+                                    {
+                                        Default : preselected on new entries. Saving it clears the old default of this list.
+                                    }
+
+                                </p>
+                            }
+
+                        </app-form-section>
+
+                    </div>
+
+
+                    <!-- Panel footer : the error of the last try -->
+
+                    @if (panelError)
+                    {
+                        <div class="es-panel-error">
+
+                            <i class="fas fa-circle-exclamation"></i>
+
+                            <span>{{ panelError }}</span>
+
+                        </div>
+                    }
+                }
+
+
+                <!-- Panel footer : Save / Update · Clear · back (bottom right) -->
+
+                    <div class="es-panel-commands es-panel-foot">
+
+                    <app-command-center
+
+                        [command1Text]="saveText"
+
+                        [command1Icon]="saveIcon"
+
+                        [command1Visible]="!isView"
+
+                        (command1Click)="save()"
+
+                        command2Text="Clear"
+
+                        command2Icon="fas fa-broom"
+
+                        [command2Visible]="panelMode === 'add'"
+
+                        (command2Click)="clearForm()"
+
+                        [command3Visible]="false"
+
+                        rightCommandIcon="fas fa-arrow-right"
+
+                        rightCommandTitle="Back to the list"
+
+                        (rightCommandClick)="closePanel()">
+
+                    </app-command-center>
+
+                    </div>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         HISTORY
+    ====================================================== -->
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+
+
+    <!-- =====================================================
+         UTILITIES
+    ====================================================== -->
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

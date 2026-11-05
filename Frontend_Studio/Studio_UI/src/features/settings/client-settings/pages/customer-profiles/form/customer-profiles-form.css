@@ -99,3 +99,114 @@
     background: #ffffff;
     color: #1e293b;
 }
+
+/* =====================================================
+   Walk-in tag (Outside customers added at a sales counter) :
+   thin outline, teal text, no fill
+===================================================== */
+
+.cus-walkin
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    margin: 0 0 12px;
+    padding: 8px 0 0;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 13px;
+    color: #334155;
+}
+
+.cus-walkin-tag
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 10px;
+    border: 1px solid #99f6e4;
+    border-radius: 999px;
+    color: #0f766e;
+    font-weight: 700;
+}
+
+.cus-walkin-cleared .cus-walkin-tag
+{
+    border-style: dashed;
+    color: #64748b;
+    text-decoration: line-through;
+}
+
+.cus-walkin-text
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.cus-walkin-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cus-walkin-btn:hover:not(:disabled)
+{
+    border-color: #fecdd3;
+    color: #be123c;
+}
+
+.cus-walkin-btn:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* Canvas footer : Display Name (same as Supplier Profiles) */
+.cus-footer
+{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    min-width:0;
+    padding:0 20px;
+    box-sizing:border-box;
+}
+
+.cus-footer-label
+{
+    flex:none;
+    color:#64748b;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+}
+
+.cus-footer-name
+{
+    min-width:0;
+    overflow:hidden;
+    color:#0f172a;
+    font-size:15px;
+    font-weight:800;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.cus-footer-empty
+{
+    color:#94a3b8;
+    font-weight:600;
+}

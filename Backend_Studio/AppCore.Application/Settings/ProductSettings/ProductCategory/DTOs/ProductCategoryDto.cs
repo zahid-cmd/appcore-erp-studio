@@ -22,6 +22,10 @@ public class ProductCategoryDto
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
+
     //===========================================================
     // Basic Information
     //===========================================================
@@ -109,6 +113,28 @@ public class ProductCategoryDto
 
 
     public string CogsGroupName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Sales Account Group (CLS-005 / 006 / 008)
+    //===========================================================
+
+    public string SalesGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Sales Account Group Name
+    //===========================================================
+
+    public string SalesGroupName
     {
         get;
         set;

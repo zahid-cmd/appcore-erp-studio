@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.Paging;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.Settings.ProductSettings;
@@ -20,17 +21,29 @@ namespace AppCore.Api.Controllers.Settings.ProductSettings;
 //===============================================================
 // Spare Parts Controller
 //
+// A part is opened / changed by its Public Id (uuid), never by
+// the internal number :
+//
+//   GET    paged                the list page (one page, server
+//                               side; see SparePartsPageRequest)
+//   GET    {publicId}           one part
+//   POST                        create -> its Public Id
+//   PUT    {publicId}           update
+//   DELETE {publicId}           delete
+//
+// GET (all) stays for the dropdowns / lookups of other pages.
+//
 // Defaults
 //   GET    defaults?productSubCategoryId=n   preview of the four codes
 //
 // Spare Part Image
-//   POST   {id}/image   multipart field "file" (JPG/PNG/WEBP/GIF by
+//   POST   {publicId}/image   multipart field "file" (JPG/PNG/WEBP/GIF by
 //                       content, any file name;
 //                       max 2 MB) → saved to
 //                       wwwroot/uploads/spare-part-images/, path
 //                       stored on the part, old file removed. Returns
 //                       the new path as plain text.
-//   DELETE {id}/image   removes the file and clears the path.
+//   DELETE {publicId}/image   removes the file and clears the path.
 //===============================================================
 
 [ApiController]
@@ -98,6 +111,20 @@ public class SparePartsController : ControllerBase
 
 
     //===========================================================
+    // Get Paged (the list page)
+    //===========================================================
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<SparePartsDto>>> GetPaged(
+        [FromQuery] SparePartsPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new SparePartsPageRequest()));
+    }
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 
@@ -123,13 +150,20 @@ public class SparePartsController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
-    public async Task<ActionResult<SparePartsDto>> GetById(
-        long id)
+    [HttpGet("{publicId:guid}")]
+    public async Task<ActionResult<SparePartsDto>> GetByPublicId(
+        Guid publicId)
     {
+        long? id =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (id == null)
+        {
+            return NotFound();
+        }
+
         SparePartsDto? sparePart =
-            await _repository.GetByIdAsync(id);
+            await _repository.GetByIdAsync(id.Value);
 
         if (sparePart == null)
         {
@@ -144,19 +178,25 @@ public class SparePartsController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new part's Public Id
     [HttpPost]
 
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateSparePartsDto dto)
     {
            long userId = this.CurrentUserId();
 
         try
         {
-            return Ok(
+            long id =
                 await _repository.CreateAsync(
                     dto,
-                    userId));
+                    userId);
+
+            SparePartsDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (InvalidOperationException ex)
         {
@@ -175,11 +215,28 @@ public class SparePartsController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
+    // The part comes from the link's Public Id; a SparePartId in
+    // the body is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateSparePartsDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.SparePartId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try
@@ -211,14 +268,25 @@ public class SparePartsController : ControllerBase
     // Upload Spare Part Image
     //===========================================================
 
-    [HttpPost("{id:long}/image")]
+    [HttpPost("{publicId:guid}/image")]
 
     [RequestSizeLimit(5 * 1024 * 1024)]
 
     public async Task<IActionResult> UploadImage(
-        long id,
+        Guid publicId,
         IFormFile file)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         //=======================================================
@@ -332,11 +400,22 @@ public class SparePartsController : ControllerBase
     // Delete Spare Part Image
     //===========================================================
 
-    [HttpDelete("{id:long}/image")]
+    [HttpDelete("{publicId:guid}/image")]
 
     public async Task<IActionResult> DeleteImage(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try
@@ -369,11 +448,22 @@ public class SparePartsController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

@@ -35,6 +35,8 @@ using VoucherEntryEntity =
 using AppCore.Infrastructure.CodeMaster;
 
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 
 using AppCore.Domain.Common;
 
@@ -143,6 +145,9 @@ public class BrandManagementRepository : IBrandManagementRepository
                         BrandManagementId =
                             x.BrandManagementId,
 
+                        PublicId =
+                            x.PublicId,
+
                         BrandCode =
                             x.BrandCode,
 
@@ -232,6 +237,154 @@ public class BrandManagementRepository : IBrandManagementRepository
                     x.BrandCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Filters and search on the list query, the counts for the
+    // summary line, then the status, the total and one page.
+    //===========================================================
+
+    private SortMap<BrandManagementDto> ListSorts()
+    {
+        return new SortMap<BrandManagementDto>("BrandCode")
+            .Add("BrandCode", x => x.BrandCode)
+            .Add("BrandName", x => x.BrandName)
+            .Add("MotorBikesSupplierName", x => x.MotorBikesSupplierName)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.BrandManagementId);
+    }
+
+    public async Task<PagedResult<BrandManagementDto>>
+        GetPagedAsync
+        (
+            BrandManagementPageRequest request
+        )
+    {
+        // Sub group renames reach the brand ledger names (as Get All)
+        await SyncLedgerNamesAsync();
+
+        IQueryable<BrandManagementDto> query =
+            BrandManagementQuery();
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.BrandCode, like) ||
+                        EF.Functions.ILike(x.BrandName, like) ||
+                        EF.Functions.ILike(x.MotorBikesSupplierCode, like) ||
+                        EF.Functions.ILike(x.MotorBikesSupplierName, like) ||
+                        EF.Functions.ILike(x.OfferAdjustmentLedgerCode, like) ||
+                        EF.Functions.ILike(x.EmiClaimLedgerCode, like) ||
+                        EF.Functions.ILike(x.Remarks, like)
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts (search and filters applied; not the
+        // status)
+        //-------------------------------------------------------
+
+        int countAll =
+            await query.CountAsync();
+
+        int countActive =
+            await query.CountAsync(x => x.Status);
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = countAll,
+                ["Active"] = countActive,
+                ["Inactive"] = countAll - countActive
+            };
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        if
+        (
+            request.Status.HasValue
+        )
+        {
+            bool active =
+                request.Status.Value;
+
+            query =
+                query.Where(x => x.Status == active);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<BrandManagementDto> rows =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        return new PagedResult<BrandManagementDto>
+        {
+            Items = rows,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<BrandManagementEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.BrandManagementId)
+            .FirstOrDefaultAsync();
     }
 
 

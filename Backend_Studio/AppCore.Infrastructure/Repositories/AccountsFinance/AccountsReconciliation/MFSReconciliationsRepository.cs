@@ -283,6 +283,7 @@ public class MfsReconciliationsRepository : IMfsReconciliationsRepository
                 select new
                 {
                     PaymentId = p.ReceiptVoucherPaymentId,
+                    PaymentPublicId = p.PublicId,
                     VoucherId = v.ReceiptVoucherId,
                     v.VoucherNo,
                     v.VoucherDate,
@@ -349,6 +350,7 @@ public class MfsReconciliationsRepository : IMfsReconciliationsRepository
                 new()
                 {
                     PaymentId = x.PaymentId,
+                    PaymentPublicId = x.PaymentPublicId,
                     MfsReconciliationId = state?.MfsReconciliationId ?? 0,
                     SourceVoucherType = SourceType,
                     SourceVoucherId = x.VoucherId,
@@ -965,6 +967,8 @@ public class MfsReconciliationsRepository : IMfsReconciliationsRepository
 
                     result.VoucherNos.Add(voucher.VoucherNo);
                     result.VoucherIds.Add(voucher.MfsReconciliationVoucherId);
+
+                    result.VoucherPublicIds.Add(voucher.PublicId);
                 }
 
                 await _context.SaveChangesAsync();
@@ -1402,6 +1406,8 @@ public class MfsReconciliationsRepository : IMfsReconciliationsRepository
 
                     result.VoucherNos.Add(voucher.VoucherNo);
                     result.VoucherIds.Add(voucher.MfsReconciliationVoucherId);
+
+                    result.VoucherPublicIds.Add(voucher.PublicId);
                 }
 
                 await _context.SaveChangesAsync();
@@ -1572,6 +1578,8 @@ public class MfsReconciliationsRepository : IMfsReconciliationsRepository
 
                 result.VoucherNos.Add(voucher.VoucherNo);
                 result.VoucherIds.Add(voucher.MfsReconciliationVoucherId);
+
+                result.VoucherPublicIds.Add(voucher.PublicId);
                 result.TransactionCount = states.Count;
                 result.Message =
                     $"{voucher.VoucherNo} reversed; {states.Count} transaction(s) back.";
@@ -2992,4 +3000,30 @@ public class MfsReconciliationsRepository : IMfsReconciliationsRepository
     {
         return decimal.Round(value, 2) == value;
     }
-}
+
+
+    //===========================================================
+    // uuid -> internal id (print links)
+    //===========================================================
+    public async Task<long?>
+        GetVoucherIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<MfsReconciliationVouchers>()
+            .AsNoTracking()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.MfsReconciliationVoucherId)
+            .FirstOrDefaultAsync();
+    }
+}

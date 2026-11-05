@@ -11,6 +11,13 @@ namespace AppCore.Domain.Entities.Procurement.SparePartsLubricantPurchase;
 
 public class PurchaseAdjustmentsSp
 {
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId
+    {
+        get;
+        set;
+    } = Guid.CreateVersion7();
+
     //===========================================================
     // Primary Key
     //===========================================================

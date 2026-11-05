@@ -27,6 +27,13 @@ public interface IBankAccountsRepository
     Task<List<BankAccountDto>> GetAllAsync();
 
 
+    // Public Id -> internal id (live rows only; null = not found)
+
+    Task<long?> GetIdByPublicIdAsync(
+
+        Guid publicId);
+
+
     //===========================================================
     // Get By Id
     //===========================================================

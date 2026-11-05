@@ -294,6 +294,44 @@ implements OnInit
         10;
 
 
+    // Rows matching the search (all pages)
+    totalRecords:
+        number =
+        0;
+
+
+    // Summary line below the canvas (search applied)
+    summaryTotal:
+        number =
+        0;
+
+
+    summaryActive:
+        number =
+        0;
+
+
+    // Server sort ('' = User Profile Code)
+    private sortField:
+        string =
+        '';
+
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+
+    private searchTimer?:
+        ReturnType<typeof setTimeout>;
+
+
+    // Answers of older calls are dropped (fast paging / search)
+    private loadSeq:
+        number =
+        0;
+
+
 
     //===========================================================
     // History
@@ -493,6 +531,16 @@ implements OnInit
 
 
         return {
+            PublicId:
+                String
+                (
+                    item?.PublicId
+                    ??
+                    item?.publicId
+                    ??
+                    ''
+                ),
+
             UserProfileId:
                 Number
                 (
@@ -616,65 +664,86 @@ implements OnInit
 
 
     //===========================================================
-    // Load Items
+    // Load Items (one page from the server)
     //===========================================================
 
     loadItems():
         void
     {
+        const seq =
+            ++this.loadSeq;
+
         this.loading =
             true;
-
 
         this.loadFailed =
             false;
 
-
         this.userprofileservice
-            .getAll()
+            .getPaged
+            ({
+                page:
+                    this.currentPage,
+
+                pageSize:
+                    this.pageSize,
+
+                search:
+                    this.searchText,
+
+                sort:
+                    this.sortField,
+
+                dir:
+                    this.sortDirection
+            })
             .subscribe
             ({
                 next:
                 (
-                    response:
-                        UserProfile[]
+                    result
                 ):
                     void =>
                 {
-                    console.log
+                    if
                     (
-                        'User Profile API Response:',
-                        response
-                    );
-
+                        seq !== this.loadSeq
+                    )
+                    {
+                        return;
+                    }
 
                     this.userprofiles =
                         this.normalizeUserProfiles(
-                            response
+                            result.items
                         );
 
+                    this.filteredUserProfiles =
+                        this.userprofiles;
 
-                    console.log
-                    (
-                        'Normalized User Profiles:',
-                        this.userprofiles
-                    );
+                    this.pagedUserProfiles =
+                        this.userprofiles;
 
+                    this.totalRecords =
+                        result.totalCount;
 
-                    this.applyFilters();
+                    this.currentPage =
+                        result.page;
 
+                    this.summaryTotal =
+                        Number(result.counts['Total'] ?? 0);
+
+                    this.summaryActive =
+                        Number(result.counts['Active'] ?? 0);
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         false;
 
-
                     this.cdr.detectChanges();
                 },
-
 
                 error:
                 (
@@ -683,40 +752,43 @@ implements OnInit
                 ):
                     void =>
                 {
+                    if
+                    (
+                        seq !== this.loadSeq
+                    )
+                    {
+                        return;
+                    }
+
                     console.error
                     (
                         'Load User Profiles Error:',
                         error
                     );
 
-
                     this.userprofiles =
                         [];
-
 
                     this.filteredUserProfiles =
                         [];
 
-
                     this.pagedUserProfiles =
                         [];
 
+                    this.totalRecords =
+                        0;
 
                     this.loading =
                         false;
 
-
                     this.loadFailed =
                         true;
-
 
                     this.toast.error
                     (
                         'Load Failed',
-
                         'Unable to load user profiles.'
                     );
-
 
                     this.cdr.detectChanges();
                 }
@@ -726,126 +798,22 @@ implements OnInit
 
 
     //===========================================================
-    // Apply Filters
+    // Apply Filters (search / sort run on the server)
     //===========================================================
 
     applyFilters():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-
-        this.filteredUserProfiles =
-            this.userprofiles.filter
-            (
-                (
-                    item:
-                        UserProfile
-                ):
-                    boolean =>
-                {
-                    const profileCode =
-                        item.ProfileCode
-                        ??
-                        '';
-
-
-                    const userName =
-                        item.UserName
-                        ??
-                        '';
-
-
-                    const displayName =
-                        item.DisplayName
-                        ??
-                        '';
-
-
-                    const fullName =
-                        item.FullName
-                        ??
-                        '';
-
-
-                    const primaryRoleName =
-                        item.PrimaryRoleName
-                        ??
-                        'Not Assigned';
-
-
-                    const email =
-                        item.Email
-                        ??
-                        '';
-
-
-                    const mobileNo =
-                        item.MobileNo
-                        ??
-                        '';
-
-
-                    const status =
-                        item.IsActive
-                            ? 'active'
-                            : 'inactive';
-
-
-                    const searchMatch =
-                        !keyword
-                        ||
-                        profileCode
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        userName
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        displayName
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        fullName
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        primaryRoleName
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        email
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        mobileNo
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        status
-                            .includes(keyword);
-
-
-                    return searchMatch;
-                }
-            );
-
-
         this.currentPage =
             1;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
 
 
 
     //===========================================================
-    // Search
+    // Search (waits 300 ms after the last key)
     //===========================================================
 
     onSearch
@@ -860,14 +828,34 @@ implements OnInit
             ??
             '';
 
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
+        }
 
-        this.applyFilters();
+        this.searchTimer =
+            setTimeout
+            (
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.applyFilters();
+                },
+                300
+            );
     }
 
 
 
     //===========================================================
-    // Sort
+    // Sort (on the server)
     //===========================================================
 
     onSort
@@ -883,117 +871,13 @@ implements OnInit
     ):
         void
     {
-        this.filteredUserProfiles =
-        [
-            ...this.filteredUserProfiles
-        ];
+        this.sortField =
+            event.field;
 
+        this.sortDirection =
+            event.direction;
 
-        this.filteredUserProfiles.sort
-        (
-            (
-                a:
-                    UserProfile,
-
-                b:
-                    UserProfile
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof UserProfile
-                    ];
-
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof UserProfile
-                    ];
-
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
-                }
-
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
-            }
-        );
-
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
+        this.applyFilters();
     }
 
 
@@ -1019,30 +903,14 @@ implements OnInit
 
 
     //===========================================================
-    // Update Pagination
+    // Update Pagination (the server sends one page)
     //===========================================================
 
     updatePagination():
         void
     {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-
         this.pagedUserProfiles =
-        [
-            ...this.filteredUserProfiles.slice
-            (
-                start,
-
-                start + this.pageSize
-            )
-        ];
+            this.userprofiles;
     }
 
 
@@ -1061,8 +929,7 @@ implements OnInit
         this.currentPage =
             page;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1081,12 +948,10 @@ implements OnInit
         this.pageSize =
             size;
 
-
         this.currentPage =
             1;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1129,7 +994,7 @@ implements OnInit
             [
                 'view',
 
-                item.UserProfileId
+                item.PublicId
             ],
 
             {
@@ -1157,7 +1022,7 @@ implements OnInit
             [
                 'edit',
 
-                item.UserProfileId
+                item.PublicId
             ],
 
             {
@@ -1191,7 +1056,7 @@ implements OnInit
                 this.userprofileservice
                     .delete
                     (
-                        item.UserProfileId
+                        item.PublicId ?? ''
                     )
                     .subscribe
                     ({
@@ -1507,4 +1372,16 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line number format
+    //===========================================================
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

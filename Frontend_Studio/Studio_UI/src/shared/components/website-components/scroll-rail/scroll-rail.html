@@ -1,0 +1,115 @@
+<!-- ===========================================================
+     SCROLL RAIL : line · filled part · section dots · glowing
+     ball (with the current section's name while scrolling)
+============================================================ -->
+
+<nav
+
+    class="rail"
+
+    [class.rail-idle]="idle()"
+
+    [class.rail-shown]="shown()"
+
+    aria-label="Page sections">
+
+    <div
+
+        #track
+
+        class="rail-track"
+
+        tabindex="0"
+
+        role="slider"
+
+        aria-label="Scroll the page"
+
+        aria-valuemin="0"
+
+        aria-valuemax="100"
+
+        [attr.aria-valuetext]="steps()[active()]?.label"
+
+        (pointerdown)="onPointerDown($event)"
+
+        (pointermove)="onPointerMove($event)"
+
+        (pointerup)="onPointerUp($event)"
+
+        (pointercancel)="onPointerUp($event)"
+
+        (keydown)="onKey($event)">
+
+        <!-- The line, and the part already scrolled -->
+
+        <span class="rail-line" aria-hidden="true"></span>
+
+        <span #fill class="rail-fill" aria-hidden="true">
+
+            <span class="rail-fill-shine"></span>
+
+        </span>
+
+
+        <!-- One dot per section -->
+
+        @for (step of steps(); track step.id; let i = $index)
+        {
+            <button
+
+                type="button"
+
+                class="rail-dot"
+
+                [class.rail-dot-passed]="i < active()"
+
+                [class.rail-dot-active]="i === active()"
+
+                [style.top.%]="step.at * 100"
+
+                [attr.aria-label]="'Go to ' + step.label"
+
+                [attr.aria-current]="i === active() ? 'true' : null"
+
+                (pointerdown)="$event.stopPropagation()"
+
+                (click)="goTo(step, $event)">
+
+                <span class="rail-tip">{{ step.label }}</span>
+
+            </button>
+        }
+
+
+        <!-- The glowing ball -->
+
+        <span #ball class="rail-ball" aria-hidden="true">
+
+            <span class="rail-ball-tail"></span>
+
+            <span class="rail-ball-glow"></span>
+
+            <span class="rail-ball-ring"></span>
+
+            <span class="rail-ball-core"></span>
+
+            <span class="rail-ball-spark rail-ball-spark-1"></span>
+
+            <span class="rail-ball-spark rail-ball-spark-2"></span>
+
+            <span
+
+                class="rail-ball-label"
+
+                [class.rail-ball-label-on]="moving()">
+
+                {{ steps()[active()]?.label }}
+
+            </span>
+
+        </span>
+
+    </div>
+
+</nav>

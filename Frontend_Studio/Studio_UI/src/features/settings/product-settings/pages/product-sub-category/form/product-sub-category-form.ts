@@ -187,6 +187,18 @@ import
 }
 from '../../../services/product-category.service';
 
+import
+{
+    BikeModelsService
+}
+from '../../../services/bike-models.service';
+
+import
+{
+    BikeModels
+}
+from '../../../models/bike-models.model';
+
 //===============================================================
 // Local Types
 //===============================================================
@@ -203,6 +215,12 @@ interface ProductCategoryOption
         boolean;
     SubCategoryCreationAllowed:
         boolean;
+    CategoryType:
+        string;
+    BrandManagementId:
+        number | null;
+    BrandName:
+        string;
 }
 
 //===============================================================
@@ -280,6 +298,44 @@ implements OnInit, OnDestroy
     private readonly productCategoryService =
         inject(ProductCategoryService);
 
+    private readonly bikeModelsService =
+        inject(BikeModelsService);
+
+
+    //===========================================================
+    // Bike Model (Motor Bikes / Spare Parts / Accessories)
+    //===========================================================
+
+    private bikeModels:
+        BikeModels[] =
+        [];
+
+    // Models already linked to a sub category (not offered again)
+    // "<categoryId>:<modelId>" -> the sub category using it
+    // (a model is used once per category)
+    private usedBikeModels:
+        Map<string, number> =
+        new Map<string, number>();
+
+    modelItems:
+        any[] =
+        [];
+
+    // Read only : the selected category's brand
+    brandName:
+        string =
+        '';
+
+    // Motor Bikes / Spare Parts / Accessories : pick a model
+    isModelCategory:
+        boolean =
+        false;
+
+    // Category type of the selected category ('Motor Bikes' ...)
+    categoryType:
+        string =
+        '';
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
@@ -341,8 +397,8 @@ implements OnInit, OnDestroy
         'add';
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
     //===========================================================
     // Page Header
@@ -476,6 +532,10 @@ implements OnInit, OnDestroy
     {
         this.loadProductCategories();
 
+        this.loadBikeModels();
+
+        this.loadUsedBikeModels();
+
         this.initializeMode();
     }
 
@@ -507,6 +567,7 @@ implements OnInit, OnDestroy
         return {
             ProductSubCategoryId:0,
             ProductCategoryId:0,
+            BikeModelId:null,
             SubCategoryCode:'',
             SubCategoryName:'',
             InventorySubGroupCode:'',
@@ -585,9 +646,34 @@ implements OnInit, OnDestroy
                                         item?.subCategoryCreationAllowed
                                         ??
                                         true
-                                    )
+                                    ),
+
+                                CategoryType:
+                                    item?.CategoryType
+                                    ??
+                                    item?.categoryType
+                                    ??
+                                    '',
+
+                                BrandManagementId:
+                                    Number(
+                                        item?.BrandManagementId
+                                        ??
+                                        item?.brandManagementId
+                                        ??
+                                        0
+                                    ) || null,
+
+                                BrandName:
+                                    item?.BrandName
+                                    ??
+                                    item?.brandName
+                                    ??
+                                    ''
                             })
                         );
+
+                    this.refreshBikeModelContext();
 
                     this.buildProductCategoryItems();
                 },
@@ -699,7 +785,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -718,7 +804,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -730,13 +816,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -746,7 +830,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
@@ -763,6 +847,8 @@ implements OnInit, OnDestroy
 
         this.lastProductCategoryId =
             0;
+
+        this.refreshBikeModelContext();
 
         this.setInitialFormState();
     }
@@ -785,6 +871,9 @@ implements OnInit, OnDestroy
 
         this.entity.CogsSubGroupCode =
             '';
+
+        this.entity.SalesSubGroupCode =
+            '';
     }
 
     //===========================================================
@@ -796,7 +885,7 @@ implements OnInit, OnDestroy
     {
         if
         (
-            this.entityId > 0
+            !!this.entityId
             ||
             !this.entity.ProductCategoryId
             ||
@@ -874,6 +963,15 @@ implements OnInit, OnDestroy
                             ''
                         ).trim();
 
+                    this.entity.SalesSubGroupCode =
+                        String(
+                            response?.SalesSubGroupCode
+                            ??
+                            response?.salesSubGroupCode
+                            ??
+                            ''
+                        ).trim();
+
                     this.checkForChanges();
 
                     this.cdr.detectChanges();
@@ -947,6 +1045,28 @@ implements OnInit, OnDestroy
             this.lastProductCategoryId =
                 productCategoryId;
 
+            const wasMotorBikes =
+                this.isModelCategory;
+
+            this.entity.BikeModelId =
+                null;
+
+            this.refreshBikeModelContext();
+
+            // The name is built from the model : start empty
+            if
+            (
+                this.isModelCategory
+                ||
+                wasMotorBikes
+            )
+            {
+                this.entity.SubCategoryName =
+                    '';
+
+                this.onSubCategoryNameChange();
+            }
+
             this.defaultsRequestId++;
 
             this.clearGeneratedCodes();
@@ -964,6 +1084,231 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
+
+    //===========================================================
+    // Load Bike Models (for the Model dropdown)
+    //===========================================================
+
+    private loadBikeModels():
+        void
+    {
+        this.bikeModelsService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    models:
+                        BikeModels[]
+                ):
+                    void =>
+                {
+                    this.bikeModels =
+                        Array.isArray(models)
+                            ? models
+                            : [];
+
+                    this.refreshBikeModelContext();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Bike Models Error',
+                        error
+                    );
+
+                    this.bikeModels =
+                        [];
+
+                    this.refreshBikeModelContext();
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Models already used by other sub categories
+    //===========================================================
+
+    private loadUsedBikeModels():
+        void
+    {
+        this.productSubCategoryService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    list:
+                        any[]
+                ):
+                    void =>
+                {
+                    this.usedBikeModels =
+                        new Map<string, number>(
+                            (Array.isArray(list) ? list : [])
+                                .filter(x => Number(x?.BikeModelId ?? x?.bikeModelId ?? 0) > 0)
+                                .map(x =>
+                                    [
+                                        `${Number(x?.ProductCategoryId ?? x?.productCategoryId ?? 0)}:${Number(x?.BikeModelId ?? x?.bikeModelId ?? 0)}`,
+                                        Number(x?.ProductSubCategoryId ?? x?.productSubCategoryId ?? 0)
+                                    ] as [string, number])
+                        );
+
+                    this.refreshBikeModelContext();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    // The server still refuses a duplicate on save
+                    console.error(
+                        'Load Used Bike Models Error',
+                        error
+                    );
+                }
+            });
+    }
+
+
+    //===========================================================
+    // Bike Model Context
+    //
+    // Model category : read only Brand + Model dropdown
+    // (the category brand's active models, plus the record's
+    // own model when it has become inactive).
+    //===========================================================
+
+    private refreshBikeModelContext():
+        void
+    {
+        const category =
+            this.productCategories.find(
+                x =>
+                    x.ProductCategoryId ===
+                    Number(this.entity.ProductCategoryId ?? 0)
+            );
+
+        this.categoryType =
+            (category?.CategoryType ?? '').trim();
+
+        this.isModelCategory =
+            ['motor bikes', 'spare parts', 'accessories']
+                .includes(this.categoryType.toLowerCase());
+
+        // Every category has a brand : always shown
+        this.brandName =
+            category?.BrandName ?? '';
+
+        if
+        (
+            !this.isModelCategory
+        )
+        {
+            this.modelItems =
+                [];
+
+            return;
+        }
+
+        const brandId =
+            Number(category?.BrandManagementId ?? 0);
+
+        const ownId =
+            Number(this.entity.BikeModelId ?? 0);
+
+        const categoryId =
+            Number(this.entity.ProductCategoryId ?? 0);
+
+        this.modelItems =
+            this.bikeModels
+                .filter(
+                    x =>
+                        Number(x.BrandManagementId ?? 0) === brandId
+                        &&
+                        (
+                            x.BikeModelId === ownId
+                            ||
+                            (
+                                x.Status
+                                &&
+                                (
+                                    !this.usedBikeModels.has(`${categoryId}:${x.BikeModelId}`)
+                                    ||
+                                    // this record's own saved model
+                                    this.usedBikeModels.get(`${categoryId}:${x.BikeModelId}`) ===
+                                    Number(this.entity.ProductSubCategoryId ?? 0)
+                                )
+                            )
+                        )
+                )
+                .sort(
+                    (a, b) =>
+                        a.ModelName.localeCompare(b.ModelName)
+                )
+                .map(
+                    x =>
+                    ({
+                        label:
+                            x.Status
+                                ? x.ModelName
+                                : `${x.ModelName} (Inactive)`,
+                        value:
+                            x.BikeModelId
+                    })
+                );
+    }
+
+
+    //===========================================================
+    // Model Change : name = "<Category Type> - <Brand> - <Model>"
+    //===========================================================
+
+    onBikeModelChange():
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+        const model =
+            this.bikeModels.find(
+                x =>
+                    x.BikeModelId ===
+                    Number(this.entity.BikeModelId ?? 0)
+            );
+
+        this.entity.BikeModelId =
+            model?.BikeModelId ?? null;
+
+        this.entity.SubCategoryName =
+            model
+                ? [this.categoryType, this.brandName.trim(), model.ModelName.trim()]
+                    .filter(x => !!x)
+                    .join(' - ')
+                : '';
+
+        this.onSubCategoryNameChange();
+    }
+
 
     //===========================================================
     // Sub Category Name Change
@@ -1005,6 +1350,12 @@ implements OnInit, OnDestroy
             this.entity.CogsSubGroupName =
                 subCategoryName
                     ? `COGS - ${subCategoryName}`
+                    : '';
+
+            // Preview : the server names it "Sales - <name>"
+            this.entity.SalesSubGroupName =
+                subCategoryName && this.entity.SalesSubGroupCode
+                    ? `Sales - ${subCategoryName}`
                     : '';
         }
 
@@ -1071,6 +1422,15 @@ implements OnInit, OnDestroy
                                 0
                             ),
 
+                        BikeModelId:
+                            Number(
+                                response?.BikeModelId
+                                ??
+                                response?.bikeModelId
+                                ??
+                                0
+                            ) || null,
+
                         SubCategoryCode:
                             response?.SubCategoryCode
                             ??
@@ -1105,6 +1465,12 @@ implements OnInit, OnDestroy
                             response?.cogsSubGroupCode
                             ??
                             '',
+
+                        SalesSubGroupCode:
+                            response?.SalesSubGroupCode ?? response?.salesSubGroupCode ?? '',
+
+                        SalesSubGroupName:
+                            response?.SalesSubGroupName ?? response?.salesSubGroupName ?? '',
 
                         InventorySubGroupName:
                             response?.InventorySubGroupName
@@ -1157,6 +1523,8 @@ implements OnInit, OnDestroy
                         this.entity.ProductCategoryId;
 
                     this.buildProductCategoryItems();
+
+                    this.refreshBikeModelContext();
 
                     this.setInitialFormState();
                 },
@@ -1252,6 +1620,21 @@ implements OnInit, OnDestroy
             return;
         }
 
+        if
+        (
+            this.isModelCategory
+            &&
+            !(Number(this.entity.BikeModelId) > 0)
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Model is required.'
+            );
+
+            return;
+        }
+
         const requiredFields:
             {
                 value:
@@ -1337,6 +1720,11 @@ implements OnInit, OnDestroy
         return {
             ProductCategoryId:
                 this.entity.ProductCategoryId,
+
+            BikeModelId:
+                this.isModelCategory
+                    ? (this.entity.BikeModelId ?? null)
+                    : null,
 
             SubCategoryCode:
                 this.entity.SubCategoryCode.trim(),
@@ -1492,7 +1880,9 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.productSubCategoryService.update(
-                model
+                this.entityId,
+
+model
             ),
             this.minimumSaveDurationMs
         )
@@ -1987,4 +2377,4 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
-}
+}

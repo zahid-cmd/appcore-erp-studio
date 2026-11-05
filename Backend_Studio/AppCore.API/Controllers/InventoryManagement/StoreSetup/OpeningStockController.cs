@@ -172,10 +172,21 @@ public class OpeningStockController
     }
 
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
     public async Task<IActionResult> GetById(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         OpeningStockDto? item =
             await _repository.GetByIdAsync(id);
 
@@ -216,13 +227,24 @@ public class OpeningStockController
     }
 
 
-    [HttpDelete("{id:long}")]
-    public Task<IActionResult> Delete(
-        long id)
+    [HttpDelete("{publicId:guid}")]
+    public async Task<IActionResult> Delete(
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Delete",
             async () =>
             {

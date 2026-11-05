@@ -1,0 +1,90 @@
+/* ============================================================
+   Service Enquiries
+============================================================ */
+
+export interface ServiceEnquiries
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Service Enquiries
+============================================================ */
+
+export interface CreateServiceEnquiries
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Service Enquiries
+============================================================ */
+
+export interface UpdateServiceEnquiries
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Service Enquiries Defaults
+============================================================ */
+
+export interface ServiceEnquiriesDefaults
+{
+    code:
+        string;
+}

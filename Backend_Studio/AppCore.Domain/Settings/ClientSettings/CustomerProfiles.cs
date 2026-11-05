@@ -30,6 +30,21 @@ public class CustomerProfiles
 
 
     //===========================================================
+    // Public Id
+    //-----------------------------------------------------------
+    // The id used in links and API calls (uuid v7), so internal
+    // numbers are never shown or guessed. New on every customer;
+    // the database default uuidv7() fills rows added by scripts.
+    //===========================================================
+
+    public Guid PublicId
+    {
+        get;
+        set;
+    } = Guid.CreateVersion7();
+
+
+    //===========================================================
     // Customer Information
     //===========================================================
 
@@ -213,6 +228,16 @@ public class CustomerProfiles
     }
 
 
+    // Walk-in : a quick Outside customer made by a sales page's
+    // Add Customer button (cash only). Removable by hand; buying
+    // a bike (Outside -> Inbound) clears it.
+    public bool IsWalkIn
+    {
+        get;
+        set;
+    }
+
+
     //===========================================================
     // Remarks & Status
     //===========================================================
@@ -286,4 +311,4 @@ public class CustomerProfiles
         get;
         set;
     }
-}
+}

@@ -13,6 +13,9 @@ public class SparePartsDto
 {
     public long SparePartId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
 
     //===========================================================
     // Parent
@@ -57,6 +60,9 @@ public class SparePartsDto
 
     public string CogsLedgerCode { get; set; } = string.Empty;
 
+    // Sales ledger (CLS-005 / 006 / 008)
+    public string SalesLedgerCode { get; set; } = string.Empty;
+
 
     //===========================================================
     // Stock Levels / Image / Status
@@ -70,6 +76,13 @@ public class SparePartsDto
     // cannot take the company stock above it
     public int MaxStockLevel { get; set; }
 
+
+    // SuperFast / Fast / Regular / Periodic / Slow
+    public string MovementClass { get; set; } = "Slow";
+
+    // Reserved (automatic class from sales; not used yet)
+    public bool MovementClassAuto { get; set; }
+
     public string ImagePath { get; set; } = string.Empty;
 
 
@@ -79,8 +92,20 @@ public class SparePartsDto
 
     public List<SparePartLocationDto> Locations { get; set; } = new();
 
-    // "WH-001: R-001 / S-03, WH-002: R-002 / S-01"
+    // "WH-001: A-03-05, WH-002: B-01-02"
     public string LocationsText { get; set; } = string.Empty;
+
+
+    //===========================================================
+    // Fits Models : other sub categories (models) of the same
+    // category this item also fits (its home is the sub
+    // category above)
+    //===========================================================
+
+    public List<ProductFitDto> Fits { get; set; } = new();
+
+    // "Y06, A10"
+    public string FitsText { get; set; } = string.Empty;
 
 
     public string Remarks { get; set; } = string.Empty;
@@ -110,4 +135,4 @@ public class SparePartsDto
     public long? ModifiedBy { get; set; }
 
     public DateTime? ModifiedDate { get; set; }
-}
+}

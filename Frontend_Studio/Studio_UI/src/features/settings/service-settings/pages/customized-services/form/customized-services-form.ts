@@ -323,8 +323,8 @@ implements OnInit, OnDestroy
         'add';
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
 
     //===========================================================
@@ -535,7 +535,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -554,7 +554,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -566,13 +566,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -582,7 +580,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
@@ -1287,7 +1285,9 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.customizedServicesService.update(
-                model
+                this.entityId,
+
+model
             ),
             this.minimumSaveDurationMs
         )

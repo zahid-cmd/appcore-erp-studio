@@ -439,6 +439,15 @@ implements OnInit, OnDestroy
         FinancialYearListItem[] =
         [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredFinancialYears:
         FinancialYearListItem[] =
         [];
@@ -738,6 +747,9 @@ implements OnInit, OnDestroy
                             );
 
                     this.applyFilters();
+
+
+                    this.updateSummary();
 
                     this.loading =
                         false;
@@ -1134,20 +1146,20 @@ implements OnInit, OnDestroy
         item:
             any
     ):
-        number
+        string
     {
         const id =
-            Number(
-                item?.FinancialYearId
-                ||
-                readField(item, 'FinancialYearId')
-            );
+            String(
+                item?.PublicId
+                ??
+                readField(item, 'PublicId')
+                ??
+                ''
+            ).trim();
 
         if
         (
             !id
-            ||
-            id <= 0
         )
         {
             console.error(
@@ -1160,7 +1172,7 @@ implements OnInit, OnDestroy
                 'This financial year has no id from the server, so it cannot be opened.'
             );
 
-            return 0;
+            return '';
         }
 
         return id;
@@ -1175,7 +1187,7 @@ implements OnInit, OnDestroy
         action:
             'add' | 'view' | 'edit',
         id?:
-            number
+            string
     ):
         void
     {
@@ -1243,7 +1255,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.navigateTo(
@@ -1279,7 +1291,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.navigateTo(
@@ -1318,7 +1330,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id <= 0
+            !id
         )
         {
             return;
@@ -1360,7 +1372,7 @@ implements OnInit, OnDestroy
     private deleteItem
     (
         id:
-            number,
+            string,
         name:
             string
     ):
@@ -1890,4 +1902,32 @@ implements OnInit, OnDestroy
         this.historyOpened =
             false;
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.financialYears ?? [];
+
+        const active =
+            all.filter(x => !!x?.Status).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

@@ -1,0 +1,1162 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    ChangeDetectorRef,
+    Component,
+    DestroyRef,
+    OnInit,
+    inject
+}
+from '@angular/core';
+
+import
+{
+    takeUntilDestroyed
+}
+from '@angular/core/rxjs-interop';
+
+import
+{
+    CommonModule
+}
+from '@angular/common';
+
+import
+{
+    Router
+}
+from '@angular/router';
+
+import
+{
+    PageHeaderComponent
+}
+from '../../../../../../shared/components/layout/page-header/page-header';
+
+import
+{
+    PageToolbarComponent
+}
+from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
+
+import
+{
+    PageCanvasComponent,
+    PageCanvasConfig
+}
+from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    ControlTabsComponent,
+    ControlTab
+}
+from '../../../../../../shared/components/controls/control-tabs/control-tabs';
+
+import
+{
+    SearchBoxComponent
+}
+from '../../../../../../shared/components/utilities/search-box/search-box';
+
+import
+{
+    CommandCenterComponent
+}
+from '../../../../../../shared/components/utilities/command-center/command-center';
+
+import
+{
+    ListTableComponent,
+    ListTableColumn,
+    ListTableRowAction,
+    ListTableRowActionEvent
+}
+from '../../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    PaginationComponent
+}
+from '../../../../../../shared/components/controls/pagination/pagination';
+
+import
+{
+    HistoryDrawerComponent
+}
+from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
+
+import
+{
+    ConfirmDialogComponent
+}
+from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
+
+import
+{
+    ConfirmDialogService
+}
+from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
+    ProgressRunner
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-runner';
+
+import
+{
+    PRICE_ADJUSTMENT_PRINT_KEY,
+    PRICE_ADJUSTMENT_ROUTE,
+    PRICE_ADJUSTMENT_TYPES,
+    PriceAdjustmentListRow,
+    formatAdjustmentDate,
+    formatAdjustmentMoney,
+    priceAdjustmentType
+}
+from '../../../models/price-adjustment.model';
+
+import
+{
+    PriceAdjustmentService
+}
+from '../../../services/price-adjustment.service';
+
+
+// A row with its display texts
+type PriceAdjustmentRow =
+    PriceAdjustmentListRow
+    &
+    {
+        CutOffText:string;
+        TypeText:string;
+        CircularText:string;
+        IncreaseText:string;
+        ReductionText:string;
+        NetText:string;
+        // Draft / Posted / Cancelled / Deleted
+        StatusText:string;
+    };
+
+// The line under the toolbar : what an action did (no toast on
+// this page)
+interface ListNotice
+{
+    tone:'info' | 'ok' | 'error';
+    text:string;
+}
+
+
+//===============================================================
+// Price Adjustment list : the price adjustments of every type; a
+// type filter on the toolbar. A draft opens for editing, a posted
+// / cancelled one opens to view (print, cancel). Deleted drafts
+// show on the Deleted tab, each with Restore.
+//===============================================================
+
+@Component(
+{
+    selector:'app-price-adjustment-list',
+
+    standalone:true,
+
+    imports:
+    [
+        CommonModule,
+        PageHeaderComponent,
+        PageToolbarComponent,
+        PageCanvasComponent,
+        ControlTabsComponent,
+        SearchBoxComponent,
+        CommandCenterComponent,
+        ListTableComponent,
+        PaginationComponent,
+        HistoryDrawerComponent,
+        ConfirmDialogComponent,
+        ProgressDialogComponent
+    ],
+
+    templateUrl:'./price-adjustment-list.html',
+
+    styleUrl:'./price-adjustment-list.css'
+})
+
+export class PriceAdjustmentList
+    implements OnInit
+{
+    private readonly service =
+        inject(PriceAdjustmentService);
+
+    private readonly router =
+        inject(Router);
+
+    private readonly cdr =
+        inject(ChangeDetectorRef);
+
+    private readonly confirmDialog =
+        inject(ConfirmDialogService);
+
+    private readonly destroyRef =
+        inject(DestroyRef);
+
+    // Progress dialog around delete / restore
+    readonly progress =
+        new ProgressRunner(inject(ProgressDialogService), () => this.cdr.detectChanges());
+
+    //===========================================================
+    // History
+    //===========================================================
+
+    historyOpened:
+        boolean = false;
+
+    historyTitle:
+        string = 'Price Adjustment History';
+
+    historyItems:
+        any[] = [];
+
+    //===========================================================
+    // Notice (instead of toasts)
+    //===========================================================
+
+    notice:
+        ListNotice | null = null;
+
+    private noticeTimer?:
+        number;
+
+    //===========================================================
+    // Tabs : All / Draft / Posted / Cancelled / Deleted ; type
+    //===========================================================
+
+    tabs:
+        ControlTab[] =
+        [
+            { id:'all', label:'All' },
+            { id:'draft', label:'Draft' },
+            { id:'posted', label:'Posted' },
+            { id:'cancelled', label:'Cancelled' },
+            { id:'deleted', label:'Deleted' }
+        ];
+
+    selectedTab:
+        string = 'all';
+
+    readonly types =
+        [
+            { id:'', label:'All Types', icon:'fas fa-layer-group' },
+            ...PRICE_ADJUSTMENT_TYPES.map(x => ({ id:x.type as string, label:x.title, icon:x.icon }))
+        ];
+
+    selectedType:
+        string = '';
+
+    //===========================================================
+    // Data
+    //===========================================================
+
+    rows:
+        PriceAdjustmentRow[] = [];
+
+    // Rows on all pages after the tab / type / search (server)
+    totalRecords:
+        number = 0;
+
+    // Tab / type / status counts from the server
+    counts:
+        Record<string, number> = {};
+
+    // Server sort ('' = newest first)
+    private sortField:
+        string = '';
+
+    private sortDirection:
+        'asc' | 'desc' = 'asc';
+
+    private searchTimer?:
+        number;
+
+    // A load that is out of date is ignored
+    private loadSeq:
+        number = 0;
+
+    pagedRows:
+        PriceAdjustmentRow[] = [];
+
+    searchText:
+        string = '';
+
+    loading:
+        boolean = false;
+
+    loadFailed:
+        boolean = false;
+
+    currentPage:
+        number = 1;
+
+    pageSize:
+        number = 10;
+
+    readonly canvasConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:true,
+        reserveFooterSpace:true,
+        bodyScrollable:true,
+        fixedHeight:true,
+        visibleRows:10,
+        rowHeight:32,
+        headerHeight:36,
+        footerHeight:56
+    };
+
+    readonly columns:
+        ListTableColumn[] =
+    [
+        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
+        { header:'Adjustment No', field:'AdjustmentNo', width:'150px', align:'center', sortable:true },
+        { header:'Cut-off Date', field:'CutOffText', width:'120px', align:'center', sortable:true },
+        { header:'Product Type', field:'TypeText', width:'190px', align:'left', sortable:true },
+        { header:'Circular', field:'CircularText', align:'left', sortable:true },
+        { header:'Products', field:'ProductCount', width:'90px', align:'right', sortable:true },
+        { header:'Batches', field:'BatchCount', width:'85px', align:'right', sortable:true },
+        { header:'Increase', field:'IncreaseText', width:'120px', align:'right', sortable:true },
+        { header:'Reduction', field:'ReductionText', width:'120px', align:'right', sortable:true },
+        { header:'Net', field:'NetText', width:'120px', align:'right', sortable:true },
+        { header:'Status', field:'StatusText', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'200px', align:'center' }
+    ];
+
+    // Extra row buttons before View / Edit / Delete
+    readonly rowActions:
+        ListTableRowAction[] =
+    [
+        {
+            key:'restore',
+            icon:'fas fa-trash-arrow-up',
+            title:'Restore the deleted draft',
+            tone:'success',
+            visible:(row: PriceAdjustmentRow) => row.IsDeleted
+        },
+        {
+            key:'print',
+            icon:'fas fa-print',
+            title:'Print',
+            tone:'primary',
+            visible:(row: PriceAdjustmentRow) => !row.IsDeleted
+        },
+        {
+            key:'history',
+            icon:'fas fa-clock-rotate-left',
+            title:'History of this price adjustment',
+            tone:'default'
+        }
+    ];
+
+    //===========================================================
+    // Start
+    //===========================================================
+
+    ngOnInit():
+        void
+    {
+        this.load();
+    }
+
+    load():
+        void
+    {
+        this.loading = true;
+
+        this.loadFailed = false;
+
+        const seq =
+            ++this.loadSeq;
+
+        this.cdr.detectChanges();
+
+        this.service
+            .getPaged
+            ({
+                page:
+                    this.currentPage,
+                pageSize:
+                    this.pageSize,
+                search:
+                    this.searchText,
+                sort:
+                    this.sortField,
+                dir:
+                    this.sortDirection,
+                type:
+                    this.selectedType,
+                tab:
+                    this.selectedTab
+            })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    result =>
+                    {
+                        if
+                        (
+                            seq !== this.loadSeq
+                        )
+                        {
+                            return;
+                        }
+
+                        this.rows =
+                            result.items.map(x => this.toRow(x));
+
+                        this.pagedRows =
+                            this.rows;
+
+                        this.totalRecords =
+                            result.totalCount;
+
+                        this.currentPage =
+                            result.page || 1;
+
+                        this.counts =
+                            result.counts ?? {};
+
+                        this.loading = false;
+
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    () =>
+                    {
+                        if
+                        (
+                            seq !== this.loadSeq
+                        )
+                        {
+                            return;
+                        }
+
+                        this.loading = false;
+
+                        this.loadFailed = true;
+
+                        this.rows = [];
+
+                        this.pagedRows = [];
+
+                        this.totalRecords = 0;
+
+                        this.counts = {};
+
+                        this.cdr.detectChanges();
+                    }
+            });
+    }
+
+    // A list row with its display texts
+    private toRow
+    (
+        x:
+            any
+    ):
+        PriceAdjustmentRow
+    {
+        return ({
+            ...x,
+            CutOffText:formatAdjustmentDate(x.CutOffDate),
+            TypeText:priceAdjustmentType(x.PageType).title,
+            CircularText:[x.CircularRef, formatAdjustmentDate(x.CircularDate)].filter(t => !!t).join(' · ') || '—',
+            IncreaseText:x.IncreaseAmount ? formatAdjustmentMoney(x.IncreaseAmount) : '—',
+            ReductionText:x.ReductionAmount ? formatAdjustmentMoney(x.ReductionAmount) : '—',
+            NetText:formatAdjustmentMoney(x.NetAmount),
+            StatusText:x.IsDeleted ? 'Deleted' : x.Status
+        });
+    }
+
+    //===========================================================
+    // Notice
+    //===========================================================
+
+    private say
+    (
+        tone:
+            ListNotice['tone'],
+        message:
+            string
+    ):
+        void
+    {
+        this.notice = { tone, text:message };
+
+        if
+        (
+            this.noticeTimer
+        )
+        {
+            clearTimeout(this.noticeTimer);
+        }
+
+        this.noticeTimer =
+            window.setTimeout
+            (
+                () =>
+                {
+                    this.notice = null;
+
+                    this.cdr.detectChanges();
+                },
+                tone === 'error' ? 9000 : 6000
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    closeNotice():
+        void
+    {
+        this.notice = null;
+
+        this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Filters (tab / type / search / sort / page on the server)
+    //===========================================================
+
+    onTabChange
+    (
+        tab:
+            string
+    ):
+        void
+    {
+        this.selectedTab = tab;
+
+        this.reload();
+    }
+
+    onTypeChange
+    (
+        type:
+            string
+    ):
+        void
+    {
+        this.selectedType = type;
+
+        this.reload();
+    }
+
+    // Live documents of a type (search applied) ; '' = all types
+    typeCount
+    (
+        type:
+            string
+    ):
+        number
+    {
+        return Number(this.counts['Type_' + (type || 'All')] ?? 0);
+    }
+
+    // Search after a short pause in typing
+    onSearch
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.searchText = value ?? '';
+
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(this.searchTimer);
+        }
+
+        this.searchTimer =
+            window.setTimeout
+            (
+                () =>
+                {
+                    this.searchTimer = undefined;
+
+                    this.reload();
+                },
+                300
+            );
+    }
+
+    // Back to page 1 and load
+    private reload():
+        void
+    {
+        this.currentPage = 1;
+
+        this.load();
+    }
+
+    onSort
+    (
+        event:
+            { field:string; direction:'asc' | 'desc' }
+    ):
+        void
+    {
+        this.sortField = event?.field ?? '';
+
+        this.sortDirection = event?.direction === 'desc' ? 'desc' : 'asc';
+
+        this.reload();
+    }
+
+    onPageChange
+    (
+        page:
+            number
+    ):
+        void
+    {
+        this.currentPage = page;
+
+        this.load();
+    }
+
+    onPageSizeChange
+    (
+        size:
+            number
+    ):
+        void
+    {
+        this.pageSize = size;
+
+        this.reload();
+    }
+
+    //===========================================================
+    // Summary Line (below the canvas) : documents by status
+    // (search and type applied)
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return Number(this.counts['All'] ?? 0);
+    }
+
+    // A status count ; the server keys are the status names
+    countOf
+    (
+        status:
+            string
+    ):
+        number
+    {
+        const key =
+            Object.keys(this.counts).find(k => k.toLowerCase() === status.toLowerCase());
+
+        return key ? Number(this.counts[key] ?? 0) : 0;
+    }
+
+    get summaryNote():
+        string
+    {
+        return this.searchText.trim() || this.selectedType
+            ? 'Filtered records'
+            : 'All records';
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
+
+    //===========================================================
+    // Commands
+    //===========================================================
+
+    add():
+        void
+    {
+        this.router.navigate(
+            [PRICE_ADJUSTMENT_ROUTE, 'add'],
+            this.selectedType ? { queryParams:{ type:this.selectedType } } : {});
+    }
+
+    refresh():
+        void
+    {
+        this.searchText = '';
+
+        this.sortField = '';
+
+        this.currentPage = 1;
+
+        this.selectedTab = 'all';
+
+        this.selectedType = '';
+
+        this.notice = null;
+
+        this.load();
+    }
+
+    view
+    (
+        row:
+            PriceAdjustmentRow
+    ):
+        void
+    {
+        if
+        (
+            !row?.Id
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            row.IsDeleted
+        )
+        {
+            this.say('info', `${row.AdjustmentNo} is deleted. Restore it first to open it.`);
+
+            return;
+        }
+
+        this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'view', row.PublicId]);
+    }
+
+    // Only a draft is edited; a posted / cancelled one opens to view
+    edit
+    (
+        row:
+            PriceAdjustmentRow
+    ):
+        void
+    {
+        if
+        (
+            !row?.Id
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            row.IsDeleted
+        )
+        {
+            this.say('info', `${row.AdjustmentNo} is deleted. Restore it first to edit it.`);
+
+            return;
+        }
+
+        if
+        (
+            row.Status !== 'Draft'
+        )
+        {
+            this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'view', row.PublicId]);
+
+            return;
+        }
+
+        this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'edit', row.PublicId]);
+    }
+
+    onRowAction
+    (
+        event:
+            ListTableRowActionEvent
+    ):
+        void
+    {
+        const row =
+            event?.row as PriceAdjustmentRow;
+
+        if
+        (
+            !row?.Id
+        )
+        {
+            return;
+        }
+
+        switch
+        (
+            event.key
+        )
+        {
+            case 'restore':
+                this.restoreRow(row);
+                break;
+
+            case 'print':
+                this.print(row);
+                break;
+
+            case 'history':
+                this.openRowHistory(row);
+                break;
+        }
+    }
+
+    //===========================================================
+    // Delete (draft)
+    //===========================================================
+
+    delete
+    (
+        row:
+            PriceAdjustmentRow
+    ):
+        void
+    {
+        if
+        (
+            this.progress.busy || !row?.Id
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            row.IsDeleted
+        )
+        {
+            this.say('info', `${row.AdjustmentNo} is already deleted.`);
+
+            return;
+        }
+
+        if
+        (
+            row.Status !== 'Draft'
+        )
+        {
+            this.say('info', `${row.AdjustmentNo} is ${row.Status}. Only a draft can be deleted; a posted one is cancelled from its page.`);
+
+            return;
+        }
+
+        this.confirmDialog.open
+        (
+            'Delete Price Adjustment',
+            `Are you sure you want to delete draft "${row.AdjustmentNo}"?`,
+            () =>
+                // Next tick : let the confirm dialog close first
+                setTimeout(() => this.deleteRow(row))
+        );
+    }
+
+    private deleteRow
+    (
+        row:
+            PriceAdjustmentRow
+    ):
+        void
+    {
+        this.progress
+            .run(
+                'Deleting Price Adjustment',
+                `Please wait while "${row.AdjustmentNo}" is being deleted...`,
+                'Price adjustment deleted.',
+                this.service.delete(row.PublicId ?? ''))
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    () =>
+                    {
+                        this.say('ok', `${row.AdjustmentNo} deleted. It stays on the Deleted tab for Restore.`);
+
+                        this.load();
+                    },
+
+                error:
+                    err =>
+                        this.say('error', errorText(err, 'Failed to delete the price adjustment.'))
+            });
+    }
+
+    //===========================================================
+    // Restore : a row's own button, or the command (the most
+    // recently deleted draft)
+    //===========================================================
+
+    restore():
+        void
+    {
+        if
+        (
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+        // The newest deleted draft (the first row of the Deleted tab)
+        this.service
+            .getPaged({ page:1, pageSize:1, tab:'deleted' })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    result =>
+                    {
+                        const last =
+                            result.items[0];
+
+                        if
+                        (
+                            !last
+                        )
+                        {
+                            this.say('info', 'There is no deleted price adjustment draft to restore.');
+
+                            return;
+                        }
+
+                        this.restoreRow(this.toRow(last));
+                    },
+
+                error:
+                    err =>
+                        this.say('error', errorText(err, 'Failed to find the deleted draft.'))
+            });
+    }
+
+    private restoreRow
+    (
+        row:
+            PriceAdjustmentRow
+    ):
+        void
+    {
+        if
+        (
+            this.progress.busy || !row.IsDeleted
+        )
+        {
+            return;
+        }
+
+        this.confirmDialog.open
+        (
+            'Restore Price Adjustment',
+            `Are you sure you want to restore draft "${row.AdjustmentNo}"?`,
+            () =>
+                setTimeout(() => this.runRestore(row)),
+            'Restore',
+            'Cancel',
+            'primary'
+        );
+    }
+
+    private runRestore
+    (
+        row:
+            PriceAdjustmentRow
+    ):
+        void
+    {
+        this.progress
+            .run(
+                'Restoring Price Adjustment',
+                `Please wait while "${row.AdjustmentNo}" is being restored...`,
+                'Price adjustment restored.',
+                this.service.restore(row.Id))
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    () =>
+                    {
+                        this.say('ok', `${row.AdjustmentNo} restored as a draft.`);
+
+                        this.selectedTab = 'all';
+
+                        this.load();
+                    },
+
+                error:
+                    err =>
+                        this.say('error', errorText(err, 'Failed to restore the price adjustment.'))
+            });
+    }
+
+    //===========================================================
+    // Print (the Print Engine in a new tab)
+    //===========================================================
+
+    print
+    (
+        row:
+            PriceAdjustmentRow
+    ):
+        void
+    {
+        const url =
+            this.router.serializeUrl(
+                this.router.createUrlTree(['/print-viewer', PRICE_ADJUSTMENT_PRINT_KEY, row.PublicId])
+            );
+
+        const tab =
+            window.open(url, '_blank');
+
+        if
+        (
+            !tab
+        )
+        {
+            this.say('error', 'The browser blocked the print tab. Allow pop-ups for this site.');
+        }
+    }
+
+    //===========================================================
+    // History
+    //===========================================================
+
+    openHistory():
+        void
+    {
+        this.service
+            .getHistory()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    rows =>
+                    {
+                        this.historyItems = (rows ?? []).map(toHistoryItem);
+
+                        this.historyTitle = 'Price Adjustment History';
+
+                        this.historyOpened = true;
+
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    err =>
+                        this.say('error', errorText(err, 'Failed to load the price adjustment history.'))
+            });
+    }
+
+    private openRowHistory
+    (
+        row:
+            PriceAdjustmentRow
+    ):
+        void
+    {
+        this.service
+            .getEntityHistory(row.Id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    rows =>
+                    {
+                        this.historyItems = (rows ?? []).map(toHistoryItem);
+
+                        this.historyTitle = `History · ${row.AdjustmentNo}`;
+
+                        this.historyOpened = true;
+
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    err =>
+                        this.say('error', errorText(err, `Failed to load the history of ${row.AdjustmentNo}.`))
+            });
+    }
+
+    closeHistory():
+        void
+    {
+        this.historyOpened = false;
+
+        this.cdr.detectChanges();
+    }
+}
+
+
+//===============================================================
+// Helpers
+//===============================================================
+
+function errorText
+(
+    err:
+        any,
+    fallback:
+        string
+):
+    string
+{
+    const body =
+        err?.error;
+
+    if
+    (
+        err?.status === 403
+    )
+    {
+        return body?.message || 'You do not have permission for this action.';
+    }
+
+    return typeof body === 'string' && body.trim()
+        ? body.trim()
+        : body?.message || body?.Message || body?.title || fallback;
+}
+
+// An activity row → a history drawer item
+export function toHistoryItem
+(
+    row:
+        any
+):
+    any
+{
+    return {
+        title:row?.activityTitle ?? row?.ActivityTitle,
+        description:row?.activityDescription ?? row?.ActivityDescription,
+        user:row?.performedByName ?? row?.PerformedByName ?? 'System',
+        dateTime:new Date(row?.performedDate ?? row?.PerformedDate).toLocaleString(),
+        badge:row?.activityType ?? row?.ActivityType
+    };
+}

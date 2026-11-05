@@ -18,6 +18,13 @@ public interface ILocationsRepository
     Task<List<LocationsDto>> GetAllAsync();
 
 
+    // Public Id -> internal id (live rows only; null = not found)
+
+    Task<long?> GetIdByPublicIdAsync(
+
+        Guid publicId);
+
+
     //===========================================================
     // Get By Id
     //===========================================================

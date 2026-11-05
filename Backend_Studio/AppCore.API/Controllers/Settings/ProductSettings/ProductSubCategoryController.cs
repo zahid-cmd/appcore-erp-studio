@@ -3,6 +3,7 @@
 //===============================================================
 
 using Microsoft.AspNetCore.Mvc;
+using AppCore.Application.Common.Paging;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
@@ -67,6 +68,20 @@ public class ProductSubCategoryController : ControllerBase
 
 
     //===========================================================
+    // Get Paged (the list page)
+    //===========================================================
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<ProductSubCategoryDto>>> GetPaged(
+        [FromQuery] ProductSubCategoryPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new ProductSubCategoryPageRequest()));
+    }
+
+
+    //===========================================================
     // Get Next Code
     //===========================================================
 
@@ -122,11 +137,21 @@ public class ProductSubCategoryController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<ProductSubCategoryDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         ProductSubCategoryDto? productSubCategory =
             await _repository.GetByIdAsync(id);
 
@@ -143,9 +168,9 @@ public class ProductSubCategoryController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateProductSubCategoryDto dto)
     {
            long userId = this.CurrentUserId();
@@ -157,7 +182,10 @@ public class ProductSubCategoryController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            ProductSubCategoryDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (KeyNotFoundException ex)
         {
@@ -174,11 +202,27 @@ public class ProductSubCategoryController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateProductSubCategoryDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.ProductSubCategoryId =
+            id;
+
         if (!await _repository.ExistsAsync(
                 dto.ProductSubCategoryId))
         {
@@ -210,11 +254,22 @@ public class ProductSubCategoryController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         //===========================================================
         // Verify Product Sub Category Exists
         //===========================================================

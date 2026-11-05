@@ -101,6 +101,9 @@ public class AccountGroupRepository : IAccountGroupRepository
                         AccountGroupId =
                             x.AccountGroupId,
 
+                        PublicId =
+                            x.PublicId,
+
                         AccountClassId =
                             x.AccountClassId,
 
@@ -198,6 +201,33 @@ public class AccountGroupRepository : IAccountGroupRepository
                     x.GroupCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<AccountGroupEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.AccountGroupId)
+            .FirstOrDefaultAsync();
     }
 
 

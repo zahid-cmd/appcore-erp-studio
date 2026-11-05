@@ -1,0 +1,775 @@
+<div
+    class="app-form-page ccc-page"
+    [class.ccc-deposit]="mode === 'deposit'"
+    [class.ccc-dishonour]="mode === 'dishonour'">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Check Clearing Center"
+        subtitle="Deposit, clear or dishonour checks in one batch"
+        icon="fas fa-money-check-dollar">
+
+        <div pageHeaderCenter>
+
+            <div class="ccc-ribbon">
+
+                <div class="ccc-rchip">
+
+                    <span class="ccc-rchip-icon ccc-rchip-icon-branch">
+
+                        <i class="fas fa-building"></i>
+
+                    </span>
+
+                    <span class="ccc-rchip-text">
+
+                        <span class="ccc-rchip-label">Branch</span>
+
+                        <strong>{{ headerBranch || 'Not set' }}</strong>
+
+                    </span>
+
+                </div>
+
+                <span class="ccc-ribbon-sep"></span>
+
+                <div
+                    class="ccc-rchip"
+                    [class.ccc-rchip-error]="!!headerYearError"
+                    [title]="headerYearError">
+
+                    <span class="ccc-rchip-icon ccc-rchip-icon-year">
+
+                        <i class="fas fa-calendar-days"></i>
+
+                    </span>
+
+                    <span class="ccc-rchip-text">
+
+                        <span class="ccc-rchip-label">Financial Year</span>
+
+                        <strong>{{ headerYear || (voucherNoLoading ? 'Loading…' : 'Not open') }}</strong>
+
+                    </span>
+
+                </div>
+
+                <span class="ccc-ribbon-sep"></span>
+
+                <div class="ccc-rstate">
+
+                    <span class="ccc-mode-pill">
+
+                        {{ received ? 'Received' : 'Issued' }} · {{ mode === 'clear' ? 'Clearing' : (mode === 'deposit' ? 'Deposit' : 'Dishonour') }}
+
+                    </span>
+
+                    <span class="ccc-rcount">
+
+                        {{ selected.length }} selected · Tk {{ money(totalAmount) }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveText"
+            [command1Icon]="saveIcon"
+            [command1Title]="saveTitle"
+            (command1Click)="onSave()"
+            command2Text="Clear"
+            command2Icon="fas fa-eraser"
+            command2Title="Reset the form"
+            (command2Click)="onClear()"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-arrow-left"
+            rightCommandTitle="Back to the check list"
+            (rightCommandClick)="onBack()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : Received / Issued · mode
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+
+        </app-control-tabs>
+
+        <!-- Floating ribbon : Voucher Information while Available
+             Checks is maximized (click to restore) -->
+
+        <div
+            pageToolbarLeft
+            class="ccc-float-wrap">
+
+            @if (availableMax)
+            {
+                <button
+                    type="button"
+                    class="ccc-float"
+                    title="Restore Voucher Information"
+                    (click)="toggleAvailableMax()">
+
+                    <span class="ccc-float-item ccc-float-no">
+
+                        <i class="fas fa-file-invoice"></i>
+
+                        {{ voucherNo || (voucherNoLoading ? 'Loading…' : 'No number') }}
+
+                    </span>
+
+                    <span class="ccc-float-item">
+
+                        <i class="far fa-calendar"></i>
+
+                        {{ ribbonDate }}
+
+                    </span>
+
+                    <span class="ccc-float-item ccc-float-bank" [title]="ribbonBank">
+
+                        <i class="fas fa-building-columns"></i>
+
+                        {{ ribbonBank }}
+
+                    </span>
+
+                    @if (ribbonNarration)
+                    {
+                        <span class="ccc-float-item ccc-float-note" [title]="ribbonNarration">
+
+                            <i class="fas fa-align-left"></i>
+
+                            {{ ribbonNarration }}
+
+                        </span>
+                    }
+
+                    <span class="ccc-float-restore">
+
+                        <i class="fas fa-down-left-and-up-right-to-center"></i>
+
+                    </span>
+
+                </button>
+            }
+
+        </div>
+
+        <div
+            pageToolbarRight
+            class="ccc-modes"
+            role="tablist"
+            aria-label="Mode">
+
+            @for (item of modes; track item.id)
+            {
+                <button
+                    type="button"
+                    role="tab"
+                    [attr.aria-selected]="mode === item.id"
+                    [class]="'ccc-mode ccc-mode-' + item.id + (mode === item.id ? ' ccc-mode-on' : '')"
+                    [disabled]="busy"
+                    (click)="setMode(item.id)">
+
+                    <i [class]="item.icon"></i>
+
+                    {{ item.label }}
+
+                </button>
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         BODY : left (voucher · narration · available) | right (cart)
+    ====================================================== -->
+
+    <div class="ccc-body">
+
+        <!-- =================================================
+             LEFT
+        ================================================== -->
+
+        <div class="ccc-left" [class.ccc-left-max]="availableMax">
+
+            <!-- ============ VOUCHER INFORMATION ============ -->
+
+            <section class="ccc-card ccc-info">
+
+                <div class="ccc-card-header">
+
+                    <i class="fas fa-file-invoice"></i>
+
+                    <span>Voucher Information</span>
+
+                    <span class="ccc-header-note" title="The number is confirmed on save">
+
+                        Creates : <b>{{ createsText }}</b>
+
+                        @if (voucherNoExtra > 0)
+                        {
+                            · first no. shown
+                        }
+
+                    </span>
+
+                </div>
+
+                <div class="ccc-info-grid">
+
+                    <app-textbox
+                        [label]="voucherNoLabel"
+                        [placeholder]="voucherNoLoading ? 'Loading…' : (voucherNoNote || 'Assigned on save')"
+                        [value]="voucherNo"
+                        [readonly]="true"
+                        [class.ccc-vno-warn]="!voucherNo && !voucherNoLoading"
+                        [title]="voucherNo ? 'Next number · confirmed on save' : voucherNoNote">
+
+                    </app-textbox>
+
+                    <app-datepicker
+                        [label]="dateLabel"
+                        [required]="true"
+                        [value]="$any(date)"
+                        [minDate]="minDate"
+                        [maxDate]="maxDate"
+                        (valueChange)="onDate($event)"
+                        [disabled]="busy">
+
+                    </app-datepicker>
+
+                    @if (mode === 'deposit')
+                    {
+                        <app-search-dropdown
+                            label="Deposit Into"
+                            [placeholder]="selected.length ? 'Select bank account' : 'Add a check first'"
+                            [items]="depositAccountItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="depositBankCode"
+                            [required]="true"
+                            [disabled]="busy || selected.length === 0"
+                            (valueChange)="onDepositBank($event)">
+
+                        </app-search-dropdown>
+                    }
+                    @else
+                    {
+                        <app-search-dropdown
+                            label="Bank Account"
+                            placeholder="All Bank Accounts"
+                            [items]="bankItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="bankFilter"
+                            [disabled]="busy"
+                            (valueChange)="onBankFilter($event)">
+
+                        </app-search-dropdown>
+                    }
+
+                </div>
+
+            </section>
+
+            <!-- ============ NARRATION / REASON ============ -->
+
+            <section class="ccc-card ccc-narration">
+
+                <div class="ccc-card-header">
+
+                    <i [class]="mode === 'dishonour' ? 'fas fa-ban' : 'fas fa-align-left'"></i>
+
+                    <span>{{ mode === 'dishonour' ? 'Dishonour Reason' : 'Detail Narration' }}</span>
+
+                    @if (mode === 'dishonour')
+                    {
+                        <span class="ccc-required">*</span>
+                    }
+
+                </div>
+
+                <div class="ccc-narration-body">
+
+                    @if (mode === 'dishonour')
+                    {
+                        <app-textbox
+                            placeholder="e.g. Insufficient funds (applies to all checks)"
+                            [required]="true"
+                            [maxLength]="500"
+                            [value]="reason"
+                            (valueChange)="onReason($event)"
+                            [disabled]="busy">
+
+                        </app-textbox>
+                    }
+                    @else if (mode === 'clear')
+                    {
+                        <app-textbox
+                            placeholder="Optional : a default narration is written"
+                            textCase="none"
+                            [maxLength]="500"
+                            [value]="narration"
+                            (valueChange)="onNarration($event)"
+                            [disabled]="busy">
+
+                        </app-textbox>
+                    }
+                    @else
+                    {
+                        <div class="ccc-info-note">
+
+                            <i class="fas fa-circle-info"></i>
+
+                            <span>Creates a Bank Deposit Slip · nothing is posted until the checks clear</span>
+
+                        </div>
+                    }
+
+                </div>
+
+            </section>
+
+            <!-- ============ AVAILABLE ============ -->
+
+            <section class="ccc-card ccc-available">
+
+                <div class="ccc-card-header">
+
+                    <i class="fas fa-inbox"></i>
+
+                    <span>Available Checks</span>
+
+                    <span class="ccc-count">{{ available.length }}</span>
+
+                    <button
+                        type="button"
+                        class="ccc-link"
+                        [disabled]="busy || !canAddAll"
+                        (click)="addAllShown()">
+
+                        <i class="fas fa-angles-right"></i>
+
+                        Add all shown
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="ccc-max"
+                        [title]="availableMax ? 'Restore' : 'Maximize'"
+                        [attr.aria-pressed]="availableMax"
+                        (click)="toggleAvailableMax()">
+
+                        <i [class]="availableMax ? 'fas fa-down-left-and-up-right-to-center' : 'fas fa-up-right-and-down-left-from-center'"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="ccc-filters">
+
+                    <app-textbox
+                        class="ccc-search"
+                        placeholder="Search check no, payee, voucher..."
+                        textCase="none"
+                        [value]="searchText"
+                        (valueChange)="onSearch($event)">
+
+                    </app-textbox>
+
+                    <app-search-dropdown
+                        class="ccc-branch"
+                        placeholder="All Branches"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="branchFilter"
+                        (valueChange)="onBranchFilter($event)">
+
+                    </app-search-dropdown>
+
+                </div>
+
+                <div class="ccc-scroll appcore-scrollbar">
+
+                    @if (loading)
+                    {
+                        <div class="ccc-state">
+
+                            <i class="fas fa-spinner fa-spin"></i>
+
+                            Loading checks...
+
+                        </div>
+                    }
+                    @else if (loadFailed)
+                    {
+                        <app-empty-state
+                            icon="fas fa-triangle-exclamation"
+                            title="Unable to Load Checks"
+                            subtitle="Check your connection and try again."
+                            actionText="Try Again"
+                            [showAction]="true"
+                            (action)="loadChecks()">
+
+                        </app-empty-state>
+                    }
+                    @else
+                    {
+                        <div class="ccc-cards">
+
+                            @for (check of available; track check.PaymentId)
+                            {
+                                <div
+                                    class="ccc-check"
+                                    role="button"
+                                    tabindex="0"
+                                    [class.ccc-check-off]="!!addBlock(check)"
+                                    [title]="addBlock(check) || (check.SourceVoucherNo + ' · ' + (check.CheckBank || '—') + (check.BankName ? ' · ' + check.BankName : '') + ' · Click to add')"
+                                    (click)="add(check)"
+                                    (keydown.enter)="add(check)">
+
+                                    <span class="ccc-check-no">{{ check.CheckNo }}</span>
+
+                                    <span class="ccc-check-party">
+
+                                        {{ check.PartyName }}
+
+                                        @if (check.PostDated)
+                                        {
+                                            <span class="ccc-tag ccc-tag-wait">Post-dated</span>
+                                        }
+
+                                    </span>
+
+                                    <span class="ccc-check-date">{{ check.CheckDateText }}</span>
+
+                                    <span class="ccc-check-amount">{{ check.AmountText }}</span>
+
+                                    <button
+                                        type="button"
+                                        class="ccc-add"
+                                        title="Add"
+                                        [disabled]="busy || !!addBlock(check)"
+                                        (click)="$event.stopPropagation(); add(check)">
+
+                                        <i class="fas fa-plus"></i>
+
+                                    </button>
+
+                                </div>
+                            }
+                            @empty
+                            {
+                                <app-empty-state
+                                    icon="fas fa-money-check"
+                                    title="No Checks Here"
+                                    [subtitle]="mode === 'deposit'
+                                        ? 'Pending received checks appear here.'
+                                        : (received ? 'Deposited checks appear here.' : 'Pending issued checks appear here.')"
+                                    [showAction]="false">
+
+                                </app-empty-state>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+
+            </section>
+
+        </div>
+
+        <!-- =================================================
+             RIGHT : CART (full height)
+        ================================================== -->
+
+        <section class="ccc-card ccc-selected">
+
+            <div class="ccc-card-header">
+
+                <i class="fas fa-list-check"></i>
+
+                <span>Selected Checks</span>
+
+                <span class="ccc-count">{{ selected.length }}</span>
+
+                <button
+                    type="button"
+                    class="ccc-link ccc-link-danger"
+                    [disabled]="busy || selected.length === 0"
+                    (click)="removeAll()">
+
+                    <i class="fas fa-trash-can"></i>
+
+                    Remove all
+
+                </button>
+
+            </div>
+
+            <div class="ccc-scroll appcore-scrollbar">
+
+                @if (selected.length === 0)
+                {
+                    <app-empty-state
+                        icon="fas fa-hand-pointer"
+                        title="Nothing Selected"
+                        subtitle="Click a check on the left, or Add, to bring it here."
+                        [showAction]="false">
+
+                    </app-empty-state>
+                }
+                @else
+                {
+                    <table class="ccc-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th class="ccc-c ccc-col-sl">SL</th>
+
+                                <th>Check · Voucher</th>
+
+                                <th>{{ received ? 'Payee (from)' : 'Payee (to)' }}</th>
+
+                                <th class="ccc-r">Amount</th>
+
+                                @if (mode === 'clear')
+                                {
+                                    <th class="ccc-col-money">Bank Charges</th>
+
+                                }
+
+                                @if (mode === 'dishonour')
+                                {
+                                    <th class="ccc-col-money">Bank Charges</th>
+
+                                    @if (recoveryOn)
+                                    {
+                                        <th class="ccc-col-money" title="Recovered from the payer : same as the bank charges">Recovery</th>
+                                    }
+                                }
+
+                                <th class="ccc-col-notes">Short Notes</th>
+
+                                <th class="ccc-c ccc-col-x"></th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @for (line of selected; track line.check.PaymentId; let i = $index)
+                            {
+                                <tr>
+
+                                    <td class="ccc-c ccc-sl">{{ i + 1 }}</td>
+
+                                    <td>
+
+                                        <div class="ccc-main">{{ line.check.CheckNo }}</div>
+
+                                        <div class="ccc-sub">{{ line.check.SourceVoucherNo }}</div>
+
+                                    </td>
+
+                                    <td>
+
+                                        <div class="ccc-main ccc-clip" [title]="line.check.PartyName">{{ line.check.PartyName }}</div>
+
+                                        <div class="ccc-sub">{{ line.check.CheckDateText }}</div>
+
+                                    </td>
+
+                                    <td class="ccc-r ccc-amount">{{ line.check.AmountText }}</td>
+
+                                    @if (mode === 'clear')
+                                    {
+                                        <td>
+
+                                            <app-textbox
+                                                class="ccc-input ccc-input-money"
+                                                placeholder="0.00"
+                                                inputMode="decimal"
+                                                [value]="line.charge"
+                                                (valueChange)="onLine(line, 'charge', $event)"
+                                                [disabled]="busy">
+
+                                            </app-textbox>
+
+                                        </td>
+
+                                    }
+
+                                    @if (mode === 'dishonour')
+                                    {
+                                        <td>
+
+                                            <app-textbox
+                                                class="ccc-input ccc-input-money"
+                                                placeholder="0.00"
+                                                inputMode="decimal"
+                                                [value]="line.fee"
+                                                (valueChange)="onLine(line, 'fee', $event)"
+                                                [disabled]="busy">
+
+                                            </app-textbox>
+
+                                        </td>
+
+                                        @if (recoveryOn)
+                                        {
+                                            <td>
+
+                                                <!-- Read only : follows the bank charges -->
+                                                <app-textbox
+                                                    class="ccc-input ccc-input-money ccc-input-ro"
+                                                    placeholder="0.00"
+                                                    [value]="money(lineRecovery(line))"
+                                                    [readonly]="true">
+
+                                                </app-textbox>
+
+                                            </td>
+                                        }
+                                    }
+
+                                    <td>
+
+                                        <app-textbox
+                                            class="ccc-input"
+                                            placeholder="Optional"
+                                            textCase="none"
+                                            [maxLength]="250"
+                                            [value]="line.notes"
+                                            (valueChange)="onLine(line, 'notes', $event)"
+                                            [disabled]="busy">
+
+                                        </app-textbox>
+
+                                    </td>
+
+                                    <td class="ccc-c">
+
+                                        <button
+                                            type="button"
+                                            class="ccc-remove"
+                                            title="Remove"
+                                            [disabled]="busy"
+                                            (click)="remove(line)">
+
+                                            <i class="fas fa-xmark"></i>
+
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                            <!-- Takes the free height : keeps the total row at the bottom -->
+                            <tr class="ccc-fill" aria-hidden="true">
+
+                                <td [attr.colspan]="mode === 'deposit' ? 6 : (mode === 'clear' ? 7 : (recoveryOn ? 8 : 7))"></td>
+
+                            </tr>
+
+                        </tbody>
+
+                        <tfoot>
+
+                            <tr>
+
+                                <td colspan="3">Total</td>
+
+                                <td class="ccc-r">{{ money(totalAmount) }}</td>
+
+                                @if (mode === 'clear')
+                                {
+                                    <td class="ccc-r">{{ money(totalCharges) }}</td>
+
+                                }
+
+                                @if (mode === 'dishonour')
+                                {
+                                    <td class="ccc-r">{{ money(totalFees) }}</td>
+
+                                    @if (recoveryOn)
+                                    {
+                                        <td class="ccc-r">{{ money(totalRecovery) }}</td>
+                                    }
+                                }
+
+                                <td colspan="2"></td>
+
+                            </tr>
+
+                        </tfoot>
+
+                    </table>
+                }
+
+            </div>
+
+            <!-- Footer : status -->
+
+            <div
+                class="ccc-status"
+                [class.ccc-status-ok]="!issue"
+                [class.ccc-status-warn]="!!issue">
+
+                @if (issue)
+                {
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    {{ issue }}
+                }
+                @else
+                {
+                    <i class="fas fa-circle-check"></i>
+
+                    Ready : {{ selected.length }} check(s). Click {{ saveText }} at the top to post.
+                }
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+<!-- =====================================================
+     UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

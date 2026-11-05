@@ -92,6 +92,9 @@ export class ServiceCategoryService
         ServiceCategory
     {
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             ServiceCategoryId:
                 Number(
                     item?.ServiceCategoryId
@@ -300,7 +303,7 @@ export class ServiceCategoryService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<ServiceCategory>
     {
@@ -328,9 +331,9 @@ export class ServiceCategoryService
         model:
             CreateServiceCategory
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -343,13 +346,16 @@ export class ServiceCategoryService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateServiceCategory
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -362,7 +368,7 @@ export class ServiceCategoryService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

@@ -6,6 +6,8 @@
 export interface BrandManagement
 {
     BrandManagementId: number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     BrandCode: string;
 
@@ -108,4 +110,26 @@ export interface BrandManagementDefaults
 
     // Why a ledger sub group cannot be used ('' = fine)
     LedgerMessage: string;
+}
+
+
+//===============================================================
+// List page query (server-side paging)
+//===============================================================
+
+export interface BrandManagementPageQuery
+{
+    page:number;
+
+    pageSize:number;
+
+    search:string;
+
+    // Column field ('' = the default sort)
+    sort:string;
+
+    dir:'asc' | 'desc';
+
+    // true / false (null = all)
+    status:boolean | null;
 }

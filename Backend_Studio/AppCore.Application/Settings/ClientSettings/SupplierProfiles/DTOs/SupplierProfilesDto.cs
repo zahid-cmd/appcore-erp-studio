@@ -22,6 +22,14 @@ public class SupplierProfilesDto
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId
+    {
+        get;
+        set;
+    }
+
+
     //===========================================================
     // Supplier Information
     //===========================================================
@@ -294,4 +302,4 @@ public class SupplierProfilesDto
         get;
         set;
     }
-}
+}

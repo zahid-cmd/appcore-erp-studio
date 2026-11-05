@@ -26,6 +26,9 @@ public abstract class PurchaseOrderHeader
     // Primary Key
     //===========================================================
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
     public long PurchaseOrderId { get; set; }
 
 

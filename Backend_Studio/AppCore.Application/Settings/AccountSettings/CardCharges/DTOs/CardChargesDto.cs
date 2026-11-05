@@ -21,6 +21,9 @@ public class CardChargesDto
 
     public long POSAccountId { get; set; }
 
+    // The POS Account's Public Id (links and API calls; uuid v7)
+    public Guid PublicId { get; set; }
+
     public string POSAccountCode { get; set; } = string.Empty;
 
     public string POSAccountName { get; set; } = string.Empty;

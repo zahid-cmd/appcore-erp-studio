@@ -343,6 +343,15 @@ implements OnInit, OnDestroy
         AccountSubGroup[] =
     [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredAccountSubGroups:
         AccountSubGroup[] =
     [];
@@ -903,6 +912,9 @@ implements OnInit, OnDestroy
                     0
                 ),
 
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             AccountClassId:
                 Number(
                     item?.AccountClassId
@@ -1098,6 +1110,9 @@ implements OnInit, OnDestroy
                         true;
 
                     this.applyFilters();
+
+
+                    this.updateSummary();
 
                     // keep the loader until the auto codes are known
                     this.loading =
@@ -2007,7 +2022,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.AccountSubGroupId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -2031,7 +2046,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.AccountSubGroupId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -2096,7 +2111,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.accountSubGroupService.delete(
-                item.AccountSubGroupId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -2415,4 +2430,32 @@ implements OnInit, OnDestroy
         this.historyOpened =
             false;
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.accountSubGroups ?? [];
+
+        const active =
+            all.filter(x => !!x?.IsActive).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

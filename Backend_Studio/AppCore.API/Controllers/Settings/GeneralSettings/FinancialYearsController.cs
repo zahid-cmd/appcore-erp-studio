@@ -190,11 +190,21 @@ public class FinancialYearsController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<FinancialYearsDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         try
         {
             FinancialYearsDto? financialYear =
@@ -220,10 +230,10 @@ public class FinancialYearsController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
-        [FromBody] CreateFinancialYearsDto dto)
+    public async Task<ActionResult<Guid>> Create(
+        CreateFinancialYearsDto dto)
     {
            long userId = this.CurrentUserId();
 
@@ -234,7 +244,10 @@ public class FinancialYearsController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            FinancialYearsDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (InvalidOperationException ex)
         {
@@ -257,11 +270,27 @@ public class FinancialYearsController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
-        [FromBody] UpdateFinancialYearsDto dto)
+        Guid publicId,
+        UpdateFinancialYearsDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.FinancialYearId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try
@@ -330,11 +359,22 @@ public class FinancialYearsController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

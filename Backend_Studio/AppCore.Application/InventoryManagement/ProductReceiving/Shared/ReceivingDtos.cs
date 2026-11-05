@@ -17,6 +17,9 @@ namespace AppCore.Application.InventoryManagement.ProductReceiving;
 
 public class ReceivingDto
 {
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     public long ReceivingId { get; set; }
 
     public string PageType { get; set; } = string.Empty;
@@ -106,6 +109,14 @@ public class ReceivingLineDto
 
     public int ShelfNumber { get; set; }
 
+    // 0 = no place
+    public int BinNumber { get; set; }
+
+    // SLF-A-03 / A-03-05 ('' = no place)
+    public string ShelfLabel { get; set; } = string.Empty;
+
+    public string BinCode { get; set; } = string.Empty;
+
     public string ShortNotes { get; set; } = string.Empty;
 }
 
@@ -193,6 +204,23 @@ public class ReceivingRackDto
     public string Name { get; set; } = string.Empty;
 
     public int ShelfCount { get; set; }
+
+    public string ZoneCode { get; set; } = string.Empty;
+
+    public string ZoneName { get; set; } = string.Empty;
+
+    // Bins per shelf (free / held : rack-management/bins)
+    public List<ReceivingRackShelfDto> Shelves { get; set; } = new();
+}
+
+
+public class ReceivingRackShelfDto
+{
+    public int ShelfNumber { get; set; }
+
+    public string ShelfLabel { get; set; } = string.Empty;
+
+    public int BinCount { get; set; }
 }
 
 
@@ -269,6 +297,11 @@ public class ReceivingShelfDto
     public long RackManagementId { get; set; }
 
     public int ShelfNumber { get; set; }
+
+    public int BinNumber { get; set; }
+
+    // A-03-05
+    public string BinCode { get; set; } = string.Empty;
 }
 
 
@@ -308,7 +341,10 @@ public class CreateReceivingLineDto
 
     public int ShelfNumber { get; set; }
 
-    // Save Rack · Shelf as the product's default in the warehouse
+    // Bin on that shelf (0 with a rack and shelf = bin 1)
+    public int BinNumber { get; set; }
+
+    // Save Rack · Shelf · Bin as the product's default in the warehouse
     public bool SaveAsDefault { get; set; }
 
     public string? ShortNotes { get; set; }
@@ -317,6 +353,9 @@ public class CreateReceivingLineDto
 
 public class ReceivingSavedDto
 {
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     public long ReceivingId { get; set; }
 
     public string ReceivingNo { get; set; } = string.Empty;
@@ -347,4 +386,19 @@ public class ReceivingUnitTakenDto
     public string Value { get; set; } = string.Empty;
 
     public string Message { get; set; } = string.Empty;
+}
+
+
+//===============================================================
+// Product Receiving list : paged list request
+//---------------------------------------------------------------
+// GET .../paged?page=1&pageSize=10&search=&sort=&dir=&tab=
+//
+// Tab  : all (default) / posted / cancelled.
+// Sort : the list column fields; empty = newest first.
+//===============================================================
+
+public class ReceivingPageRequest : AppCore.Application.Common.Paging.PagedRequest
+{
+    public string? Tab { get; set; }
 }

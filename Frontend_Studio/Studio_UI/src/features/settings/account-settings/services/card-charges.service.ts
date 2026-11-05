@@ -227,6 +227,10 @@ export function normalizeCardCharges
         POSAccountId:
             readNumber(item, 'POSAccountId'),
 
+        // The POS Account's Public Id (links and API calls)
+        PublicId:
+            String(readField(item, 'PublicId') ?? ''),
+
         POSAccountCode:
             readText(item, 'POSAccountCode'),
 
@@ -314,7 +318,7 @@ export class CardChargesService
     getByPosAccount
     (
         posAccountId:
-            number
+            string
     ):
         Observable<CardCharges>
     {
@@ -382,7 +386,7 @@ export class CardChargesService
     delete
     (
         posAccountId:
-            number
+            string
     ):
         Observable<void>
     {

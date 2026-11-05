@@ -1,0 +1,1035 @@
+@import '../../../../../shared/styles/app-list-page.css';
+
+/* =====================================================
+   PRODUCT LEDGERS (MB / SP / AC)
+===================================================== */
+
+/* The page lays itself out in the shell's content area (full
+   height); this host adds no box */
+:host
+{
+    display:contents;
+}
+
+.pl-page
+{
+    position:relative;
+    height:100%;
+    min-height:0;
+}
+
+
+/* =====================================================
+   BODY : filter (full height) | canvas
+===================================================== */
+
+.pl-body
+{
+    display:grid;
+    grid-template-columns:370px minmax(0, 1fr);
+    grid-template-rows:minmax(0, 1fr);
+    gap:12px;
+    flex:1 1 0;
+    min-height:0;
+}
+
+.pl-filter,
+.pl-canvas
+{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    min-height:0;
+    border:1px solid #e3e9f2;
+    border-radius:12px;
+    background:#ffffff;
+    box-shadow:0 1px 2px rgba(15, 23, 42, 0.04);
+    overflow:hidden;
+}
+
+
+/* =====================================================
+   FILTER
+===================================================== */
+
+.pl-filter-head
+{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:40px;
+    padding:0 14px;
+    border-bottom:1px solid #eef2f7;
+    background:#f8fafc;
+    color:#64748b;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.6px;
+    text-transform:uppercase;
+}
+
+.pl-filter-head b
+{
+    color:#334155;
+    font-size:11px;
+    letter-spacing:0;
+    text-transform:none;
+}
+
+.pl-filter-body
+{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    padding:14px;
+}
+
+.pl-field
+{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    min-width:0;
+}
+
+.pl-field > label
+{
+    color:#64748b;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+}
+
+.pl-date
+{
+    display:block;
+    width:100%;
+    min-width:0;
+}
+
+/* Registers : the sub group, fixed (read-only) */
+.pl-fixed
+{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    height:36px;
+    padding:0 12px;
+    border:1px dashed #cbd5e1;
+    border-radius:8px;
+    background:#f8fafc;
+    color:#1e293b;
+    font-size:13px;
+    font-weight:600;
+}
+
+.pl-fixed i
+{
+    color:#94a3b8;
+    font-size:10.5px;
+}
+
+.pl-fixed span
+{
+    min-width:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.pl-dd
+{
+    display:block;
+    width:100%;
+    --dropdown-width:100%;
+}
+
+.pl-hint
+{
+    color:#94a3b8;
+    font-size:11px;
+    line-height:1.35;
+}
+
+.pl-sep
+{
+    height:1px;
+    margin:2px 0;
+    background:#eef2f7;
+}
+
+/* Switch (on the switch bar) */
+.pl-switch
+{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    color:#334155;
+    font-size:12.5px;
+    cursor:pointer;
+    user-select:none;
+}
+
+.pl-switch input
+{
+    position:absolute;
+    opacity:0;
+    pointer-events:none;
+}
+
+.pl-switch-track
+{
+    position:relative;
+    flex:0 0 32px;
+    width:32px;
+    height:18px;
+    border-radius:999px;
+    background:#cbd5e1;
+    transition:background .15s ease;
+}
+
+.pl-switch-track i
+{
+    position:absolute;
+    top:2px;
+    left:2px;
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background:#ffffff;
+    box-shadow:0 1px 2px rgba(15, 23, 42, 0.25);
+    transition:transform .15s ease;
+}
+
+.pl-switch input:checked + .pl-switch-track
+{
+    background:#1e3a8a;
+}
+
+.pl-switch input:checked + .pl-switch-track i
+{
+    transform:translateX(14px);
+}
+
+.pl-switch input:focus-visible + .pl-switch-track
+{
+    outline:2px solid #93b4f5;
+    outline-offset:2px;
+}
+
+.pl-filter-foot
+{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    padding:10px 14px;
+    border-top:1px solid #eef2f7;
+    background:#f8fafc;
+}
+
+.pl-btn
+{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    height:34px;
+    padding:0 14px;
+    border:1px solid #d9e2ef;
+    border-radius:9px;
+    background:#ffffff;
+    color:#1e293b;
+    font-family:inherit;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.pl-btn:hover
+{
+    background:#eef4ff;
+}
+
+.pl-btn-primary
+{
+    border-color:#1e3a8a;
+    background:#1e3a8a;
+    color:#ffffff;
+}
+
+.pl-btn-primary:hover
+{
+    background:#1d3478;
+}
+
+.pl-btn:disabled
+{
+    opacity:.55;
+    cursor:default;
+}
+
+.pl-btn-primary i
+{
+    font-size:10px;
+}
+
+
+/* =====================================================
+   CANVAS
+===================================================== */
+
+.pl-empty
+{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    flex:1 1 auto;
+    padding:40px;
+    color:#64748b;
+    font-size:13px;
+    text-align:center;
+}
+
+.pl-empty b
+{
+    color:#0f172a;
+    font-size:14.5px;
+}
+
+.pl-empty-ico
+{
+    margin-bottom:6px;
+    color:#c7d6f2;
+    font-size:40px;
+}
+
+.pl-error
+{
+    color:#b42318;
+}
+
+.pl-scroll
+{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    padding:14px 14px 18px;
+    background:#f4f7fb;
+}
+
+.pl-card
+{
+    margin-bottom:14px;
+    border:1px solid #e3e9f2;
+    border-radius:12px;
+    background:#ffffff;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 8px 22px -14px rgba(15, 42, 90, 0.30);
+    overflow:hidden;
+}
+
+.pl-card:last-child
+{
+    margin-bottom:0;
+}
+
+.pl-note
+{
+    margin:-4px 0 12px;
+    padding:7px 12px;
+    border:1px solid #fde68a;
+    border-radius:9px;
+    background:#fffbeb;
+    color:#92400e;
+    font-size:12px;
+}
+
+
+/* ---------------- View : fixed head, scrolling table ---------------- */
+
+.pl-view
+{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    flex:1 1 auto;
+    min-height:0;
+    padding:14px;
+    background:#f4f7fb;
+}
+
+.pl-view > .pl-card,
+.pl-view > .pl-note
+{
+    margin:0;
+}
+
+/* ---------------- Head : two lines | figures | period ---------------- */
+
+.pl-head
+{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items:center;
+    gap:16px;
+    flex:0 0 auto;
+    padding:10px 16px;
+    background:linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.pl-head-info
+{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:0;
+}
+
+.pl-head-title
+{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+}
+
+.pl-head-title b
+{
+    min-width:0;
+    color:#0b2a5b;
+    font-size:15.5px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.pl-head-sub
+{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+    color:#64748b;
+    font-size:12px;
+}
+
+.pl-code,
+.pl-mono
+{
+    font-family:'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+    letter-spacing:.2px;
+}
+
+.pl-code
+{
+    flex:0 0 auto;
+    color:#475569;
+    font-size:11.5px;
+}
+
+.pl-pill
+{
+    flex:0 0 auto;
+    padding:1px 9px;
+    border-radius:999px;
+    background:#eef3fc;
+    color:#1e3a8a;
+    font-size:10.5px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.pl-pill-warn
+{
+    background:#fff7ed;
+    color:#b45309;
+}
+
+/* Figures : four small cards in the middle */
+.pl-figs
+{
+    display:flex;
+    gap:8px;
+}
+
+.pl-figs > div
+{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+    min-width:118px;
+    padding:5px 12px;
+    border:1px solid #e3e9f2;
+    border-radius:9px;
+    background:#ffffff;
+}
+
+.pl-figs span
+{
+    color:#94a3b8;
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:.6px;
+    text-transform:uppercase;
+}
+
+.pl-figs b
+{
+    color:#0f172a;
+    font-size:13.5px;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+}
+
+.pl-figs .pl-fig-main
+{
+    border-color:#c7d6f2;
+    background:#f3f7ff;
+}
+
+.pl-figs .pl-fig-main b
+{
+    color:#1e3a8a;
+}
+
+.pl-head-period
+{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:4px;
+    min-width:0;
+    line-height:1.3;
+}
+
+.pl-head-period b
+{
+    color:#0f172a;
+    font-size:13px;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+}
+
+.pl-head-period span
+{
+    color:#64748b;
+    font-size:12px;
+    white-space:nowrap;
+}
+
+.pl-link
+{
+    padding:0;
+    border:0;
+    background:transparent;
+    color:#2563eb;
+    font-family:inherit;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.pl-link:hover
+{
+    text-decoration:underline;
+}
+
+/* Table card : scrolls; its header stays */
+.pl-tcard
+{
+    flex:1 1 0;
+    min-height:0;
+    overflow:auto;
+}
+
+/* ---------------- Ledger table (classic rows) ---------------- */
+
+.pl-table
+{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    font-size:12px;
+}
+
+.pl-th-part span
+{
+    color:#94a3b8;
+    font-weight:700;
+    letter-spacing:.3px;
+}
+
+.pl-table th
+{
+    position:sticky;
+    top:0;
+    z-index:2;
+    height:42px;
+    padding:0 10px;
+    border-bottom:1px solid #cfd9ea;
+    background:#f1f5fb;
+    color:#334155;
+    font-size:10.5px;
+    font-weight:800;
+    letter-spacing:.6px;
+    text-align:left;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+
+.pl-table td
+{
+    height:38px;
+    padding:4px 10px;
+    border-bottom:1px solid #f0f3f8;
+    color:#0f172a;
+    vertical-align:middle;
+}
+
+/* Contra ledger codes after the names */
+.pl-pcode
+{
+    margin-left:6px;
+    color:#94a3b8;
+    font-family:'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+    font-size:10.5px;
+}
+
+/* Short notes : the line's own narration */
+.pl-note-c
+{
+    color:#475569;
+    font-size:11.5px;
+    font-style:italic;
+}
+
+/* Narration once per voucher (voucher with several rows) */
+.pl-table tr.pl-narr td
+{
+    height:auto;
+    padding:2px 10px 7px;
+    border-bottom:1px solid #e9eef6;
+    background:#fbfcfe;
+    color:#64748b;
+    font-size:11.5px;
+}
+
+.pl-table tr.pl-narr td
+{
+    border-left:0 !important;
+}
+
+.pl-table tr.pl-narr i
+{
+    margin-right:8px;
+    color:#94a3b8;
+    font-size:9.5px;
+    font-style:normal;
+    font-weight:700;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+}
+
+.pl-table tbody tr.pl-row:nth-child(even) td
+{
+    background:#fcfdff;
+}
+
+.pl-table tbody tr.pl-row:hover td
+{
+    background:#f3f7ff;
+}
+
+.pl-table .r
+{
+    text-align:right !important;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+}
+
+.pl-sl
+{
+    color:#94a3b8;
+    font-size:11px;
+    font-variant-numeric:tabular-nums;
+}
+
+.pl-nowrap
+{
+    white-space:nowrap;
+}
+
+.pl-clip
+{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.pl-dim
+{
+    color:#64748b;
+}
+
+.pl-tag
+{
+    margin-left:6px;
+    padding:0 7px;
+    border:1px solid #fca5a5;
+    border-radius:999px;
+    background:#fef2f2;
+    color:#b42318;
+    font-size:9.5px;
+    font-weight:700;
+}
+
+.pl-bal
+{
+    font-weight:700;
+}
+
+/* Opening / closing / total */
+.pl-open td
+{
+    background:#f8fbff;
+    color:#1e293b;
+}
+
+.pl-total td
+{
+    height:38px;
+    border-top:1px solid #cbd5e1;
+    border-bottom:0;
+    background:#fbfcfe;
+    font-weight:800;
+}
+
+/* The last body row gives way so the closing row's top line
+   shows (collapsed borders : the upper cell wins a tie) */
+.pl-table tbody tr:last-child td
+{
+    border-bottom:0;
+}
+
+.pl-close td
+{
+    height:38px;
+    border-top:1px solid #1e3a8a;
+    border-bottom:1px solid #1e3a8a;
+    background:#f3f7ff;
+    color:#1e3a8a;
+    font-weight:800;
+}
+
+.pl-none td
+{
+    height:70px;
+    color:#64748b;
+    text-align:center;
+}
+
+/* Cancelled voucher and its reversal */
+.pl-row.is-cancelled td,
+.pl-row.is-rev td
+{
+    color:#94a3b8;
+}
+
+.pl-row.is-cancelled td.r:not(.pl-bal)
+{
+    text-decoration:line-through;
+}
+
+.pl-row.is-rev td
+{
+    background:#fffafa !important;
+}
+
+/* Summary rows open their statement */
+.pl-click
+{
+    cursor:pointer;
+}
+
+.pl-row.is-inactive td
+{
+    color:#94a3b8;
+}
+
+/* =====================================================
+   NARROW SCREENS
+===================================================== */
+
+@media (max-width: 1280px)
+{
+    .pl-body
+    {
+        grid-template-columns:320px minmax(0, 1fr);
+    }
+
+    .pl-table col.c-doc
+    {
+        width:180px;
+    }
+}
+
+
+@media (max-width: 1700px)
+{
+    .pl-head
+    {
+        gap:12px;
+    }
+
+    .pl-figs > div
+    {
+        min-width:0;
+        padding:5px 9px;
+    }
+
+    .pl-figs b
+    {
+        font-size:12.5px;
+    }
+}
+
+
+/* =====================================================
+   HEADER SEARCH : wide enough for the full placeholder
+===================================================== */
+
+:host ::ng-deep [pageHeaderCenter] app-search-box
+{
+    width:460px;
+    max-width:100%;
+}
+
+@media (max-width: 1400px)
+{
+    :host ::ng-deep [pageHeaderCenter] app-search-box
+    {
+        width:380px;
+    }
+}
+
+
+/* =====================================================
+   PRODUCT LEDGER : columns, quantities, values
+===================================================== */
+
+.pl-table col.c-sl    { width:44px; }
+.pl-table col.c-date  { width:98px; }
+.pl-table col.c-doc   { width:200px; }
+.pl-table col.c-qty   { width:86px; }
+.pl-table col.c-bal   { width:96px; }
+.pl-table col.c-cost  { width:96px; }
+.pl-table col.c-val   { width:118px; }
+.pl-table col.c-note  { width:16%; }
+.pl-table col.c-sub   { width:28%; }
+.pl-table col.c-sq    { width:128px; }
+
+/* With values the table is wide : the card scrolls sideways */
+.pl-table.pl-wide
+{
+    min-width:1240px;
+}
+
+/* Ledger-book rule before a block of figures */
+.pl-table th.b-l,
+.pl-table td.b-l
+{
+    border-left:1px solid #edf1f7;
+}
+
+.pl-main
+{
+    font-weight:600;
+}
+
+.pl-sub
+{
+    margin-top:1px;
+    color:#64748b;
+    font-size:11px;
+}
+
+.pl-doc
+{
+    color:#0b2a5b;
+    font-family:'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+    font-size:11.5px;
+    font-weight:700;
+}
+
+.pl-table td.pl-in,
+.pl-figs b.pl-in
+{
+    color:#15803d;
+}
+
+.pl-table td.pl-out,
+.pl-figs b.pl-out
+{
+    color:#b42318;
+}
+
+/* In Transit : purchased, not yet received (amber); the row's
+   change after the running balance (+ purchased, − received) */
+.pl-table td.pl-transit,
+.pl-figs b.pl-transit
+{
+    color:#b45309;
+}
+
+.pl-table td.pl-transit small
+{
+    margin-left:4px;
+    font-size:11px;
+    font-weight:600;
+    color:#d97706;
+}
+
+.pl-table td.pl-transit small.pl-tr-down
+{
+    color:#15803d;
+}
+
+/* Value under a figure (header cards / summary cells) */
+.pl-figs em
+{
+    color:#64748b;
+    font-size:11px;
+    font-style:normal;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+}
+
+.pl-val
+{
+    display:block;
+    margin-top:1px;
+    color:#64748b;
+    font-size:10.5px;
+    font-style:normal;
+    font-weight:500;
+}
+
+.pl-sum td
+{
+    height:auto;
+    padding-top:6px;
+    padding-bottom:6px;
+}
+
+.pl-switch em
+{
+    color:#94a3b8;
+    font-size:11px;
+    font-style:normal;
+}
+
+/* Received into store : nothing in or out of the total */
+.pl-row.is-transfer td
+{
+    color:#475569;
+    background:#fbfcff !important;
+}
+
+/* MB : the bikes of a row (full width, under it) */
+.pl-table tr.pl-bikes td
+{
+    height:auto;
+    padding:2px 10px 7px;
+    border-bottom:1px solid #e9eef6;
+    background:#fbfcfe;
+    color:#475569;
+    font-family:'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+    font-size:11px;
+    line-height:1.5;
+}
+
+.pl-table tr.pl-bikes i
+{
+    margin-right:8px;
+    color:#94a3b8;
+    font-family:inherit;
+    font-size:9.5px;
+    font-style:normal;
+    font-weight:700;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+}
+
+.pl-bikes.is-cancelled td,
+.pl-bikes.is-rev td
+{
+    color:#94a3b8;
+}
+
+
+/* =====================================================
+   SWITCH BAR : one line over the canvas
+===================================================== */
+
+.pl-switchbar
+{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    flex:0 0 auto;
+    min-height:44px;
+    padding:0 16px;
+    border-bottom:1px solid #e9eef6;
+    background:linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    overflow-x:auto;
+    white-space:nowrap;
+    scrollbar-width:none;
+}
+
+.pl-switchbar::-webkit-scrollbar
+{
+    display:none;
+}
+
+.pl-switchbar-title
+{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    flex:0 0 auto;
+    padding-right:18px;
+    border-right:1px solid #e3e9f2;
+    color:#3b62b8;
+    font-size:10.5px;
+    font-weight:800;
+    letter-spacing:1px;
+    text-transform:uppercase;
+}
+
+.pl-switchbar .pl-switch
+{
+    position:relative;
+    flex:0 0 auto;
+    font-size:12.5px;
+}
+
+.pl-switchbar .pl-switch em
+{
+    color:#94a3b8;
+    font-size:11px;
+    font-style:normal;
+}
+
+/* The canvas content fills what the bar leaves */
+.pl-canvas > .pl-view,
+.pl-canvas > .pl-empty
+{
+    min-height:0;
+}

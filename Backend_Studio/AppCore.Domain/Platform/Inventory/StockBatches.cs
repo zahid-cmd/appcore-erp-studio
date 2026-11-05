@@ -37,12 +37,20 @@ public class StockBatches
     public decimal QuantityOut { get; set; }
     public decimal RemainingValue { get; set; }
 
-    // Selling price of the batch (0 = not priced yet : not
-    // saleable). Opening Stock may set it; Product Pricing later.
-    public decimal SalePrice { get; set; }
-
-    // Maximum retail price of the batch (VAT inclusive; 0 = none)
+    // Maximum retail price of the batch (VAT inclusive; 0 = not
+    // priced yet : not saleable). MRP is the sale price : there
+    // is no separate selling price anywhere.
     public decimal Mrp { get; set; }
+
+    // VAT paid at source (the "base VAT") : the VAT rate and the VAT
+    // per unit of the batch, from its purchase / opening stock line.
+    // At sale, the VAT Current Account takes this base VAT; the
+    // difference from the VAT inside the selling MRP goes to the
+    // price increase / reduction ledgers (Case A : VAT final at
+    // source)
+    public decimal SourceVatRate { get; set; }
+
+    public decimal SourceVatPerUnit { get; set; }
     // InTransit / OnHand / Closed / Cancelled
     public string Status { get; set; } = "InTransit";
     public long CreatedBy { get; set; }

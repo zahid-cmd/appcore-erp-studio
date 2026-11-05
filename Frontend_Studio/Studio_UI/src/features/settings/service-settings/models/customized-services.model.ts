@@ -7,6 +7,8 @@ export interface CustomizedService
 {
     CustomizedServiceId:
         number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     // OCS-001-001-00001
     ServiceCode:

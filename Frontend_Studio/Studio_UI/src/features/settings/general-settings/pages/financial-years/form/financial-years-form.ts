@@ -616,8 +616,8 @@ implements OnInit, OnDestroy
         'add';
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
     //===========================================================
     // Page Header
@@ -1250,7 +1250,7 @@ implements OnInit, OnDestroy
         const selfId =
             this.entity.FinancialYearId
             ||
-            this.entityId;
+            0;
 
         return this.existingYears.find
         (
@@ -1304,7 +1304,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -1323,7 +1323,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -1335,13 +1335,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -1351,7 +1349,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
@@ -1391,7 +1389,7 @@ implements OnInit, OnDestroy
     {
         if
         (
-            this.entityId > 0
+            !!this.entityId
         )
         {
             return;
@@ -1504,7 +1502,7 @@ implements OnInit, OnDestroy
                         FinancialYearId:
                             response.FinancialYearId
                             ||
-                            this.entityId
+                            0
                     };
 
                     // A saved End Date is kept as the user set it
@@ -2099,7 +2097,7 @@ implements OnInit, OnDestroy
             number =
             this.entity.FinancialYearId
             ||
-            this.entityId;
+            0;
 
         if
         (
@@ -2132,7 +2130,9 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.financialYearsService.update(
-                model
+                this.entityId,
+
+model
             )
         )
         .subscribe

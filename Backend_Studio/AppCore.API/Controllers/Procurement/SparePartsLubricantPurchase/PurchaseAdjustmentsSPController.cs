@@ -71,13 +71,24 @@ public class PurchaseAdjustmentsSpController
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
     public async Task<IActionResult> GetById
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         var entity =
             await _repository
                 .GetByIdAsync(
@@ -218,13 +229,24 @@ public class PurchaseAdjustmentsSpController
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         var entity =
             await _repository
                 .GetByIdAsync(

@@ -171,6 +171,30 @@ public abstract class PurchaseOrderControllerBase : ControllerBase
 
 
     //===========================================================
+    // List page : one page + tab counts ; supplier filter options
+    //   GET paged?page=1&pageSize=10&search=&sort=&dir=&tab=&supplier=
+    //===========================================================
+
+    [HttpGet("paged")]
+    public Task<IActionResult> GetPaged(
+        [FromQuery] PurchaseOrderPageRequest request)
+    {
+        return Run(
+            async () => Ok(await _repository.GetPagedAsync(PageType, request ?? new PurchaseOrderPageRequest())),
+            "Failed to load the purchase orders.");
+    }
+
+
+    [HttpGet("list-suppliers")]
+    public Task<IActionResult> GetListSuppliers()
+    {
+        return Run(
+            async () => Ok(await _repository.GetListSuppliersAsync(PageType)),
+            "Failed to load the suppliers.");
+    }
+
+
+    //===========================================================
     // Get Defaults : number preview, period, suppliers, products
     //   GET defaults?branchId=1&date=2026-10-28
     //===========================================================
@@ -223,10 +247,21 @@ public abstract class PurchaseOrderControllerBase : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
     public async Task<IActionResult> GetById(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         PurchaseOrderDto? item =
             await _repository.GetByIdAsync(id);
 
@@ -288,10 +323,21 @@ public abstract class PurchaseOrderControllerBase : ControllerBase
     }
 
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =

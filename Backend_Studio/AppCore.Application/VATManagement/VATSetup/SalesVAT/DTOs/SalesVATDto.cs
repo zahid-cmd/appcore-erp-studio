@@ -13,6 +13,9 @@ public class SalesVatDto
 {
     public long SalesVatId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     // SVT-0001
     public string VatCode { get; set; } = string.Empty;
 

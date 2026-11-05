@@ -22,8 +22,7 @@ export interface OpeningStockLine
     Quantity:number;
     UnitCost:number;
     LineValue:number;
-    // VAT inclusive
-    SalePrice:number;
+    // VAT inclusive : MRP is the sale price
     Mrp:number;
     // MRP basis : supplier margin on MRP
     MarginPercent:number;
@@ -34,6 +33,11 @@ export interface OpeningStockLine
     RackManagementId:number | null;
     RackCode:string;
     ShelfNumber:number;
+    // The bin (the location; 0 = no place)
+    BinNumber:number;
+    // SLF-A-03 / A-03-05
+    ShelfLabel:string;
+    BinCode:string;
     SaveAsDefault:boolean;
     ShortNotes:string;
     BatchNo:string;
@@ -50,6 +54,9 @@ export interface OpeningStockUnit
 
 export interface OpeningStock
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:string;
+
     OpeningStockId:number;
     PageType:string;
     OpeningNo:string;
@@ -122,13 +129,21 @@ export interface OpeningStockRack
     Code:string;
     Name:string;
     ShelfCount:number;
+    ZoneCode:string;
+    ZoneName:string;
+    // Bins per shelf
+    Shelves:{ ShelfNumber:number; ShelfLabel:string; BinCount:number }[];
 }
 
+// The product's saved default place in a warehouse
 export interface OpeningStockShelf
 {
     WarehouseId:number;
     RackManagementId:number;
     ShelfNumber:number;
+    BinNumber:number;
+    // A-03-05
+    BinCode:string;
 }
 
 export interface OpeningStockProduct
@@ -142,7 +157,6 @@ export interface OpeningStockProduct
     // Has an Inventory ledger (needed to post)
     HasLedger:boolean;
     LastCost:number;
-    LastSalePrice:number;
     LastMrp:number;
     // Motor Bikes / Spare Parts / Lubricants / Accessories
     VatType:string;
@@ -165,6 +179,9 @@ export interface OpeningStockDefaults
     // Includes Unclaimed VAT (switch of the type) : cost typed incl.
     // VAT, the VAT part to the VAT Current Account
     VatIncluded:boolean;
+    // Profit % On Sale Price : false = profit on cost (markup),
+    // true = margin on the net sale
+    ProfitOnSale:boolean;
     Branches:OpeningStockBranch[];
     Warehouses:OpeningStockWarehouse[];
     Racks:OpeningStockRack[];
@@ -176,7 +193,7 @@ export interface OpeningStockDefaults
     UnitsRequired:boolean;
     UniqueKeyNo:boolean;
     UniqueBatteryNo:boolean;
-    // VAT : cost excl. VAT; MRP / sale price incl. VAT
+    // VAT : cost excl. VAT; MRP (the sale price) incl. VAT
     PurchaseVatApplicable:boolean;
     SalesVatApplicable:boolean;
     PurchaseVatRules:OpeningStockVatRule[];
@@ -193,11 +210,11 @@ export interface CreateOpeningStockLine
     ProductId:number;
     Quantity:number;
     UnitCost:number;
-    SalePrice:number;
     Mrp:number;
     MarginPercent:number;
     RackManagementId:number | null;
     ShelfNumber:number;
+    BinNumber:number;
     SaveAsDefault:boolean;
     ShortNotes:string;
 }
@@ -217,6 +234,9 @@ export interface CreateOpeningStock
 
 export interface OpeningStockSaved
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:string;
+
     OpeningStockId:number;
     OpeningNo:string;
     Status:string;

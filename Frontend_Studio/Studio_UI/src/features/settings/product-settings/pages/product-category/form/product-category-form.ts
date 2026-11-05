@@ -337,8 +337,8 @@ implements OnInit, OnDestroy
         'add';
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
     //===========================================================
     // Page Header
@@ -454,6 +454,13 @@ implements OnInit, OnDestroy
     // Next Category Code per type, from the defaults call
     // ({ 'Motor Bikes': 'MB-001', ... })
     private nextTypeCodes:
+        Record<string, string>
+        =
+        {};
+
+    // Sales group code per type (CLS-005 / 006 / 008), from the
+    // defaults call ({ 'spare parts': 'GRP-006-004', ... })
+    private nextSalesGroupCodes:
         Record<string, string>
         =
         {};
@@ -607,7 +614,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -630,7 +637,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -642,13 +649,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -658,7 +663,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
@@ -685,7 +690,7 @@ implements OnInit, OnDestroy
     {
         if
         (
-            this.entityId > 0
+            !!this.entityId
         )
         {
             return;
@@ -720,6 +725,26 @@ implements OnInit, OnDestroy
                     {
                         this.nextTypeCodes[key.toLowerCase()] =
                             String(rawTypeCodes[key] ?? '').trim();
+                    }
+
+                    const rawSalesCodes =
+                        response?.SalesGroupCodes
+                        ??
+                        response?.salesGroupCodes
+                        ??
+                        {};
+
+                    this.nextSalesGroupCodes =
+                        {};
+
+                    for
+                    (
+                        const key
+                        of Object.keys(rawSalesCodes)
+                    )
+                    {
+                        this.nextSalesGroupCodes[key.toLowerCase()] =
+                            String(rawSalesCodes[key] ?? '').trim();
                     }
 
                     this.entity.InventoryGroupCode =
@@ -894,8 +919,8 @@ implements OnInit, OnDestroy
     //===========================================================
     // Category Type / Brand Change
     //
-    // Category Name = "<Brand Name> <Category Type>",
-    // e.g. "Yadea Motor Bikes". The server builds the same name
+    // Category Name = "<Category Type> - <Brand Name>",
+    // e.g. "Motor Bikes - Yadea". The server builds the same name
     // (and the three group names "<class prefix> - <Name>");
     // the values here are a preview.
     // Accessories : Category Name is typed (editable), the group
@@ -987,6 +1012,19 @@ implements OnInit, OnDestroy
                 ? this.nextTypeCodes[type] ?? ''
                 : '';
 
+        this.entity.SalesGroupCode =
+            type
+                ? this.nextSalesGroupCodes[type] ?? ''
+                : '';
+
+        const salesName =
+            (this.entity.CategoryName ?? '').trim();
+
+        this.entity.SalesGroupName =
+            salesName && this.entity.SalesGroupCode
+                ? `Sales - ${salesName}`
+                : '';
+
         this.cdr.detectChanges();
     }
 
@@ -1050,7 +1088,8 @@ implements OnInit, OnDestroy
         }
 
         //=======================================================
-        // Motor Bikes / Spare Parts : "<Brand Name> <Category Type>"
+        // Motor Bikes / Spare Parts / Lubricants :
+        // "<Category Type> - <Brand Name>"
         //=======================================================
 
         const brandName =
@@ -1072,7 +1111,7 @@ implements OnInit, OnDestroy
 
         const categoryName =
             brandName && categoryType
-                ? `${brandName} ${categoryType}`
+                ? `${categoryType} - ${brandName}`
                 : '';
 
         this.entity.CategoryName =
@@ -1124,6 +1163,12 @@ implements OnInit, OnDestroy
         this.entity.CogsGroupName =
             categoryName
                 ? `COGS - ${categoryName}`
+                : '';
+
+        // Preview : the server names it "Sales - <Name>"
+        this.entity.SalesGroupName =
+            categoryName && this.entity.SalesGroupCode
+                ? `Sales - ${categoryName}`
                 : '';
 
         this.checkForChanges();
@@ -1229,6 +1274,12 @@ implements OnInit, OnDestroy
                             response?.cogsGroupCode
                             ??
                             '',
+
+                        SalesGroupCode:
+                            response?.SalesGroupCode ?? response?.salesGroupCode ?? '',
+
+                        SalesGroupName:
+                            response?.SalesGroupName ?? response?.salesGroupName ?? '',
 
                         InventoryGroupName:
                             response?.InventoryGroupName
@@ -1640,7 +1691,9 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.productCategoryService.update(
-                model
+                this.entityId,
+
+model
             ),
             this.minimumSaveDurationMs
         )

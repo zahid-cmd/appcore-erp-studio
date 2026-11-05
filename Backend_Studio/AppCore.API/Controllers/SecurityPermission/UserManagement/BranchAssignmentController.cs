@@ -132,7 +132,7 @@ public class BranchAssignmentController
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
     public async Task
         <
@@ -140,9 +140,20 @@ public class BranchAssignmentController
         >
         GetById
         (
-            long id
+            Guid publicId
         )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         BranchAssignmentDto? result =
             await _repository.GetByIdAsync(
                 id
@@ -452,14 +463,25 @@ public class BranchAssignmentController
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult>
         Delete
         (
-            long id
+            Guid publicId
         )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         try
         {
             bool deleted =

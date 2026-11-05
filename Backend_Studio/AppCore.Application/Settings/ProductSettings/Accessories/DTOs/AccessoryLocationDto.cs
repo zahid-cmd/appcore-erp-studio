@@ -25,7 +25,15 @@ public class AccessoryLocationDto
 
     public int ShelfNumber { get; set; }
 
-    // "WH-001: R-001 / S-03"
+    public int BinNumber { get; set; }
+
+    // SLF-A-03
+    public string ShelfLabel { get; set; } = string.Empty;
+
+    // A-03-05
+    public string BinCode { get; set; } = string.Empty;
+
+    // "WH-001: A-03-05"
     public string LocationText { get; set; } = string.Empty;
 }
 
@@ -41,4 +49,7 @@ public class AccessoryLocationInputDto
     public long RackManagementId { get; set; }
 
     public int ShelfNumber { get; set; }
+
+    // 1 … the shelf's bins (0 / missing is read as 1)
+    public int BinNumber { get; set; }
 }

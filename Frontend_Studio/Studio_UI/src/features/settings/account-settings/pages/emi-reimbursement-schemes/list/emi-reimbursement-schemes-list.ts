@@ -300,6 +300,15 @@ implements OnInit, OnDestroy
         SchemeRow[] =
     [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredSchemes:
         SchemeRow[] =
     [];
@@ -753,6 +762,9 @@ implements OnInit, OnDestroy
                     this.buildBrandFilterItems();
 
                     this.applyFilters();
+
+
+                    this.updateSummary();
 
                     this.loading =
                         false;
@@ -1295,7 +1307,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.EmiReimbursementSchemeId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1315,7 +1327,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.EmiReimbursementSchemeId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1375,7 +1387,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.schemesService.delete(
-                item.EmiReimbursementSchemeId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -1671,4 +1683,32 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.schemes ?? [];
+
+        const active =
+            all.filter(x => !!x?.Status).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

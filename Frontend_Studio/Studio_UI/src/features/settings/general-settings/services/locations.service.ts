@@ -109,6 +109,9 @@ export class LocationsService
                 String(this.pick(item, name) ?? '');
 
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             LocationId:
                 Number(this.pick(item, 'LocationId') ?? 0),
 
@@ -213,7 +216,7 @@ export class LocationsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<Location>
     {
@@ -241,9 +244,9 @@ export class LocationsService
         model:
             CreateLocation
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -256,13 +259,16 @@ export class LocationsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateLocation
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -275,7 +281,7 @@ export class LocationsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

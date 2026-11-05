@@ -910,7 +910,7 @@ implements OnInit, OnDestroy
         action:
             'add' | 'view' | 'edit',
         id?:
-            number
+            string
     ):
         void
     {
@@ -967,7 +967,7 @@ implements OnInit, OnDestroy
         (
             this.isProcessing
             ||
-            !item?.POSAccountId
+            !item?.PublicId
         )
         {
             return;
@@ -975,7 +975,7 @@ implements OnInit, OnDestroy
 
         this.navigateTo(
             'view',
-            item.POSAccountId
+            item.PublicId
         );
     }
 
@@ -994,7 +994,7 @@ implements OnInit, OnDestroy
         (
             this.isProcessing
             ||
-            !item?.POSAccountId
+            !item?.PublicId
         )
         {
             return;
@@ -1002,7 +1002,7 @@ implements OnInit, OnDestroy
 
         this.navigateTo(
             'edit',
-            item.POSAccountId
+            item.PublicId
         );
     }
 
@@ -1049,7 +1049,7 @@ implements OnInit, OnDestroy
                 (
                     () =>
                         this.deleteItem(
-                            item.POSAccountId,
+                            item.PublicId ?? '',
                             name
                         ),
                     this.CONFIRM_CLOSE_DELAY_MS
@@ -1065,7 +1065,7 @@ implements OnInit, OnDestroy
     private deleteItem
     (
         posAccountId:
-            number,
+            string,
         name:
             string
     ):

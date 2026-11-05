@@ -107,4 +107,8 @@ public interface IPurchaseReturnsSpRepository
         long id
     );
 
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

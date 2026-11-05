@@ -36,7 +36,8 @@ import
     Observable,
     defer,
     timer,
-    throwError
+    throwError,
+    Subscription
 }
 from 'rxjs';
 
@@ -57,6 +58,18 @@ import
     ProductCategory
 }
 from '../../../models/product-category.model';
+
+import
+{
+    ProductCategoryPageQuery
+}
+from '../../../models/product-category.model';
+
+import
+{
+    PagedResult
+}
+from '../../../../../../shared/paging/paged-result.model';
 
 //===============================================================
 // Shared Components
@@ -305,13 +318,40 @@ implements OnInit, OnDestroy
         ProductCategory[] =
         [];
 
-    filteredProductCategories:
-        ProductCategory[] =
-        [];
+    // Rows matching the filters and search, all pages
+    totalRecords:
+        number =
+        0;
 
-    pagedProductCategories:
-        ProductCategory[] =
-        [];
+    // Summary line below the canvas (filled by each load)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
+    private loadSubscription?:
+        Subscription;
+
+    // '' = the server's default sort
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer?:
+        number;
+
+    private readonly SEARCH_DELAY_MS:
+        number =
+        300;
+
+
 
     //===========================================================
     // Status Filter
@@ -491,6 +531,10 @@ implements OnInit, OnDestroy
     ngOnDestroy():
         void
     {
+        this.clearSearchTimer();
+
+        this.loadSubscription?.unsubscribe();
+
         this.clearProgressTimer();
 
         if
@@ -526,6 +570,9 @@ implements OnInit, OnDestroy
                     ??
                     0
                 ),
+
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
             CategoryCode:
                 item?.CategoryCode
                 ??
@@ -648,80 +695,157 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Load Items
+    // Load Items (one page from the server)
+    //
+    // The server filters, searches, sorts and pages; the answer
+    // also carries the summary counts.
     //===========================================================
 
     loadItems():
         void
     {
+        this.loadSubscription?.unsubscribe();
+
         this.loading =
             true;
 
         this.loadFailed =
             false;
 
-        this.productCategoryService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        ProductCategory[]
-                ):
-                    void =>
-                {
-                    this.productCategories =
-                        this.normalizeProductCategories(
-                            response
+        this.cdr.detectChanges();
+
+        const query:
+            ProductCategoryPageQuery =
+        {
+            page:
+                this.currentPage,
+
+            pageSize:
+                this.pageSize,
+
+            search:
+                this.searchText.trim(),
+
+            sort:
+                this.sortField,
+
+            dir:
+                this.sortDirection,
+
+            status:
+                this.selectedStatus
+        };
+
+        this.loadSubscription =
+            this.productCategoryService
+                .getPaged(
+                    query
+                )
+                .subscribe
+                ({
+                    next:
+                    (
+                        response:
+                            PagedResult<any>
+                    ):
+                        void =>
+                    {
+                        this.productCategories =
+                            this.normalizeProductCategories(response.items);
+
+                        this.totalRecords =
+                            response.totalCount;
+
+                        // The server pulls the page back when rows got
+                        // fewer (e.g. the last row of a page deleted)
+                        this.currentPage =
+                            response.page;
+
+                        this.updateSummary(
+                            response.counts
                         );
 
-                    this.applyFilters();
+                        this.loading =
+                            false;
 
-                    this.loading =
-                        false;
+                        this.cdr.detectChanges();
+                    },
 
-                    this.loadFailed =
-                        false;
-
-                    this.cdr.detectChanges();
-                },
-
-                error:
-                (
                     error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error(
-                        'Load Product Categories Error:',
-                        error
-                    );
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error
+                        (
+                            'Load Product Categories Error:',
+                            error
+                        );
 
-                    this.productCategories =
-                        [];
+                        this.productCategories =
+                            [];
 
-                    this.filteredProductCategories =
-                        [];
+                        this.totalRecords =
+                            0;
 
-                    this.pagedProductCategories =
-                        [];
+                        this.loading =
+                            false;
 
-                    this.loading =
-                        false;
+                        this.loadFailed =
+                            true;
 
-                    this.loadFailed =
-                        true;
+                        this.toast.error
+                        (
+                            'Load Failed',
+                            'Unable to load product categories.'
+                        );
 
-                    this.toast.error(
-                        'Load Failed',
-                        'Unable to load product categories.'
-                    );
+                        this.cdr.detectChanges();
+                    }
+                });
+    }
 
-                    this.cdr.detectChanges();
-                }
-            });
+    //===========================================================
+    // Reload from page 1 (a filter, search, sort or page size
+    // changed)
+    //===========================================================
+
+    private reload():
+        void
+    {
+        this.currentPage =
+            1;
+
+        this.loadItems();
+    }
+
+    //===========================================================
+    // Summary Line (below the canvas)
+    //===========================================================
+
+    private updateSummary
+    (
+        counts:
+            Record<string, number>
+    ):
+        void
+    {
+        const value =
+            (
+                key:
+                    string
+            ):
+                string =>
+                    Number(counts[key] ?? 0).toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total', value:value('Total'), tone:'' },
+            { label:'Active', value:value('Active'), tone:'ok' },
+            { label:'Inactive', value:value('Inactive'), tone:'bad' }
+        ];
     }
 
     //===========================================================
@@ -738,86 +862,11 @@ implements OnInit, OnDestroy
         this.selectedStatus =
             value;
 
-        this.applyFilters();
+        this.reload();
     }
 
     //===========================================================
-    // Apply Filters
-    //===========================================================
-
-    applyFilters():
-        void
-    {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredProductCategories =
-            this.productCategories.filter
-            (
-                (
-                    item:
-                        ProductCategory
-                ):
-                    boolean =>
-                {
-                    const statusMatches =
-                        this.selectedStatus === null
-                        ||
-                        item.IsActive ===
-                        this.selectedStatus;
-
-                    if
-                    (
-                        !keyword
-                    )
-                    {
-                        return statusMatches;
-                    }
-
-                    const searchable:
-                        string[] =
-                    [
-                        item.CategoryCode ?? '',
-                        item.CategoryName ?? '',
-                        item.CategoryType ?? '',
-                        item.BrandName ?? '',
-                        item.InventoryGroupCode ?? '',
-                        item.InventoryGroupName ?? '',
-                        item.WipGroupCode ?? '',
-                        item.WipGroupName ?? '',
-                        item.CogsGroupCode ?? '',
-                        item.CogsGroupName ?? '',
-                        item.Remarks ?? '',
-                        item.IsActive
-                            ? 'active'
-                            : 'inactive'
-                    ];
-
-                    const keywordMatches =
-                        searchable.some
-                        (
-                            value =>
-                                value
-                                    .toLowerCase()
-                                    .includes(keyword)
-                        );
-
-                    return keywordMatches
-                        &&
-                        statusMatches;
-                }
-            );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
-    }
-
-    //===========================================================
-    // Search
+    // Search (asks the server 300 ms after the last key)
     //===========================================================
 
     onSearch
@@ -832,11 +881,41 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        this.clearSearchTimer();
+
+        this.searchTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.reload();
+                },
+
+                this.SEARCH_DELAY_MS
+            );
+    }
+
+    private clearSearchTimer():
+        void
+    {
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
+
+            this.searchTimer =
+                undefined;
+        }
     }
 
     //===========================================================
-    // Sort
+    // Sort (the server sorts)
     //===========================================================
 
     onSort
@@ -845,105 +924,22 @@ implements OnInit, OnDestroy
         {
             field:
                 string;
+
             direction:
                 'asc' | 'desc';
         }
     ):
         void
     {
-        this.filteredProductCategories =
-        [
-            ...this.filteredProductCategories
-        ];
+        this.sortField =
+            event.field;
 
-        this.filteredProductCategories.sort
-        (
-            (
-                a:
-                    ProductCategory,
-                b:
-                    ProductCategory
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof ProductCategory
-                    ];
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof ProductCategory
-                    ];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ? valueA.localeCompare(valueB)
-                        : valueB.localeCompare(valueA);
-                }
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ? -1
-                        : 1;
-                }
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ? 1
-                        : -1;
-                }
-
-                return 0;
-            }
-        );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -953,13 +949,7 @@ implements OnInit, OnDestroy
     refresh():
         void
     {
-        if
-        (
-            this.isProcessing
-        )
-        {
-            return;
-        }
+        this.clearSearchTimer();
 
         this.searchText =
             '';
@@ -967,39 +957,17 @@ implements OnInit, OnDestroy
         this.selectedStatus =
             null;
 
-        this.currentPage =
-            1;
+        this.sortField =
+            '';
 
-        this.loadItems();
+        this.sortDirection =
+            'asc';
+
+        this.reload();
     }
 
     //===========================================================
-    // Update Pagination
-    //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-        this.pagedProductCategories =
-        [
-            ...this.filteredProductCategories.slice
-            (
-                start,
-                start + this.pageSize
-            )
-        ];
-    }
-
-    //===========================================================
-    // Page Change
+    // Pagination
     //===========================================================
 
     onPageChange
@@ -1012,12 +980,8 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
-
-    //===========================================================
-    // Page Size Change
-    //===========================================================
 
     onPageSizeChange
     (
@@ -1029,10 +993,7 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1085,7 +1046,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.ProductCategoryId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1117,7 +1078,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.ProductCategoryId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1190,7 +1151,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.productCategoryService.delete(
-                item.ProductCategoryId
+                item.PublicId ?? ''
             ),
             this.minimumActionDurationMs
         )

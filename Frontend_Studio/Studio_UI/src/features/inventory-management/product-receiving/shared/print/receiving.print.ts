@@ -7,7 +7,7 @@
 //   /print-viewer/accessories-receiving/<receivingId>
 //
 // Portrait : SL · Product (code · batch) · Purchased · Before ·
-// Received · [Rack · Shelf] · Notes; motor bikes : the bikes
+// Received · [Location (bin)] · Notes; motor bikes : the bikes
 // (chassis / engine / key / battery) under their line. Signature
 // line at the end.
 //===============================================================
@@ -144,13 +144,13 @@ function receivingSource
             injector:
                 Injector,
             id:
-                number
+                number | string
         ):
             Promise<ReceivingPrintData>
         {
             const receiving =
                 await firstValueFrom(
-                    injector.get(ReceivingService).getById(page.path, id)
+                    injector.get(ReceivingService).getById(page.path, String(id))
                 );
 
             return {
@@ -363,7 +363,7 @@ function noteHtml
         ['Purchased', '18mm', 'vd-r'],
         ['Before', '15mm', 'vd-r'],
         ['Received', '18mm', 'vd-r'],
-        ...(shelves ? [['Rack · Shelf', '26mm', '']] as [string, string, string][] : []),
+        ...(shelves ? [['Location', '24mm', '']] as [string, string, string][] : []),
         ['Notes', '24%', '']
     ];
 
@@ -389,9 +389,10 @@ function noteHtml
                             }</td></tr>`
                             : '';
 
+                    // The bin code A-03-05 (the server's label)
                     const rack =
                         line.RackCode
-                            ? `${line.RackCode}${line.ShelfNumber ? ' · Shelf ' + line.ShelfNumber : ''}`
+                            ? (line.BinCode || line.ShelfLabel || line.RackCode)
                             : '—';
 
                     return `<tr>
@@ -478,7 +479,7 @@ function noteSheet
             [bold('Date'), kit.date(r.ReceivingDate), null, bold('Warehouse'), r.WarehouseName],
             [bold('Purchase'), r.PurchaseNo, null, bold('Supplier'), r.SupplierName],
             [],
-            [bold('SL'), bold('Code'), bold('Product'), bold('Batch'), bold('Purchased'), bold('Before'), bold('Received'), bold('Rack · Shelf'), bold('Notes')],
+            [bold('SL'), bold('Code'), bold('Product'), bold('Batch'), bold('Purchased'), bold('Before'), bold('Received'), bold('Location'), bold('Notes')],
             ...r.Lines.map
             (
                 (line, index): ExcelCell[] =>
@@ -490,7 +491,7 @@ function noteSheet
                     line.PurchasedQuantity,
                     line.ReceivedBefore,
                     line.Quantity,
-                    line.RackCode ? `${line.RackCode}${line.ShelfNumber ? ' · Shelf ' + line.ShelfNumber : ''}` : '',
+                    line.RackCode ? (line.BinCode || line.ShelfLabel || line.RackCode) : '',
                     line.ShortNotes
                 ]
             ),

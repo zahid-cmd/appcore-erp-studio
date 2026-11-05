@@ -34,6 +34,7 @@ from '@angular/router';
 import
 {
     Observable,
+    Subscription,
     defer,
     timer,
     throwError,
@@ -50,9 +51,16 @@ from 'rxjs';
 import
 {
     Customer,
-    CustomerProfilesDefaults
+    CustomerProfilesDefaults,
+    CustomerPageQuery
 }
 from '../../../models/customer-profiles.model';
+
+import
+{
+    PagedResult
+}
+from '../../../../../../shared/paging/paged-result.model';
 
 //===============================================================
 // Shared Components
@@ -254,17 +262,48 @@ implements OnInit, OnDestroy
     // Data
     //===========================================================
 
+    // The page shown (the server sends one page at a time)
     customers:
         Customer[] =
     [];
 
-    filteredCustomers:
-        Customer[] =
+    // Rows matching the filters, all pages
+    totalRecords:
+        number =
+        0;
+
+    // Summary line below the canvas (filled by each load) :
+    // Total / Inbound / Outside / Active / Inactive
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
     [];
 
-    pagedCustomers:
-        Customer[] =
-    [];
+    private loadSubscription?:
+        Subscription;
+
+    //===========================================================
+    // Sort & Search Delay
+    //===========================================================
+
+    // '' = the server's default (Customer Code)
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer?:
+        number;
+
+    private readonly SEARCH_DELAY_MS:
+        number =
+        300;
 
     //===========================================================
     // Search & Loading
@@ -423,11 +462,15 @@ implements OnInit, OnDestroy
             width:'130px',
             align:'center'
         },
+        // "Walk-in" tag : Outside customers added at a sales counter
         {
             header:'Customer Name',
             field:'CustomerName',
             width:'220px',
-            align:'left'
+            align:'left',
+            flagField:'IsWalkIn',
+            flagText:'Walk-in',
+            flagTitleField:'WalkInTitle'
         },
         {
             header:'Phone 1',
@@ -484,6 +527,10 @@ implements OnInit, OnDestroy
         void
     {
         this.clearProgressTimer();
+
+        this.clearSearchTimer();
+
+        this.loadSubscription?.unsubscribe();
 
         if
         (
@@ -717,150 +764,181 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Load Items
+    // Load Items (one page from the server)
+    //
+    // The server filters (tab, location, status, search), sorts
+    // and pages; the answer also carries the tab counts.
     //===========================================================
 
     loadItems():
         void
     {
+        this.loadSubscription?.unsubscribe();
+
         this.loading =
             true;
 
         this.loadFailed =
             false;
 
-        this.customerProfilesService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        Customer[]
-                ):
-                    void =>
-                {
-                    this.customers =
-                        response ?? [];
+        this.cdr.detectChanges();
 
-                    this.applyFilters();
+        const query:
+            CustomerPageQuery =
+        {
+            page:
+                this.currentPage,
 
-                    this.loading =
-                        false;
+            pageSize:
+                this.pageSize,
 
-                    this.cdr.detectChanges();
-                },
+            search:
+                this.searchText.trim(),
 
-                error:
-                (
+            sort:
+                this.sortField,
+
+            dir:
+                this.sortDirection,
+
+            type:
+                this.selectedTab === 'outside'
+                    ? 'Outside'
+                    : 'Inbound',
+
+            locationId:
+                this.selectedLocationId,
+
+            status:
+                this.selectedStatus
+        };
+
+        this.loadSubscription =
+            this.customerProfilesService
+                .getPaged(
+                    query
+                )
+                .subscribe
+                ({
+                    next:
+                    (
+                        response:
+                            PagedResult<Customer>
+                    ):
+                        void =>
+                    {
+                        // Walk-in tag tooltip (Name column flag)
+                        this.customers =
+                            response.items.map
+                            (
+                                item =>
+                                ({
+                                    ...item,
+
+                                    WalkInTitle:
+                                        item.IsWalkIn
+                                            ? 'Walk-in : added at a sales counter (cash only). Clear the tag on the customer form.'
+                                            : ''
+                                })
+                            );
+
+                        this.totalRecords =
+                            response.totalCount;
+
+                        // The server pulls the page back when rows got
+                        // fewer (e.g. the last row of a page deleted)
+                        this.currentPage =
+                            response.page;
+
+                        this.updateCounters(
+                            response.counts
+                        );
+
+                        this.loading =
+                            false;
+
+                        this.cdr.detectChanges();
+                    },
+
                     error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
                     (
-                        'Load Customers Error:',
-                        error
-                    );
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error
+                        (
+                            'Load Customers Error:',
+                            error
+                        );
 
-                    this.customers =
-                        [];
+                        this.customers =
+                            [];
 
-                    this.filteredCustomers =
-                        [];
+                        this.totalRecords =
+                            0;
 
-                    this.pagedCustomers =
-                        [];
+                        this.loading =
+                            false;
 
-                    this.loading =
-                        false;
+                        this.loadFailed =
+                            true;
 
-                    this.loadFailed =
-                        true;
+                        this.toast.error
+                        (
+                            'Load Failed',
+                            'Unable to load customers.'
+                        );
 
-                    this.toast.error
-                    (
-                        'Load Failed',
-                        'Unable to load customers.'
-                    );
-
-                    this.cdr.detectChanges();
-                }
-            });
+                        this.cdr.detectChanges();
+                    }
+                });
     }
 
     //===========================================================
-    // Apply Filters
+    // Reload from page 1 (a filter, the tab, search or sort
+    // changed)
     //===========================================================
 
-    applyFilters():
+    private reload():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredCustomers =
-            this.customers.filter
-            (
-                item =>
-                {
-                    const tabMatch =
-                        (
-                            this.selectedTab === 'outside'
-                                ? item.CustomerType === 'Outside'
-                                : item.CustomerType === 'Inbound'
-                        )
-                        &&
-                        (
-                            this.selectedLocationId === null
-                            ||
-                            Number(item.LocationId) ===
-                            this.selectedLocationId
-                        );
-
-                    const statusMatch =
-                        this.selectedStatus === null
-                        ||
-                        item.IsActive ===
-                        this.selectedStatus;
-
-                    const text =
-                        [
-                            item.CustomerCode,
-                            item.PreviousCode,
-                            item.CustomerName,
-                            item.Phone1,
-                            item.Phone2,
-                            item.NidNo,
-                            item.LocationName,
-                            item.ReceivableLedgerCode,
-                            item.Remarks,
-                            item.IsActive
-                                ? 'active'
-                                : 'inactive'
-                        ]
-                        .join(' ')
-                        .toLowerCase();
-
-                    return tabMatch
-                        &&
-                        statusMatch
-                        &&
-                        (
-                            !keyword
-                            ||
-                            text.includes(keyword)
-                        );
-                }
-            );
-
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
+    }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Inbound /
+    // Outside / Active / Inactive, with the location and search
+    // applied (not the tab or the status filter)
+    //===========================================================
+
+    private updateCounters
+    (
+        counts:
+            Record<string, number>
+    ):
+        void
+    {
+        const value =
+            (
+                key:
+                    string
+            ):
+                string =>
+                    Number(counts[key] ?? 0).toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:value('Total'),    tone:'' },
+            { label:'Inbound',  value:value('Inbound'),  tone:'' },
+            { label:'Outside',  value:value('Outside'),  tone:'' },
+            { label:'Active',   value:value('Active'),   tone:'ok' },
+            { label:'Inactive', value:value('Inactive'), tone:'bad' }
+        ];
     }
 
     //===========================================================
@@ -877,13 +955,11 @@ implements OnInit, OnDestroy
         this.selectedTab =
             value;
 
-        this.applyFilters();
-
-        this.cdr.detectChanges();
+        this.reload();
     }
 
     //===========================================================
-    // Search
+    // Search (asks the server 300 ms after the last key)
     //===========================================================
 
     onSearch
@@ -898,7 +974,37 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        this.clearSearchTimer();
+
+        this.searchTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.reload();
+                },
+
+                this.SEARCH_DELAY_MS
+            );
+    }
+
+    private clearSearchTimer():
+        void
+    {
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
+
+            this.searchTimer =
+                undefined;
+        }
     }
 
     //===========================================================
@@ -919,7 +1025,7 @@ implements OnInit, OnDestroy
                 ? null
                 : Number(value);
 
-        this.applyFilters();
+        this.reload();
     }
 
     //===========================================================
@@ -990,14 +1096,16 @@ implements OnInit, OnDestroy
     {
         this.selectedStatus =
             value === null
+            ||
+            value === undefined
                 ? null
                 : Boolean(value);
 
-        this.applyFilters();
+        this.reload();
     }
 
     //===========================================================
-    // Sort
+    // Sort (by the server, on the whole list)
     //===========================================================
 
     onSort
@@ -1013,69 +1121,15 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        const direction =
-            event.direction === 'asc'
-                ? 1
-                : -1;
+        this.sortField =
+            event.field;
 
-        this.filteredCustomers =
-        [
-            ...this.filteredCustomers
-        ]
-        .sort
-        (
-            (a: any, b: any): number =>
-            {
-                const valueA =
-                    a[event.field];
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-                const valueB =
-                    b[event.field];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1 * direction;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1 * direction;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return valueA.localeCompare(valueB) * direction;
-                }
-
-                return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * direction;
-            }
-        );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1085,6 +1139,8 @@ implements OnInit, OnDestroy
     refresh():
         void
     {
+        this.clearSearchTimer();
+
         this.searchText =
             '';
 
@@ -1097,34 +1153,20 @@ implements OnInit, OnDestroy
         this.selectedLocationId =
             null;
 
-        this.currentPage =
-            1;
+        this.sortField =
+            '';
+
+        this.sortDirection =
+            'asc';
 
         this.loadLocations();
 
-        this.loadItems();
+        this.reload();
     }
 
     //===========================================================
     // Pagination
     //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (this.currentPage - 1) * this.pageSize;
-
-        this.pagedCustomers =
-        [
-            ...this.filteredCustomers.slice
-            (
-                start,
-                start + this.pageSize
-            )
-        ];
-    }
 
     onPageChange
     (
@@ -1136,7 +1178,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     onPageSizeChange
@@ -1149,10 +1191,7 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1194,7 +1233,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.CustomerId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1214,7 +1253,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.CustomerId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1274,7 +1313,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.customerProfilesService.delete(
-                item.CustomerId
+                item.PublicId
             )
         )
             .subscribe
@@ -1570,4 +1609,4 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
-}
+}

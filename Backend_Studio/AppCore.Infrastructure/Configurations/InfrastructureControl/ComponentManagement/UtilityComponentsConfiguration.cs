@@ -51,6 +51,24 @@ public class UtilityComponentsConfiguration
         );
 
 
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .HasColumnName("publicId")
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_UtilityComponents_PublicId");
+
+
         builder.Property(
             x => x.Id
         )

@@ -1,0 +1,405 @@
+@if (enquiry; as e)
+{
+    <app-form-modal
+
+        [opened]="true"
+
+        [title]="'Service Enquiry Follow-up · ' + e.EnquirerName"
+
+        [subtitle]="subtitle"
+
+        icon="fas fa-phone"
+
+        width="1040px"
+
+        saveText="Update"
+
+        saveIcon="fas fa-pen-to-square"
+
+        [busy]="progress.busy"
+
+        [closeOnBackdrop]="false"
+
+        (save)="save()"
+
+        (closed)="close()">
+
+        <div class="fd-body">
+
+
+            <!-- =================================================
+                 LEFT : the call · the update
+            ================================================== -->
+
+            <div class="fd-main">
+
+
+                <!-- ===== THE CALL ===== -->
+
+                <section class="fd-card">
+
+                    <header class="fd-card-head">
+
+                        <span class="fd-card-icon"><i class="fas fa-headset"></i></span>
+
+                        <b>The Call</b>
+
+                    </header>
+
+                    <div class="fd-row">
+
+                        <app-search-dropdown
+
+                            label="Called by"
+
+                            placeholder="Select executive"
+
+                            [items]="executiveItems"
+
+                            [value]="draft.ExecutiveUserId || null"
+
+                            (valueChange)="onExecutive($event)"
+
+                            [disabled]="progress.busy"
+
+                            [required]="true">
+
+                        </app-search-dropdown>
+
+
+                        <app-search-dropdown
+
+                            label="Method"
+
+                            placeholder="Select method"
+
+                            [items]="methodItems"
+
+                            [value]="$any(draft.MethodId)"
+
+                            (valueChange)="onMethod($event)"
+
+                            [disabled]="progress.busy">
+
+                        </app-search-dropdown>
+
+                    </div>
+
+
+                    <div class="fd-field">
+
+                        <span class="fd-label">Outcome <i>*</i></span>
+
+                        <div class="fd-outcomes" role="radiogroup" aria-label="Outcome">
+
+                            @for (o of outcomes; track o)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    role="radio"
+
+                                    class="fd-outcome"
+
+                                    [class.fd-outcome-on]="draft.Outcome === o"
+
+                                    [style.--tone]="outcomeColor(o)"
+
+                                    [attr.aria-checked]="draft.Outcome === o"
+
+                                    [disabled]="progress.busy"
+
+                                    (click)="pickOutcome(o)">
+
+                                    <i [class]="outcomeIcon(o)"></i>
+
+                                    <span>{{ o }}</span>
+
+                                </button>
+                            }
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="fd-note">
+
+                        <app-textarea
+
+                            label="Note"
+
+                            placeholder="What the customer said"
+
+                            [rows]="2"
+
+                            [value]="draft.Note"
+
+                            (valueChange)="onNote($event)"
+
+                            [disabled]="progress.busy"
+
+                            [required]="noteRequired && draft.Outcome !== 'No answer'">
+
+                        </app-textarea>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ===== UPDATE THE ENQUIRY ===== -->
+
+                <section class="fd-card">
+
+                    <header class="fd-card-head">
+
+                        <span class="fd-card-icon"><i class="fas fa-arrows-rotate"></i></span>
+
+                        <b>Update the Enquiry</b>
+
+                    </header>
+
+                    <div class="fd-row">
+
+                        <app-search-dropdown
+
+                            label="Status"
+
+                            placeholder="Move the enquiry to"
+
+                            [items]="statusItems"
+
+                            [value]="draft.StatusId || null"
+
+                            (valueChange)="onStatus($event)"
+
+                            [disabled]="progress.busy"
+
+                            [required]="true">
+
+                        </app-search-dropdown>
+
+
+                        @if (isSuspend)
+                        {
+                            <app-search-dropdown
+
+                                label="Suspend Reason"
+
+                                placeholder="Select reason"
+
+                                [items]="lostReasonItems"
+
+                                [value]="$any(draft.LostReasonId)"
+
+                                (valueChange)="onLostReason($event)"
+
+                                [disabled]="progress.busy"
+
+                                [required]="true">
+
+                            </app-search-dropdown>
+                        }
+                        @else if (isService)
+                        {
+                            <app-datepicker
+
+                                label="Visit Date"
+
+                                [value]="$any(draft.PreferredDate)"
+
+                                [minDate]="minDate"
+
+                                [disabled]="progress.busy"
+
+                                (valueChange)="onVisit($event)">
+
+                            </app-datepicker>
+                        }
+
+                    </div>
+
+
+                    @if (!isSuspend)
+                    {
+                        <div class="fd-field">
+
+                            <span class="fd-label">Next Follow-up <i>*</i></span>
+
+                            <div class="fd-next">
+
+                                <app-datepicker
+
+                                    [value]="$any(draft.NextFollowUpDate)"
+
+                                    [minDate]="minDate"
+
+                                    [disabled]="progress.busy"
+
+                                    (valueChange)="onNext($event)">
+
+                                </app-datepicker>
+
+                                <div class="fd-quick" role="group" aria-label="Quick dates">
+
+                                    <button type="button" [class.on]="isNextIn(1)" [disabled]="progress.busy" (click)="nextIn(1)">Tomorrow</button>
+
+                                    <button type="button" [class.on]="isNextIn(3)" [disabled]="progress.busy" (click)="nextIn(3)">3 days</button>
+
+                                    <button type="button" [class.on]="isNextIn(7)" [disabled]="progress.busy" (click)="nextIn(7)">1 week</button>
+
+                                    <button type="button" [class.on]="isNextIn(15)" [disabled]="progress.busy" (click)="nextIn(15)">15 days</button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </section>
+
+            </div>
+
+
+            <!-- =================================================
+                 RIGHT : call history
+            ================================================== -->
+
+            <aside class="fd-history">
+
+                <header class="fd-history-head">
+
+                    <span class="fd-card-icon"><i class="fas fa-clock-rotate-left"></i></span>
+
+                    <b>Call History</b>
+
+                    <span class="fd-count">{{ calls.length }}</span>
+
+                </header>
+
+
+                <!-- Where the enquiry stands now -->
+
+                <div class="fd-now">
+
+                    <div>
+                        <span>Status</span>
+                        <b><i class="fd-dot" [style.background]="e.StatusColor"></i>{{ e.StatusName }}</b>
+                    </div>
+
+                    <div>
+                        <span>Request</span>
+                        <b [title]="e.RequestSummary || ''">{{ e.RequestSummary || '—' }}</b>
+                    </div>
+
+                    <div>
+                        <span>Visit</span>
+                        <b>{{ formatDate(e.PreferredDate) }}</b>
+                    </div>
+
+                    <div>
+                        <span>Next due</span>
+                        <b>{{ formatDate(e.NextFollowUpDate) }}</b>
+                    </div>
+
+                </div>
+
+
+                <!-- Timeline -->
+
+                <div class="fd-timeline">
+
+                    @if (callsLoading)
+                    {
+                        <div class="fd-empty">
+
+                            <i class="fas fa-spinner fa-spin"></i>
+
+                            <span>Loading the calls…</span>
+
+                        </div>
+                    }
+                    @else
+                    {
+                        @for (c of calls; track c.ServiceFollowUpId)
+                        {
+                            <div class="fd-entry" [style.--tone]="outcomeColor(c.Outcome)">
+
+                                <span class="fd-entry-dot"><i [class]="outcomeIcon(c.Outcome)"></i></span>
+
+                                <div class="fd-entry-card">
+
+                                    <div class="fd-entry-top">
+
+                                        <span class="fd-entry-badge">{{ c.Outcome }}</span>
+
+                                        <small>{{ formatDate(c.FollowUpDate) }} · {{ timeOf(c.FollowUpAt) }}</small>
+
+                                    </div>
+
+                                    @if (c.Note)
+                                    {
+                                        <p>{{ c.Note }}</p>
+                                    }
+
+                                    <div class="fd-entry-meta">
+
+                                        <span><i class="fas fa-user"></i>{{ c.ExecutiveName }}</span>
+
+                                        @if (c.MethodName)
+                                        {
+                                            <span><i class="fas fa-phone"></i>{{ c.MethodName }}</span>
+                                        }
+
+                                        @if (c.StatusFromName !== c.StatusToName)
+                                        {
+                                            <span><i class="fas fa-arrow-right"></i>{{ c.StatusToName }}</span>
+                                        }
+
+                                        @if (c.NextFollowUpDate)
+                                        {
+                                            <span><i class="fas fa-calendar-day"></i>Next {{ formatDate(c.NextFollowUpDate) }}</span>
+                                        }
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+                        @empty
+                        {
+                            <div class="fd-empty">
+
+                                <i class="fas fa-phone-slash"></i>
+
+                                <b>No calls logged yet</b>
+
+                                <span>The first call you save starts this history.</span>
+
+                            </div>
+                        }
+                    }
+
+                </div>
+
+            </aside>
+
+        </div>
+
+
+        <!-- Footer left : dial from this device -->
+
+        <a modalFooterLeft class="fd-dial" [href]="callLink" title="Call from this device">
+
+            <i class="fas fa-phone-volume"></i>
+
+            Call {{ e.EnquirerMobile }}
+
+        </a>
+
+    </app-form-modal>
+}

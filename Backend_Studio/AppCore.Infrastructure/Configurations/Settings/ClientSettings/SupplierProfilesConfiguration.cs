@@ -47,6 +47,19 @@ public class SupplierProfilesConfiguration
 
 
         //===========================================================
+        // Public Id : the id used in links and API calls
+        //===========================================================
+
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_SupplierProfiles_PublicId");
+
+
+        //===========================================================
         // Columns (no database foreign keys : Code Synchronization
         // rebuilds the tables)
         //===========================================================
@@ -198,4 +211,4 @@ public class SupplierProfilesConfiguration
 
         builder.Property(x => x.ModifiedDate);
     }
-}
+}

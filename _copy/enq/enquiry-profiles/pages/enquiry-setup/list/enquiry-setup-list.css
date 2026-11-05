@@ -1,0 +1,620 @@
+@import '../../../../../../shared/styles/app-list-page.css';
+
+/* =====================================================
+   ENQUIRY SETUP : one page
+   Header (full width) · body = list | form panel.
+   Opening the form shrinks the toolbar and the canvas to
+   the left (animated); closing brings the full list back.
+===================================================== */
+
+
+/* -----------------------------------------------------
+   BODY : list | panel
+----------------------------------------------------- */
+
+.es-body
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    align-items:stretch;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+}
+
+
+/* List : toolbar + canvas (what app-list-page does for its
+   direct children, one level down) */
+.es-main
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    gap:12px;
+
+    min-width:0;
+
+    min-height:0;
+}
+
+
+.es-main > app-page-toolbar
+{
+    flex:0 0 auto;
+}
+
+
+/* The shared pagination is 1650px wide by default : follow the
+   canvas width, so nothing is cut while the list is narrower */
+.es-main app-pagination
+{
+    --pagination-width:100%;
+}
+
+
+.es-main > app-page-canvas
+{
+    position:relative;
+
+    display:flex;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    height:100%;
+
+    overflow:hidden;
+}
+
+
+/* Panel : closed = no width; open = 460px, slides in */
+/* The panel takes the height of the list (toolbar + canvas) :
+   its card is placed absolutely, so the form never makes the
+   page taller; the form body scrolls instead. */
+.es-panel
+{
+    position:relative;
+
+    flex:0 0 0px;
+
+    width:0;
+
+    min-width:0;
+
+    margin-left:0;
+
+    overflow:hidden;
+
+    opacity:0;
+
+    transform:translateX(24px);
+
+    transition:
+        flex-basis .38s cubic-bezier(.22, .8, .24, 1),
+        width .38s cubic-bezier(.22, .8, .24, 1),
+        margin-left .38s cubic-bezier(.22, .8, .24, 1),
+        opacity .26s ease,
+        transform .38s cubic-bezier(.22, .8, .24, 1);
+
+    pointer-events:none;
+}
+
+
+.es-open .es-panel
+{
+    flex-basis:460px;
+
+    width:460px;
+
+    margin-left:14px;
+
+    opacity:1;
+
+    transform:none;
+
+    pointer-events:auto;
+}
+
+
+@media (prefers-reduced-motion:reduce)
+{
+    .es-panel
+    {
+        transition:none;
+    }
+}
+
+
+/* -----------------------------------------------------
+   PANEL CARD (same look as the page canvas)
+----------------------------------------------------- */
+
+.es-panel-card
+{
+    position:absolute;
+
+    top:0;
+
+    bottom:0;
+
+    left:0;
+
+    display:flex;
+
+    flex-direction:column;
+
+    width:460px;
+
+    min-height:0;
+
+    overflow:hidden;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+
+    border:1px solid #e7edf5;
+
+    border-radius:16px;
+
+    box-shadow:0 2px 8px rgba(15, 23, 42, .04);
+}
+
+
+.es-panel-head
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    flex:0 0 auto;
+
+    padding:12px 14px;
+
+    border-bottom:1px solid #e7edf5;
+
+    border-top:3px solid #1e3a8a;
+
+    border-radius:16px 16px 0 0;
+
+    background:linear-gradient(180deg, #f8fbff, #ffffff);
+}
+
+
+.es-panel-title
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    min-width:0;
+}
+
+
+.es-panel-icon
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex:0 0 36px;
+
+    width:36px;
+
+    height:36px;
+
+    border-radius:10px;
+
+    background:#eef2ff;
+
+    color:#1e3a8a;
+
+    font-size:15px;
+}
+
+
+.es-panel-text
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:2px;
+
+    min-width:0;
+}
+
+
+.es-panel-name
+{
+    color:#0f172a;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    white-space:nowrap;
+}
+
+
+.es-panel-sub
+{
+    overflow:hidden;
+
+    color:#64748b;
+
+    font-size:12px;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+/* Footer : Save / Update · Clear · back, bottom right */
+.es-panel-foot
+{
+    display:flex;
+
+    justify-content:flex-end;
+
+    flex:0 0 auto;
+
+    padding:10px 14px;
+
+    border-top:1px solid #e7edf5;
+
+    border-radius:0 0 16px 16px;
+
+    background:linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+
+.es-panel-commands app-command-center
+{
+    flex-shrink:0;
+}
+
+
+/* Body : the sections, scrolling */
+.es-panel-body
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    gap:12px;
+
+    min-height:0;
+
+    padding:14px;
+
+    overflow-y:auto;
+}
+
+
+.es-panel-body ::ng-deep app-form-section
+{
+    display:block;
+
+    flex:0 0 auto;
+}
+
+
+.es-panel-body ::ng-deep .form-section
+{
+    height:auto;
+}
+
+
+.es-panel-body ::ng-deep .form-section-body
+{
+    padding:14px;
+}
+
+
+/* Two columns inside a section */
+.es-grid
+{
+    display:grid;
+
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+
+    gap:12px 14px;
+
+    align-items:end;
+}
+
+
+.es-wide
+{
+    grid-column:1 / -1;
+
+    min-width:0;
+}
+
+
+.es-grid ::ng-deep app-textbox,
+.es-grid ::ng-deep app-dropdown,
+.es-grid ::ng-deep app-textarea
+{
+    display:block;
+
+    width:100%;
+
+    min-width:0;
+}
+
+
+/* -----------------------------------------------------
+   COLOUR
+----------------------------------------------------- */
+
+.es-swatches
+{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:8px;
+
+    margin-bottom:12px;
+}
+
+
+.es-swatch
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:28px;
+
+    height:28px;
+
+    padding:0;
+
+    border:2px solid #ffffff;
+
+    border-radius:999px;
+
+    box-shadow:0 0 0 1px #cbd5e1;
+
+    color:#ffffff;
+
+    font-size:11px;
+
+    cursor:pointer;
+
+    transition:transform .12s ease, box-shadow .12s ease;
+}
+
+
+.es-swatch:hover:not(:disabled)
+{
+    transform:scale(1.08);
+}
+
+
+.es-swatch-on
+{
+    box-shadow:0 0 0 2px #0f172a;
+}
+
+
+.es-swatch:disabled
+{
+    cursor:default;
+}
+
+
+.es-preview-wrap
+{
+    display:flex;
+
+    align-items:center;
+
+    min-height:36px;
+}
+
+
+.es-preview
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:7px;
+
+    max-width:100%;
+
+    padding:4px 12px;
+
+    overflow:hidden;
+
+    border:1px solid #cbd5e1;
+
+    border-radius:999px;
+
+    background:#ffffff;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+.es-preview-dot
+{
+    flex:0 0 8px;
+
+    width:8px;
+
+    height:8px;
+
+    border-radius:999px;
+}
+
+
+/* -----------------------------------------------------
+   NOTES / ERROR
+----------------------------------------------------- */
+
+.es-note
+{
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:8px;
+
+    margin:12px 0 0;
+
+    color:#475569;
+
+    font-size:12px;
+
+    line-height:1.45;
+}
+
+
+.es-note i
+{
+    margin-top:2px;
+
+    color:#1e3a8a;
+}
+
+
+.es-panel-error
+{
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:8px;
+
+    flex:0 0 auto;
+
+    padding:10px 14px;
+
+    border-top:1px solid #fecaca;
+
+    background:#fef2f2;
+
+    color:#b42318;
+
+    font-size:13px;
+
+    font-weight:600;
+}
+
+
+.es-panel-error i
+{
+    margin-top:2px;
+}
+
+
+/* -----------------------------------------------------
+   TOOLBAR RIGHT : hint + count
+----------------------------------------------------- */
+
+.es-toolbar-right
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    min-width:0;
+}
+
+
+.es-hint
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:7px;
+
+    max-width:420px;
+
+    overflow:hidden;
+
+    color:#64748b;
+
+    font-size:12px;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+.es-count
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:7px;
+
+    padding:4px 10px;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:999px;
+
+    background:#f8fafc;
+
+    color:#334155;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    white-space:nowrap;
+}
+
+
+.es-count i
+{
+    color:#64748b;
+
+    font-size:12px;
+}
+
+
+/* Days to purchase : a wrong range turns the note red */
+.es-note.es-note-error
+{ color:#b91c1c; }

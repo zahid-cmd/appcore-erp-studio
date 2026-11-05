@@ -48,6 +48,14 @@ public interface ISystemConfigurationsRepository
     Task<List<SystemConfigurationsDto>> GetAllAsync(
         long userId);
 
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
+
+    // Internal id -> Public Id (Guid.Empty = not found)
+    Task<Guid> GetPublicIdAsync(
+        long id);
+
     Task<SystemConfigurationsDto?> GetByIdAsync(
         long id,
         long userId);

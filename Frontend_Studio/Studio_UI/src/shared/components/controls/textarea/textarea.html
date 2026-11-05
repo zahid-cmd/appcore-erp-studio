@@ -80,9 +80,25 @@
 
             [autofocus]="autofocus"
 
-            (input)="onInput($event)">
+            (input)="onInput($event)"
+
+            (compositionstart)="onCompositionStart()"
+
+            (compositionend)="onCompositionEnd($event)">
 
         </textarea>
+
+        <span
+
+            *ngIf="blocked"
+
+            class="text-guard-note"
+
+            role="status">
+
+            English only
+
+        </span>
 
         <!-- =====================================================
              SUFFIX
@@ -100,4 +116,4 @@
 
     </div>
 
-</div>
+</div>

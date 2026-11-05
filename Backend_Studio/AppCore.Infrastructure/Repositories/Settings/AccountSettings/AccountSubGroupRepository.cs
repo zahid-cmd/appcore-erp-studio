@@ -117,6 +117,9 @@ public class AccountSubGroupRepository : IAccountSubGroupRepository
                         AccountSubGroupId =
                             x.AccountSubGroupId,
 
+                        PublicId =
+                            x.PublicId,
+
                         AccountClassId =
                             x.AccountClassId,
 
@@ -238,6 +241,33 @@ public class AccountSubGroupRepository : IAccountSubGroupRepository
                     x.SubGroupCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<AccountSubGroupEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.AccountSubGroupId)
+            .FirstOrDefaultAsync();
     }
 
 

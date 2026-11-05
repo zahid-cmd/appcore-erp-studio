@@ -264,6 +264,7 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
                     select new
                     {
                         PaymentId = p.ReceiptVoucherPaymentId,
+                        PaymentPublicId = p.PublicId,
                         VoucherId = v.ReceiptVoucherId,
                         v.VoucherNo,
                         v.VoucherDate,
@@ -302,6 +303,15 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
                             x.Amount,
                             x.LedgerCode,
                             x.LedgerName)));
+
+            // The payment line's uuid (print links)
+            Dictionary<long, Guid> receivedPublicIds =
+                rows.ToDictionary(x => x.PaymentId, x => x.PaymentPublicId);
+
+            foreach (CheckReconciliationDto dto in result.Where(x => x.Direction == Received))
+            {
+                dto.PaymentPublicId = receivedPublicIds.GetValueOrDefault(dto.PaymentId);
+            }
         }
 
         if (wantIssued)
@@ -317,6 +327,7 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
                     select new
                     {
                         PaymentId = p.PaymentVoucherPaymentId,
+                        PaymentPublicId = p.PublicId,
                         VoucherId = v.PaymentVoucherId,
                         v.VoucherNo,
                         v.VoucherDate,
@@ -356,6 +367,15 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
                             x.Amount,
                             x.LedgerCode,
                             x.LedgerName)));
+
+            // The payment line's uuid (print links)
+            Dictionary<long, Guid> issuedPublicIds =
+                rows.ToDictionary(x => x.PaymentId, x => x.PaymentPublicId);
+
+            foreach (CheckReconciliationDto dto in result.Where(x => x.Direction == Issued))
+            {
+                dto.PaymentPublicId = issuedPublicIds.GetValueOrDefault(dto.PaymentId);
+            }
         }
 
         // Oldest check first (the queue to work through)
@@ -1037,6 +1057,8 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
                 result.Message = $"{states.Count} check(s) deposited. Deposit Slip {slip.SlipNo}.";
                 result.DepositSlipNo = slip.SlipNo;
                 result.DepositSlipId = slip.CheckDepositSlipId;
+
+                result.DepositSlipPublicId = slip.PublicId;
                 result.CheckCount = states.Count;
             });
 
@@ -1344,6 +1366,8 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
 
                     result.VoucherNos.Add(voucher.VoucherNo);
                     result.VoucherIds.Add(voucher.CheckReconciliationVoucherId);
+
+                    result.VoucherPublicIds.Add(voucher.PublicId);
                 }
 
                 await _context.SaveChangesAsync();
@@ -1898,6 +1922,8 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
 
                     result.VoucherNos.Add(voucher.VoucherNo);
                     result.VoucherIds.Add(voucher.CheckReconciliationVoucherId);
+
+                    result.VoucherPublicIds.Add(voucher.PublicId);
                 }
 
                 //=======================================================
@@ -3064,4 +3090,52 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
     {
         return decimal.Round(value, 2) == value;
     }
-}
+
+
+    //===========================================================
+    // uuid -> internal id (print links)
+    //===========================================================
+    public async Task<long?>
+        GetVoucherIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<CheckReconciliationVouchers>()
+            .AsNoTracking()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.CheckReconciliationVoucherId)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<long?>
+        GetDepositSlipIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<CheckDepositSlips>()
+            .AsNoTracking()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.CheckDepositSlipId)
+            .FirstOrDefaultAsync();
+    }
+}

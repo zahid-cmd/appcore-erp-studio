@@ -34,6 +34,7 @@ from '@angular/router';
 import
 {
     Observable,
+    Subscription,
     defer,
     timer,
     throwError,
@@ -50,9 +51,16 @@ from 'rxjs';
 import
 {
     Supplier,
-    SupplierProfilesDefaults
+    SupplierProfilesDefaults,
+    SupplierPageQuery
 }
 from '../../../models/supplier-profiles.model';
+
+import
+{
+    PagedResult
+}
+from '../../../../../../shared/paging/paged-result.model';
 
 //===============================================================
 // Shared Components
@@ -270,17 +278,47 @@ implements OnInit, OnDestroy
     // Data
     //===========================================================
 
+    // The page shown (the server sends one page at a time)
     suppliers:
         Supplier[] =
     [];
 
-    filteredSuppliers:
-        Supplier[] =
+    // Rows matching the filters, all pages
+    totalRecords:
+        number =
+        0;
+
+    // Summary line below the canvas (filled by each load)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
     [];
 
-    pagedSuppliers:
-        Supplier[] =
-    [];
+    private loadSubscription?:
+        Subscription;
+
+    //===========================================================
+    // Sort & Search Delay
+    //===========================================================
+
+    // '' = the server's default (Supplier Code)
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer?:
+        number;
+
+    private readonly SEARCH_DELAY_MS:
+        number =
+        300;
 
     //===========================================================
     // Search & Loading
@@ -531,6 +569,10 @@ implements OnInit, OnDestroy
     {
         this.clearProgressTimer();
 
+        this.clearSearchTimer();
+
+        this.loadSubscription?.unsubscribe();
+
         if
         (
             this.isProcessing
@@ -763,163 +805,172 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Load Items
+    // Load Items (one page from the server)
+    //
+    // The server filters (tab, supply type, brand, status,
+    // search), sorts and pages; the answer also carries the
+    // summary counts.
     //===========================================================
 
     loadItems():
         void
     {
+        this.loadSubscription?.unsubscribe();
+
         this.loading =
             true;
 
         this.loadFailed =
             false;
 
-        this.supplierProfilesService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        Supplier[]
-                ):
-                    void =>
-                {
-                    this.suppliers =
-                        response ?? [];
+        this.cdr.detectChanges();
 
-                    this.applyFilters();
+        const query:
+            SupplierPageQuery =
+        {
+            page:
+                this.currentPage,
 
-                    this.loading =
-                        false;
+            pageSize:
+                this.pageSize,
 
-                    this.cdr.detectChanges();
-                },
+            search:
+                this.searchText.trim(),
 
-                error:
-                (
+            sort:
+                this.sortField,
+
+            dir:
+                this.sortDirection,
+
+            type:
+                this.TAB_TYPES[this.selectedTab] ?? '',
+
+            supplyType:
+                this.selectedSupplyType,
+
+            brandId:
+                this.selectedBrandId,
+
+            status:
+                this.selectedStatus
+        };
+
+        this.loadSubscription =
+            this.supplierProfilesService
+                .getPaged(
+                    query
+                )
+                .subscribe
+                ({
+                    next:
+                    (
+                        response:
+                            PagedResult<Supplier>
+                    ):
+                        void =>
+                    {
+                        this.suppliers =
+                            response.items;
+
+                        this.totalRecords =
+                            response.totalCount;
+
+                        // The server pulls the page back when rows got
+                        // fewer (e.g. the last row of a page deleted)
+                        this.currentPage =
+                            response.page;
+
+                        this.updateSummary(
+                            response.counts
+                        );
+
+                        this.loading =
+                            false;
+
+                        this.cdr.detectChanges();
+                    },
+
                     error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
                     (
-                        'Load Suppliers Error:',
-                        error
-                    );
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error
+                        (
+                            'Load Suppliers Error:',
+                            error
+                        );
 
-                    this.suppliers =
-                        [];
+                        this.suppliers =
+                            [];
 
-                    this.filteredSuppliers =
-                        [];
+                        this.totalRecords =
+                            0;
 
-                    this.pagedSuppliers =
-                        [];
+                        this.loading =
+                            false;
 
-                    this.loading =
-                        false;
+                        this.loadFailed =
+                            true;
 
-                    this.loadFailed =
-                        true;
+                        this.toast.error
+                        (
+                            'Load Failed',
+                            'Unable to load suppliers.'
+                        );
 
-                    this.toast.error
-                    (
-                        'Load Failed',
-                        'Unable to load suppliers.'
-                    );
-
-                    this.cdr.detectChanges();
-                }
-            });
+                        this.cdr.detectChanges();
+                    }
+                });
     }
 
     //===========================================================
-    // Apply Filters
+    // Reload from page 1 (a filter, the tab, search or sort
+    // changed)
     //===========================================================
 
-    applyFilters():
+    private reload():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredSuppliers =
-            this.suppliers.filter
-            (
-                item =>
-                {
-                    const tabType =
-                        this.TAB_TYPES[this.selectedTab];
-
-                    const tabMatch =
-                        (
-                            !tabType
-                            ||
-                            item.SupplierType === tabType
-                        )
-                        &&
-                        (
-                            this.selectedBrandId === null
-                            ||
-                            Number(item.BrandManagementId) ===
-                            this.selectedBrandId
-                        )
-                        &&
-                        (
-                            this.selectedSupplyType === null
-                            ||
-                            item.SupplyType ===
-                            this.selectedSupplyType
-                        );
-
-                    const statusMatch =
-                        this.selectedStatus === null
-                        ||
-                        item.IsActive ===
-                        this.selectedStatus;
-
-                    const text =
-                        [
-                            item.SupplierCode,
-                            item.SupplierName,
-                            item.SupplierType,
-                            item.SupplyType,
-                            item.ContactPerson,
-                            item.Phone1,
-                            item.Phone2,
-                            item.BrandName,
-                            item.BinNo,
-                            item.TinNo,
-                            item.PayableLedgerCode,
-                            item.Remarks,
-                            item.IsActive
-                                ? 'active'
-                                : 'inactive'
-                        ]
-                        .join(' ')
-                        .toLowerCase();
-
-                    return tabMatch
-                        &&
-                        statusMatch
-                        &&
-                        (
-                            !keyword
-                            ||
-                            text.includes(keyword)
-                        );
-                }
-            );
-
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
+    }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / per type /
+    // Active / Inactive, with the supply type, brand and search
+    // applied (not the tab or the status filter)
+    //===========================================================
+
+    private updateSummary
+    (
+        counts:
+            Record<string, number>
+    ):
+        void
+    {
+        const value =
+            (
+                key:
+                    string
+            ):
+                string =>
+                    Number(counts[key] ?? 0).toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',              value:value('Total'),             tone:'' },
+            { label:'Brand Distributors', value:value('Brand Distributor'), tone:'' },
+            { label:'Local Vendors',      value:value('Local Vendor'),      tone:'' },
+            { label:'Service Providers',  value:value('Service Provider'),  tone:'' },
+            { label:'Active',             value:value('Active'),            tone:'ok' },
+            { label:'Inactive',           value:value('Inactive'),          tone:'bad' }
+        ];
     }
 
     //===========================================================
@@ -936,13 +987,11 @@ implements OnInit, OnDestroy
         this.selectedTab =
             value;
 
-        this.applyFilters();
-
-        this.cdr.detectChanges();
+        this.reload();
     }
 
     //===========================================================
-    // Search
+    // Search (asks the server 300 ms after the last key)
     //===========================================================
 
     onSearch
@@ -957,7 +1006,37 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        this.clearSearchTimer();
+
+        this.searchTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.reload();
+                },
+
+                this.SEARCH_DELAY_MS
+            );
+    }
+
+    private clearSearchTimer():
+        void
+    {
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
+
+            this.searchTimer =
+                undefined;
+        }
     }
 
     //===========================================================
@@ -976,7 +1055,7 @@ implements OnInit, OnDestroy
                 ? String(value)
                 : null;
 
-        this.applyFilters();
+        this.reload();
     }
 
     //===========================================================
@@ -997,7 +1076,7 @@ implements OnInit, OnDestroy
                 ? null
                 : Number(value);
 
-        this.applyFilters();
+        this.reload();
     }
 
     //===========================================================
@@ -1068,14 +1147,16 @@ implements OnInit, OnDestroy
     {
         this.selectedStatus =
             value === null
+            ||
+            value === undefined
                 ? null
                 : Boolean(value);
 
-        this.applyFilters();
+        this.reload();
     }
 
     //===========================================================
-    // Sort
+    // Sort (by the server, on the whole list)
     //===========================================================
 
     onSort
@@ -1091,69 +1172,15 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        const direction =
-            event.direction === 'asc'
-                ? 1
-                : -1;
+        this.sortField =
+            event.field;
 
-        this.filteredSuppliers =
-        [
-            ...this.filteredSuppliers
-        ]
-        .sort
-        (
-            (a: any, b: any): number =>
-            {
-                const valueA =
-                    a[event.field];
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-                const valueB =
-                    b[event.field];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1 * direction;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1 * direction;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return valueA.localeCompare(valueB) * direction;
-                }
-
-                return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * direction;
-            }
-        );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1163,6 +1190,8 @@ implements OnInit, OnDestroy
     refresh():
         void
     {
+        this.clearSearchTimer();
+
         this.searchText =
             '';
 
@@ -1178,34 +1207,20 @@ implements OnInit, OnDestroy
         this.selectedSupplyType =
             null;
 
-        this.currentPage =
-            1;
+        this.sortField =
+            '';
+
+        this.sortDirection =
+            'asc';
 
         this.loadBrands();
 
-        this.loadItems();
+        this.reload();
     }
 
     //===========================================================
     // Pagination
     //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (this.currentPage - 1) * this.pageSize;
-
-        this.pagedSuppliers =
-        [
-            ...this.filteredSuppliers.slice
-            (
-                start,
-                start + this.pageSize
-            )
-        ];
-    }
 
     onPageChange
     (
@@ -1217,7 +1232,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     onPageSizeChange
@@ -1230,10 +1245,7 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1275,7 +1287,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.SupplierId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1295,7 +1307,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.SupplierId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1355,7 +1367,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.supplierProfilesService.delete(
-                item.SupplierId
+                item.PublicId
             )
         )
             .subscribe
@@ -1651,4 +1663,4 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
-}
+}

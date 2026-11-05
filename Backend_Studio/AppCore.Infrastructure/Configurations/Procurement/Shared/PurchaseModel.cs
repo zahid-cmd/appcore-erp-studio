@@ -39,6 +39,15 @@ public static class PurchaseModel
 
         builder.HasKey(x => x.PurchaseId);
 
+        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName($"UX_{table}_PublicId");
+
         builder.Property(x => x.PurchaseId)
                .ValueGeneratedOnAdd();
 

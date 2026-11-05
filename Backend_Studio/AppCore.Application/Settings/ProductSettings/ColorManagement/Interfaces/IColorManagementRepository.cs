@@ -7,6 +7,13 @@ using AppCore.Application.Settings.ProductSettings.ColorManagement.DTOs;
 
 
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.Paging;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -24,6 +31,20 @@ public interface IColorManagementRepository
     //===========================================================
 
     Task<List<ColorManagementDto>> GetAllAsync();
+
+
+    // The list page : one page, filtered, sorted, with the counts
+
+    Task<PagedResult<ColorManagementDto>> GetPagedAsync(
+
+        ColorManagementPageRequest request);
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+
+    Task<long?> GetIdByPublicIdAsync(
+
+        Guid publicId);
 
 
     //===========================================================

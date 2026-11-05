@@ -1,0 +1,90 @@
+/* ============================================================
+   Product Transfer
+============================================================ */
+
+export interface ProductTransfer
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Product Transfer
+============================================================ */
+
+export interface CreateProductTransfer
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Product Transfer
+============================================================ */
+
+export interface UpdateProductTransfer
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Product Transfer Defaults
+============================================================ */
+
+export interface ProductTransferDefaults
+{
+    code:
+        string;
+}

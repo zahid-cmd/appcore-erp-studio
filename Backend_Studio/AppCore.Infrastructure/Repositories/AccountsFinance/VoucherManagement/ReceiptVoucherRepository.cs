@@ -19,6 +19,8 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 
 using PostingLedgerCodes =
     AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
@@ -64,6 +66,12 @@ namespace AppCore.Infrastructure.Configurations.AccountsFinance.VoucherManagemen
 //            while a check is worked on in Check Reconciliation
 //            or an MFS / card receipt is Settled / Rejected in MFS /
 //            POS Reconciliation.
+//
+// Receipts of other documents (Sales Invoices : the Payment Desk
+// rows) : ValidateAsync checks the rows with the same rules;
+// CreatePostedAsync saves, approves and posts in one go. Both run
+// inside the caller's transaction when there is one (so the
+// document and its receipt commit together), as Cancel does.
 //===============================================================
 
 public class ReceiptVoucherRepository : IReceiptVoucherRepository
@@ -262,6 +270,225 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
                 }
             )
             .ToList();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Type filter and search on the header (and its modes), the
+    // status counts for the summary line, then the tab, the total
+    // and one page (newest first unless a column is sorted).
+    //===========================================================
+
+    private static SortMap<ReceiptVoucher> ListSorts()
+    {
+        return new SortMap<ReceiptVoucher>("VoucherDateText", defaultDescending: true)
+            .Add("VoucherNo", x => x.VoucherNo)
+            .Add("VoucherDateText", x => x.VoucherDate)
+            .Add("BranchName", x => x.BranchName)
+            .Add("PartyText", x => x.PartyName)
+            .Add("TotalAmountText", x => x.TotalAmount)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.VoucherNo, followDirection: true);
+    }
+
+    // "25-10-2026" or "2026-10-25" -> that date (else null)
+    private static DateOnly? SearchDate
+    (
+        string text
+    )
+    {
+        string[] formats =
+            { "dd-MM-yyyy", "d-M-yyyy", "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd" };
+
+        return DateOnly.TryParseExact(
+                text,
+                formats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out DateOnly date)
+            ? date
+            : null;
+    }
+
+    public async Task<PagedResult<ReceiptVoucherDto>>
+        GetPagedAsync
+        (
+            VoucherPageRequest request
+        )
+    {
+        IQueryable<ReceiptVoucher> query =
+            _context
+                .Set<ReceiptVoucher>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+        //-------------------------------------------------------
+        // Type filter
+        //-------------------------------------------------------
+
+        string ledgerType =
+            (request.LedgerType ?? string.Empty).Trim();
+
+        if
+        (
+            ledgerType.Length > 0
+        )
+        {
+            query =
+                query.Where(x => x.LedgerType == ledgerType);
+        }
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains"; a typed date finds
+        // that voucher date)
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            DateOnly? date =
+                SearchDate(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        (date != null && x.VoucherDate == date) ||
+                        EF.Functions.ILike(x.VoucherNo, like) ||
+                        EF.Functions.ILike(x.BranchName, like) ||
+                        EF.Functions.ILike(x.LedgerType, like) ||
+                        EF.Functions.ILike(x.PartyName, like) ||
+                        EF.Functions.ILike(x.Narration, like) ||
+                        EF.Functions.ILike(x.Status, like) ||
+                        _context
+                            .Set<ReceiptVoucherPayments>()
+                            .Any
+                            (
+                                m =>
+                                    m.ReceiptVoucherId == x.ReceiptVoucherId &&
+                                    EF.Functions.ILike(m.Mode, like)
+                            )
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts : Total / Draft / Approved / Posted /
+        // Cancelled (type filter and search applied; not the tab)
+        //-------------------------------------------------------
+
+        var byStatus =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = byStatus.Sum(x => x.Count)
+            };
+
+        foreach (string status in new[] { "Draft", "Approved", "Posted", "Cancelled" })
+        {
+            summaryCounts[status] =
+                byStatus.Where(x => x.Status == status).Sum(x => x.Count);
+        }
+
+        //-------------------------------------------------------
+        // Status (the tab)
+        //-------------------------------------------------------
+
+        string tab =
+            (request.Status ?? string.Empty).Trim();
+
+        if
+        (
+            tab.Length > 0 &&
+            !string.Equals(tab, "all", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            query =
+                query.Where(x => x.Status == tab);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<ReceiptVoucher> rows =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        List<long> ids =
+            rows.Select(x => x.ReceiptVoucherId).ToList();
+
+        var modes =
+            await _context
+                .Set<ReceiptVoucherPayments>()
+                .AsNoTracking()
+                .Where(x => ids.Contains(x.ReceiptVoucherId))
+                .Select(x => new { x.ReceiptVoucherId, x.Mode, x.LineNo })
+                .ToListAsync();
+
+        Dictionary<long, string> modeText =
+            modes
+                .GroupBy(x => x.ReceiptVoucherId)
+                .ToDictionary
+                (
+                    g => g.Key,
+                    g => string.Join(
+                        ", ",
+                        g.OrderBy(x => x.LineNo)
+                         .Select(x => x.Mode)
+                         .Distinct())
+                );
+
+        List<ReceiptVoucherDto> items =
+            rows
+                .Select
+                (
+                    x =>
+                    {
+                        ReceiptVoucherDto dto =
+                            ToDto(x);
+
+                        dto.ReceiptModes =
+                            modeText.TryGetValue(x.ReceiptVoucherId, out string? text)
+                                ? text
+                                : string.Empty;
+
+                        return dto;
+                    }
+                )
+                .ToList();
+
+        return new PagedResult<ReceiptVoucherDto>
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
     }
 
 
@@ -489,6 +716,7 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
         return new ReceiptVoucherDto
         {
             ReceiptVoucherId = x.ReceiptVoucherId,
+            PublicId = x.PublicId,
             VoucherNo = x.VoucherNo,
             VoucherDate = x.VoucherDate.ToString(DateFormat, CultureInfo.InvariantCulture),
             BranchId = x.BranchId,
@@ -1328,7 +1556,9 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
 
 
     //===========================================================
-    // Run in one transaction
+    // Run in one transaction (the caller's when there is one :
+    // a sales invoice posts its receipt and cancels it inside its
+    // own transaction; the caller commits or rolls back)
     //===========================================================
 
     private async Task InTransactionAsync
@@ -1336,6 +1566,13 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
         Func<Task> work
     )
     {
+        if (_context.Database.CurrentTransaction != null)
+        {
+            await work();
+
+            return;
+        }
+
         await using IDbContextTransaction transaction =
             await _context.Database.BeginTransactionAsync();
 
@@ -1412,6 +1649,7 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
         return new ReceiptVoucherSavedDto
         {
             ReceiptVoucherId = entity.ReceiptVoucherId,
+            PublicId = entity.PublicId,
             VoucherNo = entity.VoucherNo
         };
     }
@@ -1604,6 +1842,104 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
     }
 
 
+    //===========================================================
+    // Validate a receipt of another document (Sales Invoices :
+    // the Payment Desk rows) with the same rules as a save, without
+    // saving anything. The voucher date window (Back / Post Dated
+    // Entry) is not applied : the document's own date rules have
+    // been checked by its page.
+    //===========================================================
+
+    public async Task
+        ValidateAsync
+        (
+            CreateReceiptVoucherDto dto
+        )
+    {
+        await NormalizeAsync(dto);
+    }
+
+
+    //===========================================================
+    // Create a receipt of another document and post it at once
+    // (Draft -> Approved -> Posted in one go, same checks and
+    // posting as the RV page). referenceNo = the document number
+    // (written as the Reference No of the journal rows). Runs in
+    // the caller's transaction when there is one.
+    //===========================================================
+
+    public async Task<ReceiptVoucherSavedDto>
+        CreatePostedAsync
+        (
+            CreateReceiptVoucherDto dto,
+            string referenceNo,
+            long userId
+        )
+    {
+        RvInput input =
+            await NormalizeAsync(dto);
+
+        DateTime now =
+            DateTime.UtcNow;
+
+        ReceiptVoucher entity =
+            new()
+            {
+                Status = VoucherStatuses.Draft,
+                CancelReason = string.Empty,
+                IsDeleted = false,
+                CreatedBy = userId,
+                CreatedDate = now
+            };
+
+        ApplyHeader(entity, input);
+
+        await InTransactionAsync(
+            async () =>
+            {
+                VoucherNumberDto number =
+                    await _numberService.NextAsync(
+                        VoucherTypes.Receipt,
+                        input.Period.BranchId,
+                        input.VoucherDate);
+
+                entity.VoucherNo =
+                    number.VoucherNo;
+
+                _context.Set<ReceiptVoucher>().Add(entity);
+
+                await _context.SaveChangesAsync();
+
+                await ReplaceDetailsAsync(
+                    entity.ReceiptVoucherId,
+                    input);
+
+                AddHistory(entity, "Create", "Created", userId, now, $"Reference : {Limit(referenceNo, 100)}.");
+
+                await _context.SaveChangesAsync();
+
+                entity.Status = VoucherStatuses.Approved;
+
+                entity.ApprovedBy = userId;
+
+                entity.ApprovedDate = now;
+
+                AddHistory(entity, "Approve", "Approved", userId, now);
+
+                await PostCoreAsync(entity, userId, referenceNo);
+
+                await _context.SaveChangesAsync();
+            });
+
+        return new ReceiptVoucherSavedDto
+        {
+            ReceiptVoucherId = entity.ReceiptVoucherId,
+            PublicId = entity.PublicId,
+            VoucherNo = entity.VoucherNo
+        };
+    }
+
+
     // Every payment line is a check (none = false)
     private async Task<bool>
         IsCheckOnlyAsync
@@ -1699,7 +2035,8 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
         PostCoreAsync
         (
             ReceiptVoucher entity,
-            long userId
+            long userId,
+            string referenceNo = ""
         )
     {
         long id =
@@ -1740,7 +2077,9 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
                     // clean)
                     PartyType = string.Empty,
                     PartyCode = string.Empty,
-                    ReferenceNo = string.Empty,
+                    // The source document (sales invoice) of a
+                    // receipt made by another page; '' for the RV page
+                    ReferenceNo = Limit(referenceNo, 100),
                     Narration = string.IsNullOrWhiteSpace(entity.Narration)
                         ? $"Received from {entity.PartyName}"
                         : entity.Narration,
@@ -2252,4 +2591,31 @@ public class ReceiptVoucherRepository : IReceiptVoucherRepository
                     !x.IsDeleted
             );
     }
-}
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<ReceiptVoucher>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.ReceiptVoucherId)
+            .FirstOrDefaultAsync();
+    }
+}

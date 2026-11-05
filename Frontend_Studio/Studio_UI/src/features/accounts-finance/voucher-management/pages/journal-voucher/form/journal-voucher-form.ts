@@ -417,6 +417,11 @@ implements OnInit, OnDestroy
         number =
         0;
 
+    // uuid from the address bar (the voucher is loaded by it)
+    routePublicId:
+        string =
+        '';
+
     loading:
         boolean =
         false;
@@ -713,10 +718,10 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
-            this.entityId =
+            this.routePublicId =
                 id;
 
             this.loadEntity();
@@ -730,8 +735,9 @@ implements OnInit, OnDestroy
         this.initializeEntity();
     }
 
+    // The uuid in the address bar ('' = add)
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -743,13 +749,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                id !== ''
             )
             {
                 return id;
@@ -759,7 +763,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     get isAddMode():
@@ -1105,16 +1109,16 @@ implements OnInit, OnDestroy
         void
     {
         const id =
-            this.voucher?.JournalVoucherId
+            this.voucher?.PublicId
             ??
-            0;
+            '';
 
         const status =
             String(this.voucher?.Status ?? '');
 
         if
         (
-            !(id > 0)
+            id === ''
             ||
             !(
                 status === 'Posted'
@@ -1228,7 +1232,7 @@ implements OnInit, OnDestroy
 
         this.journalVoucherService
             .getById(
-                this.entityId
+                this.routePublicId
             )
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
@@ -1240,6 +1244,10 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
+                    // Internal id (save / actions use it; links use the uuid)
+                    this.entityId =
+                        item.JournalVoucherId;
+
                     this.applyVoucher(
                         item
                     );
@@ -2488,7 +2496,7 @@ implements OnInit, OnDestroy
                 'voucher-management',
                 'journal-voucher',
                 mode,
-                this.entityId
+                this.voucher?.PublicId || this.routePublicId
             ]
         );
     }

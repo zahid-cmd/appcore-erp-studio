@@ -40,7 +40,8 @@ import
     throwError,
     delayWhen,
     catchError,
-    switchMap
+    switchMap,
+    Subscription
 }
 from 'rxjs';
 
@@ -54,6 +55,18 @@ import
     ColorManagement
 }
 from '../../../models/color-management.model';
+
+import
+{
+    ColorManagementPageQuery
+}
+from '../../../models/color-management.model';
+
+import
+{
+    PagedResult
+}
+from '../../../../../../shared/paging/paged-result.model';
 
 
 //===============================================================
@@ -280,15 +293,42 @@ implements OnInit, OnDestroy
         ColorManagement[] =
     [];
 
+    // Rows matching the filters and search, all pages
+    totalRecords:
+        number =
+        0;
 
-    filteredCompanies:
-        ColorManagement[] =
+    // Summary line below the canvas (filled by each load)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
     [];
 
+    private loadSubscription?:
+        Subscription;
 
-    pagedCompanies:
-        ColorManagement[] =
-    [];
+    // '' = the server's default sort
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer?:
+        number;
+
+    private readonly SEARCH_DELAY_MS:
+        number =
+        300;
+
+
+
+
 
 
 
@@ -504,6 +544,10 @@ implements OnInit, OnDestroy
     ngOnDestroy():
         void
     {
+        this.clearSearchTimer();
+
+        this.loadSubscription?.unsubscribe();
+
         this.clearProgressTimer();
 
 
@@ -751,6 +795,9 @@ implements OnInit, OnDestroy
             ColorManagementId:
                 Number(item?.ColorManagementId ?? item?.colorManagementId ?? 0),
 
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             ColorCode:
                 item?.ColorCode ?? item?.colorCode ?? '',
 
@@ -799,160 +846,161 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Load Items
+    // Load Items (one page from the server)
+    //
+    // The server filters, searches, sorts and pages; the answer
+    // also carries the summary counts.
     //===========================================================
 
     loadItems():
         void
     {
+        this.loadSubscription?.unsubscribe();
+
         this.loading =
             true;
-
 
         this.loadFailed =
             false;
 
+        this.cdr.detectChanges();
 
-        this.colorManagementservice
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        ColorManagement[]
-                ):
-                    void =>
-                {
-                    this.companies =
-                        this.normalizeCompanies(
-                            response
+        const query:
+            ColorManagementPageQuery =
+        {
+            page:
+                this.currentPage,
+
+            pageSize:
+                this.pageSize,
+
+            search:
+                this.searchText.trim(),
+
+            sort:
+                this.sortField,
+
+            dir:
+                this.sortDirection,
+
+            status:
+                null
+        };
+
+        this.loadSubscription =
+            this.colorManagementservice
+                .getPaged(
+                    query
+                )
+                .subscribe
+                ({
+                    next:
+                    (
+                        response:
+                            PagedResult<any>
+                    ):
+                        void =>
+                    {
+                        this.companies =
+                            this.normalizeCompanies(response.items);
+
+                        this.totalRecords =
+                            response.totalCount;
+
+                        // The server pulls the page back when rows got
+                        // fewer (e.g. the last row of a page deleted)
+                        this.currentPage =
+                            response.page;
+
+                        this.updateSummary(
+                            response.counts
                         );
 
+                        this.loading =
+                            false;
 
-                    this.applyFilters();
+                        this.cdr.detectChanges();
+                    },
 
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        false;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:
-                (
                     error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
                     (
-                        'Load Companies Error:',
-                        error
-                    );
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error
+                        (
+                            'Load Colors Error:',
+                            error
+                        );
 
+                        this.companies =
+                            [];
 
-                    this.companies =
-                        [];
+                        this.totalRecords =
+                            0;
 
+                        this.loading =
+                            false;
 
-                    this.filteredCompanies =
-                        [];
+                        this.loadFailed =
+                            true;
 
+                        this.toast.error
+                        (
+                            'Load Failed',
+                            'Unable to load companies.'
+                        );
 
-                    this.pagedCompanies =
-                        [];
-
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        true;
-
-
-                    this.toast.error
-                    (
-                        'Load Failed',
-
-                        'Unable to load companies.'
-                    );
-
-
-                    this.cdr.detectChanges();
-                }
-            });
+                        this.cdr.detectChanges();
+                    }
+                });
     }
 
-
-
     //===========================================================
-    // Apply Filters
+    // Reload from page 1 (a filter, search, sort or page size
+    // changed)
     //===========================================================
 
-    applyFilters():
+    private reload():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-
-        this.filteredCompanies =
-            this.companies.filter
-            (
-                (
-                    item:
-                        ColorManagement
-                ):
-                    boolean =>
-                {
-                    const values:
-                        unknown[] =
-                    [
-                        item.ColorCode,
-                        item.ColorName,
-                        item.Remarks
-                    ];
-
-                    const searchMatch =
-                        !keyword
-                        ||
-                        values.some(
-                            value =>
-                                String(value ?? '')
-                                    .toLowerCase()
-                                    .includes(keyword)
-                        )
-                        ||
-                        (item.Status ? 'active' : 'inactive')
-                            .includes(keyword);
-
-                    return searchMatch;
-                }
-            );
-
-
         this.currentPage =
             1;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
 
+    //===========================================================
+    // Summary Line (below the canvas)
+    //===========================================================
 
+    private updateSummary
+    (
+        counts:
+            Record<string, number>
+    ):
+        void
+    {
+        const value =
+            (
+                key:
+                    string
+            ):
+                string =>
+                    Number(counts[key] ?? 0).toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total', value:value('Total'), tone:'' },
+            { label:'Active', value:value('Active'), tone:'ok' },
+            { label:'Inactive', value:value('Inactive'), tone:'bad' }
+        ];
+    }
 
     //===========================================================
-    // Search
+    // Search (asks the server 300 ms after the last key)
     //===========================================================
 
     onSearch
@@ -967,14 +1015,41 @@ implements OnInit, OnDestroy
             ??
             '';
 
+        this.clearSearchTimer();
 
-        this.applyFilters();
+        this.searchTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.reload();
+                },
+
+                this.SEARCH_DELAY_MS
+            );
     }
 
+    private clearSearchTimer():
+        void
+    {
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
 
+            this.searchTimer =
+                undefined;
+        }
+    }
 
     //===========================================================
-    // Sort
+    // Sort (the server sorts)
     //===========================================================
 
     onSort
@@ -990,120 +1065,16 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.filteredCompanies =
-        [
-            ...this.filteredCompanies
-        ];
+        this.sortField =
+            event.field;
 
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-        this.filteredCompanies.sort
-        (
-            (
-                a:
-                    ColorManagement,
-
-                b:
-                    ColorManagement
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof ColorManagement
-                    ];
-
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof ColorManagement
-                    ];
-
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
-                }
-
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
-            }
-        );
-
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
+        this.reload();
     }
-
-
 
     //===========================================================
     // Refresh
@@ -1112,50 +1083,22 @@ implements OnInit, OnDestroy
     refresh():
         void
     {
+        this.clearSearchTimer();
+
         this.searchText =
             '';
 
+        this.sortField =
+            '';
 
-        this.currentPage =
-            1;
+        this.sortDirection =
+            'asc';
 
-
-        this.loadItems();
+        this.reload();
     }
 
-
-
     //===========================================================
-    // Update Pagination
-    //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-
-        this.pagedCompanies =
-        [
-            ...this.filteredCompanies.slice
-            (
-                start,
-
-                start + this.pageSize
-            )
-        ];
-    }
-
-
-
-    //===========================================================
-    // Page Change
+    // Pagination
     //===========================================================
 
     onPageChange
@@ -1168,15 +1111,8 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
-
-
-
-    //===========================================================
-    // Page Size Change
-    //===========================================================
 
     onPageSizeChange
     (
@@ -1188,15 +1124,8 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
+        this.reload();
     }
-
-
 
     //===========================================================
     // Add
@@ -1236,7 +1165,7 @@ implements OnInit, OnDestroy
             [
                 'view',
 
-                item.ColorManagementId
+                item.PublicId
             ],
 
             {
@@ -1264,7 +1193,7 @@ implements OnInit, OnDestroy
             [
                 'edit',
 
-                item.ColorManagementId
+                item.PublicId
             ],
 
             {
@@ -1338,7 +1267,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.colorManagementservice.delete(
-                item.ColorManagementId
+                item.PublicId ?? ''
             )
         )
             .subscribe

@@ -27,6 +27,14 @@ public interface ICardChargesRepository
     Task<List<CardChargesDto>> GetAllAsync();
 
 
+    // POS Account Public Id -> POS Account id (live POS
+    // Accounts only; null = not found)
+
+    Task<long?> GetPosAccountIdByPublicIdAsync(
+
+        Guid publicId);
+
+
     //===========================================================
     // Get By POS Account
     //===========================================================

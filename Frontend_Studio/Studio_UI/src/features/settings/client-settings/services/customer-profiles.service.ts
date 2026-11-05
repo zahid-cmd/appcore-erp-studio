@@ -33,9 +33,18 @@ import
     Customer,
     CreateCustomer,
     UpdateCustomer,
-    CustomerProfilesDefaults
+    CustomerProfilesDefaults,
+    CustomerPageQuery
 }
 from '../models/customer-profiles.model';
+
+import
+{
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
 
 
 //===============================================================
@@ -111,6 +120,9 @@ export class CustomerProfilesService
         return {
             CustomerId:
                 Number(this.pick(item, 'CustomerId') ?? 0),
+
+            PublicId:
+                text('PublicId'),
 
             CustomerType:
                 text('CustomerType') === 'Outside'
@@ -189,6 +201,13 @@ export class CustomerProfilesService
                     true
                 ),
 
+            IsWalkIn:
+                Boolean(
+                    this.pick(item, 'IsWalkIn')
+                    ??
+                    false
+                ),
+
             LocationName:
                 text('LocationName')
         };
@@ -210,6 +229,42 @@ export class CustomerProfilesService
                 map(
                     response =>
                         (response ?? []).map(
+                            item =>
+                                this.normalize(
+                                    item
+                                )
+                        )
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page : one page from the server)
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            CustomerPageQuery
+    ):
+        Observable<PagedResult<Customer>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams(
+                            { ...query }
+                        )
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                        toPagedResult(
+                            response,
                             item =>
                                 this.normalize(
                                     item
@@ -280,13 +335,13 @@ export class CustomerProfilesService
 
 
     //===========================================================
-    // Get By Id
+    // Get By Public Id
     //===========================================================
 
     getById
     (
         id:
-            number
+            string
     ):
         Observable<Customer>
     {
@@ -306,7 +361,7 @@ export class CustomerProfilesService
 
 
     //===========================================================
-    // Create
+    // Create : returns the new customer's Public Id
     //===========================================================
 
     create
@@ -314,12 +369,19 @@ export class CustomerProfilesService
         model:
             CreateCustomer
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
-            this.apiUrl,
-            model
-        );
+        return this.http
+            .post<any>(
+                this.apiUrl,
+                model
+            )
+            .pipe(
+                map(
+                    response =>
+                        String(response ?? '')
+                )
+            );
     }
 
 
@@ -329,13 +391,15 @@ export class CustomerProfilesService
 
     update
     (
+        id:
+            string,
         model:
             UpdateCustomer
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${id}`,
             model
         );
     }
@@ -348,7 +412,7 @@ export class CustomerProfilesService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -416,7 +480,7 @@ export class CustomerProfilesService
     uploadPhoto
     (
         id:
-            number,
+            string,
         file:
             File
     ):
@@ -448,7 +512,7 @@ export class CustomerProfilesService
     deletePhoto
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -469,4 +533,4 @@ export class CustomerProfilesService
             `${this.apiUrl}/history`
         );
     }
-}
+}

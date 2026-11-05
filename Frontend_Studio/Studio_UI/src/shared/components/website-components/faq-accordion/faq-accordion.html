@@ -1,0 +1,45 @@
+<!-- ===========================================================
+     FAQ
+============================================================ -->
+
+<section class="wrap section faq">
+
+    <div class="intro">
+        <div class="intro-text">
+            <span class="kicker">{{ t('faq.kicker') }}</span>
+            <h2 class="title">{{ t('faq.title') }}</h2>
+            <p class="lead">{{ t('faq.lead') }}</p>
+        </div>
+        @if (ask())
+        {
+            <a class="btn" [href]="ask()" target="_blank" rel="noopener">Ask on WhatsApp</a>
+        }
+    </div>
+
+    <div class="list">
+        @for (column of columns(); track $index)
+        {
+            <div class="col">
+                @for (row of column; track row.i)
+                {
+                    <div class="qa" [class.on]="open() === row.i">
+                        <button
+                            type="button"
+                            class="q"
+                            [attr.aria-expanded]="open() === row.i"
+                            [attr.aria-controls]="'faq-' + row.i"
+                            (click)="toggle(row.i)">
+                            <span>{{ row.item.q }}</span>
+                            <span class="sign" aria-hidden="true">{{ open() === row.i ? '−' : '+' }}</span>
+                        </button>
+                        @if (open() === row.i && row.item.a)
+                        {
+                            <p class="a" [id]="'faq-' + row.i">{{ row.item.a }}</p>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</section>

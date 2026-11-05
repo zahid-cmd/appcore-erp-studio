@@ -137,6 +137,13 @@ export const PRINT_SOURCES:
             import('../../features/inventory-management/inventory-status/print/accessories-stock.print')
                 .then(module => module.ACCESSORIES_STOCK_PRINT),
 
+    // Sales Operations : Sales Invoices - SP (documents
+    // 'sales-invoice' = A4, 'sales-invoice-thermal' = 80 mm roll)
+    'sales-invoices-sp':
+        () =>
+            import('../../features/sales-operations/spare-parts-lubricant-sales/print/sales-invoices-sp.print')
+                .then(module => module.SALES_INVOICES_SP_PRINT),
+
     // Accounts & Finance : Auto Journal Registers (Journal
     // Register; the id is the page's filter token)
     'auto-journal-registers':
@@ -182,5 +189,64 @@ export const PRINT_SOURCES:
     'opening-stock':
         () =>
             import('../../features/inventory-management/store-setup/print/opening-stock.print')
-                .then(module => module.OPENING_STOCK_PRINT)
+                .then(module => module.OPENING_STOCK_PRINT),
+
+    // Inventory Management : Product Pricing (the price change
+    // note of one document; the id is the document)
+    'product-pricing':
+        () =>
+            import('../../features/inventory-management/pricing-labels/print/product-pricing.print')
+                .then(module => module.PRODUCT_PRICING_PRINT),
+
+    // Inventory Management : Price Adjustment (the note of one
+    // document : products, batches, settlement, journal; the id
+    // is the document)
+    'price-adjustment':
+        () =>
+            import('../../features/inventory-management/pricing-labels/print/price-adjustment.print')
+                .then(module => module.PRICE_ADJUSTMENT_PRINT),
+
+    // Inventory Management : Product Transfer (the transfer note
+    // of one document : lines, batches, chassis, places, journal;
+    // the id is the document)
+    'product-transfer':
+        () =>
+            import('../../features/inventory-management/stock-movement/print/product-transfer.print')
+                .then(module => module.PRODUCT_TRANSFER_PRINT),
+
+    // Inventory Management : Mass Storing (the rack / shelf
+    // placement note of one document; the id is the document)
+    'mass-storing':
+        () =>
+            import('../../features/inventory-management/stock-movement/print/mass-storing.print')
+                .then(module => module.MASS_STORING_PRINT),
+
+    // Inventory Management : Mass Storing Rack Overview (the shelf
+    // map of the warehouse's racks; the id is the page's token)
+    'mass-storing-rack-map':
+        () =>
+            import('../../features/inventory-management/stock-movement/print/mass-storing-rack-map.print')
+                .then(module => module.MASS_STORING_RACK_MAP_PRINT),
+
+    // Inventory Management : Price List (the current MRP of every
+    // product of a type; the id is the page's token)
+    'price-list':
+        () =>
+            import('../../features/inventory-management/pricing-labels/print/price-list.print')
+                .then(module => module.PRICE_LIST_PRINT),
+
+    // Inventory Management : Barcode Management (labels / motor
+    // bike hang-tags on A4 sheets or rolls; the id is the page's
+    // token)
+    'barcode-labels':
+        () =>
+            import('../../features/inventory-management/pricing-labels/print/barcode-labels.print')
+                .then(module => module.BARCODE_LABELS_PRINT),
+
+    // Enquiry Management : Sales Enquiries (the enquiries on the
+    // list's canvas; the id is the list's token)
+    'sales-enquiries':
+        () =>
+            import('../../features/enquiry-management/enquiry-profiles/print/sales-enquiries.print')
+                .then(module => module.SALES_ENQUIRIES_PRINT)
 };

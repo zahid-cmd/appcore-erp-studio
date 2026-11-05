@@ -993,7 +993,7 @@ implements OnInit
             [
                 'view',
 
-                item.sourceControlId
+                item.publicId
             ],
 
             {
@@ -1021,7 +1021,7 @@ implements OnInit
             [
                 'edit',
 
-                item.sourceControlId
+                item.publicId
             ],
 
             {
@@ -1083,7 +1083,7 @@ implements OnInit
                 this.sourcecontrolservice
                     .delete
                     (
-                        item.sourceControlId
+                        item.publicId ?? ''
                     )
                     .subscribe
                     ({
@@ -1332,4 +1332,44 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.sourcecontrols ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.sourcecontrols ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

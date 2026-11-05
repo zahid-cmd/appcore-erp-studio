@@ -1,4 +1,4 @@
-<div class="app-list-page">
+<div class="app-list-page rk-page">
 
     <!-- =====================================================
          PAGE HEADER
@@ -8,7 +8,7 @@
 
         title="Rack Management"
 
-        subtitle="Manage racks and shelves per warehouse"
+        subtitle="Zones, racks, shelves and bins per warehouse"
 
         icon="fas fa-warehouse">
 
@@ -16,9 +16,9 @@
 
             <app-search-box
 
-                [(value)]="searchText"
+                [value]="searchText"
 
-                placeholder="Search racks..."
+                [placeholder]="searchPlaceholder"
 
                 (valueChange)="onSearch($event)">
 
@@ -35,6 +35,10 @@
 
                 command1Icon="fas fa-plus"
 
+                command1Permission="add"
+
+                [command1Title]="isZonesTab ? 'Add a zone' : 'Add a rack'"
+
                 (command1Click)="add()"
 
                 command2Text="Refresh"
@@ -47,9 +51,15 @@
 
                 command3Icon="fas fa-trash-arrow-up"
 
+                command3Permission="restore"
+
+                [command3Title]="isZonesTab ? 'Restore the most recently deleted zone' : 'Restore the most recently deleted rack'"
+
                 (command3Click)="restore()"
 
                 rightCommandIcon="fas fa-clock-rotate-left"
+
+                rightCommandTitle="History"
 
                 (rightCommandClick)="openHistory()">
 
@@ -62,7 +72,7 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR
+         PAGE TOOLBAR : Racks / Zones | notice
     ====================================================== -->
 
     <app-page-toolbar>
@@ -73,9 +83,63 @@
 
             [tabs]="tabs"
 
-            [(selectedTab)]="selectedTab">
+            [selectedTab]="selectedTab"
+
+            (selectedTabChange)="onTabChange($event)">
 
         </app-control-tabs>
+
+
+        <div
+
+            pageToolbarRight
+
+            class="rk-toolbar-right">
+
+            @if (notice)
+            {
+                <div
+                    class="rk-notice"
+                    [class.rk-notice-ok]="notice.tone === 'ok'"
+                    [class.rk-notice-error]="notice.tone === 'error'"
+                    role="status">
+
+                    <i [class]="notice.tone === 'error' ? 'fas fa-circle-exclamation' : (notice.tone === 'ok' ? 'fas fa-circle-check' : 'fas fa-circle-info')"></i>
+
+                    <span [title]="notice.text">{{ notice.text }}</span>
+
+                    <button
+                        type="button"
+                        class="rk-notice-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeNotice()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+            }
+
+            <span class="rk-count">
+
+                @if (isZonesTab)
+                {
+                    <i class="fas fa-map-location-dot"></i>
+
+                    {{ zones.length }} zone{{ zones.length === 1 ? '' : 's' }}
+                }
+                @else
+                {
+                    <i class="fas fa-table-cells"></i>
+
+                    {{ racks.length }} rack{{ racks.length === 1 ? '' : 's' }}
+                }
+
+            </span>
+
+        </div>
 
     </app-page-toolbar>
 
@@ -91,7 +155,7 @@
 
 
         <!-- =================================================
-             LIST TABLE
+             LIST TABLE (racks or zones)
         ================================================== -->
 
         <div canvasBody>
@@ -100,13 +164,15 @@
 
                 [columns]="columns"
 
-                [rows]="pagedRacks"
+                [rows]="pagedRows"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
                 [loading]="loading"
 
                 [error]="loadFailed"
+
+                [actions]="{ view:true, edit:true, delete:true }"
 
                 (view)="view($event)"
 
@@ -130,7 +196,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredRacks.length"
+            [totalRecords]="filteredRows.length"
 
             [currentPage]="currentPage"
 
@@ -143,6 +209,240 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryTotal > 0)
+    {
+        <div class="ics-summary">
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Total</span>
+                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Active</span>
+                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Inactive</span>
+                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
+            </span>
+
+            <span class="ics-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
+
+
+
+
+    <!-- =====================================================
+         ZONE MODAL (shared Form Modal)
+         Warehouse · Zone Code (auto) · Zone Name · Priority ·
+         Status · Remarks. Warehouse locked after saving.
+    ====================================================== -->
+
+    <app-form-modal
+
+        [opened]="zoneModalOpened"
+
+        [title]="zoneModalTitle"
+
+        subtitle="A zone groups racks; priority 1 is nearest the counter"
+
+        icon="fas fa-map-location-dot"
+
+        width="560px"
+
+        [saveText]="zoneModalMode === 'edit' ? 'Update' : 'Save'"
+
+        [saveIcon]="zoneModalMode === 'edit' ? 'fas fa-pen-to-square' : 'fas fa-floppy-disk'"
+
+        [showSave]="!isZoneView"
+
+        [cancelText]="isZoneView ? 'Close' : 'Cancel'"
+
+        [saveDisabled]="!canSaveZone"
+
+        [busy]="progress.busy"
+
+        [closeOnBackdrop]="false"
+
+        (save)="saveZone()"
+
+        (closed)="closeZoneModal()">
+
+
+        <div class="rk-zone-grid">
+
+            <!-- Warehouse (locked after saving) -->
+
+            <div class="rk-zone-wide">
+
+                <app-search-dropdown
+
+                    label="Warehouse"
+
+                    placeholder="Select a warehouse"
+
+                    [items]="zoneWarehouseItems"
+
+                    [value]="zoneDraft.WarehouseId"
+
+                    (valueChange)="onZoneWarehouseChange($event)"
+
+                    [disabled]="zoneModalMode !== 'add' || progress.busy"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+            </div>
+
+
+            <!-- Zone Code (auto, per warehouse) -->
+
+            <app-textbox
+
+                label="Zone Code"
+
+                placeholder="Select a warehouse"
+
+                [value]="zoneDraft.ZoneCode"
+
+                [readonly]="true"
+
+                [required]="true">
+
+            </app-textbox>
+
+
+            <!-- Priority -->
+
+            <app-textbox
+
+                label="Priority (1 = nearest)"
+
+                placeholder="1"
+
+                inputMode="numeric"
+
+                [value]="zonePriorityText"
+
+                (valueChange)="onZonePriorityChange($event)"
+
+                [disabled]="isZoneView || progress.busy"
+
+                [required]="true">
+
+            </app-textbox>
+
+
+            <!-- Zone Name -->
+
+            <div class="rk-zone-wide">
+
+                <app-textbox
+
+                    label="Zone Name"
+
+                    placeholder="e.g. Fast Movers"
+
+                    [maxLength]="100"
+
+                    [value]="zoneDraft.ZoneName"
+
+                    (valueChange)="onZoneNameChange($event)"
+
+                    [disabled]="isZoneView || progress.busy"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </div>
+
+
+            <!-- Status -->
+
+            <app-dropdown
+
+                label="Status"
+
+                [items]="statusItems"
+
+                [value]="zoneDraft.IsActive"
+
+                (valueChange)="onZoneStatusChange($event)"
+
+                [disabled]="isZoneView || progress.busy"
+
+                [required]="true">
+
+            </app-dropdown>
+
+
+            <span class="rk-zone-racks">
+
+                @if (zoneDraft.RackZoneId)
+                {
+                    <i class="fas fa-table-cells"></i>
+
+                    Used by {{ zoneDraft.RackCount ?? 0 }} rack{{ zoneDraft.RackCount === 1 ? '' : 's' }}
+                }
+
+            </span>
+
+
+            <!-- Remarks -->
+
+            <div class="rk-zone-wide">
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="3"
+
+                    [value]="zoneDraft.Remarks"
+
+                    (valueChange)="onZoneRemarksChange($event)"
+
+                    [disabled]="isZoneView || progress.busy">
+
+                </app-textarea>
+
+            </div>
+
+        </div>
+
+
+        <div modalFooterLeft>
+
+            @if (zoneError)
+            {
+                <span class="rk-modal-error">
+
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    {{ zoneError }}
+
+                </span>
+            }
+
+        </div>
+
+    </app-form-modal>
 
 
 
@@ -167,8 +467,6 @@
     <!-- =====================================================
          UTILITIES
     ====================================================== -->
-
-    <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
 

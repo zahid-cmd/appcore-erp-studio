@@ -20,8 +20,9 @@ export const ACCESSORY_UNITS:
 //===============================================================
 // Accessory Location
 //
-// One per warehouse : Warehouse → Rack → Shelf number (1 … the
-// rack's shelf count, shown as SLF-A-01 …).
+// One per warehouse : Warehouse → Rack → Shelf → Bin. The bin is
+// the location (one item per bin), shown as A-03-05 (rack - shelf
+// - bin, built by shared/inventory/storage-labels).
 //===============================================================
 
 export interface AccessoryLocation
@@ -31,6 +32,9 @@ export interface AccessoryLocation
     RackManagementId: number;
 
     ShelfNumber: number;
+
+    // 1 … the shelf's bin count
+    BinNumber: number;
 
     //===========================================================
     // Display only (from the server)
@@ -44,7 +48,13 @@ export interface AccessoryLocation
 
     RackName?: string;
 
-    // "WH-001: R-001 / S-03"
+    // SLF-A-03
+    ShelfLabel?: string;
+
+    // A-03-05
+    BinCode?: string;
+
+    // "WH-001: A-03-05"
     LocationText?: string;
 }
 
@@ -61,7 +71,13 @@ export interface AccessoryLocation
 
 export interface Accessories
 {
+    // Sales account (CLS-005 / 006 / 008), set by the server
+    SalesLedgerCode?: string;
+
     AccessoryId: number;
+
+    // The id used in links and API calls (uuid v7)
+    PublicId: string;
 
     //===========================================================
     // Parent (locked after saving)
@@ -109,6 +125,10 @@ export interface Accessories
 
     MaxStockLevel: number;
 
+    // SuperFast / Fast / Regular / Periodic / Slow (default Slow);
+    // labels and colours : shared/inventory/storage-labels
+    MovementClass: string;
+
     Remarks: string;
 
     IsActive: boolean;
@@ -123,7 +143,11 @@ export interface Accessories
     // Display only (from the server)
     //===========================================================
 
-    // "WH-001: R-001 / S-03, WH-002: R-002 / S-01"
+    // Reserved : the class will later follow the 3- or 6-month
+    // average sale (read only)
+    MovementClassAuto?: boolean;
+
+    // "WH-001: A-03-05, WH-002: B-01-02"
     LocationsText?: string;
 
     CategoryCode?: string;
@@ -135,6 +159,33 @@ export interface Accessories
     SubCategoryCode?: string;
 
     SubCategoryName?: string;
+
+    // Fits Models : other sub categories (models) of the same
+    // category it also fits (its home is ProductSubCategoryId)
+    Fits?: AccessoryFit[];
+
+    // "Y06, A10"
+    FitsText?: string;
+
+    // Edited on the form; sent on save (replaces the links)
+    FitSubCategoryIds?: number[];
+}
+
+
+//===============================================================
+// Fits Models : one other sub category (model)
+//===============================================================
+
+export interface AccessoryFit
+{
+    ProductSubCategoryId: number;
+
+    SubCategoryCode: string;
+
+    SubCategoryName: string;
+
+    // The bike model ('' when the sub category has none)
+    ModelName: string;
 }
 
 
@@ -166,12 +217,19 @@ export interface CreateAccessories
 
     MaxStockLevel: number;
 
+    // SuperFast / Fast / Regular / Periodic / Slow (default Slow);
+    // labels and colours : shared/inventory/storage-labels
+    MovementClass: string;
+
     Remarks: string;
 
     IsActive: boolean;
 
     // Replaces the saved locations on every save
     Locations: AccessoryLocation[];
+
+    // Fits Models : replaces the saved links (omit = keep them)
+    FitSubCategoryIds?: number[];
 }
 
 
@@ -192,6 +250,8 @@ export interface UpdateAccessories
 
 export interface AccessoriesDefaults
 {
+    SalesLedgerCode?: string;
+
     Code: string;
 
     InventoryLedgerCode: string;
@@ -199,4 +259,31 @@ export interface AccessoriesDefaults
     WipLedgerCode: string;
 
     CogsLedgerCode: string;
+}
+
+
+//===============================================================
+// List page query (server-side paging)
+//===============================================================
+
+export interface AccessoriesPageQuery
+{
+    page:number;
+
+    pageSize:number;
+
+    search:string;
+
+    // Column field ('' = Product Code)
+    sort:string;
+
+    dir:'asc' | 'desc';
+
+    // true / false (null = all)
+    status:boolean | null;
+
+    // Filters (null = all)
+    productCategoryId?:number | null;
+
+    productSubCategoryId?:number | null;
 }

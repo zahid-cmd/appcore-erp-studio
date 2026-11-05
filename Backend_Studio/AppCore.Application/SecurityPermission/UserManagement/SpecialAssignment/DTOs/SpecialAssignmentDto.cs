@@ -21,6 +21,13 @@ public class SpecialAssignmentDto
         set;
     }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId
+    {
+        get;
+        set;
+    }
+
 
     //===========================================================
     // User Profile

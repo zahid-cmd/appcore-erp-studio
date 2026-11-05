@@ -38,9 +38,21 @@ import
 
     UpdateMotorBikes,
 
-    MotorBikesDefaults
+    MotorBikesDefaults,
+
+    MotorBikesPageQuery
 }
 from '../models/motor-bikes.model';
+
+import
+{
+    PagedResult,
+
+    toPagedParams,
+
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
 
 
 //===============================================================
@@ -118,6 +130,9 @@ export class MotorBikesService
             MotorBikeId:
                 Number(item?.MotorBikeId ?? item?.motorBikeId ?? 0),
 
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             ProductCategoryId:
                 Number(item?.ProductCategoryId ?? item?.productCategoryId ?? 0),
 
@@ -141,6 +156,9 @@ export class MotorBikesService
 
             CogsLedgerCode:
                 item?.CogsLedgerCode ?? item?.cogsLedgerCode ?? '',
+
+            SalesLedgerCode:
+                item?.SalesLedgerCode ?? item?.salesLedgerCode ?? '',
 
             ReorderLevel:
                 Number(item?.ReorderLevel ?? item?.reorderLevel ?? 0),
@@ -218,7 +236,25 @@ export class MotorBikesService
                             response?.wipLedgerCode ?? response?.WipLedgerCode ?? '',
 
                         CogsLedgerCode:
-                            response?.cogsLedgerCode ?? response?.CogsLedgerCode ?? ''
+                            response?.cogsLedgerCode ?? response?.CogsLedgerCode ?? '',
+
+                        SalesLedgerCode:
+                            response?.salesLedgerCode ?? response?.SalesLedgerCode ?? '',
+
+                        LastProductCategoryId:
+                            Number(response?.lastProductCategoryId ?? response?.LastProductCategoryId ?? 0),
+
+                        LastProductSubCategoryId:
+                            Number(response?.lastProductSubCategoryId ?? response?.LastProductSubCategoryId ?? 0),
+
+                        LastReorderLevel:
+                            Number(response?.lastReorderLevel ?? response?.LastReorderLevel ?? 0),
+
+                        LastRedLevel:
+                            Number(response?.lastRedLevel ?? response?.LastRedLevel ?? 0),
+
+                        LastMaxStockLevel:
+                            Number(response?.lastMaxStockLevel ?? response?.LastMaxStockLevel ?? 0)
                     })
                 )
             );
@@ -227,13 +263,51 @@ export class MotorBikesService
 
 
     //===========================================================
-    // Get By Id
+    // Get Paged (the list page : one page from the server, with
+    // the summary counts)
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            MotorBikesPageQuery
+    ):
+        Observable<PagedResult<MotorBikes>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams(
+                            { ...query }
+                        )
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                        toPagedResult(
+                            response,
+                            item =>
+                                this.normalize(
+                                    item
+                                )
+                        )
+                )
+            );
+    }
+
+
+
+    //===========================================================
+    // Get By Public Id
     //===========================================================
 
     getById
     (
         id:
-            number
+            string
     ):
         Observable<MotorBikes>
     {
@@ -257,14 +331,15 @@ export class MotorBikesService
     // Create
     //===========================================================
 
+    // Returns the new row's Public Id
     create
     (
         model:
             CreateMotorBikes
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
 
             model
@@ -279,13 +354,16 @@ export class MotorBikesService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateMotorBikes
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -300,7 +378,7 @@ export class MotorBikesService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -373,7 +451,7 @@ export class MotorBikesService
     uploadImage
     (
         id:
-            number,
+            string,
 
         file:
             File
@@ -409,7 +487,7 @@ export class MotorBikesService
     deleteImage
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -450,4 +528,4 @@ export class MotorBikesService
         );
     }
 
-}
+}

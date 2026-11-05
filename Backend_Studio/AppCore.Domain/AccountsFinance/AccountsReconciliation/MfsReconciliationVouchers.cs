@@ -23,6 +23,9 @@ public class MfsReconciliationVouchers
 {
     public long MfsReconciliationVoucherId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
     public string VoucherNo { get; set; } = string.Empty;
 
     // RRV

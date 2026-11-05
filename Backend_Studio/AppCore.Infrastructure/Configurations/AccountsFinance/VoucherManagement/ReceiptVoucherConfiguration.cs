@@ -40,6 +40,15 @@ public class ReceiptVoucherConfiguration
 
         builder.HasKey(x => x.ReceiptVoucherId);
 
+        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_ReceiptVoucher_PublicId");
+
         builder.Property(x => x.ReceiptVoucherId)
                .ValueGeneratedOnAdd();
 
@@ -183,6 +192,15 @@ public class ReceiptVoucherConfiguration
         builder.ToTable("ReceiptVoucherPayments");
 
         builder.HasKey(x => x.ReceiptVoucherPaymentId);
+
+        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_ReceiptVoucherPayments_PublicId");
 
         builder.Property(x => x.ReceiptVoucherPaymentId)
                .ValueGeneratedOnAdd();

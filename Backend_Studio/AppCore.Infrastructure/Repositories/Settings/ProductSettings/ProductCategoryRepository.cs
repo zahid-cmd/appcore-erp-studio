@@ -26,6 +26,8 @@ using BrandManagementEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.BrandManagement;
 
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 using AppCore.Domain.Common;
 
 
@@ -72,8 +74,8 @@ namespace AppCore.Infrastructure.Configurations.Settings.ProductSettings;
 //             Manual sub groups are not allowed under them; Sub
 //             Categories create those.
 // Locked    : codes and Category Type never change after creation.
-// Name      : built here as "<Brand Name> <Category Type>",
-//             e.g. "Yadea Motor Bikes"; never typed. Unique among
+// Name      : built here as "<Category Type> - <Brand Name>",
+//             e.g. "Motor Bikes - Yadea"; never typed. Unique among
 //             non-deleted categories, so each brand has at most one
 //             category per type.
 //===============================================================
@@ -150,6 +152,9 @@ public class ProductCategoryRepository :
                         ProductCategoryId =
                             x.ProductCategoryId,
 
+                        PublicId =
+                            x.PublicId,
+
                         CategoryCode =
                             x.CategoryCode,
 
@@ -197,6 +202,12 @@ public class ProductCategoryRepository :
 
                         CogsGroupName =
                             x.CogsGroupName,
+
+                        SalesGroupCode =
+                            x.SalesGroupCode,
+
+                        SalesGroupName =
+                            x.SalesGroupName,
 
                         SubCategoryCreationAllowed =
                             x.SubCategoryCreationAllowed,
@@ -246,6 +257,157 @@ public class ProductCategoryRepository :
                     x.CategoryCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Filters and search on the list query, the counts for the
+    // summary line, then the status, the total and one page.
+    //===========================================================
+
+    private SortMap<ProductCategoryDto> ListSorts()
+    {
+        return new SortMap<ProductCategoryDto>("CategoryCode")
+            .Add("CategoryCode", x => x.CategoryCode)
+            .Add("CategoryName", x => x.CategoryName)
+            .Add("CategoryType", x => x.CategoryType)
+            .Add("InventoryGroupCode", x => x.InventoryGroupCode)
+            .Add("WipGroupCode", x => x.WipGroupCode)
+            .Add("CogsGroupCode", x => x.CogsGroupCode)
+            .Add("SubCategoryCreationAllowed", x => x.SubCategoryCreationAllowed)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.ProductCategoryId);
+    }
+
+    public async Task<PagedResult<ProductCategoryDto>>
+        GetPagedAsync
+        (
+            ProductCategoryPageRequest request
+        )
+    {
+        IQueryable<ProductCategoryDto> query =
+            ProductCategoryQuery();
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.CategoryCode, like) ||
+                        EF.Functions.ILike(x.CategoryName, like) ||
+                        EF.Functions.ILike(x.CategoryType, like) ||
+                        EF.Functions.ILike(x.BrandName, like) ||
+                        EF.Functions.ILike(x.InventoryGroupCode, like) ||
+                        EF.Functions.ILike(x.WipGroupCode, like) ||
+                        EF.Functions.ILike(x.CogsGroupCode, like) ||
+                        EF.Functions.ILike(x.SalesGroupCode, like) ||
+                        EF.Functions.ILike(x.Remarks, like)
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts (search and filters applied; not the
+        // status)
+        //-------------------------------------------------------
+
+        int countAll =
+            await query.CountAsync();
+
+        int countActive =
+            await query.CountAsync(x => x.IsActive);
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = countAll,
+                ["Active"] = countActive,
+                ["Inactive"] = countAll - countActive
+            };
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        if
+        (
+            request.Status.HasValue
+        )
+        {
+            bool active =
+                request.Status.Value;
+
+            query =
+                query.Where(x => x.IsActive == active);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<ProductCategoryDto> rows =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        return new PagedResult<ProductCategoryDto>
+        {
+            Items = rows,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<ProductCategoryEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.ProductCategoryId)
+            .FirstOrDefaultAsync();
     }
 
 
@@ -759,7 +921,19 @@ public class ProductCategoryRepository :
             CogsGroupCode =
                 GroupCode(
                     classes.Cogs,
-                    number)
+                    number),
+
+            // Sales group : same number, in the type's sales class
+            SalesGroupCodes =
+                typeCodes.Keys.ToDictionary
+                (
+                    type => type,
+                    type => ProductSalesAccounts.GroupCodeOf(
+                        type,
+                        GroupCode(
+                            classes.Inventory,
+                            number))
+                )
         };
     }
 
@@ -807,7 +981,9 @@ public class ProductCategoryRepository :
     //
     // Returns the canonical Category Type and the name :
     //   Motor Bikes / Spare Parts / Lubricants :
-    //                           generated "<Brand Name> <Category Type>"
+    //                           generated "<Category Type> - <Brand Name>"
+    //                           (e.g. "Motor Bikes - REVOO"; owner,
+    //                           2026-11-05; was "<Brand> <Type>")
     //   Accessories           : the name typed on the form
     // An inactive brand is refused unless the category already
     // uses it. Brand is required for every type.
@@ -904,7 +1080,7 @@ public class ProductCategoryRepository :
         (
             type,
             NormalizeName(
-                $"{brand.BrandName.Trim()} {type}")
+                $"{type} - {brand.BrandName.Trim()}")
         );
     }
 
@@ -1566,6 +1742,9 @@ public class ProductCategoryRepository :
             classes,
             userId);
 
+        // Sales account group (CLS-005 / 006 / 008)
+        await ProductSalesAccounts.SyncCategoryAsync(_context, entity, userId);
+
         await _context.SaveChangesAsync();
 
         AddHistory(
@@ -1711,6 +1890,9 @@ public class ProductCategoryRepository :
             entity,
             classes,
             userId);
+
+        // Sales account group (CLS-005 / 006 / 008)
+        await ProductSalesAccounts.SyncCategoryAsync(_context, entity, userId);
 
         await _context.SaveChangesAsync();
 
@@ -1873,6 +2055,9 @@ public class ProductCategoryRepository :
                 now;
         }
 
+        // Sales account group follows
+        await ProductSalesAccounts.SyncCategoryAsync(_context, entity, userId);
+
         await _context.SaveChangesAsync();
 
         AddHistory(
@@ -2017,6 +2202,9 @@ public class ProductCategoryRepository :
             entity,
             classes,
             userId);
+
+        // Sales account group (CLS-005 / 006 / 008)
+        await ProductSalesAccounts.SyncCategoryAsync(_context, entity, userId);
 
         await _context.SaveChangesAsync();
 

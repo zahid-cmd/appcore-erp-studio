@@ -28,6 +28,11 @@ export interface ReceivingLine
     RackManagementId:number | null;
     RackCode:string;
     ShelfNumber:number;
+    // The bin (the location; 0 = no place)
+    BinNumber:number;
+    // SLF-A-03 / A-03-05
+    ShelfLabel:string;
+    BinCode:string;
     ShortNotes:string;
 }
 
@@ -42,6 +47,9 @@ export interface ReceivingUnit
 
 export interface Receiving
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:string;
+
     ReceivingId:number;
     PageType:string;
     ReceivingNo:string;
@@ -92,6 +100,10 @@ export interface ReceivingRack
     Code:string;
     Name:string;
     ShelfCount:number;
+    ZoneCode:string;
+    ZoneName:string;
+    // Bins per shelf
+    Shelves:{ ShelfNumber:number; ShelfLabel:string; BinCount:number }[];
 }
 
 export interface ReceivingDefaults
@@ -118,11 +130,15 @@ export interface ReceivingDefaults
 // Purchases waiting to be received
 //===============================================================
 
+// The product's saved default place in a warehouse
 export interface ReceivingShelf
 {
     WarehouseId:number;
     RackManagementId:number;
     ShelfNumber:number;
+    BinNumber:number;
+    // A-03-05
+    BinCode:string;
 }
 
 export interface ReceivingPurchaseLine
@@ -170,6 +186,7 @@ export interface CreateReceivingLine
     Quantity:number;
     RackManagementId:number | null;
     ShelfNumber:number;
+    BinNumber:number;
     SaveAsDefault:boolean;
     ShortNotes:string;
 }
@@ -214,7 +231,7 @@ export interface ReceivingPageConfig
     itemLower:string;
     itemIcon:string;
     printKey:string;
-    // Whole units (bikes) / rack · shelf placement
+    // Whole units (bikes) / rack · shelf · bin placement
     wholeUnits:boolean;
     hasShelves:boolean;
 }

@@ -28,6 +28,10 @@ public class ScheduledServices
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
+
     //===========================================================
     // Service Policy position (copied from the policy; kept in sync)
     //===========================================================

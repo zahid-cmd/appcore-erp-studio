@@ -242,7 +242,7 @@ export class AccountGroupService
 
     getById(
         id:
-            number
+            string
     ):
         Observable<AccountGroup>
     {
@@ -260,9 +260,9 @@ export class AccountGroupService
         model:
             CreateAccountGroup
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
 
             model
@@ -275,13 +275,16 @@ export class AccountGroupService
     //===========================================================
 
     update(
+        publicId:
+            string,
+
         model:
             UpdateAccountGroup
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -294,7 +297,7 @@ export class AccountGroupService
 
     delete(
         id:
-            number
+            string
     ):
         Observable<void>
     {

@@ -37,10 +37,39 @@ public class ProductSubCategoryConfiguration
 
 
         //===========================================================
+        // Sales account (2026-11-04)
+        //===========================================================
+
+        builder.Property(x => x.SalesSubGroupCode)
+               .IsRequired()
+               .HasMaxLength(50);
+
+        builder.Property(x => x.SalesSubGroupName)
+               .IsRequired()
+               .HasMaxLength(200);
+
+
+        //===========================================================
         // Primary Key
         //===========================================================
 
         builder.HasKey(x => x.ProductSubCategoryId);
+
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_ProductSubCategories_PublicId");
 
         builder.Property(x => x.ProductSubCategoryId)
                .ValueGeneratedOnAdd();
@@ -59,6 +88,20 @@ public class ProductSubCategoryConfiguration
                .WithMany()
                .HasForeignKey(x => x.ProductCategoryId)
                .OnDelete(DeleteBehavior.Restrict);
+
+
+        //===========================================================
+        // Bike Model (Motor Bikes / Spare Parts / Accessories) :
+        // one sub category per model within a category
+        //===========================================================
+
+        builder.Property(x => x.BikeModelId)
+               .IsRequired(false);
+
+        builder.HasIndex(x => new { x.ProductCategoryId, x.BikeModelId })
+               .IsUnique()
+               .HasFilter("\"IsDeleted\" = false AND \"BikeModelId\" IS NOT NULL")
+               .HasDatabaseName("UX_ProductSubCategories_Category_BikeModel");
 
 
         //===========================================================
@@ -214,4 +257,4 @@ public class ProductSubCategoryConfiguration
 
         builder.Property(x => x.ModifiedDate);
     }
-}
+}

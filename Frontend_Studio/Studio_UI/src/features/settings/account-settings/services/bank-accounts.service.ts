@@ -214,7 +214,7 @@ export class BankAccountsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<BankAccount>
     {
@@ -233,9 +233,9 @@ export class BankAccountsService
         model:
             CreateBankAccount
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -248,13 +248,16 @@ export class BankAccountsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateBankAccount
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -267,7 +270,7 @@ export class BankAccountsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -311,7 +314,7 @@ export class BankAccountsService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

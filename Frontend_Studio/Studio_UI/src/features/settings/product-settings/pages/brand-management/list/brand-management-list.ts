@@ -39,7 +39,8 @@ import
     throwError,
     delayWhen,
     catchError,
-    switchMap
+    switchMap,
+    Subscription
 }
 from 'rxjs';
 
@@ -53,6 +54,18 @@ import
     BrandManagement
 }
 from '../../../models/brand-management.model';
+
+import
+{
+    BrandManagementPageQuery
+}
+from '../../../models/brand-management.model';
+
+import
+{
+    PagedResult
+}
+from '../../../../../../shared/paging/paged-result.model';
 
 
 // List row : the brand plus its ready-to-show thumbnail URL
@@ -288,15 +301,42 @@ implements OnInit, OnDestroy
         BrandListRow[] =
     [];
 
+    // Rows matching the filters and search, all pages
+    totalRecords:
+        number =
+        0;
 
-    filteredBrands:
-        BrandListRow[] =
+    // Summary line below the canvas (filled by each load)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
     [];
 
+    private loadSubscription?:
+        Subscription;
 
-    pagedBrands:
-        BrandListRow[] =
-    [];
+    // '' = the server's default sort
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer?:
+        number;
+
+    private readonly SEARCH_DELAY_MS:
+        number =
+        300;
+
+
+
+
 
 
 
@@ -443,7 +483,7 @@ implements OnInit, OnDestroy
 
             type:'serial',
 
-            width:'80px',
+            width:'60px',
 
             align:'center'
         },
@@ -454,7 +494,7 @@ implements OnInit, OnDestroy
 
             field:'BrandCode',
 
-            width:'280px',
+            width:'180px',
 
             align:'center'
         },
@@ -464,6 +504,8 @@ implements OnInit, OnDestroy
 
             field:'BrandName',
 
+            width:'240px',
+
             align:'left'
         },
 
@@ -472,7 +514,6 @@ implements OnInit, OnDestroy
 
             field:'MotorBikesSupplierName',
 
-            width:'320px',
 
             align:'left'
         },
@@ -480,6 +521,8 @@ implements OnInit, OnDestroy
             header:'Brand Image',
 
             field:'BrandImageUrl',
+
+            sortable:false,
 
             type:'image',
 
@@ -492,7 +535,7 @@ implements OnInit, OnDestroy
 
             field:'Status',
 
-            width:'200px',
+            width:'150px',
 
             type:'status',
 
@@ -506,7 +549,7 @@ implements OnInit, OnDestroy
 
             type:'actions',
 
-            width:'150px',
+            width:'130px',
 
             align:'center'
         }
@@ -533,6 +576,10 @@ implements OnInit, OnDestroy
     ngOnDestroy():
         void
     {
+        this.clearSearchTimer();
+
+        this.loadSubscription?.unsubscribe();
+
         this.clearProgressTimer();
 
 
@@ -785,6 +832,9 @@ implements OnInit, OnDestroy
             BrandManagementId:
                 Number(item?.BrandManagementId ?? item?.brandManagementId ?? 0),
 
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             BrandCode:
                 item?.BrandCode ?? item?.brandCode ?? '',
 
@@ -847,160 +897,161 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Load Items
+    // Load Items (one page from the server)
+    //
+    // The server filters, searches, sorts and pages; the answer
+    // also carries the summary counts.
     //===========================================================
 
     loadItems():
         void
     {
+        this.loadSubscription?.unsubscribe();
+
         this.loading =
             true;
-
 
         this.loadFailed =
             false;
 
+        this.cdr.detectChanges();
 
-        this.brandManagementservice
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        any
-                ):
-                    void =>
-                {
-                    this.brands =
-                        this.normalizeBrands(
-                            response
+        const query:
+            BrandManagementPageQuery =
+        {
+            page:
+                this.currentPage,
+
+            pageSize:
+                this.pageSize,
+
+            search:
+                this.searchText.trim(),
+
+            sort:
+                this.sortField,
+
+            dir:
+                this.sortDirection,
+
+            status:
+                null
+        };
+
+        this.loadSubscription =
+            this.brandManagementservice
+                .getPaged(
+                    query
+                )
+                .subscribe
+                ({
+                    next:
+                    (
+                        response:
+                            PagedResult<any>
+                    ):
+                        void =>
+                    {
+                        this.brands =
+                            this.normalizeBrands(response.items);
+
+                        this.totalRecords =
+                            response.totalCount;
+
+                        // The server pulls the page back when rows got
+                        // fewer (e.g. the last row of a page deleted)
+                        this.currentPage =
+                            response.page;
+
+                        this.updateSummary(
+                            response.counts
                         );
 
+                        this.loading =
+                            false;
 
-                    this.applyFilters();
+                        this.cdr.detectChanges();
+                    },
 
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        false;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:
-                (
                     error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
                     (
-                        'Load Brands Error:',
-                        error
-                    );
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error
+                        (
+                            'Load Brands Error:',
+                            error
+                        );
 
+                        this.brands =
+                            [];
 
-                    this.brands =
-                        [];
+                        this.totalRecords =
+                            0;
 
+                        this.loading =
+                            false;
 
-                    this.filteredBrands =
-                        [];
+                        this.loadFailed =
+                            true;
 
+                        this.toast.error
+                        (
+                            'Load Failed',
+                            'Unable to load brands.'
+                        );
 
-                    this.pagedBrands =
-                        [];
-
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        true;
-
-
-                    this.toast.error
-                    (
-                        'Load Failed',
-
-                        'Unable to load brands.'
-                    );
-
-
-                    this.cdr.detectChanges();
-                }
-            });
+                        this.cdr.detectChanges();
+                    }
+                });
     }
 
-
-
     //===========================================================
-    // Apply Filters
+    // Reload from page 1 (a filter, search, sort or page size
+    // changed)
     //===========================================================
 
-    applyFilters():
+    private reload():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-
-        this.filteredBrands =
-            this.brands.filter
-            (
-                (
-                    item:
-                        BrandListRow
-                ):
-                    boolean =>
-                {
-                    const values:
-                        unknown[] =
-                    [
-                        item.BrandCode,
-                        item.BrandName,
-                        item.MotorBikesSupplierName
-                    ];
-
-                    const searchMatch =
-                        !keyword
-                        ||
-                        values.some(
-                            value =>
-                                String(value ?? '')
-                                    .toLowerCase()
-                                    .includes(keyword)
-                        )
-                        ||
-                        (item.Status ? 'active' : 'inactive')
-                            .includes(keyword);
-
-                    return searchMatch;
-                }
-            );
-
-
         this.currentPage =
             1;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
 
+    //===========================================================
+    // Summary Line (below the canvas)
+    //===========================================================
 
+    private updateSummary
+    (
+        counts:
+            Record<string, number>
+    ):
+        void
+    {
+        const value =
+            (
+                key:
+                    string
+            ):
+                string =>
+                    Number(counts[key] ?? 0).toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total', value:value('Total'), tone:'' },
+            { label:'Active', value:value('Active'), tone:'ok' },
+            { label:'Inactive', value:value('Inactive'), tone:'bad' }
+        ];
+    }
 
     //===========================================================
-    // Search
+    // Search (asks the server 300 ms after the last key)
     //===========================================================
 
     onSearch
@@ -1015,14 +1066,41 @@ implements OnInit, OnDestroy
             ??
             '';
 
+        this.clearSearchTimer();
 
-        this.applyFilters();
+        this.searchTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.reload();
+                },
+
+                this.SEARCH_DELAY_MS
+            );
     }
 
+    private clearSearchTimer():
+        void
+    {
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
 
+            this.searchTimer =
+                undefined;
+        }
+    }
 
     //===========================================================
-    // Sort
+    // Sort (the server sorts)
     //===========================================================
 
     onSort
@@ -1038,120 +1116,16 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.filteredBrands =
-        [
-            ...this.filteredBrands
-        ];
+        this.sortField =
+            event.field;
 
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-        this.filteredBrands.sort
-        (
-            (
-                a:
-                    BrandListRow,
-
-                b:
-                    BrandListRow
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof BrandListRow
-                    ];
-
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof BrandListRow
-                    ];
-
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
-                }
-
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
-            }
-        );
-
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
+        this.reload();
     }
-
-
 
     //===========================================================
     // Refresh
@@ -1160,50 +1134,22 @@ implements OnInit, OnDestroy
     refresh():
         void
     {
+        this.clearSearchTimer();
+
         this.searchText =
             '';
 
+        this.sortField =
+            '';
 
-        this.currentPage =
-            1;
+        this.sortDirection =
+            'asc';
 
-
-        this.loadItems();
+        this.reload();
     }
 
-
-
     //===========================================================
-    // Update Pagination
-    //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-
-        this.pagedBrands =
-        [
-            ...this.filteredBrands.slice
-            (
-                start,
-
-                start + this.pageSize
-            )
-        ];
-    }
-
-
-
-    //===========================================================
-    // Page Change
+    // Pagination
     //===========================================================
 
     onPageChange
@@ -1216,15 +1162,8 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
-
-
-
-    //===========================================================
-    // Page Size Change
-    //===========================================================
 
     onPageSizeChange
     (
@@ -1236,15 +1175,8 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
+        this.reload();
     }
-
-
 
     //===========================================================
     // Add
@@ -1284,7 +1216,7 @@ implements OnInit, OnDestroy
             [
                 'view',
 
-                item.BrandManagementId
+                item.PublicId
             ],
 
             {
@@ -1312,7 +1244,7 @@ implements OnInit, OnDestroy
             [
                 'edit',
 
-                item.BrandManagementId
+                item.PublicId
             ],
 
             {
@@ -1386,7 +1318,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.brandManagementservice.delete(
-                item.BrandManagementId
+                item.PublicId ?? ''
             )
         )
             .subscribe

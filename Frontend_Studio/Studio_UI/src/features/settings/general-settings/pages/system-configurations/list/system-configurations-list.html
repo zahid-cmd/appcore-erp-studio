@@ -57,6 +57,10 @@
 
             @if (view === 'settings' && hasAccess)
             {
+                <!-- Re-created when the filters are reset (Refresh /
+                     Clear), so each dropdown starts clean -->
+                @for (version of [filtersVersion]; track version)
+                {
 
                 <app-search-dropdown
                     class="sc-filter-module"
@@ -87,6 +91,8 @@
                     [value]="selectedSubmenuCode"
                     (valueChange)="onSubmenuFilter($event)">
                 </app-search-dropdown>
+
+                }
             }
         </div>
     </app-page-toolbar>
@@ -96,17 +102,15 @@
          STATES : loading / failed / no access
     ====================================================== -->
 
-    @if (loading && !workspace)
+    @if (loading)
     {
-        <div class="sc-body">
-        <div class="sc-scroll">
-            <div class="sc-grid">
-                @for (n of [1, 2, 3, 4, 5, 6, 7, 8]; track n)
-                {
-                    <div class="sc-card sc-card-skeleton"></div>
-                }
-            </div>
-        </div>
+        <div class="sc-body sc-loading">
+            <app-orbit-loader
+                title="Loading"
+                message="Loading the system configurations..."
+                size="medium"
+                [overlay]="false">
+            </app-orbit-loader>
         </div>
     }
     @else if (loadFailed)
@@ -579,7 +583,14 @@
 
                 @if (requestsLoading && requests.length === 0)
                 {
-                    <div class="sc-card sc-card-skeleton"></div>
+                    <div class="sc-loading sc-loading-inline">
+                        <app-orbit-loader
+                            title="Loading"
+                            message="Loading the pending changes..."
+                            size="small"
+                            [overlay]="false">
+                        </app-orbit-loader>
+                    </div>
                 }
                 @else if (requests.length === 0)
                 {
@@ -897,4 +908,4 @@
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
-</div>
+</div>

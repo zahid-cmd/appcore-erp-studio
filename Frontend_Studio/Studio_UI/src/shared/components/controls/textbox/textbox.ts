@@ -13,6 +13,12 @@ import
 }
 from '@angular/common';
 
+import
+{
+    guardElement
+}
+from '../text-guard';
+
 /* =====================================================
    TEXT CASE
    auto  : 'title', except technical fields (default)
@@ -179,6 +185,34 @@ export class TextboxComponent
     private composing = false;
 
     /* =====================================================
+       ENGLISH ONLY (see text-guard.ts)
+       Characters the database cannot store are dropped as
+       they are typed; a short note shows for 2.5 s.
+    ====================================================== */
+
+    blocked = false;
+
+    private blockedTimer: ReturnType<typeof setTimeout> | null = null;
+
+    private guard(element: HTMLInputElement | HTMLTextAreaElement): void
+    {
+        if (!guardElement(element))
+        {
+            return;
+        }
+
+        this.blocked = true;
+
+        if (this.blockedTimer)
+        {
+            clearTimeout(this.blockedTimer);
+        }
+
+        this.blockedTimer =
+            setTimeout(() => { this.blocked = false; this.blockedTimer = null; }, 2500);
+    }
+
+    /* =====================================================
        COMPUTED
     ====================================================== */
 
@@ -241,6 +275,8 @@ export class TextboxComponent
 
         if (!this.composing)
         {
+            this.guard(input);
+
             this.applyCase(input);
         }
 
@@ -268,6 +304,8 @@ export class TextboxComponent
 
         const input =
             event.target as HTMLInputElement;
+
+        this.guard(input);
 
         this.applyCase(input);
 
@@ -414,4 +452,4 @@ export class TextboxComponent
 
         return result;
     }
-}
+}

@@ -3,7 +3,9 @@ import {
   Input,
   inject,
   OnInit,
-  OnDestroy
+  OnDestroy,
+  ViewChild,
+  ElementRef
 } from '@angular/core';
 
 import {
@@ -53,6 +55,33 @@ export class ProgressDialogComponent
   ====================================================== */
 
   previewProgress = 65;
+
+  /* =====================================================
+     CENTRE OVER THE PAGE AREA
+
+     The overlay is position:fixed and skips the sidebar with
+     padding. When a page wrapper creates its own containing
+     block (transform / filter), the overlay already starts at
+     the page area : the padding would push the dialog right of
+     the centre, so it is dropped (class in-page-area).
+  ====================================================== */
+
+  @ViewChild('overlay')
+  set overlay(ref: ElementRef<HTMLElement> | undefined)
+  {
+    const el =
+      ref?.nativeElement;
+
+    if (!el || this.previewMode)
+    {
+      return;
+    }
+
+    el.classList.toggle(
+      'in-page-area',
+      el.getBoundingClientRect().left > 1
+    );
+  }
 
   private direction = 1;
 
@@ -105,4 +134,4 @@ export class ProgressDialogComponent
       );
     }
   }
-}
+}

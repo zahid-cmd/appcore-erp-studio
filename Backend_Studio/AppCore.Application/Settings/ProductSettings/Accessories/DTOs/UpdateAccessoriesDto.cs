@@ -35,6 +35,11 @@ public class UpdateAccessoriesDto
     // cannot take the company stock above it
     public int MaxStockLevel { get; set; }
 
+
+    // Movement Class : SuperFast / Fast / Regular / Periodic /
+    // Slow ('' or unknown = Slow)
+    public string MovementClass { get; set; } = "Slow";
+
     public string Remarks { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
@@ -43,4 +48,10 @@ public class UpdateAccessoriesDto
     // Storage Locations : one row per warehouse (optional).
     // Replaces the saved locations on every save.
     public List<AccessoryLocationInputDto> Locations { get; set; } = new();
-}
+
+
+    // Fits Models : other sub categories (models) of the same
+    // category this item also fits. null = leave the saved links
+    // as they are; a list replaces them.
+    public List<long>? FitSubCategoryIds { get; set; }
+}

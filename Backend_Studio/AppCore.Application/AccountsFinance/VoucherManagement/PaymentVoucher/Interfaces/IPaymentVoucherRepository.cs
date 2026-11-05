@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.Paging;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -16,6 +23,10 @@ public interface IPaymentVoucherRepository
     //===========================================================
 
     Task<List<PaymentVoucherDto>> GetAllAsync();
+
+    // The list page : one page, filtered, sorted, with the counts
+    Task<PagedResult<PaymentVoucherDto>> GetPagedAsync(
+        VoucherPageRequest request);
 
     Task<PaymentVoucherDto?> GetByIdAsync(
         long id);
@@ -74,4 +85,9 @@ public interface IPaymentVoucherRepository
 
     Task<bool> ExistsAsync(
         long id);
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

@@ -100,7 +100,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedBrands"
+                [rows]="brands"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -130,7 +130,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredBrands.length"
+            [totalRecords]="totalRecords"
 
             [currentPage]="currentPage"
 
@@ -143,6 +143,32 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (search)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="brd-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="brd-summary-item">
+                    <span class="brd-summary-label">{{ item.label }}</span>
+                    <b
+                        class="brd-summary-value"
+                        [class.brd-ok]="item.tone === 'ok'"
+                        [class.brd-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="brd-summary-note">
+                Matching the search
+            </span>
+
+        </div>
+    }
 
 
 

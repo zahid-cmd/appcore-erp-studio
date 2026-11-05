@@ -2,6 +2,8 @@
 // Namespaces
 //===============================================================
 
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 using System.Globalization;
 
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +38,21 @@ using MotorBikeUnitsEntity =
 
 using StockBatchesEntity =
     AppCore.Domain.Platform.Inventory.StockBatches;
+
+using BinOccupancy =
+    AppCore.Infrastructure.Configurations.Settings.ProductSettings.BinOccupancy;
+
+using RackLabels =
+    AppCore.Infrastructure.Repositories.Settings.ProductSettings.RackLabels;
+
+using RackMapDto =
+    AppCore.Application.Settings.ProductSettings.RackMapDto;
+
+using RackMapShelfDto =
+    AppCore.Application.Settings.ProductSettings.RackMapShelfDto;
+
+using RackMapBinDto =
+    AppCore.Application.Settings.ProductSettings.RackMapBinDto;
 
 using StockMovementsEntity =
     AppCore.Domain.Platform.Inventory.StockMovements;
@@ -128,6 +145,53 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
     //===========================================================
 
     protected abstract ReceivingPage Page { get; }
+
+
+    //===========================================================
+    // Bins (Rack -> Shelf -> Bin; one live item per bin across
+    // spare parts and accessories). The product's OWN current bin
+    // counts as free for it. null = OK, else the reason.
+    //===========================================================
+
+    private static string HolderTypeOf(string type) =>
+        type == "AC"
+            ? BinOccupancy.AccessoryType
+            : BinOccupancy.SparePartType;
+
+    private static string? BinProblem
+    (
+        RackMapDto? rack,
+        long warehouseId,
+        int shelf,
+        int bin,
+        string type,
+        long productId
+    )
+    {
+        RackMapBinDto? cell =
+            rack?.Shelves
+                .FirstOrDefault(x => x.ShelfNumber == shelf)?
+                .Bins
+                .FirstOrDefault(x => x.BinNumber == bin);
+
+        if (rack != null
+            && rack.WarehouseId == warehouseId
+            && cell != null
+            && cell.Holder != null
+            && cell.Holder.ItemType == HolderTypeOf(type)
+            && cell.Holder.ItemId == productId)
+        {
+            return null;
+        }
+
+        return BinOccupancy.CheckBin(rack, warehouseId, shelf, bin);
+    }
+
+    // 0 / missing with a rack and shelf = bin 1 (old clients)
+    private static int BinOf(int bin) =>
+        bin > 0 ? bin : 1;
+
+
 
 
     //===========================================================
@@ -396,6 +460,22 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                 .ThenByDescending(x => x.ReceivingId)
                 .ToListAsync();
 
+        return await MapListRowsAsync(rows);
+    }
+
+
+    //===========================================================
+    // List rows : one row per document (shared by the full list
+    // and the paged list)
+    //===========================================================
+
+    private async Task<List<ReceivingDto>>
+        MapListRowsAsync
+        (
+            List<THeader> rows
+        )
+    {
+
         List<long> ids =
             rows.Select(x => x.ReceivingId).ToList();
 
@@ -475,10 +555,38 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                             RackManagementId = x.RackManagementId,
                             RackCode = x.RackCode,
                             ShelfNumber = x.ShelfNumber,
+                            BinNumber = x.BinNumber,
                             ShortNotes = x.ShortNotes
                         }
                 )
                 .ToListAsync();
+
+        // Shelf / bin labels from the racks' names
+        List<long> lineRackIds =
+            dto.Lines
+                .Where(x => x.RackManagementId.HasValue && x.ShelfNumber > 0)
+                .Select(x => x.RackManagementId!.Value)
+                .Distinct()
+                .ToList();
+
+        Dictionary<long, string> lineRackNames =
+            lineRackIds.Count == 0
+                ? new Dictionary<long, string>()
+                : await _context
+                    .Set<RackManagementEntity>()
+                    .AsNoTracking()
+                    .Where(x => lineRackIds.Contains(x.RackManagementId))
+                    .ToDictionaryAsync(x => x.RackManagementId, x => x.RackName);
+
+        foreach (ReceivingLineDto placed in dto.Lines.Where(x => x.RackManagementId.HasValue && x.ShelfNumber > 0))
+        {
+            string rackName =
+                lineRackNames.GetValueOrDefault(placed.RackManagementId!.Value, string.Empty);
+
+            placed.ShelfLabel = RackLabels.Shelf(rackName, placed.ShelfNumber);
+
+            placed.BinCode = RackLabels.BinCode(rackName, placed.ShelfNumber, placed.BinNumber);
+        }
 
         dto.LineCount =
             dto.Lines.Count;
@@ -521,6 +629,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
         return new ReceivingDto
         {
             ReceivingId = x.ReceivingId,
+            PublicId = x.PublicId,
             PageType = x.PageType,
             ReceivingNo = x.ReceivingNo,
             ReceivingDate = DateText(x.ReceivingDate),
@@ -626,6 +735,36 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                             }
                     )
                     .ToListAsync();
+
+            // Zone and bins per shelf of every rack
+            List<RackMapDto> rackMap =
+                await BinOccupancy.GetRackMapAsync(
+                    _context,
+                    0,
+                    0,
+                    0,
+                    true,
+                    result.Racks.Select(x => x.Id).ToArray());
+
+            foreach (ReceivingRackDto rack in result.Racks)
+            {
+                RackMapDto? map =
+                    BinOccupancy.FindRack(rackMap, rack.Id);
+
+                if (map == null)
+                {
+                    continue;
+                }
+
+                rack.ZoneCode = map.ZoneCode;
+
+                rack.ZoneName = map.ZoneName;
+
+                rack.Shelves =
+                    map.Shelves
+                        .Select(x => new ReceivingRackShelfDto { ShelfNumber = x.ShelfNumber, ShelfLabel = x.ShelfLabel, BinCount = x.BinCount })
+                        .ToList();
+            }
         }
 
         VoucherPeriodDto period;
@@ -844,8 +983,20 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
         List<long> productIds =
             lines.Select(x => x.ProductId).Distinct().ToList();
 
-        List<(long ProductId, long WarehouseId, long RackId, int Shelf)> shelves =
+        List<(long ProductId, long WarehouseId, long RackId, int Shelf, int Bin)> shelves =
             await ShelvesAsync(productIds);
+
+        List<long> shelfRackIds =
+            shelves.Select(x => x.RackId).Distinct().ToList();
+
+        Dictionary<long, string> shelfRackNames =
+            shelfRackIds.Count == 0
+                ? new Dictionary<long, string>()
+                : await _context
+                    .Set<RackManagementEntity>()
+                    .AsNoTracking()
+                    .Where(x => shelfRackIds.Contains(x.RackManagementId))
+                    .ToDictionaryAsync(x => x.RackManagementId, x => x.RackName);
 
         ReceivingPurchaseOptionDto option =
             new()
@@ -903,7 +1054,9 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                                     {
                                         WarehouseId = x.WarehouseId,
                                         RackManagementId = x.RackId,
-                                        ShelfNumber = x.Shelf
+                                        ShelfNumber = x.Shelf,
+                                        BinNumber = x.Bin,
+                                        BinCode = RackLabels.BinCode(shelfRackNames.GetValueOrDefault(x.RackId, string.Empty), x.Shelf, x.Bin)
                                     }
                             )
                             .ToList()
@@ -919,8 +1072,8 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
     }
 
 
-    // (product, warehouse) → rack, shelf of the page's products
-    private async Task<List<(long ProductId, long WarehouseId, long RackId, int Shelf)>>
+    // (product, warehouse) → rack, shelf, bin of the page's products
+    private async Task<List<(long ProductId, long WarehouseId, long RackId, int Shelf, int Bin)>>
         ShelvesAsync
         (
             List<long> productIds
@@ -928,7 +1081,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
     {
         if (!Page.HasShelves || productIds.Count == 0)
         {
-            return new List<(long, long, long, int)>();
+            return new List<(long, long, long, int, int)>();
         }
 
         if (Page.PageType == "SP")
@@ -939,10 +1092,10 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                         .Set<SparePartLocationsEntity>()
                         .AsNoTracking()
                         .Where(x => productIds.Contains(x.SparePartId))
-                        .Select(x => new { x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber })
+                        .Select(x => new { x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
                         .ToListAsync()
                 )
-                .Select(x => (x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber))
+                .Select(x => (x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber))
                 .ToList();
         }
 
@@ -952,10 +1105,10 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                     .Set<AccessoryLocationsEntity>()
                     .AsNoTracking()
                     .Where(x => productIds.Contains(x.AccessoryId))
-                    .Select(x => new { x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber })
+                    .Select(x => new { x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
                     .ToListAsync()
             )
-            .Select(x => (x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber))
+            .Select(x => (x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber))
             .ToList();
     }
 
@@ -1242,6 +1395,9 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
         Dictionary<long, RackManagementEntity> racks =
             new();
 
+        List<RackMapDto> rackMap =
+            new();
+
         if (Page.HasShelves)
         {
             List<long> rackIds =
@@ -1257,7 +1413,23 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                     .AsNoTracking()
                     .Where(x => rackIds.Contains(x.RackManagementId) && !x.IsDeleted)
                     .ToDictionaryAsync(x => x.RackManagementId);
+
+            rackMap =
+                rackIds.Count == 0
+                    ? new List<RackMapDto>()
+                    : await BinOccupancy.GetRackMapAsync(
+                        _context,
+                        0,
+                        0,
+                        0,
+                        false,
+                        rackIds.ToArray());
         }
+
+        // Bins taken by the lines of this receiving : bin -> product
+        // (two lines of one product may share its bin)
+        Dictionary<(long RackId, int Shelf, int Bin), long> takenBins =
+            new();
 
         foreach (CreateReceivingLineDto input in inputs)
         {
@@ -1292,7 +1464,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                 if (shelfRequired)
                 {
                     throw new InvalidOperationException(
-                        $"{line.ProductName} : choose the rack and shelf (System Configuration : Shelf Required at Receiving).");
+                        $"{line.ProductName} : choose the rack, shelf and bin (System Configuration : Shelf Required at Receiving).");
                 }
 
                 continue;
@@ -1304,11 +1476,35 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                     $"{line.ProductName} : the rack is not in {warehouse.WarehouseName}.");
             }
 
-            if (rack.ShelfCount > 0 && (input.ShelfNumber < 1 || input.ShelfNumber > rack.ShelfCount))
+            // Rack -> Shelf -> Bin : a free bin (or the product's own)
+            input.BinNumber =
+                BinOf(input.BinNumber);
+
+            string? problem =
+                BinProblem(
+                    BinOccupancy.FindRack(rackMap, rackId),
+                    warehouse.WarehouseId,
+                    input.ShelfNumber,
+                    input.BinNumber,
+                    Page.PageType,
+                    line.ProductId);
+
+            if (problem != null)
             {
                 throw new InvalidOperationException(
-                    $"{line.ProductName} : rack {rack.RackCode} has shelves 1 to {rack.ShelfCount}.");
+                    $"{line.ProductName} : {problem}");
             }
+
+            (long RackId, int Shelf, int Bin) key =
+                (rackId, input.ShelfNumber, input.BinNumber);
+
+            if (takenBins.TryGetValue(key, out long other) && other != line.ProductId)
+            {
+                throw new InvalidOperationException(
+                    $"{line.ProductName} : bin {RackLabels.BinCode(rack.RackName, input.ShelfNumber, input.BinNumber)} is chosen for another product too (one item per bin).");
+            }
+
+            takenBins[key] = line.ProductId;
         }
 
         //=======================================================
@@ -1551,6 +1747,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                             RackManagementId = rack?.RackManagementId,
                             RackCode = Limit(rack?.RackCode, 50),
                             ShelfNumber = rack == null ? 0 : input.ShelfNumber,
+                            BinNumber = rack == null ? 0 : BinOf(input.BinNumber),
                             ShortNotes = Limit(input.ShortNotes, 200)
                         };
 
@@ -1575,7 +1772,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
 
                     if (rack != null && input.SaveAsDefault)
                     {
-                        await SaveShelfAsync(source.ProductId, warehouse.WarehouseId, rack.RackManagementId, input.ShelfNumber, userId, now);
+                        await SaveShelfAsync(source.ProductId, warehouse.WarehouseId, rack.RackManagementId, input.ShelfNumber, BinOf(input.BinNumber), userId, now);
                     }
                 }
 
@@ -1690,6 +1887,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
         return new ReceivingSavedDto
         {
             ReceivingId = entity.ReceivingId,
+            PublicId = entity.PublicId,
             ReceivingNo = entity.ReceivingNo
         };
     }
@@ -1745,6 +1943,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
         long warehouseId,
         long rackId,
         int shelf,
+        int bin,
         long userId,
         DateTime now
     )
@@ -1765,6 +1964,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                         WarehouseId = warehouseId,
                         RackManagementId = rackId,
                         ShelfNumber = shelf,
+                        BinNumber = bin,
                         CreatedBy = userId,
                         CreatedDate = now
                     });
@@ -1774,6 +1974,8 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                 row.RackManagementId = rackId;
 
                 row.ShelfNumber = shelf;
+
+                row.BinNumber = bin;
             }
 
             return;
@@ -1795,6 +1997,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                         WarehouseId = warehouseId,
                         RackManagementId = rackId,
                         ShelfNumber = shelf,
+                        BinNumber = bin,
                         CreatedBy = userId,
                         CreatedDate = now
                     });
@@ -1804,6 +2007,8 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                 row.RackManagementId = rackId;
 
                 row.ShelfNumber = shelf;
+
+                row.BinNumber = bin;
             }
         }
     }
@@ -2040,5 +2245,177 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
 
                 await _context.SaveChangesAsync();
             });
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (deleted drafts too : the Deleted tab opens them)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<THeader>()
+            .AsNoTracking()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.ReceivingId)
+            .FirstOrDefaultAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (list page : tab, search, sort and page on the
+    // server). Counts : All / Posted / Cancelled (search applied).
+    //===========================================================
+
+    //===========================================================
+    // Paged list : a search word that is a date (25-10-2026,
+    // 25/10/2026 or 2026-10-25), null otherwise
+    //===========================================================
+
+    private static DateOnly? SearchDate(
+        string text)
+    {
+        string[] formats =
+        {
+            "d-M-yyyy", "dd-MM-yyyy", "d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"
+        };
+
+        return DateOnly.TryParseExact(
+            (text ?? string.Empty).Trim(),
+            formats,
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None,
+            out DateOnly date)
+            ? date
+            : null;
+    }
+
+    public async Task<PagedResult<ReceivingDto>>
+        GetPagedAsync
+        (
+            string pageType,
+            ReceivingPageRequest request
+        )
+    {
+        RequirePage(pageType);
+
+        IQueryable<THeader> query =
+            _context
+                .Set<THeader>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.PageType == Page.PageType);
+
+        foreach
+        (
+            string word in request.SafeSearch.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            DateOnly? date =
+                SearchDate(word);
+
+            DateOnly day =
+                date ?? DateOnly.MinValue;
+
+            bool isDate =
+                date.HasValue;
+
+            query =
+                query.Where
+                (
+                    x =>
+                        (isDate && x.ReceivingDate == day) ||
+                        EF.Functions.ILike(x.ReceivingNo, like) ||
+                        EF.Functions.ILike(x.PurchaseNo, like) ||
+                        EF.Functions.ILike(x.SupplierName, like) ||
+                        EF.Functions.ILike(x.SupplierInvoiceNo, like) ||
+                        EF.Functions.ILike(x.MushakNo, like) ||
+                        EF.Functions.ILike(x.WarehouseName, like) ||
+                        EF.Functions.ILike(x.ReceivedBy, like) ||
+                        EF.Functions.ILike(x.Remarks, like) ||
+                        EF.Functions.ILike(x.Status, like)
+                );
+        }
+
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        string tab =
+            (request.Tab ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (tab != string.Empty && tab != "all")
+        {
+            query = query.Where(x => x.Status.ToLower() == tab);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        SortMap<THeader> sorts =
+            new SortMap<THeader>("ReceivingNo")
+                .Add("ReceivingNo", x => x.ReceivingNo)
+                .Add("DateText", x => x.ReceivingDate)
+                .Add("PurchaseNo", x => x.PurchaseNo)
+                .Add("SupplierName", x => x.SupplierName)
+                .Add("DocumentText", x => x.SupplierInvoiceNo)
+                .Add("WarehouseName", x => x.WarehouseName)
+                .Add("LineCount", x => _context.Set<TLine>().Count(l => l.ReceivingId == x.ReceivingId))
+                .Add("QuantityText", x => x.TotalQuantity)
+                .Add("Status", x => x.Status)
+                .Tie(x => x.ReceivingId);
+
+        IQueryable<THeader> ordered =
+            string.IsNullOrWhiteSpace(request.Sort)
+                ? query
+                    .OrderByDescending(x => x.ReceivingDate)
+                    .ThenByDescending(x => x.ReceivingId)
+                : sorts.Apply(query, request);
+
+        List<THeader> rows =
+            await ordered
+                .Page(request)
+                .ToListAsync();
+
+        Dictionary<string, int> counts =
+            new()
+            {
+                ["All"] = statusCounts.Sum(x => x.Count)
+            };
+
+        foreach (var row in statusCounts)
+        {
+            counts[row.Key] = row.Count;
+        }
+
+        return new PagedResult<ReceivingDto>
+        {
+            Items = await MapListRowsAsync(rows),
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = counts
+        };
     }
 }

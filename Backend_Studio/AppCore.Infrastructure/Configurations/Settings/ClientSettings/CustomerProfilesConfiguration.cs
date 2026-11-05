@@ -47,6 +47,19 @@ public class CustomerProfilesConfiguration
 
 
         //===========================================================
+        // Public Id : the id used in links and API calls
+        //===========================================================
+
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_CustomerProfiles_PublicId");
+
+
+        //===========================================================
         // Columns (no database foreign keys : Code Synchronization
         // rebuilds the tables)
         //===========================================================
@@ -194,4 +207,4 @@ public class CustomerProfilesConfiguration
 
         builder.Property(x => x.ModifiedDate);
     }
-}
+}

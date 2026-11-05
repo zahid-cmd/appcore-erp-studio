@@ -1,0 +1,1016 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+         Center : Branch, Warehouse, status
+         Right  : Add  : Post, Clear
+                  View : Print, Cancel (posted)
+    ====================================================== -->
+
+    <app-page-header
+        [icon]="page.icon"
+        [title]="pageTitle"
+        [subtitle]="page.subtitle">
+
+        <div
+            pageHeaderCenter
+            class="pof-center">
+
+          <div class="pof-ribbon">
+
+            <div class="pof-chip">
+
+                <span class="pof-chip-icon pof-chip-icon-branch">
+                    <i class="fas fa-building"></i>
+                </span>
+
+                <span class="pof-chip-text">
+                    <span class="pof-chip-label">Branch</span>
+                    <strong>{{ branchText }}</strong>
+                </span>
+
+            </div>
+
+            <span class="pof-ribbon-sep"></span>
+
+            <div class="pof-chip">
+
+                <span class="pof-chip-icon pof-chip-icon-year">
+                    <i class="fas fa-warehouse"></i>
+                </span>
+
+                <span class="pof-chip-text">
+                    <span class="pof-chip-label">Warehouse</span>
+                    <strong>{{ warehouseText }}</strong>
+                </span>
+
+            </div>
+
+            <span class="pof-ribbon-sep"></span>
+
+            <div class="pof-state">
+                <span [class]="statusClass">{{ statusText }}</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="isView ? 'Print' : (saving ? 'Posting…' : 'Post')"
+            [command1Icon]="isView ? 'fas fa-print' : 'fas fa-check-double'"
+            [command1Permission]="isView ? '' : 'add'"
+            [command1Activity]="isView ? 'Print' : ''"
+            [command1Title]="isView ? 'Print the Goods Received Note' : 'Save and post : the stock comes on hand'"
+            [command1Visible]="!isView || !!receiving"
+            (command1Click)="isView ? print() : post()"
+            [command2Text]="isView ? 'Cancel' : 'Clear'"
+            [command2Icon]="isView ? 'fas fa-ban' : 'fas fa-broom'"
+            [command2Activity]="isView ? 'Cancel' : ''"
+            [command2Visible]="isView ? receiving?.Status === 'Posted' : true"
+            (command2Click)="isView ? openCancel() : clear()"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-arrow-left"
+            rightCommandTitle="Back to the list"
+            (rightCommandClick)="back()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         SECTION 02 : BODY
+           LEFT  : Receiving Information, Add <item>
+                   (view : Receiving Details)
+           RIGHT : Purchase Invoice + Remarks, Receiving Summary
+                   (fills the rest; its rows scroll)
+    ====================================================== -->
+
+    <div class="pof-body">
+
+        @if (loading && isView && !receiving)
+        {
+            <div class="pof-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                Loading the receiving…
+            </div>
+        }
+        @else
+        {
+            @if (error)
+            {
+                <div class="pof-banner pof-banner-warn">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>{{ error }}</span>
+                </div>
+            }
+
+            @if (!isView && defaults?.Message)
+            {
+                <div class="pof-banner pof-banner-warn">
+                    <i class="fas fa-calendar-xmark"></i>
+                    <span>{{ defaults?.Message }}</span>
+                </div>
+            }
+
+            @if (!isView && !loading && purchasesLoaded && purchases.length === 0)
+            {
+                <div class="pof-banner pof-banner-info">
+                    <i class="fas fa-circle-info"></i>
+                    <span>No posted purchase of this branch has {{ page.itemLower }} in transit. A purchase shows here once it is posted with its stock coming in on Product Receiving.</span>
+                </div>
+            }
+
+            @if (receiving?.Status === 'Cancelled')
+            {
+                <div class="pof-banner pof-banner-cancelled">
+                    <i class="fas fa-ban"></i>
+                    <span>
+                        <strong>Cancelled</strong>
+                        on {{ date(receiving?.CancelledDate ?? '') }} : {{ receiving?.CancelReason }}
+                    </span>
+                </div>
+            }
+
+            <div class="pof-grid pur-grid">
+
+              <!-- ================= Row 1 : left ================= -->
+
+              <div class="pof-col pof-col-left pur-top">
+
+                <div class="pof-card">
+
+                    <div class="pof-card-header">
+                        <i class="fas fa-truck-ramp-box"></i>
+                        <span>Receiving Information</span>
+                    </div>
+
+                    <div class="pof-grid-3 pof-fields">
+
+                        <app-textbox
+                            class="pof-order-no"
+                            label="Receiving No"
+                            placeholder="Assigned on post"
+                            [value]="receivingNoText"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        @if (isView)
+                        {
+                            <app-textbox
+                                label="Receiving Date"
+                                [value]="date(receiving?.ReceivingDate ?? '')"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Warehouse"
+                                [value]="receiving?.WarehouseName ?? ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="pof-span-two"
+                                label="Purchase Invoice"
+                                [value]="receiving?.PurchaseNo ?? ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Received By"
+                                [value]="receiving?.ReceivedBy || '—'"
+                                [readonly]="true">
+                            </app-textbox>
+                        }
+                        @else
+                        {
+                            <app-datepicker
+                                label="Receiving Date"
+                                [required]="true"
+                                [value]="receivingDate"
+                                [minDate]="minDate"
+                                [maxDate]="maxDate"
+                                (valueChange)="onDateChange($event)">
+                            </app-datepicker>
+
+                            <app-search-dropdown
+                                label="Warehouse"
+                                placeholder="Select warehouse"
+                                [items]="warehouseItems"
+                                [value]="warehouseId || null"
+                                [required]="true"
+                                (valueChange)="onWarehouseChange($event)">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                class="pof-span-two"
+                                label="Purchase Invoice"
+                                [placeholder]="purchaseItems.length ? 'Select the purchase to receive' : 'No purchase is waiting'"
+                                [items]="purchaseItems"
+                                [value]="purchaseId || null"
+                                [required]="true"
+                                [disabled]="addedLines.length > 0"
+                                (valueChange)="onPurchaseChange($event)">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Received By"
+                                placeholder="Store keeper"
+                                [maxLength]="150"
+                                [value]="receivedBy"
+                                (valueChange)="receivedBy = '' + $event">
+                            </app-textbox>
+                        }
+
+                    </div>
+
+                </div>
+
+              </div>
+
+              <!-- ================= Row 1 : right ================ -->
+
+              <div class="pof-col pof-col-right pur-top">
+
+                <div class="pof-card rc-inv-card">
+
+                    <div class="pof-card-header">
+                        <i class="fas fa-file-invoice"></i>
+                        <span>Purchase Invoice</span>
+                        @if (invoiceStatus)
+                        {
+                            <span [class]="'rc-pill rc-pill-' + invoiceTone">{{ invoiceStatus }}</span>
+                        }
+                    </div>
+
+                    @if (facts.length)
+                    {
+                        <div class="rc-facts">
+                            @for (fact of facts; track fact.label)
+                            {
+                                <div class="rc-fact" [class.rc-fact-wide]="!!fact.wide">
+                                    <span>{{ fact.label }}</span>
+                                    <strong [title]="fact.value">{{ fact.value || '—' }}</strong>
+                                </div>
+                            }
+                        </div>
+                    }
+                    @else
+                    {
+                        <div class="rc-facts-empty">
+                            <i class="fas fa-arrow-left"></i>
+                            Select the purchase invoice : its supplier and documents show here.
+                        </div>
+                    }
+
+                </div>
+
+                <div class="pof-card pur-narr-card">
+
+                    <div class="pof-card-header">
+                        <i class="fas fa-align-left"></i>
+                        <span>Remarks</span>
+                    </div>
+
+                    <div class="pof-narration pur-narr">
+                        <app-textarea
+                            placeholder="Vehicle no, condition of the goods …"
+                            [rows]="1"
+                            [maxLength]="500"
+                            [value]="isView ? (receiving?.Remarks ?? '') : remarks"
+                            [readonly]="isView"
+                            (valueChange)="remarks = $event">
+                        </app-textarea>
+                    </div>
+
+                </div>
+
+              </div>
+
+              <!-- ================= Row 2 : left ================= -->
+
+              <div class="pof-col pof-col-left">
+
+                @if (isView)
+                {
+                    <div class="pof-card pur-add-card">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Receiving Details</span>
+                        </div>
+
+                        <div class="rc-facts rc-facts-left">
+                            @for (fact of details; track fact.label)
+                            {
+                                <div class="rc-fact" [class.rc-fact-wide]="!!fact.wide">
+                                    <span>{{ fact.label }}</span>
+                                    <strong [title]="fact.value">{{ fact.value || '—' }}</strong>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+                }
+                @else
+                {
+                    <!-- Add <item> : loads into the summary on the right -->
+                    <div
+                        class="pof-card pur-add-card"
+                        [class.pof-locked]="!purchase">
+
+                        <div class="pof-card-header">
+
+                            <i [class]="editingId ? 'fas fa-pen-to-square' : page.itemIcon"></i>
+
+                            <span>{{ editingId ? 'Edit ' + page.item : 'Add ' + page.item }}</span>
+
+                            <span class="pur-hd-notes">
+                                @if (lineError)
+                                {
+                                    <span class="pof-tip-wrap">
+                                        <span class="pur-hd-ico pur-hd-red" [attr.aria-label]="lineError">
+                                            <i class="fas fa-circle-exclamation"></i>
+                                        </span>
+                                        <span class="pof-tip" role="tooltip">{{ lineError }}</span>
+                                    </span>
+                                }
+                            </span>
+
+                            @if (editingId)
+                            {
+                                <button
+                                    type="button"
+                                    class="pof-cancel-edit"
+                                    title="Cancel edit"
+                                    aria-label="Cancel edit"
+                                    (click)="cancelEdit()">
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+                            }
+                            @else
+                            {
+                                <button
+                                    type="button"
+                                    class="pof-shelf"
+                                    title="Add every line still in transit, full quantity"
+                                    [disabled]="!purchase || productItems.length === 0"
+                                    (click)="addAll()">
+                                    <i class="fas fa-layer-group"></i>
+                                    Add All
+                                </button>
+                            }
+
+                            <button
+                                type="button"
+                                class="pof-add"
+                                [class.pof-add-after]="!!editingId"
+                                [disabled]="!purchase"
+                                (click)="onAddLine()">
+                                <i [class]="editingId ? 'fas fa-check' : 'fas fa-plus'"></i>
+                                {{ editingId ? 'Update' : 'Add' }}
+                            </button>
+
+                        </div>
+
+                        <div class="pof-grid-3 pof-fields">
+
+                            <app-search-dropdown
+                                class="pof-span-two"
+                                [label]="page.item"
+                                [placeholder]="!purchase ? 'Select the purchase first' : productItems.length ? 'Select a line of the invoice' : 'Every line is added'"
+                                [items]="productItems"
+                                [value]="pickId || null"
+                                [required]="true"
+                                [disabled]="!purchase || !!editingId"
+                                (valueChange)="onPickChange($event)">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                class="rc-num"
+                                label="In Transit"
+                                placeholder="—"
+                                [value]="pick ? qty(pick.Pending) + ' ' + pick.Unit : ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="rc-num"
+                                label="Purchased"
+                                placeholder="—"
+                                [value]="pick ? qty(pick.Purchased) : ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="rc-num"
+                                label="Received Before"
+                                placeholder="—"
+                                [value]="pick ? qty(pick.ReceivedBefore) : ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="rc-num rc-qty"
+                                label="Receive Now"
+                                [inputMode]="page.wholeUnits ? 'numeric' : 'decimal'"
+                                [placeholder]="pick ? qty(pick.Pending) : '0'"
+                                [required]="true"
+                                [disabled]="!pick"
+                                [value]="pickQty"
+                                (valueChange)="pickQty = '' + $event"
+                                (enterPressed)="onAddLine()">
+                            </app-textbox>
+
+                            @if (page.hasShelves)
+                            {
+                                <app-search-dropdown
+                                    label="Rack"
+                                    placeholder="No rack"
+                                    badgeField="count"
+                                    [items]="rackItems"
+                                    [value]="pickRackId || null"
+                                    [required]="!!defaults?.ShelfRequired"
+                                    [disabled]="!pick"
+                                    (valueChange)="onPickRackChange($event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Shelf"
+                                    placeholder="—"
+                                    badgeField="count"
+                                    [items]="shelfItems"
+                                    [value]="pickShelf || null"
+                                    [disabled]="!pick || !pickRackId || shelfItems.length === 0"
+                                    (valueChange)="onPickShelfChange($event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Bin"
+                                    [placeholder]="pickShelf && !binItems.length ? 'Full' : '—'"
+                                    [items]="binItems"
+                                    [value]="pickBin || null"
+                                    [disabled]="!pick || !pickShelf || binItems.length === 0"
+                                    (valueChange)="onPickBinChange($event)">
+                                </app-search-dropdown>
+
+                                <div class="rc-default">
+                                    <span class="rc-default-label">Product Default</span>
+                                    <app-checkbox
+                                        label="Save this location"
+                                        appearance="switch"
+                                        [value]="pickDefault"
+                                        [disabled]="!pick || !pickRackId"
+                                        (valueChange)="pickDefault = $event">
+                                    </app-checkbox>
+                                </div>
+                            }
+
+                            <!-- With a place : the notes share the row with the switch -->
+                            <app-textbox
+                                [class]="page.hasShelves ? 'pof-span-two' : 'pof-span-all'"
+                                label="Short Notes"
+                                placeholder="Damage, short, sealed carton …"
+                                [maxLength]="200"
+                                [disabled]="!pick"
+                                [value]="pickNotes"
+                                (valueChange)="pickNotes = '' + $event"
+                                (enterPressed)="onAddLine()">
+                            </app-textbox>
+
+                        </div>
+
+                        @if (page.hasShelves && pick && defaultShelfText(pick))
+                        {
+                            <div class="pof-hint rc-hint">
+                                <i class="fas fa-location-dot"></i>
+                                <span>Default place here : {{ defaultShelfText(pick) }}</span>
+                            </div>
+                        }
+                        @if (isBikes)
+                        {
+                            <div class="pof-hint rc-hint">
+                                <i class="fas fa-motorcycle"></i>
+                                <span>Bikes' Chassis, Engine{{ defaults?.UnitsRequired ? ', Key and Battery' : '' }} No : the <i class="fas fa-motorcycle"></i> button on the line in the summary.</span>
+                            </div>
+                        }
+
+                    </div>
+                }
+
+              </div>
+
+              <!-- ================= Row 2 : right ================ -->
+
+              <div class="pof-col pof-col-right">
+
+                <div class="pof-summary-slot">
+
+                    <div class="pof-card pof-summary">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-list-check"></i>
+                            <span>Receiving Summary</span>
+                            <span class="pof-count">
+                                {{ rowCount }} {{ rowCount === 1 ? 'line' : 'lines' }}@if (!isView && lines.length) { of {{ lines.length }} in transit }
+                            </span>
+                        </div>
+
+                        <div class="pof-table-scroll appcore-scrollbar">
+
+                            <table class="pof-table">
+
+                                <colgroup>
+                                    <col class="pof-col-sl">
+                                    <col>
+                                    <col class="pof-col-qty">
+                                    <col class="pof-col-qty">
+                                    <col class="rc-col-recv">
+                                    @if (page.hasShelves)
+                                    {
+                                        <col class="rc-col-rack">
+                                    }
+                                    <col class="pof-col-action">
+                                </colgroup>
+
+                                <thead>
+                                    <tr>
+                                        <th class="pof-sl">SL</th>
+                                        <th>{{ page.item }}</th>
+                                        <th class="pof-num">Purchased</th>
+                                        <th class="pof-num">Before</th>
+                                        <th class="pof-num">Receive</th>
+                                        @if (page.hasShelves)
+                                        {
+                                            <th>Location</th>
+                                        }
+                                        <th class="pof-action">Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    @if (isView)
+                                    {
+                                        @for (line of receiving?.Lines ?? []; track line.ReceivingLineId)
+                                        {
+                                            <tr>
+                                                <td class="pof-sl">{{ $index + 1 }}</td>
+                                                <td>
+                                                    <div class="pof-ledger">{{ line.ProductName }}</div>
+                                                    <div class="pof-sub">
+                                                        {{ line.ProductCode }} · Batch {{ line.BatchNo }}@if (line.ShortNotes) { · {{ line.ShortNotes }} }
+                                                    </div>
+                                                </td>
+                                                <td class="pof-num">{{ qty(line.PurchasedQuantity) }} <span class="pof-unit">{{ line.Unit }}</span></td>
+                                                <td class="pof-num rc-dim">{{ qty(line.ReceivedBefore) }}</td>
+                                                <td class="pof-num rc-strong">{{ qty(line.Quantity) }}</td>
+                                                @if (page.hasShelves)
+                                                {
+                                                    <td>{{ line.RackCode ? (line.BinCode || line.ShelfLabel || line.RackCode) : '—' }}</td>
+                                                }
+                                                <td class="pof-action">
+                                                    @if (isBikes)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="pur-units-btn"
+                                                            title="The bikes received"
+                                                            (click)="openViewUnits(line)">
+                                                            <i class="fas fa-motorcycle"></i>
+                                                            {{ unitsOfLine(line.PurchaseLineId).length }}
+                                                        </button>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <span class="rc-dim">—</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    @else
+                                    {
+                                        @for (line of addedLines; track line.PurchaseLineId)
+                                        {
+                                            <tr
+                                                class="pof-row-editable"
+                                                [class.pof-row-editing]="editingId === line.PurchaseLineId"
+                                                title="Double-click to edit"
+                                                (dblclick)="startEdit(line)">
+                                                <td class="pof-sl">{{ $index + 1 }}</td>
+                                                <td>
+                                                    <div class="pof-ledger">{{ line.ProductName }}</div>
+                                                    <div class="pof-sub">
+                                                        {{ line.ProductCode }} · Batch {{ line.BatchNo }}@if (line.Notes) { · {{ line.Notes }} }
+                                                    </div>
+                                                </td>
+                                                <td class="pof-num">{{ qty(line.Purchased) }} <span class="pof-unit">{{ line.Unit }}</span></td>
+                                                <td class="pof-num rc-dim">{{ qty(line.ReceivedBefore) }}</td>
+                                                <td class="pof-num rc-strong">
+                                                    {{ qty(line.Quantity) }}
+                                                    @if (line.Quantity < line.Pending)
+                                                    {
+                                                        <span class="pof-billed" title="Stays in transit for a later receiving">{{ qty(line.Pending - line.Quantity) }} left</span>
+                                                    }
+                                                </td>
+                                                @if (page.hasShelves)
+                                                {
+                                                    <td>
+                                                        {{ rackText(line) }}
+                                                        @if (line.SaveDefault && line.RackId)
+                                                        {
+                                                            <span class="pof-billed">default</span>
+                                                        }
+                                                    </td>
+                                                }
+                                                <td class="pof-action">
+                                                    @if (isBikes)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="pur-units-btn"
+                                                            [class.pur-units-short]="!unitsComplete(line)"
+                                                            [title]="'Bikes : ' + unitsEntered(line) + ' of ' + line.Units.length + ' with chassis and engine'"
+                                                            [disabled]="saving"
+                                                            (click)="openUnits(line); $event.stopPropagation()">
+                                                            <i class="fas fa-motorcycle"></i>
+                                                            {{ unitsEntered(line) }}/{{ line.Units.length }}
+                                                        </button>
+                                                    }
+                                                    <button
+                                                        type="button"
+                                                        class="pof-remove"
+                                                        title="Remove"
+                                                        [disabled]="saving || editingId === line.PurchaseLineId"
+                                                        [attr.aria-label]="'Remove ' + line.ProductName"
+                                                        (click)="removeLine(line); $event.stopPropagation()">
+                                                        <i class="fas fa-xmark"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+
+                                    @if (rowCount === 0)
+                                    {
+                                        <tr>
+                                            <td
+                                                [attr.colspan]="page.hasShelves ? 7 : 6"
+                                                class="pof-empty">
+                                                @if (!purchase) { Select the purchase invoice, then add its {{ page.itemLower }} on the left. } @else { No {{ page.itemLower }} yet. Pick a line on the left and press Add, or Add All for every line. Double-click a line to edit it. }
+                                            </td>
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <!-- Total : always visible under the rows -->
+                        <div class="pof-table-foot">
+
+                            <table class="pof-table">
+
+                                <colgroup>
+                                    <col class="pof-col-sl">
+                                    <col>
+                                    <col class="pof-col-qty">
+                                    <col class="pof-col-qty">
+                                    <col class="rc-col-recv">
+                                    @if (page.hasShelves)
+                                    {
+                                        <col class="rc-col-rack">
+                                    }
+                                    <col class="pof-col-action">
+                                </colgroup>
+
+                                <tbody>
+                                    <tr class="pof-payable">
+                                        <td colspan="2">Total Received</td>
+                                        <td class="pof-num">{{ qty(totalPurchased) }}</td>
+                                        <td class="pof-num">{{ qty(totalBefore) }}</td>
+                                        <td class="pof-num">{{ qty(totalQuantity) }}</td>
+                                        <td [attr.colspan]="page.hasShelves ? 2 : 1"></td>
+                                    </tr>
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+              </div>
+
+            </div>
+        }
+
+    </div>
+
+    <!-- =====================================================
+         CANCEL MODAL (view, posted)
+    ====================================================== -->
+
+    @if (cancelOpen && receiving)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="rc-cx-title">
+
+                <div class="pof-cx-head">
+
+                    <span class="pof-cx-icon">
+                        <i class="fas fa-ban"></i>
+                    </span>
+
+                    <div class="pof-cx-title">
+                        <strong id="rc-cx-title">Cancel Receiving</strong>
+                        <span>{{ receiving.ReceivingNo }}</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="cancelOpen = false">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+                <div class="pof-cx-body">
+
+                    <div class="pof-cx-summary">
+
+                        <div>
+                            <span>Receiving Date</span>
+                            <strong>{{ date(receiving.ReceivingDate) }}</strong>
+                        </div>
+
+                        <div>
+                            <span>Purchase</span>
+                            <strong [title]="receiving.SupplierName">{{ receiving.PurchaseNo }}</strong>
+                        </div>
+
+                        <div class="pof-cx-amount">
+                            <span>Quantity</span>
+                            <strong>{{ qty(receiving.TotalQuantity) }}</strong>
+                        </div>
+
+                    </div>
+
+                    <div class="pof-cx-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>
+                            The received stock goes back in transit{{ isBikes ? ' and the bikes are taken off the stock' : '' }}.
+                            Allowed only while all of it is still on hand in {{ receiving.WarehouseName }}.
+                            This cannot be undone.
+                        </span>
+                    </div>
+
+                    <div class="pof-cx-fields">
+                        <app-textarea
+                            class="pof-cx-reason"
+                            label="Reason"
+                            placeholder="Why is this receiving cancelled?"
+                            [required]="true"
+                            [rows]="4"
+                            [maxLength]="500"
+                            [value]="cancelReason"
+                            (valueChange)="cancelReason = $event">
+                        </app-textarea>
+                    </div>
+
+                </div>
+
+                <div class="pof-modal-foot">
+
+                    <span class="pof-modal-note">
+                        <i class="fas fa-circle-info"></i>
+                        Reason is required.
+                    </span>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="cancelOpen = false">
+                        <i class="fas fa-arrow-left"></i>
+                        Keep Receiving
+                    </button>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-danger"
+                        [disabled]="saving"
+                        (click)="confirmCancel()">
+                        <i class="fas fa-ban"></i>
+                        Cancel Receiving
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <!-- =====================================================
+         UNIT DESK (MB) : one row per bike received
+    ====================================================== -->
+
+    @if (desk; as d)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx pur-ud"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="rc-ud-title">
+
+                <div class="pof-cx-head">
+
+                    <span class="pof-cx-icon pur-ud-icon">
+                        <i class="fas fa-motorcycle"></i>
+                    </span>
+
+                    <div class="pof-cx-title">
+                        <strong id="rc-ud-title">Unit Desk · {{ d.name }}</strong>
+                        <span>{{ d.code }} · {{ d.rows.length }} bike{{ d.rows.length === 1 ? '' : 's' }}</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeUnits()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+                <div class="pof-cx-body">
+
+                    @if (!d.readonly)
+                    {
+                        <div class="pof-hint">
+                            <i class="fas fa-paste"></i>
+                            Copy the {{ d.keys ? 'four columns from Excel (Chassis, Engine, Key, Battery)' : 'two columns from Excel (Chassis, Engine)' }} and paste into a Chassis box : every row fills at once, from that bike down.
+                        </div>
+                    }
+
+                    <div class="pur-ud-scroll appcore-scrollbar">
+
+                        <table class="pof-table pur-ud-table">
+
+                            <colgroup>
+                                <col class="pur-ud-c-sl">
+                                <col class="pur-ud-c-wide">
+                                <col class="pur-ud-c-wide">
+                                @if (d.keys)
+                                {
+                                    <col class="pur-ud-c-key">
+                                    <col class="pur-ud-c-bat">
+                                }
+                                @if (!d.readonly)
+                                {
+                                    <col class="pur-ud-c-act">
+                                }
+                            </colgroup>
+
+                            <thead>
+                                <tr>
+                                    <th class="pof-sl">SL</th>
+                                    <th>Chassis No <b class="pof-req">*</b></th>
+                                    <th>Engine No <b class="pof-req">*</b></th>
+                                    @if (d.keys)
+                                    {
+                                        <th>Key No @if (keyBattery) { <b class="pof-req">*</b> }</th>
+                                        <th>Battery No @if (keyBattery) { <b class="pof-req">*</b> }</th>
+                                    }
+                                    @if (!d.readonly)
+                                    {
+                                        <th class="pur-ud-act" aria-label="Clear"></th>
+                                    }
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @for (row of d.rows; track $index; let u = $index)
+                                {
+                                    <tr>
+                                        <td class="pof-sl">{{ u + 1 }}</td>
+                                        @if (d.readonly)
+                                        {
+                                            <td>{{ row.ChassisNo }}</td>
+                                            <td>{{ row.EngineNo }}</td>
+                                            @if (d.keys)
+                                            {
+                                                <td>{{ row.KeyNo || '—' }}</td>
+                                                <td>{{ row.BatteryNo || '—' }}</td>
+                                            }
+                                        }
+                                        @else
+                                        {
+                                            @for (field of d.fields; track field; let c = $index)
+                                            {
+                                                <td
+                                                    [class.pur-ud-bad]="!!unitProblem(row, field)"
+                                                    [attr.title]="unitProblem(row, field) || null"
+                                                    (paste)="onUnitPaste($event, u, c)">
+                                                    <app-textbox
+                                                        [placeholder]="unitPlaceholders[field]"
+                                                        textCase="upper"
+                                                        [maxLength]="50"
+                                                        [value]="row[field]"
+                                                        (valueChange)="onUnitChange(row, field, $event)">
+                                                    </app-textbox>
+                                                </td>
+                                            }
+                                            <td class="pur-ud-act">
+                                                <button
+                                                    type="button"
+                                                    class="pur-ud-clear"
+                                                    [title]="d.keys ? 'Clear this bike\'s four numbers' : 'Clear this bike\'s numbers'"
+                                                    [attr.aria-label]="'Clear bike ' + (u + 1)"
+                                                    [disabled]="!row.ChassisNo && !row.EngineNo && !row.KeyNo && !row.BatteryNo"
+                                                    (click)="clearUnit(row)">
+                                                    <i class="fas fa-eraser"></i>
+                                                </button>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+
+                                @if (d.rows.length === 0)
+                                {
+                                    <tr>
+                                        <td [attr.colspan]="d.keys ? 6 : 4" class="pof-empty">No bikes.</td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+                <div class="pof-modal-foot">
+
+                    <span class="pof-modal-note">
+                        @if (checking)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                            Checking the numbers against the bikes on file…
+                        }
+                        @else
+                        {
+                            <i class="fas fa-circle-info"></i>
+                            {{ keyBattery ? 'Every bike needs all four numbers.' : 'Every bike needs its Chassis No and Engine No.' }}
+                        }
+                    </span>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="closeUnits()">
+                        <i class="fas fa-arrow-left"></i>
+                        Close
+                    </button>
+
+                    @if (!d.readonly)
+                    {
+                        <button
+                            type="button"
+                            class="pof-btn pof-btn-primary"
+                            (click)="saveUnits()">
+                            <i class="fas fa-check"></i>
+                            Save
+                        </button>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+<app-toast></app-toast>

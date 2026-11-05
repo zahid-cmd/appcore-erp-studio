@@ -30,6 +30,15 @@ from '../../../../environments/environment';
 
 import
 {
+    PagedQuery,
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     CreateReceiving,
     Receiving,
     ReceivingDefaults,
@@ -83,12 +92,27 @@ export class ReceivingService
     }
 
 
+    // One page of the list plus the tab counts (server paging)
+    getPaged
+    (
+        path:
+            string,
+        query:
+            PagedQuery & { tab?:string }
+    ):
+        Observable<PagedResult<Receiving>>
+    {
+        return this.http
+            .get<any>(`${this.api}/${path}/paged`, { params:toPagedParams({ ...query }) })
+            .pipe(map(raw => toPagedResult(raw, toReceiving)));
+    }
+
     getById
     (
         path:
             string,
         id:
-            number
+            string
     ):
         Observable<Receiving>
     {
@@ -147,7 +171,18 @@ export class ReceivingService
                                 WarehouseId:num(pick(r, 'WarehouseId')),
                                 Code:text(pick(r, 'Code')),
                                 Name:text(pick(r, 'Name')),
-                                ShelfCount:num(pick(r, 'ShelfCount'))
+                                ShelfCount:num(pick(r, 'ShelfCount')),
+                                ZoneCode:text(pick(r, 'ZoneCode')),
+                                ZoneName:text(pick(r, 'ZoneName')),
+                                Shelves:list(pick(r, 'Shelves')).map
+                                (
+                                    s =>
+                                    ({
+                                        ShelfNumber:num(pick(s, 'ShelfNumber')),
+                                        ShelfLabel:text(pick(s, 'ShelfLabel')),
+                                        BinCount:num(pick(s, 'BinCount')) || 1
+                                    })
+                                )
                             })
                         ),
                         Message:text(pick(x, 'Message'))
@@ -210,7 +245,10 @@ export class ReceivingService
                                             ({
                                                 WarehouseId:num(pick(s, 'WarehouseId')),
                                                 RackManagementId:num(pick(s, 'RackManagementId')),
-                                                ShelfNumber:num(pick(s, 'ShelfNumber'))
+                                                ShelfNumber:num(pick(s, 'ShelfNumber')),
+                                                // Old answers : bin 1
+                                                BinNumber:num(pick(s, 'BinNumber')) || 1,
+                                                BinCode:text(pick(s, 'BinCode'))
                                             })
                                         )
                                     })
@@ -379,6 +417,10 @@ function toLine
         RackManagementId:rack === null || rack === undefined ? null : num(rack),
         RackCode:text(pick(x, 'RackCode')),
         ShelfNumber:num(pick(x, 'ShelfNumber')),
+        // Old lines with a place : bin 1
+        BinNumber:num(pick(x, 'BinNumber')) || (rack !== null && rack !== undefined && num(pick(x, 'ShelfNumber')) ? 1 : 0),
+        ShelfLabel:text(pick(x, 'ShelfLabel')),
+        BinCode:text(pick(x, 'BinCode')),
         ShortNotes:text(pick(x, 'ShortNotes'))
     };
 }
@@ -391,6 +433,7 @@ function toReceiving
     Receiving
 {
     return {
+        PublicId:text(pick(x, 'PublicId')),
         ReceivingId:num(pick(x, 'ReceivingId')),
         PageType:text(pick(x, 'PageType')),
         ReceivingNo:text(pick(x, 'ReceivingNo')),

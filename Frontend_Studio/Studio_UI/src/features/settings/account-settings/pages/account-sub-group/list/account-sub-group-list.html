@@ -184,6 +184,32 @@
 
     </app-page-canvas>
 
+    <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="asg-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="asg-summary-item">
+                    <span class="asg-summary-label">{{ item.label }}</span>
+                    <b
+                        class="asg-summary-value"
+                        [class.asg-ok]="item.tone === 'ok'"
+                        [class.asg-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="asg-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
 
 
     <!-- =====================================================

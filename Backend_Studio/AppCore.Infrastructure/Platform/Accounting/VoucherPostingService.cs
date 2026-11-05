@@ -33,7 +33,10 @@ namespace AppCore.Infrastructure.Platform.Accounting;
 // Branch : every row carries a branch. A line on a money
 //          account that belongs to ONE other branch (Cash / Bank
 //          / MFS / POS / EMI with Branch Exclusive) is posted to
-//          that branch; every other line to the voucher's branch.
+//          that branch; a line that names its own branch
+//          (VoucherPostingLine.BranchId, e.g. Product Transfer :
+//          Dr the receiving branch's inventory) is posted to it;
+//          every other line to the voucher's branch.
 //          When a group then touches more than one branch, an
 //          Inter-Branch Current Account line is added per branch
 //          so each branch's own books balance (company total of
@@ -456,6 +459,12 @@ public class VoucherPostingService : IVoucherPostingService
 
         foreach (VoucherPostingLine line in lines)
         {
+            // A line with its own branch keeps it (see below)
+            if (line.BranchId > 0)
+            {
+                continue;
+            }
+
             VoucherLedgerDto ledger =
                 ledgers[line.LedgerCode.Trim()];
 
@@ -474,10 +483,19 @@ public class VoucherPostingService : IVoucherPostingService
             }
         }
 
+        // Other branches named on the lines themselves
+        // (VoucherPostingLine.BranchId, e.g. Product Transfer)
+        List<long> otherIds =
+            lines
+                .Where(x => x.BranchId > 0 && x.BranchId!.Value != period.BranchId)
+                .Select(x => x.BranchId!.Value)
+                .Distinct()
+                .ToList();
+
         List<PostingRow> rows =
             new();
 
-        if (otherNames.Count == 0)
+        if (otherNames.Count == 0 && otherIds.Count == 0)
         {
             // Usual case : everything on the voucher's branch
             foreach (VoucherPostingLine line in lines)
@@ -509,7 +527,11 @@ public class VoucherPostingService : IVoucherPostingService
                     x =>
                         !x.IsDeleted
                         &&
-                        wanted.Contains(x.BranchName.Trim().ToUpper())
+                        (
+                            wanted.Contains(x.BranchName.Trim().ToUpper())
+                            ||
+                            otherIds.Contains(x.BranchId)
+                        )
                 )
                 .ToListAsync();
 
@@ -523,8 +545,51 @@ public class VoucherPostingService : IVoucherPostingService
                 branch);
         }
 
+        Dictionary<long, BranchesEntity> byId =
+            branches
+                .GroupBy(x => x.BranchId)
+                .ToDictionary(g => g.Key, g => g.First());
+
         foreach (VoucherPostingLine line in lines)
         {
+            // The line's own branch (the voucher's, or another one)
+            if (line.BranchId > 0)
+            {
+                long lineBranchId =
+                    line.BranchId!.Value;
+
+                if (lineBranchId == period.BranchId)
+                {
+                    rows.Add(
+                        new PostingRow
+                        {
+                            Line = line,
+                            Ledger = ledgers[line.LedgerCode.Trim()],
+                            BranchId = period.BranchId,
+                            BranchCode = period.BranchCode
+                        });
+
+                    continue;
+                }
+
+                if (!byId.TryGetValue(lineBranchId, out BranchesEntity? own))
+                {
+                    throw new InvalidOperationException(
+                        $"Line '{line.Narration}' is for branch #{lineBranchId}, which was not found.");
+                }
+
+                rows.Add(
+                    new PostingRow
+                    {
+                        Line = line,
+                        Ledger = ledgers[line.LedgerCode.Trim()],
+                        BranchId = own.BranchId,
+                        BranchCode = own.BranchCode ?? string.Empty
+                    });
+
+                continue;
+            }
+
             VoucherLedgerDto ledger =
                 ledgers[line.LedgerCode.Trim()];
 

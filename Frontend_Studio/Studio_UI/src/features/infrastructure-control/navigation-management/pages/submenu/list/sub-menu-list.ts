@@ -972,7 +972,7 @@ implements OnInit
         [
             '/infrastructure-control/navigation-management/navigation-submenus/view',
 
-            item.id
+            item.publicId
         ]);
     }
 
@@ -991,7 +991,7 @@ implements OnInit
         [
             '/infrastructure-control/navigation-management/navigation-submenus/edit',
 
-            item.id
+            item.publicId
         ]);
     }
 
@@ -1015,7 +1015,7 @@ implements OnInit
             () =>
             {
                 this.navigationSubmenuService
-                    .delete(item.id)
+                    .delete(item.publicId ?? '')
                     .subscribe(
                     {
                         next:() =>
@@ -1188,4 +1188,44 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.submenus ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.submenus ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

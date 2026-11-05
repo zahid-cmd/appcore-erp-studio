@@ -98,12 +98,29 @@ export class SubOrdinateComponentsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<SubOrdinateComponents>
     {
         return this.http.get<SubOrdinateComponents>(
             `${this.apiUrl}/${id}`
+        );
+    }
+
+
+    //===========================================================
+    // Get By Internal Id (system use only)
+    //===========================================================
+
+    getByInternalId
+    (
+        id:
+            number
+    ):
+        Observable<SubOrdinateComponents>
+    {
+        return this.http.get<SubOrdinateComponents>(
+            `${this.apiUrl}/by-id/${id}`
         );
     }
 
@@ -154,6 +171,9 @@ export class SubOrdinateComponentsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateSubOrdinateComponents
     ):
@@ -165,7 +185,7 @@ export class SubOrdinateComponentsService
             );
 
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            `${this.apiUrl}/${publicId}`,
 
             formData
         );
@@ -180,7 +200,7 @@ export class SubOrdinateComponentsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -228,7 +248,7 @@ export class SubOrdinateComponentsService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

@@ -85,7 +85,7 @@ export const JOURNAL_VOUCHER_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<JvPrintData>
     {
@@ -93,7 +93,7 @@ export const JOURNAL_VOUCHER_PRINT:
             await firstValueFrom(
                 injector
                     .get(JournalVoucherService)
-                    .getById(id)
+                    .getForPrint(id)
             );
 
         return {

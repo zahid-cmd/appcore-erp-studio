@@ -17,8 +17,8 @@
 --    keys to PurchasesMb / PurchasesMbLines are taken off (the
 --    purchase page removes its own bikes itself) and a check
 --    keeps every bike tied to a purchase or an opening stock.
--- 3. StockBatches : + SalePrice, Mrp (VAT inclusive; Product
---    Pricing manages them later).
+-- 3. StockBatches : + Mrp (VAT inclusive). MRP is the sale
+--    price : no separate SalePrice column.
 -- 4. Page actions Post and Cancel linked to the Opening Stock
 --    page (Add, Edit, Delete, View, Print are common actions).
 -- 5. Auto Journal Registers : OPMB / OPSP / OPAC under the page.
@@ -161,7 +161,6 @@ CREATE TABLE IF NOT EXISTS public."OpeningStockLines"
     "Quantity"           numeric(18,2)          NOT NULL,
     "UnitCost"           numeric(18,4)          NOT NULL,
     "LineValue"          numeric(18,2)          NOT NULL DEFAULT 0,
-    "SalePrice"          numeric(18,2)          NOT NULL DEFAULT 0,
     "Mrp"                numeric(18,2)          NOT NULL DEFAULT 0,
     "MarginPercent"      numeric(9,4)           NOT NULL DEFAULT 0,
     "GrossUnitCost"      numeric(18,4)          NOT NULL DEFAULT 0,
@@ -235,10 +234,8 @@ END $$;
 
 
 -- ------------------------------------------------------------
--- 3. Stock batches : sale price
+-- 3. Stock batches : MRP (the sale price)
 -- ------------------------------------------------------------
-
-ALTER TABLE public."StockBatches" ADD COLUMN IF NOT EXISTS "SalePrice" numeric(18,2) NOT NULL DEFAULT 0;
 
 ALTER TABLE public."StockBatches" ADD COLUMN IF NOT EXISTS "Mrp" numeric(18,2) NOT NULL DEFAULT 0;
 

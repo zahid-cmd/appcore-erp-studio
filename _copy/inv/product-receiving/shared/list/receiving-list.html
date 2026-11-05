@@ -1,0 +1,108 @@
+<div class="app-list-page rl-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        [title]="page.title"
+        [subtitle]="page.subtitle"
+        [icon]="page.icon">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search receiving, purchase, supplier, invoice, warehouse…"
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Receive"
+                command1Icon="fas fa-plus"
+                command1Permission="add"
+                command1Title="Receive a posted purchase into the warehouse"
+                (command1Click)="add()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="refresh()"
+                [command3Visible]="false"
+                [rightCommandVisible]="false">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : tabs | waiting purchases
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+
+        </app-control-tabs>
+
+        <button
+            pageToolbarRight
+            type="button"
+            class="rl-waiting"
+            [class.is-zero]="waiting === 0"
+            title="Posted purchases of your branch with stock still in transit"
+            (click)="add()">
+            <i class="fas fa-truck-fast"></i>
+            <b>{{ waiting }}</b>
+            purchase{{ waiting === 1 ? '' : 's' }} waiting to be received
+        </button>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+
+            <app-list-table
+                [columns]="columns"
+                [rows]="pagedRows"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                [actions]="{ view:true, edit:false, delete:false }"
+                (view)="view($event)"
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="filteredRows.length"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+
+</div>

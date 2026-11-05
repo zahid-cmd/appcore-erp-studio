@@ -4,6 +4,10 @@
 
 export interface Designation
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     DesignationId:
         number;
 

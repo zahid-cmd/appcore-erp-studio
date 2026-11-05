@@ -83,6 +83,9 @@ public class WarehousesRepository : IWarehousesRepository
                         WarehouseId =
                             x.WarehouseId,
 
+                        PublicId =
+                            x.PublicId,
+
                         CompanyId =
                             x.CompanyId,
 
@@ -188,6 +191,33 @@ public class WarehousesRepository : IWarehousesRepository
             )
 
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<WarehousesEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.WarehouseId)
+            .FirstOrDefaultAsync();
     }
 
 

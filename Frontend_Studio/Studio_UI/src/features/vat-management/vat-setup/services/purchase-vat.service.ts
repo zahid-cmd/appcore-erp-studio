@@ -113,6 +113,9 @@ export class PurchaseVatService
             PurchaseVatId:
                 Number(this.pick(item, 'PurchaseVatId') ?? 0) || 0,
 
+            PublicId:
+                text('PublicId'),
+
             VatCode:
                 text('VatCode'),
 
@@ -183,7 +186,7 @@ export class PurchaseVatService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<PurchaseVat>
     {
@@ -357,7 +360,7 @@ export class PurchaseVatService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

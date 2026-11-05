@@ -35,7 +35,7 @@ public interface INavigationMenuRepository
 
     Task<List<NavigationMenuDto>> GetByModuleAsync(
         long navigationModuleId);
-        
+
     //===============================================================
     // Create
     //===============================================================
@@ -66,14 +66,14 @@ public interface INavigationMenuRepository
 
     Task<bool> RestoreAsync(
         long userId);
-        
+
     //===============================================================
     // Exists
     //===============================================================
 
     Task<bool> ExistsAsync(
         long id);
-        
+
     //===============================================================
     // Route Key Exists
     //===============================================================
@@ -103,4 +103,9 @@ public interface INavigationMenuRepository
 
     Task<NavigationMenuDefaultsDto> GetDefaultsAsync(
         long navigationModuleId);
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

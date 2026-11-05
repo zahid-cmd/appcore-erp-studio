@@ -123,7 +123,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedProductCategories"
+                [rows]="productCategories"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -152,7 +152,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredProductCategories.length"
+            [totalRecords]="totalRecords"
 
             [currentPage]="currentPage"
 
@@ -165,6 +165,32 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (status filter and search)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="pct-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="pct-summary-item">
+                    <span class="pct-summary-label">{{ item.label }}</span>
+                    <b
+                        class="pct-summary-value"
+                        [class.pct-ok]="item.tone === 'ok'"
+                        [class.pct-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="pct-summary-note">
+                Matching the status filter and search
+            </span>
+
+        </div>
+    }
 
 
 

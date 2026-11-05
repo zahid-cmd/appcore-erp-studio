@@ -197,7 +197,7 @@ export class PosReconciliationsService
     getVoucher
     (
         id:
-            number
+            number | string
     ):
         Observable<PosReconciliationVoucher>
     {

@@ -192,4 +192,26 @@ export const infrastructureControlRoutes:
 
     // AUTO-END : MNU-002-007
 
+    //===========================================================
+    // Data Management (hand-written; outside the AUTO blocks)
+    //===========================================================
+
+    {
+        path:'data-management',
+
+        data:
+        {
+            breadcrumb:'Data Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../data-management/routes/data-management.routes'
+            )
+            .then(
+                m =>
+                    m.dataManagementRoutes
+            )
+    },
+
 ];

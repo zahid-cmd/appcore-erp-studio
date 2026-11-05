@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.Paging;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.Settings.ClientSettings;
@@ -20,13 +21,26 @@ namespace AppCore.API.Controllers.Settings.ClientSettings;
 //===============================================================
 // Customer Profiles Controller
 //
+// A customer is opened / changed by its Public Id (uuid), never
+// by the internal number :
+//
+//   GET    paged                     the list page (one page,
+//                                    server side; see
+//                                    CustomerProfilesPageRequest)
+//   GET    {publicId}                one customer
+//   POST                             create -> its Public Id
+//   PUT    {publicId}                update
+//   DELETE {publicId}                delete
+//
 // Customer Photo
-//   POST   {id}/photo   multipart field "file" (JPG / PNG by
+//   POST   {publicId}/photo  multipart field "file" (JPG / PNG by
 //                       content; max 2 MB) -> saved to
 //                       wwwroot/uploads/customer-photos/, path stored
 //                       on the customer, old file removed. Returns
 //                       the new path as plain text.
-//   DELETE {id}/photo   removes the file and clears the path.
+//   DELETE {publicId}/photo  removes the file and clears the path.
+//
+// GET (all) stays for the dropdowns / lookups of other pages.
 //===============================================================
 
 [ApiController]
@@ -88,6 +102,21 @@ public class CustomerProfilesController : ControllerBase
 
 
     //===========================================================
+    // Get Paged (the list page)
+    //===========================================================
+
+    [HttpGet("paged")]
+
+    public async Task<ActionResult<PagedResult<CustomerProfilesDto>>> GetPaged(
+        [FromQuery] CustomerProfilesPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new CustomerProfilesPageRequest()));
+    }
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 
@@ -111,16 +140,24 @@ public class CustomerProfilesController : ControllerBase
 
 
     //===========================================================
-    // Get By Id
+    // Get By Public Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
-    public async Task<ActionResult<CustomerProfilesDto>> GetById(
-        long id)
+    public async Task<ActionResult<CustomerProfilesDto>> GetByPublicId(
+        Guid publicId)
     {
+        long? id =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (id == null)
+        {
+            return NotFound();
+        }
+
         CustomerProfilesDto? customer =
-            await _repository.GetByIdAsync(id);
+            await _repository.GetByIdAsync(id.Value);
 
         if (customer == null)
         {
@@ -135,9 +172,10 @@ public class CustomerProfilesController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new customer's Public Id
     [HttpPost]
 
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateCustomerProfilesDto dto)
     {
            long userId = this.CurrentUserId();
@@ -149,7 +187,10 @@ public class CustomerProfilesController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            CustomerProfilesDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch
         (
@@ -172,16 +213,24 @@ public class CustomerProfilesController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
+    // The customer comes from the link's Public Id; a CustomerId
+    // in the body is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateCustomerProfilesDto dto)
     {
-        if (!await _repository.ExistsAsync(
-                dto.CustomerId))
+        long? id =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (id == null)
         {
             return NotFound();
         }
+
+        dto.CustomerId =
+            id.Value;
 
            long userId = this.CurrentUserId();
 
@@ -214,15 +263,21 @@ public class CustomerProfilesController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
-        if (!await _repository.ExistsAsync(id))
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
         {
             return NotFound();
         }
+
+        long id =
+            found.Value;
 
            long userId = this.CurrentUserId();
 
@@ -297,15 +352,26 @@ public class CustomerProfilesController : ControllerBase
     // Upload Customer Photo
     //===========================================================
 
-    [HttpPost("{id:long}/photo")]
+    [HttpPost("{publicId:guid}/photo")]
 
     [RequestSizeLimit(5 * 1024 * 1024)]
 
     public async Task<IActionResult> UploadPhoto(
-        long id,
+        Guid publicId,
         IFormFile file)
     {
            long userId = this.CurrentUserId();
+
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound("Customer not found.");
+        }
+
+        long id =
+            found.Value;
 
         //=======================================================
         // Validate
@@ -418,12 +484,23 @@ public class CustomerProfilesController : ControllerBase
     // Delete Customer Photo
     //===========================================================
 
-    [HttpDelete("{id:long}/photo")]
+    [HttpDelete("{publicId:guid}/photo")]
 
     public async Task<IActionResult> DeletePhoto(
-        long id)
+        Guid publicId)
     {
            long userId = this.CurrentUserId();
+
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound("Customer not found.");
+        }
+
+        long id =
+            found.Value;
 
         try
         {
@@ -545,4 +622,4 @@ public class CustomerProfilesController : ControllerBase
             _logger.LogWarning(ex, "Could not remove old customer photo {Path}", relativePath);
         }
     }
-}
+}

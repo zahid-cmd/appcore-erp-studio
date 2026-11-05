@@ -44,6 +44,11 @@ public class AccessoryLocationsConfiguration
         builder.Property(x => x.ShelfNumber)
                .IsRequired();
 
+        // 1 … the shelf's BinCount; one bin = one item
+        builder.Property(x => x.BinNumber)
+               .IsRequired()
+               .HasDefaultValue(1);
+
         // One location per warehouse for each accessory
         builder.HasIndex(x => new { x.AccessoryId, x.WarehouseId })
                .IsUnique()

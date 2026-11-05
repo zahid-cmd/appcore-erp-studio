@@ -239,6 +239,9 @@ public class MembershipCardsRepository :
                     MembershipCardId =
                         card.MembershipCardId,
 
+                    PublicId =
+                        card.PublicId,
+
                     CardCode =
                         card.CardCode,
 
@@ -1636,5 +1639,32 @@ public class MembershipCardsRepository :
                     &&
                     !x.IsDeleted
             );
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.MembershipManagement.MembershipSetup.MembershipCards>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.MembershipCardId)
+            .FirstOrDefaultAsync();
     }
 }

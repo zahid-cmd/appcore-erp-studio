@@ -322,9 +322,10 @@ implements OnInit, OnDestroy
         'add' | 'edit' | 'view' =
         'add';
 
+    // Public Id from the link (edit / view); '' in Add mode
     entityId:
-        number =
-        0;
+        string =
+        '';
 
 
     //===========================================================
@@ -611,6 +612,7 @@ implements OnInit, OnDestroy
     {
         return {
             SupplierId:0,
+            PublicId:'',
             SupplierCode:'',
             SupplierType:type,
             SupplyType:'',
@@ -674,7 +676,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            id
         )
         {
             this.entityId =
@@ -692,8 +694,9 @@ implements OnInit, OnDestroy
     // Resolve Entity Id
     //===========================================================
 
+    // The supplier's Public Id (uuid) from the link, or ''
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -705,13 +708,15 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
+                String(
                     currentRoute.snapshot.paramMap.get('id')
-                );
+                    ??
+                    ''
+                ).trim();
 
             if
             (
-                id > 0
+                id
             )
             {
                 return id;
@@ -721,7 +726,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
@@ -1758,6 +1763,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.supplierProfilesService.update(
+                this.entity.PublicId,
                 model
             ),
             this.minimumSaveDurationMs

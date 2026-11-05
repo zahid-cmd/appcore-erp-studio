@@ -1170,7 +1170,7 @@ implements
             [
                 'view',
 
-                item.id
+                item.publicId
             ],
 
             {
@@ -1198,7 +1198,7 @@ implements
             [
                 'edit',
 
-                item.id
+                item.publicId
             ],
 
             {
@@ -1290,7 +1290,7 @@ implements
                 this.loginpagesservice
                     .delete
                     (
-                        item.id
+                        item.publicId ?? ''
                     )
                     .subscribe
                     ({
@@ -1541,4 +1541,44 @@ implements
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.loginpages ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.loginpages ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

@@ -62,6 +62,9 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             Id =
                 x.Id,
 
+            PublicId =
+                x.PublicId,
+
             NavigationModuleId =
                 x.NavigationModuleId,
 
@@ -126,6 +129,9 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             {
                 Id =
                     x.Id,
+
+                PublicId =
+                    x.PublicId,
 
                 NavigationModuleId =
                     x.NavigationModuleId,
@@ -192,6 +198,9 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             {
                 Id =
                     x.Id,
+
+                PublicId =
+                    x.PublicId,
 
                 NavigationModuleId =
                     x.NavigationModuleId,
@@ -328,6 +337,9 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
             {
                 Id =
                     x.Id,
+
+                PublicId =
+                    x.PublicId,
 
                 NavigationModuleId =
                     x.NavigationModuleId,
@@ -1009,7 +1021,7 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
 
         return true;
     }
-    
+
 
     //===============================================================
     // Exists
@@ -1099,5 +1111,32 @@ private IQueryable<NavigationMenuDto> NavigationMenuQuery()
 
         return
             (lastSequenceNo ?? 0) + 1;
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.InfrastructureControl.NavigationManagement.NavigationMenu>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.Id)
+            .FirstOrDefaultAsync();
     }
 }

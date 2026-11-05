@@ -1,0 +1,56 @@
+/* =====================================================
+   WEBSITE PAGE 1 : HOME
+===================================================== */
+
+:host
+{
+    display:block;
+}
+
+
+/* Sections land below the sticky header when jumped to */
+
+.page > [id]
+{
+    display:block;
+    scroll-margin-top:92px;
+}
+
+
+/* =====================================================
+   RIBBON ZONE : the moving strip runs as the background
+   band; the offer ribbon sits on it, centred vertically.
+===================================================== */
+
+.ribbon-zone
+{
+    display:grid;
+    align-items:center;
+}
+
+
+.ribbon-zone.with-offer
+{
+    padding:34px 0;
+}
+
+
+.ribbon-zone > *
+{
+    grid-area:1 / 1;
+    min-width:0;
+}
+
+
+.ribbon-zone .ribbon-back
+{
+    display:block;
+}
+
+
+.ribbon-zone .ribbon-front
+{
+    position:relative;
+    z-index:1;
+    padding-top:0;
+}

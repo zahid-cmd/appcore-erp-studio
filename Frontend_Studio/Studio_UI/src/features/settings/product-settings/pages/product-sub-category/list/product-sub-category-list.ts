@@ -38,7 +38,8 @@ import
     forkJoin,
     of,
     timer,
-    throwError
+    throwError,
+    Subscription
 }
 from 'rxjs';
 
@@ -59,6 +60,18 @@ import
     ProductSubCategory
 }
 from '../../../models/product-sub-category.model';
+
+import
+{
+    ProductSubCategoryPageQuery
+}
+from '../../../models/product-sub-category.model';
+
+import
+{
+    PagedResult
+}
+from '../../../../../../shared/paging/paged-result.model';
 
 //===============================================================
 // Shared Components
@@ -327,13 +340,40 @@ implements OnInit, OnDestroy
         ProductSubCategoryRow[] =
         [];
 
-    filteredProductSubCategories:
-        ProductSubCategoryRow[] =
-        [];
+    // Rows matching the filters and search, all pages
+    totalRecords:
+        number =
+        0;
 
-    pagedProductSubCategories:
-        ProductSubCategoryRow[] =
-        [];
+    // Summary line below the canvas (filled by each load)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
+    private loadSubscription?:
+        Subscription;
+
+    // '' = the server's default sort
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer?:
+        number;
+
+    private readonly SEARCH_DELAY_MS:
+        number =
+        300;
+
+
 
     //===========================================================
     // Status Filter
@@ -358,6 +398,23 @@ implements OnInit, OnDestroy
 
     selectedStatus:
         boolean | null =
+        null;
+
+    //===========================================================
+    // Product Category Filter
+    //===========================================================
+
+    categoryFilterItems:
+        any[] =
+    [
+        {
+            label:'All Categories',
+            value:null
+        }
+    ];
+
+    selectedCategoryId:
+        number | null =
         null;
 
     //===========================================================
@@ -496,7 +553,68 @@ implements OnInit, OnDestroy
     ngOnInit():
         void
     {
+        this.loadCategoryFilter();
+
         this.loadItems();
+    }
+
+    //===========================================================
+    // Product Category Filter Items
+    //===========================================================
+
+    private loadCategoryFilter():
+        void
+    {
+        this.productCategoryService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    list:
+                        any[]
+                ):
+                    void =>
+                {
+                    const items =
+                        (Array.isArray(list) ? list : [])
+                            .map(
+                                x =>
+                                ({
+                                    label:
+                                        `${x?.CategoryCode ?? x?.categoryCode ?? ''} - ${x?.CategoryName ?? x?.categoryName ?? ''}`,
+                                    value:
+                                        Number(x?.ProductCategoryId ?? x?.productCategoryId ?? 0)
+                                })
+                            )
+                            .filter(x => x.value > 0)
+                            .sort((a, b) => a.label.localeCompare(b.label));
+
+                    this.categoryFilterItems =
+                    [
+                        {
+                            label:'All Categories',
+                            value:null
+                        },
+                        ...items
+                    ];
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Product Category Filter Error',
+                        error
+                    );
+                }
+            });
     }
 
     //===========================================================
@@ -506,6 +624,10 @@ implements OnInit, OnDestroy
     ngOnDestroy():
         void
     {
+        this.clearSearchTimer();
+
+        this.loadSubscription?.unsubscribe();
+
         this.clearProgressTimer();
 
         if
@@ -552,9 +674,16 @@ implements OnInit, OnDestroy
                     ??
                     0
                 ),
+
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
             ProductCategoryId:
                 productCategoryId,
             ProductCategoryName:
+                item?.ProductCategoryName
+                ??
+                item?.productCategoryName
+                ??
                 categoryNames.get(
                     productCategoryId
                 )
@@ -693,123 +822,179 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Load Items
+    // Load Items (one page from the server)
+    //
+    // The server filters, searches, sorts and pages; the answer
+    // also carries the summary counts.
     //===========================================================
 
     loadItems():
         void
     {
+        this.loadSubscription?.unsubscribe();
+
         this.loading =
             true;
 
         this.loadFailed =
             false;
 
-        forkJoin
-        ({
-            subCategories:
-                this.productSubCategoryService.getAll(),
+        this.cdr.detectChanges();
 
-            categories:
-                this.productCategoryService
-                    .getAll()
-                    .pipe
+        const query:
+            ProductSubCategoryPageQuery =
+        {
+            page:
+                this.currentPage,
+
+            pageSize:
+                this.pageSize,
+
+            search:
+                this.searchText.trim(),
+
+            sort:
+                this.sortField,
+
+            dir:
+                this.sortDirection,
+
+            status:
+                this.selectedStatus,
+
+            productCategoryId:
+                this.selectedCategoryId
+        };
+
+        this.loadSubscription =
+            this.productSubCategoryService
+                .getPaged(
+                    query
+                )
+                .subscribe
+                ({
+                    next:
                     (
-                        catchError
+                        response:
+                            PagedResult<any>
+                    ):
+                        void =>
+                    {
+                        this.productSubCategories =
+                            response.items.map(item => this.normalizeProductSubCategory(item, new Map<number, string>()));
+
+                        this.totalRecords =
+                            response.totalCount;
+
+                        // The server pulls the page back when rows got
+                        // fewer (e.g. the last row of a page deleted)
+                        this.currentPage =
+                            response.page;
+
+                        this.updateSummary(
+                            response.counts
+                        );
+
+                        this.loading =
+                            false;
+
+                        this.cdr.detectChanges();
+                    },
+
+                    error:
+                    (
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error
                         (
-                            error =>
-                            {
-                                console.error(
-                                    'Load Product Categories Error:',
-                                    error
-                                );
+                            'Load Product Sub Categories Error:',
+                            error
+                        );
 
-                                return of([]);
-                            }
-                        )
-                    )
-        })
-        .subscribe
-        ({
-            next:
+                        this.productSubCategories =
+                            [];
+
+                        this.totalRecords =
+                            0;
+
+                        this.loading =
+                            false;
+
+                        this.loadFailed =
+                            true;
+
+                        this.toast.error
+                        (
+                            'Load Failed',
+                            'Unable to load product sub categories.'
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+                });
+    }
+
+    //===========================================================
+    // Reload from page 1 (a filter, search, sort or page size
+    // changed)
+    //===========================================================
+
+    private reload():
+        void
+    {
+        this.currentPage =
+            1;
+
+        this.loadItems();
+    }
+
+    //===========================================================
+    // Summary Line (below the canvas)
+    //===========================================================
+
+    private updateSummary
+    (
+        counts:
+            Record<string, number>
+    ):
+        void
+    {
+        const value =
             (
-                result:
-                {
-                    subCategories:
-                        any;
-                    categories:
-                        any;
-                }
+                key:
+                    string
             ):
-                void =>
-            {
-                const categoryNames =
-                    this.buildCategoryNameMap(
-                        result.categories
-                    );
+                string =>
+                    Number(counts[key] ?? 0).toLocaleString('en-US');
 
-                const list:
-                    any[] =
-                    Array.isArray(result.subCategories)
-                        ? result.subCategories
-                        : [];
+        this.summaryItems =
+        [
+            { label:'Total', value:value('Total'), tone:'' },
+            { label:'Active', value:value('Active'), tone:'ok' },
+            { label:'Inactive', value:value('Inactive'), tone:'bad' }
+        ];
+    }
 
-                this.productSubCategories =
-                    list.map
-                    (
-                        item =>
-                            this.normalizeProductSubCategory(
-                                item,
-                                categoryNames
-                            )
-                    );
+    //===========================================================
+    // Product Category Filter Change
+    //===========================================================
 
-                this.applyFilters();
+    onCategoryFilterChange
+    (
+        value:
+            number | null
+    ):
+        void
+    {
+        this.selectedCategoryId =
+            Number(value) > 0
+                ? Number(value)
+                : null;
 
-                this.loading =
-                    false;
-
-                this.loadFailed =
-                    false;
-
-                this.cdr.detectChanges();
-            },
-
-            error:
-            (
-                error:
-                    unknown
-            ):
-                void =>
-            {
-                console.error(
-                    'Load Product Sub Categories Error:',
-                    error
-                );
-
-                this.productSubCategories =
-                    [];
-
-                this.filteredProductSubCategories =
-                    [];
-
-                this.pagedProductSubCategories =
-                    [];
-
-                this.loading =
-                    false;
-
-                this.loadFailed =
-                    true;
-
-                this.toast.error(
-                    'Load Failed',
-                    'Unable to load product sub categories.'
-                );
-
-                this.cdr.detectChanges();
-            }
-        });
+        this.reload();
     }
 
     //===========================================================
@@ -826,85 +1011,11 @@ implements OnInit, OnDestroy
         this.selectedStatus =
             value;
 
-        this.applyFilters();
+        this.reload();
     }
 
     //===========================================================
-    // Apply Filters
-    //===========================================================
-
-    applyFilters():
-        void
-    {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredProductSubCategories =
-            this.productSubCategories.filter
-            (
-                (
-                    item:
-                        ProductSubCategoryRow
-                ):
-                    boolean =>
-                {
-                    const statusMatches =
-                        this.selectedStatus === null
-                        ||
-                        item.IsActive ===
-                        this.selectedStatus;
-
-                    if
-                    (
-                        !keyword
-                    )
-                    {
-                        return statusMatches;
-                    }
-
-                    const searchable:
-                        string[] =
-                    [
-                        item.SubCategoryCode ?? '',
-                        item.SubCategoryName ?? '',
-                        item.ProductCategoryName ?? '',
-                        item.InventorySubGroupCode ?? '',
-                        item.InventorySubGroupName ?? '',
-                        item.WipSubGroupCode ?? '',
-                        item.WipSubGroupName ?? '',
-                        item.CogsSubGroupCode ?? '',
-                        item.CogsSubGroupName ?? '',
-                        item.Remarks ?? '',
-                        item.IsActive
-                            ? 'active'
-                            : 'inactive'
-                    ];
-
-                    const keywordMatches =
-                        searchable.some
-                        (
-                            value =>
-                                value
-                                    .toLowerCase()
-                                    .includes(keyword)
-                        );
-
-                    return keywordMatches
-                        &&
-                        statusMatches;
-                }
-            );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
-    }
-
-    //===========================================================
-    // Search
+    // Search (asks the server 300 ms after the last key)
     //===========================================================
 
     onSearch
@@ -919,11 +1030,41 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        this.clearSearchTimer();
+
+        this.searchTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.reload();
+                },
+
+                this.SEARCH_DELAY_MS
+            );
+    }
+
+    private clearSearchTimer():
+        void
+    {
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
+
+            this.searchTimer =
+                undefined;
+        }
     }
 
     //===========================================================
-    // Sort
+    // Sort (the server sorts)
     //===========================================================
 
     onSort
@@ -932,105 +1073,22 @@ implements OnInit, OnDestroy
         {
             field:
                 string;
+
             direction:
                 'asc' | 'desc';
         }
     ):
         void
     {
-        this.filteredProductSubCategories =
-        [
-            ...this.filteredProductSubCategories
-        ];
+        this.sortField =
+            event.field;
 
-        this.filteredProductSubCategories.sort
-        (
-            (
-                a:
-                    ProductSubCategoryRow,
-                b:
-                    ProductSubCategoryRow
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof ProductSubCategoryRow
-                    ];
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof ProductSubCategoryRow
-                    ];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ? valueA.localeCompare(valueB)
-                        : valueB.localeCompare(valueA);
-                }
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ? -1
-                        : 1;
-                }
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ? 1
-                        : -1;
-                }
-
-                return 0;
-            }
-        );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1040,13 +1098,7 @@ implements OnInit, OnDestroy
     refresh():
         void
     {
-        if
-        (
-            this.isProcessing
-        )
-        {
-            return;
-        }
+        this.clearSearchTimer();
 
         this.searchText =
             '';
@@ -1054,39 +1106,21 @@ implements OnInit, OnDestroy
         this.selectedStatus =
             null;
 
-        this.currentPage =
-            1;
+        this.sortField =
+            '';
 
-        this.loadItems();
+        // Filters back to "All"
+        this.selectedCategoryId =
+            null;
+
+        this.sortDirection =
+            'asc';
+
+        this.reload();
     }
 
     //===========================================================
-    // Update Pagination
-    //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-        this.pagedProductSubCategories =
-        [
-            ...this.filteredProductSubCategories.slice
-            (
-                start,
-                start + this.pageSize
-            )
-        ];
-    }
-
-    //===========================================================
-    // Page Change
+    // Pagination
     //===========================================================
 
     onPageChange
@@ -1099,12 +1133,8 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
-
-    //===========================================================
-    // Page Size Change
-    //===========================================================
 
     onPageSizeChange
     (
@@ -1116,10 +1146,7 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1172,7 +1199,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.ProductSubCategoryId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1204,7 +1231,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.ProductSubCategoryId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1277,7 +1304,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.productSubCategoryService.delete(
-                item.ProductSubCategoryId
+                item.PublicId ?? ''
             ),
             this.minimumActionDurationMs
         )
@@ -1892,4 +1919,4 @@ implements OnInit, OnDestroy
         this.historyOpened =
             false;
     }
-}
+}

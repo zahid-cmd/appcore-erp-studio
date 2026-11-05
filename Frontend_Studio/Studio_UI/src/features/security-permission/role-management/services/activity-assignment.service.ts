@@ -109,7 +109,7 @@ export class ActivityAssignmentService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<ActivityAssignment>
     {
@@ -268,7 +268,7 @@ export class ActivityAssignmentService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

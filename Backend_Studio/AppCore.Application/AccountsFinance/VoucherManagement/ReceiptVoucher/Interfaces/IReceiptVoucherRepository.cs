@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.Paging;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -16,6 +23,10 @@ public interface IReceiptVoucherRepository
     //===========================================================
 
     Task<List<ReceiptVoucherDto>> GetAllAsync();
+
+    // The list page : one page, filtered, sorted, with the counts
+    Task<PagedResult<ReceiptVoucherDto>> GetPagedAsync(
+        VoucherPageRequest request);
 
     Task<ReceiptVoucherDto?> GetByIdAsync(
         long id);
@@ -69,9 +80,32 @@ public interface IReceiptVoucherRepository
 
 
     //===========================================================
+    // Receipts of other documents (Sales Invoices : the Payment
+    // Desk rows). Same rules and posting as the RV page; run in
+    // the caller's transaction when there is one.
+    //===========================================================
+
+    // Checks the rows only (nothing saved)
+    Task ValidateAsync(
+        CreateReceiptVoucherDto dto);
+
+    // Saves, approves and posts at once; referenceNo = the
+    // document number (Reference No of the journal rows)
+    Task<ReceiptVoucherSavedDto> CreatePostedAsync(
+        CreateReceiptVoucherDto dto,
+        string referenceNo,
+        long userId);
+
+
+    //===========================================================
     // Exists
     //===========================================================
 
     Task<bool> ExistsAsync(
         long id);
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

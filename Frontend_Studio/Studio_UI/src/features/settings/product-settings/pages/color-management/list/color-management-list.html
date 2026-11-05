@@ -101,7 +101,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedCompanies"
+                [rows]="companies"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -131,7 +131,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredCompanies.length"
+            [totalRecords]="totalRecords"
 
             [currentPage]="currentPage"
 
@@ -144,6 +144,32 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (search)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="clr-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="clr-summary-item">
+                    <span class="clr-summary-label">{{ item.label }}</span>
+                    <b
+                        class="clr-summary-value"
+                        [class.clr-ok]="item.tone === 'ok'"
+                        [class.clr-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="clr-summary-note">
+                Matching the search
+            </span>
+
+        </div>
+    }
 
 
 

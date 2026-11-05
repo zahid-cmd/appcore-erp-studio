@@ -1700,4 +1700,49 @@ public static class CodeGenerator
             ? sequence
             : 0;
     }
+
+
+    //===============================================================
+    // ENQUIRY MANAGEMENT : Enquiry No
+    //
+    //   Sales Enquiries     ENQ-SAL-MM-YYYY-00001
+    //   Service Enquiries   ENQ-SER-MM-YYYY-00001
+    //
+    // Manual section, OUTSIDE any "// AUTO-BEGIN ... // AUTO-END"
+    // block. One series per type and calendar month, the same for
+    // every branch; it restarts at 00001 every month. The
+    // repository finds the month's highest number (deleted
+    // enquiries included) and passes highest + 1.
+    //===============================================================
+
+    public static string GenerateEnquiryNo(
+        string enquiryType,
+        int year,
+        int month,
+        int sequenceNo)
+    {
+        string type =
+            (enquiryType ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (type != "SAL" && type != "SER")
+        {
+            throw new ArgumentException(
+                "Enquiry type must be SAL (sales) or SER (service).");
+        }
+
+        if (year < 2000 || year > 9999 || month < 1 || month > 12)
+        {
+            throw new ArgumentException(
+                "Invalid enquiry month.");
+        }
+
+        if (sequenceNo < 1 || sequenceNo > 99999)
+        {
+            throw new ArgumentException(
+                "Enquiry sequence number must be from 1 to 99999 in a month.");
+        }
+
+        return $"ENQ-{type}-{month:D2}-{year:D4}-{sequenceNo:D5}";
+    }
+
 }

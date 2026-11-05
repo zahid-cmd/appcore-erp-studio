@@ -5,15 +5,17 @@
 //   1. Parent Information   : Category, Sub Category, Brand, Remarks
 //   2. Part Information     : Part Number, Part Name, Unit, Product Code
 //   3. Ledgers & Status     : INV / WIP / COGS Ledger Codes, Status
-//   4. Stock & Storage      : Re-order Level, Red Level, Storage Locations
+//   4. Stock & Storage      : Re-order / Red / Max Level, Movement
+//                             Class, Storage Locations (bins)
 //
 // Storage locations are added from the page toolbar (Add Location)
 // in the shared Form Modal. No image on this form.
 //
-// A shelf holds ONE item (spare part OR accessory), once : shelves
-// already linked to another item, or to another row of this part,
-// are not offered in the Shelf list (the server checks it again on
-// save).
+// A BIN holds ONE item (spare part OR accessory) : the location
+// modal (Warehouse → Rack → Shelf → Bin) offers only free bins,
+// this item's own bin included (rack map from Rack Management;
+// the server checks it again on save). Movement Class (Stock &
+// Storage) feeds the allocation plan.
 //===============================================================
 // Imports
 //===============================================================
@@ -55,9 +57,7 @@ import
     throwError,
     delayWhen,
     catchError,
-    switchMap,
-    forkJoin,
-    of
+    switchMap
 }
 from 'rxjs';
 
@@ -215,12 +215,6 @@ from '../../../services/spare-parts.service';
 
 import
 {
-    AccessoriesService
-}
-from '../../../services/accessories.service';
-
-import
-{
     ProductCategoryService
 }
 from '../../../services/product-category.service';
@@ -239,9 +233,25 @@ from '../../../services/rack-management.service';
 
 import
 {
-    shelfLabel
+    RackMap
 }
 from '../../../models/rack-management.model';
+
+import
+{
+    binCode,
+
+    shelfLabel,
+
+    locationText,
+
+    movementClassInfo,
+
+    MOVEMENT_CLASS_OPTIONS,
+
+    DEFAULT_MOVEMENT_CLASS
+}
+from '../../../../../../shared/inventory/storage-labels';
 
 import
 {
@@ -361,11 +371,6 @@ implements OnInit, OnDestroy
         inject(SparePartsService);
 
 
-    // Shelves held by accessories (one item per shelf)
-    private readonly accessoriesService =
-        inject(AccessoriesService);
-
-
     private readonly productCategoryService =
         inject(ProductCategoryService);
 
@@ -413,9 +418,10 @@ implements OnInit, OnDestroy
         'add';
 
 
+    // The part's Public Id (from the link)
     entityId:
-        number =
-        0;
+        string =
+        '';
 
 
 
@@ -559,11 +565,11 @@ implements OnInit, OnDestroy
     [];
 
 
-    // Shelves held by OTHER items (spare parts / accessories) :
-    // "rackId:shelfNo" → "SP-001-001-00001 - Brake Pad"
-    private takenShelves:
-        Map<string, string> =
-        new Map<string, string>();
+    // Rack maps of the warehouses opened in the modal :
+    // WarehouseId → racks → shelves → bins (with holders)
+    private warehouseMaps:
+        Map<number, RackMap[]> =
+        new Map<number, RackMap[]>();
 
 
     locationLabels:
@@ -571,6 +577,12 @@ implements OnInit, OnDestroy
             warehouse: string;
             rack: string;
             shelf: string;
+
+            // A-03-05
+            bin: string;
+
+            // "Rack A · SLF-A-03 · Bin 05"
+            title: string;
 
             // The warehouse's branch no longer runs the business
             revoked: boolean;
@@ -615,7 +627,8 @@ implements OnInit, OnDestroy
     {
         WarehouseId:0,
         RackManagementId:0,
-        ShelfNumber:0
+        ShelfNumber:0,
+        BinNumber:0
     };
 
 
@@ -632,6 +645,38 @@ implements OnInit, OnDestroy
     draftShelfItems:
         any[] =
     [];
+
+
+    draftBinItems:
+        any[] =
+    [];
+
+
+    // The warehouse's rack map is loading
+    draftLoading:
+        boolean =
+        false;
+
+
+    // Shown in the modal footer (no toast)
+    draftError:
+        string =
+        '';
+
+
+
+    //===========================================================
+    // Movement Class (Stock & Storage) : stable items
+    //===========================================================
+
+    readonly movementClassItems:
+        any[] =
+        MOVEMENT_CLASS_OPTIONS.map(
+            item =>
+            ({
+                ...item
+            })
+        );
 
 
 
@@ -693,6 +738,8 @@ implements OnInit, OnDestroy
     {
         SparePartId:0,
 
+        PublicId:'',
+
         ProductCategoryId:0,
 
         ProductSubCategoryId:0,
@@ -717,6 +764,8 @@ implements OnInit, OnDestroy
 
         MaxStockLevel:0,
 
+        MovementClass:DEFAULT_MOVEMENT_CLASS,
+
         // Not used on this form (kept for the model)
         ImagePath:'',
 
@@ -724,7 +773,9 @@ implements OnInit, OnDestroy
 
         IsActive:true,
 
-        Locations:[]
+        Locations:[],
+
+        FitSubCategoryIds:[]
     };
 
 
@@ -887,7 +938,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            id
         )
         {
             this.entityId =
@@ -915,7 +966,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -927,15 +978,14 @@ implements OnInit, OnDestroy
             currentRoute
         )
         {
+            // The Public Id (uuid) of the link
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
 
             if
             (
-                id > 0
+                id
             )
             {
                 return id;
@@ -947,7 +997,7 @@ implements OnInit, OnDestroy
         }
 
 
-        return 0;
+        return '';
     }
 
 
@@ -962,6 +1012,8 @@ implements OnInit, OnDestroy
         this.entity =
         {
             SparePartId:0,
+
+            PublicId:'',
 
             ProductCategoryId:0,
 
@@ -987,13 +1039,17 @@ implements OnInit, OnDestroy
 
             MaxStockLevel:0,
 
+            MovementClass:DEFAULT_MOVEMENT_CLASS,
+
             ImagePath:'',
 
             Remarks:'',
 
             IsActive:true,
 
-            Locations:[]
+            Locations:[],
+
+            FitSubCategoryIds:[]
         };
 
 
@@ -1128,6 +1184,9 @@ implements OnInit, OnDestroy
 
         this.entity.CogsLedgerCode =
             defaults?.CogsLedgerCode ?? '';
+
+        this.entity.SalesLedgerCode =
+            defaults?.SalesLedgerCode ?? '';
 
         this.checkForChanges();
 
@@ -1264,9 +1323,6 @@ implements OnInit, OnDestroy
             });
 
 
-        this.loadTakenShelves();
-
-
         this.businessConfigurationService
             .getAllowedWarehouses(
                 'Spare Parts'
@@ -1354,215 +1410,228 @@ implements OnInit, OnDestroy
     //===========================================================
     // Storage Locations
     //
-    // One row per warehouse : Warehouse → Rack → Shelf.
-    // Added / edited in the modal; warehouses already used by
-    // another row are not offered. Inactive warehouses / racks
-    // only show when already chosen.
+    // One row per warehouse : Warehouse → Rack → Shelf → Bin.
+    // The bin is the location and holds ONE item (spare part OR
+    // accessory). The modal reads the warehouse's rack map
+    // (GET rack-management/bins) : only free bins are offered;
+    // this item's own saved bin counts as free. Inactive racks
+    // only show when already chosen. The server checks it all
+    // again on save.
     //===========================================================
 
     //-----------------------------------------------------------
-    // Shelves already used by other items
-    //
-    // A shelf holds ONE item : a spare part OR an accessory. Read
-    // from both lists (each item carries its locations). This
-    // spare part's own shelves are not counted, so they stay
-    // selectable while editing.
+    // Rack map of a warehouse (cached while the page is open)
     //-----------------------------------------------------------
 
-    private loadTakenShelves():
+    private loadWarehouseMap
+    (
+        warehouseId:
+            number
+    ):
         void
     {
-        forkJoin
-        ({
-            spareParts:
-                this.sparePartsService
-                    .getAll()
-                    .pipe(
-                        catchError(
-                            () =>
-                                of([] as any[])
-                        )
-                    ),
+        if
+        (
+            !(warehouseId > 0)
+            ||
+            this.warehouseMaps.has(warehouseId)
+        )
+        {
+            this.buildDraftOptions();
 
-            accessories:
-                this.accessoriesService
-                    .getAll()
-                    .pipe(
-                        catchError(
-                            () =>
-                                of([] as any[])
-                        )
-                    )
-        })
-        .subscribe
-        ({
-            next:
-            (
-                result:
-                    { spareParts: any[]; accessories: any[] }
-            ): void =>
-            {
-                const taken =
-                    new Map<string, string>();
+            return;
+        }
 
-                const add =
-                    (
-                        item: any,
-                        name: string
-                    ): void =>
-                    {
-                        for
-                        (
-                            const location
-                            of item?.Locations ?? []
-                        )
-                        {
-                            taken.set(
-                                this.shelfKey(
-                                    location.RackManagementId,
-                                    location.ShelfNumber
-                                ),
+        this.draftLoading =
+            true;
 
-                                `${item.ProductCode} - ${name}`
-                            );
-                        }
-                    };
+        this.draftError =
+            '';
 
-                for
-                (
-                    const part
-                    of result.spareParts ?? []
-                )
+        this.buildDraftOptions();
+
+        this.rackManagementService
+            .getWarehouseBins(
+                warehouseId,
                 {
-                    // This spare part's own shelves don't block it
-                    if
-                    (
-                        Number(part?.SparePartId) === Number(this.entityId)
-                    )
-                    {
-                        continue;
-                    }
-
-                    add(
-                        part,
-                        part?.PartName ?? ''
-                    );
+                    sparePartId:
+                        Number(this.entity?.SparePartId) || 0
                 }
-
-                for
+            )
+            .subscribe
+            ({
+                next:
                 (
-                    const accessory
-                    of result.accessories ?? []
-                )
+                    maps:
+                        RackMap[]
+                ): void =>
                 {
-                    add(
-                        accessory,
-                        accessory?.AccessoryName ?? ''
+                    this.warehouseMaps.set(
+                        warehouseId,
+                        maps ?? []
                     );
+
+                    this.draftLoading =
+                        false;
+
+                    this.buildDraftOptions();
+
+                    this.buildLocationOptions();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Load Rack Bins Error',
+                        error
+                    );
+
+                    this.draftLoading =
+                        false;
+
+                    this.draftError =
+                        this.extractMessage(
+                            error,
+                            'The racks of this warehouse could not be loaded.'
+                        );
+
+                    this.buildDraftOptions();
                 }
-
-                this.takenShelves =
-                    taken;
-
-                this.buildDraftOptions();
-            }
-        });
+            });
     }
 
 
-    private shelfKey
+    private findRack
     (
+        warehouseId:
+            number,
         rackId:
-            number | string,
-        shelfNumber:
-            number | string
+            number
     ):
-        string
+        RackMap | undefined
     {
-        return `${Number(rackId)}:${Number(shelfNumber)}`;
+        return (this.warehouseMaps.get(Number(warehouseId)) ?? [])
+            .find(
+                rack =>
+                    rack.RackManagementId === Number(rackId)
+            );
     }
 
 
-    // A shelf is blocked when another item holds it, or
-    // when another row of THIS part already uses it (the row
-    // being edited does not block itself)
-    private isShelfBlocked
+    // A bin is free when nobody holds it (this item's own saved
+    // bin is free) and no other row of this item uses it
+    private isBinFree
     (
-        rackId:
-            number | string,
+        rack:
+            RackMap | undefined,
         shelfNumber:
-            number | string
+            number,
+        binNumber:
+            number
     ):
         boolean
     {
-        const key =
-            this.shelfKey(
-                rackId,
-                shelfNumber
+        const shelf =
+            rack?.Shelves.find(
+                item =>
+                    item.ShelfNumber === Number(shelfNumber)
+            );
+
+        const bin =
+            shelf?.Bins.find(
+                item =>
+                    item.BinNumber === Number(binNumber)
             );
 
         if
         (
-            this.takenShelves.has(
-                key
-            )
+            !rack
+            ||
+            !bin
+            ||
+            !bin.IsFree
         )
         {
-            return true;
+            return false;
         }
 
-        return (this.entity.Locations ?? [])
+        return !(this.entity.Locations ?? [])
             .some(
                 (row, i) =>
                     i !== this.editingLocationIndex
                     &&
-                    this.shelfKey(
-                        row.RackManagementId,
-                        row.ShelfNumber
-                    ) === key
+                    Number(row.RackManagementId) === rack.RackManagementId
+                    &&
+                    Number(row.ShelfNumber) === Number(shelfNumber)
+                    &&
+                    (Number(row.BinNumber) || 1) === Number(binNumber)
             );
     }
 
 
-    // Free shelves of a rack (1 … ShelfCount minus the blocked ones)
-    private freeShelfCount
+    private freeBinsOfShelf
     (
         rack:
-            any
+            RackMap | undefined,
+        shelfNumber:
+            number
     ):
-        number
+        number[]
     {
-        let free =
-            0;
+        const shelf =
+            rack?.Shelves.find(
+                item =>
+                    item.ShelfNumber === Number(shelfNumber)
+            );
 
-        for
-        (
-            let shelf = 1;
-            shelf <= Number(rack?.ShelfCount ?? 0);
-            shelf++
-        )
-        {
-            if
-            (
-                !this.isShelfBlocked(
-                    rack.RackManagementId,
-                    shelf
-                )
+        return (shelf?.Bins ?? [])
+            .map(
+                bin =>
+                    bin.BinNumber
             )
-            {
-                free++;
-            }
-        }
-
-        return free;
+            .filter(
+                binNumber =>
+                    this.isBinFree(
+                        rack,
+                        shelfNumber,
+                        binNumber
+                    )
+            );
     }
 
 
-    // Modal footer : the chosen rack has no free shelf
+    private freeBinCount
+    (
+        rack:
+            RackMap
+    ):
+        number
+    {
+        return rack.Shelves
+            .reduce(
+                (sum, shelf) =>
+                    sum
+                    +
+                    this.freeBinsOfShelf(
+                        rack,
+                        shelf.ShelfNumber
+                    ).length,
+                0
+            );
+    }
+
+
+    // Modal footer : the chosen rack / shelf has no free bin
     get draftRackFull():
         boolean
     {
         return Number(this.locationDraft.RackManagementId) > 0
+            &&
+            !this.draftLoading
             &&
             this.draftShelfItems.length === 0;
     }
@@ -1584,48 +1653,98 @@ implements OnInit, OnDestroy
             &&
             Number(this.locationDraft.RackManagementId) > 0
             &&
-            Number(this.locationDraft.ShelfNumber) > 0;
+            Number(this.locationDraft.ShelfNumber) > 0
+            &&
+            Number(this.locationDraft.BinNumber) > 0;
     }
 
 
-    // Modal preview of the picked place (labels of the chosen items)
+    // Modal preview of the picked place
     get draftPreview():
-        { warehouse: string; rack: string; shelf: string }
+        { warehouse: string; rack: string; shelf: string; bin: string; outsidePlan: string }
     {
-        const labelOf =
-            (
-                items: any[],
-                value: number
-            ):
-                string =>
-                String(
-                    items.find(
-                        item =>
-                            Number(item?.value) === Number(value)
-                    )?.label
-                    ??
-                    ''
-                );
+        const draft =
+            this.locationDraft;
+
+        const rack =
+            this.findRack(
+                draft.WarehouseId,
+                draft.RackManagementId
+            );
+
+        const warehouse =
+            this.warehouses.find(
+                item =>
+                    Number(item?.WarehouseId) === Number(draft.WarehouseId)
+            );
 
         return {
             warehouse:
-                labelOf(
-                    this.draftWarehouseItems,
-                    this.locationDraft.WarehouseId
-                ),
+                warehouse
+                    ? `${warehouse.WarehouseCode} - ${warehouse.WarehouseName}`
+                    : '',
 
             rack:
-                labelOf(
-                    this.draftRackItems,
-                    this.locationDraft.RackManagementId
-                ),
+                rack
+                    ? `${rack.RackCode} - ${rack.RackName}`
+                    : '',
 
             shelf:
-                labelOf(
-                    this.draftShelfItems,
-                    this.locationDraft.ShelfNumber
+                shelfLabel(
+                    rack?.RackName,
+                    Number(draft.ShelfNumber)
+                ),
+
+            bin:
+                binCode(
+                    rack?.RackName,
+                    Number(draft.ShelfNumber),
+                    Number(draft.BinNumber)
+                ),
+
+            outsidePlan:
+                this.outsidePlanNote(
+                    rack
                 )
         };
+    }
+
+
+    // "Outside the rack plan" : the rack is assigned to another
+    // category / sub category (a hint only; placement is allowed)
+    private outsidePlanNote
+    (
+        rack:
+            RackMap | undefined
+    ):
+        string
+    {
+        if
+        (
+            !rack
+            ||
+            rack.IsGeneral
+            ||
+            !rack.ProductCategoryId
+        )
+        {
+            return '';
+        }
+
+        const fits =
+            rack.ProductCategoryId === Number(this.entity.ProductCategoryId)
+            &&
+            (
+                rack.SubCategoryIds.length === 0
+                ||
+                rack.SubCategoryIds.includes(
+                    Number(this.entity.ProductSubCategoryId)
+                )
+            );
+
+        return fits
+            ? ''
+            : `Outside the rack plan : ${rack.RackName} is assigned to ${rack.AssignmentText || rack.CategoryName}.`;
     }
 
 
@@ -1650,8 +1769,12 @@ implements OnInit, OnDestroy
         {
             WarehouseId:0,
             RackManagementId:0,
-            ShelfNumber:0
+            ShelfNumber:0,
+            BinNumber:0
         };
+
+        this.draftError =
+            '';
 
         this.buildDraftOptions();
 
@@ -1713,13 +1836,21 @@ implements OnInit, OnDestroy
                 Number(row.RackManagementId),
 
             ShelfNumber:
-                Number(row.ShelfNumber)
+                Number(row.ShelfNumber),
+
+            BinNumber:
+                Number(row.BinNumber) || 1
         };
 
-        this.buildDraftOptions();
+        this.draftError =
+            '';
 
         this.locationModalOpened =
             true;
+
+        this.loadWarehouseMap(
+            Number(row.WarehouseId)
+        );
 
         this.cdr.detectChanges();
     }
@@ -1734,6 +1865,9 @@ implements OnInit, OnDestroy
         this.editingLocationIndex =
             -1;
 
+        this.draftError =
+            '';
+
         this.cdr.detectChanges();
     }
 
@@ -1745,17 +1879,36 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.locationDraft.WarehouseId =
+        const warehouseId =
             Number(this.unwrapValue(value) ?? 0);
 
-        // A new warehouse clears the rack and shelf
+        if
+        (
+            warehouseId === Number(this.locationDraft.WarehouseId)
+        )
+        {
+            return;
+        }
+
+        this.locationDraft.WarehouseId =
+            warehouseId;
+
+        // A new warehouse clears the rack, shelf and bin
         this.locationDraft.RackManagementId =
             0;
 
         this.locationDraft.ShelfNumber =
             0;
 
-        this.buildDraftOptions();
+        this.locationDraft.BinNumber =
+            0;
+
+        this.draftError =
+            '';
+
+        this.loadWarehouseMap(
+            warehouseId
+        );
     }
 
 
@@ -1766,10 +1919,24 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.locationDraft.RackManagementId =
+        const rackId =
             Number(this.unwrapValue(value) ?? 0);
 
+        if
+        (
+            rackId === Number(this.locationDraft.RackManagementId)
+        )
+        {
+            return;
+        }
+
+        this.locationDraft.RackManagementId =
+            rackId;
+
         this.locationDraft.ShelfNumber =
+            0;
+
+        this.locationDraft.BinNumber =
             0;
 
         this.buildDraftOptions();
@@ -1783,7 +1950,47 @@ implements OnInit, OnDestroy
     ):
         void
     {
+        const shelfNumber =
+            Number(this.unwrapValue(value) ?? 0);
+
+        if
+        (
+            shelfNumber === Number(this.locationDraft.ShelfNumber)
+        )
+        {
+            return;
+        }
+
         this.locationDraft.ShelfNumber =
+            shelfNumber;
+
+        // The first free bin of the shelf is proposed
+        const rack =
+            this.findRack(
+                this.locationDraft.WarehouseId,
+                this.locationDraft.RackManagementId
+            );
+
+        this.locationDraft.BinNumber =
+            this.freeBinsOfShelf(
+                rack,
+                shelfNumber
+            )[0]
+            ??
+            0;
+
+        this.buildDraftOptions();
+    }
+
+
+    onDraftBinChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.locationDraft.BinNumber =
             Number(this.unwrapValue(value) ?? 0);
 
         this.cdr.detectChanges();
@@ -1799,28 +2006,33 @@ implements OnInit, OnDestroy
             !this.canSaveLocation
         )
         {
-            this.toast.error(
-                'Validation',
+            this.draftError =
+                'Select the warehouse, rack, shelf and bin.';
 
-                'Select the warehouse, rack and shelf.'
-            );
+            this.cdr.detectChanges();
 
             return;
         }
 
+        const rack =
+            this.findRack(
+                this.locationDraft.WarehouseId,
+                this.locationDraft.RackManagementId
+            );
+
         if
         (
-            this.isShelfBlocked(
-                this.locationDraft.RackManagementId,
-                this.locationDraft.ShelfNumber
+            !this.isBinFree(
+                rack,
+                this.locationDraft.ShelfNumber,
+                this.locationDraft.BinNumber
             )
         )
         {
-            this.toast.error(
-                'Validation',
+            this.draftError =
+                'This bin is already used. Choose another bin.';
 
-                'This shelf is already used. Choose another shelf.'
-            );
+            this.cdr.detectChanges();
 
             return;
         }
@@ -1835,7 +2047,10 @@ implements OnInit, OnDestroy
                 Number(this.locationDraft.RackManagementId),
 
             ShelfNumber:
-                Number(this.locationDraft.ShelfNumber)
+                Number(this.locationDraft.ShelfNumber),
+
+            BinNumber:
+                Number(this.locationDraft.BinNumber)
         };
 
         const rows =
@@ -1954,74 +2169,87 @@ implements OnInit, OnDestroy
                     })
                 );
 
+        // Racks of the warehouse (zone priority order from the
+        // server); inactive only when already chosen
         const warehouseRacks =
-            this.racks
+            (this.warehouseMaps.get(Number(draft.WarehouseId)) ?? [])
                 .filter(
-                    item =>
-                        Number(item?.WarehouseId) === Number(draft.WarehouseId)
-                        &&
-                        (
-                            Boolean(item?.IsActive)
-                            ||
-                            Number(item?.RackManagementId) === Number(draft.RackManagementId)
-                        )
+                    rack =>
+                        rack.IsActive
+                        ||
+                        rack.RackManagementId === Number(draft.RackManagementId)
                 );
 
-        // A rack with no free shelf is still listed, marked (Full)
+        // A rack with no free bin is still listed, marked (Full)
         this.draftRackItems =
             warehouseRacks
                 .map(
-                    item =>
-                    ({
-                        label:
-                            this.freeShelfCount(item) > 0
-                                ? `${item.RackCode} - ${item.RackName}`
-                                : `${item.RackCode} - ${item.RackName} (Full)`,
+                    rack =>
+                    {
+                        const free =
+                            this.freeBinCount(
+                                rack
+                            );
 
-                        value:
-                            Number(item.RackManagementId)
-                    })
+                        const zone =
+                            rack.ZoneCode
+                                ? ` · ${rack.ZoneCode}`
+                                : '';
+
+                        return {
+                            label:
+                                free > 0
+                                    ? `${rack.RackCode} - ${rack.RackName}${zone} (${free} free)`
+                                    : `${rack.RackCode} - ${rack.RackName}${zone} (Full)`,
+
+                            value:
+                                rack.RackManagementId
+                        };
+                    }
                 );
 
         const rack =
             warehouseRacks.find(
                 item =>
-                    Number(item?.RackManagementId) === Number(draft.RackManagementId)
+                    item.RackManagementId === Number(draft.RackManagementId)
             );
 
-        // SLF-A-01 … SLF-A-nn, without the shelves held by other
-        // spare parts or by this part's other rows
+        // SLF-A-01 … : shelves with at least one free bin
         this.draftShelfItems =
-            Array.from(
-                { length: Number(rack?.ShelfCount ?? 0) },
-                (_, i) =>
-                    i + 1
-            )
-            .filter(
-                shelf =>
-                    !this.isShelfBlocked(
-                        Number(draft.RackManagementId),
-                        shelf
-                    )
-            )
-            .map(
-                shelf =>
-                ({
-                    label:
-                        shelfLabel(
-                            rack?.RackName,
-                            shelf
-                        ),
+            (rack?.Shelves ?? [])
+                .map(
+                    shelf =>
+                    ({
+                        shelf,
 
-                    value:
-                        shelf
-                })
-            );
+                        free:
+                            this.freeBinsOfShelf(
+                                rack,
+                                shelf.ShelfNumber
+                            ).length
+                    })
+                )
+                .filter(
+                    item =>
+                        item.free > 0
+                )
+                .map(
+                    item =>
+                    ({
+                        label:
+                            `${shelfLabel(rack?.RackName, item.shelf.ShelfNumber)}${item.shelf.IsPrime ? ' · Prime' : ''} (${item.free} free)`,
 
-        // A chosen shelf that was taken meanwhile is cleared
+                        value:
+                            item.shelf.ShelfNumber
+                    })
+                );
+
+        // A chosen shelf that is full meanwhile is cleared
         if
         (
             Number(draft.ShelfNumber) > 0
+            &&
+            !this.draftLoading
             &&
             !this.draftShelfItems.some(
                 item =>
@@ -2031,6 +2259,55 @@ implements OnInit, OnDestroy
         {
             draft.ShelfNumber =
                 0;
+
+            draft.BinNumber =
+                0;
+        }
+
+        // A-03-01 … : only the free bins of the chosen shelf
+        // (this item's own bin included)
+        const ownBin =
+            (this.entity.Locations ?? [])[this.editingLocationIndex];
+
+        this.draftBinItems =
+            this.freeBinsOfShelf(
+                rack,
+                Number(draft.ShelfNumber)
+            )
+            .map(
+                binNumber =>
+                ({
+                    label:
+                        ownBin
+                        &&
+                        Number(ownBin.RackManagementId) === Number(draft.RackManagementId)
+                        &&
+                        Number(ownBin.ShelfNumber) === Number(draft.ShelfNumber)
+                        &&
+                        (Number(ownBin.BinNumber) || 1) === binNumber
+                            ? `${binCode(rack?.RackName, Number(draft.ShelfNumber), binNumber)} (current)`
+                            : binCode(rack?.RackName, Number(draft.ShelfNumber), binNumber),
+
+                    value:
+                        binNumber
+                })
+            );
+
+        // A chosen bin that was taken meanwhile is cleared
+        if
+        (
+            Number(draft.BinNumber) > 0
+            &&
+            !this.draftLoading
+            &&
+            !this.draftBinItems.some(
+                item =>
+                    Number(item.value) === Number(draft.BinNumber)
+            )
+        )
+        {
+            draft.BinNumber =
+                0;
         }
 
         this.cdr.detectChanges();
@@ -2038,7 +2315,7 @@ implements OnInit, OnDestroy
 
 
     //-----------------------------------------------------------
-    // Row labels shown on the form (warehouse / rack / shelf)
+    // Row labels shown on the form (warehouse / rack / bin)
     //-----------------------------------------------------------
 
     private buildLocationOptions():
@@ -2059,7 +2336,19 @@ implements OnInit, OnDestroy
                             this.racks.find(
                                 item =>
                                     Number(item?.RackManagementId) === Number(row.RackManagementId)
+                            )
+                            ??
+                            this.findRack(
+                                row.WarehouseId,
+                                row.RackManagementId
                             );
+
+                        const rackName =
+                            rack?.RackName
+                            ??
+                            row.RackName
+                            ??
+                            '';
 
                         return {
                             warehouse:
@@ -2074,8 +2363,22 @@ implements OnInit, OnDestroy
 
                             shelf:
                                 shelfLabel(
-                                    rack?.RackName,
+                                    rackName,
                                     Number(row.ShelfNumber)
+                                ),
+
+                            bin:
+                                binCode(
+                                    rackName,
+                                    Number(row.ShelfNumber),
+                                    Number(row.BinNumber) || 1
+                                ),
+
+                            title:
+                                locationText(
+                                    rackName,
+                                    Number(row.ShelfNumber),
+                                    Number(row.BinNumber) || 1
                                 ),
 
                             revoked:
@@ -2207,6 +2510,10 @@ implements OnInit, OnDestroy
         this.entity.ProductSubCategoryId =
             0;
 
+        // Fits Models belong to the category too
+        this.entity.FitSubCategoryIds =
+            [];
+
         this.buildSubCategoryItems();
 
         this.updateBrandName();
@@ -2233,7 +2540,228 @@ implements OnInit, OnDestroy
                 Number(this.unwrapValue(value) ?? 0);
         }
 
+        // The home model is never a "fits" link
+        this.entity.FitSubCategoryIds =
+            (this.entity.FitSubCategoryIds ?? [])
+                .filter(x => x !== Number(this.entity.ProductSubCategoryId));
+
         this.loadDefaults();
+
+        this.onValueChange();
+    }
+
+
+    //===========================================================
+    // Fits Models : other sub categories (models) of the same
+    // category this item also fits. Its stock, price and ledgers
+    // stay with its home sub category.
+    //===========================================================
+
+    // Bound to the "add" dropdown; cleared after each pick
+    fitPickValue:
+        number | null =
+        null;
+
+    // Cached so the bindings keep the same array between checks
+    private fitCacheKey =
+        '';
+
+    private fitItemsCache:
+        any[] =
+        [];
+
+    private fitChipsCache:
+        { id: number; name: string; title: string; home: boolean }[] =
+        [];
+
+    private refreshFitCache():
+        void
+    {
+        const key =
+            [
+                this.entity.ProductCategoryId,
+                this.entity.ProductSubCategoryId,
+                (this.entity.FitSubCategoryIds ?? []).join(','),
+                this.subCategories.length,
+                (this.entity.Fits ?? []).length
+            ].join('|');
+
+        if
+        (
+            key === this.fitCacheKey
+        )
+        {
+            return;
+        }
+
+        this.fitCacheKey = key;
+
+        this.fitItemsCache = this.buildFitItems();
+
+        this.fitChipsCache = this.buildFitChips();
+    }
+
+    get fitItems():
+        any[]
+    {
+        this.refreshFitCache();
+
+        return this.fitItemsCache;
+    }
+
+    get fitChips():
+        { id: number; name: string; title: string; home: boolean }[]
+    {
+        this.refreshFitCache();
+
+        return this.fitChipsCache;
+    }
+
+    // Sub categories that can still be added
+    private buildFitItems():
+        any[]
+    {
+        const categoryId =
+            Number(this.entity.ProductCategoryId ?? 0);
+
+        const homeId =
+            Number(this.entity.ProductSubCategoryId ?? 0);
+
+        const chosen =
+            new Set<number>(this.entity.FitSubCategoryIds ?? []);
+
+        return categoryId > 0
+            ? this.subCategories
+                .filter(
+                    item =>
+                        Number(item?.ProductCategoryId) === categoryId
+                        &&
+                        Number(item?.ProductSubCategoryId) !== homeId
+                        &&
+                        !chosen.has(Number(item?.ProductSubCategoryId))
+                        &&
+                        Boolean(item?.IsActive)
+                )
+                .map(
+                    item =>
+                    ({
+                        label:
+                            `${item.SubCategoryCode} - ${item.SubCategoryName}`,
+
+                        value:
+                            Number(item.ProductSubCategoryId)
+                    })
+                )
+            : [];
+    }
+
+    // Chips : the home model first, then the linked ones
+    private buildFitChips():
+        { id: number; name: string; title: string; home: boolean }[]
+    {
+        const find =
+            (id: number): any =>
+                this.subCategories.find(x => Number(x?.ProductSubCategoryId) === id)
+                ??
+                (this.entity.Fits ?? []).find(x => Number(x.ProductSubCategoryId) === id);
+
+        const chip =
+            (id: number, home: boolean) =>
+            {
+                const sub: any =
+                    find(id);
+
+                const full =
+                    String(sub?.SubCategoryName ?? '');
+
+                return {
+                    id,
+                    home,
+                    name: this.shortModelName(full) || String(sub?.SubCategoryCode ?? id),
+                    title: sub ? `${sub.SubCategoryCode} - ${full}` : String(id)
+                };
+            };
+
+        const homeId =
+            Number(this.entity.ProductSubCategoryId ?? 0);
+
+        return [
+            ...(homeId > 0 ? [chip(homeId, true)] : []),
+            ...(this.entity.FitSubCategoryIds ?? []).map(id => chip(id, false))
+        ];
+    }
+
+    // "Spare Parts - REVOO - A04" -> "A04"
+    private shortModelName
+    (
+        name:
+            string
+    ):
+        string
+    {
+        const parts =
+            String(name ?? '').split(' - ').map(x => x.trim()).filter(x => !!x);
+
+        return parts.length > 0 ? parts[parts.length - 1] : '';
+    }
+
+    onAddFit
+    (
+        value:
+            any
+    ):
+        void
+    {
+        const id =
+            Number(this.unwrapValue(value) ?? 0);
+
+        this.fitPickValue =
+            id || null;
+
+        if
+        (
+            id > 0
+            &&
+            id !== Number(this.entity.ProductSubCategoryId)
+            &&
+            !(this.entity.FitSubCategoryIds ?? []).includes(id)
+        )
+        {
+            this.entity.FitSubCategoryIds =
+                [...(this.entity.FitSubCategoryIds ?? []), id];
+
+            this.onValueChange();
+        }
+
+        // Ready for the next pick
+        setTimeout(
+            () =>
+            {
+                this.fitPickValue = null;
+
+                this.cdr.detectChanges();
+            });
+    }
+
+    removeFit
+    (
+        id:
+            number
+    ):
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        this.entity.FitSubCategoryIds =
+            (this.entity.FitSubCategoryIds ?? []).filter(x => x !== id);
 
         this.onValueChange();
     }
@@ -2366,6 +2894,29 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
+    // Movement Class (default Slow Moving)
+    //===========================================================
+
+    onMovementClassChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.entity.MovementClass =
+            movementClassInfo(
+                this.unwrapValue(
+                    value
+                )
+            ).value;
+
+        this.onValueChange();
+    }
+
+
+
+    //===========================================================
     // Server Message
     //===========================================================
 
@@ -2444,6 +2995,12 @@ implements OnInit, OnDestroy
                         );
 
 
+                    // Fits Models : only the ids are edited
+                    this.entity.FitSubCategoryIds =
+                        (this.entity.Fits ?? [])
+                            .map(x => Number(x.ProductSubCategoryId))
+                            .filter(x => x > 0);
+
                     // Only the editable values; names come from lookups
                     this.entity.Locations =
                         (this.entity.Locations ?? [])
@@ -2457,7 +3014,10 @@ implements OnInit, OnDestroy
                                         Number(location.RackManagementId),
 
                                     ShelfNumber:
-                                        Number(location.ShelfNumber)
+                                        Number(location.ShelfNumber),
+
+                                    BinNumber:
+                                        Number(location.BinNumber) || 1
                                 })
                             );
 
@@ -2928,6 +3488,8 @@ implements OnInit, OnDestroy
                 !(Number(row.RackManagementId) > 0)
                 ||
                 !(Number(row.ShelfNumber) > 0)
+                ||
+                !(Number(row.BinNumber) > 0)
             )
             {
                 this.toast.error(
@@ -3004,11 +3566,20 @@ implements OnInit, OnDestroy
             MaxStockLevel:
                 Number(this.entity.MaxStockLevel ?? 0),
 
+            MovementClass:
+                movementClassInfo(
+                    this.entity.MovementClass
+                ).value,
+
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
 
             IsActive:
                 this.entity.IsActive,
+
+            // Fits Models (replaces the saved links)
+            FitSubCategoryIds:
+                [...(this.entity.FitSubCategoryIds ?? [])],
 
             Locations:
                 (this.entity.Locations ?? [])
@@ -3022,7 +3593,10 @@ implements OnInit, OnDestroy
                                 Number(location.RackManagementId),
 
                             ShelfNumber:
-                                Number(location.ShelfNumber)
+                                Number(location.ShelfNumber),
+
+                            BinNumber:
+                                Number(location.BinNumber) || 1
                         })
                     )
         };
@@ -3141,11 +3715,20 @@ implements OnInit, OnDestroy
             MaxStockLevel:
                 Number(this.entity.MaxStockLevel ?? 0),
 
+            MovementClass:
+                movementClassInfo(
+                    this.entity.MovementClass
+                ).value,
+
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
 
             IsActive:
                 this.entity.IsActive,
+
+            // Fits Models (replaces the saved links)
+            FitSubCategoryIds:
+                [...(this.entity.FitSubCategoryIds ?? [])],
 
             Locations:
                 (this.entity.Locations ?? [])
@@ -3159,7 +3742,10 @@ implements OnInit, OnDestroy
                                 Number(location.RackManagementId),
 
                             ShelfNumber:
-                                Number(location.ShelfNumber)
+                                Number(location.ShelfNumber),
+
+                            BinNumber:
+                                Number(location.BinNumber) || 1
                         })
                     )
         };
@@ -3175,6 +3761,8 @@ implements OnInit, OnDestroy
         this.withMinimumDuration(
             this.sparePartsService
                 .update(
+                    this.entityId,
+
                     model
                 )
         )
@@ -3455,4 +4043,4 @@ implements OnInit, OnDestroy
         this.cdr.detectChanges();
     }
 
-}
+}

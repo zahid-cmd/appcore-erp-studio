@@ -33,9 +33,18 @@ import
     Supplier,
     CreateSupplier,
     UpdateSupplier,
-    SupplierProfilesDefaults
+    SupplierProfilesDefaults,
+    SupplierPageQuery
 }
 from '../models/supplier-profiles.model';
+
+import
+{
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
 
 
 //===============================================================
@@ -111,6 +120,9 @@ export class SupplierProfilesService
         return {
             SupplierId:
                 Number(this.pick(item, 'SupplierId') ?? 0),
+
+            PublicId:
+                text('PublicId'),
 
             SupplierCode:
                 text('SupplierCode'),
@@ -289,13 +301,49 @@ export class SupplierProfilesService
 
 
     //===========================================================
-    // Get By Id
+    // Get Paged (the list page : one page from the server)
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            SupplierPageQuery
+    ):
+        Observable<PagedResult<Supplier>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams(
+                            { ...query }
+                        )
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                        toPagedResult(
+                            response,
+                            item =>
+                                this.normalize(
+                                    item
+                                )
+                        )
+                )
+            );
+    }
+
+
+    //===========================================================
+    // Get By Public Id
     //===========================================================
 
     getById
     (
         id:
-            number
+            string
     ):
         Observable<Supplier>
     {
@@ -318,17 +366,25 @@ export class SupplierProfilesService
     // Create
     //===========================================================
 
+    // Returns the new supplier's Public Id
     create
     (
         model:
             CreateSupplier
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
-            this.apiUrl,
-            model
-        );
+        return this.http
+            .post<any>(
+                this.apiUrl,
+                model
+            )
+            .pipe(
+                map(
+                    response =>
+                        String(response ?? '')
+                )
+            );
     }
 
 
@@ -338,13 +394,15 @@ export class SupplierProfilesService
 
     update
     (
+        id:
+            string,
         model:
             UpdateSupplier
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${id}`,
             model
         );
     }
@@ -357,7 +415,7 @@ export class SupplierProfilesService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -392,4 +450,4 @@ export class SupplierProfilesService
             `${this.apiUrl}/history`
         );
     }
-}
+}

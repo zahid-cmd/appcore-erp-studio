@@ -204,7 +204,7 @@ export class DesignationService
 
     getById(
         id:
-            number
+            string
     ):
         Observable<Designation>
     {
@@ -256,7 +256,7 @@ export class DesignationService
 
     delete(
         id:
-            number
+            string
     ):
         Observable<void>
     {

@@ -639,6 +639,119 @@ ${bodies.join('\n')}
 
 
     //===========================================================
+    // Paper size of a page
+    //
+    // A4 portrait by default (A4 landscape with .pv-landscape). A
+    // fixed page may name its own paper in mm :
+    //
+    //   <section class="pv-page" data-paper-w="38" data-paper-h="25">
+    //
+    // (label sheets, thermal rolls); it is printed on a page of
+    // that size and the PDF page takes the same size.
+    //===========================================================
+
+    pageSizeMm
+    (
+        page:
+            HTMLElement
+    ):
+        { width: number; height: number }
+    {
+        const width =
+            Number(page.dataset['paperW']);
+
+        const height =
+            Number(page.dataset['paperH']);
+
+        if
+        (
+            width > 0
+            &&
+            height > 0
+        )
+        {
+            return { width, height };
+        }
+
+        return page.classList.contains('pv-landscape')
+            ? { width:297, height:210 }
+            : { width:210, height:297 };
+    }
+
+    // Sizes the pages that name their paper and gives each size a
+    // named @page (margin 0) so the printer gets that paper
+    private applyPaperSizes
+    (
+        doc:
+            Document,
+        pages:
+            HTMLElement[]
+    ):
+        void
+    {
+        const rules =
+            new Map<string, string>();
+
+        for
+        (
+            const page of pages
+        )
+        {
+            if
+            (
+                !(Number(page.dataset['paperW']) > 0 && Number(page.dataset['paperH']) > 0)
+            )
+            {
+                continue;
+            }
+
+            const size =
+                this.pageSizeMm(page);
+
+            const name =
+                `pv-paper-${String(size.width).replace('.', '_')}x${String(size.height).replace('.', '_')}`;
+
+            page.style.width =
+                `${size.width}mm`;
+
+            page.style.height =
+                `${size.height}mm`;
+
+            page.style.setProperty(
+                'page',
+                name
+            );
+
+            rules.set(
+                name,
+                `@page ${name} { size: ${size.width}mm ${size.height}mm; margin: 0; }`
+            );
+        }
+
+        if
+        (
+            rules.size === 0
+            ||
+            doc.getElementById('pv-paper-sizes')
+        )
+        {
+            return;
+        }
+
+        const style =
+            doc.createElement('style');
+
+        style.id =
+            'pv-paper-sizes';
+
+        style.textContent =
+            [...rules.values()].join('\n');
+
+        doc.head.appendChild(style);
+    }
+
+
+    //===========================================================
     // Pagination (.pv-flow → A4 pages)
     //===========================================================
 
@@ -697,6 +810,12 @@ ${bodies.join('\n')}
             Array.from(
                 doc.querySelectorAll<HTMLElement>('.pv-page')
             );
+
+        // Pages of their own paper (labels, rolls)
+        this.applyPaperSizes(
+            doc,
+            all
+        );
 
         all.forEach
         (
@@ -1188,14 +1307,16 @@ ${bodies.join('\n')}
             const page of pages
         )
         {
+            // A4 (portrait / landscape) or the page's own paper
+            const { width, height } =
+                this.pageSizeMm(page);
+
             const landscape =
-                page.classList.contains('pv-landscape');
+                width > height;
 
-            const width =
-                landscape ? 297 : 210;
-
-            const height =
-                landscape ? 210 : 297;
+            const format:
+                [number, number] =
+                [width, height];
 
             const canvas =
                 await html2canvas(
@@ -1224,14 +1345,14 @@ ${bodies.join('\n')}
                     {
                         orientation:landscape ? 'landscape' : 'portrait',
                         unit:'mm',
-                        format:'a4',
+                        format,
                         compress:true
                     });
             }
             else
             {
                 pdf.addPage(
-                    'a4',
+                    format,
                     landscape ? 'landscape' : 'portrait'
                 );
             }

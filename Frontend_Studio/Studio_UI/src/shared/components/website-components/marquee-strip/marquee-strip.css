@@ -1,0 +1,67 @@
+/* =====================================================
+   MARQUEE STRIP
+===================================================== */
+
+.strip
+{
+    overflow:hidden;
+    border-top:1px solid var(--w-line);
+    border-bottom:1px solid var(--w-line);
+    background:var(--w-bg-2);
+}
+
+
+.track
+{
+    display:flex;
+    width:max-content;
+    gap:44px;
+    padding:16px 0;
+    animation:marquee 34s linear infinite;
+}
+
+
+.strip:hover .track
+{
+    animation-play-state:paused;
+}
+
+
+.item
+{
+    display:flex;
+    align-items:center;
+    gap:44px;
+    white-space:nowrap;
+    font-family:var(--w-display);
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--w-faint);
+}
+
+
+.star
+{
+    color:var(--w-accent);
+}
+
+
+@keyframes marquee
+{
+    from { transform:translateX(0); }
+    to   { transform:translateX(-50%); }
+}
+
+
+@media (prefers-reduced-motion: reduce)
+{
+    .track
+    {
+        animation:none;
+        flex-wrap:wrap;
+        width:auto;
+        padding:16px 24px;
+    }
+}

@@ -103,4 +103,9 @@ public interface INavigationSubmenuRepository
 
     Task<NavigationSubmenuDefaultsDto> GetDefaultsAsync(
         long navigationMenuId);
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

@@ -1,0 +1,90 @@
+/* ============================================================
+   Sales Enquiries
+============================================================ */
+
+export interface SalesEnquiries
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Sales Enquiries
+============================================================ */
+
+export interface CreateSalesEnquiries
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Sales Enquiries
+============================================================ */
+
+export interface UpdateSalesEnquiries
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Sales Enquiries Defaults
+============================================================ */
+
+export interface SalesEnquiriesDefaults
+{
+    code:
+        string;
+}

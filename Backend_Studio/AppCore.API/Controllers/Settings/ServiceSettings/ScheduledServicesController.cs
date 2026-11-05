@@ -83,11 +83,21 @@ public class ScheduledServicesController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<ScheduledServicesDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         ScheduledServicesDto? scheduledService =
             await _repository.GetByIdAsync(id);
 
@@ -104,11 +114,27 @@ public class ScheduledServicesController : ControllerBase
     // Configure (price)
     //===========================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Configure(
+        Guid publicId,
         ConfigureScheduledServicesDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.ScheduledServiceId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try

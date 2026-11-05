@@ -18,7 +18,11 @@
 
     gap:12px;
 
-    overflow:hidden;
+    /* The canvas is a fixed height (page-canvas.css) : a short
+       screen scrolls the page instead of cutting the canvas */
+    overflow-x:hidden;
+
+    overflow-y:auto;
 }
 
 
@@ -55,7 +59,9 @@
 
 .app-form-page > app-page-canvas
 {
-    flex:1 1 auto;
+    /* Exactly the canvas height (page-canvas.css), on every form
+       page; no stretching to the free space */
+    flex:0 0 auto;
 
     min-height:0;
 
@@ -955,4 +961,4 @@ select:disabled
     {
         width:100%;
     }
-}
+}

@@ -279,6 +279,11 @@ implements OnInit
         'add';
 
 
+    // uuid from the address bar (the record is loaded by it)
+    routePublicId:
+        string =
+        '';
+
     branchAssignmentId:
         number =
         0;
@@ -1118,10 +1123,10 @@ implements OnInit
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
-            this.branchAssignmentId =
+            this.routePublicId =
                 id;
 
 
@@ -1140,7 +1145,7 @@ implements OnInit
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -1153,16 +1158,15 @@ implements OnInit
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get(
+                currentRoute.snapshot.paramMap.get(
                         'id'
                     )
-                );
+                ?? '';
 
 
             if
             (
-                id > 0
+                id !== ''
             )
             {
                 return id;
@@ -1174,7 +1178,7 @@ implements OnInit
         }
 
 
-        return 0;
+        return '';
     }
 
 
@@ -1253,7 +1257,7 @@ implements OnInit
 
         this.branchAssignmentService
             .getById(
-                this.branchAssignmentId
+                this.routePublicId
             )
             .subscribe(
             {
@@ -1264,6 +1268,10 @@ implements OnInit
                     ):
                         void =>
                 {
+                    // Internal id of the loaded record (links use the uuid)
+                    this.branchAssignmentId =
+                        Number((response as any)?.branchAssignmentId ?? (response as any)?.BranchAssignmentId ?? 0);
+
                     this.bindBranchAssignment(
                         response
                     );
@@ -2334,7 +2342,7 @@ implements OnInit
             {
                 this.branchAssignmentService
                     .delete(
-                        this.branchAssignmentId
+                        this.routePublicId
                     )
                     .subscribe(
                     {

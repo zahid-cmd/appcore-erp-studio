@@ -95,4 +95,9 @@ public interface IRoleProfileRepository
     //===========================================================
 
     Task<RoleProfileDefaultsDto> GetDefaultsAsync();
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

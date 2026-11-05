@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.Paging;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.AccountsFinance.VoucherManagement;
@@ -21,6 +22,7 @@ namespace AppCore.Api.Controllers.AccountsFinance.VoucherManagement;
 // Payment Voucher Controller
 //
 //   GET    /                    list
+//   GET    /paged               the list page (one page, server side)
 //   GET    /defaults            next voucher number (preview)
 //   GET    /{id}                header + debits + credits
 //   POST   /                    create Draft (returns id + number)
@@ -82,6 +84,20 @@ public class PaymentVoucherController : ControllerBase
             await _repository.GetAllAsync());
     }
 
+
+    //===========================================================
+    // Get Paged (the list page)
+    //===========================================================
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<PaymentVoucherDto>>> GetPaged(
+        [FromQuery] VoucherPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new VoucherPageRequest()));
+    }
+
     //===========================================================
     // Defaults (Add form) : next voucher number for branch + date
     //   GET defaults?branchId=1&date=2026-10-22
@@ -111,11 +127,38 @@ public class PaymentVoucherController : ControllerBase
     }
 
 
-    [HttpGet("{id:long}")]
+    // Internal id : the print documents of the reconciliation
+    // pages load a source voucher by it (not used in links)
+    [HttpGet("by-id/{id:long}")]
 
-    public async Task<ActionResult<PaymentVoucherDto>> GetById(
+    public async Task<ActionResult<PaymentVoucherDto>> GetByInternalId(
         long id)
     {
+        PaymentVoucherDto? found =
+            await _repository.GetByIdAsync(id);
+
+        return found == null
+            ? NotFound()
+            : Ok(found);
+    }
+
+
+    [HttpGet("{publicId:guid}")]
+
+    public async Task<ActionResult<PaymentVoucherDto>> GetById(
+        Guid publicId)
+    {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         PaymentVoucherDto? item =
             await _repository.GetByIdAsync(id);
 
@@ -167,12 +210,23 @@ public class PaymentVoucherController : ControllerBase
     // Delete / Restore (Draft)
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
-    public Task<IActionResult> Delete(
-        long id)
+    public async Task<IActionResult> Delete(
+        Guid publicId)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        return await Run(
             async () =>
             {
                 await _repository.DeleteAsync(

@@ -117,6 +117,32 @@
     </app-page-canvas>
 
     <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="agr-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="agr-summary-item">
+                    <span class="agr-summary-label">{{ item.label }}</span>
+                    <b
+                        class="agr-summary-value"
+                        [class.agr-ok]="item.tone === 'ok'"
+                        [class.agr-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="agr-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
+    <!-- =====================================================
          HISTORY
     ====================================================== -->
 

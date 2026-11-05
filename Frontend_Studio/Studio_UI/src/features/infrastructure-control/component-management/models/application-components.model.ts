@@ -7,6 +7,9 @@ export interface ApplicationComponents
     id:
         number;
 
+    // The id used in links and API calls (uuid v7)
+    publicId?: string;
+
     code:
         string;
 

@@ -132,7 +132,7 @@ public class WidgetConfigurationController
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
     public async Task
         <
@@ -140,9 +140,20 @@ public class WidgetConfigurationController
         >
         GetById
         (
-            long id
+            Guid publicId
         )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         WidgetConfigurationDto? result =
             await _repository.GetByIdAsync(
                 id
@@ -205,7 +216,7 @@ public class WidgetConfigurationController
     // Get Entity History
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    [HttpGet("{publicId:guid}/history")]
 
     public async Task
         <
@@ -213,9 +224,20 @@ public class WidgetConfigurationController
         >
         GetHistory
         (
-            long id
+            Guid publicId
         )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         List<ActivityHistoryDto> history =
             await _historyRepository.GetHistoryAsync
             (
@@ -452,14 +474,25 @@ public class WidgetConfigurationController
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult>
         Delete
         (
-            long id
+            Guid publicId
         )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         try
         {
             bool deleted =

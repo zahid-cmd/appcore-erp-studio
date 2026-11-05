@@ -20,6 +20,13 @@ public interface IMembershipServicesRepository
 
     Task<List<MembershipServicesDto>> GetAllAsync();
 
+
+    // Public Id -> internal id (live rows only; null = not found)
+
+    Task<long?> GetIdByPublicIdAsync(
+
+        Guid publicId);
+
     Task<MembershipServicesDto?> GetByIdAsync(
         long id);
 

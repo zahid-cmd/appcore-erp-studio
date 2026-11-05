@@ -67,4 +67,16 @@ public class ProductCategoryDefaultsDto
         get;
         set;
     } = string.Empty;
+
+
+    //===========================================================
+    // Sales Group Code of every Category Type (the class
+    // differs by type), e.g. { "Spare Parts": "GRP-006-004" }
+    //===========================================================
+
+    public Dictionary<string, string> SalesGroupCodes
+    {
+        get;
+        set;
+    } = new();
 }

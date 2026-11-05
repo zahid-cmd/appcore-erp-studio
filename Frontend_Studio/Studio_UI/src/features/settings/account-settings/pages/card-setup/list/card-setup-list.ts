@@ -292,6 +292,15 @@ implements OnInit, OnDestroy
         CardSetup[] =
         [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredCardSetup:
         CardSetup[] =
         [];
@@ -476,6 +485,9 @@ implements OnInit, OnDestroy
             CardSetupId:
                 Number(item?.CardSetupId ?? item?.cardSetupId ?? 0),
 
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             CardCode:
                 item?.CardCode ?? item?.cardCode ?? '',
 
@@ -536,6 +548,9 @@ implements OnInit, OnDestroy
                         );
 
                     this.applyFilters();
+
+
+                    this.updateSummary();
 
                     this.loading =
                         false;
@@ -937,7 +952,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.CardSetupId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -969,7 +984,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.CardSetupId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1036,7 +1051,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.cardSetupService.delete(
-                item.CardSetupId
+                item.PublicId ?? ''
             )
         )
         .subscribe
@@ -1563,4 +1578,32 @@ implements OnInit, OnDestroy
         this.historyOpened =
             false;
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.cardSetup ?? [];
+
+        const active =
+            all.filter(x => !!x?.Status).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

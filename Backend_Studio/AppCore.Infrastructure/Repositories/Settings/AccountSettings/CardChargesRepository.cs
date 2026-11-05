@@ -175,6 +175,9 @@ public class CardChargesRepository : ICardChargesRepository
             POSAccountId =
                 posAccountId,
 
+            PublicId =
+                posAccount?.PublicId ?? Guid.Empty,
+
             POSAccountCode =
                 posAccount?.POSAccountCode ?? string.Empty,
 
@@ -241,6 +244,33 @@ public class CardChargesRepository : ICardChargesRepository
             )
             .OrderBy(x => x.POSAccountName)
             .ToList();
+    }
+
+
+    //===========================================================
+    // POS Account Public Id -> POS Account id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetPosAccountIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<POSAccountsEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.POSAccountId)
+            .FirstOrDefaultAsync();
     }
 
 

@@ -13,6 +13,10 @@ export interface SalesVat
     SalesVatId:
         number;
 
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     // SVT-0001
     VatCode:
         string;

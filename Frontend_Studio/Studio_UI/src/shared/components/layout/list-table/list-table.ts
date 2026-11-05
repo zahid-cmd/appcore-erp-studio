@@ -87,6 +87,14 @@ export interface ListTableColumn
   // (cellClick) with { field, row } (e.g. open a detail row)
   link?: boolean;
   linkTitle?: string;
+  // Text cells : a small dot before the value, coloured by
+  // row[dotField] (a CSS colour; no dot when empty). Thin style
+  // for classes such as the Movement Class (no filled chips).
+  dotField?: string;
+  // Image cells : the hover preview's tiny header (title =
+  // row[previewTitleField]) and footer ("label value" chips)
+  previewTitleField?: string;
+  previewDetails?: { label: string; field: string }[];
 }
 
 
@@ -221,6 +229,11 @@ private readonly navigationContextSubscription =
   /* =====================================================
      INPUTS
   ====================================================== */
+
+  // Hover preview of 'image' cells (a page turns it off by a
+  // System Configuration switch)
+  @Input()
+  imagePreview = true;
 
   @Input()
   columns: ListTableColumn[] = [];
@@ -707,6 +720,18 @@ private readonly navigationContextSubscription =
   }
 
 
+  getDotColor(
+    row: any,
+    column: ListTableColumn
+  ):
+    string
+  {
+    return column.dotField
+      ? String(row?.[column.dotField] ?? '')
+      : '';
+  }
+
+
   getFlagTitle(
     row: any,
     column: ListTableColumn
@@ -757,6 +782,94 @@ private readonly navigationContextSubscription =
     if (value)
     {
       this.brokenImages.add(value);
+
+      this.cdr.markForCheck();
+    }
+  }
+
+
+  /* =====================================================
+     IMAGE PREVIEW : a larger copy of the thumbnail while
+     the pointer is over it (left of the cell, or right of
+     it near the window edge), with an optional tiny header
+  ====================================================== */
+
+  previewImageSrc: string | null = null;
+
+  previewImageTitle = '';
+
+  previewImageDetails: { label: string; value: string }[] = [];
+
+  previewImageX = 0;
+
+  previewImageY = 0;
+
+  private readonly previewWidth = 280;
+
+  private readonly previewHeight = 270;
+
+  showImagePreview(
+    event: MouseEvent,
+    src: string,
+    row: any = null,
+    column: ListTableColumn | null = null
+  ):
+    void
+  {
+    if (!src || !this.imagePreview)
+    {
+      return;
+    }
+
+    this.previewImageTitle =
+      column?.previewTitleField
+        ? String(row?.[column.previewTitleField] ?? '')
+        : '';
+
+    this.previewImageDetails =
+      (column?.previewDetails ?? [])
+        .map(
+          d =>
+          ({
+            label: d.label,
+            value: String(row?.[d.field] ?? '')
+          })
+        );
+
+    const rect =
+      (event.currentTarget as HTMLElement).getBoundingClientRect();
+
+    const gap = 12;
+
+    // Left of the cell; right of it only when there is no room
+    let x =
+      rect.left - gap - this.previewWidth;
+
+    if (x < 8)
+    {
+      x = rect.right + gap;
+    }
+
+    let y =
+      rect.top + rect.height / 2 - this.previewHeight / 2;
+
+    y = Math.max(8, Math.min(y, window.innerHeight - this.previewHeight - 8));
+
+    this.previewImageX = Math.max(8, x);
+
+    this.previewImageY = y;
+
+    this.previewImageSrc = src;
+
+    this.cdr.markForCheck();
+  }
+
+  hideImagePreview():
+    void
+  {
+    if (this.previewImageSrc)
+    {
+      this.previewImageSrc = null;
 
       this.cdr.markForCheck();
     }
@@ -1230,4 +1343,4 @@ private readonly navigationContextSubscription =
       ??
       index;
   }
-}
+}

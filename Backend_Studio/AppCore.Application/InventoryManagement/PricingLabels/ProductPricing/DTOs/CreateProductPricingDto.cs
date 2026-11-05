@@ -6,68 +6,46 @@ namespace AppCore.Application.InventoryManagement.PricingLabels;
 
 
 //===============================================================
-// CreateProductPricingDto
+// Product Pricing (Price Change) : save a draft. One line per
+// ticked batch; the lines of a product carry the same new MRP.
 //===============================================================
 
 public class CreateProductPricingDto
 {
-    //===========================================================
-    // Name
-    //===========================================================
+    // MB / SP / AC
+    public string PageType { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    // yyyy-MM-dd (effective date)
+    public string PricingDate { get; set; } = string.Empty;
 
+    public string Remarks { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    // New (one purchase invoice) / Reprice; '' = Reprice
+    public string PricingKind { get; set; } = string.Empty;
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    // New : the invoice and the basis / % applied to all
+    public long PurchaseId { get; set; }
 
+    public string PricingBasis { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
+    public decimal BasisPercent { get; set; }
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public List<CreateProductPricingLineDto> Lines { get; set; } = new();
+}
 
+public class CreateProductPricingLineDto
+{
+    public long ProductId { get; set; }
 
-    //===========================================================
-    // Status
-    //===========================================================
+    public long StockBatchId { get; set; }
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    // VAT inclusive : the sale price
+    public decimal NewMrp { get; set; }
 
+    public string Notes { get; set; } = string.Empty;
 
-    //===========================================================
-    // Remarks
-    //===========================================================
+    // New : the line's % and the MRP it gave
+    public decimal ProfitPercent { get; set; }
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public decimal SuggestedMrp { get; set; }
 }

@@ -1,0 +1,50 @@
+<!-- ===========================================================
+     WEBSITE FRAME
+     -----------------------------------------------------------
+     Theme variables live on .website (Deep by default,
+     .theme-light for Light). Pages show in the outlet.
+============================================================ -->
+
+<div
+    class="website"
+    [class.theme-light]="themes.theme() === 'light'">
+
+    @if (content(); as site)
+    {
+        @if (site.enabled)
+        {
+            <app-site-header
+                [content]="site">
+            </app-site-header>
+
+            <main class="website-main">
+                <router-outlet></router-outlet>
+            </main>
+
+            <app-visit-us
+                id="visit"
+                [content]="site">
+            </app-visit-us>
+
+            <app-site-footer
+                [content]="site">
+            </app-site-footer>
+
+            <app-appcore-strip>
+            </app-appcore-strip>
+
+            <!-- Section progress on the right (replaces the
+                 scrollbar on desktop) -->
+            <app-scroll-rail
+                [scroller]="frame">
+            </app-scroll-rail>
+        }
+    }
+    @else if (!loaded())
+    {
+        <div class="website-loading" aria-live="polite">
+            <span class="website-spinner" aria-hidden="true"></span>
+        </div>
+    }
+
+</div>

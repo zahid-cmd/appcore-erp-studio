@@ -255,6 +255,9 @@ public class EmiReimbursementSchemesRepository
                     return new EmiReimbursementSchemesDto
                     {
                         EmiReimbursementSchemeId = x.EmiReimbursementSchemeId,
+
+                        PublicId =
+                            x.PublicId,
                         SchemeCode = x.SchemeCode,
                         BrandCode = x.BrandCode,
                         BrandName = brand?.BrandName ?? x.BrandCode,
@@ -305,6 +308,33 @@ public class EmiReimbursementSchemesRepository
 
         return await ToDtosAsync(
             rows);
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<SchemeEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.EmiReimbursementSchemeId)
+            .FirstOrDefaultAsync();
     }
 
 

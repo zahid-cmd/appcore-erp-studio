@@ -24,6 +24,13 @@ public interface IFinancialYearsRepository
 
     Task<List<FinancialYearsDto>> GetAllAsync();
 
+
+    // Public Id -> internal id (live rows only; null = not found)
+
+    Task<long?> GetIdByPublicIdAsync(
+
+        Guid publicId);
+
     Task<FinancialYearsDto?> GetByIdAsync(
         long id);
 

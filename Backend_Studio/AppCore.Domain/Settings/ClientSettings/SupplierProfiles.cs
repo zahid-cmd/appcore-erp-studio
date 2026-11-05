@@ -28,6 +28,21 @@ public class SupplierProfiles
 
 
     //===========================================================
+    // Public Id
+    //-----------------------------------------------------------
+    // The id used in links and API calls (uuid v7), so internal
+    // numbers are never shown or guessed. New on every supplier;
+    // the database default uuidv7() fills rows added by scripts.
+    //===========================================================
+
+    public Guid PublicId
+    {
+        get;
+        set;
+    } = Guid.CreateVersion7();
+
+
+    //===========================================================
     // Supplier Information
     //===========================================================
 
@@ -288,4 +303,4 @@ public class SupplierProfiles
         get;
         set;
     }
-}
+}

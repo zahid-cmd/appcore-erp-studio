@@ -149,6 +149,12 @@ import
 }
 from '../../../services/system-configurations.service';
 
+import
+{
+    OrbitLoaderComponent
+}
+from '../../../../../../shared/components/utilities/orbit-loader/orbit-loader';
+
 
 //===============================================================
 // View models
@@ -334,6 +340,7 @@ function readCardStyle():
         SearchBoxComponent,
         CommandCenterComponent,
         EmptyStateComponent,
+        OrbitLoaderComponent,
         HistoryDrawerComponent,
         ToastComponent,
         ConfirmDialogComponent
@@ -1010,6 +1017,11 @@ implements OnInit
         this.cdr.detectChanges();
     }
 
+    // Bumped when the filters are reset : the toolbar dropdowns
+    // are re-created, so none keeps its old choice on screen
+    filtersVersion =
+        0;
+
     refresh():
         void
     {
@@ -1019,6 +1031,7 @@ implements OnInit
         this.selectedSubmenuCode = '';
         this.chip = 'all';
         this.searchText = '';
+        this.filtersVersion++;
 
         this.load();
 
@@ -2057,6 +2070,7 @@ implements OnInit
         this.selectedSubmenuCode = '';
         this.chip = 'all';
         this.searchText = '';
+        this.filtersVersion++;
         this.rebuild();
     }
 
@@ -2563,7 +2577,7 @@ implements OnInit
         void
     {
         void this.router.navigate(
-            ['/settings/general-settings/system-configurations/edit', card.item.SystemConfigurationId]
+            ['/settings/general-settings/system-configurations/edit', card.item.PublicId]
         );
     }
 
@@ -2588,7 +2602,7 @@ implements OnInit
                 (
                     () =>
                         this.service
-                            .delete(item.SystemConfigurationId)
+                            .delete(item.PublicId)
                             .subscribe
                             ({
                                 next:

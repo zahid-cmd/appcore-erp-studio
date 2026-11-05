@@ -2454,8 +2454,9 @@ implements OnInit
             result.DepositSlipId
         )
         {
+            // The slip's uuid (print link)
             const id =
-                result.DepositSlipId;
+                result.DepositSlipPublicId || result.DepositSlipId;
 
             this.confirmDialog.open(
                 'Print Deposit Slip',
@@ -2475,8 +2476,10 @@ implements OnInit
             return;
         }
 
-        const ids =
-            result.VoucherIds ?? [];
+        // The vouchers' uuids (print links)
+        const ids:
+            (number | string)[] =
+            result.VoucherPublicIds?.length ? result.VoucherPublicIds : result.VoucherIds ?? [];
 
         if
         (
@@ -2512,7 +2515,7 @@ implements OnInit
         key:
             string,
         id:
-            number
+            number | string
     ):
         void
     {

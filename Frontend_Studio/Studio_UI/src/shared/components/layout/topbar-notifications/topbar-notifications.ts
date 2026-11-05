@@ -294,6 +294,12 @@ implements
             case 'cheque':
                 return 'fa-solid fa-money-check';
 
+            case 'website':
+                return 'fa-solid fa-globe';
+
+            case 'backup':
+                return 'fa-solid fa-triangle-exclamation';
+
             default:
                 return 'fa-regular fa-bell';
         }

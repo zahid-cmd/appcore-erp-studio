@@ -635,11 +635,21 @@
     opacity: 0.7;
 }
 
-.sc-card-skeleton
+/* Orbit loader : the shared list-page style places
+   app-orbit-loader absolutely (inset 0), so the loading area
+   is its frame : centred in the canvas under the toolbar */
+
+.sc-loading
 {
-    min-height: 150px;
-    background: linear-gradient(90deg, #f1f3fa 0%, #f8f9fd 50%, #f1f3fa 100%);
-    box-shadow: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sc-loading-inline
+{
+    padding: 36px 0;
 }
 
 .sc-card-top
@@ -1920,4 +1930,4 @@
 {
     background: rgba(239, 68, 68, 0.15);
     color: #b91c1c;
-}
+}

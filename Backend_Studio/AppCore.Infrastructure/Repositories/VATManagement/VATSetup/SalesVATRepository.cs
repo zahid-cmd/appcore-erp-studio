@@ -267,6 +267,8 @@ public class SalesVatRepository
                     {
                         SalesVatId = rule.SalesVatId,
 
+                        PublicId = rule.PublicId,
+
                         VatCode = rule.VatCode,
 
                         VatType = rule.VatType,
@@ -1345,4 +1347,31 @@ public class SalesVatRepository
                     !x.IsDeleted
             );
     }
-}
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<RuleEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.SalesVatId)
+            .FirstOrDefaultAsync();
+    }
+}

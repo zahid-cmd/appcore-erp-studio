@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.Paging;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -12,6 +19,14 @@ namespace AppCore.Application.Settings.ProductSettings;
 public interface IMotorBikesRepository
 {
     Task<List<MotorBikesDto>> GetAllAsync();
+
+    // The list page : one page, filtered, sorted, with the counts
+    Task<PagedResult<MotorBikesDto>> GetPagedAsync(
+        MotorBikesPageRequest request);
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 
     Task<MotorBikesDto?> GetByIdAsync(
         long id);

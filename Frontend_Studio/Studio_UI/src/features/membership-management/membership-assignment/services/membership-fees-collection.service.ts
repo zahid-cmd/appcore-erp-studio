@@ -90,7 +90,7 @@ export class MembershipFeesCollectionService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<MembershipFeesCollection>
     {
@@ -148,7 +148,7 @@ export class MembershipFeesCollectionService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

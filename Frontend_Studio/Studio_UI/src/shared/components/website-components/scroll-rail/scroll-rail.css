@@ -1,0 +1,714 @@
+/* =====================================================
+   SCROLL RAIL (website)
+   Fixed on the right, vertically centred. Hidden on the
+   hero; slides in from the second section on. Colours
+   follow the website theme (deep / light) with an amber
+   / gold glow.
+===================================================== */
+
+:host
+{
+    position:fixed;
+
+    top:50%;
+
+    right:26px;
+
+    z-index:40;
+
+    transform:translateY(-50%);
+
+    pointer-events:none;
+}
+
+
+/* Hidden (hero) : off to the right and faded */
+.rail
+{
+    opacity:0;
+
+    transform:translateX(36px) scale(.96);
+
+    pointer-events:none;
+
+    transition:
+        opacity .45s ease,
+        transform .55s cubic-bezier(.22, 1.2, .36, 1);
+}
+
+
+.rail.rail-shown
+{
+    opacity:1;
+
+    transform:none;
+
+    pointer-events:auto;
+}
+
+
+.rail.rail-idle
+{
+    opacity:0;
+
+    pointer-events:none;
+}
+
+
+/* The hit area : wider than the line, easy to grab */
+.rail-track
+{
+    position:relative;
+
+    width:40px;
+
+    height:min(64vh, 580px);
+
+    cursor:pointer;
+
+    touch-action:none;
+
+    outline:none;
+}
+
+
+.rail-track:focus-visible
+{
+    border-radius:20px;
+
+    box-shadow:0 0 0 2px rgba(251,191,36,.45);
+}
+
+
+/* -----------------------------------------------------
+   THE LINE : a glass channel with a soft edge glow
+----------------------------------------------------- */
+
+.rail-line
+{
+    position:absolute;
+
+    top:-6px;
+
+    bottom:-6px;
+
+    left:50%;
+
+    width:6px;
+
+    margin-left:-3px;
+
+    border-radius:6px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.10) 0%,
+            rgba(255,255,255,.04) 50%,
+            rgba(255,255,255,.10) 100%
+        ),
+        rgba(7,13,31,.55);
+
+    border:1px solid rgba(255,255,255,.14);
+
+    box-shadow:
+        inset 0 1px 3px rgba(0,0,0,.55),
+        0 0 0 1px rgba(0,0,0,.25),
+        0 8px 30px -8px rgba(0,0,0,.6);
+
+    backdrop-filter:blur(6px);
+}
+
+
+/* Light theme : a frosted white channel */
+:host-context(.theme-light) .rail-line
+{
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.95) 0%,
+            rgba(232,238,248,.9) 100%
+        );
+
+    border-color:rgba(147,180,245,.55);
+
+    box-shadow:
+        inset 0 1px 3px rgba(19,37,74,.18),
+        0 10px 30px -10px rgba(19,37,74,.35);
+}
+
+
+/* -----------------------------------------------------
+   THE FILLED PART : molten gold with a light running down
+----------------------------------------------------- */
+
+.rail-fill
+{
+    position:absolute;
+
+    top:-4px;
+
+    left:50%;
+
+    width:3px;
+
+    height:0;
+
+    margin-left:-1.5px;
+
+    overflow:hidden;
+
+    border-radius:6px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fde68a 0%,
+            #fbbf24 35%,
+            #f59e0b 70%,
+            #ea580c 100%
+        );
+
+    box-shadow:
+        0 0 8px rgba(251,191,36,.85),
+        0 0 22px rgba(245,158,11,.55),
+        0 0 44px rgba(234,88,12,.3);
+
+    transition:height .12s linear;
+}
+
+
+.rail-fill-shine
+{
+    position:absolute;
+
+    left:0;
+
+    right:0;
+
+    top:-60px;
+
+    height:60px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0) 0%,
+            rgba(255,255,255,.95) 50%,
+            rgba(255,255,255,0) 100%
+        );
+
+    animation:rail-shine 2.4s ease-in-out infinite;
+}
+
+
+/* -----------------------------------------------------
+   SECTION DOTS : jewel rings
+----------------------------------------------------- */
+
+.rail-dot
+{
+    position:absolute;
+
+    left:50%;
+
+    width:16px;
+
+    height:16px;
+
+    margin:-8px 0 0 -8px;
+
+    padding:0;
+
+    border:2px solid rgba(255,255,255,.45);
+
+    border-radius:999px;
+
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            rgba(255,255,255,.35),
+            rgba(15,26,58,.95) 70%
+        );
+
+    box-shadow:
+        0 0 0 3px rgba(7,13,31,.55),
+        0 4px 10px rgba(0,0,0,.45);
+
+    cursor:pointer;
+
+    transition:
+        transform .25s cubic-bezier(.22, 1.4, .36, 1),
+        border-color .25s ease,
+        box-shadow .25s ease,
+        background .25s ease;
+}
+
+
+:host-context(.theme-light) .rail-dot
+{
+    border-color:#9fb4d8;
+
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #ffffff,
+            #dfe7f3 75%
+        );
+
+    box-shadow:
+        0 0 0 3px rgba(255,255,255,.9),
+        0 4px 10px rgba(19,37,74,.25);
+}
+
+
+.rail-dot:hover,
+.rail-dot:focus-visible
+{
+    transform:scale(1.4);
+
+    border-color:#fde68a;
+
+    box-shadow:
+        0 0 0 3px rgba(7,13,31,.55),
+        0 0 16px rgba(251,191,36,.8);
+
+    outline:none;
+}
+
+
+/* Passed : lit gold */
+.rail-dot-passed
+{
+    border-color:#fde68a;
+
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #fff7d6,
+            #fbbf24 45%,
+            #ea580c 100%
+        );
+
+    box-shadow:
+        0 0 0 3px rgba(7,13,31,.55),
+        0 0 12px rgba(251,191,36,.75),
+        0 0 26px rgba(245,158,11,.35);
+}
+
+
+/* The section being read : a pulsing ring around it */
+.rail-dot-active
+{
+    border-color:#fde68a;
+}
+
+
+.rail-dot-active::after
+{
+    content:'';
+
+    position:absolute;
+
+    inset:-8px;
+
+    border:2px solid rgba(251,191,36,.7);
+
+    border-radius:999px;
+
+    animation:rail-ping 1.8s ease-out infinite;
+}
+
+
+/* Section name : on hover / focus, to the left */
+.rail-tip
+{
+    position:absolute;
+
+    top:50%;
+
+    right:calc(100% + 18px);
+
+    padding:6px 14px;
+
+    border:1px solid rgba(252,211,77,.45);
+
+    border-radius:999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(15,26,58,.92),
+            rgba(7,13,31,.92)
+        );
+
+    box-shadow:
+        0 10px 24px -10px rgba(0,0,0,.7),
+        0 0 14px rgba(245,158,11,.25);
+
+    backdrop-filter:blur(8px);
+
+    color:#fde68a;
+
+    font-family:var(--w-display, sans-serif);
+
+    font-size:14px;
+
+    font-weight:700;
+
+    letter-spacing:.08em;
+
+    text-transform:uppercase;
+
+    white-space:nowrap;
+
+    opacity:0;
+
+    transform:translate(10px, -50%);
+
+    pointer-events:none;
+
+    transition:
+        opacity .2s ease,
+        transform .25s cubic-bezier(.22, 1.4, .36, 1);
+}
+
+
+.rail-dot:hover .rail-tip,
+.rail-dot:focus-visible .rail-tip
+{
+    opacity:1;
+
+    transform:translate(0, -50%);
+}
+
+
+/* -----------------------------------------------------
+   THE BALL : comet tail, breathing halo, spinning ring,
+   bright core and two orbiting sparks
+----------------------------------------------------- */
+
+.rail-ball
+{
+    position:absolute;
+
+    top:0;
+
+    left:50%;
+
+    width:0;
+
+    height:0;
+
+    pointer-events:none;
+
+    transition:top .12s linear;
+}
+
+
+/* Comet tail above the ball */
+.rail-ball-tail
+{
+    position:absolute;
+
+    left:-2.5px;
+
+    bottom:4px;
+
+    width:5px;
+
+    height:70px;
+
+    border-radius:8px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(251,191,36,0) 0%,
+            rgba(251,191,36,.35) 60%,
+            rgba(255,247,214,.9) 100%
+        );
+
+    filter:blur(2px);
+}
+
+
+/* Breathing halo */
+.rail-ball-glow
+{
+    position:absolute;
+
+    left:-28px;
+
+    top:-28px;
+
+    width:56px;
+
+    height:56px;
+
+    border-radius:999px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255,247,214,.75) 0%,
+            rgba(251,191,36,.45) 25%,
+            rgba(245,158,11,.18) 50%,
+            rgba(245,158,11,0) 72%
+        );
+
+    animation:rail-breathe 2.2s ease-in-out infinite;
+}
+
+
+/* Spinning gradient ring */
+.rail-ball-ring
+{
+    position:absolute;
+
+    left:-17px;
+
+    top:-17px;
+
+    width:34px;
+
+    height:34px;
+
+    border-radius:999px;
+
+    background:
+        conic-gradient(
+            from 0deg,
+            rgba(253,230,138,0) 0deg,
+            #fde68a 90deg,
+            #f59e0b 180deg,
+            rgba(234,88,12,0) 270deg,
+            rgba(253,230,138,0) 360deg
+        );
+
+    -webkit-mask:radial-gradient(circle, transparent 13px, #000 14px);
+
+    mask:radial-gradient(circle, transparent 13px, #000 14px);
+
+    animation:rail-spin 1.6s linear infinite;
+}
+
+
+/* The ball : bright, glassy core */
+.rail-ball-core
+{
+    position:absolute;
+
+    left:-11px;
+
+    top:-11px;
+
+    width:22px;
+
+    height:22px;
+
+    border-radius:999px;
+
+    background:
+        radial-gradient(
+            circle at 32% 28%,
+            #ffffff 0%,
+            #fff7d6 18%,
+            #fbbf24 48%,
+            #f59e0b 75%,
+            #c2410c 100%
+        );
+
+    box-shadow:
+        0 0 0 2px rgba(255,255,255,.9),
+        0 0 10px 3px rgba(251,191,36,.9),
+        0 0 26px 8px rgba(245,158,11,.55),
+        0 0 50px 16px rgba(234,88,12,.25);
+}
+
+
+/* Two sparks circling the ball */
+.rail-ball-spark
+{
+    position:absolute;
+
+    left:-3px;
+
+    top:-3px;
+
+    width:6px;
+
+    height:6px;
+
+    border-radius:999px;
+
+    background:#fff7d6;
+
+    box-shadow:0 0 8px 2px rgba(251,191,36,.95);
+}
+
+
+.rail-ball-spark-1
+{
+    animation:rail-orbit 2.2s linear infinite;
+}
+
+
+.rail-ball-spark-2
+{
+    width:4px;
+
+    height:4px;
+
+    left:-2px;
+
+    top:-2px;
+
+    animation:rail-orbit 3.1s linear infinite reverse;
+}
+
+
+/* Current section, beside the ball while scrolling */
+.rail-ball-label
+{
+    position:absolute;
+
+    top:0;
+
+    right:32px;
+
+    padding:7px 16px;
+
+    border:1px solid rgba(252,211,77,.55);
+
+    border-radius:999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(245,158,11,.25),
+            rgba(15,26,58,.92) 55%
+        );
+
+    box-shadow:
+        0 12px 28px -12px rgba(0,0,0,.75),
+        0 0 18px rgba(245,158,11,.35);
+
+    backdrop-filter:blur(8px);
+
+    color:#fde68a;
+
+    font-family:var(--w-display, sans-serif);
+
+    font-size:16px;
+
+    font-weight:800;
+
+    letter-spacing:.1em;
+
+    text-transform:uppercase;
+
+    text-shadow:0 0 10px rgba(251,191,36,.6);
+
+    white-space:nowrap;
+
+    opacity:0;
+
+    transform:translate(12px, -50%);
+
+    transition:
+        opacity .3s ease,
+        transform .35s cubic-bezier(.22, 1.4, .36, 1);
+}
+
+
+.rail-ball-label-on
+{
+    opacity:1;
+
+    transform:translate(0, -50%);
+}
+
+
+/* -----------------------------------------------------
+   MOTION
+----------------------------------------------------- */
+
+@keyframes rail-breathe
+{
+    0%, 100% { transform:scale(.8);  opacity:.7; }
+
+    50%      { transform:scale(1.2); opacity:1; }
+}
+
+
+@keyframes rail-spin
+{
+    to { transform:rotate(360deg); }
+}
+
+
+@keyframes rail-orbit
+{
+    from { transform:rotate(0deg)   translateX(19px) rotate(0deg); }
+
+    to   { transform:rotate(360deg) translateX(19px) rotate(-360deg); }
+}
+
+
+@keyframes rail-ping
+{
+    0%   { transform:scale(.7); opacity:.9; }
+
+    100% { transform:scale(1.6); opacity:0; }
+}
+
+
+@keyframes rail-shine
+{
+    0%   { top:-60px; }
+
+    100% { top:100%; }
+}
+
+
+/* -----------------------------------------------------
+   SMALL SCREENS / REDUCED MOTION / PRINT
+----------------------------------------------------- */
+
+@media (max-width:900px), (pointer:coarse)
+{
+    :host
+    {
+        display:none;
+    }
+}
+
+
+@media (prefers-reduced-motion:reduce)
+{
+    .rail,
+    .rail-ball,
+    .rail-fill
+    {
+        transition:none;
+    }
+
+    .rail-ball-glow,
+    .rail-ball-ring,
+    .rail-ball-spark,
+    .rail-fill-shine,
+    .rail-dot-active::after
+    {
+        animation:none;
+    }
+}
+
+
+@media print
+{
+    :host
+    {
+        display:none;
+    }
+}

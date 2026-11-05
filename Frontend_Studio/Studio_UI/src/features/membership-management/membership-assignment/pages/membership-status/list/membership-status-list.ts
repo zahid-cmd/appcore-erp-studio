@@ -1273,7 +1273,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.MembershipId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1293,7 +1293,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.MembershipId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1353,7 +1353,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.membershipStatusService.delete(
-                item.MembershipId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -1648,5 +1648,35 @@ implements OnInit, OnDestroy
             false;
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : memberships by status
+    // (all records)
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.memberships ?? []).length;
+    }
+
+    summaryCount(
+        status: string
+    ):
+        number
+    {
+        return (this.memberships ?? [])
+            .filter(x => String((x as any)?.Status ?? '').toLowerCase() === status)
+            .length;
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 }

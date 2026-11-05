@@ -1,0 +1,85 @@
+<!-- ===========================================================
+     EMI ESTIMATE
+============================================================ -->
+
+@if (content().emi.enabled && price() > 0)
+{
+    <section class="wrap section">
+        <div class="emi">
+
+            <div class="controls">
+                <span class="kicker">{{ t('emi.kicker') }}</span>
+                <h2 class="title">{{ t('emi.title') }}</h2>
+                <p class="lead">{{ t('emi.lead') }}</p>
+
+                @if (!bikeSlug() && priced().length > 1)
+                {
+                    <label class="field">
+                        <span class="label">Bike</span>
+                        <select class="select" (change)="pickBike($event)">
+                            @for (b of priced(); track b.slug)
+                            {
+                                <option [value]="b.slug" [selected]="b.slug === bike()?.slug">{{ b.model }}</option>
+                            }
+                        </select>
+                    </label>
+                }
+
+                <div class="field">
+                    <span class="label">Down payment</span>
+                    <div class="pills" role="group" aria-label="Down payment">
+                        @for (pct of downs(); track pct; let i = $index)
+                        {
+                            <button
+                                type="button"
+                                class="pill"
+                                [class.on]="i === downIndex()"
+                                [attr.aria-pressed]="i === downIndex()"
+                                (click)="downIndex.set(i)">
+                                {{ pct }}%
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="field">
+                    <span class="label">Months</span>
+                    <div class="pills" role="group" aria-label="Months">
+                        @for (m of months(); track m; let i = $index)
+                        {
+                            <button
+                                type="button"
+                                class="pill"
+                                [class.on]="i === monthIndex()"
+                                [attr.aria-pressed]="i === monthIndex()"
+                                (click)="monthIndex.set(i)">
+                                {{ m }} mo
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="result" aria-live="polite">
+                <span class="muted">
+                    {{ bike()?.model ? bike()?.model + ' · ' : 'Example price · ' }}{{ content().currency }} {{ money(price()) }}
+                </span>
+                <div class="amount">
+                    <b>{{ content().currency }} {{ money(monthly()) }}</b>
+                    <span>/ month</span>
+                </div>
+                <span class="detail">Down payment {{ content().currency }} {{ money(down()) }} · {{ tenure() }} months</span>
+                <span class="note">{{ content().emi.note }}</span>
+                @if (enquire(); as q)
+                {
+                    <a class="btn btn-accent btn-lg" routerLink="/enquire" [queryParams]="q">Ask for an EMI plan</a>
+                }
+                @else if (ask())
+                {
+                    <a class="btn btn-accent btn-lg" [href]="ask()" target="_blank" rel="noopener">Ask for an EMI plan</a>
+                }
+            </div>
+
+        </div>
+    </section>
+}

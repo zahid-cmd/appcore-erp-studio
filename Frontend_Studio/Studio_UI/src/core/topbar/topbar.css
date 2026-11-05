@@ -188,3 +188,128 @@
 {
     display:none !important;
 }
+
+
+/* =====================================================
+   WEBSITE BUTTON
+   -----------------------------------------------------
+   Opens the public website in a new tab; same look as
+   the calculator button, tooltip below on hover.
+===================================================== */
+
+.site-button
+{
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex:0 0 auto;
+
+    width:40px;
+
+    height:40px;
+
+    box-sizing:border-box;
+
+    border:1px solid rgba(255,255,255,.12);
+
+    border-radius:11px;
+
+    background:rgba(255,255,255,.06);
+
+    color:#ffffff;
+
+    text-decoration:none;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease;
+}
+
+
+.site-button:hover
+{
+    background:rgba(255,255,255,.12);
+
+    border-color:rgba(147,180,245,.45);
+}
+
+
+.site-button:focus-visible
+{
+    outline:2px solid #93b4f5;
+
+    outline-offset:2px;
+}
+
+
+.site-button::after
+{
+    content:attr(data-tip);
+
+    position:absolute;
+
+    top:calc(100% + 8px);
+
+    left:50%;
+
+    z-index:400;
+
+    padding:5px 10px;
+
+    border-radius:8px;
+
+    background:#0b1430;
+
+    color:#ffffff;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    white-space:nowrap;
+
+    box-shadow:0 6px 16px rgba(2,6,23,.3);
+
+    opacity:0;
+
+    transform:translate(-50%, -4px);
+
+    pointer-events:none;
+
+    transition:
+        opacity .15s ease,
+        transform .15s ease;
+}
+
+
+.site-button:hover::after,
+
+.site-button:focus-visible::after
+{
+    opacity:1;
+
+    transform:translate(-50%, 0);
+}
+
+
+:host-context(.appearance-light) .site-button
+{
+    border-color:#cbd6e7;
+
+    background:#f6f8fc;
+
+    color:#13254a;
+}
+
+
+:host-context(.appearance-light) .site-button:hover
+{
+    border-color:#bfd0ec;
+
+    background:#e1eafa;
+}

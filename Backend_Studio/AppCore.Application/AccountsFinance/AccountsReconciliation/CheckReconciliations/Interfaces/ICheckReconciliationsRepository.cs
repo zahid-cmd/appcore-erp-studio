@@ -99,4 +99,13 @@ public interface ICheckReconciliationsRepository
     Task<CheckActionResultDto> UndoVoidAsync(
         CheckUndoDto dto,
         long userId);
+
+
+    // Reconciliation voucher : uuid -> internal id (null = not found)
+    Task<long?> GetVoucherIdByPublicIdAsync(
+        Guid publicId);
+
+    // Deposit slip : uuid -> internal id (null = not found)
+    Task<long?> GetDepositSlipIdByPublicIdAsync(
+        Guid publicId);
 }

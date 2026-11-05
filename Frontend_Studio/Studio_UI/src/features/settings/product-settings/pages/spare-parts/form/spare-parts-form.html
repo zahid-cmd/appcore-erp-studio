@@ -169,6 +169,63 @@
                 </app-textbox>
 
 
+                <!-- Fits Models : the home model + the other models it fits -->
+
+                <div class="fit-box">
+
+                    <app-search-dropdown
+
+                        label="Fits Models"
+
+                        placeholder="Add another model it fits"
+
+                        [items]="fitItems"
+
+                        [value]="fitPickValue"
+
+                        (valueChange)="onAddFit($event)"
+
+                        [disabled]="isViewMode || isSaving || !entity.ProductSubCategoryId">
+
+                    </app-search-dropdown>
+
+                    <div class="fit-chips" aria-label="Models this item fits">
+
+                        @for (c of fitChips; track c.id)
+                        {
+                            <span class="fit-chip" [class.is-home]="c.home" [title]="c.title">
+
+                                @if (c.home)
+                                {
+                                    <i class="fas fa-house" aria-hidden="true"></i>
+                                }
+
+                                {{ c.name }}
+
+                                @if (!c.home && !isViewMode)
+                                {
+                                    <button
+                                        type="button"
+                                        class="fit-chip-x"
+                                        [attr.aria-label]="'Remove ' + c.name"
+                                        [disabled]="isSaving"
+                                        (click)="removeFit(c.id)">
+                                        <i class="fas fa-xmark" aria-hidden="true"></i>
+                                    </button>
+                                }
+
+                            </span>
+                        }
+                        @empty
+                        {
+                            <span class="fit-empty">Pick the sub category first</span>
+                        }
+
+                    </div>
+
+                </div>
+
+
                 <!-- Remarks -->
 
                 <app-textarea
@@ -177,7 +234,7 @@
 
                     placeholder="Enter remarks"
 
-                    [rows]="3"
+                    [rows]="2"
 
                     [(value)]="entity.Remarks"
 
@@ -343,6 +400,21 @@
                 </app-textbox>
 
 
+                <!-- Sales Ledger Code (CLS-005 / 006 / 008) -->
+
+                <app-textbox
+
+                    label="Sales Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [value]="entity.SalesLedgerCode ?? ''"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
                 <!-- Status -->
 
                 <app-dropdown
@@ -366,8 +438,8 @@
 
             <!-- =============================================
                  SECTION 04 : STOCK & STORAGE
-                 Stock levels and the storage locations
-                 (one per warehouse).
+                 Stock levels, the movement class and the
+                 storage locations (one bin per warehouse).
             ============================================== -->
 
             <app-form-section
@@ -425,6 +497,25 @@
                     [disabled]="isViewMode || isSaving">
 
                 </app-textbox>
+
+
+                <!-- Movement Class (default Slow Moving) -->
+
+                <app-dropdown
+
+                    label="Movement Class"
+
+                    [items]="movementClassItems"
+
+                    [value]="entity.MovementClass"
+
+                    (valueChange)="onMovementClassChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
 
 
                 <!-- =========================================
@@ -506,9 +597,13 @@
 
                                             {{ locationLabels[i]?.rack }}
 
-                                            <span class="sp-location-shelf">
+                                            <span
+                                                class="sp-location-shelf"
+                                                [title]="locationLabels[i]?.title">
 
-                                                {{ locationLabels[i]?.shelf }}
+                                                <i class="fas fa-box-archive"></i>
+
+                                                {{ locationLabels[i]?.bin }}
 
                                             </span>
 
@@ -556,7 +651,7 @@
 
         [title]="locationModalTitle"
 
-        subtitle="Warehouse → Rack → Shelf (one location per warehouse)"
+        subtitle="Warehouse → Rack → Shelf → Bin (one bin per warehouse)"
 
         icon="fas fa-warehouse"
 
@@ -571,7 +666,7 @@
         (closed)="closeLocationModal()">
 
 
-        <!-- Steps : Warehouse → Rack → Shelf (all the same width) -->
+        <!-- Steps : Warehouse → Rack → Shelf → Bin (all the same width) -->
 
         <div class="sp-steps">
 
@@ -640,7 +735,7 @@
 
                         (valueChange)="onDraftRackChange($event)"
 
-                        [disabled]="!locationDraft.WarehouseId"
+                        [disabled]="!locationDraft.WarehouseId || draftLoading"
 
                         [required]="true">
 
@@ -680,7 +775,47 @@
 
                         (valueChange)="onDraftShelfChange($event)"
 
-                        [disabled]="!locationDraft.RackManagementId"
+                        [disabled]="!locationDraft.RackManagementId || draftLoading"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+                </div>
+
+            </div>
+
+
+            <!-- Bin : only the free bins of the chosen shelf -->
+
+            <div class="sp-step" [class.sp-step-done]="!!locationDraft.BinNumber" [class.sp-step-locked]="!locationDraft.ShelfNumber">
+
+                <span class="sp-step-badge">
+
+                    @if (locationDraft.BinNumber)
+                    {
+                        <i class="fas fa-check"></i>
+                    }
+                    @else
+                    {
+                        4
+                    }
+
+                </span>
+
+                <div class="sp-step-field">
+
+                    <app-dropdown
+
+                        label="Bin"
+
+                        [items]="draftBinItems"
+
+                        [value]="locationDraft.BinNumber"
+
+                        (valueChange)="onDraftBinChange($event)"
+
+                        [disabled]="!locationDraft.ShelfNumber || draftLoading"
 
                         [required]="true">
 
@@ -727,7 +862,7 @@
 
                     <i class="fas fa-chevron-right sp-modal-sep"></i>
 
-                    <span class="sp-modal-chip sp-modal-chip-strong">
+                    <span class="sp-modal-chip">
 
                         <i class="fas fa-layer-group"></i>
 
@@ -735,13 +870,34 @@
 
                     </span>
 
+                    <i class="fas fa-chevron-right sp-modal-sep"></i>
+
+                    <span class="sp-modal-chip sp-modal-chip-strong">
+
+                        <i class="fas fa-box-archive"></i>
+
+                        {{ draftPreview.bin }}
+
+                    </span>
+
                 </div>
+
+                @if (draftPreview.outsidePlan)
+                {
+                    <div class="sp-modal-plan">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        {{ draftPreview.outsidePlan }}
+
+                    </div>
+                }
             }
             @else
             {
                 <div class="sp-modal-preview-empty">
 
-                    Choose a warehouse, rack and shelf.
+                    Choose a warehouse, rack, shelf and bin.
 
                 </div>
             }
@@ -749,24 +905,48 @@
         </div>
 
 
-        @if (locationDraft.WarehouseId && !draftRackItems.length)
-        {
-            <div
-                modalFooterLeft>
+        <div
+            modalFooterLeft
+            class="sp-modal-foot">
 
-                No active rack in this warehouse. Create one in Rack Management.
+            @if (draftError)
+            {
+                <span class="sp-modal-foot-error">
 
-            </div>
-        }
-        @else if (draftRackFull)
-        {
-            <div
-                modalFooterLeft>
+                    <i class="fas fa-circle-exclamation"></i>
 
-                Every shelf on this rack is used by another spare part. Choose another rack.
+                    {{ draftError }}
 
-            </div>
-        }
+                </span>
+            }
+            @else if (draftLoading)
+            {
+                <span>
+
+                    <i class="fas fa-spinner fa-spin"></i>
+
+                    Loading the racks of this warehouse…
+
+                </span>
+            }
+            @else if (locationDraft.WarehouseId && !draftRackItems.length)
+            {
+                <span>
+
+                    No active rack in this warehouse. Create one in Rack Management.
+
+                </span>
+            }
+            @else if (draftRackFull)
+            {
+                <span>
+
+                    Every bin on this rack is used by another item. Choose another rack.
+
+                </span>
+            }
+
+        </div>
 
     </app-form-modal>
 
@@ -782,4 +962,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

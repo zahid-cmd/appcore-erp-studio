@@ -332,6 +332,11 @@ implements OnInit, OnDestroy
         number =
         0;
 
+    // uuid from the address bar (the record is loaded by it)
+    routePublicId:
+        string =
+        '';
+
     //===========================================================
     // Page Header / Tabs
     //===========================================================
@@ -552,10 +557,10 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
-            this.entityId =
+            this.routePublicId =
                 id;
 
             this.loadEntity();
@@ -566,8 +571,9 @@ implements OnInit, OnDestroy
         this.initializeEntity();
     }
 
+    // The uuid in the address bar ('' = add)
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -579,13 +585,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                id !== ''
             )
             {
                 return id;
@@ -595,7 +599,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
@@ -737,7 +741,7 @@ implements OnInit, OnDestroy
     {
         this.vatService
             .getById(
-                this.entityId
+                this.routePublicId
             )
             .subscribe
             ({
@@ -748,6 +752,10 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
+                    // Internal id (save uses it; links use the uuid)
+                    this.entityId =
+                        Number(response.PurchaseVatId || 0);
+
                     this.entity =
                     {
                         ...response,

@@ -140,7 +140,7 @@ export const FUND_TRANSFER_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<FtPrintData>
     {
@@ -150,7 +150,7 @@ export const FUND_TRANSFER_PRINT:
                 firstValueFrom(
                     injector
                         .get(FundTransferService)
-                        .getById(id)
+                        .getForPrint(id)
                 ),
                 firstValueFrom(
                     injector

@@ -354,7 +354,7 @@ export class WelcomeWidgetComponent
         void
     {
         this.userProfileService
-            .getById(
+            .getByInternalId(
                 userProfileId
             )
             .subscribe

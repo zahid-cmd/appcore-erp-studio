@@ -1,0 +1,89 @@
+/* =====================================================
+   POLICY PAGE
+===================================================== */
+
+.banner
+{
+    padding:36px 0 44px;
+    background:var(--w-hero-bg);
+    color:var(--w-hero-text);
+}
+
+
+.banner .title
+{
+    color:var(--w-hero-text);
+}
+
+
+.crumbs
+{
+    display:flex;
+    gap:8px;
+    margin-bottom:18px;
+    color:var(--w-hero-muted);
+    font-size:13.5px;
+}
+
+
+.crumbs a
+{
+    color:inherit;
+    font-weight:700;
+    text-decoration:none;
+}
+
+
+.crumbs [aria-current]
+{
+    color:var(--w-hero-text);
+    font-weight:800;
+}
+
+
+.updated
+{
+    display:block;
+    margin-top:12px;
+    color:var(--w-hero-muted);
+    font-size:13.5px;
+}
+
+
+.body
+{
+    max-width:860px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:26px;
+    padding-top:48px;
+    padding-bottom:96px;
+}
+
+
+.part
+{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+
+.part-title
+{
+    margin:0;
+    color:var(--w-strong);
+    font-size:20px;
+    font-weight:800;
+}
+
+
+.part-text
+{
+    margin:0;
+    color:var(--w-muted);
+    font-size:15.5px;
+    line-height:1.75;
+    white-space:pre-line;
+}

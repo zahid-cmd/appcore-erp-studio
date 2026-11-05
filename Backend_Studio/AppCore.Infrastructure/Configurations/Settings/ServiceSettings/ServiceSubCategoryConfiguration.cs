@@ -42,6 +42,22 @@ public class ServiceSubCategoryConfiguration
 
         builder.HasKey(x => x.ServiceSubCategoryId);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_ServiceSubCategories_PublicId");
+
         builder.Property(x => x.ServiceSubCategoryId)
                .ValueGeneratedOnAdd();
 

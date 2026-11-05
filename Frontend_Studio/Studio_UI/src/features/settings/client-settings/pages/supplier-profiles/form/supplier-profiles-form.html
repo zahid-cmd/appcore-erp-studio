@@ -44,7 +44,6 @@
     </app-page-header>
 
 
-
     <!-- =====================================================
          SECTION 02 : PAGE TOOLBAR
     ====================================================== -->
@@ -64,7 +63,6 @@
     </app-page-toolbar>
 
 
-
     <!-- =====================================================
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
@@ -76,7 +74,6 @@
             canvasBody
 
             [columns]="4">
-
 
 
             <!-- =============================================
@@ -181,6 +178,22 @@
                 </app-search-dropdown>
 
 
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 02
+                 CONTACT & TAX IDS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Contact & Tax IDs"
+
+                icon="fas fa-phone">
+
+
+                <!-- Contact Person : first in this section -->
                 <app-textbox
 
                     label="Contact Person"
@@ -194,21 +207,6 @@
                     [disabled]="isViewMode || isSaving">
 
                 </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 CONTACT & TAX IDS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Contact & Tax IDs"
-
-                icon="fas fa-phone">
 
 
                 <!-- Phone 1 : 11 digits, starts 01, unique among suppliers -->
@@ -299,40 +297,17 @@
                 }
 
 
-                <app-textbox
-
-                    label="TIN"
-
-                    placeholder="Optional, 12 digits"
-
-                    [value]="entity.TinNo"
-
-                    (valueChange)="onDigitsChange('TinNo', $event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-                @if (!isViewMode && tinWarning)
-                {
-                    <div class="sup-warning">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        {{ tinWarning }}
-                    </div>
-                }
-
             </app-form-section>
-
 
 
             <!-- =============================================
                  SECTION 03
-                 ADDRESS, LICENSE & REMARKS
+                 ADDRESS, LICENSE, TIN & CREDIT DAYS
             ============================================== -->
 
             <app-form-section
 
-                title="Address, License & Remarks"
+                title="Address, License & Credit"
 
                 icon="fas fa-location-dot">
 
@@ -369,26 +344,47 @@
                 </app-textbox>
 
 
+                <app-textbox
+
+                    label="Credit Days"
+
+                    placeholder="0 = pay on purchase"
+
+                    [value]="creditDaysText"
+
+                    (valueChange)="onCreditDaysChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
 
 
-                <app-textarea
+                <app-textbox
 
-                    label="Remarks"
+                    label="TIN"
 
-                    placeholder="Enter remarks"
+                    placeholder="Optional, 12 digits"
 
-                    [rows]="2"
+                    [value]="entity.TinNo"
 
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
+                    (valueChange)="onDigitsChange('TinNo', $event)"
 
                     [disabled]="isViewMode || isSaving">
 
-                </app-textarea>
+                </app-textbox>
+
+                @if (!isViewMode && tinWarning)
+                {
+                    <div class="sup-warning">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {{ tinWarning }}
+                    </div>
+                }
+
 
             </app-form-section>
-
 
 
             <!-- =============================================
@@ -398,7 +394,7 @@
 
             <app-form-section
 
-                title="Accounts & Status"
+                title="Accounts, Status & Remarks"
 
                 icon="fas fa-sack-dollar">
 
@@ -430,35 +426,6 @@
 
                 </app-textbox>
 
-                <!-- Display Name : "<SUPPLIER NAME> - <BRAND> - <SUPPLY TYPE> - <PHONE 1>" -->
-
-                <app-textbox
-
-                    label="Display Name"
-
-                    placeholder="Follows the name, brand, supply type and Phone 1"
-
-                    [(value)]="entity.DisplayName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-                <app-textbox
-
-                    label="Credit Days"
-
-                    placeholder="0 = pay on purchase"
-
-                    [value]="creditDaysText"
-
-                    (valueChange)="onCreditDaysChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
 
                 <!-- Supplier terms : a new PO takes them (System Configuration › Edit Supplier Terms fixes them) -->
 
@@ -535,16 +502,43 @@
 
                 </app-dropdown>
 
-            </app-form-section>
 
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="2"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
 
 
         </app-form-grid>
 
+
+        <!-- Canvas footer : the Display Name (follows the name,
+             brand, supply type and Phone 1; read-only) -->
+
+        <div canvasFooter class="sup-footer">
+
+            <span class="sup-footer-label">Display Name</span>
+
+            <b class="sup-footer-name" [class.sup-footer-empty]="!entity.DisplayName">{{ entity.DisplayName || 'Follows the name, brand, supply type and Phone 1' }}</b>
+
+        </div>
+
     </app-page-canvas>
 
 </div>
-
 
 
 <!-- =====================================================

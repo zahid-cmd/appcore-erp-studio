@@ -1,0 +1,573 @@
+<div class="app-list-page dm-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Database Backups"
+        subtitle="Back up, copy and restore : saved on both PCs"
+        icon="fa-solid fa-floppy-disk">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search file, database, note, taken by..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="refresh()"
+                command2Text="Backup"
+                command2Icon="fas fa-floppy-disk"
+                [command2Visible]="allowed"
+                (command2Click)="openBackup()"
+                command3Text="Settings"
+                command3Icon="fas fa-gear"
+                [command3Visible]="allowed"
+                (command3Click)="toggleSettings()">
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    @if (!loading && !allowed)
+    {
+        <div class="dm-denied">
+            <i class="fa-solid fa-lock"></i>
+            <div>
+                <b>AppCore Admin only</b>
+                <span>Database backups, restore and data reset are open only to the AppCore Admin role (RP-001).</span>
+            </div>
+        </div>
+    }
+
+    @if (allowed)
+    {
+        <!-- =================================================
+             TOOLBAR : DATABASE · STATUS
+        ================================================== -->
+
+        <app-page-toolbar leftFlex="1 1 auto">
+
+            <div pageToolbarLeft class="dm-toolbar">
+
+                <app-search-dropdown
+                    class="dm-db-dd"
+                    placeholder="Choose a database"
+                    [items]="connectionItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="$any(connectionName)"
+                    (valueChange)="onConnectionChange($event)">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    class="dm-kind-dd"
+                    placeholder="All kinds"
+                    [items]="kindItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="$any(kindFilter)"
+                    (valueChange)="onKindFilter($event)">
+                </app-search-dropdown>
+
+                <div class="dm-stats">
+
+                    <div class="dm-seg" [class.dm-seg-ok]="status?.Nightly?.Enabled && !status?.Nightly?.Failing"
+                         [class.dm-seg-bad]="status?.Nightly?.Failing" [class.dm-seg-off]="!status?.Nightly?.Enabled"
+                         [title]="status?.Nightly?.Message || ''">
+                        <i class="fa-solid fa-moon dm-seg-icon"></i>
+                        <div class="dm-seg-text">
+                            <span>Nightly {{ status?.Nightly?.Time }}</span>
+                            <b>{{ nightlyText }}</b>
+                        </div>
+                    </div>
+
+                    <div class="dm-seg" [class.dm-seg-ok]="server?.Reachable" [class.dm-seg-bad]="server && !server.Reachable"
+                         [title]="server?.Message || ''">
+                        <i class="fa-solid fa-server dm-seg-icon"></i>
+                        <div class="dm-seg-text">
+                            <span>Server</span>
+                            <b>
+                                @if (server?.Reachable)
+                                {
+                                    PostgreSQL {{ server?.Major }} · {{ formatBytes(server?.SizeBytes ?? 0) }}
+                                }
+                                @else if (server)
+                                {
+                                    Not reachable
+                                }
+                                @else
+                                {
+                                    Checking...
+                                }
+                            </b>
+                        </div>
+                    </div>
+
+                    <div class="dm-seg" [class.dm-seg-ok]="status?.ToolsFound && !toolsOlderThanServer" [class.dm-seg-bad]="!status?.ToolsFound || toolsOlderThanServer"
+                         [title]="status?.ToolsFound ? (status?.ToolsFolder || '') : (status?.ToolsMessage || '')">
+                        <i class="fa-solid fa-toolbox dm-seg-icon"></i>
+                        <div class="dm-seg-text">
+                            <span>Tools</span>
+                            <b>{{ status?.ToolsFound ? 'pg_dump ' + status?.ToolsVersion : 'Not found' }}</b>
+                        </div>
+                    </div>
+
+                    <div class="dm-seg" [class.dm-seg-ok]="status?.ThisPcFolderOk" [class.dm-seg-bad]="!status?.ThisPcFolderOk"
+                         [title]="status?.ThisPcFolderMessage || ''">
+                        <i class="fa-solid fa-desktop dm-seg-icon"></i>
+                        <div class="dm-seg-text">
+                            <span>This PC</span>
+                            <b>{{ status?.MachineName }}</b>
+                        </div>
+                        <i class="fa-solid dm-seg-state" [class.fa-circle-check]="status?.ThisPcFolderOk" [class.fa-circle-xmark]="!status?.ThisPcFolderOk"></i>
+                    </div>
+
+                    <div class="dm-seg" [class.dm-seg-ok]="status?.OtherPcFolderOk" [class.dm-seg-bad]="status?.OtherPcFolderSet && !status?.OtherPcFolderOk"
+                         [class.dm-seg-off]="!status?.OtherPcFolderSet"
+                         [title]="status?.OtherPcFolderMessage || ''">
+                        <i class="fa-solid fa-network-wired dm-seg-icon"></i>
+                        <div class="dm-seg-text">
+                            <span>Other PC</span>
+                            <b>{{ status?.OtherPcFolderSet ? otherPcName : 'Not set' }}</b>
+                        </div>
+                        @if (status?.OtherPcFolderSet)
+                        {
+                            <i class="fa-solid dm-seg-state" [class.fa-circle-check]="status?.OtherPcFolderOk" [class.fa-circle-xmark]="!status?.OtherPcFolderOk"></i>
+                        }
+                    </div>
+
+                </div>
+
+            </div>
+
+        </app-page-toolbar>
+
+        @if (status && (!status.ToolsFound || toolsOlderThanServer))
+        {
+            <div class="dm-warn">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                @if (!status.ToolsFound)
+                {
+                    <span>{{ status.ToolsMessage }}</span>
+                }
+                @else
+                {
+                    <span>The tools on this PC ({{ status.ToolsVersion }}) are older than the database server (PostgreSQL {{ server?.Major }}). Install the PostgreSQL {{ server?.Major }} Command Line Tools.</span>
+                }
+            </div>
+        }
+
+        <!-- =================================================
+             SETTINGS
+        ================================================== -->
+
+        @if (settingsOpen)
+        {
+            <section class="dm-card dm-settings">
+
+                <div class="dm-card-head">
+                    <span><i class="fa-solid fa-gear"></i> Backup Settings</span>
+                    <button type="button" class="dm-icon-btn" title="Close" (click)="toggleSettings()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="dm-settings-grid">
+
+                    <div class="dm-field">
+                        <label>Folder on this PC ({{ status?.MachineName }})</label>
+                        <app-textbox
+                            textCase="none"
+                            placeholder="F:\AppCore_ERP_Studio\Backups"
+                            [value]="settings.ThisPcFolder"
+                            (valueChange)="onSettingText('ThisPcFolder', $event)">
+                        </app-textbox>
+                    </div>
+
+                    <div class="dm-field">
+                        <label>Shared folder on the other PC</label>
+                        <app-textbox
+                            textCase="none"
+                            placeholder="\\SERVER-PC\AppCore_Backups (empty = off)"
+                            [value]="settings.OtherPcFolder"
+                            (valueChange)="onSettingText('OtherPcFolder', $event)">
+                        </app-textbox>
+                    </div>
+
+                    <div class="dm-field">
+                        <label>Tools folder (pg_dump / pg_restore)</label>
+                        <app-textbox
+                            textCase="none"
+                            placeholder="Empty = found automatically"
+                            [value]="settings.ToolsFolder"
+                            (valueChange)="onSettingText('ToolsFolder', $event)">
+                        </app-textbox>
+                    </div>
+
+                </div>
+
+                <div class="dm-settings-sub">
+                    <i class="fa-solid fa-moon"></i> Nightly backup of the App database
+                </div>
+
+                <div class="dm-settings-grid dm-settings-grid-nightly">
+
+                    <div class="dm-field dm-field-check">
+                        <label>Nightly backup</label>
+                        <app-checkbox
+                            label="Run every night"
+                            [value]="settings.NightlyEnabled"
+                            (valueChange)="onNightlyEnabled($event)">
+                        </app-checkbox>
+                    </div>
+
+                    <div class="dm-field">
+                        <label>Time (24 h, Bangladesh)</label>
+                        <app-textbox
+                            textCase="none"
+                            placeholder="00:30"
+                            [disabled]="!settings.NightlyEnabled"
+                            [value]="settings.NightlyTime"
+                            (valueChange)="onNightlyTime($event)">
+                        </app-textbox>
+                    </div>
+
+                    <div class="dm-field">
+                        <label>Keep nightly</label>
+                        <app-textbox textCase="none" inputMode="numeric"
+                            [value]="settings.KeepNightly"
+                            (valueChange)="onKeep('KeepNightly', $event)">
+                        </app-textbox>
+                    </div>
+
+                    <div class="dm-field">
+                        <label>Keep weekly (Friday night)</label>
+                        <app-textbox textCase="none" inputMode="numeric"
+                            [value]="settings.KeepWeekly"
+                            (valueChange)="onKeep('KeepWeekly', $event)">
+                        </app-textbox>
+                    </div>
+
+                    <div class="dm-field">
+                        <label>Keep monthly (1st)</label>
+                        <app-textbox textCase="none" inputMode="numeric"
+                            [value]="settings.KeepMonthly"
+                            (valueChange)="onKeep('KeepMonthly', $event)">
+                        </app-textbox>
+                    </div>
+
+                </div>
+
+                <div class="dm-settings-foot">
+                    <span class="dm-hint">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Saved on this PC (C:\ProgramData\AppCoreERP). The other PC's folder must be shared with Read / Write for the Windows user that runs the API. Manual, client, before-restore and before-reset backups are never deleted automatically.
+                    </span>
+                    <button type="button" class="dm-btn" (click)="toggleSettings()">Cancel</button>
+                    <button type="button" class="dm-btn dm-btn-primary" (click)="saveSettings()">
+                        <i class="fa-solid fa-check"></i> Save
+                    </button>
+                </div>
+
+            </section>
+        }
+
+        <!-- =================================================
+             BACKUPS
+        ================================================== -->
+
+        <app-page-canvas [config]="canvasConfig">
+
+            <div canvasBody class="dm-canvas-body">
+
+            @if (loading)
+            {
+                <div class="dm-loading">
+                    <app-orbit-loader title="Loading" message="Reading both backup folders..." size="medium" [overlay]="false"></app-orbit-loader>
+                </div>
+            }
+            @else if (visibleBackups.length === 0)
+            {
+                <div class="dm-empty">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <span>{{ searchText ? 'No backup matches the search.' : 'No backup yet. Choose a database and click Backup.' }}</span>
+                </div>
+            }
+            @else
+            {
+                <div class="dm-table-wrap dm-canvas-table appcore-scrollbar">
+                    <table class="dm-table">
+                        <thead>
+                            <tr>
+                                <th class="dm-c dm-sl">#</th>
+                                <th>Backup</th>
+                                <th>Database</th>
+                                <th>Kind</th>
+                                <th class="dm-r">Size</th>
+                                <th>Taken</th>
+                                <th class="dm-c">This PC</th>
+                                <th class="dm-c">Other PC</th>
+                                <th class="dm-c">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (item of pagedBackups; track item.FileName; let i = $index)
+                            {
+                                <tr>
+                                    <td class="dm-c dm-sl">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+                                    <td>
+                                        <div class="dm-main dm-mono">{{ item.FileName }}</div>
+                                        @if (item.Note)
+                                        {
+                                            <div class="dm-sub">{{ item.Note }}</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="dm-main">{{ item.Database || '-' }}</div>
+                                        <div class="dm-sub">{{ connectionText(item.ConnectionName) }}{{ item.Host ? ' @ ' + item.Host : '' }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="dm-kind"
+                                              [class.dm-kind-auto]="item.Kind !== 'Manual'">{{ item.Kind }}</span>
+                                    </td>
+                                    <td class="dm-r dm-mono">{{ formatBytes(item.SizeBytes) }}</td>
+                                    <td>
+                                        <div class="dm-main">{{ formatDateTime(item.TakenDate) }}</div>
+                                        <div class="dm-sub">{{ item.TakenBy || '-' }}{{ item.TakenOn ? ' · ' + item.TakenOn : '' }}</div>
+                                    </td>
+                                    <td class="dm-c">
+                                        <i class="fa-solid" [class.fa-check]="item.OnThisPc" [class.fa-xmark]="!item.OnThisPc"
+                                           [class.dm-ok-text]="item.OnThisPc" [class.dm-bad-text]="!item.OnThisPc"></i>
+                                    </td>
+                                    <td class="dm-c">
+                                        @if (status?.OtherPcFolderSet)
+                                        {
+                                            <i class="fa-solid" [class.fa-check]="item.OnOtherPc" [class.fa-xmark]="!item.OnOtherPc"
+                                               [class.dm-ok-text]="item.OnOtherPc" [class.dm-bad-text]="!item.OnOtherPc"></i>
+                                        }
+                                        @else
+                                        {
+                                            <span class="dm-sub">off</span>
+                                        }
+                                    </td>
+                                    <td class="dm-c dm-actions">
+                                        <button type="button" class="dm-icon-btn" title="Download" [disabled]="!!busy" (click)="download(item)">
+                                            <i class="fa-solid fa-download"></i>
+                                        </button>
+                                        @if (canCopy(item))
+                                        {
+                                            <button type="button" class="dm-icon-btn" [title]="item.OnThisPc ? 'Copy to the other PC' : 'Copy back to this PC'" [disabled]="!!busy" (click)="copy(item)">
+                                                <i class="fa-solid fa-copy"></i>
+                                            </button>
+                                        }
+                                        <button type="button" class="dm-icon-btn dm-icon-warn" title="Restore" [disabled]="!!busy" (click)="openRestore(item)">
+                                            <i class="fa-solid fa-clock-rotate-left"></i>
+                                        </button>
+                                        <button type="button" class="dm-icon-btn dm-icon-danger" title="Delete" [disabled]="!!busy" (click)="openDelete(item)">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="visibleBackups.length"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+    }
+
+    <!-- =====================================================
+         BACKUP NOW
+    ====================================================== -->
+
+    @if (backupOpen)
+    {
+        <div class="dm-backdrop">
+            <div class="dm-modal" role="dialog" aria-modal="true">
+
+                <div class="dm-modal-head">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>Backup</span>
+                </div>
+
+                <div class="dm-modal-body">
+                    <div class="dm-facts">
+                        <div><span>Database</span><b>{{ selectedConnection?.Database }}</b></div>
+                        <div><span>Server</span><b>{{ selectedConnection?.Host }}:{{ selectedConnection?.Port }}</b></div>
+                        <div><span>Saved to</span><b>This PC{{ status?.OtherPcFolderSet ? ' + other PC' : '' }}</b></div>
+                    </div>
+
+                    <app-textbox
+                        textCase="none"
+                        placeholder="Note (optional), e.g. Before testing sales"
+                        [value]="backupNote"
+                        (valueChange)="backupNote = $any($event)">
+                    </app-textbox>
+                </div>
+
+                <div class="dm-modal-foot">
+                    <button type="button" class="dm-btn" (click)="closeBackup()">Close</button>
+                    <button type="button" class="dm-btn dm-btn-primary" (click)="runBackup()">
+                        <i class="fa-solid fa-floppy-disk"></i> Backup
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <!-- =====================================================
+         RESTORE
+    ====================================================== -->
+
+    @if (restoreItem)
+    {
+        <div class="dm-backdrop">
+            <div class="dm-modal dm-modal-wide" role="dialog" aria-modal="true">
+
+                <div class="dm-modal-head dm-head-warn">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Restore Database</span>
+                </div>
+
+                <div class="dm-modal-body">
+
+                    <div class="dm-facts">
+                        <div><span>Backup</span><b class="dm-mono">{{ restoreItem.FileName }}</b></div>
+                        <div><span>Taken</span><b>{{ formatDateTime(restoreItem.TakenDate) }} · {{ restoreItem.Database }}</b></div>
+                    </div>
+
+                    <div class="dm-field">
+                        <label>Restore into</label>
+                        <app-search-dropdown
+                            class="dm-db-dd dm-full"
+                            placeholder="Choose the target database"
+                            [items]="connectionItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="$any(restoreTarget)"
+                            (valueChange)="onRestoreTargetChange($event)">
+                        </app-search-dropdown>
+                    </div>
+
+                    <div class="dm-danger-note">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>
+                            Everything in <b>{{ restoreConnection?.Database }}</b> is replaced by this backup.
+                            A backup of it as it is now is taken first; the restore is all or nothing.
+                        </span>
+                    </div>
+
+                    <div class="dm-field">
+                        <label>Type <b class="dm-mono">{{ restoreConnection?.Database }}</b> to confirm</label>
+                        <app-textbox
+                            textCase="none"
+                            [value]="restoreConfirm"
+                            (valueChange)="restoreConfirm = $any($event)">
+                        </app-textbox>
+                    </div>
+
+                    <app-textarea
+                        class="dm-reason"
+                        placeholder="Reason (required)"
+                        [rows]="3"
+                        [value]="restoreReason"
+                        (valueChange)="restoreReason = $any($event)">
+                    </app-textarea>
+
+                </div>
+
+                <div class="dm-modal-foot">
+                    <button type="button" class="dm-btn" (click)="closeRestore()">Close</button>
+                    <button type="button" class="dm-btn dm-btn-danger" [disabled]="!restoreReady" (click)="runRestore()">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Restore
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <!-- =====================================================
+         DELETE
+    ====================================================== -->
+
+    @if (deleteItem)
+    {
+        <div class="dm-backdrop">
+            <div class="dm-modal" role="dialog" aria-modal="true">
+
+                <div class="dm-modal-head dm-head-danger">
+                    <i class="fa-solid fa-trash"></i>
+                    <span>Delete Backup</span>
+                </div>
+
+                <div class="dm-modal-body">
+
+                    <div class="dm-facts">
+                        <div><span>Backup</span><b class="dm-mono">{{ deleteItem.FileName }}</b></div>
+                    </div>
+
+                    <div class="dm-choices">
+                        <button type="button" class="dm-choice" [class.dm-choice-on]="deleteWhere === 'this'"
+                                [disabled]="!deleteItem.OnThisPc" (click)="setDeleteWhere('this')">
+                            <i class="fa-solid fa-desktop"></i> This PC only
+                        </button>
+                        <button type="button" class="dm-choice" [class.dm-choice-on]="deleteWhere === 'other'"
+                                [disabled]="!deleteItem.OnOtherPc" (click)="setDeleteWhere('other')">
+                            <i class="fa-solid fa-network-wired"></i> Other PC only
+                        </button>
+                        <button type="button" class="dm-choice" [class.dm-choice-on]="deleteWhere === 'both'"
+                                [disabled]="!deleteItem.OnThisPc || !deleteItem.OnOtherPc" (click)="setDeleteWhere('both')">
+                            <i class="fa-solid fa-clone"></i> Both PCs
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="dm-modal-foot">
+                    <button type="button" class="dm-btn" (click)="closeDelete()">Close</button>
+                    <button type="button" class="dm-btn dm-btn-danger" (click)="runDelete()">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <!-- =====================================================
+         BUSY
+    ====================================================== -->
+
+    <!-- Shared progress dialog, centred on the page area (not the window) -->
+    <div class="dm-progress-host">
+        <app-progress-dialog></app-progress-dialog>
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

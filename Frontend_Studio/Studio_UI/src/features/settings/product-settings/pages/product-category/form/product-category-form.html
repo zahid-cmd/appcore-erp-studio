@@ -235,6 +235,21 @@
 
                 </app-textbox>
 
+
+                <!-- Sales Group Code (CLS-005 / 006 / 008) -->
+
+                <app-textbox
+
+                    label="Sales Group Code"
+
+                    placeholder="Auto generated"
+
+                    [value]="entity.SalesGroupCode ?? ''"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
             </app-form-section>
 
 
@@ -300,6 +315,21 @@
                     [readonly]="true"
 
                     [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Sales Group Name (set by the server) -->
+
+                <app-textbox
+
+                    label="Sales Group Name"
+
+                    placeholder="Follows the category name"
+
+                    [value]="entity.SalesGroupName ?? ''"
+
+                    [readonly]="true">
 
                 </app-textbox>
 
@@ -380,6 +410,17 @@
 
         </app-form-grid>
 
+
+        <!-- Canvas footer : the Category Name (read only) -->
+
+        <div canvasFooter class="pcat-footer">
+
+            <span class="pcat-footer-label">Category Name</span>
+
+            <b class="pcat-footer-name" [class.pcat-footer-empty]="!entity.CategoryName">{{ entity.CategoryName || 'Follows the category type and brand' }}</b>
+
+        </div>
+
     </app-page-canvas>
 
 </div>
@@ -394,4 +435,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

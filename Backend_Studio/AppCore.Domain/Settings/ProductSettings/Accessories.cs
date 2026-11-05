@@ -33,6 +33,10 @@ public class Accessories
     public long AccessoryId { get; set; }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
+
     //===========================================================
     // Parent (locked after saving)
     //===========================================================
@@ -71,6 +75,10 @@ public class Accessories
 
     public string CogsLedgerCode { get; set; } = string.Empty;
 
+    // Sales ledger (2026-11-04) : GLR-ccc-ggg-sss-nnnnn under the
+    // sub category's sales sub group (CLS-005 / 006 / 008)
+    public string SalesLedgerCode { get; set; } = string.Empty;
+
 
     //===========================================================
     // Stock Levels
@@ -83,6 +91,19 @@ public class Accessories
     // Highest stock wanted (0 = not set) : a purchase order
     // cannot take the company stock above it
     public int MaxStockLevel { get; set; }
+
+
+    //===========================================================
+    // Movement Class : SuperFast / Fast / Regular / Periodic /
+    // Slow (default). Used by bin allocation (Stage 2).
+    //
+    // MovementClassAuto : reserved (later set from the 3- or
+    // 6-month average sales); not used yet.
+    //===========================================================
+
+    public string MovementClass { get; set; } = "Slow";
+
+    public bool MovementClassAuto { get; set; }
 
 
     //===========================================================

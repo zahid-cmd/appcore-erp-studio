@@ -86,12 +86,12 @@ export class ModuleService
     //===========================================================
 
     getById(
-        id:number
+        publicId: string
     ):
         Observable<NavigationModule>
     {
         return this.http.get<NavigationModule>(
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${publicId}`
         );
     }
 
@@ -189,12 +189,12 @@ export class ModuleService
     //===========================================================
 
     delete(
-        id:number
+        publicId: string
     ):
         Observable<void>
     {
         return this.http.delete<void>(
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${publicId}`
         );
     }
 

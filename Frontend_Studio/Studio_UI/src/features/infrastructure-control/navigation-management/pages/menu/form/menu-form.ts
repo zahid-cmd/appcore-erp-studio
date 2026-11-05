@@ -226,7 +226,7 @@ implements OnInit
         'add' | 'edit' | 'view' = 'add';
 
     menuId =
-        0;
+        '';
 
     //===========================================================
     // Page Header
@@ -417,9 +417,7 @@ implements OnInit
         void
     {
         const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
+            this.route.snapshot.paramMap.get('id') ?? '';
 
         const url =
             this.router.url.toLowerCase();
@@ -458,7 +456,7 @@ implements OnInit
         // Edit / View
         //=======================================================
 
-        if (id > 0)
+        if (id !== '')
         {
             this.menuId =
                 id;

@@ -1,0 +1,840 @@
+<div class="app-form-page rk-form">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-warehouse"
+
+        [title]="pageTitle"
+
+        subtitle="Zone, shelves, bins and assignment of one rack">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            [command1Icon]="saveButtonIcon"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            rightCommandTitle="Back to the list"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR : tab | error line
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+
+        <div
+
+            pageToolbarRight
+
+            class="rk-toolbar-right">
+
+            @if (formError)
+            {
+                <div
+                    class="rk-error"
+                    role="alert">
+
+                    <i class="fas fa-circle-exclamation"></i>
+
+                    <span [title]="formError">{{ formError }}</span>
+
+                    <button
+                        type="button"
+                        class="rk-error-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeError()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        @if (loading)
+        {
+            <div
+
+                canvasBody
+
+                class="rk-loading">
+
+                <app-orbit-loader
+
+                    title="Loading Rack"
+
+                    message="Please wait while the rack is being loaded."
+
+                    size="medium"
+
+                    [showMessage]="true"
+
+                    [overlay]="false">
+
+                </app-orbit-loader>
+
+            </div>
+        }
+        @else
+        {
+        <app-form-grid
+
+            canvasBody
+
+            class="rk-grid"
+
+            [columns]="4">
+
+
+            <!-- =============================================
+                 SECTION 01 : RACK INFORMATION
+                 Warehouse locked after saving; Zone = the zones
+                 of that warehouse; Rack Code R-nnn and Rack Name
+                 are built by the server.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Rack Information"
+
+                icon="fas fa-warehouse">
+
+
+                <!-- Warehouse -->
+
+                <app-search-dropdown
+
+                    label="Warehouse"
+
+                    placeholder="Select a warehouse"
+
+                    [items]="warehouseItems"
+
+                    [value]="entity.WarehouseId"
+
+                    (valueChange)="onWarehouseChange($event)"
+
+                    [disabled]="!isAddMode || progress.busy"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Zone (zones of the warehouse) -->
+
+                <div class="rk-field">
+
+                    <app-search-dropdown
+
+                        label="Zone"
+
+                        placeholder="Select a zone"
+
+                        [items]="zoneItems"
+
+                        [value]="entity.RackZoneId ?? 0"
+
+                        (valueChange)="onZoneChange($event)"
+
+                        [disabled]="locked || !entity.WarehouseId || !zoneItems.length"
+
+                        [required]="zoneRequired">
+
+                    </app-search-dropdown>
+
+                    <span class="rk-hint">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        {{ noZoneHint }}
+
+                    </span>
+
+                </div>
+
+
+                <!-- Rack Code ("<Warehouse Code>-R-001") -->
+
+                <app-textbox
+
+                    label="Rack Code"
+
+                    placeholder="Select a warehouse"
+
+                    [value]="fullRackCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Rack Name : "Rack A", "Rack B" … auto -->
+
+                <app-textbox
+
+                    label="Rack Name"
+
+                    placeholder="Select a warehouse"
+
+                    [value]="entity.RackName"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 02 : SHELVES & BINS
+                 Number of shelves, quick fill, per-shelf bins
+                 and the live mini rack preview. Removing a
+                 shelf / bin that holds an item is refused.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Shelves &amp; Bins"
+
+                icon="fas fa-layer-group">
+
+
+                <div class="rk-two">
+
+                    <!-- Number of Shelves -->
+
+                    <app-textbox
+
+                        [label]="'Number of Shelves (1 - ' + maxShelves + ')'"
+
+                        placeholder="1"
+
+                        inputMode="numeric"
+
+                        [value]="shelfCountText"
+
+                        (valueChange)="onShelfCountChange($event)"
+
+                        [disabled]="locked"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <!-- Quick fill : bins on every shelf -->
+
+                    <div class="rk-fill">
+
+                        <app-textbox
+
+                            [label]="'Bins on every shelf (1 - ' + maxBins + ')'"
+
+                            placeholder="1"
+
+                            inputMode="numeric"
+
+                            [value]="binsEveryText"
+
+                            (valueChange)="onBinsEveryChange($event)"
+
+                            [disabled]="locked">
+
+                        </app-textbox>
+
+                        @if (!isViewMode)
+                        {
+                            <button
+
+                                type="button"
+
+                                class="rk-fill-btn"
+
+                                title="Give every shelf this number of bins"
+
+                                [disabled]="locked"
+
+                                (click)="applyQuickFill()">
+
+                                <i class="fas fa-fill-drip"></i>
+
+                                Fill
+
+                            </button>
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <!-- Per-shelf table : Shelf · Bins · Prime · Used -->
+
+                @if (shelfRows.length)
+                {
+                    <div class="rk-shelves appcore-scrollbar">
+
+                        <table class="rk-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th class="rk-col-shelf">Shelf</th>
+
+                                    <th class="rk-col-bins">Bins</th>
+
+                                    <th class="rk-col-prime">Prime</th>
+
+                                    <th class="rk-col-used">Used</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                @for (row of shelfRows; track row.ShelfNumber)
+                                {
+                                    <tr
+                                        [class.rk-row-prime]="row.IsPrime"
+                                        [class.rk-row-warn]="!!row.Warning">
+
+                                        <td class="rk-col-shelf">
+
+                                            <span class="rk-shelf-label">{{ row.Label }}</span>
+
+                                        </td>
+
+                                        <td class="rk-col-bins">
+
+                                            <div class="rk-stepper">
+
+                                                <button
+                                                    type="button"
+                                                    class="rk-step"
+                                                    title="One bin less"
+                                                    [disabled]="locked || row.BinCount <= 1"
+                                                    (click)="stepShelfBins(row.ShelfNumber, -1)">
+
+                                                    <i class="fas fa-minus"></i>
+
+                                                </button>
+
+                                                <input
+                                                    type="text"
+                                                    inputmode="numeric"
+                                                    class="rk-bin-input"
+                                                    [attr.aria-label]="row.Label + ' bins'"
+                                                    [value]="row.BinText"
+                                                    [disabled]="locked"
+                                                    (input)="onShelfBinsChange(row.ShelfNumber, $any($event.target).value)">
+
+                                                <button
+                                                    type="button"
+                                                    class="rk-step"
+                                                    title="One bin more"
+                                                    [disabled]="locked || row.BinCount >= maxBins"
+                                                    (click)="stepShelfBins(row.ShelfNumber, 1)">
+
+                                                    <i class="fas fa-plus"></i>
+
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td class="rk-col-prime">
+
+                                            <button
+                                                type="button"
+                                                class="rk-prime"
+                                                [class.is-on]="row.IsPrime"
+                                                [attr.aria-pressed]="row.IsPrime"
+                                                [title]="row.IsPrime ? 'Prime shelf (part of the prime range) : click to take it out' : 'Add to the prime range'"
+                                                [disabled]="locked"
+                                                (click)="togglePrime(row.ShelfNumber)">
+
+                                                <i class="fas fa-star"></i>
+
+                                            </button>
+
+                                        </td>
+
+                                        <td class="rk-col-used">
+
+                                            @if (row.Used)
+                                            {
+                                                <span class="rk-used">{{ row.Used }}</span>
+                                            }
+                                            @else
+                                            {
+                                                <span class="rk-used-none">–</span>
+                                            }
+
+                                        </td>
+
+                                    </tr>
+
+                                    @if (row.Warning)
+                                    {
+                                        <tr class="rk-warn-line">
+
+                                            <td colspan="4">
+
+                                                <i class="fas fa-triangle-exclamation"></i>
+
+                                                {{ row.Warning }}
+
+                                            </td>
+
+                                        </tr>
+                                    }
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+
+
+                <!-- Mini rack preview : shelves as rows, bins as cells -->
+
+                <div class="rk-preview">
+
+                    <div class="rk-preview-head">
+
+                        <span class="rk-preview-title">
+
+                            <i class="fas fa-table-cells"></i>
+
+                            {{ entity.RackName || 'Rack' }} preview
+
+                        </span>
+
+                        <span class="rk-preview-total">
+
+                            <b>{{ totalBins }}</b> bins
+
+                            @if (usedBins)
+                            {
+                                <span class="rk-dotsep">·</span>
+
+                                <b>{{ usedBins }}</b> used
+                            }
+
+                            @if (primeShelfCount)
+                            {
+                                <span class="rk-dotsep">·</span>
+
+                                <b>{{ primeShelfCount }}</b> prime
+                            }
+
+                        </span>
+
+                    </div>
+
+
+                    @if (previewShelves.length)
+                    {
+                        <div class="rk-rack appcore-scrollbar">
+
+                            @for (shelf of previewShelves; track shelf.ShelfNumber)
+                            {
+                                <div
+                                    class="rk-rack-row"
+                                    [class.is-prime]="shelf.IsPrime"
+                                    [class.is-lost]="shelf.Lost">
+
+                                    <span class="rk-rack-no">{{ shelf.Short }}</span>
+
+                                    <div class="rk-rack-bins">
+
+                                        @for (bin of shelf.Bins; track bin.BinNumber)
+                                        {
+                                            <span
+                                                class="rk-bin"
+                                                [class.is-used]="bin.Occupied"
+                                                [class.is-lost]="bin.Lost"
+                                                [title]="bin.Title">
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                </div>
+                            }
+
+                        </div>
+                    }
+                    @else
+                    {
+                        <div class="rk-preview-empty">
+
+                            Enter the number of shelves.
+
+                        </div>
+                    }
+
+
+                    <div class="rk-legend">
+
+                        <span><i class="rk-bin"></i> Free</span>
+
+                        <span><i class="rk-bin is-used"></i> Holds an item</span>
+
+                        <span><i class="rk-legend-prime"></i> Prime shelf</span>
+
+                    </div>
+
+                </div>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 03 : ASSIGNMENT
+                 Category (Spare Parts / Accessories types) →
+                 Sub Categories (none = the whole category); no
+                 category = General rack. A plan for allocation :
+                 it never blocks manual placement.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Assignment"
+
+                icon="fas fa-diagram-project">
+
+
+                <!-- Category -->
+
+                <app-search-dropdown
+
+                    label="Category"
+
+                    placeholder="General (any product)"
+
+                    [items]="categoryItems"
+
+                    [value]="entity.ProductCategoryId ?? 0"
+
+                    (valueChange)="onCategoryChange($event)"
+
+                    [disabled]="locked">
+
+                </app-search-dropdown>
+
+
+                <!-- Sub Categories (multi-select) -->
+
+                <div class="rk-subs">
+
+                    <div class="rk-subs-head">
+
+                        <span class="rk-label">Sub Categories</span>
+
+                        @if (subCategoryChips.length && !isViewMode)
+                        {
+                            <span class="rk-subs-tools">
+
+                                <button
+                                    type="button"
+                                    class="rk-link"
+                                    [disabled]="locked"
+                                    (click)="selectAllSubCategories(true)">
+
+                                    All
+
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="rk-link"
+                                    [disabled]="locked || !selectedSubCount"
+                                    (click)="selectAllSubCategories(false)">
+
+                                    None
+
+                                </button>
+
+                            </span>
+                        }
+
+                    </div>
+
+
+                    @if (!entity.ProductCategoryId)
+                    {
+                        <div class="rk-subs-empty">
+
+                            Choose a category to limit the rack to some of its sub categories.
+
+                        </div>
+                    }
+                    @else if (!subCategoryChips.length)
+                    {
+                        <div class="rk-subs-empty">
+
+                            This category has no active sub category : the whole category.
+
+                        </div>
+                    }
+                    @else
+                    {
+                        <div class="rk-subs-list appcore-scrollbar">
+
+                            @for (chip of subCategoryChips; track chip.Id)
+                            {
+                                <button
+                                    type="button"
+                                    class="rk-sub"
+                                    [class.is-on]="chip.On"
+                                    [attr.aria-pressed]="chip.On"
+                                    [title]="chip.Code + ' - ' + chip.Name"
+                                    [disabled]="locked"
+                                    (click)="toggleSubCategory(chip.Id)">
+
+                                    <i [class]="chip.On ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                    {{ chip.Name }}
+
+                                </button>
+                            }
+
+                        </div>
+                    }
+
+
+                    <span class="rk-hint">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        {{ assignmentSummary }} None selected = the whole category.
+
+                    </span>
+
+                </div>
+
+
+                <!-- Prime shelves From / To -->
+
+                <div class="rk-prime-range">
+
+                    <div class="rk-subs-head">
+
+                        <span class="rk-label">
+
+                            <i class="fas fa-star rk-label-star"></i>
+
+                            Prime Shelves
+
+                        </span>
+
+                        @if (entity.PrimeShelfFrom && !isViewMode)
+                        {
+                            <button
+                                type="button"
+                                class="rk-link"
+                                [disabled]="locked"
+                                (click)="clearPrime()">
+
+                                Clear
+
+                            </button>
+                        }
+
+                    </div>
+
+                    <div class="rk-two">
+
+                        <app-dropdown
+
+                            label="From"
+
+                            [items]="primeFromItems"
+
+                            [value]="entity.PrimeShelfFrom ?? 0"
+
+                            (valueChange)="onPrimeFromChange($event)"
+
+                            [disabled]="locked || !shelfRows.length">
+
+                        </app-dropdown>
+
+                        <app-dropdown
+
+                            label="To"
+
+                            [items]="primeToItems"
+
+                            [value]="entity.PrimeShelfTo ?? 0"
+
+                            (valueChange)="onPrimeToChange($event)"
+
+                            [disabled]="locked || !shelfRows.length">
+
+                        </app-dropdown>
+
+                    </div>
+
+                    <span class="rk-hint">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        The easiest shelves to reach; fast movers go there first.
+
+                    </span>
+
+                </div>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 04 : LOCATION DETAILS & STATUS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Location Details &amp; Status"
+
+                icon="fas fa-location-dot">
+
+
+                <!-- Rack Type -->
+
+                <app-dropdown
+
+                    label="Rack Type"
+
+                    [items]="rackTypeItems"
+
+                    [value]="entity.RackType"
+
+                    (valueChange)="onRackTypeChange($event)"
+
+                    [disabled]="locked">
+
+                </app-dropdown>
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [value]="entity.IsActive"
+
+                    (valueChange)="onStatusChange($event)"
+
+                    [disabled]="locked"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [value]="entity.Remarks"
+
+                    (valueChange)="onRemarksChange($event)"
+
+                    [disabled]="locked">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+        </app-form-grid>
+        }
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

@@ -220,6 +220,10 @@ export function normalizeFinancialYear
         FinancialYearId:
             readNumber(item, 'FinancialYearId'),
 
+        // The id used in links and API calls (uuid v7)
+        PublicId:
+            readText(item, 'PublicId'),
+
         FinancialYearCode:
             readText(item, 'FinancialYearCode'),
 
@@ -363,7 +367,7 @@ export class FinancialYearsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<FinancialYear>
     {
@@ -391,9 +395,9 @@ export class FinancialYearsService
         model:
             CreateFinancialYear
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -406,13 +410,16 @@ export class FinancialYearsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateFinancialYear
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -425,7 +432,7 @@ export class FinancialYearsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

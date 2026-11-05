@@ -202,6 +202,32 @@
 
     </app-page-canvas>
 
+    <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="bka-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="bka-summary-item">
+                    <span class="bka-summary-label">{{ item.label }}</span>
+                    <b
+                        class="bka-summary-value"
+                        [class.bka-ok]="item.tone === 'ok'"
+                        [class.bka-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="bka-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
 
 
     <!-- =====================================================

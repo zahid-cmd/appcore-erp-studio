@@ -47,8 +47,6 @@ public class CreateOpeningStockLineDto
     // switch is ON, else excl. VAT (MRP basis : not used)
     public decimal UnitCost { get; set; }
 
-    public decimal SalePrice { get; set; }
-
     public decimal Mrp { get; set; }
 
     public decimal MarginPercent { get; set; }
@@ -56,6 +54,9 @@ public class CreateOpeningStockLineDto
     public long? RackManagementId { get; set; }
 
     public int ShelfNumber { get; set; }
+
+    // Bin on that shelf (0 with a rack and shelf = bin 1)
+    public int BinNumber { get; set; }
 
     public bool SaveAsDefault { get; set; }
 

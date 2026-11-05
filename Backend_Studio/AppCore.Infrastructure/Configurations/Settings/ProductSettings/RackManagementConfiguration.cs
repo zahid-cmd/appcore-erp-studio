@@ -41,6 +41,15 @@ public class RackManagementConfiguration
 
         builder.HasKey(x => x.RackManagementId);
 
+        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_RackManagements_PublicId");
+
         builder.Property(x => x.RackManagementId)
                .ValueGeneratedOnAdd();
 
@@ -89,6 +98,22 @@ public class RackManagementConfiguration
 
         builder.Property(x => x.ShelfCount)
                .IsRequired();
+
+
+        //===========================================================
+        // Zone / Assignment / Prime shelves
+        //===========================================================
+
+        builder.Property(x => x.RackZoneId);
+
+        builder.HasIndex(x => x.RackZoneId)
+               .HasDatabaseName("IX_RackManagements_RackZoneId");
+
+        builder.Property(x => x.ProductCategoryId);
+
+        builder.Property(x => x.PrimeShelfFrom);
+
+        builder.Property(x => x.PrimeShelfTo);
 
 
         //===========================================================
@@ -144,5 +169,69 @@ public class RackManagementConfiguration
         builder.Property(x => x.ModifiedBy);
 
         builder.Property(x => x.ModifiedDate);
+    }
+}
+
+
+//===============================================================
+// Rack Shelves Configuration (bins per shelf)
+//===============================================================
+
+public class RackShelvesConfiguration
+    : IEntityTypeConfiguration<RackShelves>
+{
+    public void Configure(
+        EntityTypeBuilder<RackShelves> builder)
+    {
+        builder.ToTable("RackShelves");
+
+        builder.HasKey(x => x.RackShelfId);
+
+        builder.Property(x => x.RackShelfId)
+               .ValueGeneratedOnAdd();
+
+        builder.Property(x => x.RackManagementId)
+               .IsRequired();
+
+        builder.Property(x => x.ShelfNumber)
+               .IsRequired();
+
+        builder.Property(x => x.BinCount)
+               .IsRequired();
+
+        // One row per shelf of a rack
+        builder.HasIndex(x => new { x.RackManagementId, x.ShelfNumber })
+               .IsUnique()
+               .HasDatabaseName("IX_RackShelves_RackManagementId_ShelfNumber");
+    }
+}
+
+
+//===============================================================
+// Rack Sub Categories Configuration (assignment)
+//===============================================================
+
+public class RackSubCategoriesConfiguration
+    : IEntityTypeConfiguration<RackSubCategories>
+{
+    public void Configure(
+        EntityTypeBuilder<RackSubCategories> builder)
+    {
+        builder.ToTable("RackSubCategories");
+
+        builder.HasKey(x => x.RackSubCategoryId);
+
+        builder.Property(x => x.RackSubCategoryId)
+               .ValueGeneratedOnAdd();
+
+        builder.Property(x => x.RackManagementId)
+               .IsRequired();
+
+        builder.Property(x => x.ProductSubCategoryId)
+               .IsRequired();
+
+        builder.HasIndex(x => new { x.RackManagementId, x.ProductSubCategoryId })
+               .IsUnique()
+               .HasDatabaseName("IX_RackSubCategories_RackManagementId_ProductSubCategoryId");
     }
 }

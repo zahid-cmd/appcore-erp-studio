@@ -129,15 +129,55 @@
 
                 <!-- Sub Category Name -->
 
+                <!-- Brand (read only, from the category) -->
+
+                <app-textbox
+
+                    label="Brand"
+
+                    placeholder="From the product category"
+
+                    [value]="brandName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Model (Motor Bikes / Spare Parts / Accessories) -->
+
+                <app-dropdown
+
+                    label="Model"
+
+                    [placeholder]="isModelCategory || !entity.ProductCategoryId ? 'Select model' : 'Not used for this category'"
+
+                    [items]="modelItems"
+
+                    [(value)]="entity.BikeModelId"
+
+                    (valueChange)="onBikeModelChange()"
+
+                    [disabled]="isViewMode || isSaving || !isModelCategory"
+
+                    [required]="isModelCategory">
+
+                </app-dropdown>
+
+
+                <!-- Sub Category Name (model categories : built from the model) -->
+
                 <app-textbox
 
                     label="Sub Category Name"
 
-                    placeholder="Enter sub category name"
+                    [placeholder]="isModelCategory ? categoryType + ' - Brand - Model' : 'Enter sub category name'"
 
                     [(value)]="entity.SubCategoryName"
 
                     (valueChange)="onSubCategoryNameChange()"
+
+                    [readonly]="isModelCategory"
 
                     [disabled]="isViewMode || isSaving"
 
@@ -211,6 +251,21 @@
 
                 </app-textbox>
 
+
+                <!-- Sales Sub Group Code (CLS-005 / 006 / 008) -->
+
+                <app-textbox
+
+                    label="Sales Sub Group Code"
+
+                    placeholder="Auto generated"
+
+                    [value]="entity.SalesSubGroupCode ?? ''"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
             </app-form-section>
 
 
@@ -277,6 +332,21 @@
 
                 </app-textbox>
 
+
+                <!-- Sales Sub Group Name (set by the server) -->
+
+                <app-textbox
+
+                    label="Sales Sub Group Name"
+
+                    placeholder="Follows the sub category name"
+
+                    [value]="entity.SalesSubGroupName ?? ''"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
             </app-form-section>
 
 
@@ -335,6 +405,17 @@
 
         </app-form-grid>
 
+
+        <!-- Canvas footer : the Sub Category Name (read only) -->
+
+        <div canvasFooter class="psc-footer">
+
+            <span class="psc-footer-label">Sub Category Name</span>
+
+            <b class="psc-footer-name" [class.psc-footer-empty]="!entity.SubCategoryName">{{ entity.SubCategoryName || (isModelCategory ? categoryType + ' - Brand - Model' : 'Follows the sub category name') }}</b>
+
+        </div>
+
     </app-page-canvas>
 
 </div>
@@ -349,4 +430,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

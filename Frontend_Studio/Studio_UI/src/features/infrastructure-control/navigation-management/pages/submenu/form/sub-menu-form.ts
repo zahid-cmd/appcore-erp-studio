@@ -260,7 +260,7 @@ implements OnInit
 
 
     submenuId =
-        0;
+        '';
 
 
 
@@ -492,9 +492,7 @@ implements OnInit
         void
     {
         const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
+            this.route.snapshot.paramMap.get('id') ?? '';
 
         const url =
             this.router.url.toLowerCase();
@@ -533,7 +531,7 @@ implements OnInit
         // Edit / View
         //=======================================================
 
-        if (id > 0)
+        if (id !== '')
         {
             this.submenuId =
                 id;

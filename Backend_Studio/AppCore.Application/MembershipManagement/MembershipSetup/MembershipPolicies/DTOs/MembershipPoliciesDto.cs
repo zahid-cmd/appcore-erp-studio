@@ -21,6 +21,13 @@ public class MembershipPoliciesDto
         set;
     }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId
+    {
+        get;
+        set;
+    }
+
 
     //===========================================================
     // Policy Information

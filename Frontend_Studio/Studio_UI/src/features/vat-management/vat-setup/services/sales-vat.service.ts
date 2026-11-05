@@ -113,6 +113,9 @@ export class SalesVatService
             SalesVatId:
                 Number(this.pick(item, 'SalesVatId') ?? 0) || 0,
 
+            PublicId:
+                text('PublicId'),
+
             VatCode:
                 text('VatCode'),
 
@@ -183,7 +186,7 @@ export class SalesVatService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<SalesVat>
     {
@@ -357,7 +360,7 @@ export class SalesVatService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

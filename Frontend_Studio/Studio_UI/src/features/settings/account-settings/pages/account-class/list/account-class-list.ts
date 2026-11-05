@@ -285,6 +285,15 @@ implements OnInit, OnDestroy
 
     [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
 
     filteredAccountClasses:
         AccountClass[] =
@@ -784,6 +793,10 @@ implements OnInit, OnDestroy
                     0
                 ),
 
+            // The id used in links and API calls (uuid v7)
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             ClassType:
                 item?.ClassType
                 ??
@@ -923,6 +936,9 @@ implements OnInit, OnDestroy
                     );
 
                     this.applyFilters();
+
+
+                    this.updateSummary();
 
                     this.loading =
                         false;
@@ -1352,7 +1368,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.AccountClassId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1378,7 +1394,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.AccountClassId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1450,7 +1466,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.accountClassService.delete(
-                item.AccountClassId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -1782,6 +1798,34 @@ implements OnInit, OnDestroy
     {
         this.historyOpened =
             false;
+    }
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.accountClasses ?? [];
+
+        const active =
+            all.filter(x => !!x?.IsActive).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
     }
 
 }

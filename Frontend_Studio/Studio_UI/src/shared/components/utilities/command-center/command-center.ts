@@ -228,6 +228,36 @@ implements OnChanges
 
 
     //=============================================================
+    // Left Command 4 (optional; hidden while it has no text / icon)
+    //=============================================================
+
+    @Input() command4Text = '';
+
+    @Input() command4Icon = '';
+
+    @Input() command4Visible = true;
+    // Tooltip; empty = the button text
+    @Input() command4Title = '';
+
+    @Input()
+    command4Permission:
+        'add'
+        |
+        'update'
+        |
+        'restore'
+        |
+        '' =
+        '';
+
+    // Page / common activity the button needs ('Print' …)
+    @Input() command4Activity = '';
+
+    @Output() command4Click =
+        new EventEmitter<void>();
+
+
+    //=============================================================
     // Right Command
     //=============================================================
 
@@ -579,6 +609,31 @@ implements OnChanges
 
 
     //=============================================================
+    // Command 4 Visibility
+    //=============================================================
+
+    isCommand4Visible():
+        boolean
+    {
+        return (
+            this.command4Visible
+            &&
+            !!(
+                this.command4Text
+                ||
+                this.command4Icon
+            )
+            &&
+            this.hasCommandPermission(
+                this.command4Text,
+                this.command4Permission,
+                this.command4Activity
+            )
+        );
+    }
+
+
+    //=============================================================
     // Right Command Visibility
     //=============================================================
 
@@ -606,6 +661,8 @@ implements OnChanges
             this.isCommand2Visible()
             ||
             this.isCommand3Visible()
+            ||
+            this.isCommand4Visible()
         );
     }
 
@@ -668,6 +725,25 @@ implements OnChanges
 
 
     //=============================================================
+    // Left Command 4 Click
+    //=============================================================
+
+    onCommand4Click():
+        void
+    {
+        if
+        (
+            !this.isCommand4Visible()
+        )
+        {
+            return;
+        }
+
+        this.command4Click.emit();
+    }
+
+
+    //=============================================================
     // Right Command Click
     //=============================================================
 
@@ -684,4 +760,4 @@ implements OnChanges
 
         this.rightCommandClick.emit();
     }
-}
+}

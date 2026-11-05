@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Application.Common.Paging;
 using AppCore.Application.Settings.ClientSettings;
 
 using CustomerEntity =
@@ -28,6 +29,7 @@ using GeneralLedgerEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.GeneralLedgers;
 
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Domain.Common;
 
@@ -74,6 +76,11 @@ namespace AppCore.Infrastructure.Configurations.Settings.ClientSettings;
 // is refused.
 //
 // Delete : posting checks come with the transaction modules.
+//
+// Walk-in (IsWalkIn) : an Outside customer made by a sales page's
+// Add Customer button (cash only). Kept only on Outside customers;
+// an update can clear it but not set it; the conversion to
+// Inbound clears it.
 //===============================================================
 
 public class CustomerProfilesRepository :
@@ -139,6 +146,15 @@ public class CustomerProfilesRepository :
     private IQueryable<CustomerProfilesDto>
         CustomerQuery()
     {
+        return Project(
+            LiveCustomers());
+    }
+
+
+    // Live (not deleted) customers, not tracked
+    private IQueryable<CustomerEntity>
+        LiveCustomers()
+    {
         return _context
             .Set<CustomerEntity>()
             .AsNoTracking()
@@ -146,13 +162,26 @@ public class CustomerProfilesRepository :
             (
                 x =>
                     !x.IsDeleted
-            )
+            );
+    }
+
+
+    // Entity rows -> DTO rows (filters / sort / paging stay on the
+    // entity query, before this)
+    private IQueryable<CustomerProfilesDto>
+        Project
+        (
+            IQueryable<CustomerEntity> source
+        )
+    {
+        return source
             .Select
             (
                 x =>
                     new CustomerProfilesDto
                     {
                         CustomerId = x.CustomerId,
+                        PublicId = x.PublicId,
                         CustomerType = x.CustomerType,
                         CustomerCode = x.CustomerCode,
                         PreviousCode = x.PreviousCode,
@@ -187,6 +216,7 @@ public class CustomerProfilesRepository :
                         ReceivableLedgerCode = x.ReceivableLedgerCode,
                         ReceivableLedgerName = x.ReceivableLedgerName,
                         CreditLimit = x.CreditLimit,
+                        IsWalkIn = x.IsWalkIn,
                         Remarks = x.Remarks,
                         IsActive = x.IsActive,
                         IsDeleted = x.IsDeleted,
@@ -267,6 +297,223 @@ public class CustomerProfilesRepository :
             rows);
 
         return rows;
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Filters : type (tab), location, status, search. Counts
+    // (the counter strip) use the location and search only.
+    //===========================================================
+
+    private SortMap<CustomerEntity> ListSorts()
+    {
+        return new SortMap<CustomerEntity>("CustomerCode")
+            .Add("CustomerCode", x => x.CustomerCode)
+            .Add("CustomerName", x => x.CustomerName)
+            .Add("DisplayName", x => x.DisplayName)
+            .Add("Phone1", x => x.Phone1)
+            .Add(
+                "LocationName",
+                x =>
+                    _context
+                        .Set<LocationEntity>()
+                        .Where(l => l.LocationId == x.LocationId)
+                        .Select(l => l.DisplayName)
+                        .FirstOrDefault())
+            .Add("ReceivableLedgerCode", x => x.ReceivableLedgerCode)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.CustomerId);
+    }
+
+
+    public async Task<PagedResult<CustomerProfilesDto>>
+        GetPagedAsync
+        (
+            CustomerProfilesPageRequest request
+        )
+    {
+        IQueryable<CustomerEntity> query =
+            LiveCustomers();
+
+        //-------------------------------------------------------
+        // Location
+        //-------------------------------------------------------
+
+        if
+        (
+            request.LocationId is > 0
+        )
+        {
+            long locationId =
+                request.LocationId.Value;
+
+            query =
+                query.Where(x => x.LocationId == locationId);
+        }
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            // "walk", "walk-in", "walkin" : the walk-in customers
+            bool walkIn =
+                search.Length >= 4 &&
+                "walk-in walkin".Contains(
+                    search.ToLowerInvariant(),
+                    StringComparison.Ordinal);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.CustomerCode, like) ||
+                        EF.Functions.ILike(x.PreviousCode, like) ||
+                        EF.Functions.ILike(x.CustomerName, like) ||
+                        EF.Functions.ILike(x.DisplayName, like) ||
+                        EF.Functions.ILike(x.Phone1, like) ||
+                        EF.Functions.ILike(x.Phone2, like) ||
+                        EF.Functions.ILike(x.NidNo, like) ||
+                        EF.Functions.ILike(x.ReceivableLedgerCode, like) ||
+                        EF.Functions.ILike(x.Remarks, like) ||
+                        (walkIn && x.IsWalkIn) ||
+                        _context
+                            .Set<LocationEntity>()
+                            .Any
+                            (
+                                l =>
+                                    l.LocationId == x.LocationId &&
+                                    EF.Functions.ILike(l.DisplayName, like)
+                            )
+                );
+        }
+
+        //-------------------------------------------------------
+        // Counter strip : Total / Inbound / Outside / Active /
+        // Inactive, with the location and search applied (not
+        // the tab or the status filter)
+        //-------------------------------------------------------
+
+        var groups =
+            await query
+                .GroupBy(x => new { x.CustomerType, x.IsActive })
+                .Select(g => new { g.Key.CustomerType, g.Key.IsActive, Count = g.Count() })
+                .ToListAsync();
+
+        Dictionary<string, int> stripCounts =
+            new()
+            {
+                ["Total"] = groups.Sum(x => x.Count),
+                [InboundType] = groups.Where(x => x.CustomerType == InboundType).Sum(x => x.Count),
+                [OutsideType] = groups.Where(x => x.CustomerType == OutsideType).Sum(x => x.Count),
+                ["Active"] = groups.Where(x => x.IsActive).Sum(x => x.Count),
+                ["Inactive"] = groups.Where(x => !x.IsActive).Sum(x => x.Count)
+            };
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        if
+        (
+            request.Status.HasValue
+        )
+        {
+            bool active =
+                request.Status.Value;
+
+            query =
+                query.Where(x => x.IsActive == active);
+        }
+
+        //-------------------------------------------------------
+        // Type (the tab)
+        //-------------------------------------------------------
+
+        string type =
+            (request.Type ?? string.Empty).Trim();
+
+        if
+        (
+            type.Equals(InboundType, StringComparison.OrdinalIgnoreCase) ||
+            type.Equals(OutsideType, StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            string customerType =
+                type.Equals(OutsideType, StringComparison.OrdinalIgnoreCase)
+                    ? OutsideType
+                    : InboundType;
+
+            query =
+                query.Where(x => x.CustomerType == customerType);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<CustomerProfilesDto> rows =
+            await Project(
+                    ListSorts()
+                        .Apply(query, request)
+                        .Page(request))
+                .ToListAsync();
+
+        await FillDatesAsync(
+            rows);
+
+        return new PagedResult<CustomerProfilesDto>
+        {
+            Items = rows,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = stripCounts
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live customers only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await LiveCustomers()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.CustomerId)
+            .FirstOrDefaultAsync();
     }
 
 
@@ -485,6 +732,9 @@ public class CustomerProfilesRepository :
 
         public decimal CreditLimit { get; init; }
 
+        // Outside only
+        public bool IsWalkIn { get; init; }
+
         public string Remarks { get; init; } = string.Empty;
     }
 
@@ -611,6 +861,9 @@ public class CustomerProfilesRepository :
             ReceivableLedgerCode = dto.ReceivableLedgerCode,
             ReceivableLedgerName = dto.ReceivableLedgerName,
             CreditLimit = dto.CreditLimit,
+            // null (an older page) keeps the tag : the update can
+            // only clear it
+            IsWalkIn = dto.IsWalkIn ?? true,
             Remarks = dto.Remarks,
             IsActive = dto.IsActive
         };
@@ -815,6 +1068,11 @@ public class CustomerProfilesRepository :
 
             CreditLimit =
                 Math.Round(dto.CreditLimit, 2),
+
+            IsWalkIn =
+                !inbound
+                &&
+                dto.IsWalkIn,
 
             Remarks =
                 (dto.Remarks ?? string.Empty).Trim()
@@ -1368,6 +1626,7 @@ public class CustomerProfilesRepository :
         entity.LocationId = input.LocationId;
         entity.ReceivableLedgerName = entity.DisplayName;
         entity.CreditLimit = input.CreditLimit;
+        entity.IsWalkIn = input.IsWalkIn;
         entity.Remarks = input.Remarks;
         entity.IsActive = isActive;
     }
@@ -1541,6 +1800,10 @@ public class CustomerProfilesRepository :
         string oldCode =
             entity.CustomerCode;
 
+        // Walk-in can be cleared here, never set
+        bool wasWalkIn =
+            entity.IsWalkIn;
+
         if
         (
             converting
@@ -1559,6 +1822,11 @@ public class CustomerProfilesRepository :
             entity,
             input,
             dto.IsActive);
+
+        entity.IsWalkIn =
+            wasWalkIn
+            &&
+            input.IsWalkIn;
 
         entity.ModifiedBy =
             userId;
@@ -1979,4 +2247,4 @@ public class CustomerProfilesRepository :
                     !x.IsDeleted
             );
     }
-}
+}

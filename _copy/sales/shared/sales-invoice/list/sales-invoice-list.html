@@ -1,0 +1,266 @@
+<div class="app-list-page si-list">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        [title]="page.listTitle"
+
+        subtitle="Sales invoice : Draft -> Approved -> Posted"
+
+        icon="fas fa-file-invoice-dollar">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [(value)]="searchText"
+
+                placeholder="Search invoices, customers, phones..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Add"
+
+                command1Icon="fas fa-plus"
+
+                command1Permission="add"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                command3Permission="restore"
+
+                (command3Click)="restore()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                rightCommandTitle="Activity history"
+
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR : status tabs | inline notice
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab"
+
+            (selectedTabChange)="onTabChange($event)">
+
+        </app-control-tabs>
+
+        <div
+
+            pageToolbarRight
+
+            class="si-list-tools">
+
+            @if (notice)
+            {
+                <span
+
+                    class="si-notice"
+
+                    [class.si-notice-ok]="noticeTone === 'ok'"
+
+                    [class.si-notice-warn]="noticeTone === 'warn'"
+
+                    [class.si-notice-error]="noticeTone === 'error'"
+
+                    [title]="notice">
+
+                    <i [class]="noticeIcon"></i>
+
+                    <span class="si-notice-text">{{ notice }}</span>
+
+                    @if (noticePrintId > 0)
+                    {
+                        <button
+
+                            type="button"
+
+                            class="si-notice-link"
+
+                            title="Print the A4 sales invoice"
+
+                            (click)="openPrint(noticePrintId, page.a4DocKey)">
+
+                            <i class="fas fa-print"></i>
+
+                            Print
+
+                        </button>
+
+                        <button
+
+                            type="button"
+
+                            class="si-notice-link"
+
+                            title="Print the 80 mm receipt"
+
+                            (click)="openPrint(noticePrintId, page.thermalDocKey)">
+
+                            <i class="fas fa-receipt"></i>
+
+                            Receipt
+
+                        </button>
+                    }
+
+                    <button
+
+                        type="button"
+
+                        class="si-notice-x"
+
+                        title="Dismiss"
+
+                        aria-label="Dismiss"
+
+                        (click)="clearNotice()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </span>
+            }
+            @else
+            {
+                <span class="si-list-count">
+
+                    <i class="fa-regular fa-file-lines"></i>
+
+                    {{ filteredInvoices.length }} invoice{{ filteredInvoices.length === 1 ? '' : 's' }}
+
+                    @if (dueTotal > 0)
+                    {
+                        <span class="si-list-due">· Due Tk {{ money(dueTotal) }}</span>
+                    }
+
+                </span>
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+        <div canvasBody>
+
+            <app-list-table
+
+                [columns]="columns"
+
+                [rows]="pagedInvoices"
+
+                [serialOffset]="(currentPage - 1) * pageSize"
+
+                [loading]="loading"
+
+                [error]="loadFailed"
+
+                [rowActions]="rowActions"
+
+                (rowAction)="onRowAction($event)"
+
+                (view)="view($event)"
+
+                (edit)="edit($event)"
+
+                (delete)="delete($event)"
+
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+        <app-pagination
+
+            canvasFooter
+
+            [totalRecords]="filteredInvoices.length"
+
+            [currentPage]="currentPage"
+
+            [pageSize]="pageSize"
+
+            (pageChange)="onPageChange($event)"
+
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+
+    <!-- =====================================================
+         HISTORY
+    ====================================================== -->
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+
+    <!-- =====================================================
+         UTILITIES (no toasts : messages are inline)
+    ====================================================== -->
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

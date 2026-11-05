@@ -97,6 +97,9 @@ public class LocationsRepository :
                         LocationId =
                             x.LocationId,
 
+                        PublicId =
+                            x.PublicId,
+
                         LocationCode =
                             x.LocationCode,
 
@@ -160,6 +163,33 @@ public class LocationsRepository :
                     x.LocationCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<LocationEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.LocationId)
+            .FirstOrDefaultAsync();
     }
 
 

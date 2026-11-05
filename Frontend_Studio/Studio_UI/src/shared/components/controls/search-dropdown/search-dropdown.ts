@@ -114,6 +114,19 @@ export class SearchDropdownComponent
     minWidth:
         string | number | null = null;
 
+    // Optional counter at the right of an option row : the
+    // option's field to show (empty = none; null / '' = no badge)
+    @Input()
+    badgeField =
+        '';
+
+    // Optional color swatch at the right of an option row (and
+    // of the selected value) : the option's field holding a CSS
+    // color (empty = none)
+    @Input()
+    swatchField =
+        '';
+
     /* =====================================================
        OUTPUT
     ====================================================== */
@@ -159,6 +172,29 @@ export class SearchDropdownComponent
     /* =====================================================
        SELECTED LABEL
     ====================================================== */
+
+    get selectedSwatch(): string
+    {
+        if
+        (
+            !this.swatchField
+            ||
+            this.value === null
+            ||
+            this.value === undefined
+        )
+        {
+            return '';
+        }
+
+        const selected =
+            this.items.find(
+                option =>
+                    option[this.valueField] == this.value
+            );
+
+        return selected?.[this.swatchField] ?? '';
+    }
 
     get selectedLabel(): string
     {

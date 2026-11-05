@@ -34,7 +34,12 @@ using WarehousesEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Warehouses;
 
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 using AppCore.Domain.Common;
+
+// RackLabels : bin codes, movement classes
+using AppCore.Infrastructure.Repositories.Settings.ProductSettings;
 
 // BusinessLineAccess : warehouses whose branch runs a business line
 using AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
@@ -75,8 +80,9 @@ namespace AppCore.Infrastructure.Configurations.Settings.ProductSettings;
 // Image     : path only; the file is saved / removed by the
 //             controller ({id}/image).
 // Locations : optional, one per warehouse (Warehouse → Rack →
-//             Shelf). The rack must belong to the warehouse and the
-//             shelf must exist on it. Replaced on every save.
+//             Shelf → Bin). The rack must belong to the warehouse,
+//             the shelf and bin must exist on it and the bin must
+//             be free (one item per bin, BinOccupancy). Replaced on every save.
 //===============================================================
 
 public class SparePartsRepository : ISparePartsRepository
@@ -143,10 +149,28 @@ public class SparePartsRepository : ISparePartsRepository
 
     private IQueryable<SparePartsDto> SparePartsQuery()
     {
-        return
-            from x in _context.Set<SparePartsEntity>().AsNoTracking()
+        return Project(
+            LiveParts());
+    }
 
-            where !x.IsDeleted
+    // Not deleted, no tracking
+    private IQueryable<SparePartsEntity> LiveParts()
+    {
+        return _context
+            .Set<SparePartsEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted);
+    }
+
+    // Parts -> DTOs (category / brand / sub category names)
+    private IQueryable<SparePartsDto>
+        Project
+        (
+            IQueryable<SparePartsEntity> source
+        )
+    {
+        return
+            from x in source
 
             join c in _context.Set<ProductCategoryEntity>().AsNoTracking()
                 on x.ProductCategoryId equals c.ProductCategoryId into cj
@@ -164,6 +188,9 @@ public class SparePartsRepository : ISparePartsRepository
             {
                 SparePartId =
                     x.SparePartId,
+
+                PublicId =
+                    x.PublicId,
 
                 ProductCategoryId =
                     x.ProductCategoryId,
@@ -207,6 +234,9 @@ public class SparePartsRepository : ISparePartsRepository
                 CogsLedgerCode =
                     x.CogsLedgerCode,
 
+                SalesLedgerCode =
+                    x.SalesLedgerCode,
+
                 ReorderLevel =
                     x.ReorderLevel,
 
@@ -215,6 +245,12 @@ public class SparePartsRepository : ISparePartsRepository
 
                 MaxStockLevel =
                     x.MaxStockLevel,
+
+                MovementClass =
+                    x.MovementClass,
+
+                MovementClassAuto =
+                    x.MovementClassAuto,
 
                 ImagePath =
                     x.ImagePath,
@@ -268,7 +304,338 @@ public class SparePartsRepository : ISparePartsRepository
         await AttachLocationsAsync(
             items);
 
+        await ProductFitments.AttachSparePartsAsync(
+            _context,
+            items);
+
         return items;
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Filters on the part itself, the counts for the summary
+    // line, then the tab / status, the total and one page. The
+    // locations are read for that page only.
+    //===========================================================
+
+    private const string SparePartsPrefix =
+        "SP-";
+
+    private const string LubricantsPrefix =
+        "LB-";
+
+    private SortMap<SparePartsEntity> ListSorts()
+    {
+        return new SortMap<SparePartsEntity>("ProductCode")
+            .Add("ProductCode", x => x.ProductCode)
+            .Add("PartNumber", x => x.PartNumber)
+            .Add("PartName", x => x.PartName)
+            .Add
+            (
+                "CategoryName",
+                x =>
+                    _context
+                        .Set<ProductCategoryEntity>()
+                        .Where(c => c.ProductCategoryId == x.ProductCategoryId)
+                        .Select(c => c.CategoryName)
+                        .FirstOrDefault()
+            )
+            .Add
+            (
+                "SubCategoryName",
+                x =>
+                    _context
+                        .Set<ProductSubCategoryEntity>()
+                        .Where(s => s.ProductSubCategoryId == x.ProductSubCategoryId)
+                        .Select(s => s.SubCategoryName)
+                        .FirstOrDefault()
+            )
+            .Add("Unit", x => x.Unit)
+            // Fastest first (Super Fast 1 ... Slow 5)
+            .Add
+            (
+                "MovementText",
+                x =>
+                    x.MovementClass == "SuperFast" ? 1 :
+                    x.MovementClass == "Fast" ? 2 :
+                    x.MovementClass == "Regular" ? 3 :
+                    x.MovementClass == "Periodic" ? 4 :
+                    5
+            )
+            .Add("ReorderLevel", x => x.ReorderLevel)
+            .Add("RedLevel", x => x.RedLevel)
+            .Add("MaxStockLevel", x => x.MaxStockLevel)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.SparePartId);
+    }
+
+    // Parts whose category code starts with the prefix (SP- / LB-)
+    private IQueryable<SparePartsEntity>
+        WithCategoryPrefix
+        (
+            IQueryable<SparePartsEntity> query,
+            string prefix
+        )
+    {
+        return query.Where
+        (
+            x =>
+                _context
+                    .Set<ProductCategoryEntity>()
+                    .Any
+                    (
+                        c =>
+                            c.ProductCategoryId == x.ProductCategoryId &&
+                            c.CategoryCode.StartsWith(prefix)
+                    )
+        );
+    }
+
+    public async Task<PagedResult<SparePartsDto>>
+        GetPagedAsync
+        (
+            SparePartsPageRequest request
+        )
+    {
+        IQueryable<SparePartsEntity> query =
+            LiveParts();
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            // "Super Fast" finds SuperFast
+            string movementLike =
+                PagingQuery.LikePattern(search.Replace(" ", string.Empty));
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.ProductCode, like) ||
+                        EF.Functions.ILike(x.PartNumber, like) ||
+                        EF.Functions.ILike(x.PartName, like) ||
+                        EF.Functions.ILike(x.Unit, like) ||
+                        EF.Functions.ILike(x.MovementClass, movementLike) ||
+                        EF.Functions.ILike(x.InventoryLedgerCode, like) ||
+                        EF.Functions.ILike(x.Remarks, like) ||
+                        _context
+                            .Set<ProductCategoryEntity>()
+                            .Any
+                            (
+                                c =>
+                                    c.ProductCategoryId == x.ProductCategoryId &&
+                                    (
+                                        EF.Functions.ILike(c.CategoryName, like) ||
+                                        EF.Functions.ILike(c.CategoryCode, like) ||
+                                        _context
+                                            .Set<BrandManagementEntity>()
+                                            .Any
+                                            (
+                                                b =>
+                                                    (long?)b.BrandManagementId == c.BrandManagementId &&
+                                                    EF.Functions.ILike(b.BrandName, like)
+                                            )
+                                    )
+                            ) ||
+                        _context
+                            .Set<ProductSubCategoryEntity>()
+                            .Any
+                            (
+                                s =>
+                                    s.ProductSubCategoryId == x.ProductSubCategoryId &&
+                                    EF.Functions.ILike(s.SubCategoryName, like)
+                            ) ||
+                        _context
+                            .Set<SparePartLocationsEntity>()
+                            .Any
+                            (
+                                l =>
+                                    l.SparePartId == x.SparePartId &&
+                                    (
+                                        _context
+                                            .Set<WarehousesEntity>()
+                                            .Any
+                                            (
+                                                w =>
+                                                    w.WarehouseId == l.WarehouseId &&
+                                                    (
+                                                        EF.Functions.ILike(w.WarehouseCode, like) ||
+                                                        EF.Functions.ILike(w.WarehouseName, like)
+                                                    )
+                                            ) ||
+                                        _context
+                                            .Set<RackManagementEntity>()
+                                            .Any
+                                            (
+                                                r =>
+                                                    r.RackManagementId == l.RackManagementId &&
+                                                    (
+                                                        EF.Functions.ILike(r.RackCode, like) ||
+                                                        EF.Functions.ILike(r.RackName, like)
+                                                    )
+                                            )
+                                    )
+                            )
+                );
+        }
+
+        //-------------------------------------------------------
+        // Category / Sub Category filters
+        //-------------------------------------------------------
+
+        if (request.ProductCategoryId > 0)
+        {
+            long categoryId = request.ProductCategoryId.Value;
+
+            query = query.Where(x => x.ProductCategoryId == categoryId);
+        }
+
+        if (request.ProductSubCategoryId > 0)
+        {
+            long subCategoryId = request.ProductSubCategoryId.Value;
+
+            // Its own items and the ones that also fit it
+            IQueryable<long> fitting =
+                ProductFitments.SparePartsFitting(_context, subCategoryId);
+
+            query = query.Where(x => x.ProductSubCategoryId == subCategoryId || fitting.Contains(x.SparePartId));
+        }
+
+        //-------------------------------------------------------
+        // Summary counts : Total / Spare Parts / Lubricants /
+        // Active / Inactive (search applied; not the tab or the
+        // status filter)
+        //-------------------------------------------------------
+
+        var byStatus =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { IsActive = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int spareParts =
+            await WithCategoryPrefix(query, SparePartsPrefix).CountAsync();
+
+        int lubricants =
+            await WithCategoryPrefix(query, LubricantsPrefix).CountAsync();
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = byStatus.Sum(x => x.Count),
+                ["SP"] = spareParts,
+                ["LB"] = lubricants,
+                ["Active"] = byStatus.Where(x => x.IsActive).Sum(x => x.Count),
+                ["Inactive"] = byStatus.Where(x => !x.IsActive).Sum(x => x.Count)
+            };
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        if
+        (
+            request.Status.HasValue
+        )
+        {
+            bool active =
+                request.Status.Value;
+
+            query =
+                query.Where(x => x.IsActive == active);
+        }
+
+        //-------------------------------------------------------
+        // Type (the tab) : SP / LB
+        //-------------------------------------------------------
+
+        string type =
+            (request.Type ?? string.Empty).Trim().ToUpperInvariant();
+
+        if
+        (
+            type == "SP" ||
+            type == "LB"
+        )
+        {
+            query =
+                WithCategoryPrefix(
+                    query,
+                    type == "SP" ? SparePartsPrefix : LubricantsPrefix);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page (with its locations)
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<SparePartsDto> rows =
+            await Project(
+                    ListSorts()
+                        .Apply(query, request)
+                        .Page(request))
+                .ToListAsync();
+
+        await AttachLocationsAsync(
+            rows);
+
+        await ProductFitments.AttachSparePartsAsync(
+            _context,
+            rows);
+
+        return new PagedResult<SparePartsDto>
+        {
+            Items = rows,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live parts only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await LiveParts()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.SparePartId)
+            .FirstOrDefaultAsync();
     }
 
 
@@ -298,6 +665,10 @@ public class SparePartsRepository : ISparePartsRepository
         )
         {
             await AttachLocationsAsync(
+                new List<SparePartsDto> { item });
+
+            await ProductFitments.AttachSparePartsAsync(
+                _context,
                 new List<SparePartsDto> { item });
         }
 
@@ -374,7 +745,10 @@ public class SparePartsRepository : ISparePartsRepository
                                 r != null ? r.RackName : string.Empty,
 
                             ShelfNumber =
-                                l.ShelfNumber
+                                l.ShelfNumber,
+
+                            BinNumber =
+                                l.BinNumber
                         }
                 }
             )
@@ -412,12 +786,20 @@ public class SparePartsRepository : ISparePartsRepository
                 in item.Locations
             )
             {
-                // "WH-001: Rack A / SLF-A-03"
-                location.LocationText =
-                    $"{location.WarehouseCode}: {location.RackName} / " +
-                    RackManagementRepository.ShelfLabel(
+                location.ShelfLabel =
+                    RackLabels.Shelf(
                         location.RackName,
                         location.ShelfNumber);
+
+                location.BinCode =
+                    RackLabels.BinCode(
+                        location.RackName,
+                        location.ShelfNumber,
+                        location.BinNumber);
+
+                // "WH-001: A-03-05"
+                location.LocationText =
+                    $"{location.WarehouseCode}: {location.BinCode}";
             }
 
             item.LocationsText =
@@ -437,12 +819,12 @@ public class SparePartsRepository : ISparePartsRepository
     // Storage Locations : validate
     //
     // Empty rows are ignored. Each row needs a warehouse, a rack
-    // of that warehouse and a shelf on that rack; one row per
-    // warehouse. An inactive warehouse / rack is refused unless
-    // the part already uses it.
+    // of that warehouse, a shelf on that rack and a bin on that
+    // shelf (0 = bin 1); one row per warehouse. An inactive
+    // warehouse / rack is refused unless the item already uses it.
     //
-    // A shelf holds ONE item only : a shelf already linked to
-    // another (not deleted) spare part or accessory is refused.
+    // A bin holds ONE item only : a bin already linked to another
+    // (not deleted) spare part or accessory is refused.
     //
     // Business line : a new warehouse must belong to a branch that
     // runs the Spare Parts business today (Business Configuration).
@@ -468,9 +850,28 @@ public class SparePartsRepository : ISparePartsRepository
                             x.RackManagementId > 0
                             ||
                             x.ShelfNumber > 0
+                            ||
+                            x.BinNumber > 0
                         )
                 )
                 .ToList();
+
+        // Bin 0 / missing = bin 1 (old clients, Excel import)
+        foreach
+        (
+            SparePartLocationInputDto row
+            in rows
+        )
+        {
+            if
+            (
+                row.BinNumber < 1
+            )
+            {
+                row.BinNumber =
+                    1;
+            }
+        }
 
         if
         (
@@ -504,8 +905,8 @@ public class SparePartsRepository : ISparePartsRepository
                 "Each warehouse can have only one storage location for a spare part.");
         }
 
-        // The same shelf cannot be used twice by this part
-        bool sameShelfTwice =
+        // The same bin cannot be used twice by this item
+        bool sameBinTwice =
             rows
                 .GroupBy
                 (
@@ -513,7 +914,8 @@ public class SparePartsRepository : ISparePartsRepository
                         new
                         {
                             x.RackManagementId,
-                            x.ShelfNumber
+                            x.ShelfNumber,
+                            x.BinNumber
                         }
                 )
                 .Any
@@ -524,11 +926,11 @@ public class SparePartsRepository : ISparePartsRepository
 
         if
         (
-            sameShelfTwice
+            sameBinTwice
         )
         {
             throw new InvalidOperationException(
-                "The same shelf cannot be added twice for a spare part.");
+                "The same bin cannot be added twice for a spare part.");
         }
 
         long[] warehouseIds =
@@ -599,11 +1001,16 @@ public class SparePartsRepository : ISparePartsRepository
                 _context,
                 BusinessLineAccess.SpareParts);
 
-        // Shelves of these racks held by other items
-        List<ShelfHolder> taken =
-            await GetTakenShelvesAsync(
-                rackIds,
-                sparePartId);
+        // Bins of these racks with their holders (this item's own
+        // bins are free)
+        List<RackMapDto> map =
+            await BinOccupancy.GetRackMapAsync(
+                _context,
+                0,
+                sparePartId,
+                0,
+                false,
+                rackIds);
 
         int rowNumber =
             0;
@@ -670,39 +1077,24 @@ public class SparePartsRepository : ISparePartsRepository
                     $"{label}: rack {rack.RackCode} is not in {warehouse.WarehouseName}.");
             }
 
-            if
-            (
-                row.ShelfNumber < 1
-                ||
-                row.ShelfNumber > rack.ShelfCount
-            )
-            {
-                throw new InvalidOperationException(
-                    $"{label}: select a shelf between " +
-                    $"{RackManagementRepository.ShelfLabel(rack.RackName, 1)} and " +
-                    $"{RackManagementRepository.ShelfLabel(rack.RackName, rack.ShelfCount)} on {rack.RackName}.");
-            }
-
-            ShelfHolder? holder =
-                taken.FirstOrDefault
-                (
-                    x =>
-                        x.RackManagementId == row.RackManagementId
-                        &&
-                        x.ShelfNumber == row.ShelfNumber
-                );
+            // Shelf 1 … ShelfCount, bin 1 … that shelf's bins, bin free
+            string? binProblem =
+                BinOccupancy.CheckBin(
+                    BinOccupancy.FindRack(
+                        map,
+                        row.RackManagementId),
+                    warehouse.WarehouseId,
+                    row.ShelfNumber,
+                    row.BinNumber);
 
             if
             (
-                holder !=
+                binProblem !=
                 null
             )
             {
                 throw new InvalidOperationException(
-                    $"{label}: shelf " +
-                    $"{RackManagementRepository.ShelfLabel(rack.RackName, row.ShelfNumber)} " +
-                    $"on {rack.RackName} ({warehouse.WarehouseName}) is already used by " +
-                    $"{holder.ItemType.ToLowerInvariant()} {holder.ProductCode} - {holder.ItemName}. Choose another shelf.");
+                    $"{label} ({warehouse.WarehouseName}): {binProblem}");
             }
 
             bool alreadyUsed =
@@ -742,21 +1134,20 @@ public class SparePartsRepository : ISparePartsRepository
 
 
     //===========================================================
-    // Storage Locations : shelves held by other items
+    // Storage Locations : bins held by other items
     //
-    // A shelf holds ONE item only : a spare part OR an accessory
-    // (see ShelfOccupancy). This spare part's own shelves don't
-    // block it.
+    // A bin holds ONE item only : a spare part OR an accessory
+    // (see BinOccupancy). This spare part's own bins don't block it.
     //===========================================================
 
-    private Task<List<ShelfHolder>>
-        GetTakenShelvesAsync
+    private Task<List<BinHolderDto>>
+        GetTakenBinsAsync
         (
             long[] rackIds,
             long excludeSparePartId
         )
     {
-        return ShelfOccupancy.GetHoldersAsync(
+        return BinOccupancy.GetHoldersAsync(
             _context,
             rackIds,
             excludeSparePartId,
@@ -819,6 +1210,11 @@ public class SparePartsRepository : ISparePartsRepository
 
                         ShelfNumber =
                             row.ShelfNumber,
+
+                        BinNumber =
+                            row.BinNumber < 1
+                                ? 1
+                                : row.BinNumber,
 
                         CreatedBy =
                             userId,
@@ -1366,7 +1762,14 @@ public class SparePartsRepository : ISparePartsRepository
             CogsLedgerCode =
                 ChildCode(
                     parent.CogsSubGroup.SubGroupCode,
-                    number)
+                    number),
+
+            SalesLedgerCode =
+                ProductSalesAccounts.LedgerCodeOf(
+                    parent.Category.CategoryType,
+                    ChildCode(
+                        parent.InventorySubGroup.SubGroupCode,
+                        number))
         };
     }
 
@@ -1677,7 +2080,8 @@ public class SparePartsRepository : ISparePartsRepository
         SparePartsEntity entity,
         string activityType,
         string verb,
-        long userId
+        long userId,
+        string detail = ""
     )
     {
         _context.ActivityHistories.Add(
@@ -1699,7 +2103,7 @@ public class SparePartsRepository : ISparePartsRepository
                     $"Spare Part {verb}",
 
                 ActivityDescription =
-                    $"Spare Part '{entity.PartNumber} - {entity.PartName}' ({entity.ProductCode}) {verb.ToLower()}.",
+                    $"Spare Part '{entity.PartNumber} - {entity.PartName}' ({entity.ProductCode}) {verb.ToLower()}.{detail}",
 
                 PerformedBy =
                     userId,
@@ -1815,6 +2219,13 @@ public class SparePartsRepository : ISparePartsRepository
                 MaxStockLevel =
                     dto.MaxStockLevel,
 
+                MovementClass =
+                    RackLabels.NormalizeMovementClass(
+                        dto.MovementClass),
+
+                MovementClassAuto =
+                    false,
+
                 ImagePath =
                     string.Empty,
 
@@ -1841,8 +2252,12 @@ public class SparePartsRepository : ISparePartsRepository
         // Part + its three ledgers in one transaction
         //=======================================================
 
+        // Joins an outer transaction (Parts & Accessories
+        // Onboarding) instead of opening its own
         await using var transaction =
-            await _context.Database.BeginTransactionAsync();
+            _context.Database.CurrentTransaction == null
+                ? await _context.Database.BeginTransactionAsync()
+                : null;
 
         _context
             .Set<SparePartsEntity>()
@@ -1854,6 +2269,18 @@ public class SparePartsRepository : ISparePartsRepository
             parent,
             userId);
 
+        // Sales ledger (CLS-005 / 006 / 008)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Spare Part",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
+
         await _context.SaveChangesAsync();
 
         await ReplaceLocationsAsync(
@@ -1861,15 +2288,31 @@ public class SparePartsRepository : ISparePartsRepository
             locations,
             userId);
 
+        // Fits Models (null = keep the saved links)
+        if (dto.FitSubCategoryIds != null)
+        {
+            await ProductFitments.ReplaceSparePartAsync(
+                _context,
+                entity.SparePartId,
+                entity.ProductCategoryId,
+                entity.ProductSubCategoryId,
+                dto.FitSubCategoryIds,
+                userId);
+        }
+
         AddHistory(
             entity,
             "Create",
             "Created",
-            userId);
+            userId,
+            $" Movement class: {RackLabels.MovementLabel(entity.MovementClass)}.");
 
         await _context.SaveChangesAsync();
 
-        await transaction.CommitAsync();
+        if (transaction != null)
+        {
+            await transaction.CommitAsync();
+        }
 
         return entity.SparePartId;
     }
@@ -1974,6 +2417,18 @@ public class SparePartsRepository : ISparePartsRepository
         entity.MaxStockLevel =
             dto.MaxStockLevel;
 
+        string oldMovement =
+            entity.MovementClass;
+
+        entity.MovementClass =
+            RackLabels.NormalizeMovementClass(
+                dto.MovementClass);
+
+        string movementChange =
+            string.Equals(oldMovement, entity.MovementClass, StringComparison.Ordinal)
+                ? string.Empty
+                : $" Movement class: {RackLabels.MovementLabel(oldMovement)} -> {RackLabels.MovementLabel(entity.MovementClass)}.";
+
         entity.Remarks =
             dto.Remarks?.Trim()
             ??
@@ -1997,6 +2452,18 @@ public class SparePartsRepository : ISparePartsRepository
             parent,
             userId);
 
+        // Sales ledger (CLS-005 / 006 / 008)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Spare Part",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
+
         await _context.SaveChangesAsync();
 
         await ReplaceLocationsAsync(
@@ -2004,11 +2471,24 @@ public class SparePartsRepository : ISparePartsRepository
             locations,
             userId);
 
+        // Fits Models (null = keep the saved links)
+        if (dto.FitSubCategoryIds != null)
+        {
+            await ProductFitments.ReplaceSparePartAsync(
+                _context,
+                entity.SparePartId,
+                entity.ProductCategoryId,
+                entity.ProductSubCategoryId,
+                dto.FitSubCategoryIds,
+                userId);
+        }
+
         AddHistory(
             entity,
             "Update",
             "Updated",
-            userId);
+            userId,
+            movementChange);
 
         await _context.SaveChangesAsync();
 
@@ -2082,6 +2562,18 @@ public class SparePartsRepository : ISparePartsRepository
             ledger.DeletedDate =
                 now;
         }
+
+        // Sales ledger follows (refused once it has postings)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Spare Part",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
 
         await _context.SaveChangesAsync();
 
@@ -2214,6 +2706,18 @@ public class SparePartsRepository : ISparePartsRepository
             parent,
             userId);
 
+        // Sales ledger (CLS-005 / 006 / 008)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Spare Part",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
+
         await _context.SaveChangesAsync();
 
         await DropInvalidLocationsAsync(
@@ -2235,7 +2739,7 @@ public class SparePartsRepository : ISparePartsRepository
 
     //===========================================================
     // Restore : drop locations whose rack was deleted, whose
-    // shelf no longer exists, or whose shelf was given to
+    // shelf / bin no longer exists, or whose bin was given to
     // another spare part while this part was deleted
     //===========================================================
 
@@ -2288,10 +2792,15 @@ public class SparePartsRepository : ISparePartsRepository
                         x.RackManagementId
                 );
 
-        List<ShelfHolder> taken =
-            await GetTakenShelvesAsync(
+        List<BinHolderDto> taken =
+            await GetTakenBinsAsync(
                 rackIds,
                 sparePartId);
+
+        Dictionary<(long RackId, int Shelf), int> binCounts =
+            await BinOccupancy.GetBinCountsAsync(
+                _context,
+                rackIds);
 
         List<SparePartLocationsEntity> invalid =
             locations
@@ -2306,12 +2815,16 @@ public class SparePartsRepository : ISparePartsRepository
                         ||
                         x.ShelfNumber > rack.ShelfCount
                         ||
+                        x.BinNumber > BinOccupancy.BinCountOf(binCounts, x.RackManagementId, x.ShelfNumber)
+                        ||
                         taken.Any
                         (
                             t =>
                                 t.RackManagementId == x.RackManagementId
                                 &&
                                 t.ShelfNumber == x.ShelfNumber
+                                &&
+                                t.BinNumber == x.BinNumber
                         )
                 )
                 .ToList();
@@ -2402,4 +2915,4 @@ public class SparePartsRepository : ISparePartsRepository
                     !x.IsDeleted
             );
     }
-}
+}

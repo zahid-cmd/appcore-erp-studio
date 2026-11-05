@@ -7,7 +7,13 @@
 
 export interface MotorBikes
 {
+    // Sales account (CLS-005 / 006 / 008), set by the server
+    SalesLedgerCode?: string;
+
     MotorBikeId: number;
+
+    // The id used in links and API calls (uuid v7)
+    PublicId: string;
 
     //===========================================================
     // Parent (locked after saving)
@@ -124,6 +130,8 @@ export interface UpdateMotorBikes
 
 export interface MotorBikesDefaults
 {
+    SalesLedgerCode?: string;
+
     Code: string;
 
     InventoryLedgerCode: string;
@@ -131,4 +139,44 @@ export interface MotorBikesDefaults
     WipLedgerCode: string;
 
     CogsLedgerCode: string;
+
+    // Last saved motor bike's parents (asked with no sub category)
+    LastProductCategoryId?: number;
+
+    LastProductSubCategoryId?: number;
+
+    LastReorderLevel?: number;
+
+    LastRedLevel?: number;
+
+    LastMaxStockLevel?: number;
+}
+
+
+//===============================================================
+// List page query (server-side paging)
+//===============================================================
+
+export interface MotorBikesPageQuery
+{
+    page:number;
+
+    pageSize:number;
+
+    search:string;
+
+    // Column field ('' = Product Code)
+    sort:string;
+
+    dir:'asc' | 'desc';
+
+    // true / false (null = all)
+    status:boolean | null;
+
+    // Filters (null = all)
+    productCategoryId?:number | null;
+
+    productSubCategoryId?:number | null;
+
+    colorManagementId?:number | null;
 }

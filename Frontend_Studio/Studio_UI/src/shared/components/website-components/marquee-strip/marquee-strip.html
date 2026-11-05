@@ -1,0 +1,15 @@
+<!-- ===========================================================
+     MARQUEE STRIP
+============================================================ -->
+
+<div class="strip">
+    <div class="track" [style.animation-duration.s]="duration()">
+        @for (tag of loop(); track $index)
+        {
+            <span class="item" [attr.aria-hidden]="$index >= tags().length">
+                {{ tag }}
+                <span class="star" aria-hidden="true">✦</span>
+            </span>
+        }
+    </div>
+</div>

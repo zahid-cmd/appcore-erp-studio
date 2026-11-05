@@ -134,6 +134,25 @@ public class PosReconciliationsController : ControllerBase
             await _repository.GetBanksAsync());
     }
 
+    // uuid (print links)
+    [HttpGet("vouchers/{publicId:guid}")]
+
+    public async Task<ActionResult<PosReconciliationVoucherDto>> GetVoucherByPublicId(
+        Guid publicId)
+    {
+        long? id =
+            await _repository.GetVoucherIdByPublicIdAsync(publicId);
+
+        PosReconciliationVoucherDto? found =
+            id == null
+                ? null
+                : await _repository.GetVoucherAsync(id.Value);
+
+        return found == null
+            ? NotFound()
+            : Ok(found);
+    }
+
     [HttpGet("vouchers/{id:long}")]
 
     public async Task<ActionResult<PosReconciliationVoucherDto>> GetVoucher(

@@ -69,6 +69,9 @@ public class RoleProfileRepository : IRoleProfileRepository
                 RoleProfileId =
                     x.RoleProfileId,
 
+                PublicId =
+                    x.PublicId,
+
                 ProfileCode =
                     x.ProfileCode,
 
@@ -729,4 +732,30 @@ public class RoleProfileRepository : IRoleProfileRepository
                 !x.IsDeleted);
     }
 
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.SecurityPermission.RoleManagement.RoleProfile>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.RoleProfileId)
+            .FirstOrDefaultAsync();
+    }
 }

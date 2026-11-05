@@ -147,6 +147,32 @@
     </app-page-canvas>
 
     <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="loc-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="loc-summary-item">
+                    <span class="loc-summary-label">{{ item.label }}</span>
+                    <b
+                        class="loc-summary-value"
+                        [class.loc-ok]="item.tone === 'ok'"
+                        [class.loc-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="loc-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
+    <!-- =====================================================
          HISTORY
     ====================================================== -->
 

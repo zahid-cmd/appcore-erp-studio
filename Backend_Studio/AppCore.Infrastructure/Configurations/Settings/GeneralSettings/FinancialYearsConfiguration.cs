@@ -42,6 +42,22 @@ public class FinancialYearsConfiguration
 
         builder.HasKey(x => x.FinancialYearId);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_FinancialYears_PublicId");
+
         builder.Property(x => x.FinancialYearId)
                .ValueGeneratedOnAdd();
 

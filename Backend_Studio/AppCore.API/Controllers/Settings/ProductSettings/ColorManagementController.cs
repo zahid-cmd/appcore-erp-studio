@@ -4,6 +4,7 @@
 //===============================================================
 
 using Microsoft.AspNetCore.Mvc;
+using AppCore.Application.Common.Paging;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
@@ -72,6 +73,20 @@ public class ColorManagementController : ControllerBase
     }
 
 
+    //===========================================================
+    // Get Paged (the list page)
+    //===========================================================
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<ColorManagementDto>>> GetPaged(
+        [FromQuery] ColorManagementPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new ColorManagementPageRequest()));
+    }
+
+
     //===============================================================
     // Get Next Code
     //===============================================================
@@ -102,11 +117,21 @@ public class ColorManagementController : ControllerBase
     // Get By Id
     //===============================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<ColorManagementDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         ColorManagementDto? colorManagement =
             await _repository.GetByIdAsync(id);
 
@@ -320,9 +345,9 @@ public class ColorManagementController : ControllerBase
     // Create
     //===============================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateColorManagementDto dto)
     {
            long userId = this.CurrentUserId();
@@ -334,7 +359,10 @@ public class ColorManagementController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            ColorManagementDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch
         (
@@ -350,11 +378,27 @@ public class ColorManagementController : ControllerBase
     // Update
     //===============================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateColorManagementDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.ColorManagementId =
+            id;
+
         if (!await _repository.ExistsAsync(
                 dto.ColorManagementId))
         {
@@ -392,11 +436,22 @@ public class ColorManagementController : ControllerBase
     // Delete
     //===============================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         //===========================================================
         // Verify ColorManagement Exists
         //===========================================================

@@ -27,6 +27,8 @@ export interface LaborChart
 {
     LaborChartId:
         number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     // BLC-001-001-00001
     LaborCode:

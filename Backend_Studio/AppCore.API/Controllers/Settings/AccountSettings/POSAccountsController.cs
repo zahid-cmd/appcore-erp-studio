@@ -128,11 +128,21 @@ public class POSAccountsController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<POSAccountDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         POSAccountDto? posAccount =
             await _repository.GetByIdAsync(id);
 
@@ -153,9 +163,9 @@ public class POSAccountsController : ControllerBase
     // 404 : reserved sub group missing
     //===========================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreatePOSAccountDto dto)
     {
            long userId = this.CurrentUserId();
@@ -167,7 +177,10 @@ public class POSAccountsController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            POSAccountDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (KeyNotFoundException ex)
         {
@@ -192,11 +205,27 @@ public class POSAccountsController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdatePOSAccountDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.POSAccountId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try
@@ -233,11 +262,22 @@ public class POSAccountsController : ControllerBase
     // 409 : in use (future: vouchers / transactions)
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

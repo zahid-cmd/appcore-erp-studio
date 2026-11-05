@@ -8,6 +8,10 @@ export interface SpecialAssignment
     // Primary Key
     //===========================================================
 
+    // The id used in links and API calls (uuid v7)
+    publicId?:
+        string;
+
     specialAssignmentId:
         number;
 

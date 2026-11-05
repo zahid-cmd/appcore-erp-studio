@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.Paging;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.Settings.ProductSettings;
@@ -31,6 +32,18 @@ namespace AppCore.Api.Controllers.Settings.ProductSettings;
 //                       stored on the bike, old file removed. Returns
 //                       the new path as plain text.
 //   DELETE {id}/image   removes the file and clears the path.
+//
+// A row is opened / changed by its Public Id (uuid), never by
+// the internal number :
+//
+//   GET    paged          the list page (one page, server side;
+//                         see MotorBikesPageRequest)
+//   GET    {publicId}     one row
+//   POST                  create -> its Public Id
+//   PUT    {publicId}     update
+//   DELETE {publicId}     delete
+//
+// GET (all) stays for the dropdowns / lookups of other pages.
 //===============================================================
 
 [ApiController]
@@ -98,6 +111,20 @@ public class MotorBikesController : ControllerBase
 
 
     //===========================================================
+    // Get Paged (the list page)
+    //===========================================================
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<MotorBikesDto>>> GetPaged(
+        [FromQuery] MotorBikesPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new MotorBikesPageRequest()));
+    }
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 
@@ -123,20 +150,27 @@ public class MotorBikesController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
-    public async Task<ActionResult<MotorBikesDto>> GetById(
-        long id)
+    [HttpGet("{publicId:guid}")]
+    public async Task<ActionResult<MotorBikesDto>> GetByPublicId(
+        Guid publicId)
     {
-        MotorBikesDto? motorBike =
-            await _repository.GetByIdAsync(id);
+        long? id =
+            await _repository.GetIdByPublicIdAsync(publicId);
 
-        if (motorBike == null)
+        if (id == null)
         {
             return NotFound();
         }
 
-        return Ok(motorBike);
+        MotorBikesDto? row =
+            await _repository.GetByIdAsync(id.Value);
+
+        if (row == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(row);
     }
 
 
@@ -144,19 +178,25 @@ public class MotorBikesController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
 
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateMotorBikesDto dto)
     {
            long userId = this.CurrentUserId();
 
         try
         {
-            return Ok(
+            long id =
                 await _repository.CreateAsync(
                     dto,
-                    userId));
+                    userId);
+
+            MotorBikesDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (InvalidOperationException ex)
         {
@@ -175,11 +215,28 @@ public class MotorBikesController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateMotorBikesDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.MotorBikeId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try
@@ -211,14 +268,25 @@ public class MotorBikesController : ControllerBase
     // Upload Motor Bike Image
     //===========================================================
 
-    [HttpPost("{id:long}/image")]
+    [HttpPost("{publicId:guid}/image")]
 
     [RequestSizeLimit(5 * 1024 * 1024)]
 
     public async Task<IActionResult> UploadImage(
-        long id,
+        Guid publicId,
         IFormFile file)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         //=======================================================
@@ -332,11 +400,22 @@ public class MotorBikesController : ControllerBase
     // Delete Motor Bike Image
     //===========================================================
 
-    [HttpDelete("{id:long}/image")]
+    [HttpDelete("{publicId:guid}/image")]
 
     public async Task<IActionResult> DeleteImage(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try
@@ -369,11 +448,22 @@ public class MotorBikesController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

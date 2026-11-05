@@ -31,6 +31,10 @@ export type ReceiptVoucherStatus =
 
 export interface ReceiptVoucher
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     ReceiptVoucherId:
         number;
 
@@ -154,6 +158,10 @@ export interface UpdateReceiptVoucher
 
 export interface ReceiptVoucherSaved
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     ReceiptVoucherId:
         number;
 

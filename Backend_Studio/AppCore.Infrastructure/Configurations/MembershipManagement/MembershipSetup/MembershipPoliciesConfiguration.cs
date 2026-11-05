@@ -42,6 +42,22 @@ public class MembershipPoliciesConfiguration
 
         builder.HasKey(x => x.MembershipPolicyId);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_MembershipPolicies_PublicId");
+
         builder.Property(x => x.MembershipPolicyId)
                .ValueGeneratedOnAdd();
 

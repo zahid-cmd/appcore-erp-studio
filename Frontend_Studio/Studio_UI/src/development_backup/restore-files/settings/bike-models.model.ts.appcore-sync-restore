@@ -1,0 +1,90 @@
+/* ============================================================
+   Bike Models
+============================================================ */
+
+export interface BikeModels
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Bike Models
+============================================================ */
+
+export interface CreateBikeModels
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Bike Models
+============================================================ */
+
+export interface UpdateBikeModels
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Bike Models Defaults
+============================================================ */
+
+export interface BikeModelsDefaults
+{
+    code:
+        string;
+}

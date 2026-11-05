@@ -16,7 +16,11 @@
 
     min-height:0;
 
-    overflow:hidden;
+    /* The canvas is a fixed height (page-canvas.css) : a short
+       screen scrolls the page instead of cutting the canvas */
+    overflow-x:hidden;
+
+    overflow-y:auto;
 
     gap:12px;
 }
@@ -49,7 +53,9 @@
 
     display:flex;
 
-    flex:1 1 auto;
+    /* Exactly the canvas height (page-canvas.css), on every list
+       page; no stretching to the free space */
+    flex:0 0 auto;
 
     width:100%;
 
@@ -57,7 +63,7 @@
 
     min-height:0;
 
-    height:100%;
+    height:auto;
 
     overflow:hidden;
 }
@@ -281,4 +287,4 @@ app-orbit-loader
 
         flex:1 1 100%;
     }
-}
+}

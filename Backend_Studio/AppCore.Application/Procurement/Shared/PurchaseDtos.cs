@@ -94,6 +94,9 @@ public class UpdatePurchaseDto
 public class PurchaseDto
 {
     public long PurchaseId { get; set; }
+
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
     public string PageType { get; set; } = string.Empty;
     public string PurchaseNo { get; set; } = string.Empty;
     public string PurchaseDate { get; set; } = string.Empty;
@@ -196,6 +199,9 @@ public class PurchaseLineDto
 public class PurchaseSavedDto
 {
     public long PurchaseId { get; set; }
+
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
     public string PurchaseNo { get; set; } = string.Empty;
 }
 
@@ -383,4 +389,30 @@ public class PurchaseOpenOrderLineDto
     public decimal ProfitPercent { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal VatRate { get; set; }
+}
+
+
+//===============================================================
+// List page : paged request and the supplier filter options
+//---------------------------------------------------------------
+// GET .../paged?page=1&pageSize=10&search=&sort=&dir=&tab=&supplier=
+//
+// Tab      : all (default) / Draft / Approved / Posted / Cancelled.
+// Supplier : a supplier code ('' = all).
+// Sort     : the list column fields; empty = newest first.
+//===============================================================
+
+public class PurchasePageRequest : AppCore.Application.Common.Paging.PagedRequest
+{
+    public string? Tab { get; set; }
+
+    public string? Supplier { get; set; }
+}
+
+
+public class PurchaseListSupplierDto
+{
+    public string SupplierCode { get; set; } = string.Empty;
+
+    public string SupplierName { get; set; } = string.Empty;
 }

@@ -22,6 +22,10 @@ public class ProductCategory
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
+
     //===========================================================
     // Basic Information
     //===========================================================
@@ -102,6 +106,25 @@ public class ProductCategory
 
 
     public string CogsGroupName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Sales Account Group (2026-11-04) : GRP-ccc-ggg in the
+    // type's sales class (CLS-005 / 006 / 008)
+    //===========================================================
+
+    public string SalesGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string SalesGroupName
     {
         get;
         set;

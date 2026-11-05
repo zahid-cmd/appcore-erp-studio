@@ -23,6 +23,9 @@ public class PosReconciliationDto
     // ReceiptVoucherPaymentId
     public long PaymentId { get; set; }
 
+    // The payment line's uuid (print links)
+    public Guid PaymentPublicId { get; set; }
+
     // 0 until the first action
     public long PosReconciliationId { get; set; }
 
@@ -274,6 +277,9 @@ public class PosActionResultDto
     public List<string> VoucherNos { get; set; } = new();
 
     public List<long> VoucherIds { get; set; } = new();
+
+    // The same vouchers by uuid (print links)
+    public List<Guid> VoucherPublicIds { get; set; } = new();
 
     public int TransactionCount { get; set; }
 }

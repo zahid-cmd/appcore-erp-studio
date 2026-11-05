@@ -1622,7 +1622,7 @@ implements OnInit
         const url =
             this.router.serializeUrl(
                 this.router.createUrlTree(
-                    ['/print-viewer', 'pos-received', row.PaymentId],
+                    ['/print-viewer', 'pos-received', row.PaymentPublicId || row.PaymentId],
                     {
                         queryParams:{ doc:'all' }
                     }

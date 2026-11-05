@@ -22,6 +22,9 @@ public class MfsReconciliationDto
     // ReceiptVoucherPaymentId
     public long PaymentId { get; set; }
 
+    // The payment line's uuid (print links)
+    public Guid PaymentPublicId { get; set; }
+
     // 0 until the first action
     public long MfsReconciliationId { get; set; }
 
@@ -284,6 +287,9 @@ public class MfsActionResultDto
 
     // Their ids (print)
     public List<long> VoucherIds { get; set; } = new();
+
+    // The same vouchers by uuid (print links)
+    public List<Guid> VoucherPublicIds { get; set; } = new();
 
     // Transactions the action touched
     public int TransactionCount { get; set; }

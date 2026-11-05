@@ -117,6 +117,32 @@
     </app-page-canvas>
 
     <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="sct-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="sct-summary-item">
+                    <span class="sct-summary-label">{{ item.label }}</span>
+                    <b
+                        class="sct-summary-value"
+                        [class.sct-ok]="item.tone === 'ok'"
+                        [class.sct-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="sct-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
+    <!-- =====================================================
          HISTORY
     ====================================================== -->
 

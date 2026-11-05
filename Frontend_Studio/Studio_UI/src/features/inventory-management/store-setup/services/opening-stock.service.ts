@@ -90,7 +90,7 @@ export class OpeningStockService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<OpeningStock>
     {
@@ -118,6 +118,7 @@ export class OpeningStockService
                         Today:text(pick(x, 'Today')),
                         LedgerLocked:pick(x, 'LedgerLocked') !== false,
                         VatIncluded:!!pick(x, 'VatIncluded'),
+                        ProfitOnSale:!!pick(x, 'ProfitOnSale'),
                         PurchaseVatApplicable:pick(x, 'PurchaseVatApplicable') !== false,
                         SalesVatApplicable:pick(x, 'SalesVatApplicable') !== false,
                         PurchaseVatRules:list(pick(x, 'PurchaseVatRules')).map(toVatRule),
@@ -159,7 +160,18 @@ export class OpeningStockService
                                 WarehouseId:num(pick(r, 'WarehouseId')),
                                 Code:text(pick(r, 'Code')),
                                 Name:text(pick(r, 'Name')),
-                                ShelfCount:num(pick(r, 'ShelfCount'))
+                                ShelfCount:num(pick(r, 'ShelfCount')),
+                                ZoneCode:text(pick(r, 'ZoneCode')),
+                                ZoneName:text(pick(r, 'ZoneName')),
+                                Shelves:list(pick(r, 'Shelves')).map
+                                (
+                                    s =>
+                                    ({
+                                        ShelfNumber:num(pick(s, 'ShelfNumber')),
+                                        ShelfLabel:text(pick(s, 'ShelfLabel')),
+                                        BinCount:num(pick(s, 'BinCount')) || 1
+                                    })
+                                )
                             })
                         ),
 
@@ -175,7 +187,6 @@ export class OpeningStockService
                                 SubCategoryName:text(pick(p, 'SubCategoryName')),
                                 HasLedger:!!pick(p, 'HasLedger'),
                                 LastCost:num(pick(p, 'LastCost')),
-                                LastSalePrice:num(pick(p, 'LastSalePrice')),
                                 LastMrp:num(pick(p, 'LastMrp')),
                                 VatType:text(pick(p, 'VatType')),
                                 Shelves:list(pick(p, 'Shelves')).map
@@ -184,7 +195,10 @@ export class OpeningStockService
                                     ({
                                         WarehouseId:num(pick(s, 'WarehouseId')),
                                         RackManagementId:num(pick(s, 'RackManagementId')),
-                                        ShelfNumber:num(pick(s, 'ShelfNumber'))
+                                        ShelfNumber:num(pick(s, 'ShelfNumber')),
+                                        // Old answers : bin 1
+                                        BinNumber:num(pick(s, 'BinNumber')) || 1,
+                                        BinCode:text(pick(s, 'BinCode'))
                                     })
                                 )
                             })
@@ -272,7 +286,7 @@ export class OpeningStockService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -423,6 +437,7 @@ function toSaved
     OpeningStockSaved
 {
     return {
+        PublicId:text(pick(x, 'PublicId')),
         OpeningStockId:num(pick(x, 'OpeningStockId')),
         OpeningNo:text(pick(x, 'OpeningNo')),
         Status:text(pick(x, 'Status'))
@@ -449,7 +464,6 @@ function toLine
         Quantity:num(pick(x, 'Quantity')),
         UnitCost:num(pick(x, 'UnitCost')),
         LineValue:num(pick(x, 'LineValue')),
-        SalePrice:num(pick(x, 'SalePrice')),
         Mrp:num(pick(x, 'Mrp')),
         MarginPercent:num(pick(x, 'MarginPercent')),
         GrossUnitCost:num(pick(x, 'GrossUnitCost')),
@@ -458,6 +472,10 @@ function toLine
         RackManagementId:rack === null || rack === undefined ? null : num(rack),
         RackCode:text(pick(x, 'RackCode')),
         ShelfNumber:num(pick(x, 'ShelfNumber')),
+        // Old lines with a place : bin 1
+        BinNumber:num(pick(x, 'BinNumber')) || (rack !== null && rack !== undefined && num(pick(x, 'ShelfNumber')) ? 1 : 0),
+        ShelfLabel:text(pick(x, 'ShelfLabel')),
+        BinCode:text(pick(x, 'BinCode')),
         SaveAsDefault:!!pick(x, 'SaveAsDefault'),
         ShortNotes:text(pick(x, 'ShortNotes')),
         BatchNo:text(pick(x, 'BatchNo'))
@@ -472,6 +490,7 @@ function toOpeningStock
     OpeningStock
 {
     return {
+        PublicId:text(pick(x, 'PublicId')),
         OpeningStockId:num(pick(x, 'OpeningStockId')),
         PageType:text(pick(x, 'PageType')),
         OpeningNo:text(pick(x, 'OpeningNo')),

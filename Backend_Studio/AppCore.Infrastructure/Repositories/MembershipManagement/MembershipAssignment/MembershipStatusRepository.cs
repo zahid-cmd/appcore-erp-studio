@@ -267,6 +267,9 @@ public class MembershipStatusRepository :
             MembershipStatusDto dto = new MembershipStatusDto
             {
                 MembershipId = x.MembershipId,
+
+                PublicId =
+                    x.PublicId,
                 MembershipNo = x.MembershipNo,
                 EntryType = x.EntryType,
                 PreviousMembershipId = x.PreviousMembershipId,
@@ -1177,5 +1180,32 @@ public class MembershipStatusRepository :
     {
         return await _context.Set<MembershipEntity>()
             .AnyAsync(x => x.MembershipId == id && !x.IsDeleted);
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipStatus>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.MembershipId)
+            .FirstOrDefaultAsync();
     }
 }

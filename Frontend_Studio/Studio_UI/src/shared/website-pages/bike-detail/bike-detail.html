@@ -1,0 +1,220 @@
+<!-- ===========================================================
+     BIKE DETAIL  ( /bikes/:slug )
+============================================================ -->
+
+@if (content(); as site)
+{
+    @if (bike(); as b)
+    {
+        <!-- ================= TOP ================= -->
+        <section class="top">
+            <span class="glow" aria-hidden="true"></span>
+
+            <div class="wrap">
+
+                <nav class="crumbs" aria-label="Breadcrumb">
+                    <a routerLink="/">Home</a>
+                    <span aria-hidden="true">/</span>
+                    <a routerLink="/">Bikes</a>
+                    <span aria-hidden="true">/</span>
+                    <span aria-current="page">{{ b.model }}</span>
+                </nav>
+
+                <div class="top-grid">
+
+                    <div class="stage">
+                        <span class="stage-shadow" aria-hidden="true"></span>
+                        @if (photo())
+                        {
+                            @for (p of [photo()]; track p)
+                            {
+                                <img class="stage-photo" [src]="p" [alt]="b.model">
+                            }
+                        }
+                        @else
+                        {
+                            <span class="stage-placeholder" aria-hidden="true">
+                                <svg width="130" height="130" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17" r="3.5"></circle><circle cx="18.5" cy="17" r="3.5"></circle><path d="M5.5 17l4-7h5l4 7M9.5 10l-1.5-3H5M14.5 10l1.5-3h3"></path></svg>
+                            </span>
+                        }
+
+                        @if (b.colours.length)
+                        {
+                            <div class="colours" role="group" aria-label="Colours">
+                                @for (c of b.colours; track c.name; let i = $index)
+                                {
+                                    <button
+                                        type="button"
+                                        class="swatch"
+                                        [class.on]="i === colourIndex()"
+                                        [attr.aria-pressed]="i === colourIndex()"
+                                        [attr.aria-label]="c.name"
+                                        [title]="c.name"
+                                        [style.background]="c.hex"
+                                        (click)="pickColour(i)">
+                                    </button>
+                                }
+                                <span class="colour-name">{{ b.colours[colourIndex()]?.name }}</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="info">
+                        <div class="chips">
+                            @if (b.brand)
+                            {
+                                <span class="chip">{{ b.brand }}</span>
+                            }
+                            @if (b.category)
+                            {
+                                <span class="chip">{{ b.category }}</span>
+                            }
+                            @if (stock())
+                            {
+                                <span [class]="'chip stock ' + b.stock">{{ stock() }}</span>
+                            }
+                        </div>
+
+                        @if (b.tagline)
+                        {
+                            <p class="tagline">{{ b.tagline }}</p>
+                        }
+
+                        <h1 class="model">{{ b.model }}</h1>
+
+                        @if (price())
+                        {
+                            <div class="price">{{ price() }}</div>
+                        }
+
+                        <div class="tiles">
+                            <div class="tile"><b>{{ b.engine || '–' }}</b><span>Engine</span></div>
+                            <div class="tile"><b>{{ b.mileage || '–' }}</b><span>Mileage</span></div>
+                            <div class="tile"><b>{{ b.topSpeed || '–' }}</b><span>Top speed</span></div>
+                        </div>
+
+                        <div class="actions">
+                            @if (b.code)
+                            {
+                                <a
+                                    class="btn btn-accent btn-lg"
+                                    routerLink="/enquire"
+                                    [queryParams]="{ bike:b.slug, colour:b.colours[colourIndex()]?.name || null }">
+                                    Enquire now
+                                </a>
+                            }
+                            @if (b.code)
+                            {
+                                <a class="btn btn-lg" routerLink="/enquire" [queryParams]="{ type:'test-ride', bike:b.slug }">Book a test ride</a>
+                            }
+                            @else if (links().ride)
+                            {
+                                <a class="btn btn-accent btn-lg" [href]="links().ride" target="_blank" rel="noopener">Book a test ride</a>
+                            }
+                            @if (links().ask)
+                            {
+                                <a class="btn btn-lg" [href]="links().ask" target="_blank" rel="noopener">Ask on WhatsApp</a>
+                            }
+                            @if (links().call)
+                            {
+                                <a class="btn btn-lg" [href]="links().call">Call {{ site.company.hotline }}</a>
+                            }
+                        </div>
+
+                        @if (b.highlights.length)
+                        {
+                            <ul class="highlights">
+                                @for (h of b.highlights; track h)
+                                {
+                                    <li>
+                                        <span class="tick" aria-hidden="true">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"></path></svg>
+                                        </span>
+                                        {{ h }}
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SPECIFICATIONS ================= -->
+        @if (b.specs.length)
+        {
+            <section class="wrap section">
+                <div class="head">
+                    <span class="kicker">Full details</span>
+                    <h2 class="title">Specifications</h2>
+                </div>
+                <div class="spec-grid">
+                    @for (g of b.specs; track g.title)
+                    {
+                        <div class="card spec-card">
+                            <h3 class="spec-title">{{ g.title }}</h3>
+                            <dl class="spec-list">
+                                @for (r of g.rows; track r.label)
+                                {
+                                    <div class="spec-row">
+                                        <dt>{{ r.label }}</dt>
+                                        <dd>{{ r.value || '–' }}</dd>
+                                    </div>
+                                }
+                            </dl>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- ================= GALLERY ================= -->
+        @if (b.gallery.length)
+        {
+            <section class="wrap section">
+                <div class="head">
+                    <span class="kicker">Gallery</span>
+                    <h2 class="title">Take a closer look</h2>
+                </div>
+                <div class="gallery">
+                    @for (g of b.gallery; track g)
+                    {
+                        <button type="button" class="shot" (click)="showPhoto(g)" aria-label="Show this photo above">
+                            <img [src]="g" [alt]="b.model" loading="lazy">
+                        </button>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- ================= EMI ================= -->
+        @if (b.price !== null)
+        {
+            <app-emi-estimator [content]="site" [bikeSlug]="b.slug"></app-emi-estimator>
+        }
+
+        <!-- ================= MORE BIKES ================= -->
+        @if (site.bikes.length > 1)
+        {
+            <app-featured-bikes
+                [content]="site"
+                [exclude]="b.slug"
+                [limit]="3"
+                [showFilter]="false"
+                kicker="Keep looking"
+                heading="More bikes">
+            </app-featured-bikes>
+        }
+
+        <app-contact [company]="site.company" [model]="b.model" [bikeSlug]="b.code ? b.slug : ''"></app-contact>
+    }
+    @else
+    {
+        <section class="wrap missing">
+            <h1 class="title">Bike not found</h1>
+            <p class="lead">This bike is not on our list any more.</p>
+            <a class="btn btn-accent btn-lg" routerLink="/">See all bikes</a>
+        </section>
+    }
+}

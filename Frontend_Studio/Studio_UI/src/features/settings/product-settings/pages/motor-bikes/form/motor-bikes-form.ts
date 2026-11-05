@@ -347,9 +347,10 @@ implements OnInit, OnDestroy
         'add';
 
 
+    // The row's Public Id (from the link)
     entityId:
-        number =
-        0;
+        string =
+        '';
 
 
 
@@ -530,6 +531,8 @@ implements OnInit, OnDestroy
     =
     {
         MotorBikeId:0,
+
+        PublicId:'',
 
         ProductCategoryId:0,
 
@@ -763,7 +766,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            id
         )
         {
             this.entityId =
@@ -778,10 +781,13 @@ implements OnInit, OnDestroy
 
 
         //=======================================================
-        // New Entity
+        // New Entity (category / sub category of the last saved
+        // motor bike preselected)
         //=======================================================
 
         this.initializeEntity();
+
+        this.preselectLastParent();
     }
 
 
@@ -791,7 +797,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -803,15 +809,14 @@ implements OnInit, OnDestroy
             currentRoute
         )
         {
+            // The Public Id (uuid) of the link
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
 
             if
             (
-                id > 0
+                id
             )
             {
                 return id;
@@ -823,7 +828,7 @@ implements OnInit, OnDestroy
         }
 
 
-        return 0;
+        return '';
     }
 
 
@@ -838,6 +843,8 @@ implements OnInit, OnDestroy
         this.entity =
         {
             MotorBikeId:0,
+
+            PublicId:'',
 
             ProductCategoryId:0,
 
@@ -887,6 +894,99 @@ implements OnInit, OnDestroy
         this.setInitialFormState();
     }
 
+
+
+    //===========================================================
+    // Add mode : preselect the category, sub category and stock
+    // levels of the last saved motor bike (still editable)
+    //===========================================================
+
+    private cleanAfterDefaults =
+        false;
+
+
+    private preselectLastParent():
+        void
+    {
+        if
+        (
+            this.mode !== 'add'
+        )
+        {
+            return;
+        }
+
+        this.motorBikesService
+            .getDefaults(
+                0
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    defaults:
+                        MotorBikesDefaults
+                ): void =>
+                {
+                    const categoryId =
+                        Number(defaults?.LastProductCategoryId ?? 0);
+
+                    const subCategoryId =
+                        Number(defaults?.LastProductSubCategoryId ?? 0);
+
+                    // Only on an untouched new form
+                    if
+                    (
+                        this.mode !== 'add'
+                        ||
+                        !(categoryId > 0)
+                        ||
+                        Number(this.entity.ProductCategoryId) > 0
+                    )
+                    {
+                        return;
+                    }
+
+                    this.entity.ProductCategoryId =
+                        categoryId;
+
+                    this.entity.ProductSubCategoryId =
+                        subCategoryId;
+
+                    // Same stock levels as the last saved bike
+                    this.entity.ReorderLevel =
+                        Number(defaults?.LastReorderLevel ?? 0);
+
+                    this.entity.RedLevel =
+                        Number(defaults?.LastRedLevel ?? 0);
+
+                    this.entity.MaxStockLevel =
+                        Number(defaults?.LastMaxStockLevel ?? 0);
+
+                    this.syncLevelTexts();
+
+                    this.buildSubCategoryItems();
+
+                    this.updateBrandName();
+
+                    this.updateProductName();
+
+                    // A preselection is not a user change
+                    this.setInitialFormState();
+
+                    this.cleanAfterDefaults =
+                        subCategoryId > 0;
+
+                    this.loadDefaults();
+                },
+
+                error:
+                (): void =>
+                {
+                    // Nothing preselected
+                }
+            });
+    }
 
 
     //===========================================================
@@ -1003,7 +1103,22 @@ implements OnInit, OnDestroy
         this.entity.CogsLedgerCode =
             defaults?.CogsLedgerCode ?? '';
 
+        this.entity.SalesLedgerCode =
+            defaults?.SalesLedgerCode ?? '';
+
         this.checkForChanges();
+
+        // Codes of a preselected sub category are not a change
+        if
+        (
+            this.cleanAfterDefaults
+        )
+        {
+            this.cleanAfterDefaults =
+                false;
+
+            this.setInitialFormState();
+        }
 
         this.cdr.detectChanges();
     }
@@ -1039,6 +1154,12 @@ implements OnInit, OnDestroy
                             );
 
                     this.buildCategoryItems();
+
+                    this.updateBrandName();
+
+                    this.updateProductName();
+
+                    this.cdr.detectChanges();
                 },
 
                 error:
@@ -1236,7 +1357,12 @@ implements OnInit, OnDestroy
                                 : `${item.ColorName} (Inactive)`,
 
                         value:
-                            Number(item.ColorManagementId)
+                            Number(item.ColorManagementId),
+
+                        // Swatch : the color name as a CSS color
+                        // ("Grey" -> grey); unknown names show none
+                        swatch:
+                            this.cssColor(item.ColorName)
                     })
                 );
 
@@ -1276,6 +1402,9 @@ implements OnInit, OnDestroy
     ):
         void
     {
+        this.cleanAfterDefaults =
+            false;
+
         if
         (
             value !== undefined
@@ -1308,6 +1437,9 @@ implements OnInit, OnDestroy
     ):
         void
     {
+        this.cleanAfterDefaults =
+            false;
+
         if
         (
             value !== undefined
@@ -1365,6 +1497,42 @@ implements OnInit, OnDestroy
 
     // Preview of "<Sub Category Name> - <Color Name>"
     // (the server builds the same name on save)
+    //===========================================================
+    // Sales Ledger Name : the server names it
+    // "Sales - <Product Name>" (shown only with a sales code)
+    //===========================================================
+
+    // "Sky Blue" -> "skyblue" when the browser knows it, else ''
+    private cssColor
+    (
+        name:
+            string
+    ):
+        string
+    {
+        const css =
+            String(name ?? '')
+                .toLowerCase()
+                .replace(/[^a-z]/g, '');
+
+        return css && CSS.supports('color', css)
+            ? css
+            : '';
+    }
+
+
+    get salesLedgerName():
+        string
+    {
+        const productName =
+            (this.entity.ProductName ?? '').trim();
+
+        return productName && this.entity.SalesLedgerCode
+            ? `Sales - ${productName}`
+            : '';
+    }
+
+
     private updateProductName():
         void
     {
@@ -1847,13 +2015,13 @@ implements OnInit, OnDestroy
 
     private saveImage
     (
-        motorBikeId:
-            number
+        publicId:
+            string
     ):
         Observable<boolean>
     {
         return this.runImageStep(
-            motorBikeId
+            publicId
         )
             .pipe(
                 map(
@@ -1887,8 +2055,8 @@ implements OnInit, OnDestroy
 
     private runImageStep
     (
-        motorBikeId:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
@@ -1896,12 +2064,12 @@ implements OnInit, OnDestroy
         (
             this.imageFile
             &&
-            motorBikeId > 0
+            !!publicId
         )
         {
             return this.motorBikesService
                 .uploadImage(
-                    motorBikeId,
+                    publicId,
                     this.imageFile
                 )
                 .pipe(
@@ -1916,12 +2084,12 @@ implements OnInit, OnDestroy
         (
             this.imageRemoved
             &&
-            motorBikeId > 0
+            !!publicId
         )
         {
             return this.motorBikesService
                 .deleteImage(
-                    motorBikeId
+                    publicId
                 );
         }
 
@@ -2368,9 +2536,9 @@ implements OnInit, OnDestroy
                 .pipe(
                     // Then upload the picked image to the new motor bike
                     switchMap(
-                        (id: number) =>
+                        (id: string) =>
                             this.saveImage(
-                                Number(id)
+                                String(id ?? '')
                             )
                     )
                 )
@@ -2494,6 +2662,8 @@ implements OnInit, OnDestroy
         this.withMinimumDuration(
             this.motorBikesService
                 .update(
+                    this.entityId,
+
                     model
                 )
                 .pipe(
@@ -2501,7 +2671,7 @@ implements OnInit, OnDestroy
                     switchMap(
                         () =>
                             this.saveImage(
-                                this.entity.MotorBikeId
+                                this.entityId
                             )
                     )
                 )
@@ -2706,6 +2876,9 @@ implements OnInit, OnDestroy
         this.initializeEntity();
 
 
+        this.preselectLastParent();
+
+
         this.cdr.detectChanges();
     }
 
@@ -2858,6 +3031,9 @@ implements OnInit, OnDestroy
 
 
         this.initializeEntity();
+
+
+        this.preselectLastParent();
 
 
         this.cdr.detectChanges();

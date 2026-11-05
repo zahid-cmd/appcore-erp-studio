@@ -29,6 +29,9 @@ public class PurchaseVat
 
     public long PurchaseVatId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
 
     //===========================================================
     // Rule

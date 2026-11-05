@@ -238,8 +238,87 @@ Routes =
 
                 // AUTO-END : SUB-003-003-008
 
+            // AUTO-BEGIN : SUB-003-003-009
+
+                //===========================================================
+                // Bike Models
+                //===========================================================
+
+                {
+                    path:'bike-models',
+
+                    data:
+                    {
+                        breadcrumb:'Bike Models'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './bike-models.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BikeModelsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-003-009
+                //===========================================================
+                // Model Onboarding (custom page, kept out of Code Sync)
+                //===========================================================
+                {
+                    path:'model-onboarding',
+                    data:
+                    {
+                        breadcrumb:'Model Onboarding'
+                    },
+                    loadComponent:() =>
+                        import(
+                            '../pages/model-onboarding/model-onboarding'
+                        )
+                        .then(
+                            m =>
+                                m.ModelOnboarding
+                        )
+                },
+
+                //===========================================================
+                // Parts & Accessories Onboarding (custom page, kept out of
+                // Code Sync). Both route keys lead to it.
+                //===========================================================
+                {
+                    path:'parts-onboarding',
+                    data:
+                    {
+                        breadcrumb:'Parts & Accessories Onboarding'
+                    },
+                    loadComponent:() =>
+                        import(
+                            '../pages/parts-onboarding/parts-onboarding'
+                        )
+                        .then(
+                            m =>
+                                m.PartsOnboarding
+                        )
+                },
+                {
+                    path:'parts-accessories-onboarding',
+                    data:
+                    {
+                        breadcrumb:'Parts & Accessories Onboarding'
+                    },
+                    loadComponent:() =>
+                        import(
+                            '../pages/parts-onboarding/parts-onboarding'
+                        )
+                        .then(
+                            m =>
+                                m.PartsOnboarding
+                        )
+                },
+
         ]
 
     }
 
-];
+];

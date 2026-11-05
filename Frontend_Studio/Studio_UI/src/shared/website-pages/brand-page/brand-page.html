@@ -1,0 +1,239 @@
+<!-- ===========================================================
+     BRAND PAGE : Bikes · Price list · Parts catalogue
+============================================================ -->
+
+@if (brand(); as b)
+{
+    <section class="banner">
+        <div class="wrap banner-inner">
+
+            <div class="banner-text">
+                <nav class="crumbs" aria-label="Breadcrumb">
+                    <a routerLink="/">Home</a>
+                    <span aria-hidden="true">/</span>
+                    <span>Brands</span>
+                    <span aria-hidden="true">/</span>
+                    <span aria-current="page">{{ b.name }}</span>
+                </nav>
+                <span class="kicker">Authorised dealer</span>
+                <h1 class="title">{{ b.name }}</h1>
+                <p class="sub">
+                    @if (bikes().length)
+                    {
+                        {{ bikes().length }} {{ bikes().length === 1 ? 'model' : 'models' }} ·
+                    }
+                    genuine parts and accessories at {{ content()?.company?.name }}
+                </p>
+                @if (b.about)
+                {
+                    <p class="about">{{ b.about }}</p>
+                }
+            </div>
+
+            <span class="banner-logo">
+                @if (b.logo)
+                {
+                    <img [src]="b.logo" [alt]="b.name">
+                }
+                @else
+                {
+                    <b>{{ b.name.charAt(0) }}</b>
+                }
+            </span>
+
+        </div>
+
+        <div class="wrap">
+            <nav class="tabs" aria-label="Brand sections">
+                @if (bikes().length)
+                {
+                    <a class="tab" [class.on]="tab() === 'bikes'" [routerLink]="[]" [queryParams]="{ tab:'bikes' }" replaceUrl>Bikes</a>
+                    <a class="tab" [class.on]="tab() === 'prices'" [routerLink]="[]" [queryParams]="{ tab:'prices' }" replaceUrl>Price list</a>
+                }
+                <a class="tab" [class.on]="tab() === 'parts'" [routerLink]="[]" [queryParams]="{ tab:'parts' }" replaceUrl>Parts catalogue</a>
+            </nav>
+        </div>
+    </section>
+
+    @switch (tab())
+    {
+        @case ('bikes')
+        {
+            @if (brandSite(); as site)
+            {
+                <app-featured-bikes
+                    [content]="site"
+                    [kicker]="b.name"
+                    [heading]="'Choose your ' + b.name">
+                </app-featured-bikes>
+            }
+        }
+
+        @case ('prices')
+        {
+            <section class="wrap section">
+                <div class="list-head">
+                    <div class="head">
+                        <span class="kicker">{{ b.name }}</span>
+                        <h2 class="title">Price list</h2>
+                    </div>
+                    <button type="button" class="btn btn-soft no-print" (click)="print()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="7"></rect></svg>
+                        Print
+                    </button>
+                </div>
+
+                <div class="table-card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Colours</th>
+                                <th class="num">MRP</th>
+                                <th>Availability</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (r of priceRows(); track r.slug)
+                            {
+                                <tr>
+                                    <td><a class="model-link" [routerLink]="['/bikes', r.slug]">{{ r.model }}</a></td>
+                                    <td class="muted">{{ r.colours || '–' }}</td>
+                                    <td class="num strong">{{ r.price }}</td>
+                                    <td>
+                                        @if (r.stockText)
+                                        {
+                                            <span [class]="'chip stock ' + r.stock">{{ r.stockText }}</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="note">{{ data.text('prices.note') }}</p>
+            </section>
+        }
+
+        @case ('parts')
+        {
+            <section class="wrap section">
+                <div class="list-head">
+                    <div class="head">
+                        <span class="kicker">{{ b.name }}</span>
+                        <h2 class="title">Parts catalogue</h2>
+                    </div>
+                    <label class="search">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+                        <input
+                            type="search"
+                            placeholder="Part number or name"
+                            aria-label="Search parts"
+                            [value]="search()"
+                            (input)="setSearch($any($event.target).value)">
+                    </label>
+                </div>
+
+                @if (kinds().length)
+                {
+                    <div class="kinds" role="group" aria-label="Kind">
+                        @for (k of kinds(); track k)
+                        {
+                            <button
+                                type="button"
+                                class="kind"
+                                [class.on]="k === kind()"
+                                [attr.aria-pressed]="k === kind()"
+                                (click)="setKind(k)">
+                                {{ k }}
+                            </button>
+                        }
+                    </div>
+                }
+
+                @switch (partsState())
+                {
+                    @case ('loading')
+                    {
+                        <p class="lead">Loading the catalogue…</p>
+                    }
+                    @case ('failed')
+                    {
+                        <p class="lead">The parts catalogue is not available right now. Please call or WhatsApp us.</p>
+                    }
+                    @default
+                    {
+                        @if (filteredParts().length)
+                        {
+                            <div class="table-card">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Part no.</th>
+                                            <th>Name</th>
+                                            <th>Kind</th>
+                                            <th>Unit</th>
+                                            <th class="num">MRP</th>
+                                            <th>Availability</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (p of visibleParts(); track $index)
+                                        {
+                                            <tr>
+                                                <td class="mono">{{ p.partNumber || '–' }}</td>
+                                                <td class="strong">{{ p.name }}</td>
+                                                <td class="muted">{{ p.kind }}</td>
+                                                <td class="muted">{{ p.unit }}</td>
+                                                <td class="num strong">{{ partPrice(p) }}</td>
+                                                <td>
+                                                    <span [class]="'chip stock ' + (p.stock === 'in-stock' ? 'in-stock' : 'pre-order')">
+                                                        {{ p.stock === 'in-stock' ? 'In stock' : 'On order' }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="list-foot">
+                                <span class="muted">Showing {{ visibleParts().length }} of {{ filteredParts().length }}</span>
+                                @if (visibleParts().length < filteredParts().length)
+                                {
+                                    <button type="button" class="btn" (click)="more()">Show more</button>
+                                }
+                            </div>
+                        }
+                        @else
+                        {
+                            <p class="lead">
+                                @if (search() || kind() !== 'All')
+                                {
+                                    No parts match your search.
+                                }
+                                @else
+                                {
+                                    No parts listed for {{ b.name }} yet.
+                                }
+                            </p>
+                        }
+                    }
+                }
+            </section>
+        }
+    }
+
+    @if (content(); as site)
+    {
+        <app-contact id="test-ride" [company]="site.company"></app-contact>
+    }
+}
+@else if (content())
+{
+    <section class="wrap section missing">
+        <h1 class="title">Brand not found</h1>
+        <p class="lead">This brand is not on our website.</p>
+        <a class="btn btn-accent" routerLink="/">Back to home</a>
+    </section>
+}

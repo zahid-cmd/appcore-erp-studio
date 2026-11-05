@@ -1,4 +1,15 @@
 //===============================================================
+// Rack Management List
+//
+// Two tabs :
+//   Racks : Warehouse · Zone · Rack Code · Rack · Shelves · Bins ·
+//           Assigned to · Items · Status (add / edit on the form)
+//   Zones : Warehouse · Zone Code · Zone · Priority · Racks ·
+//           Status (add / edit in the shared Form Modal)
+//
+// No toasts : what an action did shows as a notice on the
+// toolbar.
+//===============================================================
 // Imports
 //===============================================================
 
@@ -31,18 +42,6 @@ import
 }
 from '@angular/router';
 
-import
-{
-    Observable,
-    defer,
-    timer,
-    throwError,
-    delayWhen,
-    catchError,
-    switchMap
-}
-from 'rxjs';
-
 
 //===============================================================
 // Models
@@ -50,14 +49,42 @@ from 'rxjs';
 
 import
 {
-    RackManagement
+    RackManagement,
+    RackZone,
+    CreateRackZone,
+    UpdateRackZone,
+    RackZoneDefaults
 }
 from '../../../../../settings/product-settings/models/rack-management.model';
 
 
-// List row
+// Rack row with its display texts
 type RackListRow =
-    RackManagement;
+    RackManagement
+    &
+    {
+        WarehouseText:string;
+        ZoneText:string;
+        AssignedText:string;
+        BinsTotal:number;
+    };
+
+
+// Zone row with its display texts
+type ZoneListRow =
+    RackZone
+    &
+    {
+        WarehouseText:string;
+    };
+
+
+// What an action did (no toast on this page)
+interface ListNotice
+{
+    tone:'info' | 'ok' | 'error';
+    text:string;
+}
 
 
 //===============================================================
@@ -147,19 +174,43 @@ from '../../../../../../shared/components/utilities/progress-dialog/progress-dia
 
 import
 {
-    ToastService
+    ProgressRunner
 }
-from '../../../../../../shared/components/utilities/toast/toast.service';
+from '../../../../../../shared/components/utilities/progress-dialog/progress-runner';
 
 import
 {
-    ToastComponent
+    FormModalComponent
 }
-from '../../../../../../shared/components/utilities/toast/toast';
+from '../../../../../../shared/components/utilities/form-modal/form-modal';
+
+import
+{
+    TextboxComponent
+}
+from '../../../../../../shared/components/controls/textbox/textbox';
+
+import
+{
+    TextareaComponent
+}
+from '../../../../../../shared/components/controls/textarea/textarea';
+
+import
+{
+    DropdownComponent
+}
+from '../../../../../../shared/components/controls/dropdown/dropdown';
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 
 //===============================================================
-// Service
+// Services
 //===============================================================
 
 import
@@ -167,6 +218,13 @@ import
     RackManagementService
 }
 from '../../../../../settings/product-settings/services/rack-management.service';
+
+// Warehouses live in General Settings
+import
+{
+    WarehousesService
+}
+from '../../../../../settings/general-settings/services/warehouses.service';
 
 
 //===============================================================
@@ -205,7 +263,15 @@ from '../../../../../settings/product-settings/services/rack-management.service'
 
         ProgressDialogComponent,
 
-        ToastComponent
+        FormModalComponent,
+
+        TextboxComponent,
+
+        TextareaComponent,
+
+        DropdownComponent,
+
+        SearchDropdownComponent
     ],
 
     templateUrl:'./rack-management-list.html',
@@ -230,16 +296,12 @@ implements OnInit, OnDestroy
         inject(RackManagementService);
 
 
+    private readonly warehousesService =
+        inject(WarehousesService);
+
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
-
-
-    private readonly progressDialog =
-        inject(ProgressDialogService);
-
-
-    private readonly toast =
-        inject(ToastService);
 
 
     private readonly router =
@@ -254,25 +316,46 @@ implements OnInit, OnDestroy
         inject(ChangeDetectorRef);
 
 
+    // Progress dialog around save / delete / restore
+    readonly progress =
+        new ProgressRunner(
+            inject(ProgressDialogService),
+            () => this.cdr.detectChanges()
+        );
+
+
 
     //===========================================================
-    // Page Tabs
+    // Page Tabs : Racks / Zones
     //===========================================================
 
     tabs:
         ControlTab[] =
     [
         {
-            id:'all',
+            id:'racks',
 
-            label:'All Racks'
+            label:'Racks'
+        },
+
+        {
+            id:'zones',
+
+            label:'Zones'
         }
     ];
 
 
     selectedTab:
         string =
-        'all';
+        'racks';
+
+
+    get isZonesTab():
+        boolean
+    {
+        return this.selectedTab === 'zones';
+    }
 
 
 
@@ -285,13 +368,18 @@ implements OnInit, OnDestroy
     [];
 
 
-    filteredRacks:
-        RackListRow[] =
+    zones:
+        ZoneListRow[] =
     [];
 
 
-    pagedRacks:
-        RackListRow[] =
+    filteredRows:
+        any[] =
+    [];
+
+
+    pagedRows:
+        any[] =
     [];
 
 
@@ -315,48 +403,18 @@ implements OnInit, OnDestroy
         false;
 
 
-    // Prevents a second Delete / Restore while one is running
-    isProcessing:
-        boolean =
-        false;
-
-
 
     //===========================================================
-    // Progress Dialog Settings
+    // Notice (instead of toasts)
     //===========================================================
 
-    // Minimum time the dialog stays open
-    private readonly MIN_PROGRESS_MS:
-        number =
-        3000;
+    notice:
+        ListNotice | null =
+        null;
 
 
-    // Animation tick
-    private readonly PROGRESS_TICK_MS:
-        number =
-        100;
-
-
-    // Highest % reached before the server answers
-    private readonly PROGRESS_CEILING:
-        number =
-        90;
-
-
-    // How long 100% is shown before closing
-    private readonly PROGRESS_COMPLETE_HOLD_MS:
-        number =
-        600;
-
-
-    private progressTimer?:
+    private noticeTimer?:
         number;
-
-
-    private progressValue:
-        number =
-        0;
 
 
 
@@ -396,6 +454,66 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
+    // Zone Modal (shared Form Modal)
+    //===========================================================
+
+    zoneModalOpened:
+        boolean =
+        false;
+
+
+    zoneModalMode:
+        'add' | 'edit' | 'view' =
+        'add';
+
+
+    zoneDraft:
+        RackZone =
+        this.emptyZone();
+
+
+    // Text in the Priority box
+    zonePriorityText:
+        string =
+        '1';
+
+
+    // Error shown in the modal footer
+    zoneError:
+        string =
+        '';
+
+
+    // Active warehouses (the zone's own one always stays)
+    zoneWarehouseItems:
+        any[] =
+    [];
+
+
+    readonly statusItems:
+        any[] =
+    [
+        {
+            label:'Active',
+
+            value:true
+        },
+
+        {
+            label:'Inactive',
+
+            value:false
+        }
+    ];
+
+
+    private warehouses:
+        any[] =
+    [];
+
+
+
+    //===========================================================
     // Page Canvas Configuration
     //===========================================================
 
@@ -426,10 +544,10 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Table Columns
+    // Table Columns : Racks
     //===========================================================
 
-    readonly columns:
+    readonly rackColumns:
         ListTableColumn[] =
     [
         {
@@ -439,15 +557,15 @@ implements OnInit, OnDestroy
 
             type:'serial',
 
-            width:'80px',
+            width:'60px',
 
             align:'center'
         },
 
         {
-            header:'Branch',
+            header:'Warehouse',
 
-            field:'BranchName',
+            field:'WarehouseText',
 
             width:'220px',
 
@@ -455,11 +573,11 @@ implements OnInit, OnDestroy
         },
 
         {
-            header:'Warehouse',
+            header:'Zone',
 
-            field:'WarehouseName',
+            field:'ZoneText',
 
-            width:'220px',
+            width:'180px',
 
             align:'left'
         },
@@ -469,15 +587,17 @@ implements OnInit, OnDestroy
 
             field:'FullRackCode',
 
-            width:'220px',
+            width:'170px',
 
             align:'center'
         },
 
         {
-            header:'Rack Name',
+            header:'Rack',
 
             field:'RackName',
+
+            width:'110px',
 
             align:'left'
         },
@@ -487,27 +607,35 @@ implements OnInit, OnDestroy
 
             field:'ShelfCount',
 
-            width:'200px',
+            width:'90px',
 
             align:'center'
         },
 
         {
-            header:'Zone / Aisle',
+            header:'Bins',
 
-            field:'ZoneAisle',
+            field:'BinsTotal',
 
-            width:'170px',
+            width:'80px',
+
+            align:'center'
+        },
+
+        {
+            header:'Assigned to',
+
+            field:'AssignedText',
 
             align:'left'
         },
 
         {
-            header:'Parts',
+            header:'Items',
 
             field:'PartsPlaced',
 
-            width:'100px',
+            width:'80px',
 
             align:'center'
         },
@@ -517,7 +645,7 @@ implements OnInit, OnDestroy
 
             field:'IsActive',
 
-            width:'150px',
+            width:'120px',
 
             type:'status',
 
@@ -531,11 +659,123 @@ implements OnInit, OnDestroy
 
             type:'actions',
 
-            width:'150px',
+            width:'130px',
 
             align:'center'
         }
     ];
+
+
+
+    //===========================================================
+    // Table Columns : Zones
+    //===========================================================
+
+    readonly zoneColumns:
+        ListTableColumn[] =
+    [
+        {
+            header:'#',
+
+            field:'serial',
+
+            type:'serial',
+
+            width:'60px',
+
+            align:'center'
+        },
+
+        {
+            header:'Warehouse',
+
+            field:'WarehouseText',
+
+            width:'280px',
+
+            align:'left'
+        },
+
+        {
+            header:'Zone Code',
+
+            field:'ZoneCode',
+
+            width:'130px',
+
+            align:'center'
+        },
+
+        {
+            header:'Zone',
+
+            field:'ZoneName',
+
+            align:'left'
+        },
+
+        {
+            header:'Priority',
+
+            field:'Priority',
+
+            width:'110px',
+
+            align:'center'
+        },
+
+        {
+            header:'Racks',
+
+            field:'RackCount',
+
+            width:'100px',
+
+            align:'center'
+        },
+
+        {
+            header:'Status',
+
+            field:'IsActive',
+
+            width:'120px',
+
+            type:'status',
+
+            align:'center'
+        },
+
+        {
+            header:'Actions',
+
+            field:'actions',
+
+            type:'actions',
+
+            width:'130px',
+
+            align:'center'
+        }
+    ];
+
+
+    get columns():
+        ListTableColumn[]
+    {
+        return this.isZonesTab
+            ? this.zoneColumns
+            : this.rackColumns;
+    }
+
+
+    get searchPlaceholder():
+        string
+    {
+        return this.isZonesTab
+            ? 'Search zones...'
+            : 'Search racks...';
+    }
 
 
 
@@ -546,6 +786,8 @@ implements OnInit, OnDestroy
     ngOnInit():
         void
     {
+        this.loadWarehouses();
+
         this.loadItems();
     }
 
@@ -558,85 +800,63 @@ implements OnInit, OnDestroy
     ngOnDestroy():
         void
     {
-        this.clearProgressTimer();
-
-
         if
         (
-            this.isProcessing
+            this.noticeTimer
         )
         {
-            this.progressDialog.close();
+            clearTimeout(
+                this.noticeTimer
+            );
         }
     }
 
 
 
     //===========================================================
-    // Progress Dialog (Animated)
-    //
-    // The bar eases from 0% toward 90% while the request runs,
-    // then jumps to 100% on success before closing.
+    // Notice
     //===========================================================
 
-    private startProgress
+    private say
     (
-        title:
-            string,
+        tone:
+            ListNotice['tone'],
 
         message:
             string
     ):
         void
     {
-        this.isProcessing =
-            true;
+        this.notice =
+        {
+            tone,
+
+            text:message
+        };
 
 
-        this.progressValue =
-            0;
+        if
+        (
+            this.noticeTimer
+        )
+        {
+            clearTimeout(
+                this.noticeTimer
+            );
+        }
 
 
-        // Determinate : we drive the percentage ourselves
-        this.progressDialog.show(
-            title,
-
-            message,
-
-            false
-        );
-
-
-        this.clearProgressTimer();
-
-
-        this.progressTimer =
-            window.setInterval(
+        this.noticeTimer =
+            window.setTimeout(
                 () =>
                 {
-                    // Ease-out : big steps first, smaller near the ceiling
-                    const step =
-                        Math.max(
-                            0.4,
-                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
-                        );
+                    this.notice =
+                        null;
 
-
-                    this.progressValue =
-                        Math.min(
-                            this.PROGRESS_CEILING,
-                            this.progressValue + step
-                        );
-
-
-                    this.progressDialog.update(
-                        Math.round(
-                            this.progressValue
-                        )
-                    );
+                    this.cdr.detectChanges();
                 },
 
-                this.PROGRESS_TICK_MS
+                tone === 'error' ? 9000 : 6000
             );
 
 
@@ -644,203 +864,69 @@ implements OnInit, OnDestroy
     }
 
 
-    //-----------------------------------------------------------
-    // Success : show 100%, pause briefly, then close
-    //-----------------------------------------------------------
-
-    private completeProgress
-    (
-        message:
-            string,
-
-        done:
-            () => void
-    ):
+    closeNotice():
         void
     {
-        this.clearProgressTimer();
-
-
-        this.progressDialog.update(
-            100,
-
-            message
-        );
-
-
-        window.setTimeout(
-            () =>
-            {
-                this.progressDialog.close();
-
-
-                this.isProcessing =
-                    false;
-
-
-                this.cdr.detectChanges();
-
-
-                done();
-            },
-
-            this.PROGRESS_COMPLETE_HOLD_MS
-        );
-    }
-
-
-    //-----------------------------------------------------------
-    // Error : close immediately, then report
-    //-----------------------------------------------------------
-
-    private failProgress
-    (
-        done:
-            () => void
-    ):
-        void
-    {
-        this.clearProgressTimer();
-
-
-        this.progressDialog.close();
-
-
-        this.isProcessing =
-            false;
-
+        this.notice =
+            null;
 
         this.cdr.detectChanges();
-
-
-        done();
     }
 
 
-    private clearProgressTimer():
+
+    //===========================================================
+    // Load Warehouses (zone modal)
+    //===========================================================
+
+    private loadWarehouses():
         void
     {
-        if
-        (
-            this.progressTimer
-        )
-        {
-            clearInterval(
-                this.progressTimer
-            );
+        this.warehousesService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        any[]
+                ):
+                    void =>
+                {
+                    this.warehouses =
+                        (response ?? [])
+                            .slice()
+                            .sort(
+                                (a, b) =>
+                                    String(a?.WarehouseCode ?? '')
+                                        .localeCompare(
+                                            String(b?.WarehouseCode ?? '')
+                                        )
+                            );
 
 
-            this.progressTimer =
-                undefined;
-        }
+                    this.buildZoneWarehouseItems();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Warehouses Error',
+                        error
+                    );
+                }
+            });
     }
 
 
 
     //===========================================================
-    // Minimum Progress Duration
-    //
-    // Keeps the progress dialog visible for at least
-    // MIN_PROGRESS_MS, on both success and error.
-    //===========================================================
-
-    private withMinimumDuration<T>
-    (
-        source$:
-            Observable<T>
-    ):
-        Observable<T>
-    {
-        return defer(
-            () =>
-            {
-                const startedAt:
-                    number =
-                    Date.now();
-
-
-                const remaining =
-                    (): number =>
-                        Math.max(
-                            0,
-                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
-                        );
-
-
-                return source$.pipe(
-
-                    delayWhen(
-                        () =>
-                            timer(remaining())
-                    ),
-
-                    catchError(
-                        error =>
-                            timer(remaining()).pipe(
-                                switchMap(
-                                    () =>
-                                        throwError(() => error)
-                                )
-                            )
-                    )
-                );
-            }
-        );
-    }
-
-
-
-    //===========================================================
-    // Normalize API Response
-    //===========================================================
-
-    private normalizeRack
-    (
-        item:
-            any
-    ):
-        RackListRow
-    {
-        return this.rackManagementService.normalize(
-            item
-        );
-    }
-
-
-
-    //===========================================================
-    // Normalize API Response List
-    //===========================================================
-
-    private normalizeRacks
-    (
-        response:
-            any
-    ):
-        RackListRow[]
-    {
-        if
-        (
-            !Array.isArray(response)
-        )
-        {
-            return [];
-        }
-
-
-        return response.map
-        (
-            item =>
-                this.normalizeRack(
-                    item
-                )
-        );
-    }
-
-
-
-    //===========================================================
-    // Load Items
+    // Load Items (racks and zones)
     //===========================================================
 
     loadItems():
@@ -854,6 +940,36 @@ implements OnInit, OnDestroy
             false;
 
 
+        let pending =
+            2;
+
+
+        const done =
+            (): void =>
+            {
+                pending--;
+
+
+                if
+                (
+                    pending > 0
+                )
+                {
+                    return;
+                }
+
+
+                this.loading =
+                    false;
+
+
+                this.applyFilters();
+
+
+                this.cdr.detectChanges();
+            };
+
+
         this.rackManagementService
             .getAll()
             .subscribe
@@ -861,28 +977,21 @@ implements OnInit, OnDestroy
                 next:
                 (
                     response:
-                        any
+                        RackManagement[]
                 ):
                     void =>
                 {
                     this.racks =
-                        this.normalizeRacks(
-                            response
-                        );
+                        (response ?? [])
+                            .map(
+                                item =>
+                                    this.toRackRow(
+                                        item
+                                    )
+                            );
 
 
-                    this.applyFilters();
-
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        false;
-
-
-                    this.cdr.detectChanges();
+                    done();
                 },
 
 
@@ -893,8 +1002,7 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    console.error
-                    (
+                    console.error(
                         'Load Racks Error:',
                         error
                     );
@@ -904,33 +1012,167 @@ implements OnInit, OnDestroy
                         [];
 
 
-                    this.filteredRacks =
-                        [];
-
-
-                    this.pagedRacks =
-                        [];
-
-
-                    this.loading =
-                        false;
-
-
                     this.loadFailed =
                         true;
 
 
-                    this.toast.error
-                    (
-                        'Load Failed',
-
+                    this.say(
+                        'error',
                         'Unable to load racks.'
                     );
 
 
-                    this.cdr.detectChanges();
+                    done();
                 }
             });
+
+
+        this.rackManagementService
+            .getZones(
+                0
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        RackZone[]
+                ):
+                    void =>
+                {
+                    this.zones =
+                        (response ?? [])
+                            .map(
+                                item =>
+                                    this.toZoneRow(
+                                        item
+                                    )
+                            );
+
+
+                    done();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Zones Error:',
+                        error
+                    );
+
+
+                    this.zones =
+                        [];
+
+
+                    if
+                    (
+                        this.isZonesTab
+                    )
+                    {
+                        this.loadFailed =
+                            true;
+                    }
+
+
+                    this.say(
+                        'error',
+                        'Unable to load zones.'
+                    );
+
+
+                    done();
+                }
+            });
+    }
+
+
+
+    //===========================================================
+    // Rows with display texts
+    //===========================================================
+
+    private toRackRow
+    (
+        item:
+            RackManagement
+    ):
+        RackListRow
+    {
+        const binsTotal =
+            item.TotalBins
+            ||
+            (item.Shelves ?? [])
+                .reduce(
+                    (sum, shelf) =>
+                        sum + Number(shelf.BinCount || 0),
+                    0
+                )
+            ||
+            item.ShelfCount;
+
+
+        const subCount =
+            (item.SubCategoryIds ?? []).length;
+
+
+        const assigned =
+            item.AssignmentText
+            ||
+            (
+                item.ProductCategoryId
+                    ? (
+                        subCount > 0
+                            ? `${item.CategoryName} (${subCount} sub categor${subCount === 1 ? 'y' : 'ies'})`
+                            : String(item.CategoryName ?? '')
+                    )
+                    : 'General'
+            );
+
+
+        return {
+            ...item,
+
+            WarehouseText:
+                [item.WarehouseCode, item.WarehouseName]
+                    .filter(x => !!x)
+                    .join(' - '),
+
+            ZoneText:
+                item.ZoneCode
+                    ? `${item.ZoneCode} · ${item.ZoneName}`
+                    : '—',
+
+            AssignedText:
+                assigned,
+
+            BinsTotal:
+                binsTotal
+        };
+    }
+
+
+    private toZoneRow
+    (
+        item:
+            RackZone
+    ):
+        ZoneListRow
+    {
+        return {
+            ...item,
+
+            WarehouseText:
+                [item.WarehouseCode, item.WarehouseName]
+                    .filter(x => !!x)
+                    .join(' - ')
+        };
     }
 
 
@@ -948,43 +1190,67 @@ implements OnInit, OnDestroy
                 .toLowerCase();
 
 
-        this.filteredRacks =
-            this.racks.filter
+        const matches =
             (
-                (
-                    item:
-                        RackListRow
-                ):
-                    boolean =>
-                {
-                    const values:
-                        unknown[] =
-                    [
-                        item.FullRackCode,
-                        item.RackName,
-                        item.BranchName,
-                        item.WarehouseCode,
-                        item.WarehouseName,
-                        item.ZoneAisle,
-                        item.RackType
-                    ];
+                values:
+                    unknown[],
 
-                    const searchMatch =
-                        !keyword
-                        ||
-                        values.some(
-                            value =>
-                                String(value ?? '')
-                                    .toLowerCase()
-                                    .includes(keyword)
+                isActive:
+                    boolean
+            ): boolean =>
+                !keyword
+                ||
+                values.some(
+                    value =>
+                        String(value ?? '')
+                            .toLowerCase()
+                            .includes(keyword)
+                )
+                ||
+                (isActive ? 'active' : 'inactive')
+                    .includes(keyword);
+
+
+        if
+        (
+            this.isZonesTab
+        )
+        {
+            this.filteredRows =
+                this.zones.filter(
+                    item =>
+                        matches(
+                            [
+                                item.WarehouseText,
+                                item.BranchName,
+                                item.ZoneCode,
+                                item.ZoneName,
+                                item.Priority,
+                                item.Remarks
+                            ],
+                            item.IsActive
                         )
-                        ||
-                        (item.IsActive ? 'active' : 'inactive')
-                            .includes(keyword);
-
-                    return searchMatch;
-                }
-            );
+                );
+        }
+        else
+        {
+            this.filteredRows =
+                this.racks.filter(
+                    item =>
+                        matches(
+                            [
+                                item.FullRackCode,
+                                item.RackName,
+                                item.BranchName,
+                                item.WarehouseText,
+                                item.ZoneText,
+                                item.AssignedText,
+                                item.RackType
+                            ],
+                            item.IsActive
+                        )
+                );
+        }
 
 
         this.currentPage =
@@ -992,6 +1258,37 @@ implements OnInit, OnDestroy
 
 
         this.updatePagination();
+    }
+
+
+
+    //===========================================================
+    // Tab Change
+    //===========================================================
+
+    onTabChange
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.selectedTab =
+            value;
+
+
+        this.searchText =
+            '';
+
+
+        this.loadFailed =
+            false;
+
+
+        this.applyFilters();
+
+
+        this.cdr.detectChanges();
     }
 
 
@@ -1035,35 +1332,24 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.filteredRacks =
+        const sign =
+            event.direction === 'asc'
+                ? 1
+                : -1;
+
+
+        this.filteredRows =
         [
-            ...this.filteredRacks
-        ];
-
-
-        this.filteredRacks.sort
-        (
-            (
-                a:
-                    RackListRow,
-
-                b:
-                    RackListRow
-            ):
-                number =>
+            ...this.filteredRows
+        ]
+        .sort(
+            (a, b) =>
             {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof RackListRow
-                    ];
+                const valueA =
+                    a?.[event.field];
 
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof RackListRow
-                    ];
+                const valueB =
+                    b?.[event.field];
 
 
                 if
@@ -1082,7 +1368,7 @@ implements OnInit, OnDestroy
                     valueA == null
                 )
                 {
-                    return -1;
+                    return -1 * sign;
                 }
 
 
@@ -1091,7 +1377,7 @@ implements OnInit, OnDestroy
                     valueB == null
                 )
                 {
-                    return 1;
+                    return 1 * sign;
                 }
 
 
@@ -1102,41 +1388,11 @@ implements OnInit, OnDestroy
                     typeof valueB === 'string'
                 )
                 {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
+                    return valueA.localeCompare(valueB, undefined, { numeric:true }) * sign;
                 }
 
 
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
+                return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * sign;
             }
         );
 
@@ -1171,7 +1427,7 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Update Pagination
+    // Pagination
     //===========================================================
 
     updatePagination():
@@ -1186,9 +1442,9 @@ implements OnInit, OnDestroy
             this.pageSize;
 
 
-        this.pagedRacks =
+        this.pagedRows =
         [
-            ...this.filteredRacks.slice
+            ...this.filteredRows.slice
             (
                 start,
 
@@ -1197,11 +1453,6 @@ implements OnInit, OnDestroy
         ];
     }
 
-
-
-    //===========================================================
-    // Page Change
-    //===========================================================
 
     onPageChange
     (
@@ -1217,11 +1468,6 @@ implements OnInit, OnDestroy
         this.updatePagination();
     }
 
-
-
-    //===========================================================
-    // Page Size Change
-    //===========================================================
 
     onPageSizeChange
     (
@@ -1244,12 +1490,26 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Add
+    // Add (rack form or zone modal)
     //===========================================================
 
     add():
         void
     {
+        if
+        (
+            this.isZonesTab
+        )
+        {
+            this.openZoneModal(
+                'add',
+                null
+            );
+
+            return;
+        }
+
+
         void this.router.navigate
         (
             [
@@ -1272,16 +1532,30 @@ implements OnInit, OnDestroy
     view
     (
         item:
-            RackListRow
+            any
     ):
         void
     {
+        if
+        (
+            this.isZonesTab
+        )
+        {
+            this.openZoneModal(
+                'view',
+                item
+            );
+
+            return;
+        }
+
+
         void this.router.navigate
         (
             [
                 'view',
 
-                item.RackManagementId
+                item.PublicId
             ],
 
             {
@@ -1300,16 +1574,30 @@ implements OnInit, OnDestroy
     edit
     (
         item:
-            RackListRow
+            any
     ):
         void
     {
+        if
+        (
+            this.isZonesTab
+        )
+        {
+            this.openZoneModal(
+                'edit',
+                item
+            );
+
+            return;
+        }
+
+
         void this.router.navigate
         (
             [
                 'edit',
 
-                item.RackManagementId
+                item.PublicId
             ],
 
             {
@@ -1328,24 +1616,34 @@ implements OnInit, OnDestroy
     delete
     (
         item:
-            RackListRow
+            any
     ):
         void
     {
         if
         (
-            this.isProcessing
+            this.progress.busy
         )
         {
             return;
         }
 
 
+        const isZone =
+            this.isZonesTab;
+
+
+        const name =
+            isZone
+                ? `${item.ZoneCode} - ${item.ZoneName}`
+                : item.RackName;
+
+
         this.confirmDialog.open
         (
-            'Delete Rack',
+            isZone ? 'Delete Zone' : 'Delete Rack',
 
-            `Are you sure you want to delete "${item.RackName}" ?`,
+            `Are you sure you want to delete "${name}" ?`,
 
             (): void =>
             {
@@ -1353,61 +1651,46 @@ implements OnInit, OnDestroy
                 // so it cannot hide the progress dialog.
                 setTimeout(
                     () =>
-                        this.deleteItem(
-                            item
-                        )
+                        isZone
+                            ? this.deleteZone(item)
+                            : this.deleteRack(item)
                 );
             }
         );
     }
 
 
-
-    //===========================================================
-    // Delete Item
-    //===========================================================
-
-    private deleteItem
+    private deleteRack
     (
         item:
             RackListRow
     ):
         void
     {
-        this.startProgress(
-            'Deleting Rack',
+        this.progress
+            .run(
+                'Deleting Rack',
 
-            `Please wait while "${item.RackName}" is being deleted...`
-        );
+                `Please wait while "${item.RackName}" is being deleted...`,
 
+                'Rack deleted.',
 
-        this.withMinimumDuration(
-            this.rackManagementService.delete(
-                item.RackManagementId
+                this.rackManagementService.delete(
+                    item.PublicId ?? ''
+                )
             )
-        )
             .subscribe
             ({
                 next:
                 (): void =>
                 {
-                    this.completeProgress(
-
-                        'Rack deleted.',
-
-                        () =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
-
-                                `${item.RackName} deleted successfully.`
-                            );
-
-
-                            this.loadItems();
-                        }
+                    this.say(
+                        'ok',
+                        `${item.RackName} (${item.FullRackCode}) deleted.`
                     );
+
+
+                    this.loadItems();
                 },
 
 
@@ -1418,82 +1701,81 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    console.error
-                    (
+                    console.error(
                         'Delete Rack Error:',
                         error
                     );
 
 
-                    this.failProgress(
-                        () =>
-                        {
-                            //===========================================
-                            // Deletion Blocked
-                            //===========================================
-
-                            if
-                            (
-                                error instanceof HttpErrorResponse
-                                &&
-                                error.status === 409
-                            )
-                            {
-                                let message =
-                                    'Rack cannot be deleted because it is already in use.';
+                    this.say(
+                        'error',
+                        this.errorText(
+                            error,
+                            error instanceof HttpErrorResponse && error.status === 409
+                                ? 'Rack cannot be deleted because it is already in use.'
+                                : 'Failed to delete rack.'
+                        )
+                    );
+                }
+            });
+    }
 
 
-                                if
-                                (
-                                    typeof error.error === 'string'
-                                    &&
-                                    error.error.trim()
-                                )
-                                {
-                                    message =
-                                        error.error;
-                                }
-                                else if
-                                (
-                                    error.error?.message
-                                )
-                                {
-                                    message =
-                                        error.error.message;
-                                }
-                                else if
-                                (
-                                    error.error?.title
-                                )
-                                {
-                                    message =
-                                        error.error.title;
-                                }
+    private deleteZone
+    (
+        item:
+            ZoneListRow
+    ):
+        void
+    {
+        this.progress
+            .run(
+                'Deleting Zone',
+
+                `Please wait while "${item.ZoneName}" is being deleted...`,
+
+                'Zone deleted.',
+
+                this.rackManagementService.deleteZone(
+                    item.RackZoneId
+                )
+            )
+            .subscribe
+            ({
+                next:
+                (): void =>
+                {
+                    this.say(
+                        'ok',
+                        `Zone ${item.ZoneCode} - ${item.ZoneName} deleted.`
+                    );
 
 
-                                this.toast.info
-                                (
-                                    'Delete Blocked',
-
-                                    message
-                                );
+                    this.loadItems();
+                },
 
 
-                                return;
-                            }
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Delete Zone Error:',
+                        error
+                    );
 
 
-                            //===========================================
-                            // Delete Failed
-                            //===========================================
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-
-                                'Failed to delete rack.'
-                            );
-                        }
+                    this.say(
+                        'error',
+                        this.errorText(
+                            error,
+                            error instanceof HttpErrorResponse && error.status === 409
+                                ? 'Zone cannot be deleted while a rack uses it.'
+                                : 'Failed to delete zone.'
+                        )
                     );
                 }
             });
@@ -1502,7 +1784,7 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Restore
+    // Restore (the most recently deleted rack / zone)
     //===========================================================
 
     restore():
@@ -1510,25 +1792,34 @@ implements OnInit, OnDestroy
     {
         if
         (
-            this.isProcessing
+            this.progress.busy
         )
         {
             return;
         }
 
 
+        const isZone =
+            this.isZonesTab;
+
+
+        const noun =
+            isZone ? 'zone' : 'rack';
+
+
         this.confirmDialog.open
         (
-            'Restore Rack',
+            isZone ? 'Restore Zone' : 'Restore Rack',
 
-            'Are you sure you want to restore the most recently deleted rack?',
+            `Are you sure you want to restore the most recently deleted ${noun}?`,
 
             (): void =>
             {
-                // Next tick : same as Delete, for consistency.
                 setTimeout(
                     () =>
-                        this.restoreItem()
+                        this.restoreItem(
+                            isZone
+                        )
                 );
             },
 
@@ -1541,46 +1832,45 @@ implements OnInit, OnDestroy
     }
 
 
-
-    //===========================================================
-    // Restore Item
-    //===========================================================
-
-    private restoreItem():
+    private restoreItem
+    (
+        isZone:
+            boolean
+    ):
         void
     {
-        this.startProgress(
-            'Restoring Rack',
-
-            'Please wait while the most recently deleted rack is being restored...'
-        );
+        const noun =
+            isZone ? 'zone' : 'rack';
 
 
-        this.withMinimumDuration(
-            this.rackManagementService.restore()
-        )
+        const call$ =
+            isZone
+                ? this.rackManagementService.restoreZone()
+                : this.rackManagementService.restore();
+
+
+        this.progress
+            .run<unknown>(
+                isZone ? 'Restoring Zone' : 'Restoring Rack',
+
+                `Please wait while the most recently deleted ${noun} is being restored...`,
+
+                isZone ? 'Zone restored.' : 'Rack restored.',
+
+                call$
+            )
             .subscribe
             ({
                 next:
                 (): void =>
                 {
-                    this.completeProgress(
-
-                        'Rack restored.',
-
-                        () =>
-                        {
-                            this.toast.success
-                            (
-                                'Restore Successful',
-
-                                'The most recently deleted rack has been restored.'
-                            );
-
-
-                            this.loadItems();
-                        }
+                    this.say(
+                        'ok',
+                        `The most recently deleted ${noun} has been restored.`
                     );
+
+
+                    this.loadItems();
                 },
 
 
@@ -1591,43 +1881,34 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    console.error
-                    (
-                        'Restore Rack Error',
-
+                    console.error(
+                        'Restore Error',
                         error
                     );
 
 
-                    this.failProgress(
-                        () =>
-                        {
-                            if
-                            (
-                                error instanceof HttpErrorResponse
-                                &&
-                                error.status === 404
-                            )
-                            {
-                                this.toast.info
-                                (
-                                    'No Data to Restore',
+                    if
+                    (
+                        error instanceof HttpErrorResponse
+                        &&
+                        error.status === 404
+                    )
+                    {
+                        this.say(
+                            'info',
+                            `There is no deleted ${noun} to restore.`
+                        );
 
-                                    'There is no deleted rack record to restore.'
-                                );
+                        return;
+                    }
 
 
-                                return;
-                            }
-
-
-                            this.toast.error
-                            (
-                                'Restore Failed',
-
-                                'Failed to restore rack.'
-                            );
-                        }
+                    this.say(
+                        'error',
+                        this.errorText(
+                            error,
+                            `Failed to restore the ${noun}.`
+                        )
                     );
                 }
             });
@@ -1636,72 +1917,272 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Open History
+    // ZONE MODAL
     //===========================================================
 
-    openHistory():
+    private emptyZone():
+        RackZone
+    {
+        return {
+            RackZoneId:0,
+
+            BranchId:0,
+
+            WarehouseId:0,
+
+            ZoneCode:'',
+
+            ZoneName:'',
+
+            Priority:1,
+
+            Remarks:'',
+
+            IsActive:true
+        };
+    }
+
+
+    get zoneModalTitle():
+        string
+    {
+        switch
+        (
+            this.zoneModalMode
+        )
+        {
+            case 'edit':
+
+                return 'Update Zone';
+
+
+            case 'view':
+
+                return 'View Zone';
+
+
+            default:
+
+                return 'Add Zone';
+        }
+    }
+
+
+    get isZoneView():
+        boolean
+    {
+        return this.zoneModalMode === 'view';
+    }
+
+
+    get canSaveZone():
+        boolean
+    {
+        return Number(this.zoneDraft.WarehouseId) > 0
+            &&
+            !!this.zoneDraft.ZoneName.trim()
+            &&
+            Number(this.zoneDraft.Priority) >= 1;
+    }
+
+
+    openZoneModal
+    (
+        mode:
+            'add' | 'edit' | 'view',
+
+        item:
+            ZoneListRow | null
+    ):
         void
     {
+        if
+        (
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+
+        this.zoneModalMode =
+            mode;
+
+
+        this.zoneError =
+            '';
+
+
+        this.zoneDraft =
+            item
+                ? {
+                    RackZoneId:item.RackZoneId,
+                    BranchId:item.BranchId,
+                    WarehouseId:item.WarehouseId,
+                    ZoneCode:item.ZoneCode,
+                    ZoneName:item.ZoneName,
+                    Priority:item.Priority,
+                    Remarks:item.Remarks,
+                    IsActive:item.IsActive,
+                    RackCount:item.RackCount
+                }
+                : this.emptyZone();
+
+
+        this.zonePriorityText =
+            String(this.zoneDraft.Priority || 1);
+
+
+        this.buildZoneWarehouseItems();
+
+
+        this.zoneModalOpened =
+            true;
+
+
+        this.cdr.detectChanges();
+    }
+
+
+    closeZoneModal():
+        void
+    {
+        if
+        (
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+
+        this.zoneModalOpened =
+            false;
+
+
+        this.cdr.detectChanges();
+    }
+
+
+    private buildZoneWarehouseItems():
+        void
+    {
+        const currentId =
+            Number(this.zoneDraft.WarehouseId ?? 0);
+
+
+        this.zoneWarehouseItems =
+            this.warehouses
+                .filter(
+                    item =>
+                        Boolean(item?.IsActive)
+                        ||
+                        Number(item?.WarehouseId) === currentId
+                )
+                .map(
+                    item =>
+                    ({
+                        label:
+                            `${item.WarehouseCode} - ${item.WarehouseName}`,
+
+                        value:
+                            Number(item.WarehouseId)
+                    })
+                );
+
+
+        this.cdr.detectChanges();
+    }
+
+
+    // A dropdown may emit the value or the whole { label, value } item
+    private unwrapValue
+    (
+        value:
+            any
+    ):
+        any
+    {
+        return value !== null
+            &&
+            typeof value === 'object'
+            &&
+            'value' in value
+                ? value.value
+                : value;
+    }
+
+
+    // Add : the next code and priority of the warehouse
+    onZoneWarehouseChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        const warehouseId =
+            Number(this.unwrapValue(value) ?? 0);
+
+
+        this.zoneDraft.WarehouseId =
+            warehouseId;
+
+
+        this.zoneDraft.ZoneCode =
+            '';
+
+
+        this.zoneError =
+            '';
+
+
+        if
+        (
+            !(warehouseId > 0)
+            ||
+            this.zoneModalMode !== 'add'
+        )
+        {
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+
         this.rackManagementService
-            .getHistory()
+            .getZoneDefaults(
+                warehouseId
+            )
             .subscribe
             ({
                 next:
                 (
-                    response:
-                        any[]
+                    defaults:
+                        RackZoneDefaults
                 ):
                     void =>
                 {
-                    this.historyItems =
-                        response.map
-                        (
-                            history =>
-                            ({
-                                title:
-                                    history.activityTitle
-                                    ??
-                                    history.ActivityTitle,
+                    // Ignore a late answer for an older choice
+                    if
+                    (
+                        Number(this.zoneDraft.WarehouseId) !== warehouseId
+                    )
+                    {
+                        return;
+                    }
 
 
-                                description:
-                                    history.activityDescription
-                                    ??
-                                    history.ActivityDescription,
+                    this.zoneDraft.ZoneCode =
+                        defaults.Code;
 
 
-                                user:
-                                    history.performedByName
-                                    ??
-                                    history.PerformedByName
-                                    ??
-                                    'System',
+                    this.zoneDraft.Priority =
+                        defaults.NextPriority;
 
 
-                                dateTime:
-                                    new Date
-                                    (
-                                        history.performedDate
-                                        ??
-                                        history.PerformedDate
-                                    )
-                                    .toLocaleString(),
-
-
-                                badge:
-                                    history.activityType
-                                    ??
-                                    history.ActivityType
-                            })
-                        );
-
-
-                    this.historyTitle =
-                        'Rack Management History';
-
-
-                    this.historyOpened =
-                        true;
+                    this.zonePriorityText =
+                        String(defaults.NextPriority);
 
 
                     this.cdr.detectChanges();
@@ -1715,19 +2196,209 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
-                    console.error
-                    (
-                        'History Load Failed:',
+                    this.zoneError =
+                        this.errorText(
+                            error,
+                            'The next zone code could not be loaded.'
+                        );
+
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+
+    onZoneNameChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        this.zoneDraft.ZoneName =
+            String(value ?? '');
+
+
+        this.zoneError =
+            '';
+    }
+
+
+    onZonePriorityChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        const digits =
+            String(value ?? '')
+                .replace(/[^0-9]/g, '')
+                .replace(/^0+(?=\d)/, '')
+                .slice(0, 3);
+
+
+        this.zonePriorityText =
+            digits;
+
+
+        this.zoneDraft.Priority =
+            digits
+                ? Number(digits)
+                : 0;
+
+
+        this.cdr.detectChanges();
+    }
+
+
+    onZoneStatusChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.zoneDraft.IsActive =
+            Boolean(this.unwrapValue(value));
+    }
+
+
+    onZoneRemarksChange
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.zoneDraft.Remarks =
+            String(value ?? '');
+    }
+
+
+    saveZone():
+        void
+    {
+        if
+        (
+            this.isZoneView
+            ||
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            !this.canSaveZone
+        )
+        {
+            this.zoneError =
+                !(Number(this.zoneDraft.WarehouseId) > 0)
+                    ? 'Select the warehouse.'
+                    : !this.zoneDraft.ZoneName.trim()
+                        ? 'Zone Name is required.'
+                        : 'Priority must be 1 or more (1 = nearest the counter).';
+
+
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+
+        const body:
+            CreateRackZone =
+        {
+            WarehouseId:
+                Number(this.zoneDraft.WarehouseId),
+
+            ZoneName:
+                this.zoneDraft.ZoneName.trim(),
+
+            Priority:
+                Number(this.zoneDraft.Priority),
+
+            Remarks:
+                this.zoneDraft.Remarks?.trim() ?? '',
+
+            IsActive:
+                this.zoneDraft.IsActive
+        };
+
+
+        const isAdd =
+            this.zoneModalMode === 'add';
+
+
+        const call$ =
+            isAdd
+                ? this.rackManagementService.createZone(
+                    body
+                )
+                : this.rackManagementService.updateZone(
+                    {
+                        RackZoneId:this.zoneDraft.RackZoneId,
+                        ...body
+                    } as UpdateRackZone
+                );
+
+
+        this.progress
+            .run<unknown>(
+                isAdd ? 'Saving Zone' : 'Updating Zone',
+
+                'Please wait while the zone is being saved...',
+
+                isAdd ? 'Zone saved.' : 'Zone updated.',
+
+                call$
+            )
+            .subscribe
+            ({
+                next:
+                (): void =>
+                {
+                    this.zoneModalOpened =
+                        false;
+
+
+                    this.say(
+                        'ok',
+                        isAdd
+                            ? `Zone ${body.ZoneName} added.`
+                            : `Zone ${this.zoneDraft.ZoneCode} - ${body.ZoneName} updated.`
+                    );
+
+
+                    this.loadItems();
+                },
+
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Save Zone Error',
                         error
                     );
 
 
-                    this.toast.error
-                    (
-                        'History',
+                    this.zoneError =
+                        this.errorText(
+                            error,
+                            'The zone could not be saved.'
+                        );
 
-                        'Failed to load rack history.'
-                    );
+
+                    this.cdr.detectChanges();
                 }
             });
     }
@@ -1735,8 +2406,109 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Close History
+    // History
     //===========================================================
+
+    openHistory():
+        void
+    {
+        const isZone =
+            this.isZonesTab;
+
+
+        const call$ =
+            isZone
+                ? this.rackManagementService.getZoneHistory()
+                : this.rackManagementService.getHistory();
+
+
+        call$.subscribe
+        ({
+            next:
+            (
+                response:
+                    any[]
+            ):
+                void =>
+            {
+                this.historyItems =
+                    (response ?? []).map
+                    (
+                        history =>
+                        ({
+                            title:
+                                history.activityTitle
+                                ??
+                                history.ActivityTitle,
+
+
+                            description:
+                                history.activityDescription
+                                ??
+                                history.ActivityDescription,
+
+
+                            user:
+                                history.performedByName
+                                ??
+                                history.PerformedByName
+                                ??
+                                'System',
+
+
+                            dateTime:
+                                new Date
+                                (
+                                    history.performedDate
+                                    ??
+                                    history.PerformedDate
+                                )
+                                .toLocaleString(),
+
+
+                            badge:
+                                history.activityType
+                                ??
+                                history.ActivityType
+                        })
+                    );
+
+
+                this.historyTitle =
+                    isZone
+                        ? 'Rack Zone History'
+                        : 'Rack Management History';
+
+
+                this.historyOpened =
+                    true;
+
+
+                this.cdr.detectChanges();
+            },
+
+
+            error:
+            (
+                error:
+                    unknown
+            ):
+                void =>
+            {
+                console.error(
+                    'History Load Failed:',
+                    error
+                );
+
+
+                this.say(
+                    'error',
+                    'Failed to load the history.'
+                );
+            }
+        });
+    }
+
 
     closeHistory():
         void
@@ -1745,4 +2517,91 @@ implements OnInit, OnDestroy
             false;
     }
 
+
+
+    //===========================================================
+    // Server Message ({ message } / a text / the fallback)
+    //===========================================================
+
+    private errorText
+    (
+        error:
+            unknown,
+
+        fallback:
+            string
+    ):
+        string
+    {
+        const err =
+            error as any;
+
+
+        const body =
+            err?.error;
+
+
+        if
+        (
+            err?.status === 403
+        )
+        {
+            return body?.message || body?.Message || 'You do not have permission for this action.';
+        }
+
+
+        if
+        (
+            typeof body === 'string'
+            &&
+            body.trim()
+        )
+        {
+            return body.trim();
+        }
+
+
+        return body?.message || body?.Message || body?.title || fallback;
+    }
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.racks ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.racks ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

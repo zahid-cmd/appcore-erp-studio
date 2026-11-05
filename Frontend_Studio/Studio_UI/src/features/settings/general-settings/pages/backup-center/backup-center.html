@@ -1,0 +1,205 @@
+<div class="app-list-page bc-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Backup Center"
+        subtitle="Your data is backed up every night"
+        icon="fa-solid fa-shield-halved">
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="refresh()"
+                command2Text="Backup"
+                command2Icon="fas fa-floppy-disk"
+                [command2Visible]="!!data?.CanTakeBackup"
+                (command2Click)="openBackup()"
+                [command3Visible]="false">
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    @if (denied)
+    {
+        <div class="bc-denied">
+            <i class="fa-solid fa-lock"></i>
+            <span>{{ denied }}</span>
+        </div>
+    }
+    @else
+    {
+        <!-- =================================================
+             STATUS
+        ================================================== -->
+
+        @if (data)
+        {
+            <section class="bc-status" [class]="'bc-status bc-' + state">
+
+                <div class="bc-status-icon">
+                    <i class="fa-solid"
+                       [class.fa-shield-halved]="state === 'ok'"
+                       [class.fa-triangle-exclamation]="state === 'failed'"
+                       [class.fa-hourglass-half]="state === 'pending'"
+                       [class.fa-power-off]="state === 'off'"></i>
+                </div>
+
+                <div class="bc-status-main">
+                    <b>{{ stateTitle }}</b>
+                    <span>{{ data.Nightly.Message }}</span>
+                    @if (stateHint)
+                    {
+                        <em>{{ stateHint }}</em>
+                    }
+                </div>
+
+                <div class="bc-facts">
+                    <div>
+                        <span>Last backup</span>
+                        <b>{{ formatDateTime(data.Nightly.LastSuccessDate) }}</b>
+                    </div>
+                    <div>
+                        <span>Next run</span>
+                        <b>{{ data.Nightly.Enabled ? formatDateTime(data.Nightly.NextRun) : 'Off' }}</b>
+                    </div>
+                    <div>
+                        <span>Saved on</span>
+                        <b>{{ data.Nightly.SavedOnBothPcs ? '2 PCs' : 'This PC' }}</b>
+                    </div>
+                    <div>
+                        <span>Kept</span>
+                        <b>{{ data.Nightly.KeepNightly }} days · {{ data.Nightly.KeepWeekly }} weeks · {{ data.Nightly.KeepMonthly }} months</b>
+                    </div>
+                </div>
+
+            </section>
+        }
+
+        <!-- =================================================
+             LAST BACKUPS
+        ================================================== -->
+
+        <app-page-canvas [config]="canvasConfig">
+
+            <div canvasBody class="bc-canvas-body">
+
+                @if (loading)
+                {
+                    <div class="bc-center">
+                        <app-orbit-loader title="Loading" message="Reading the backups..." size="medium" [overlay]="false"></app-orbit-loader>
+                    </div>
+                }
+                @else if (backups.length === 0)
+                {
+                    <div class="bc-center bc-empty">
+                        <i class="fa-regular fa-folder-open"></i>
+                        <span>No backup yet.</span>
+                    </div>
+                }
+                @else
+                {
+                    <div class="bc-table-wrap appcore-scrollbar">
+                        <table class="bc-table">
+                            <thead>
+                                <tr>
+                                    <th class="bc-c bc-sl">#</th>
+                                    <th>Taken</th>
+                                    <th>Kind</th>
+                                    <th>Note</th>
+                                    <th class="bc-r">Size</th>
+                                    <th>By</th>
+                                    <th class="bc-c">Copies</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (item of pagedBackups; track item.FileName; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="bc-c bc-sl">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+                                        <td class="bc-main">{{ formatDateTime(item.TakenDate) }}</td>
+                                        <td>
+                                            <span class="bc-kind" [class.bc-kind-auto]="item.Kind === 'Nightly' || item.Kind === 'Weekly' || item.Kind === 'Monthly'">
+                                                {{ item.Kind }}
+                                            </span>
+                                        </td>
+                                        <td class="bc-sub">{{ item.Note || '-' }}</td>
+                                        <td class="bc-r bc-mono">{{ formatBytes(item.SizeBytes) }}</td>
+                                        <td>{{ item.TakenBy || '-' }}</td>
+                                        <td class="bc-c">
+                                            @if (item.OnThisPc && item.OnOtherPc)
+                                            {
+                                                <span class="bc-ok"><i class="fa-solid fa-circle-check"></i> 2 PCs</span>
+                                            }
+                                            @else
+                                            {
+                                                <span class="bc-warn"><i class="fa-solid fa-circle-exclamation"></i> 1 PC</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="backups.length"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+    }
+
+    <!-- =====================================================
+         BACKUP NOW
+    ====================================================== -->
+
+    @if (backupOpen)
+    {
+        <div class="bc-backdrop">
+            <div class="bc-modal" role="dialog" aria-modal="true">
+
+                <div class="bc-modal-head">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>Backup</span>
+                </div>
+
+                <div class="bc-modal-body">
+                    <p>A full backup of {{ data?.Database }} is saved now{{ data?.Nightly?.SavedOnBothPcs ? ' on both PCs' : '' }}. It takes about a minute.</p>
+                    <app-textbox
+                        textCase="none"
+                        placeholder="Note (optional), e.g. Before month end"
+                        [value]="backupNote"
+                        (valueChange)="backupNote = $any($event)">
+                    </app-textbox>
+                </div>
+
+                <div class="bc-modal-foot">
+                    <button type="button" class="bc-btn" (click)="closeBackup()">Close</button>
+                    <button type="button" class="bc-btn bc-btn-primary" (click)="runBackup()">
+                        <i class="fa-solid fa-floppy-disk"></i> Backup
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <app-progress-dialog></app-progress-dialog>
+
+    <app-toast></app-toast>
+
+</div>

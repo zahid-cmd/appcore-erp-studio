@@ -1,0 +1,42 @@
+<!-- ===========================================================
+     POLICY PAGE
+============================================================ -->
+
+<section class="banner">
+    <div class="wrap">
+        <nav class="crumbs" aria-label="Breadcrumb">
+            <a routerLink="/">Home</a>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{{ title() }}</span>
+        </nav>
+        <h1 class="title">{{ title() }}</h1>
+        @if (policy()?.updatedOn)
+        {
+            <span class="updated">Last updated {{ policy()?.updatedOn }}</span>
+        }
+    </div>
+</section>
+
+<section class="wrap body">
+    @if (policy(); as p)
+    {
+        @for (s of p.sections; track $index)
+        {
+            <div class="part">
+                @if (s.heading)
+                {
+                    <h2 class="part-title">{{ s.heading }}</h2>
+                }
+                @if (s.text)
+                {
+                    <p class="part-text">{{ s.text }}</p>
+                }
+            </div>
+        }
+    }
+    @else
+    {
+        <p class="lead">This page is not available yet.</p>
+    }
+    <a class="btn" routerLink="/">← Back to home</a>
+</section>

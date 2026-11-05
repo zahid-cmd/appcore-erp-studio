@@ -88,4 +88,22 @@ public interface IPurchaseRepository
 
     Task<bool> ExistsAsync(
         long id);
+
+
+    //===========================================================
+    // List page (server paging) and Public Id
+    //===========================================================
+
+    // One page of the list plus the tab counts
+    Task<AppCore.Application.Common.Paging.PagedResult<PurchaseDto>> GetPagedAsync(
+        string pageType,
+        PurchasePageRequest request);
+
+    // The suppliers on this page's live documents (filter options)
+    Task<List<PurchaseListSupplierDto>> GetListSuppliersAsync(
+        string pageType);
+
+    // Public Id -> internal id (live rows; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

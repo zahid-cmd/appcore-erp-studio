@@ -118,6 +118,9 @@ export class ScheduledServicesService
             this.pick(item, 'ServiceSubCategoryId');
 
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             ScheduledServiceId:
                 num('ScheduledServiceId'),
 
@@ -245,7 +248,7 @@ export class ScheduledServicesService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<ScheduledService>
     {
@@ -270,13 +273,16 @@ export class ScheduledServicesService
 
     configure
     (
+        publicId:
+            string,
+
         model:
             ConfigureScheduledService
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }

@@ -346,7 +346,7 @@ export class LoginPage1
         void
     {
         this.subOrdinateComponentsService
-            .getById(
+            .getByInternalId(
                 this.backgroundImageComponentId
             )
             .subscribe(

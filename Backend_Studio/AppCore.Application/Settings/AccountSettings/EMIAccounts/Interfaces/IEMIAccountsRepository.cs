@@ -17,6 +17,13 @@ public interface IEmiAccountsRepository
 
     Task<List<EmiAccountsDto>> GetAllAsync();
 
+
+    // Public Id -> internal id (live rows only; null = not found)
+
+    Task<long?> GetIdByPublicIdAsync(
+
+        Guid publicId);
+
     Task<EmiAccountsDto?> GetByIdAsync(
         long id);
 

@@ -55,4 +55,9 @@ public interface IMasterActivityRepository
 
     Task<bool> RestoreAsync(
         long userId);
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

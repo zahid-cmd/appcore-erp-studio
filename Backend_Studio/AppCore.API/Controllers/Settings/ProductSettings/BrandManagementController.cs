@@ -3,6 +3,7 @@
 //===============================================================
 
 using Microsoft.AspNetCore.Mvc;
+using AppCore.Application.Common.Paging;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
@@ -96,6 +97,20 @@ public class BrandManagementController : ControllerBase
 
 
     //===========================================================
+    // Get Paged (the list page)
+    //===========================================================
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<BrandManagementDto>>> GetPaged(
+        [FromQuery] BrandManagementPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new BrandManagementPageRequest()));
+    }
+
+
+    //===========================================================
     // Get Next Code
     //===========================================================
 
@@ -125,11 +140,21 @@ public class BrandManagementController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<BrandManagementDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         BrandManagementDto? brand =
             await _repository.GetByIdAsync(id);
 
@@ -146,19 +171,24 @@ public class BrandManagementController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateBrandManagementDto dto)
     {
            long userId = this.CurrentUserId();
 
         try
         {
-            return Ok(
+            long newId =
                 await _repository.CreateAsync(
                     dto,
-                    userId));
+                    userId);
+
+            BrandManagementDto? created =
+                await _repository.GetByIdAsync(newId);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (InvalidOperationException ex)
         {
@@ -177,11 +207,27 @@ public class BrandManagementController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateBrandManagementDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.BrandManagementId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try
@@ -213,14 +259,25 @@ public class BrandManagementController : ControllerBase
     // Upload Brand Image
     //===========================================================
 
-    [HttpPost("{id:long}/image")]
+    [HttpPost("{publicId:guid}/image")]
 
     [RequestSizeLimit(5 * 1024 * 1024)]
 
     public async Task<IActionResult> UploadImage(
-        long id,
+        Guid publicId,
         IFormFile file)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         //=======================================================
@@ -334,11 +391,22 @@ public class BrandManagementController : ControllerBase
     // Delete Brand Image
     //===========================================================
 
-    [HttpDelete("{id:long}/image")]
+    [HttpDelete("{publicId:guid}/image")]
 
     public async Task<IActionResult> DeleteImage(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try
@@ -371,11 +439,22 @@ public class BrandManagementController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

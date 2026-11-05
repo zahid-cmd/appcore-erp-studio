@@ -33,6 +33,10 @@ public class MembershipServices
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
+
     //===========================================================
     // Basic Information
     //===========================================================

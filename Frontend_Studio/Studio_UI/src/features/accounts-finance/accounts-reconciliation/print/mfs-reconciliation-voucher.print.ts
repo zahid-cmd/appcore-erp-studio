@@ -80,7 +80,7 @@ export const MFS_RECONCILIATION_VOUCHER_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<MfsVoucherPrintData>
     {

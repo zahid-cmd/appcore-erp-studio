@@ -16,6 +16,8 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 
 using PostingLedgerCodes =
     AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
@@ -200,6 +202,181 @@ public class FundTransferRepository : IFundTransferRepository
         return rows
             .Select(ToDto)
             .ToList();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Type filter and search on the header (and its modes), the
+    // status counts for the summary line, then the tab, the total
+    // and one page (newest first unless a column is sorted).
+    //===========================================================
+
+    private static SortMap<FundTransfer> ListSorts()
+    {
+        return new SortMap<FundTransfer>("VoucherDateText", defaultDescending: true)
+            .Add("VoucherNo", x => x.VoucherNo)
+            .Add("VoucherDateText", x => x.VoucherDate)
+            .Add("BranchName", x => x.BranchName)
+            .Add("PartyText", x => x.PartyName)
+            .Add("TotalAmountText", x => x.TotalAmount)
+            .Add("TransferType", x => x.TransferType)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.VoucherNo, followDirection: true);
+    }
+
+    // "25-10-2026" or "2026-10-25" -> that date (else null)
+    private static DateOnly? SearchDate
+    (
+        string text
+    )
+    {
+        string[] formats =
+            { "dd-MM-yyyy", "d-M-yyyy", "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd" };
+
+        return DateOnly.TryParseExact(
+                text,
+                formats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out DateOnly date)
+            ? date
+            : null;
+    }
+
+    public async Task<PagedResult<FundTransferDto>>
+        GetPagedAsync
+        (
+            VoucherPageRequest request
+        )
+    {
+        IQueryable<FundTransfer> query =
+            _context
+                .Set<FundTransfer>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+        //-------------------------------------------------------
+        // Type filter
+        //-------------------------------------------------------
+
+        string fromType =
+            (request.LedgerType ?? string.Empty).Trim();
+
+        if
+        (
+            fromType.Length > 0
+        )
+        {
+            // "Bank → Cash" : the From side comes first
+            query =
+                query.Where(x => x.TransferType.StartsWith(fromType));
+        }
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains"; a typed date finds
+        // that voucher date)
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            DateOnly? date =
+                SearchDate(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        (date != null && x.VoucherDate == date) ||
+                        EF.Functions.ILike(x.VoucherNo, like) ||
+                        EF.Functions.ILike(x.BranchName, like) ||
+                        EF.Functions.ILike(x.TransferType, like) ||
+                        EF.Functions.ILike(x.PartyName, like) ||
+                        EF.Functions.ILike(x.Narration, like) ||
+                        EF.Functions.ILike(x.Status, like)
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts : Total / Draft / Approved / Posted /
+        // Cancelled (type filter and search applied; not the tab)
+        //-------------------------------------------------------
+
+        var byStatus =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = byStatus.Sum(x => x.Count)
+            };
+
+        foreach (string status in new[] { "Draft", "Approved", "Posted", "Cancelled" })
+        {
+            summaryCounts[status] =
+                byStatus.Where(x => x.Status == status).Sum(x => x.Count);
+        }
+
+        //-------------------------------------------------------
+        // Status (the tab)
+        //-------------------------------------------------------
+
+        string tab =
+            (request.Status ?? string.Empty).Trim();
+
+        if
+        (
+            tab.Length > 0 &&
+            !string.Equals(tab, "all", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            query =
+                query.Where(x => x.Status == tab);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<FundTransfer> rows =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        List<FundTransferDto> items =
+            rows
+                .Select(ToDto)
+                .ToList();
+
+        return new PagedResult<FundTransferDto>
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
     }
 
 
@@ -390,6 +567,7 @@ public class FundTransferRepository : IFundTransferRepository
         return new FundTransferDto
         {
             FundTransferId = x.FundTransferId,
+            PublicId = x.PublicId,
             VoucherNo = x.VoucherNo,
             VoucherDate = x.VoucherDate.ToString(DateFormat, CultureInfo.InvariantCulture),
             BranchId = x.BranchId,
@@ -1043,6 +1221,7 @@ public class FundTransferRepository : IFundTransferRepository
         return new FundTransferSavedDto
         {
             FundTransferId = entity.FundTransferId,
+            PublicId = entity.PublicId,
             VoucherNo = entity.VoucherNo
         };
     }
@@ -1708,4 +1887,31 @@ public class FundTransferRepository : IFundTransferRepository
                     !x.IsDeleted
             );
     }
-}
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<FundTransfer>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.FundTransferId)
+            .FirstOrDefaultAsync();
+    }
+}

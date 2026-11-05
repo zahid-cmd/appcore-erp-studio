@@ -1320,7 +1320,7 @@ implements OnInit
             [
                 'view',
 
-                item.roleAssignmentId
+                item.publicId
             ],
 
             {
@@ -1348,7 +1348,7 @@ implements OnInit
             [
                 'edit',
 
-                item.roleAssignmentId
+                item.publicId
             ],
 
             {
@@ -1382,7 +1382,7 @@ implements OnInit
                 this.roleassignmentservice
                     .delete
                     (
-                        item.roleAssignmentId
+                        item.publicId ?? ''
                     )
                     .subscribe
                     ({
@@ -1627,4 +1627,44 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.roleassignments ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.roleassignments ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

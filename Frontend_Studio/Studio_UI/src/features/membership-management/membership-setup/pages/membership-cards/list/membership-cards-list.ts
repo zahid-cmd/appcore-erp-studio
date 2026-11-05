@@ -1089,7 +1089,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.MembershipCardId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1109,7 +1109,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.MembershipCardId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1169,7 +1169,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.membershipCardsService.delete(
-                item.MembershipCardId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -1464,5 +1464,49 @@ implements OnInit, OnDestroy
             false;
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.membershipCards ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.membershipCards ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        const value =
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status;
+
+        return typeof value === 'string'
+            ? value.toLowerCase() === 'active'
+            : !!value;
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 }

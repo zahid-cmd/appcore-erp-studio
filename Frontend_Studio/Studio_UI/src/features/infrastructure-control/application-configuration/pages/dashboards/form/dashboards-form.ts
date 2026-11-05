@@ -286,8 +286,8 @@ implements OnInit
 
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
 
 
@@ -707,9 +707,7 @@ implements OnInit
         void
     {
         const id =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
+            (this.route.snapshot.paramMap.get('id') ?? '').trim();
 
 
         const url =
@@ -761,7 +759,7 @@ implements OnInit
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -1333,7 +1331,9 @@ implements OnInit
 
         this.dashboardsservice
             .update(
-                model
+                this.entityId,
+
+model
             )
             .subscribe(
             {

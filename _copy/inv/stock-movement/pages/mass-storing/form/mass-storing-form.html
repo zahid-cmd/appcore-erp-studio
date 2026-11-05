@@ -1,0 +1,1391 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+         Center : Product Type, Storing No, Warehouse, status
+         Right  : Add  : Save · Post · Clear
+                  Edit : Update · Post · Delete
+                  View : Print · Post (draft) / Cancel (posted)
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-boxes-stacked"
+        [title]="pageTitle"
+        subtitle="Stock Movement : rack, shelf and bin placement">
+
+        <div
+            pageHeaderCenter
+            class="pof-center">
+
+          <div class="pof-ribbon">
+
+            <div class="pof-chip">
+                <span class="pof-chip-icon pof-chip-icon-branch">
+                    <i [class]="info.icon"></i>
+                </span>
+                <span class="pof-chip-text">
+                    <span class="pof-chip-label">Product Type</span>
+                    <strong>{{ info.title }}</strong>
+                </span>
+            </div>
+
+            <span class="pof-ribbon-sep"></span>
+
+            <div class="pof-chip">
+                <span class="pof-chip-icon pof-chip-icon-year">
+                    <i class="fas fa-hashtag"></i>
+                </span>
+                <span class="pof-chip-text">
+                    <span class="pof-chip-label">Storing No</span>
+                    <strong>{{ numberText || '—' }}</strong>
+                </span>
+            </div>
+
+            @if (warehouseText)
+            {
+                <span class="pof-ribbon-sep"></span>
+
+                <div class="pof-chip">
+                    <span class="pof-chip-icon pt-chip-icon-route">
+                        <i class="fas fa-warehouse"></i>
+                    </span>
+                    <span class="pof-chip-text">
+                        <span class="pof-chip-label">Warehouse</span>
+                        <strong [title]="warehouseText">{{ warehouseText }}</strong>
+                    </span>
+                </div>
+            }
+
+            <span class="pof-ribbon-sep"></span>
+
+            <div class="pof-state">
+                <span [class]="statusClass">{{ statusText }}</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="isView ? 'Print' : (mode === 'edit' ? 'Update' : 'Save')"
+            [command1Icon]="isView ? 'fas fa-print' : (mode === 'edit' ? 'fas fa-pen-to-square' : 'fas fa-floppy-disk')"
+            [command1Permission]="isView ? '' : (mode === 'edit' ? 'update' : 'add')"
+            [command1Activity]="isView ? 'Print' : ''"
+            [command1Title]="isView ? 'Print the mass storing' : saveTitle"
+            [command1Visible]="!isView || !!doc"
+            (command1Click)="isView ? print() : save()"
+            [command2Text]="command2Text"
+            [command2Icon]="command2Icon"
+            [command2Activity]="command2Activity"
+            [command2Title]="command2Title"
+            [command2Visible]="command2Kind !== ''"
+            (command2Click)="onCommand2()"
+            [command3Text]="command3Kind === 'delete' ? 'Delete' : 'Clear'"
+            [command3Icon]="command3Kind === 'delete' ? 'fas fa-trash-can' : 'fas fa-broom'"
+            [command3Activity]="command3Kind === 'delete' ? 'Delete' : ''"
+            [command3Title]="command3Kind === 'delete' ? 'Delete the draft' : 'Undo every change on the grid'"
+            [command3Visible]="command3Kind !== ''"
+            (command3Click)="onCommand3()"
+            rightCommandIcon="fas fa-arrow-left"
+            rightCommandTitle="Back to the list"
+            (rightCommandClick)="back()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         SECTION 02 : BODY
+         Left  : Storing Information, then Filter (view : Cancel,
+                 Details) reaching the bottom
+         Right : Placements : Narration, the grid, the footer
+    ====================================================== -->
+
+    <div
+        class="pof-body appcore-scrollbar"
+        [class.pa-body-products]="!overviewOpen"
+        [class.ms-body-canvas]="overviewOpen">
+
+        @if (loading && !defaults && !doc)
+        {
+            <div class="pof-loading">
+                <app-orbit-loader
+                    title="Loading Mass Storing"
+                    message="Please wait while the mass storing is being loaded."
+                    size="medium"
+                    [showMessage]="true"
+                    [overlay]="false">
+                </app-orbit-loader>
+            </div>
+        }
+        @else
+        {
+            @if (error)
+            {
+                <div class="pof-banner pof-banner-warn">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>{{ error }}</span>
+                    <button
+                        type="button"
+                        class="pa-banner-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="error = ''">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+            }
+
+            <!-- Delete : inline confirmation (edit of a draft) -->
+            @if (deleteOpen && doc)
+            {
+                <div class="pof-banner pof-banner-cancelled ms-confirm">
+                    <i class="fas fa-trash-can"></i>
+                    <span><strong>Delete draft {{ doc.StoringNo }}?</strong> No location changed by it; it can be restored from the list.</span>
+                    <span class="ms-confirm-actions">
+                        <button
+                            type="button"
+                            class="pof-btn pof-btn-light ms-btn"
+                            (click)="closeDelete()">
+                            <i class="fas fa-arrow-left"></i>
+                            Keep Draft
+                        </button>
+                        <button
+                            type="button"
+                            class="pof-btn pof-btn-danger ms-btn"
+                            [disabled]="saving"
+                            (click)="confirmDelete()">
+                            <i class="fas fa-trash-can"></i>
+                            Delete Draft
+                        </button>
+                    </span>
+                </div>
+            }
+
+            @if (isView && doc)
+            {
+                @if (doc.IsDeleted)
+                {
+                    <div class="pof-banner pof-banner-cancelled">
+                        <i class="fas fa-trash-can"></i>
+                        <span><strong>Deleted draft</strong> : restore it from the list to edit or post it.</span>
+                    </div>
+                }
+                @else if (doc.Status === 'Cancelled')
+                {
+                    <div class="pof-banner pof-banner-cancelled">
+                        <i class="fas fa-ban"></i>
+                        <span>
+                            <strong>Cancelled</strong>
+                            on {{ date(doc.CancelledDate) }}@if (doc.CancelledByName) { by {{ doc.CancelledByName }} } : {{ doc.CancelReason }}
+                        </span>
+                    </div>
+                }
+                @else if (doc.Status === 'Posted')
+                {
+                    <div class="pof-banner pt-banner-done">
+                        <i class="fas fa-circle-check"></i>
+                        <span><strong>Posted</strong> : {{ statusNote }}</span>
+                    </div>
+                }
+            }
+
+            @if (overviewOpen)
+            {
+                <!-- ================= RACK OVERVIEW =================
+                     Replaces the page area under the header : the
+                     toolbar (back, colour, filters, print, post), the
+                     summary strip, the racks as cards and the info
+                     panel of the bin under the pointer
+                ================================================== -->
+
+                <div class="ms-ov">
+
+                    <!-- Toolbar -->
+                    <div class="pof-card ms-ov-bar">
+
+                        <button
+                            type="button"
+                            class="pof-btn pof-btn-light ms-ov-tool"
+                            [title]="isView ? 'Back to the document' : 'Back to the placements grid'"
+                            (click)="closeOverview()">
+                            <i class="fas fa-arrow-left"></i>
+                            {{ isView ? 'Back' : 'Back to edit' }}
+                        </button>
+
+                        <span class="ms-ov-sep"></span>
+
+                        <span class="ms-ov-title">
+                            <i class="fas fa-table-cells-large"></i>
+                            Rack Overview
+                        </span>
+
+                        <app-control-segment
+                            class="ms-ov-seg"
+                            name="ms-ov-color"
+                            [items]="ovColorSegments"
+                            [value]="ovColor"
+                            (valueChange)="onOvColor($event)">
+                        </app-control-segment>
+
+                        <app-search-dropdown
+                            class="ms-ov-zone"
+                            placeholder="All zones"
+                            [items]="ovZoneItems"
+                            [value]="ovZone"
+                            (valueChange)="onOvZone($event)">
+                        </app-search-dropdown>
+
+                        <app-checkbox
+                            class="ms-ov-switch"
+                            label="Changed racks only"
+                            appearance="switch"
+                            [value]="ovChangedOnly"
+                            (valueChange)="onOvChangedOnly($event)">
+                        </app-checkbox>
+
+                        <app-textbox
+                            class="ms-ov-search"
+                            placeholder="Find a product"
+                            textCase="none"
+                            prefixIcon="fas fa-magnifying-glass"
+                            [value]="ovSearch"
+                            (valueChange)="onOvSearch($event)">
+                        </app-textbox>
+
+                        @if (ovSearch.trim())
+                        {
+                            <span class="ms-ov-hits" [class.ms-ov-hits-none]="!ovHits">{{ ovHits }} found</span>
+                        }
+
+                        <span class="ms-ov-grow"></span>
+
+                        <button
+                            type="button"
+                            class="pof-btn pof-btn-light ms-ov-tool"
+                            title="Print the shelf map (landscape)"
+                            [disabled]="!ovRacks.length"
+                            (click)="ovPrint()">
+                            <i class="fas fa-print"></i>
+                            Print
+                        </button>
+
+                        @if (ovCanPost)
+                        {
+                            <button
+                                type="button"
+                                class="pof-add pa-pick-add ms-ov-post"
+                                title="Post : apply every change in the warehouse"
+                                [disabled]="saving"
+                                (click)="ovPost()">
+                                <i class="fas fa-check-double"></i>
+                                Post
+                            </button>
+                        }
+
+                    </div>
+
+                    <!-- Summary strip -->
+                    <div class="pof-card ms-ov-strip">
+                        @for (stat of ovStats; track stat.label)
+                        {
+                            <span class="ms-ov-stat">
+                                <span class="ms-ov-cap">{{ stat.label }}</span>
+                                <strong [class]="'ms-ov-val ms-tone-' + (stat.tone || 'none')">{{ stat.value }}</strong>
+                            </span>
+                        }
+                        <span class="ms-ov-legend">
+                            @for (key of ovLegend; track key.key)
+                            {
+                                <span class="ms-ov-key" [title]="key.count + ' bin(s)'">
+                                    <span class="ms-ov-dot" [style.background]="key.color || '#ffffff'" [style.border-color]="key.color || '#94a3b8'"></span>
+                                    {{ key.label }}
+                                    <b>{{ key.count }}</b>
+                                </span>
+                            }
+                        </span>
+                    </div>
+
+                    @if (ovError)
+                    {
+                        <div class="pa-inline-err">
+                            <i class="fas fa-circle-exclamation"></i>
+                            <span>{{ ovError }}</span>
+                        </div>
+                    }
+
+                    <div class="ms-ov-main">
+
+                        <!-- Racks -->
+                        <div class="ms-ov-racks appcore-scrollbar">
+
+                            @if (ovBusy)
+                            {
+                                <div class="pof-loading">
+                                    <app-orbit-loader
+                                        title="Loading the racks"
+                                        message="Please wait while the warehouse's racks are being loaded."
+                                        size="medium"
+                                        [showMessage]="true"
+                                        [overlay]="false">
+                                    </app-orbit-loader>
+                                </div>
+                            }
+                            @else
+                            {
+                                @for (rack of ovRacks; track rack.Id)
+                                {
+                                    <div class="ms-ov-card" [class.ms-ov-card-changed]="rack.Changed" [class.ms-ov-card-off]="rack.Inactive">
+
+                                        <div class="ms-ov-head">
+                                            <span class="ms-ov-name">
+                                                {{ rack.Name }}
+                                                <em>{{ rack.Code }}</em>
+                                            </span>
+                                            <span class="ms-ov-used" [title]="rack.Used + ' of ' + rack.Total + ' bins used'">{{ rack.Used }} / {{ rack.Total }}</span>
+                                            <span class="ms-ov-meta">
+                                                @if (rack.Zone) { <span><i class="fa-regular fa-compass"></i>{{ rack.Zone }}</span> }
+                                                <span><i class="fa-regular fa-bookmark"></i>{{ rack.Assignment }}</span>
+                                                @if (rack.Prime) { <span><i class="fa-regular fa-star"></i>Prime {{ rack.Prime }}</span> }
+                                                @if (rack.Inactive) { <span class="ms-ov-off">Inactive</span> }
+                                            </span>
+                                        </div>
+
+                                        <div class="ms-ov-body">
+                                            @for (shelf of rack.Shelves; track shelf.ShelfNo)
+                                            {
+                                                <div class="ms-ov-shelf" [class.ms-ov-prime]="shelf.Prime">
+                                                    <span class="ms-ov-label">{{ shelf.Label }}</span>
+                                                    <span class="ms-ov-bins">
+                                                        @for (cell of shelf.Cells; track cell.Key)
+                                                        {
+                                                            <button
+                                                                type="button"
+                                                                [class]="'ms-ov-bin ms-st-' + cell.State"
+                                                                [class.ms-ov-other]="cell.Other"
+                                                                [class.ms-ov-hit]="cell.Hit"
+                                                                [class.ms-ov-on]="ovHover?.Key === cell.Key"
+                                                                [style.--bin]="cell.Color || null"
+                                                                [attr.aria-label]="cell.Code + (cell.Item ? ' ' + cell.Item.Code : ' free')"
+                                                                (mouseenter)="onOvHover(cell)"
+                                                                (focus)="onOvHover(cell)">
+                                                                @if (!shelf.Narrow && cell.Label)
+                                                                {
+                                                                    <span class="ms-ov-txt">{{ cell.Label }}</span>
+                                                                }
+                                                            </button>
+                                                        }
+                                                    </span>
+                                                </div>
+                                            }
+                                            @if (!rack.Shelves.length)
+                                            {
+                                                <span class="ms-muted">No shelf.</span>
+                                            }
+                                        </div>
+
+                                    </div>
+                                }
+                                @empty
+                                {
+                                    <div class="pof-empty ms-ov-empty">
+                                        {{ ovChangedOnly ? 'No rack changes in this document.' : 'No rack in this warehouse' + (ovZone ? ' zone.' : '.') }}
+                                    </div>
+                                }
+                            }
+
+                        </div>
+
+                        <!-- Info panel : the bin under the pointer / focus -->
+                        <aside class="pof-card ms-ov-info">
+
+                            <div class="pof-card-header">
+                                <i class="fa-regular fa-hand-pointer"></i>
+                                <span>Bin</span>
+                                @if (ovHover)
+                                {
+                                    <span [class]="'ms-ov-state ms-tx-' + ovHover.State">{{ ovStateText(ovHover.State) }}</span>
+                                }
+                            </div>
+
+                            @if (ovHover)
+                            {
+                                <div class="ms-ov-facts">
+                                    <div class="ms-ov-fact ms-ov-fact-big">
+                                        <span>Bin</span>
+                                        <strong>{{ ovHover.Code }}</strong>
+                                    </div>
+                                    @if (ovHover.Item)
+                                    {
+                                        <div class="ms-ov-fact">
+                                            <span>{{ ovHover.Other ? 'Item (other type)' : 'Product' }}</span>
+                                            <strong>{{ ovHover.Item.Code }}</strong>
+                                            <em>{{ ovHover.Item.Name }}</em>
+                                        </div>
+                                        <div class="ms-ov-fact">
+                                            <span>Part No</span>
+                                            <strong>{{ ovHover.Item.PartNumber || '—' }}</strong>
+                                        </div>
+                                        <div class="ms-ov-fact">
+                                            <span>Sub Category</span>
+                                            <strong>
+                                                <span class="ms-ov-dot" [style.background]="ovHover.Other ? '#94a3b8' : null" [style.border-color]="null"></span>
+                                                {{ ovHover.Item.SubName || '—' }}
+                                            </strong>
+                                        </div>
+                                        <div class="ms-ov-fact">
+                                            <span>Movement</span>
+                                            <strong [style.color]="movementColor(ovHover.Item.Movement)">{{ movementLabel(ovHover.Item.Movement) }}</strong>
+                                        </div>
+                                        <div class="ms-ov-fact">
+                                            <span>Stock</span>
+                                            <strong>{{ qty(ovHover.Item.Stock) }}</strong>
+                                        </div>
+                                    }
+                                    @else
+                                    {
+                                        <div class="ms-ov-fact">
+                                            <span>Item</span>
+                                            <strong>Free bin</strong>
+                                        </div>
+                                    }
+                                    @if (ovHover.State !== 'same' && ovHover.State !== 'free')
+                                    {
+                                        <div class="ms-ov-fact">
+                                            <span>From → To</span>
+                                            <strong class="ms-move">
+                                                <span [class.ms-muted]="!ovHover.FromText">{{ ovHover.FromText || 'Unplaced' }}</span>
+                                                <i class="fas fa-arrow-right-long ms-arrow"></i>
+                                                <span [class]="ovHover.ToText === 'Unplaced' ? 'ms-to-clear' : 'ms-to-place'">{{ ovHover.ToText }}</span>
+                                            </strong>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            @else
+                            {
+                                <div class="ms-ov-hint">
+                                    <i class="fa-regular fa-hand-pointer"></i>
+                                    Point at a bin (or tab to it) to see its product, sub category, movement class, stock and move.
+                                </div>
+                            }
+
+                            <div class="ms-ov-marks">
+                                <span class="ms-ov-mk ms-st-new"><i></i>New</span>
+                                <span class="ms-ov-mk ms-st-moved"><i></i>Moved in</span>
+                                <span class="ms-ov-mk ms-st-vacated"><i></i>Vacated</span>
+                                <span class="ms-ov-mk ms-st-cleared"><i></i>Cleared</span>
+                            </div>
+
+                        </aside>
+
+                    </div>
+
+                </div>
+            }
+            @else
+            {
+                <!-- Three cards in one row on top, the Placements table under them -->
+                <div class="pa-split ms-stack">
+
+                    <!-- TOP : Information + Add Products + Allocate (view : Cancel, Details) -->
+                    <div class="pa-left pof-col-left appcore-scrollbar">
+
+                        <!-- SECTION 1 : STORING INFORMATION -->
+                        <div class="pof-card pa-info-card">
+
+                            <div class="pof-card-header">
+                                <i class="fas fa-boxes-stacked"></i>
+                                <span>Storing Information</span>
+                            </div>
+
+                            <div class="pa-fields ms-info-rows">
+
+                                <div class="ms-cell">
+                                    <span class="ms-multi-label">
+                                        Product Type <b class="pof-req">*</b>
+                                        @if (mode === 'add' && hasChanges)
+                                        {
+                                            <i class="fas fa-lock ms-lock" title="Clear the changes to switch the type or the warehouse"></i>
+                                        }
+                                    </span>
+                                    @if (isView)
+                                    {
+                                        <span class="pa-type-read">
+                                            <i [class]="info.icon"></i>
+                                            {{ info.title }}
+                                        </span>
+                                    }
+                                    @else
+                                    {
+                                        <app-control-segment
+                                            class="pa-type-seg"
+                                            name="ms-type"
+                                            [items]="typeSegments"
+                                            [value]="type"
+                                            [disabled]="mode !== 'add' || hasChanges || loading"
+                                            (valueChange)="onTypeChange($event)">
+                                        </app-control-segment>
+                                    }
+                                </div>
+
+                                <app-textbox
+                                    label="Storing No"
+                                    placeholder="On save"
+                                    [value]="numberText"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                @if (isView)
+                                {
+                                    <app-textbox
+                                        label="Date"
+                                        [value]="date(doc?.StoringDate ?? '')"
+                                        [readonly]="true">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        label="Warehouse"
+                                        [value]="warehouseText"
+                                        [readonly]="true">
+                                    </app-textbox>
+                                }
+                                @else
+                                {
+                                    <app-datepicker
+                                        label="Date"
+                                        [required]="true"
+                                        [value]="storingDate"
+                                        (valueChange)="onDateChange($event)">
+                                    </app-datepicker>
+
+                                    <app-search-dropdown
+                                        class="pt-wh"
+                                        label="Warehouse"
+                                        [placeholder]="warehousePlaceholder"
+                                        [required]="true"
+                                        [items]="warehouseItems"
+                                        [value]="warehouseId || null"
+                                        [disabled]="mode !== 'add' || hasChanges"
+                                        (valueChange)="onWarehouseChange($event)">
+                                    </app-search-dropdown>
+                                }
+
+                            </div>
+
+                        </div>
+
+                        @if (isView)
+                        {
+                            @if (cancelOpen && doc)
+                            {
+                                <!-- CANCEL : the reason, inline -->
+                                <div class="pof-card ms-cancel-card">
+
+                                    <div class="pof-card-header">
+                                        <i class="fas fa-ban"></i>
+                                        <span>Cancel {{ doc.StoringNo }}</span>
+                                    </div>
+
+                                    <div class="ms-cancel">
+
+                                        @if (!doc.CanCancel && doc.CancelBlockedReason)
+                                        {
+                                            <div class="pa-inline-err ms-cancel-err">
+                                                <i class="fas fa-circle-exclamation"></i>
+                                                <span>{{ doc.CancelBlockedReason }}</span>
+                                            </div>
+                                        }
+
+                                        <div class="pof-hint pa-hint">
+                                            <i class="fas fa-circle-info"></i>
+                                            <span>Every product goes back to its previous location (all or nothing). Refused when a location changed since, or an old bin is now held by another item.</span>
+                                        </div>
+
+                                        <app-textarea
+                                            label="Reason"
+                                            placeholder="Why is this mass storing cancelled?"
+                                            [required]="true"
+                                            [rows]="3"
+                                            [maxLength]="500"
+                                            [value]="cancelReason"
+                                            (valueChange)="onCancelReason($event)">
+                                        </app-textarea>
+
+                                        @if (cancelError)
+                                        {
+                                            <div class="pa-inline-err ms-cancel-err">
+                                                <i class="fas fa-circle-exclamation"></i>
+                                                <span>{{ cancelError }}</span>
+                                            </div>
+                                        }
+
+                                        <div class="ms-cancel-actions">
+                                            <button
+                                                type="button"
+                                                class="pof-btn pof-btn-light ms-btn"
+                                                (click)="closeCancel()">
+                                                <i class="fas fa-arrow-left"></i>
+                                                Keep It
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="pof-btn pof-btn-danger ms-btn"
+                                                [disabled]="saving"
+                                                (click)="confirmCancel()">
+                                                <i class="fas fa-ban"></i>
+                                                Cancel Storing
+                                            </button>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            }
+
+                            <!-- VIEW : details of the document -->
+                            <div class="pof-card rc-inv-card pa-details">
+
+                                <div class="pof-card-header">
+                                    <i class="fas fa-clipboard-check"></i>
+                                    <span>Details</span>
+                                    @if (doc?.Status === 'Posted')
+                                    {
+                                        <span class="rc-pill pt-pill-green">Locations applied</span>
+                                    }
+                                    @else if (doc?.Status === 'Cancelled')
+                                    {
+                                        <span class="rc-pill rc-pill-amber">Previous locations back</span>
+                                    }
+                                    @else
+                                    {
+                                        <span class="rc-pill rc-pill-amber">Draft : nothing applied yet</span>
+                                    }
+                                </div>
+
+                                <div class="rc-facts">
+                                    @for (fact of facts; track fact.label)
+                                    {
+                                        <div class="rc-fact" [class.rc-fact-wide]="!!fact.wide">
+                                            <span>{{ fact.label }}</span>
+                                            <strong [title]="fact.value">{{ fact.value || '—' }}</strong>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="pof-hint pa-hint pa-card-hint">
+                                    <i class="fas fa-circle-info"></i>
+                                    <span>{{ statusNote }}</span>
+                                </div>
+
+                            </div>
+                        }
+                        @else
+                        {
+                            <!-- SECTION 2 : ADD PRODUCTS (two rows : category | sub categories; switches + Add) -->
+                            <div
+                                class="pof-card ms-add-card"
+                                [class.pof-locked]="!defaults || !warehouseId">
+
+                                <div class="pof-card-header">
+                                    <i class="fas fa-layer-group"></i>
+                                    <span>Add Products</span>
+                                    @if (gridLoading)
+                                    {
+                                        <span class="pa-an-busy pt-head-busy">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            Loading…
+                                        </span>
+                                    }
+                                </div>
+
+                                <div class="ms-rows">
+
+                                    <div class="ms-row2">
+
+                                        <app-search-dropdown
+                                            label="Category"
+                                            badgeField="count"
+                                            [placeholder]="addCategoryItems.length ? 'Choose a category' : 'No ' + info.itemLower + ' here'"
+                                            [items]="addCategoryItems"
+                                            [value]="addCategoryId || null"
+                                            [disabled]="!addCategoryItems.length || gridLoading"
+                                            (valueChange)="onAddCategory($event)">
+                                        </app-search-dropdown>
+
+                                        <!-- Sub Categories : a compact multi-select (none = all) -->
+                                        <div class="ms-multi" [class.is-open]="multiOpen === 'sub'">
+                                            <span class="ms-multi-label">Sub Categories</span>
+                                            <button
+                                                type="button"
+                                                class="ms-multi-box"
+                                                [disabled]="!addCategoryId"
+                                                [attr.aria-expanded]="multiOpen === 'sub'"
+                                                (click)="toggleMulti('sub')">
+                                                <span class="ms-multi-text" [class.ms-multi-all]="!addSubIds.length">{{ subSummary }}</span>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </button>
+                                            @if (multiOpen === 'sub')
+                                            {
+                                                <div class="ms-multi-panel appcore-scrollbar">
+                                                    <button
+                                                        type="button"
+                                                        class="ms-multi-opt"
+                                                        [class.is-on]="!addSubIds.length"
+                                                        (click)="clearAddSubs()">
+                                                        <i [class]="!addSubIds.length ? 'fas fa-circle-dot' : 'far fa-circle'"></i>
+                                                        <span>All sub categories</span>
+                                                    </button>
+                                                    @for (chip of addSubChips; track chip.id)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="ms-multi-opt"
+                                                            [class.is-on]="chip.on"
+                                                            [attr.aria-pressed]="chip.on"
+                                                            (click)="toggleAddSub(chip.id)">
+                                                            <i [class]="chip.on ? 'fas fa-square-check' : 'far fa-square'"></i>
+                                                            <span>{{ chip.label }}</span>
+                                                            <em>{{ chip.count }}</em>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+
+                                    </div>
+
+                                    <div class="ms-line">
+                                        <app-checkbox
+                                            label="Include without stock"
+                                            appearance="switch"
+                                            [value]="addWithoutStock"
+                                            (valueChange)="onAddWithoutStock($event)">
+                                        </app-checkbox>
+                                        <app-checkbox
+                                            label="Unplaced only"
+                                            appearance="switch"
+                                            [value]="addUnplacedOnly"
+                                            (valueChange)="onAddUnplacedOnly($event)">
+                                        </app-checkbox>
+                                        <button
+                                            type="button"
+                                            class="pof-add pa-pick-add ms-line-btn"
+                                            title="Every matching part of the warehouse to the grid (parts already there stay as they are)"
+                                            [disabled]="!addCategoryId || gridLoading"
+                                            (click)="addProducts()">
+                                            <i class="fas fa-plus"></i>
+                                            Add
+                                        </button>
+                                    </div>
+
+                                    @if (gridError)
+                                    {
+                                        <div class="pa-inline-err pa-pick-err">
+                                            <i class="fas fa-circle-exclamation"></i>
+                                            <span>{{ gridError }}</span>
+                                        </div>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                            <!-- SECTION 3 : ALLOCATE (two rows : mode | target; plan switch, info, reset + Allocate) -->
+                            <div
+                                class="pof-card ms-alloc-card"
+                                [class.pof-locked]="!defaults || !warehouseId">
+
+                                <div class="pof-card-header">
+                                    <i class="fas fa-diagram-project"></i>
+                                    <span>Allocate</span>
+                                </div>
+
+                                <div class="ms-rows">
+
+                                    <div class="ms-row2 ms-row2-mode" [class.ms-row2-bin]="allocMode === 'bin'">
+
+                                        <div class="ms-cell">
+                                            <span class="ms-multi-label">Allocate by</span>
+                                            <app-control-segment
+                                                class="pa-type-seg ms-alloc-seg"
+                                                name="ms-alloc-mode"
+                                                [items]="allocModeSegments"
+                                                [value]="allocMode"
+                                                (valueChange)="onAllocMode($event)">
+                                            </app-control-segment>
+                                        </div>
+
+                                        @if (allocMode === 'zone')
+                                        {
+                                            <app-search-dropdown
+                                                label="Zone"
+                                                placeholder="All zones"
+                                                [items]="allocZoneItems"
+                                                [value]="allocZone"
+                                                (valueChange)="onAllocZone($event)">
+                                            </app-search-dropdown>
+                                        }
+                                        @else if (allocMode === 'rack')
+                                        {
+                                            <!-- Racks : a compact multi-select (free bins live) -->
+                                            <div class="ms-multi" [class.is-open]="multiOpen === 'rack'">
+                                                <span class="ms-multi-label">Racks</span>
+                                                <button
+                                                    type="button"
+                                                    class="ms-multi-box"
+                                                    [disabled]="!allocChips.length"
+                                                    [attr.aria-expanded]="multiOpen === 'rack'"
+                                                    (click)="toggleMulti('rack')">
+                                                    <span class="ms-multi-text" [class.ms-multi-all]="!allocSelectedCount">{{ rackSummary }}</span>
+                                                    <i class="fas fa-chevron-down"></i>
+                                                </button>
+                                                @if (multiOpen === 'rack')
+                                                {
+                                                    <div class="ms-multi-panel ms-multi-right appcore-scrollbar">
+                                                        @for (chip of allocChips; track chip.id)
+                                                        {
+                                                            <button
+                                                                type="button"
+                                                                class="ms-multi-opt"
+                                                                [class.is-on]="chip.on"
+                                                                [class.is-full]="chip.full"
+                                                                [title]="chip.title"
+                                                                [attr.aria-pressed]="chip.on"
+                                                                (click)="toggleAllocRack(chip.id)">
+                                                                <i [class]="chip.on ? 'fas fa-square-check' : 'far fa-square'"></i>
+                                                                <span>{{ chip.label }}</span>
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                        @else
+                                        {
+                                            <div class="ms-three">
+                                                <app-search-dropdown
+                                                    label="Rack"
+                                                    badgeField="count"
+                                                    placeholder="Rack"
+                                                    [items]="binRackItems"
+                                                    [value]="binRackId || null"
+                                                    (valueChange)="onBinRack($event)">
+                                                </app-search-dropdown>
+                                                <app-search-dropdown
+                                                    label="Shelf"
+                                                    badgeField="count"
+                                                    placeholder="—"
+                                                    [items]="binShelfItems"
+                                                    [value]="binShelfNo || null"
+                                                    [disabled]="!binRackId"
+                                                    (valueChange)="onBinShelf($event)">
+                                                </app-search-dropdown>
+                                                <app-search-dropdown
+                                                    label="Start Bin"
+                                                    [placeholder]="binShelfNo && !binBinItems.length ? 'Full' : '—'"
+                                                    [items]="binBinItems"
+                                                    [value]="binBinNo || null"
+                                                    [disabled]="!binShelfNo || !binBinItems.length"
+                                                    (valueChange)="onBinBin($event)">
+                                                </app-search-dropdown>
+                                            </div>
+                                        }
+
+                                    </div>
+
+                                    <div class="ms-line">
+                                        @if (allocMode !== 'bin')
+                                        {
+                                            <app-checkbox
+                                                label="Follow rack plan"
+                                                appearance="switch"
+                                                title="On : a part only goes to racks whose assignment fits its category / sub category (General racks take the rest). Off : fill the racks in order."
+                                                [value]="followPlan"
+                                                (valueChange)="onFollowPlan($event)">
+                                            </app-checkbox>
+                                        }
+                                        <span class="ms-sub" [title]="allocInfo">{{ allocInfo }}</span>
+                                        <button
+                                            type="button"
+                                            class="ms-link"
+                                            title="Clear the new rack / shelf / bin of the ticked rows (else the rows shown) to allocate again"
+                                            [disabled]="!allocatedCount"
+                                            (click)="resetAllocation()">
+                                            Reset allocation
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="pof-add pa-pick-add ms-line-btn"
+                                            [title]="checkedCount ? 'A bin for the ' + checkedCount + ' ticked rows' : 'A bin for every row with no new bin : fast movers first, then part number'"
+                                            [disabled]="!allocReady"
+                                            (click)="allocate()">
+                                            <i class="fas fa-wand-magic-sparkles"></i>
+                                            Allocate
+                                        </button>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                    <!-- RIGHT : Placements -->
+                    <div
+                        class="pof-card pa-right"
+                        [class.pof-locked]="!defaults && !isView">
+
+                        <div class="pof-card-header pa-right-head">
+
+                            <i class="fas fa-table-cells"></i>
+
+                            <span>Placements</span>
+
+                            <span class="pa-pills">
+                                @if (isView)
+                                {
+                                    <span class="pa-pill">{{ viewRows.length }} {{ viewRows.length === 1 ? 'line' : 'lines' }}</span>
+                                    <span class="pa-pill ms-pill-placed" title="Placed in a bin">
+                                        <i class="fas fa-location-dot"></i>
+                                        {{ doc?.PlacedCount ?? 0 }} placed
+                                    </span>
+                                    <span class="pa-pill ms-pill-cleared" title="Set to Unplaced">
+                                        <i class="fas fa-eraser"></i>
+                                        {{ doc?.ClearedCount ?? 0 }} cleared
+                                    </span>
+                                }
+                                @else
+                                {
+                                    <span class="pa-pill" [title]="shownRows.length + ' of ' + rows.length + ' products listed'">{{ shownRows.length }} listed</span>
+                                    <span
+                                        class="pa-pill ms-pill-changes"
+                                        [title]="hiddenChangeCount ? hiddenChangeCount + ' changed row(s) hidden by the filters : still saved' : 'Rows saved as lines'">
+                                        <i class="fas fa-pen"></i>
+                                        {{ changeCount }} {{ changeCount === 1 ? 'change' : 'changes' }}
+                                    </span>
+                                    @if (allocatedCount)
+                                    {
+                                        <span class="pa-pill ms-pill-placed" title="Rows with a new bin">
+                                            <i class="fas fa-location-dot"></i>
+                                            {{ allocatedCount }} allocated
+                                        </span>
+                                    }
+                                    @if (leftCount)
+                                    {
+                                        <button
+                                            type="button"
+                                            class="pa-pill ms-pill-left"
+                                            [title]="leftoversOnly ? 'Show every row' : 'Show only the rows the last Allocate could not place'"
+                                            (click)="showLeftovers(!leftoversOnly)">
+                                            <i [class]="leftoversOnly ? 'fas fa-filter-circle-xmark' : 'fas fa-filter'"></i>
+                                            {{ leftCount }} left
+                                        </button>
+                                    }
+                                    @if (problemCount)
+                                    {
+                                        <span class="pa-pill pa-pill-down">
+                                            <i class="fas fa-triangle-exclamation"></i>
+                                            {{ problemCount }} to fix
+                                        </span>
+                                    }
+                                }
+                            </span>
+
+                            @if (!isView)
+                            {
+                                <!-- Find in grid (rows only; products are added on the left) -->
+                                <app-textbox
+                                    class="ms-find"
+                                    placeholder="Find in grid"
+                                    textCase="none"
+                                    prefixIcon="fas fa-magnifying-glass"
+                                    [value]="search"
+                                    (valueChange)="onSearch($event)">
+                                </app-textbox>
+                            }
+
+                            <!-- Rack Overview : the racks as a map (replaces this area) -->
+                            <button
+                                type="button"
+                                class="pof-btn pof-btn-light ms-ov-open"
+                                title="Rack Overview : every rack, shelf and bin with its product and the changes of this document"
+                                [disabled]="!canOverview"
+                                (click)="openOverview()">
+                                <i class="fas fa-table-cells-large"></i>
+                                Rack Overview
+                            </button>
+
+                        </div>
+
+                        <!-- Narration : one line on top of the lines (voucher pages) -->
+                        <div class="pa-narr">
+                            <span class="pa-narr-label">
+                                <i class="fas fa-align-left"></i>
+                                Narration
+                            </span>
+                            <app-textbox
+                                class="pa-narr-box"
+                                placeholder="Rack A filled, new arrivals shelved …"
+                                textCase="none"
+                                [maxLength]="500"
+                                [readonly]="isView"
+                                [value]="remarks"
+                                (valueChange)="onRemarks($event)">
+                            </app-textbox>
+                        </div>
+
+                        <!-- Added groups + the Add / Allocate notes : one thin line (no groups, no notes = hidden) -->
+                        @if (!isView && (groups.length || addNote || allocNote))
+                        {
+                            <div class="ms-strip appcore-scrollbar">
+                                @if (groups.length)
+                                {
+                                    <span class="ms-strip-cap">
+                                        <i class="fas fa-layer-group"></i>
+                                        Groups
+                                    </span>
+                                    @for (group of groups; track group.Key)
+                                    {
+                                        <span class="ms-gchip" [class.is-asking]="groupConfirm === group.Key" [title]="group.Label">
+                                            {{ group.Label }} · <b>{{ groupCount(group.Key) }}</b>
+                                            <button
+                                                type="button"
+                                                class="ms-gchip-x"
+                                                title="Remove this group's rows from the grid"
+                                                aria-label="Remove the group"
+                                                (click)="askRemoveGroup(group.Key)">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+                                        </span>
+                                    }
+                                    @if (groupConfirm)
+                                    {
+                                        <span class="ms-confirm-line">
+                                            Remove {{ groupConfirm === '*' ? 'all ' : '' }}{{ confirmCount }} rows?
+                                            <button type="button" class="ms-link ms-link-rose" (click)="removeGroup()">Remove</button>
+                                            <button type="button" class="ms-link" (click)="askRemoveGroup('')">Keep</button>
+                                        </span>
+                                    }
+                                    @else
+                                    {
+                                        <button type="button" class="ms-link ms-link-rose" (click)="askRemoveGroup('*')">Clear all</button>
+                                    }
+                                }
+                                @if (addNote)
+                                {
+                                    <span class="ms-note" [class.ms-note-warn]="addTone === 'warn'">
+                                        <i [class]="addTone === 'warn' ? 'fas fa-circle-exclamation' : 'fas fa-circle-check'"></i>
+                                        {{ addNote }}
+                                    </span>
+                                }
+                                @if (allocNote)
+                                {
+                                    <span class="ms-note" [class.ms-note-warn]="allocTone === 'warn'">
+                                        <i [class]="allocTone === 'warn' ? 'fas fa-circle-exclamation' : 'fas fa-circle-check'"></i>
+                                        {{ allocNote }}
+                                        @if (leftCount)
+                                        {
+                                            <button
+                                                type="button"
+                                                class="ms-link"
+                                                (click)="showLeftovers(!leftoversOnly)">
+                                                {{ leftoversOnly ? 'Show all rows' : 'Show left' }}
+                                            </button>
+                                        }
+                                    </span>
+                                }
+                            </div>
+                        }
+
+                        <div class="pa-grid-scroll pa-prod-scroll appcore-scrollbar">
+
+                            @if (isView)
+                            {
+                                <table class="pof-table pa-table pa-prod-table ms-table ms-table-view">
+
+                                    <colgroup>
+                                        <col class="pa-c-sl">
+                                        <col>
+                                        <col class="ms-c-stock">
+                                        <col class="ms-c-move">
+                                        <col class="ms-c-notes">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="pa-sl">SL</th>
+                                            <th>{{ info.item }}</th>
+                                            <th class="pof-num">Stock</th>
+                                            <th>From → To</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @for (line of viewRows; track line.ProductId; let i = $index)
+                                        {
+                                            <tr>
+                                                <td class="pa-sl">{{ i + 1 }}</td>
+                                                <td class="pa-prod">
+                                                    <div class="pa-name">{{ line.Name }}</div>
+                                                    <div class="pa-code">
+                                                        {{ line.Code }}@if (line.PartNumber) { · {{ line.PartNumber }} }
+                                                    </div>
+                                                </td>
+                                                <td class="pof-num">{{ qty(line.Stock) }}</td>
+                                                <td>
+                                                    <span class="ms-move">
+                                                        <span [class.ms-muted]="!line.FromText">{{ line.FromText || 'Unplaced' }}</span>
+                                                        <i class="fas fa-arrow-right-long ms-arrow"></i>
+                                                        @if (line.IsClear)
+                                                        {
+                                                            <span class="ms-to-clear">Unplaced</span>
+                                                        }
+                                                        @else
+                                                        {
+                                                            <span class="ms-to-place">{{ line.ToText }}</span>
+                                                        }
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="pt-notes" [title]="line.Notes">{{ line.Notes || '—' }}</span>
+                                                </td>
+                                            </tr>
+                                        }
+                                        @empty
+                                        {
+                                            <tr>
+                                                <td colspan="5" class="pof-empty">No lines on this mass storing.</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+
+                                </table>
+                            }
+                            @else
+                            {
+                                <table class="pof-table pa-table pa-prod-table ms-table">
+
+                                    <colgroup>
+                                        <col class="ms-c-check">
+                                        <col class="pa-c-sl">
+                                        <col>
+                                        <col class="ms-c-group">
+                                        <col class="ms-c-mov">
+                                        <col class="ms-c-stock">
+                                        <col class="ms-c-cur">
+                                        <col class="ms-c-rack">
+                                        <col class="ms-c-shelf">
+                                        <col class="ms-c-bin">
+                                        <col class="ms-c-notes">
+                                        <col class="ms-c-act">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="ms-check-cell">
+                                                <button
+                                                    type="button"
+                                                    class="ms-check"
+                                                    [class.is-on]="allChecked"
+                                                    [title]="allChecked ? 'Untick the rows shown' : 'Tick the rows shown'"
+                                                    [attr.aria-pressed]="allChecked"
+                                                    (click)="toggleAllRows()">
+                                                    <i [class]="allChecked ? 'fas fa-square-check' : 'far fa-square'"></i>
+                                                </button>
+                                            </th>
+                                            <th class="pa-sl">SL</th>
+                                            <th>{{ info.item }}</th>
+                                            <th>Group</th>
+                                            <th>Movement</th>
+                                            <th class="pof-num">Stock</th>
+                                            <th>Current</th>
+                                            <th>New Rack</th>
+                                            <th>New Shelf</th>
+                                            <th>New Bin</th>
+                                            <th>Notes</th>
+                                            <th class="pa-act"></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @for (row of visibleRows; track row.ProductId; let i = $index)
+                                        {
+                                            <tr
+                                                class="ms-row"
+                                                [class.ms-row-changed]="row.Changed"
+                                                [class.pa-row-bad]="!!row.Problem"
+                                                [title]="row.Problem">
+                                                <td class="ms-check-cell">
+                                                    <button
+                                                        type="button"
+                                                        class="ms-check"
+                                                        [class.is-on]="row.Checked"
+                                                        title="Tick : Allocate / Reset allocation work on the ticked rows"
+                                                        [attr.aria-pressed]="row.Checked"
+                                                        (click)="toggleRow(row)">
+                                                        <i [class]="row.Checked ? 'fas fa-square-check' : 'far fa-square'"></i>
+                                                    </button>
+                                                </td>
+                                                <td class="pa-sl">{{ i + 1 }}</td>
+                                                <td class="pa-prod">
+                                                    <div class="pa-name">{{ row.Name }}</div>
+                                                    <div class="pa-code">
+                                                        {{ row.Code }}@if (row.PartNumber) { · {{ row.PartNumber }} }@if (row.Extra) { · <span class="ms-extra">saved line</span> }
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="ms-group-cell" [title]="row.SubCategoryName">{{ row.SubCategoryName || '—' }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="ms-mov" [style.color]="movementColor(row.MovementClass)">
+                                                        <i class="fas fa-circle"></i>
+                                                        {{ movementShort(row.MovementClass) }}
+                                                    </span>
+                                                </td>
+                                                <td class="pof-num" [class.ms-muted]="row.Stock === 0">{{ qty(row.Stock) }}</td>
+                                                <td>
+                                                    @if (row.IsPlaced)
+                                                    {
+                                                        <span class="pt-place-text">
+                                                            <i class="fas fa-location-dot"></i>
+                                                            {{ row.CurText }}
+                                                        </span>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <span class="ms-muted">Unplaced</span>
+                                                    }
+                                                </td>
+                                                <td class="ms-dd-cell">
+                                                    <app-search-dropdown
+                                                        class="ms-dd"
+                                                        placeholder="No change"
+                                                        badgeField="count"
+                                                        [items]="rackItemsOf(row)"
+                                                        [value]="row.NewRackId"
+                                                        (valueChange)="onRackChange(row, $event)">
+                                                    </app-search-dropdown>
+                                                </td>
+                                                <td class="ms-dd-cell">
+                                                    @if (row.NewRackId > 0)
+                                                    {
+                                                        <app-search-dropdown
+                                                            class="ms-dd"
+                                                            badgeField="count"
+                                                            [placeholder]="row.ShelfItems.length ? 'Shelf' : 'No free bin'"
+                                                            [items]="row.ShelfItems"
+                                                            [value]="row.NewShelfNo || null"
+                                                            [disabled]="!row.ShelfItems.length"
+                                                            (valueChange)="onShelfChange(row, $event)">
+                                                        </app-search-dropdown>
+                                                    }
+                                                    @else if (row.NewRackId === -1)
+                                                    {
+                                                        <span class="ms-to-clear">
+                                                            <i class="fas fa-eraser"></i>
+                                                            Unplaced
+                                                        </span>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <span class="ms-muted">—</span>
+                                                    }
+                                                </td>
+                                                <td class="ms-dd-cell">
+                                                    @if (row.NewRackId > 0 && row.NewShelfNo > 0)
+                                                    {
+                                                        <app-search-dropdown
+                                                            class="ms-dd"
+                                                            [placeholder]="row.BinItems.length ? 'Bin' : 'Full'"
+                                                            [items]="row.BinItems"
+                                                            [value]="row.NewBinNo || null"
+                                                            [disabled]="!row.BinItems.length"
+                                                            (valueChange)="onBinChange(row, $event)">
+                                                        </app-search-dropdown>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <span class="ms-muted">—</span>
+                                                    }
+                                                </td>
+                                                <td class="pt-notes-cell">
+                                                    <input
+                                                        class="pa-in pt-in-notes"
+                                                        placeholder="—"
+                                                        maxlength="200"
+                                                        [value]="row.Notes"
+                                                        (change)="onRowNotes(row, $any($event.target).value)">
+                                                </td>
+                                                <td class="pa-act">
+                                                    @if (row.NewRackId !== 0 || row.Notes)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="ms-reset"
+                                                            title="Undo the change of this row"
+                                                            aria-label="Undo"
+                                                            (click)="resetRow(row)">
+                                                            <i class="fas fa-rotate-left"></i>
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                        @empty
+                                        {
+                                            <tr>
+                                                <td colspan="12" class="pof-empty">
+                                                    @if (!warehouseId) { Choose the warehouse first. }
+                                                    @else if (gridLoading) { Loading the products of the warehouse… }
+                                                    @else if (rows.length) { No row matches. }
+                                                    @else { Add products by category on the left. }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+
+                                </table>
+
+                                @if (moreCount > 0)
+                                {
+                                    <div class="ms-more">
+                                        <button
+                                            type="button"
+                                            class="pof-btn pof-btn-light ms-btn"
+                                            (click)="showMore()">
+                                            <i class="fas fa-angles-down"></i>
+                                            Show more ({{ moreCount }} left)
+                                        </button>
+                                    </div>
+                                }
+                            }
+
+                        </div>
+
+                        <!-- Footer : the rules -->
+                        <div class="pt-foot">
+                            <span class="pt-route-chip pt-route-inter">
+                                <i class="fas fa-table-cells-large"></i>
+                                One item per bin : free or vacated in this document.
+                            </span>
+                            <span class="pt-foot-text">Post applies all changes at once.</span>
+                            <span class="pt-foot-text ms-foot-hint">
+                                <i class="fas fa-circle-info"></i>
+                                Location only : no quantity changes and no journal. Only changed rows are saved.
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+        }
+
+    </div>
+
+</div>
+
+<app-progress-dialog></app-progress-dialog>

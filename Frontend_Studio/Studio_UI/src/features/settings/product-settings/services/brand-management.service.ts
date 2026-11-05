@@ -42,6 +42,20 @@ import
 }
 from '../models/brand-management.model';
 
+import
+{
+    BrandManagementPageQuery
+}
+from '../models/brand-management.model';
+
+import
+{
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
 
 //===============================================================
 // Brand Management Service
@@ -99,6 +113,11 @@ export class BrandManagementService
                                 BrandManagementId:
                                     Number(brandManagement.BrandManagementId ?? brandManagement.brandManagementId ?? brandManagement.id ?? brandManagement.Id),
 
+
+                                PublicId:
+
+                                    String(brandManagement?.PublicId ?? brandManagement?.publicId ?? ''),
+
                                 BrandCode:
                                     brandManagement.BrandCode ?? brandManagement.brandCode ?? '',
 
@@ -132,6 +151,42 @@ export class BrandManagementService
                                 EmiClaimLedgerName:
                                     brandManagement.EmiClaimLedgerName ?? brandManagement.emiClaimLedgerName ?? ''
                             })
+                        )
+                )
+            );
+    }
+
+
+
+    //===========================================================
+    // Get Paged (the list page : one page from the server, with
+    // the summary counts; rows are normalized by the list)
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            BrandManagementPageQuery
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams(
+                            { ...query }
+                        )
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                        toPagedResult(
+                            response,
+                            item =>
+                                item
                         )
                 )
             );
@@ -239,7 +294,7 @@ export class BrandManagementService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<BrandManagement>
     {
@@ -259,9 +314,9 @@ export class BrandManagementService
         model:
             CreateBrandManagement
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
 
             model
@@ -276,13 +331,16 @@ export class BrandManagementService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateBrandManagement
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -297,7 +355,7 @@ export class BrandManagementService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -370,7 +428,7 @@ export class BrandManagementService
     uploadImage
     (
         id:
-            number,
+            string,
 
         file:
             File
@@ -406,7 +464,7 @@ export class BrandManagementService
     deleteImage
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -438,7 +496,7 @@ export class BrandManagementService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

@@ -4,8 +4,22 @@
 
 export interface ProductSubCategory
 {
+    // Bike Model (Motor Bikes categories only)
+    BikeModelId?:
+        number | null;
+
+    // Sales account (CLS-005 / 006 / 008), set by the server
+    SalesSubGroupCode?:
+        string;
+
+    SalesSubGroupName?:
+        string;
+
     ProductSubCategoryId:
         number;
+
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     ProductCategoryId:
         number;
@@ -66,6 +80,10 @@ export interface ProductSubCategory
 
 export interface CreateProductSubCategory
 {
+    // Bike Model (Motor Bikes categories only)
+    BikeModelId?:
+        number | null;
+
     ProductCategoryId:
         number;
 
@@ -125,6 +143,10 @@ export interface CreateProductSubCategory
 
 export interface UpdateProductSubCategory
 {
+    // Bike Model (Motor Bikes categories only)
+    BikeModelId?:
+        number | null;
+
     ProductSubCategoryId:
         number;
 
@@ -187,6 +209,9 @@ export interface UpdateProductSubCategory
 
 export interface ProductSubCategoryDefaults
 {
+    SalesSubGroupCode?:
+        string;
+
     //===========================================================
     // Product Sub Category Code
     //===========================================================
@@ -214,4 +239,29 @@ export interface ProductSubCategoryDefaults
 
     CogsSubGroupCode:
         string;
+}
+
+
+//===============================================================
+// List page query (server-side paging)
+//===============================================================
+
+export interface ProductSubCategoryPageQuery
+{
+    page:number;
+
+    pageSize:number;
+
+    search:string;
+
+    // Column field ('' = the default sort)
+    sort:string;
+
+    dir:'asc' | 'desc';
+
+    // true / false (null = all)
+    status:boolean | null;
+
+    // Product Category filter (null = all)
+    productCategoryId?:number | null;
 }

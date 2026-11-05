@@ -35,6 +35,9 @@ public class PaymentVoucher
 
     public long PaymentVoucherId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
 
     //===========================================================
     // Voucher

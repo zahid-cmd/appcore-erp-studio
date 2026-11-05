@@ -93,7 +93,7 @@
 
         <app-pagination
             canvasFooter
-            [totalRecords]="filteredRows.length"
+            [totalRecords]="totalRecords"
             [currentPage]="currentPage"
             [pageSize]="pageSize"
             (pageChange)="onPageChange($event)"
@@ -102,6 +102,38 @@
         </app-pagination>
 
     </app-page-canvas>
+
+
+    <!-- =====================================================
+         SUMMARY (search applied)
+    ====================================================== -->
+
+    @if (summaryTotal > 0)
+    {
+        <div class="ics-summary">
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Total</span>
+                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Posted</span>
+                <b class="ics-summary-value ics-ok">{{ summaryText(countOf('posted')) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Cancelled</span>
+                <b class="ics-summary-value ics-bad">{{ summaryText(countOf('cancelled')) }}</b>
+            </span>
+
+            <span class="ics-summary-note">
+                {{ summaryNote }}
+            </span>
+
+        </div>
+    }
+
 
     <app-toast></app-toast>
 

@@ -120,11 +120,21 @@ public class AccountGroupController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<AccountGroupDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         AccountGroupDto? accountGroup =
             await _repository.GetByIdAsync(id);
 
@@ -141,9 +151,9 @@ public class AccountGroupController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateAccountGroupDto dto)
     {
            long userId = this.CurrentUserId();
@@ -155,7 +165,10 @@ public class AccountGroupController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            AccountGroupDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch
         (
@@ -191,11 +204,27 @@ public class AccountGroupController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateAccountGroupDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.AccountGroupId =
+            id;
+
         if (!await _repository.ExistsAsync(
                 dto.AccountGroupId))
         {
@@ -247,11 +276,22 @@ public class AccountGroupController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         //===========================================================
         // Verify Account Group Exists
         //===========================================================

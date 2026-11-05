@@ -58,4 +58,9 @@ public interface ISalesVatRepository
 
     Task<bool> ExistsAsync(
         long id);
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 }

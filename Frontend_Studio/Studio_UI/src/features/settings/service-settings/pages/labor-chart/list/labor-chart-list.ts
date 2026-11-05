@@ -254,6 +254,15 @@ implements OnInit, OnDestroy
         LaborChart[] =
     [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredLaborCharts:
         LaborChart[] =
     [];
@@ -798,6 +807,9 @@ implements OnInit, OnDestroy
 
                     this.applyFilters();
 
+
+                    this.updateSummary();
+
                     this.loading =
                         false;
 
@@ -1285,7 +1297,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.LaborChartId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1305,7 +1317,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.LaborChartId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1365,7 +1377,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.laborChartService.delete(
-                item.LaborChartId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -1661,4 +1673,32 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.laborCharts ?? [];
+
+        const active =
+            all.filter(x => !!x?.IsActive).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

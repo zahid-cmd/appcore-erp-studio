@@ -6,6 +6,13 @@ using AppCore.Application.Settings.ProductSettings.ProductSubCategory.DTOs;
 
 
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.Paging;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -23,6 +30,20 @@ public interface IProductSubCategoryRepository
     //===========================================================
 
     Task<List<ProductSubCategoryDto>> GetAllAsync();
+
+
+    // The list page : one page, filtered, sorted, with the counts
+
+    Task<PagedResult<ProductSubCategoryDto>> GetPagedAsync(
+
+        ProductSubCategoryPageRequest request);
+
+
+    // Public Id -> internal id (live rows only; null = not found)
+
+    Task<long?> GetIdByPublicIdAsync(
+
+        Guid publicId);
 
 
     //===========================================================

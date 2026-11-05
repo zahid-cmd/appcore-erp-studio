@@ -452,6 +452,7 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
         return new PurchaseOrderDto
         {
             PurchaseOrderId = x.PurchaseOrderId,
+            PublicId = x.PublicId,
             PageType = x.PageType,
             OrderNo = x.OrderNo,
             OrderDate = x.OrderDate.ToString(DateFormat, CultureInfo.InvariantCulture),
@@ -2347,6 +2348,7 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
         return new PurchaseOrderSavedDto
         {
             PurchaseOrderId = entity.PurchaseOrderId,
+            PublicId = entity.PublicId,
             OrderNo = entity.OrderNo
         };
     }
@@ -2942,5 +2944,220 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
                     &&
                     !x.IsDeleted
             );
+    }
+
+
+    //===========================================================
+    // List page (server paging) : supplier, search, tab, sort
+    // and page on the server. Counts : All and one per status
+    // (supplier and search applied).
+    //===========================================================
+
+    //===========================================================
+    // Paged list : a search word that is a date (25-10-2026,
+    // 25/10/2026 or 2026-10-25), null otherwise
+    //===========================================================
+
+    private static DateOnly? SearchDate(
+        string text)
+    {
+        string[] formats =
+        {
+            "d-M-yyyy", "dd-MM-yyyy", "d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"
+        };
+
+        return DateOnly.TryParseExact(
+            (text ?? string.Empty).Trim(),
+            formats,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out DateOnly date)
+            ? date
+            : null;
+    }
+
+    public async Task<AppCore.Application.Common.Paging.PagedResult<PurchaseOrderDto>>
+        GetPagedAsync
+        (
+            string pageType,
+            PurchaseOrderPageRequest request
+        )
+    {
+        string type =
+            PageOf(pageType).PageType;
+
+        IQueryable<THeader> query =
+            _context
+                .Set<THeader>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.PageType == type);
+
+        string supplier =
+            (request.Supplier ?? string.Empty).Trim();
+
+        if (supplier != string.Empty)
+        {
+            query = query.Where(x => x.SupplierCode == supplier);
+        }
+
+        foreach
+        (
+            string word in request.SafeSearch.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        )
+        {
+            string like =
+                AppCore.Infrastructure.Persistence.Paging.PagingQuery.LikePattern(word);
+
+            DateOnly? date =
+                SearchDate(word);
+
+            DateOnly day =
+                date ?? DateOnly.MinValue;
+
+            bool isDate =
+                date.HasValue;
+
+            query =
+                query.Where
+                (
+                    x =>
+                        (isDate && (x.OrderDate == day || x.ExpectedDate == day)) ||
+                        EF.Functions.ILike(x.OrderNo, like) ||
+                        EF.Functions.ILike(x.SupplierName, like) ||
+                        EF.Functions.ILike(x.SupplierCode, like) ||
+                        EF.Functions.ILike(x.InvoicePriceBasis, like) ||
+                        EF.Functions.ILike(x.Narration, like) ||
+                        EF.Functions.ILike(x.Status, like)
+                );
+        }
+
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        string tab =
+            (request.Tab ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (tab == "closed")
+        {
+            query = query.Where(x => x.Status == "Closed Short" || x.Status == "Cancelled");
+        }
+        else if (tab != string.Empty && tab != "all")
+        {
+            query = query.Where(x => x.Status.ToLower() == tab);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        AppCore.Infrastructure.Persistence.Paging.PagingQuery.FitPage(
+            request,
+            total);
+
+        AppCore.Infrastructure.Persistence.Paging.SortMap<THeader> sorts =
+            new AppCore.Infrastructure.Persistence.Paging.SortMap<THeader>("OrderNo")
+                .Add("OrderNo", x => x.OrderNo)
+                .Add("OrderDateText", x => x.OrderDate)
+                .Add("SupplierName", x => x.SupplierName)
+                .Add("InvoiceText", x => x.InvoicePriceBasis)
+                .Add("ExpectedDateText", x => x.ExpectedDate)
+                .Add("TotalQuantityText", x => x.TotalQuantity)
+                .Add("TotalPayableText", x => x.TotalPayable)
+                .Add("Status", x => x.Status)
+                .Tie(x => x.PurchaseOrderId);
+
+        IQueryable<THeader> ordered =
+            string.IsNullOrWhiteSpace(request.Sort)
+                ? query
+                    .OrderByDescending(x => x.OrderDate)
+                    .ThenByDescending(x => x.OrderNo)
+                : sorts.Apply(query, request);
+
+        List<THeader> rows =
+            await AppCore.Infrastructure.Persistence.Paging.PagingQuery
+                .Page(ordered, request)
+                .ToListAsync();
+
+        Dictionary<string, int> counts =
+            new()
+            {
+                ["All"] = statusCounts.Sum(x => x.Count)
+            };
+
+        foreach (var row in statusCounts)
+        {
+            counts[row.Key] = row.Count;
+        }
+
+        return new AppCore.Application.Common.Paging.PagedResult<PurchaseOrderDto>
+        {
+            Items = rows.Select(ToDto).ToList(),
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = counts
+        };
+    }
+
+
+    //===========================================================
+    // Supplier filter options : the suppliers on this page's
+    // live documents
+    //===========================================================
+
+    public async Task<List<PurchaseOrderListSupplierDto>>
+        GetListSuppliersAsync
+        (
+            string pageType
+        )
+    {
+        string type =
+            PageOf(pageType).PageType;
+
+        return await _context
+            .Set<THeader>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PageType == type && x.SupplierCode != "")
+            .GroupBy(x => x.SupplierCode)
+            .Select
+            (
+                g =>
+                    new PurchaseOrderListSupplierDto
+                    {
+                        SupplierCode = g.Key,
+                        SupplierName = g.Max(x => x.SupplierName) ?? g.Key
+                    }
+            )
+            .OrderBy(x => x.SupplierName)
+            .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<THeader>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.PurchaseOrderId)
+            .FirstOrDefaultAsync();
     }
 }

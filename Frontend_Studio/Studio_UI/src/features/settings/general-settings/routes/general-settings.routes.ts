@@ -236,6 +236,48 @@ Routes =
 
                 // AUTO-END : SUB-003-001-008
 
+            // MANUAL : Website Configuration (custom page, no sync;
+            // kept outside the AUTO blocks so a sync never removes it)
+
+                {
+                    path:'website-configuration',
+
+                    data:
+                    {
+                        breadcrumb:'Website Configuration'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './website-configuration.routes'
+                        )
+                        .then(
+                            m =>
+                                m.WebsiteConfigurationRoutes
+                        )
+                },
+
+            // MANUAL : Backup Center (custom page, no sync; nightly
+            // backup status + Take Backup, client side)
+
+                {
+                    path:'backup-center',
+
+                    data:
+                    {
+                        breadcrumb:'Backup Center'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './backup-center.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BackupCenterRoutes
+                        )
+                },
+
         ]
 
     }

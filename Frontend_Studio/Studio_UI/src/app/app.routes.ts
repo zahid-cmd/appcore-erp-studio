@@ -29,10 +29,148 @@ import
 from '../core/authentication/authentication.guard';
 
 
+import
+{
+    WebsitePageLoader
+}
+from '../core/website-page-loader/website-page-loader';
+
+import
+{
+    WebsitePage1
+}
+from '../shared/website-pages/website-page-1/website-page-1';
+
+import
+{
+    BikeDetailPage
+}
+from '../shared/website-pages/bike-detail/bike-detail';
+
+import
+{
+    PolicyPage
+}
+from '../shared/website-pages/policy-page/policy-page';
+
+import
+{
+    BrandPage
+}
+from '../shared/website-pages/brand-page/brand-page';
+
+import
+{
+    EnquirePage
+}
+from '../shared/website-pages/enquire-page/enquire-page';
+
 
 export const routes:
     Routes =
 [
+    //===========================================================
+    // Company website (public)
+    //   /                home
+    //   /bikes/:slug     bike detail
+    //   /enquire         Enquire Now (→ an ERP Sales Enquiry)
+    //   /brands/:slug    brand : bikes · price list · parts
+    //   /warranty /terms /privacy
+    //   Switched off in site-content.json → the login page.
+    //   Any other address falls through to the routes below.
+    //===========================================================
+
+    {
+        path:
+            '',
+
+        component:
+            WebsitePageLoader,
+
+        children:
+        [
+            {
+                path:
+                    '',
+
+                pathMatch:
+                    'full',
+
+                component:
+                    WebsitePage1
+            },
+
+            {
+                path:
+                    'bikes/:slug',
+
+                component:
+                    BikeDetailPage
+            },
+
+            {
+                path:
+                    'enquire',
+
+                component:
+                    EnquirePage
+            },
+
+            {
+                path:
+                    'brands/:slug',
+
+                component:
+                    BrandPage
+            },
+
+            {
+                path:
+                    'warranty',
+
+                component:
+                    PolicyPage,
+
+                data:
+                {
+                    policy:
+                        'warranty'
+                }
+            },
+
+            {
+                path:
+                    'terms',
+
+                component:
+                    PolicyPage,
+
+                data:
+                {
+                    policy:
+                        'terms'
+                }
+            },
+
+            {
+                path:
+                    'privacy',
+
+                component:
+                    PolicyPage,
+
+                data:
+                {
+                    policy:
+                        'privacy'
+                }
+            },
+
+
+        ]
+    },
+
+
     //===========================================================
     // Authentication
     //===========================================================
@@ -376,6 +514,83 @@ export const routes:
             },
 
             // AUTO-END : MOD-013
+            // AUTO-BEGIN : MOD-010
+
+            //===========================================================
+            // Enquiry Management
+            //===========================================================
+
+            {
+                path:'enquiry-management',
+
+                data:
+                {
+                    breadcrumb:'Enquiry Management'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/enquiry-management/routes/enquiry-management.routes'
+                    )
+                    .then(
+                        m =>
+                            m.enquiryManagementRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-010
+
+            // AUTO-BEGIN : MOD-008
+
+            //===========================================================
+            // Sales Operations
+            //===========================================================
+
+            {
+                path:'sales-operations',
+
+                data:
+                {
+                    breadcrumb:'Sales Operations'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/sales-operations/routes/sales-operations.routes'
+                    )
+                    .then(
+                        m =>
+                            m.salesOperationsRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-008
+
+            // AUTO-BEGIN : MOD-014
+
+            //===========================================================
+            // Service Operations
+            //===========================================================
+
+            {
+                path:'service-operations',
+
+                data:
+                {
+                    breadcrumb:'Service Operations'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/service-operations/routes/service-operations.routes'
+                    )
+                    .then(
+                        m =>
+                            m.serviceOperationsRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-014
 
         ]
     },

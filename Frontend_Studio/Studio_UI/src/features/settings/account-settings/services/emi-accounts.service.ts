@@ -124,6 +124,9 @@ export class EmiAccountsService
             };
 
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             EmiAccountId:
                 num('EmiAccountId'),
 
@@ -207,7 +210,7 @@ export class EmiAccountsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<EmiAccounts>
     {
@@ -268,9 +271,9 @@ export class EmiAccountsService
         model:
             CreateEmiAccounts
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -283,13 +286,16 @@ export class EmiAccountsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateEmiAccounts
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -302,7 +308,7 @@ export class EmiAccountsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

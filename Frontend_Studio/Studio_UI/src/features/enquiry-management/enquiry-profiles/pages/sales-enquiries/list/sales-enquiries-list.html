@@ -1,0 +1,383 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Sales Enquiries"
+
+        subtitle="Motor bike sales leads, from first contact to the sale"
+
+        icon="fas fa-motorcycle">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [value]="searchText"
+
+                [placeholder]="searchPlaceholder"
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                [class.se-cc-wide]="isRides"
+
+                [command1Text]="isRides ? 'Book Test Ride' : 'Add'"
+
+                [command1Icon]="isRides ? 'fas fa-motorcycle' : 'fas fa-plus'"
+
+                [command1Permission]="isRides ? 'update' : 'add'"
+
+                [command1Title]="isRides ? 'Open the test ride board to book' : ''"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                command3Permission="restore"
+
+                [command3Visible]="!isRides"
+
+                (command3Click)="restore()"
+
+                command4Text="Print"
+
+                command4Icon="fas fa-print"
+
+                command4Activity="Print"
+
+                command4Title="Print the enquiries on the list (tab, interest, search)"
+
+                [command4Visible]="!isRides"
+
+                (command4Click)="print()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                rightCommandTitle="History"
+
+                [rightCommandVisible]="!isRides"
+
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+           left   : All · Open · Due · Matured · Suspended
+           centre : Website · Test Rides (waiting counts)
+           right  : interest levels
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <div
+
+            pageToolbarLeft
+
+            class="se-toolbar-left">
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [selectedTab]="selectedTab"
+
+                (selectedTabChange)="onTabChange($event)">
+
+            </app-control-tabs>
+
+
+            <!-- Centre : what came in from the website -->
+
+            <div
+
+                class="se-inbox"
+
+                role="group"
+
+                aria-label="From the website">
+
+                <button
+
+                    type="button"
+
+                    class="se-inbox-btn se-inbox-web"
+
+                    [class.se-inbox-on]="selectedTab === 'website'"
+
+                    [class.se-inbox-live]="websiteCount > 0"
+
+                    [attr.aria-pressed]="selectedTab === 'website'"
+
+                    title="Enquiries sent from the website that nobody has taken yet"
+
+                    (click)="onInboxClick('website')">
+
+                    <span class="se-inbox-icon">
+
+                        <i class="fas fa-globe"></i>
+
+                    </span>
+
+                    <span class="se-inbox-label">Website</span>
+
+                    <span class="se-inbox-count">{{ websiteCount }}</span>
+
+                </button>
+
+
+                <button
+
+                    type="button"
+
+                    class="se-inbox-btn se-inbox-ride"
+
+                    [class.se-inbox-on]="selectedTab === 'rides'"
+
+                    [class.se-inbox-live]="ridesCount > 0"
+
+                    [attr.aria-pressed]="selectedTab === 'rides'"
+
+                    title="Test rides booked and asked for (date-wise) · book on the Test Rides board"
+
+                    (click)="onInboxClick('rides')">
+
+                    <span class="se-inbox-icon">
+
+                        <i class="fas fa-motorcycle"></i>
+
+                    </span>
+
+                    <span class="se-inbox-label">Test Rides</span>
+
+                    <span class="se-inbox-count">{{ ridesCount }}</span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- Interest levels : All · Super Hot · Hot … (with counts) -->
+
+        <div
+
+            pageToolbarRight
+
+            class="se-interest"
+
+            role="group"
+
+            aria-label="Filter by interest level">
+
+            <span class="se-interest-title">
+
+                <i [class]="isRides ? 'fas fa-motorcycle' : 'fas fa-temperature-half'"></i>
+
+                {{ isRides ? 'Rides' : 'Interest' }}
+
+            </span>
+
+            @for (chip of chipList; track chip.id)
+            {
+                <button
+
+                    type="button"
+
+                    class="se-chip"
+
+                    [class.se-chip-on]="chipSelected === chip.id"
+
+                    [style.--chip]="chip.color || '#1e3a8a'"
+
+                    [attr.aria-pressed]="chipSelected === chip.id"
+
+                    (click)="onChip(chip.id)">
+
+                    @if (chip.color)
+                    {
+                        <span class="se-chip-dot"></span>
+                    }
+
+                    <span class="se-chip-label">{{ chip.label }}</span>
+
+                    <span class="se-chip-count">{{ chip.count }}</span>
+
+                </button>
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+        <div canvasBody>
+
+            <app-list-table
+
+                [columns]="tableColumns"
+
+                [rows]="tableRows"
+
+                [serialOffset]="(currentPage - 1) * pageSize"
+
+                [loading]="tableLoading"
+
+                [error]="tableFailed"
+
+                [actions]="tableActions"
+
+                [rowActions]="tableRowActions"
+
+                (rowAction)="onRowAction($event)"
+
+                (view)="view($event)"
+
+                (edit)="edit($event)"
+
+                (delete)="delete($event)"
+
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+
+        <app-pagination
+
+            canvasFooter
+
+            [totalRecords]="tableTotal"
+
+            [currentPage]="currentPage"
+
+            [pageSize]="pageSize"
+
+            (pageChange)="onPageChange($event)"
+
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+
+    <!-- =====================================================
+         SUMMARY (search applied; tab and interest not)
+    ====================================================== -->
+
+    @if (!isRides && summaryTotal > 0)
+    {
+        <div class="ics-summary">
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Total</span>
+                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Open</span>
+                <b class="ics-summary-value">{{ summaryText(countOf('Open')) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Due Today</span>
+                <b class="ics-summary-value">{{ summaryText(countOf('Due')) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Lapsed</span>
+                <b class="ics-summary-value">{{ summaryText(countOf('Lapsed')) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Matured</span>
+                <b class="ics-summary-value ics-ok">{{ summaryText(countOf('Matured')) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Suspended</span>
+                <b class="ics-summary-value ics-bad">{{ summaryText(countOf('Suspended')) }}</b>
+            </span>
+
+            <span class="ics-summary-note">
+                {{ summaryNote }}
+            </span>
+
+        </div>
+    }
+
+
+
+    <!-- =====================================================
+         HISTORY / UTILITIES
+    ====================================================== -->
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+    <!-- Log a call (Sales Follow-up) -->
+
+    <app-sales-follow-up-dialog
+
+        [enquiry]="callEnquiry"
+
+        (saved)="onCallSaved()"
+
+        (closed)="onCallClosed()">
+
+    </app-sales-follow-up-dialog>
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

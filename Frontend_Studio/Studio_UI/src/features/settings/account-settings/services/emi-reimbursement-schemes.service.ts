@@ -131,6 +131,9 @@ export class EmiReimbursementSchemesService
                     : 'Percent';
 
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             EmiReimbursementSchemeId:
                 num('EmiReimbursementSchemeId'),
 
@@ -225,7 +228,7 @@ export class EmiReimbursementSchemesService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<EmiReimbursementSchemes>
     {
@@ -305,9 +308,9 @@ export class EmiReimbursementSchemesService
         model:
             CreateEmiReimbursementSchemes
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -320,13 +323,16 @@ export class EmiReimbursementSchemesService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateEmiReimbursementSchemes
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -339,7 +345,7 @@ export class EmiReimbursementSchemesService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

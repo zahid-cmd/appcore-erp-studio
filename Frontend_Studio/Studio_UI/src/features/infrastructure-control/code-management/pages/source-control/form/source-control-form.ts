@@ -260,8 +260,8 @@ implements OnInit
 
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
 
 
@@ -531,7 +531,7 @@ implements OnInit
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -559,7 +559,7 @@ implements OnInit
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -572,14 +572,12 @@ implements OnInit
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -591,7 +589,7 @@ implements OnInit
         }
 
 
-        return 0;
+        return '';
     }
 
 
@@ -1269,7 +1267,9 @@ implements OnInit
 
         this.sourcecontrolservice
             .update(
-                model
+                this.entityId,
+
+model
             )
             .subscribe(
             {

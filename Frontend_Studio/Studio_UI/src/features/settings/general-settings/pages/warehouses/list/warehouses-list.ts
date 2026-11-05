@@ -322,6 +322,15 @@ implements OnInit
         WarehouseListItem[] =
     [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
 
     filteredWarehouses:
         WarehouseListItem[] =
@@ -704,6 +713,9 @@ implements OnInit
                     ??
                     0
                 ),
+
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
 
             CompanyId:
                 companyId,
@@ -1212,6 +1224,10 @@ implements OnInit
 
 
                     this.applyFilters();
+
+
+
+                    this.updateSummary();
 
 
                     this.loading =
@@ -1934,7 +1950,7 @@ implements OnInit
         [
             'view',
 
-            item.WarehouseId
+            item.PublicId
         ],
         {
             relativeTo:
@@ -1958,7 +1974,7 @@ implements OnInit
         [
             'edit',
 
-            item.WarehouseId
+            item.PublicId
         ],
         {
             relativeTo:
@@ -1987,7 +2003,7 @@ implements OnInit
                 void =>
             {
                 this.warehousesService
-                    .delete(item.WarehouseId)
+                    .delete(item.PublicId ?? '')
                     .subscribe(
                     {
                         next:
@@ -2284,4 +2300,32 @@ implements OnInit
         this.historyOpened =
             false;
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.warehouses ?? [];
+
+        const active =
+            all.filter(x => !!x?.IsActive).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

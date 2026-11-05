@@ -330,7 +330,7 @@ export class LoginPage2
         void
     {
         this.subOrdinateComponentsService
-            .getById(
+            .getByInternalId(
                 this.backgroundImageComponentId
             )
             .subscribe(

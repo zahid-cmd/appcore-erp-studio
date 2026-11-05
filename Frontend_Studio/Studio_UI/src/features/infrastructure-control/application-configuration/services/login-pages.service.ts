@@ -92,7 +92,7 @@ export class LoginPagesService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<LoginPages>
     {
@@ -157,13 +157,16 @@ export class LoginPagesService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateLoginPages
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -178,7 +181,7 @@ export class LoginPagesService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -226,7 +229,7 @@ export class LoginPagesService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

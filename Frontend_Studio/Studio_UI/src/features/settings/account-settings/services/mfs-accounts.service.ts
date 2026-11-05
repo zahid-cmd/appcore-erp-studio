@@ -166,6 +166,10 @@ export function normalizeMFSAccount
         MFSAccountId:
             readNumber(item, 'MFSAccountId'),
 
+        // The id used in links and API calls (uuid v7)
+        PublicId:
+            readText(item, 'PublicId'),
+
         AccountSubGroupsId:
             readNumber(item, 'AccountSubGroupsId'),
 
@@ -327,7 +331,7 @@ export class MFSAccountsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<MFSAccount>
     {
@@ -355,9 +359,9 @@ export class MFSAccountsService
         model:
             CreateMFSAccount
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -370,13 +374,16 @@ export class MFSAccountsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateMFSAccount
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -389,7 +396,7 @@ export class MFSAccountsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -433,7 +440,7 @@ export class MFSAccountsService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

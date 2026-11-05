@@ -6,6 +6,8 @@
 export interface CardSetup
 {
     CardSetupId: number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     CardCode: string;
 

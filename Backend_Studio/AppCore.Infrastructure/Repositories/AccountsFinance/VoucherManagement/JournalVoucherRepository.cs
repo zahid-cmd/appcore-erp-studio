@@ -18,6 +18,8 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 
 using CustomerProfilesEntity =
     AppCore.Domain.Entities.Settings.ClientSettings.CustomerProfiles;
@@ -190,6 +192,180 @@ public class JournalVoucherRepository : IJournalVoucherRepository
         return rows
             .Select(ToDto)
             .ToList();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Type filter and search on the header (and its modes), the
+    // status counts for the summary line, then the tab, the total
+    // and one page (newest first unless a column is sorted).
+    //===========================================================
+
+    private static SortMap<JournalVoucher> ListSorts()
+    {
+        return new SortMap<JournalVoucher>("VoucherDateText", defaultDescending: true)
+            .Add("VoucherNo", x => x.VoucherNo)
+            .Add("VoucherDateText", x => x.VoucherDate)
+            .Add("BranchName", x => x.BranchName)
+            .Add("PartyText", x => x.PartyName)
+            .Add("TotalAmountText", x => x.TotalAmount)
+            .Add("GroupCountText", x => x.GroupCount)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.VoucherNo, followDirection: true);
+    }
+
+    // "25-10-2026" or "2026-10-25" -> that date (else null)
+    private static DateOnly? SearchDate
+    (
+        string text
+    )
+    {
+        string[] formats =
+            { "dd-MM-yyyy", "d-M-yyyy", "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd" };
+
+        return DateOnly.TryParseExact(
+                text,
+                formats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out DateOnly date)
+            ? date
+            : null;
+    }
+
+    public async Task<PagedResult<JournalVoucherDto>>
+        GetPagedAsync
+        (
+            VoucherPageRequest request
+        )
+    {
+        IQueryable<JournalVoucher> query =
+            _context
+                .Set<JournalVoucher>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+        //-------------------------------------------------------
+        // Type filter
+        //-------------------------------------------------------
+
+        string ledgerType =
+            (request.LedgerType ?? string.Empty).Trim();
+
+        if
+        (
+            ledgerType.Length > 0
+        )
+        {
+            query =
+                query.Where(x => x.LedgerType == ledgerType);
+        }
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains"; a typed date finds
+        // that voucher date)
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            DateOnly? date =
+                SearchDate(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        (date != null && x.VoucherDate == date) ||
+                        EF.Functions.ILike(x.VoucherNo, like) ||
+                        EF.Functions.ILike(x.BranchName, like) ||
+                        EF.Functions.ILike(x.LedgerType, like) ||
+                        EF.Functions.ILike(x.PartyName, like) ||
+                        EF.Functions.ILike(x.Narration, like) ||
+                        EF.Functions.ILike(x.Status, like)
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts : Total / Draft / Approved / Posted /
+        // Cancelled (type filter and search applied; not the tab)
+        //-------------------------------------------------------
+
+        var byStatus =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = byStatus.Sum(x => x.Count)
+            };
+
+        foreach (string status in new[] { "Draft", "Approved", "Posted", "Cancelled" })
+        {
+            summaryCounts[status] =
+                byStatus.Where(x => x.Status == status).Sum(x => x.Count);
+        }
+
+        //-------------------------------------------------------
+        // Status (the tab)
+        //-------------------------------------------------------
+
+        string tab =
+            (request.Status ?? string.Empty).Trim();
+
+        if
+        (
+            tab.Length > 0 &&
+            !string.Equals(tab, "all", StringComparison.OrdinalIgnoreCase)
+        )
+        {
+            query =
+                query.Where(x => x.Status == tab);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<JournalVoucher> rows =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        List<JournalVoucherDto> items =
+            rows
+                .Select(ToDto)
+                .ToList();
+
+        return new PagedResult<JournalVoucherDto>
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
     }
 
 
@@ -371,6 +547,7 @@ public class JournalVoucherRepository : IJournalVoucherRepository
         return new JournalVoucherDto
         {
             JournalVoucherId = x.JournalVoucherId,
+            PublicId = x.PublicId,
             VoucherNo = x.VoucherNo,
             VoucherDate = x.VoucherDate.ToString(DateFormat, CultureInfo.InvariantCulture),
             BranchId = x.BranchId,
@@ -1077,6 +1254,7 @@ public class JournalVoucherRepository : IJournalVoucherRepository
         return new JournalVoucherSavedDto
         {
             JournalVoucherId = entity.JournalVoucherId,
+            PublicId = entity.PublicId,
             VoucherNo = entity.VoucherNo
         };
     }
@@ -1688,5 +1866,32 @@ public class JournalVoucherRepository : IJournalVoucherRepository
                     &&
                     !x.IsDeleted
             );
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<JournalVoucher>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.JournalVoucherId)
+            .FirstOrDefaultAsync();
     }
 }

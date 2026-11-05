@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.Paging;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.Settings.ClientSettings;
@@ -19,6 +20,19 @@ namespace AppCore.API.Controllers.Settings.ClientSettings;
 
 //===============================================================
 // Supplier Profiles Controller
+//
+// A supplier is opened / changed by its Public Id (uuid), never
+// by the internal number :
+//
+//   GET    paged          the list page (one page, server side;
+//                         see SupplierProfilesPageRequest)
+//   GET    {publicId}     one supplier
+//   POST                  create -> its Public Id
+//   PUT    {publicId}     update
+//   DELETE {publicId}     delete
+//
+// GET (all) stays for the dropdowns / lookups / prints of other
+// pages.
 //===============================================================
 
 [ApiController]
@@ -64,6 +78,21 @@ public class SupplierProfilesController : ControllerBase
 
 
     //===========================================================
+    // Get Paged (the list page)
+    //===========================================================
+
+    [HttpGet("paged")]
+
+    public async Task<ActionResult<PagedResult<SupplierProfilesDto>>> GetPaged(
+        [FromQuery] SupplierProfilesPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new SupplierProfilesPageRequest()));
+    }
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 
@@ -87,16 +116,24 @@ public class SupplierProfilesController : ControllerBase
 
 
     //===========================================================
-    // Get By Id
+    // Get By Public Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
-    public async Task<ActionResult<SupplierProfilesDto>> GetById(
-        long id)
+    public async Task<ActionResult<SupplierProfilesDto>> GetByPublicId(
+        Guid publicId)
     {
+        long? id =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (id == null)
+        {
+            return NotFound();
+        }
+
         SupplierProfilesDto? supplier =
-            await _repository.GetByIdAsync(id);
+            await _repository.GetByIdAsync(id.Value);
 
         if (supplier == null)
         {
@@ -111,9 +148,10 @@ public class SupplierProfilesController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new supplier's Public Id
     [HttpPost]
 
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateSupplierProfilesDto dto)
     {
            long userId = this.CurrentUserId();
@@ -125,7 +163,10 @@ public class SupplierProfilesController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            SupplierProfilesDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch
         (
@@ -148,16 +189,24 @@ public class SupplierProfilesController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
+    // The supplier comes from the link's Public Id; a SupplierId
+    // in the body is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateSupplierProfilesDto dto)
     {
-        if (!await _repository.ExistsAsync(
-                dto.SupplierId))
+        long? id =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (id == null)
         {
             return NotFound();
         }
+
+        dto.SupplierId =
+            id.Value;
 
            long userId = this.CurrentUserId();
 
@@ -190,15 +239,21 @@ public class SupplierProfilesController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
-        if (!await _repository.ExistsAsync(id))
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
         {
             return NotFound();
         }
+
+        long id =
+            found.Value;
 
            long userId = this.CurrentUserId();
 
@@ -282,4 +337,4 @@ public class SupplierProfilesController : ControllerBase
                 "Client Settings",
                 "Supplier Profiles"));
     }
-}
+}

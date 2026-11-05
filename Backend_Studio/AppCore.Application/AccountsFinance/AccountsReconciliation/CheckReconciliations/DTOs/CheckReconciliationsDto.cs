@@ -26,6 +26,9 @@ public class CheckReconciliationDto
 
     public long PaymentId { get; set; }
 
+    // The payment line's uuid (print links)
+    public Guid PaymentPublicId { get; set; }
+
     // 0 until the first action
     public long CheckReconciliationId { get; set; }
 
@@ -281,7 +284,13 @@ public class CheckActionResultDto
     // Their ids (print)
     public List<long> VoucherIds { get; set; } = new();
 
+    // The same vouchers by uuid (print links)
+    public List<Guid> VoucherPublicIds { get; set; } = new();
+
     public long? DepositSlipId { get; set; }
+
+    // The slip by uuid (print link)
+    public Guid? DepositSlipPublicId { get; set; }
 
     public string DepositSlipNo { get; set; } = string.Empty;
 

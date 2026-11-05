@@ -106,6 +106,7 @@ import
     ReceivingPageConfig,
     ReceivingPurchase,
     ReceivingRack,
+    ReceivingShelf,
     ReceivingUnit,
     formatReceivingDate,
     formatReceivingQty,
@@ -120,6 +121,33 @@ import
     ReceivingService
 }
 from '../receiving.service';
+
+import
+{
+    RackManagementService
+}
+from '../../../../settings/product-settings/services/rack-management.service';
+
+import
+{
+    BinMapRack,
+    binItemType,
+    binKey,
+    mapBinFree,
+    mapBinItems,
+    mapFirstFree,
+    mapFreeBins,
+    mapRack,
+    mapRackFreeCount,
+    mapShelfItems
+}
+from '../../../../../shared/inventory/bin-availability';
+
+import
+{
+    binCode
+}
+from '../../../../../shared/inventory/storage-labels';
 
 
 //===============================================================
@@ -153,6 +181,7 @@ interface FormLine
 {
     PurchaseLineId:number;
     LineNo:number;
+    ProductId:number;
     ProductCode:string;
     ProductName:string;
     Unit:string;
@@ -164,11 +193,13 @@ interface FormLine
     Quantity:number;
     RackId:number | null;
     Shelf:number;
+    // The bin (the location)
+    Bin:number;
     SaveDefault:boolean;
     Notes:string;
     Units:UnitRow[];
-    // Default shelves of the product per warehouse
-    Shelves:{ WarehouseId:number; RackManagementId:number; ShelfNumber:number }[];
+    // Default place (rack · shelf · bin) of the product per warehouse
+    Shelves:ReceivingShelf[];
 }
 
 // Unit Desk (MB) : a working copy; Save writes it back
@@ -197,7 +228,7 @@ type UnitField =
 //   LEFT  : Receiving Information (No, Date, Warehouse, Purchase
 //           Invoice, Received By); Add <item> : a line of the
 //           invoice still in transit, the quantity received now,
-//           rack · shelf (SP / AC), notes. Add loads it into the
+//           rack · shelf · bin (SP / AC), notes. Add loads it into the
 //           summary on the right (MB : the bikes button on the
 //           line opens the Unit Desk for their numbers).
 //   RIGHT : Purchase Invoice facts, Remarks; Receiving Summary
@@ -235,6 +266,20 @@ export class ReceivingForm
 {
     private readonly service =
         inject(ReceivingService);
+
+    // The warehouse's rack map (free / held bins)
+    private readonly rackService =
+        inject(RackManagementService);
+
+    private binMap:
+        BinMapRack[] = [];
+
+    // The warehouse the map belongs to (0 = none loaded)
+    private binMapOf:
+        number = 0;
+
+    private binCall:
+        number = 0;
 
     private readonly route =
         inject(ActivatedRoute);
@@ -330,6 +375,10 @@ export class ReceivingForm
     shelfItems:
         Option[] = [];
 
+    // Free bins of the picked shelf
+    binItems:
+        Option[] = [];
+
     productItems:
         Option[] = [];
 
@@ -362,6 +411,9 @@ export class ReceivingForm
         number = 0;
 
     pickShelf:
+        number = 0;
+
+    pickBin:
         number = 0;
 
     pickDefault:
@@ -478,11 +530,11 @@ export class ReceivingForm
             String(user?.fullName || user?.displayName || '');
 
         const id =
-            Number(this.route.snapshot.paramMap.get('id')) || 0;
+            this.route.snapshot.paramMap.get('id') ?? '';
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
             this.isView = true;
@@ -500,7 +552,7 @@ export class ReceivingForm
     private loadReceiving
     (
         id:
-            number
+            string
     ):
         void
     {
@@ -788,6 +840,7 @@ export class ReceivingForm
                     ({
                         PurchaseLineId:x.PurchaseLineId,
                         LineNo:x.LineNo,
+                        ProductId:x.ProductId,
                         ProductCode:x.ProductCode,
                         ProductName:x.ProductName,
                         Unit:x.Unit,
@@ -799,6 +852,7 @@ export class ReceivingForm
                         Quantity:0,
                         RackId:null,
                         Shelf:0,
+                        Bin:0,
                         SaveDefault:false,
                         Notes:'',
                         Units:[],
@@ -817,23 +871,187 @@ export class ReceivingForm
         this.updateDateLimits();
     }
 
+    // Racks of the warehouse; badge = free bins for the picked
+    // product
     private buildRackItems():
         void
     {
+        const taken =
+            this.takenBins(this.pick);
+
+        const productId =
+            this.pick?.ProductId ?? 0;
+
         this.rackItems =
             (this.defaults?.Racks ?? [])
                 .filter(x => x.WarehouseId === this.warehouseId)
-                .map(x => ({ label:`${x.Code}${x.Name && x.Name !== x.Code ? ' · ' + x.Name : ''}`, value:x.Id }));
+                .map
+                (
+                    x =>
+                    ({
+                        label:`${x.Code}${x.Name && x.Name !== x.Code ? ' · ' + x.Name : ''}${x.ZoneCode ? ' · ' + x.ZoneCode : ''}`,
+                        value:x.Id,
+                        count:String(mapRackFreeCount(this.binRack(x.Id), this.itemType, productId, taken))
+                    })
+                );
+
+        this.loadBinMap();
+    }
+
+    // The rack map of the warehouse (who holds which bin), once
+    // per warehouse; a late answer of an older warehouse is
+    // ignored
+    private loadBinMap():
+        void
+    {
+        if
+        (
+            !this.page.hasShelves || !this.warehouseId || this.binMapOf === this.warehouseId
+        )
+        {
+            return;
+        }
+
+        const call =
+            ++this.binCall;
+
+        const warehouseId =
+            this.warehouseId;
+
+        this.binMapOf = warehouseId;
+
+        this.binMap = [];
+
+        this.rackService
+            .getWarehouseBins(warehouseId, { activeOnly:true })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    map =>
+                    {
+                        if
+                        (
+                            call !== this.binCall
+                        )
+                        {
+                            return;
+                        }
+
+                        this.binMap = map;
+
+                        this.buildRackItems();
+
+                        this.buildShelfItems();
+
+                        this.refreshView();
+                    },
+                error:
+                    () =>
+                    {
+                        // No map : every bin is offered; the server
+                        // checks on post
+                        if
+                        (
+                            call === this.binCall
+                        )
+                        {
+                            this.binMapOf = 0;
+                        }
+                    }
+            });
+    }
+
+    // The item type of the page (BinOccupancy names)
+    private get itemType():
+        string
+    {
+        return binItemType(this.page.type);
+    }
+
+    // A rack of the map, or (map not loaded) the defaults' rack
+    // with every bin free
+    private binRack
+    (
+        rackId:
+            number | null
+    ):
+        BinMapRack | null
+    {
+        const fromMap =
+            mapRack(this.binMap, rackId ?? 0);
+
+        if
+        (
+            fromMap
+        )
+        {
+            return fromMap;
+        }
+
+        const rack =
+            this.rackById(rackId);
+
+        return rack
+            ? {
+                RackManagementId:rack.Id,
+                RackName:rack.Name,
+                ShelfCount:rack.ShelfCount,
+                Shelves:rack.Shelves.map(x => ({ ShelfNumber:x.ShelfNumber, ShelfLabel:x.ShelfLabel, BinCount:x.BinCount, Bins:[] }))
+            }
+            : null;
+    }
+
+    // Bins the added lines of OTHER products take (two lines of
+    // one product may share its bin)
+    private takenBins
+    (
+        line:
+            FormLine | null
+    ):
+        Set<string>
+    {
+        return new Set(
+            this.lines
+                .filter
+                (
+                    x =>
+                        x.Added
+                        && x !== line
+                        && x.ProductId !== (line?.ProductId ?? 0)
+                        && !!x.RackId
+                        && x.Shelf > 0
+                        && x.Bin > 0
+                )
+                .map(x => binKey(x.RackId ?? 0, x.Shelf, x.Bin)));
     }
 
     private buildShelfItems():
         void
     {
-        const count =
-            this.rackById(this.pickRackId)?.ShelfCount ?? 0;
-
         this.shelfItems =
-            Array.from({ length:count }, (_, i) => ({ label:`Shelf ${i + 1}`, value:i + 1 }));
+            mapShelfItems(
+                this.binRack(this.pickRackId),
+                this.rackById(this.pickRackId)?.Name ?? '',
+                this.itemType,
+                this.pick?.ProductId ?? 0,
+                this.takenBins(this.pick));
+
+        this.buildBinItems();
+    }
+
+    private buildBinItems():
+        void
+    {
+        this.binItems =
+            mapBinItems(
+                this.binRack(this.pickRackId),
+                this.rackById(this.pickRackId)?.Name ?? '',
+                this.pickShelf,
+                this.itemType,
+                this.pick?.ProductId ?? 0,
+                this.takenBins(this.pick),
+                this.pickBin);
     }
 
     // Product dropdown : lines not yet added; summary : added
@@ -870,7 +1088,7 @@ export class ReceivingForm
             : null;
     }
 
-    // The product's default rack · shelf in this warehouse
+    // The product's default rack · shelf · bin in this warehouse
     private placeDefault
     (
         line:
@@ -893,6 +1111,8 @@ export class ReceivingForm
 
         line.Shelf = shelf ? shelf.ShelfNumber : 0;
 
+        line.Bin = shelf ? (shelf.BinNumber || 1) : 0;
+
         line.SaveDefault = false;
     }
 
@@ -910,7 +1130,7 @@ export class ReceivingForm
             shelf ? this.rackById(shelf.RackManagementId) : null;
 
         return rack && shelf
-            ? `${rack.Code}${shelf.ShelfNumber ? ' · Shelf ' + shelf.ShelfNumber : ''}`
+            ? (shelf.BinCode || binCode(rack.Name, shelf.ShelfNumber, shelf.BinNumber || 1))
             : '';
     }
 
@@ -925,7 +1145,7 @@ export class ReceivingForm
             this.rackById(line.RackId);
 
         return rack
-            ? `${rack.Code}${line.Shelf ? ' · Shelf ' + line.Shelf : ''}`
+            ? (binCode(rack.Name, line.Shelf, line.Bin) || rack.Code)
             : '—';
     }
 
@@ -950,6 +1170,8 @@ export class ReceivingForm
 
         this.pickShelf = 0;
 
+        this.pickBin = 0;
+
         this.pickDefault = false;
 
         this.pickNotes = '';
@@ -959,6 +1181,10 @@ export class ReceivingForm
         this.lineError = '';
 
         this.shelfItems = [];
+
+        this.binItems = [];
+
+        this.buildRackItems();
     }
 
     // The line's values into the Add card
@@ -977,11 +1203,15 @@ export class ReceivingForm
 
         this.pickShelf = line.Shelf;
 
+        this.pickBin = line.Bin;
+
         this.pickDefault = line.SaveDefault;
 
         this.pickNotes = line.Notes;
 
         this.lineError = '';
+
+        this.buildRackItems();
 
         this.buildShelfItems();
     }
@@ -1020,28 +1250,50 @@ export class ReceivingForm
     {
         this.pickRackId = Number(value) || 0;
 
-        this.buildShelfItems();
+        // The first free bin of the rack (shelf-then-bin)
+        const first =
+            mapFirstFree(this.binRack(this.pickRackId), this.itemType, this.pick?.ProductId ?? 0, this.takenBins(this.pick));
 
-        const count =
-            this.shelfItems.length;
+        this.pickShelf = first?.shelf ?? 0;
 
-        if
-        (
-            this.pickShelf > count || (!this.pickShelf && count > 0)
-        )
-        {
-            this.pickShelf = count > 0 ? 1 : 0;
-        }
+        this.pickBin = first?.bin ?? 0;
 
         if
         (
             !this.pickRackId
         )
         {
-            this.pickShelf = 0;
-
             this.pickDefault = false;
         }
+
+        this.buildShelfItems();
+    }
+
+    onPickShelfChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.pickShelf = Number(value) || 0;
+
+        this.pickBin =
+            mapFreeBins(this.binRack(this.pickRackId), this.pickShelf, this.itemType, this.pick?.ProductId ?? 0, this.takenBins(this.pick))[0] ?? 0;
+
+        this.buildBinItems();
+    }
+
+    onPickBinChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.pickBin = Number(value) || 0;
+
+        this.buildBinItems();
     }
 
     // Quantity typed in the Add card : a number, not more than
@@ -1124,11 +1376,45 @@ export class ReceivingForm
             this.page.hasShelves && this.defaults?.ShelfRequired && !this.pickRackId
         )
         {
-            this.lineError = 'Choose the rack and shelf (System Configuration : shelf required).';
+            this.lineError = 'Choose the rack, shelf and bin (System Configuration : shelf required).';
 
             this.refreshView();
 
             return;
+        }
+
+        // A place : rack + shelf + a free bin (one item per bin)
+        if
+        (
+            this.page.hasShelves && this.pickRackId
+        )
+        {
+            const rack =
+                this.binRack(this.pickRackId);
+
+            if
+            (
+                !rack || !this.pickShelf || !this.pickBin
+            )
+            {
+                this.lineError = 'Choose the shelf and bin (or no rack).';
+
+                this.refreshView();
+
+                return;
+            }
+
+            if
+            (
+                !mapBinFree(rack, this.pickShelf, this.pickBin, this.itemType, line.ProductId, this.takenBins(line))
+            )
+            {
+                this.lineError = `Bin ${binCode(rack.RackName, this.pickShelf, this.pickBin)} holds another item or another line uses it (one item per bin). Choose a free bin.`;
+
+                this.refreshView();
+
+                return;
+            }
         }
 
         line.Added = true;
@@ -1138,6 +1424,8 @@ export class ReceivingForm
         line.RackId = this.page.hasShelves && this.pickRackId ? this.pickRackId : null;
 
         line.Shelf = line.RackId ? this.pickShelf : 0;
+
+        line.Bin = line.RackId ? this.pickBin : 0;
 
         line.SaveDefault = !!line.RackId && this.pickDefault;
 
@@ -1192,7 +1480,7 @@ export class ReceivingForm
                 missing
             )
             {
-                this.toast.warning('Rack Needed', `${missing.ProductName} has no default place here : double-click it to choose the rack and shelf.`);
+                this.toast.warning('Rack Needed', `${missing.ProductName} has no default place here : double-click it to choose the rack, shelf and bin.`);
             }
         }
     }
@@ -1856,7 +2144,44 @@ export class ReceivingForm
                 missing
             )
             {
-                return { text:`${missing.ProductName} : choose the rack and shelf (double-click the line).` };
+                return { text:`${missing.ProductName} : choose the rack, shelf and bin (double-click the line).` };
+            }
+        }
+
+        // One item per bin : two products never on one bin
+        if
+        (
+            this.page.hasShelves
+        )
+        {
+            const seen =
+                new Map<string, FormLine>();
+
+            for (const x of lines)
+            {
+                if
+                (
+                    !x.RackId || !x.Shelf
+                )
+                {
+                    continue;
+                }
+
+                const key =
+                    binKey(x.RackId, x.Shelf, x.Bin || 1);
+
+                const other =
+                    seen.get(key);
+
+                if
+                (
+                    other && other.ProductId !== x.ProductId
+                )
+                {
+                    return { text:`${x.ProductName} and ${other.ProductName} are on one bin ${this.rackText(x)} (one item per bin) : double-click a line to move it.` };
+                }
+
+                seen.set(key, x);
             }
         }
 
@@ -1954,6 +2279,7 @@ export class ReceivingForm
                             Quantity:x.Quantity,
                             RackManagementId:this.page.hasShelves ? x.RackId : null,
                             ShelfNumber:this.page.hasShelves && x.RackId ? x.Shelf : 0,
+                            BinNumber:this.page.hasShelves && x.RackId && x.Shelf ? (x.Bin || 1) : 0,
                             SaveAsDefault:this.page.hasShelves && !!x.RackId && x.SaveDefault,
                             ShortNotes:x.Notes.trim()
                         })
@@ -1971,7 +2297,8 @@ export class ReceivingForm
 
                         this.toast.success('Received', `${saved.ReceivingNo} posted : the stock is on hand.`);
 
-                        this.router.navigate([this.page.route, 'view', saved.ReceivingId]);
+                        // After an action the form closes : back to the list
+                        this.router.navigate([this.page.route, 'list']);
                     },
 
                 error:
@@ -2029,7 +2356,7 @@ export class ReceivingForm
 
         const url =
             this.router.serializeUrl(
-                this.router.createUrlTree(['/print-viewer', this.page.printKey, this.receiving.ReceivingId])
+                this.router.createUrlTree(['/print-viewer', this.page.printKey, this.receiving.PublicId])
             );
 
         const tab =
@@ -2092,7 +2419,8 @@ export class ReceivingForm
 
                         this.toast.success('Cancelled', `${receiving.ReceivingNo} cancelled : the stock is back in transit.`);
 
-                        this.loadReceiving(receiving.ReceivingId);
+                        // After an action the form closes : back to the list
+                        this.router.navigate([this.page.route, 'list']);
                     },
 
                 error:

@@ -23,6 +23,8 @@ export interface ScheduledService
 {
     ScheduledServiceId:
         number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     //===========================================================
     // Service Policy position (read only)

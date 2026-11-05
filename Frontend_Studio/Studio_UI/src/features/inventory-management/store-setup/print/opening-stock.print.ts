@@ -5,7 +5,7 @@
 //   /print-viewer/opening-stock/<openingStockId>
 //
 // Portrait : SL · Product (code · batch) · Quantity · Unit Cost ·
-// Value · Sale Price · [Rack · Shelf]; motor bikes : the bikes
+// Value · [VAT] · MRP (the sale price) · [Location (bin)]; motor bikes : the bikes
 // (chassis / engine / key / battery) under their line. The
 // journal (Dr Inventory / Cr the credit ledger) under the total.
 // Signature line at the end.
@@ -144,13 +144,13 @@ export const OPENING_STOCK_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<OpeningStockPrintData>
     {
         const doc =
             await firstValueFrom(
-                injector.get(OpeningStockService).getById(id)
+                injector.get(OpeningStockService).getById(String(id))
             );
 
         return {
@@ -351,9 +351,8 @@ function noteHtml
         ['Unit Cost', '22mm', 'vd-r'],
         ['Value', '25mm', 'vd-r'],
         ...(vat ? [['VAT', '20mm', 'vd-r']] as [string, string, string][] : []),
-        ['MRP', '20mm', 'vd-r'],
-        ['Sale Price', '20mm', 'vd-r'],
-        ...(shelves ? [['Rack · Shelf', '24mm', '']] as [string, string, string][] : []),
+        ['MRP', '22mm', 'vd-r'],
+        ...(shelves ? [['Location', '22mm', '']] as [string, string, string][] : []),
         // Landscape : the notes get their own column
         ...(wide ? [['Notes', '22%', '']] as [string, string, string][] : [])
     ];
@@ -380,9 +379,10 @@ function noteHtml
                             }</td></tr>`
                             : '';
 
+                    // The bin code A-03-05 (the server's label)
                     const rack =
                         line.RackCode
-                            ? `${line.RackCode}${line.ShelfNumber ? ' · Shelf ' + line.ShelfNumber : ''}`
+                            ? (line.BinCode || line.ShelfLabel || line.RackCode)
                             : '—';
 
                     const sub =
@@ -398,7 +398,6 @@ function noteHtml
   <td class="vd-r rp-strong">${e(formatOpeningMoney(line.LineValue))}</td>
   ${vat ? `<td class="vd-r rp-soft">${line.VatAmount ? e(formatOpeningMoney(line.VatAmount)) : '—'}</td>` : ''}
   <td class="vd-r rp-soft">${line.Mrp ? e(formatOpeningMoney(line.Mrp)) : '—'}</td>
-  <td class="vd-r rp-soft">${line.SalePrice ? e(formatOpeningMoney(line.SalePrice)) : '—'}</td>
   ${shelves ? `<td class="rp-soft">${e(rack)}</td>` : ''}
   ${wide ? `<td class="rp-soft">${e(line.ShortNotes)}</td>` : ''}
 </tr>${bikes}`;
@@ -415,7 +414,7 @@ function noteHtml
   <i>Cr</i><b class="op-cr">${e(d.LedgerName)} · ${e(d.LedgerCode)}</b><span></span><span>${e(formatOpeningMoney(d.TotalValue + d.TotalVat))}</span>
 </div>`;
 
-    return `<section class="pv-flow${wide ? ' pv-landscape' : ''}" data-watermark=""${d.Status === 'Cancelled' ? 'CANCELLED' : d.Status === 'Draft' ? 'DRAFT' : ''}">
+    return `<section class="pv-flow${wide ? ' pv-landscape' : ''}" data-watermark="${d.Status === 'Cancelled' ? 'CANCELLED' : d.Status === 'Draft' ? 'DRAFT' : ''}">
 <div class="pv-run-head">
 ${openingHead(kit, `Opening Stock · ${info.title}`, d.OpeningNo, d.OpeningDate, d.OpeningDate,
     [
@@ -435,12 +434,12 @@ ${d.Status === 'Cancelled' ? `<div class="rp-cancel">CANCELLED ${e(kit.date(d.Ca
   <thead><tr>${cols.map(x => `<th class="${x[2]}">${e(x[0])}</th>`).join('')}</tr></thead>
   <tbody>${body}</tbody>
   <tfoot>
-    <tr class="rp-total"><td colspan="2" class="vd-r">Total · ${d.Lines.length} line${d.Lines.length === 1 ? '' : 's'}</td><td class="vd-r">${e(formatOpeningQty(d.TotalQuantity))}</td><td></td><td class="vd-r">${e(formatOpeningMoney(d.TotalValue))}</td>${vat ? `<td class="vd-r">${e(formatOpeningMoney(d.TotalVat))}</td>` : ''}<td></td><td></td>${shelves ? '<td></td>' : ''}${wide ? '<td></td>' : ''}</tr>
+    <tr class="rp-total"><td colspan="2" class="vd-r">Total · ${d.Lines.length} line${d.Lines.length === 1 ? '' : 's'}</td><td class="vd-r">${e(formatOpeningQty(d.TotalQuantity))}</td><td></td><td class="vd-r">${e(formatOpeningMoney(d.TotalValue))}</td>${vat ? `<td class="vd-r">${e(formatOpeningMoney(d.TotalVat))}</td>` : ''}<td></td>${shelves ? '<td></td>' : ''}${wide ? '<td></td>' : ''}</tr>
   </tfoot>
 </table>
 ${journal}
 ${d.Remarks ? `<div class="rp-note"><b>Remarks :</b> ${e(d.Remarks)}</div>` : ''}
-<div class="rp-note">Stock counted and found in ${e(d.WarehouseName)} on ${e(kit.date(d.OpeningDate))}, taken in at the cost above (excluding VAT). MRP and sale price include VAT.</div>
+<div class="rp-note">Stock counted and found in ${e(d.WarehouseName)} on ${e(kit.date(d.OpeningDate))}, taken in at the cost above (excluding VAT). MRP includes VAT and is the sale price.</div>
 </div>
 <div class="pv-end">
 <div class="rp-sign">
@@ -489,7 +488,7 @@ function noteSheet
             [bold('Warehouse'), d.WarehouseName, null, bold('Credit Ledger'), `${d.LedgerName} (${d.LedgerCode})`],
             [bold('Status'), d.Status, null, bold('Cost Basis'), d.CostBasis === 'MRP' ? 'MRP less margin (excl. VAT)' : 'Unit cost (excl. VAT)'],
             [],
-            [bold('SL'), bold('Code'), bold('Product'), bold('Batch'), bold('Quantity'), bold('Unit Cost'), bold('Value'), bold('VAT'), bold('MRP'), bold('Sale Price'), bold('Rack · Shelf'), bold('Notes')],
+            [bold('SL'), bold('Code'), bold('Product'), bold('Batch'), bold('Quantity'), bold('Unit Cost'), bold('Value'), bold('VAT'), bold('MRP'), bold('Location'), bold('Notes')],
             ...d.Lines.map
             (
                 (line, index): ExcelCell[] =>
@@ -503,8 +502,7 @@ function noteSheet
                     line.LineValue,
                     line.VatAmount,
                     line.Mrp,
-                    line.SalePrice,
-                    line.RackCode ? `${line.RackCode}${line.ShelfNumber ? ' · Shelf ' + line.ShelfNumber : ''}` : '',
+                    line.RackCode ? (line.BinCode || line.ShelfLabel || line.RackCode) : '',
                     line.ShortNotes
                 ]
             ),

@@ -47,6 +47,20 @@
 
         </button>
 
+
+        <button
+            *ngIf="isCommand4Visible()"
+            type="button"
+            class="command-button"
+            [appTooltip]="command4Title || command4Text"
+            (click)="onCommand4Click()">
+
+            <i [class]="command4Icon"></i>
+
+            <span>{{ command4Text }}</span>
+
+        </button>
+
     </div>
 
 
@@ -85,4 +99,4 @@
 
     </div>
 
-</div>
+</div>

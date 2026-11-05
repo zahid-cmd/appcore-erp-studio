@@ -165,6 +165,27 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : SalesInvoicesSp
+
+using AppCore.Application.SalesOperations.SparePartsLubricantSales;
+using AppCore.Infrastructure.Configurations.SalesOperations.SparePartsLubricantSales;
+
+// AUTO-END : SalesInvoicesSp
+
+// AUTO-BEGIN : SalesEnquiries
+
+using AppCore.Application.EnquiryManagement.EnquiryProfiles;
+using AppCore.Infrastructure.Configurations.EnquiryManagement.EnquiryProfiles;
+
+// AUTO-END : SalesEnquiries
+
+// AUTO-BEGIN : ProductTransfer
+
+using AppCore.Application.InventoryManagement.StockMovement;
+using AppCore.Infrastructure.Configurations.InventoryManagement.StockMovement;
+
+// AUTO-END : ProductTransfer
+
 // AUTO-BEGIN : OpeningStock
 
 using AppCore.Application.InventoryManagement.StoreSetup;
@@ -789,10 +810,121 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Enquiry Setup Repository (manual, hand-written page)
+        //
+        // Enquiry Management › Enquiry Profiles › Enquiry Setup :
+        // Source of Enquiry, Enquiry Status, Interest Levels,
+        // Follow-up Methods, Lost Reasons (one table, five tabs).
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.EnquiryManagement.EnquiryProfiles.IEnquirySetupRepository,
+            AppCore.Infrastructure.Repositories.EnquiryManagement.EnquiryProfiles.EnquirySetupRepository
+        >();
+
+        //=======================================================
+        // Data Management (manual, AppCore Admin only)
+        //
+        // Infrastructure Control › Data Management : Database
+        // Backups, Data Reset, Reset History.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.Platform.DataManagement.IDataManagementService,
+            AppCore.Infrastructure.Platform.DataManagement.DataManagementService
+        >();
+
+        //=======================================================
+        // Barcode Management Repository (manual, utility page)
+        //
+        // Inventory Management › Pricing & Labels › Barcode
+        // Management : labels of the stock batches, hang-tags of
+        // the motor bikes, print history.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.InventoryManagement.PricingLabels.IBarcodeManagementRepository,
+            AppCore.Infrastructure.Repositories.InventoryManagement.PricingLabels.BarcodeManagementRepository
+        >();
+
+        //=======================================================
         // AUTO REGISTER SERVICES
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : BikeModels
+
+        services.AddScoped
+        <
+            IBikeModelsRepository,
+            BikeModelsRepository
+        >();
+
+        // AUTO-END : BikeModels
+
+        // AUTO-BEGIN : SalesInvoicesSp
+
+        services.AddScoped
+        <
+            ISalesInvoicesSpRepository,
+            SalesInvoicesSpRepository
+        >();
+
+        // AUTO-END : SalesInvoicesSp
+
+        // AUTO-BEGIN : ServiceEnquiries
+
+        services.AddScoped
+        <
+            IServiceEnquiriesRepository,
+            ServiceEnquiriesRepository
+        >();
+
+        // AUTO-END : ServiceEnquiries
+
+        // AUTO-BEGIN : SalesEnquiries
+
+        services.AddScoped
+        <
+            ISalesEnquiriesRepository,
+            SalesEnquiriesRepository
+        >();
+
+        // AUTO-END : SalesEnquiries
+
+        // AUTO-BEGIN : MassStoring
+
+        services.AddScoped
+        <
+            IMassStoringRepository,
+            MassStoringRepository
+        >();
+
+        // AUTO-END : MassStoring
+
+        // AUTO-BEGIN : ProductTransfer
+
+        services.AddScoped
+        <
+            IProductTransferRepository,
+            ProductTransferRepository
+        >();
+
+        // AUTO-END : ProductTransfer
+
+        // AUTO-BEGIN : PriceAdjustment
+
+        services.AddScoped
+        <
+            IPriceAdjustmentRepository,
+            PriceAdjustmentRepository
+        >();
+
+        // AUTO-END : PriceAdjustment
 
         // AUTO-BEGIN : OpeningStock
 
@@ -1928,6 +2060,32 @@ public static class DependencyInjection
 
 
         //=======================================================
+        // Public Website (api/public/website, anonymous)
+        //
+        // Company, branches and bike models for the company's
+        // public website. Fully qualified : no using lines needed.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.Public.Website.IPublicWebsiteRepository,
+            AppCore.Infrastructure.Repositories.Public.Website.PublicWebsiteRepository
+        >();
+
+
+        //=======================================================
+        // Website Configuration (Settings › General Settings,
+        // custom page). Fully qualified : no using lines needed.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.Settings.GeneralSettings.IWebsiteConfigurationRepository,
+            AppCore.Infrastructure.Repositories.Settings.GeneralSettings.WebsiteConfigurationRepository
+        >();
+
+
+        //=======================================================
         // Development Management Engines
         //=======================================================
 
@@ -1951,9 +2109,32 @@ public static class DependencyInjection
 
 
         //=======================================================
+        // Model Onboarding (custom page, outside Code Sync)
+        //=======================================================
+
+        services.AddScoped
+        <
+            IModelOnboardingService,
+            ModelOnboardingService
+        >();
+
+
+        //=======================================================
+        // Parts & Accessories Onboarding (custom page, outside
+        // Code Sync)
+        //=======================================================
+
+        services.AddScoped
+        <
+            IPartsOnboardingService,
+            PartsOnboardingService
+        >();
+
+
+        //=======================================================
         // Return Services
         //=======================================================
 
         return services;
     }
-}
+}

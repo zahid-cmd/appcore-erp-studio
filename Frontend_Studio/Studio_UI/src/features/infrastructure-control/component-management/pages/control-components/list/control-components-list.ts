@@ -573,7 +573,7 @@ implements OnInit
         (
             [
                 'edit',
-                item.id
+                item.publicId
             ],
 
             {
@@ -607,7 +607,7 @@ implements OnInit
                 this.controlcomponentsservice
                     .delete
                     (
-                        item.id
+                        item.publicId ?? ''
                     )
                     .subscribe
                     ({
@@ -864,4 +864,44 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.controlcomponentses ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.controlcomponentses ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

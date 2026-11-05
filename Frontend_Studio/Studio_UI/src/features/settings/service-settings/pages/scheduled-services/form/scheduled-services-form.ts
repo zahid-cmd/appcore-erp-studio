@@ -324,8 +324,8 @@ implements OnInit, OnDestroy
         'add';
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
     //===========================================================
     // Page Header
@@ -522,7 +522,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -541,7 +541,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -553,13 +553,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -569,7 +567,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
@@ -580,7 +578,7 @@ implements OnInit, OnDestroy
         void
     {
         this.entityId =
-            0;
+            '';
 
         this.record =
             null;
@@ -626,7 +624,7 @@ implements OnInit, OnDestroy
                                         `${item.ServiceName} (${item.PolicyCode})`,
 
                                     value:
-                                        Number(item.ScheduledServiceId)
+                                        item.PublicId ?? ''
                                 })
                             );
 
@@ -684,15 +682,15 @@ implements OnInit, OnDestroy
         void
     {
         const id =
-            Number(this.unwrapValue(value) ?? 0);
+            String(this.unwrapValue(value) ?? '');
 
         if
         (
-            !(id > 0)
+            !id
         )
         {
             this.entityId =
-                0;
+                '';
 
             this.record =
                 null;
@@ -1322,7 +1320,9 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.scheduledServiceService.configure(
-                model
+                this.entityId,
+
+model
             ),
             this.minimumSaveDurationMs
         )

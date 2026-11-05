@@ -1,0 +1,1033 @@
+@import '../../../../../../shared/styles/app-form-page.css';
+
+/* =====================================================
+   RACK MANAGEMENT FORM
+   Rack Information · Shelves & Bins (table + mini rack
+   preview) · Assignment · Location Details & Status.
+   Compact, deep greys, AppCore scrollbar, no toasts.
+===================================================== */
+
+
+/* -----------------------------------------------------
+   GRID : Shelves & Bins and Assignment get more room
+----------------------------------------------------- */
+
+.rk-form ::ng-deep app-form-grid.rk-grid .form-grid
+{
+    grid-template-columns:
+        minmax(0, 0.95fr)
+        minmax(0, 1.45fr)
+        minmax(0, 1.15fr)
+        minmax(0, 0.85fr) !important;
+
+    gap:14px !important;
+}
+
+
+@media (max-width:1400px)
+{
+    .rk-form ::ng-deep app-form-grid.rk-grid .form-grid
+    {
+        grid-template-columns:minmax(0, 1fr) minmax(0, 1.4fr) !important;
+    }
+}
+
+
+.rk-form ::ng-deep .form-section-body
+{
+    gap:14px;
+}
+
+
+/* Loader while a saved rack loads */
+.rk-loading
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:100%;
+
+    height:100%;
+
+    min-height:320px;
+}
+
+
+/* -----------------------------------------------------
+   TOOLBAR : error line (no toasts)
+----------------------------------------------------- */
+
+.rk-toolbar-right
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    min-width:0;
+}
+
+
+.rk-error
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    max-width:680px;
+
+    height:30px;
+
+    padding:0 6px 0 12px;
+
+    border:1px solid #fecaca;
+
+    border-radius:999px;
+
+    background:#fef2f2;
+
+    color:#b42318;
+
+    font-size:13px;
+
+    font-weight:600;
+}
+
+
+.rk-error span
+{
+    min-width:0;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+
+.rk-error-x
+{
+    flex:0 0 auto;
+
+    width:22px;
+
+    height:22px;
+
+    border:0;
+
+    border-radius:999px;
+
+    background:transparent;
+
+    color:inherit;
+
+    cursor:pointer;
+}
+
+
+.rk-error-x:hover
+{
+    background:rgba(15, 23, 42, .08);
+}
+
+
+/* -----------------------------------------------------
+   SHARED BITS
+----------------------------------------------------- */
+
+.rk-field
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:5px;
+
+    min-width:0;
+}
+
+
+.rk-hint
+{
+    display:inline-flex;
+
+    align-items:flex-start;
+
+    gap:6px;
+
+    color:#475569;
+
+    font-size:12.5px;
+
+    line-height:1.4;
+}
+
+
+.rk-hint i
+{
+    margin-top:2px;
+
+    color:#94a3b8;
+
+    font-size:11px;
+}
+
+
+.rk-label
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    color:#1e293b;
+
+    font-size:13px;
+
+    font-weight:600;
+}
+
+
+.rk-label-star
+{
+    color:#b45309;
+
+    font-size:11px;
+}
+
+
+.rk-two
+{
+    display:grid;
+
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+
+    gap:12px;
+
+    align-items:end;
+}
+
+
+.rk-two ::ng-deep app-textbox,
+.rk-two ::ng-deep app-dropdown
+{
+    display:block;
+
+    min-width:0;
+}
+
+
+.rk-link
+{
+    padding:0 4px;
+
+    border:0;
+
+    background:none;
+
+    color:#1d4ed8;
+
+    font-size:12.5px;
+
+    font-weight:600;
+
+    cursor:pointer;
+}
+
+
+.rk-link:hover:not(:disabled)
+{
+    text-decoration:underline;
+}
+
+
+.rk-link:disabled
+{
+    color:#94a3b8;
+
+    cursor:default;
+}
+
+
+/* Quick fill : textbox + thin Fill button */
+.rk-fill
+{
+    display:grid;
+
+    grid-template-columns:minmax(0, 1fr) auto;
+
+    gap:6px;
+
+    align-items:end;
+}
+
+
+.rk-fill-btn
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    height:36px;
+
+    padding:0 12px;
+
+    border:1px solid #c7d2fe;
+
+    border-radius:8px;
+
+    background:#ffffff;
+
+    color:#1e3a8a;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    white-space:nowrap;
+}
+
+
+.rk-fill-btn i
+{
+    font-size:11px;
+
+    color:#6366f1;
+}
+
+
+.rk-fill-btn:hover:not(:disabled)
+{
+    border-color:#1e3a8a;
+
+    background:#f8faff;
+}
+
+
+.rk-fill-btn:disabled
+{
+    opacity:.55;
+
+    cursor:not-allowed;
+}
+
+
+/* -----------------------------------------------------
+   PER-SHELF TABLE
+----------------------------------------------------- */
+
+.rk-shelves
+{
+    max-height:236px;
+
+    overflow-y:auto;
+
+    overflow-x:hidden;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:10px;
+}
+
+
+.rk-table
+{
+    width:100%;
+
+    border-collapse:collapse;
+
+    color:#1e293b;
+
+    font-size:13.5px;
+}
+
+
+.rk-table thead th
+{
+    position:sticky;
+
+    top:0;
+
+    z-index:1;
+
+    height:32px;
+
+    padding:0 10px;
+
+    border-bottom:1px solid #e2e8f0;
+
+    background:#f8fafc;
+
+    color:#334155;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    letter-spacing:.3px;
+
+    text-align:left;
+
+    text-transform:uppercase;
+}
+
+
+.rk-table td
+{
+    height:36px;
+
+    padding:0 10px;
+
+    border-bottom:1px solid #f1f5f9;
+}
+
+
+.rk-table tbody tr:last-child td
+{
+    border-bottom:0;
+}
+
+
+.rk-col-bins,
+.rk-col-prime,
+.rk-col-used
+{
+    text-align:center !important;
+}
+
+
+.rk-col-prime,
+.rk-col-used
+{
+    width:64px;
+}
+
+
+.rk-col-bins
+{
+    width:124px;
+}
+
+
+.rk-shelf-label
+{
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    color:#1e293b;
+}
+
+
+.rk-row-prime td
+{
+    background:#fffbeb;
+}
+
+
+.rk-row-warn td
+{
+    background:#fef2f2;
+}
+
+
+.rk-warn-line td
+{
+    height:auto;
+
+    padding:4px 10px 7px;
+
+    background:#fef2f2;
+
+    color:#b42318;
+
+    font-size:12.5px;
+}
+
+
+.rk-warn-line i
+{
+    margin-right:5px;
+
+    font-size:11px;
+}
+
+
+/* Bins : − [n] + */
+.rk-stepper
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    height:28px;
+
+    border:1px solid #cbd5e1;
+
+    border-radius:8px;
+
+    background:#ffffff;
+
+    overflow:hidden;
+}
+
+
+.rk-step
+{
+    width:26px;
+
+    height:100%;
+
+    border:0;
+
+    background:transparent;
+
+    color:#475569;
+
+    font-size:10px;
+
+    cursor:pointer;
+}
+
+
+.rk-step:hover:not(:disabled)
+{
+    background:#eef2ff;
+
+    color:#1e3a8a;
+}
+
+
+.rk-step:disabled
+{
+    color:#cbd5e1;
+
+    cursor:default;
+}
+
+
+.rk-bin-input
+{
+    width:38px;
+
+    height:100%;
+
+    padding:0;
+
+    border:0;
+
+    border-left:1px solid #e2e8f0;
+
+    border-right:1px solid #e2e8f0;
+
+    outline:none;
+
+    background:transparent;
+
+    color:#1e293b;
+
+    font-family:inherit;
+
+    font-size:13.5px;
+
+    font-weight:600;
+
+    text-align:center;
+}
+
+
+.rk-bin-input:focus
+{
+    background:#f8faff;
+}
+
+
+.rk-bin-input:disabled
+{
+    color:#334155;
+}
+
+
+/* Prime toggle : thin star, amber when on */
+.rk-prime
+{
+    width:28px;
+
+    height:28px;
+
+    border:1px solid transparent;
+
+    border-radius:8px;
+
+    background:transparent;
+
+    color:#cbd5e1;
+
+    font-size:12px;
+
+    cursor:pointer;
+
+    transition:color .15s ease, border-color .15s ease;
+}
+
+
+.rk-prime:hover:not(:disabled)
+{
+    border-color:#fde68a;
+
+    color:#d97706;
+}
+
+
+.rk-prime.is-on
+{
+    color:#b45309;
+}
+
+
+.rk-prime:disabled
+{
+    cursor:default;
+}
+
+
+.rk-used
+{
+    color:#1e3a8a;
+
+    font-weight:700;
+}
+
+
+.rk-used-none
+{
+    color:#94a3b8;
+}
+
+
+/* -----------------------------------------------------
+   MINI RACK PREVIEW : shelves as rows, bins as cells
+----------------------------------------------------- */
+
+.rk-preview
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+    padding:10px 12px 10px;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:12px;
+
+    background:linear-gradient(180deg, #fbfcfe, #f6f8fc);
+}
+
+
+.rk-preview-head
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:8px;
+}
+
+
+.rk-preview-title
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:7px;
+
+    color:#1e293b;
+
+    font-size:13px;
+
+    font-weight:600;
+}
+
+
+.rk-preview-title i
+{
+    color:#6366f1;
+
+    font-size:12px;
+}
+
+
+.rk-preview-total
+{
+    color:#334155;
+
+    font-size:12.5px;
+
+    white-space:nowrap;
+}
+
+
+.rk-preview-total b
+{
+    color:#1e293b;
+}
+
+
+.rk-dotsep
+{
+    margin:0 5px;
+
+    color:#94a3b8;
+}
+
+
+.rk-preview-empty
+{
+    padding:8px 0;
+
+    color:#475569;
+
+    font-size:12.5px;
+}
+
+
+/* The rack frame : uprights left / right */
+.rk-rack
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:3px;
+
+    max-height:220px;
+
+    padding:6px 8px;
+
+    border-left:3px solid #94a3b8;
+
+    border-right:3px solid #94a3b8;
+
+    border-radius:4px;
+
+    background:#ffffff;
+
+    overflow-y:auto;
+
+    overflow-x:hidden;
+}
+
+
+.rk-rack-row
+{
+    display:grid;
+
+    grid-template-columns:22px minmax(0, 1fr);
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:2px 4px;
+
+    border-bottom:2px solid #cbd5e1;
+
+    border-radius:2px;
+}
+
+
+.rk-rack-row.is-prime
+{
+    background:#fef3c7;
+
+    border-bottom-color:#f59e0b;
+}
+
+
+.rk-rack-row.is-lost
+{
+    background:#fef2f2;
+
+    border-bottom-color:#fca5a5;
+}
+
+
+.rk-rack-no
+{
+    color:#475569;
+
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    font-size:11px;
+
+    font-weight:600;
+}
+
+
+.rk-rack-bins
+{
+    display:flex;
+
+    gap:2px;
+
+    min-width:0;
+}
+
+
+.rk-bin
+{
+    display:inline-block;
+
+    flex:1 1 0;
+
+    min-width:3px;
+
+    max-width:20px;
+
+    height:11px;
+
+    border:1px solid #94a3b8;
+
+    border-radius:2px;
+
+    background:#ffffff;
+}
+
+
+.rk-bin.is-used
+{
+    border-color:#1e3a8a;
+
+    background:#1e3a8a;
+}
+
+
+.rk-bin.is-lost
+{
+    border-color:#dc2626;
+
+    background:repeating-linear-gradient(45deg, #fecaca 0 2px, #ffffff 2px 4px);
+}
+
+
+/* Legend */
+.rk-legend
+{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:14px;
+
+    color:#334155;
+
+    font-size:12px;
+}
+
+
+.rk-legend span
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+}
+
+
+.rk-legend .rk-bin
+{
+    flex:0 0 auto;
+
+    width:12px;
+}
+
+
+.rk-legend-prime
+{
+    display:inline-block;
+
+    width:14px;
+
+    height:10px;
+
+    border-bottom:2px solid #f59e0b;
+
+    border-radius:2px;
+
+    background:#fef3c7;
+}
+
+
+/* -----------------------------------------------------
+   ASSIGNMENT : sub categories (thin multi-select)
+----------------------------------------------------- */
+
+.rk-subs,
+.rk-prime-range
+{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+    min-width:0;
+}
+
+
+.rk-prime-range
+{
+    padding-top:12px;
+
+    border-top:1px dashed #cbd5e1;
+}
+
+
+.rk-subs-head
+{
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:8px;
+}
+
+
+.rk-subs-tools
+{
+    display:inline-flex;
+
+    gap:4px;
+}
+
+
+.rk-subs-empty
+{
+    padding:8px 10px;
+
+    border:1px dashed #cbd5e1;
+
+    border-radius:8px;
+
+    color:#475569;
+
+    font-size:12.5px;
+}
+
+
+.rk-subs-list
+{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:6px;
+
+    max-height:168px;
+
+    padding:2px 4px 2px 0;
+
+    overflow-y:auto;
+}
+
+
+/* Outlined, never filled : selected = navy outline + check */
+.rk-sub
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    max-width:100%;
+
+    height:28px;
+
+    padding:0 11px;
+
+    border:1px solid #cbd5e1;
+
+    border-radius:999px;
+
+    background:#ffffff;
+
+    color:#334155;
+
+    font-family:inherit;
+
+    font-size:12.5px;
+
+    font-weight:500;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    cursor:pointer;
+
+    transition:border-color .15s ease, color .15s ease;
+}
+
+
+.rk-sub i
+{
+    color:#94a3b8;
+
+    font-size:10px;
+}
+
+
+.rk-sub:hover:not(:disabled)
+{
+    border-color:#94a3b8;
+
+    color:#1e293b;
+}
+
+
+.rk-sub.is-on
+{
+    border-color:#1e3a8a;
+
+    color:#1e3a8a;
+
+    font-weight:600;
+
+    box-shadow:inset 0 0 0 1px #1e3a8a;
+}
+
+
+.rk-sub.is-on i
+{
+    color:#1e3a8a;
+}
+
+
+.rk-sub:disabled
+{
+    cursor:default;
+}

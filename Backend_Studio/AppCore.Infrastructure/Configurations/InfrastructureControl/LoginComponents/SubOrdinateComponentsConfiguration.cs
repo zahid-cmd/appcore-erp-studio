@@ -51,6 +51,24 @@ public class SubOrdinateComponentsConfiguration
         );
 
 
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .HasColumnName("publicId")
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_SubOrdinateComponents_PublicId");
+
+
         builder.Property(
             x => x.Id
         )

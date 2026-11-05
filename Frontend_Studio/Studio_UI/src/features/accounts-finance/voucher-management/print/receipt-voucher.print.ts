@@ -143,7 +143,7 @@ export const RECEIPT_VOUCHER_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<RvPrintData>
     {
@@ -153,7 +153,7 @@ export const RECEIPT_VOUCHER_PRINT:
                 firstValueFrom(
                     injector
                         .get(ReceiptVoucherService)
-                        .getById(id)
+                        .getForPrint(id)
                 ),
                 firstValueFrom(
                     injector

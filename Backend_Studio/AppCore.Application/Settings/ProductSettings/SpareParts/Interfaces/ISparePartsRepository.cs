@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.Paging;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -12,6 +19,14 @@ namespace AppCore.Application.Settings.ProductSettings;
 public interface ISparePartsRepository
 {
     Task<List<SparePartsDto>> GetAllAsync();
+
+    // The list page : one page, filtered, sorted, with the counts
+    Task<PagedResult<SparePartsDto>> GetPagedAsync(
+        SparePartsPageRequest request);
+
+    // Public Id -> internal id (live parts only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 
     Task<SparePartsDto?> GetByIdAsync(
         long id);

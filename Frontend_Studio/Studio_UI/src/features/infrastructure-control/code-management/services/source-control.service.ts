@@ -176,12 +176,29 @@ export class SourceControlService
     getById
     (
         sourceControlId:
-            number
+            string
     ):
         Observable<SourceControl>
     {
         return this.http.get<SourceControl>(
             `${this.apiUrl}/${sourceControlId}`
+        );
+    }
+
+
+    //===========================================================
+    // Get By Internal Id (system use only)
+    //===========================================================
+
+    getByInternalId
+    (
+        id:
+            number
+    ):
+        Observable<SourceControl>
+    {
+        return this.http.get<SourceControl>(
+            `${this.apiUrl}/by-id/${id}`
         );
     }
 
@@ -213,13 +230,16 @@ export class SourceControlService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateSourceControl
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.sourceControlId}`,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -234,7 +254,7 @@ export class SourceControlService
     delete
     (
         sourceControlId:
-            number
+            string
     ):
         Observable<void>
     {
@@ -282,7 +302,7 @@ export class SourceControlService
     getEntityHistory
     (
         sourceControlId:
-            number
+            string
     ):
         Observable<any[]>
     {

@@ -197,6 +197,32 @@
 
     </app-page-canvas>
 
+    <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="fyr-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="fyr-summary-item">
+                    <span class="fyr-summary-label">{{ item.label }}</span>
+                    <b
+                        class="fyr-summary-value"
+                        [class.fyr-ok]="item.tone === 'ok'"
+                        [class.fyr-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="fyr-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
 
 
     <!-- =====================================================

@@ -1,0 +1,164 @@
+{
+  "_help": "Company website content. Replace every [ ... ] value. Photos: put files in public/assets/website/images/ and write them as assets/website/images/<file>. Empty photo = a placeholder is shown. stock: in-stock | few-left | pre-order | (empty). featured: true = shown in the top slider. defaultTheme: auto | light | deep. enabled: false sends visitors to the login page. price: a number without commas, or null with priceText (e.g. Call for price).",
+
+  "enabled": true,
+  "template": "website-page-1",
+  "defaultTheme": "auto",
+  "currency": "৳",
+
+  "company": {
+    "name": "[COMPANY NAME]",
+    "tagline": "[ONE-LINE TAGLINE]",
+    "about": "[TWO LINES ABOUT THE COMPANY]",
+    "brand": "[BRAND]",
+    "logoLight": "",
+    "logoDeep": "",
+    "address": "[ADDRESS]",
+    "hotline": "[HOTLINE]",
+    "whatsApp": "[WHATSAPP NUMBER]",
+    "email": "[EMAIL]",
+    "hours": "[OPENING HOURS]",
+    "openingHours": [
+      { "days": "[SATURDAY – THURSDAY]", "time": "[10:00 AM – 8:00 PM]" },
+      { "days": "[FRIDAY]", "time": "[3:00 PM – 8:00 PM]" }
+    ],
+    "mapQuery": ""
+  },
+
+  "social": {
+    "facebook": "",
+    "youtube": "",
+    "instagram": "",
+    "tiktok": ""
+  },
+
+  "payments": ["Cash", "bKash", "Nagad", "Visa", "Mastercard"],
+
+  "tags": ["Genuine parts", "Easy EMI", "Registration help", "Free servicing", "Exchange offer", "Expert mechanics"],
+
+  "bikes": [
+    {
+      "model": "[MODEL A]",
+      "category": "Commuter",
+      "tagline": "[ONE LINE THAT SELLS THIS MODEL]",
+      "engine": "[CC] cc",
+      "mileage": "[KM/L] km/l",
+      "topSpeed": "[KM/H] km/h",
+      "price": null,
+      "priceText": "[PRICE]",
+      "stock": "in-stock",
+      "featured": true,
+      "photo": "",
+      "colours": [
+        { "name": "[COLOUR 1]", "hex": "#b91c1c", "photo": "" },
+        { "name": "[COLOUR 2]", "hex": "#111827", "photo": "" }
+      ],
+      "highlights": ["[HIGHLIGHT 1]", "[HIGHLIGHT 2]", "[HIGHLIGHT 3]"],
+      "gallery": [],
+      "specs": [
+        { "title": "Engine", "rows": [
+          { "label": "Type", "value": "[ENGINE TYPE]" },
+          { "label": "Displacement", "value": "[CC] cc" },
+          { "label": "Max power", "value": "[PS @ RPM]" },
+          { "label": "Max torque", "value": "[NM @ RPM]" },
+          { "label": "Gears", "value": "[GEARS]" }
+        ] },
+        { "title": "Brakes & tyres", "rows": [
+          { "label": "Front brake", "value": "[DISC / DRUM]" },
+          { "label": "Rear brake", "value": "[DISC / DRUM]" },
+          { "label": "Tyres", "value": "[TUBELESS / TUBE]" }
+        ] },
+        { "title": "Dimensions", "rows": [
+          { "label": "Weight", "value": "[KG] kg" },
+          { "label": "Fuel tank", "value": "[L] L" },
+          { "label": "Seat height", "value": "[MM] mm" }
+        ] }
+      ]
+    },
+    {
+      "model": "[MODEL B]", "category": "Sports", "tagline": "[ONE LINE THAT SELLS THIS MODEL]",
+      "engine": "[CC] cc", "mileage": "[KM/L] km/l", "topSpeed": "[KM/H] km/h",
+      "price": null, "priceText": "[PRICE]", "stock": "few-left", "featured": true, "photo": "",
+      "colours": [], "highlights": [], "gallery": [], "specs": []
+    },
+    {
+      "model": "[MODEL C]", "category": "Scooter", "tagline": "[ONE LINE THAT SELLS THIS MODEL]",
+      "engine": "[CC] cc", "mileage": "[KM/L] km/l", "topSpeed": "[KM/H] km/h",
+      "price": null, "priceText": "Call for price", "stock": "pre-order", "featured": true, "photo": "",
+      "colours": [], "highlights": [], "gallery": [], "specs": []
+    }
+  ],
+
+  "offer": {
+    "title": "[OFFER TITLE]",
+    "text": "[OFFER DETAILS]",
+    "endsOn": ""
+  },
+
+  "why": {
+    "photo": "",
+    "points": [
+      { "title": "Authorised dealer", "text": "Genuine bikes with full company warranty and papers you can trust." },
+      { "title": "Easy EMI", "text": "Bank card EMI and company instalment plans to suit your budget." },
+      { "title": "Registration done for you", "text": "We handle the paperwork so you can ride home sooner." },
+      { "title": "Service for life", "text": "Trained mechanics and genuine parts at our service centres." }
+    ],
+    "stats": [
+      { "value": "[N]+", "label": "years in business" },
+      { "value": "[N]", "label": "branches" }
+    ]
+  },
+
+  "emi": {
+    "enabled": true,
+    "examplePrice": 250000,
+    "downPercents": [10, 20, 30, 50],
+    "months": [3, 6, 12, 18, 24],
+    "note": "Estimate only. The final instalment depends on the bank, card and charges."
+  },
+
+  "services": [
+    { "title": "Periodic servicing", "text": "[WHAT IS INCLUDED AND HOW TO BOOK]", "photo": "" },
+    { "title": "Genuine spare parts", "text": "[PARTS YOU KEEP IN STOCK]", "photo": "" },
+    { "title": "Lubricants", "text": "[BRANDS AND GRADES YOU SELL]", "photo": "" },
+    { "title": "Accessories", "text": "[HELMETS, COVERS, GUARDS ...]", "photo": "" }
+  ],
+
+  "branches": [
+    { "name": "[BRANCH 1 NAME]", "type": "Sales Center", "address": "[ADDRESS]", "phone": "[PHONE]", "hours": "[HOURS]", "mapUrl": "" },
+    { "name": "[BRANCH 2 NAME]", "type": "Service Center", "address": "[ADDRESS]", "phone": "[PHONE]", "hours": "[HOURS]", "mapUrl": "" }
+  ],
+
+  "faq": [
+    { "q": "Do you help with registration (BRTA)?", "a": "[YOUR ANSWER: documents needed and how long it takes]" },
+    { "q": "Which banks offer EMI on bikes?", "a": "[YOUR ANSWER: banks, cards and months you accept]" },
+    { "q": "What does the warranty cover?", "a": "[YOUR ANSWER: what is covered, for how long, conditions]" },
+    { "q": "How many free services do I get?", "a": "[YOUR ANSWER: number of free services and when]" },
+    { "q": "Can I exchange my old bike?", "a": "[YOUR ANSWER: exchange offer details]" }
+  ],
+
+  "policies": {
+    "warranty": {
+      "title": "Warranty",
+      "updatedOn": "[DATE]",
+      "sections": [
+        { "heading": "What is covered", "text": "[YOUR WARRANTY TEXT]" },
+        { "heading": "How to claim", "text": "[YOUR WARRANTY TEXT]" }
+      ]
+    },
+    "terms": {
+      "title": "Terms & conditions",
+      "updatedOn": "[DATE]",
+      "sections": [
+        { "heading": "[HEADING]", "text": "[YOUR TERMS TEXT]" }
+      ]
+    },
+    "privacy": {
+      "title": "Privacy policy",
+      "updatedOn": "[DATE]",
+      "sections": [
+        { "heading": "[HEADING]", "text": "[YOUR PRIVACY TEXT]" }
+      ]
+    }
+  }
+}

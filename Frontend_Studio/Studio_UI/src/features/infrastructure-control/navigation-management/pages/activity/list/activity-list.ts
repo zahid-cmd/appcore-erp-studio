@@ -837,7 +837,7 @@ implements OnInit
         this.router.navigate(
         [
             '/infrastructure-control/navigation-management/navigation-activities/view',
-            item.id
+            item.publicId
         ]);
     }
 
@@ -854,7 +854,7 @@ implements OnInit
         this.router.navigate(
         [
             '/infrastructure-control/navigation-management/navigation-activities/edit',
-            item.id
+            item.publicId
         ]);
     }
 
@@ -875,7 +875,7 @@ implements OnInit
             {
                 this.masterActivityService
                     .delete(
-                        item.id
+                        item.publicId ?? ''
                     )
                     .subscribe(
                     {
@@ -1044,5 +1044,46 @@ implements OnInit
     {
         this.historyOpened =
             false;
+    }
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.activities ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.activities ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 }

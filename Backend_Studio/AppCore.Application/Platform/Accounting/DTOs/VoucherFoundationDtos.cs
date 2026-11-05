@@ -146,4 +146,12 @@ public class VoucherPostingLine
     public string PartyType { get; set; } = string.Empty;
 
     public string PartyCode { get; set; } = string.Empty;
-}
+
+    // Branch of this line (e.g. Product Transfer : the receiving
+    // branch's inventory). Null / 0 : chosen by the posting
+    // service as before (the voucher's branch, or the branch of an
+    // exclusive money account). When the lines of a group then
+    // touch several branches, the Inter-Branch Current Account
+    // lines are added per branch.
+    public long? BranchId { get; set; }
+}

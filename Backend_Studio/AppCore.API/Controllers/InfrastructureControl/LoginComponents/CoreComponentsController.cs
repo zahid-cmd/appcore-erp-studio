@@ -72,13 +72,24 @@ public class CoreComponentsController
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
     public async Task<IActionResult> GetById
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         var entity =
             await _repository
                 .GetByIdAsync(
@@ -177,23 +188,30 @@ public class CoreComponentsController
     // Update
     //===========================================================
 
-    [HttpPut("{id:long}")]
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult> Update
     (
-        long id,
+        Guid publicId,
 
         [FromBody]
         UpdateCoreComponentsDto dto
     )
     {
-        if
-        (
-            id != dto.Id
-        )
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
         {
-            return BadRequest();
+            return NotFound();
         }
+
+        long id =
+            foundId.Value;
+
+        // The row comes from the link's Public Id
+        dto.Id =
+            id;
 
 
         var entity =
@@ -282,13 +300,24 @@ public class CoreComponentsController
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         var entity =
             await _repository
                 .GetByIdAsync(
@@ -364,13 +393,24 @@ public class CoreComponentsController
     // Get Entity History
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    [HttpGet("{publicId:guid}/history")]
 
     public async Task<IActionResult> GetEntityHistory
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         var history =
             await _repository
                 .GetEntityHistoryAsync(

@@ -141,6 +141,16 @@ public abstract class ReceivingControllerBase : ControllerBase
     }
 
 
+    [HttpGet("paged")]
+    public Task<IActionResult> GetPaged(
+        [FromQuery] ReceivingPageRequest request)
+    {
+        return Run(
+            async () => Ok(await _repository.GetPagedAsync(PageType, request ?? new ReceivingPageRequest())),
+            "Failed to load the receivings.");
+    }
+
+
     [HttpGet("defaults")]
     public Task<IActionResult> GetDefaults(
         [FromQuery] long branchId,
@@ -189,10 +199,21 @@ public abstract class ReceivingControllerBase : ControllerBase
     }
 
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
     public async Task<IActionResult> GetById(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         ReceivingDto? item =
             await _repository.GetByIdAsync(id);
 

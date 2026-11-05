@@ -1,0 +1,15 @@
+{
+  "FileName": "DefaultConnection_AppCoreERP-Studio_2026-11-05_051430.backup",
+  "ConnectionName": "DefaultConnection",
+  "Host": "100.117.11.97",
+  "Database": "AppCoreERP_Studio",
+  "SizeBytes": 1126196,
+  "Kind": "Manual",
+  "Note": "Template for new dealers",
+  "TakenBy": "Zahid",
+  "TakenDate": "2026-11-05T05:14:34.3550351+06:00",
+  "ToolsVersion": "18.6",
+  "TakenOn": "MY-VIVOBOOK",
+  "OnThisPc": true,
+  "OnOtherPc": false
+}

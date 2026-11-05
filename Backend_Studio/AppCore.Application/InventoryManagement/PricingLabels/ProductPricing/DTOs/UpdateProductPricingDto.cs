@@ -6,79 +6,11 @@ namespace AppCore.Application.InventoryManagement.PricingLabels;
 
 
 //===============================================================
-// UpdateProductPricingDto
+// Product Pricing : save a draft again (same fields as create)
 //===============================================================
 
 public class UpdateProductPricingDto
+    : CreateProductPricingDto
 {
-    //===========================================================
-    // Primary Key
-    //===========================================================
-
-    public long Id
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long ProductPricingId { get; set; }
 }

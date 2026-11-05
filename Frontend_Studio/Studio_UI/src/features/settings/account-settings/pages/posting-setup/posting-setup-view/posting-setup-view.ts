@@ -7,6 +7,8 @@ import
     Component,
     OnInit,
     ChangeDetectorRef,
+    HostListener,
+    OnDestroy,
     inject
 }
 from '@angular/core';
@@ -65,15 +67,9 @@ from '../../../../../../shared/components/utilities/command-center/command-cente
 
 import
 {
-    ToastService
+    OrbitLoaderComponent
 }
-from '../../../../../../shared/components/utilities/toast/toast.service';
-
-import
-{
-    ToastComponent
-}
-from '../../../../../../shared/components/utilities/toast/toast';
+from '../../../../../../shared/components/utilities/orbit-loader/orbit-loader';
 
 import
 {
@@ -137,13 +133,30 @@ const REASON_MIN_LENGTH:
     number =
     5;
 
+// How long the "Saved" mark stays on a card (ms)
+const SAVED_MARK_MS:
+    number =
+    4000;
+
+// Posting switches panel width (px, matches the CSS)
+const SWITCHES_PANEL_WIDTH:
+    number =
+    360;
+
+type StatusTone =
+    'ok'
+    | 'optional'
+    | 'alert';
+
 //===============================================================
 // Posting Setup (single page)
 //
-// One card per posting purpose, grouped (VAT Current Account,
-// Branch, Stock). "Change" opens a small dialog : the ledgers
-// the purpose may use + a reason. Saved changes go to history;
-// old postings keep their ledger.
+// One route tile per posting purpose (purpose -> ledger),
+// grouped (VAT Current Account, Branch, Stock). "Change ledger"
+// opens a small dialog : the ledgers the purpose may use + a
+// reason. Saved changes go to history; old postings keep their
+// ledger. The posting switches (read-only) open from the bell
+// in the toolbar. No toasts : results show on the page.
 //===============================================================
 
 @Component(
@@ -168,7 +181,7 @@ const REASON_MIN_LENGTH:
 
         CommandCenterComponent,
 
-        ToastComponent,
+        OrbitLoaderComponent,
 
         HistoryDrawerComponent
     ],
@@ -179,7 +192,7 @@ const REASON_MIN_LENGTH:
     styleUrl:
         './posting-setup-view.css'
 })
-export class PostingSetupView implements OnInit
+export class PostingSetupView implements OnInit, OnDestroy
 {
     //===========================================================
     // Services
@@ -187,9 +200,6 @@ export class PostingSetupView implements OnInit
 
     private readonly service =
         inject(PostingSetupService);
-
-    private readonly toast =
-        inject(ToastService);
 
     private readonly cdr =
         inject(ChangeDetectorRef);
@@ -224,6 +234,17 @@ export class PostingSetupView implements OnInit
 
     filter:
         PostingFilter = 'all';
+
+    // Toolbar dropdown : one group (null = all groups)
+    groupFilter:
+        string | null = null;
+
+    groupItems:
+        { label: string; value: string }[] = [];
+
+    // Bumped by Refresh so the dropdown is rebuilt empty
+    filtersVersion =
+        0;
 
     // Change dialog
     editing:
@@ -260,6 +281,27 @@ export class PostingSetupView implements OnInit
     readonly reasonMinLength =
         REASON_MIN_LENGTH;
 
+    // Posting switches panel (toolbar bell)
+    switchesOpen =
+        false;
+
+    switchesTop =
+        0;
+
+    switchesRight =
+        0;
+
+    // Card just saved (shows "Saved" for a moment)
+    savedCode =
+        '';
+
+    private savedTimer:
+        ReturnType<typeof setTimeout> | null = null;
+
+    // Inline page notice (instead of a toast)
+    pageNotice =
+        '';
+
     //===========================================================
     // Lifecycle
     //===========================================================
@@ -268,6 +310,15 @@ export class PostingSetupView implements OnInit
         void
     {
         this.load();
+    }
+
+    ngOnDestroy():
+        void
+    {
+        if (this.savedTimer)
+        {
+            clearTimeout(this.savedTimer);
+        }
     }
 
     //===========================================================
@@ -283,6 +334,9 @@ export class PostingSetupView implements OnInit
         this.loadError =
             '';
 
+        this.pageNotice =
+            '';
+
         this.service
             .getWorkspace()
             .subscribe(
@@ -295,6 +349,8 @@ export class PostingSetupView implements OnInit
 
                         this.rows =
                             workspace?.rows ?? [];
+
+                        this.buildGroupItems();
 
                         this.ledgers =
                             workspace?.ledgers ?? [];
@@ -327,7 +383,62 @@ export class PostingSetupView implements OnInit
     refresh():
         void
     {
+        this.groupFilter =
+            null;
+
+        this.searchText =
+            '';
+
+        this.filter =
+            'all';
+
+        this.filtersVersion++;
+
         this.load();
+    }
+
+    // Groups in page order, with how many purposes each holds
+    private buildGroupItems():
+        void
+    {
+        const counts =
+            new Map<string, number>();
+
+        for (const row of this.rows)
+        {
+            const name =
+                row.groupName || 'Other';
+
+            counts.set(name, (counts.get(name) ?? 0) + 1);
+        }
+
+        this.groupItems =
+            [
+                { label: `All groups (${this.rows.length})`, value: '' },
+                ...[...counts.entries()].map
+                (
+                    ([name, count]) =>
+                    ({
+                        label: `${name} (${count})`,
+                        value: name
+                    })
+                )
+            ];
+
+        if (this.groupFilter && !counts.has(this.groupFilter))
+        {
+            this.groupFilter =
+                null;
+        }
+    }
+
+    onGroupFilter(
+        value: string | null
+    ):
+        void
+    {
+        this.groupFilter =
+            value || null;
     }
 
     //===========================================================
@@ -396,6 +507,11 @@ export class PostingSetupView implements OnInit
         for (const row of this.rows)
         {
             if (this.filter === 'attention' && !this.needsAttention(row))
+            {
+                continue;
+            }
+
+            if (this.groupFilter && (row.groupName || 'Other') !== this.groupFilter)
             {
                 continue;
             }
@@ -518,22 +634,22 @@ export class PostingSetupView implements OnInit
         }
     }
 
-    statusClass(
+    statusTone(
         row: PostingSetupRow
     ):
-        string
+        StatusTone
     {
         if (row.status === 'Ready')
         {
-            return 'ps-pill ps-pill-ready';
+            return 'ok';
         }
 
         if (row.status === 'NotSet' && !row.isRequired)
         {
-            return 'ps-pill ps-pill-optional';
+            return 'optional';
         }
 
-        return 'ps-pill ps-pill-alert';
+        return 'alert';
     }
 
     allowedText(
@@ -546,31 +662,29 @@ export class PostingSetupView implements OnInit
             : 'Any general ledger';
     }
 
-    formatAmount(
+    // Balance split for the card : figure + Dr / Cr
+    balanceAmount(
         value: number | null | undefined
     ):
         string
     {
-        const amount =
-            Number(value ?? 0);
+        return Math.abs(Number(value ?? 0))
+            .toLocaleString(
+                'en-US',
+                {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+    }
 
-        const text =
-            Math.abs(amount)
-                .toLocaleString(
-                    'en-US',
-                    {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-
-        if (amount === 0)
-        {
-            return '0.00';
-        }
-
-        return amount > 0
-            ? `${text} Dr`
-            : `${text} Cr`;
+    balanceSide(
+        value: number | null | undefined
+    ):
+        string
+    {
+        return Number(value ?? 0) >= 0
+            ? 'Dr'
+            : 'Cr';
     }
 
     //===========================================================
@@ -592,9 +706,127 @@ export class PostingSetupView implements OnInit
             : 'OFF';
     }
 
+    get switchOnCount():
+        number
+    {
+        return this.switches
+            .filter(x => x.found && x.isEnabled)
+            .length;
+    }
+
+    get switchOffCount():
+        number
+    {
+        return this.switches
+            .filter(x => x.found && !x.isEnabled)
+            .length;
+    }
+
+    get switchMissingCount():
+        number
+    {
+        return this.switches
+            .filter(x => !x.found)
+            .length;
+    }
+
+    get switchesTitle():
+        string
+    {
+        if (this.switches.length === 0)
+        {
+            return 'Posting switches';
+        }
+
+        const missing =
+            this.switchMissingCount > 0
+                ? `, ${this.switchMissingCount} not set up`
+                : '';
+
+        return `Posting switches : ${this.switchOnCount} on, ${this.switchOffCount} off${missing}`;
+    }
+
+    // The toolbar clips overflow, so the panel is fixed and
+    // placed under the bell
+    toggleSwitches(
+        event: MouseEvent,
+        anchor: HTMLElement
+    ):
+        void
+    {
+        event.stopPropagation();
+
+        if (this.switchesOpen)
+        {
+            this.closeSwitches();
+
+            return;
+        }
+
+        const rect =
+            anchor.getBoundingClientRect();
+
+        this.switchesTop =
+            Math.round(rect.bottom + 8);
+
+        this.switchesRight =
+            Math.max(
+                12,
+                Math.round(
+                    Math.min(
+                        window.innerWidth - rect.right,
+                        window.innerWidth - SWITCHES_PANEL_WIDTH - 12)));
+
+        this.switchesOpen =
+            true;
+    }
+
+    closeSwitches():
+        void
+    {
+        this.switchesOpen =
+            false;
+    }
+
+    @HostListener('document:click')
+    onDocumentClick():
+        void
+    {
+        if (this.switchesOpen)
+        {
+            this.switchesOpen =
+                false;
+
+            this.cdr.markForCheck();
+        }
+    }
+
+    @HostListener('document:keydown.escape')
+    onEscape():
+        void
+    {
+        if (this.switchesOpen)
+        {
+            this.switchesOpen =
+                false;
+
+            this.cdr.markForCheck();
+        }
+    }
+
+    @HostListener('window:resize')
+    onResize():
+        void
+    {
+        this.onEscape();
+    }
+
     openSystemConfigurations():
         void
     {
+        this.switchesOpen =
+            false;
+
         this.router.navigate(
             [SYSTEM_CONFIGURATIONS_ROUTE]);
     }
@@ -758,9 +990,8 @@ export class PostingSetupView implements OnInit
                         this.editing =
                             null;
 
-                        this.toast.success(
-                            'Posting Setup',
-                            `${updated.purposeName} : ${updated.ledgerCode || 'no ledger'} saved.`);
+                        this.markSaved(
+                            updated.purposeCode);
 
                         this.cdr.markForCheck();
                     },
@@ -779,6 +1010,34 @@ export class PostingSetupView implements OnInit
                         this.cdr.markForCheck();
                     }
             });
+    }
+
+    private markSaved(
+        purposeCode: string
+    ):
+        void
+    {
+        if (this.savedTimer)
+        {
+            clearTimeout(this.savedTimer);
+        }
+
+        this.savedCode =
+            purposeCode;
+
+        this.savedTimer =
+            setTimeout(
+                () =>
+                {
+                    this.savedCode =
+                        '';
+
+                    this.savedTimer =
+                        null;
+
+                    this.cdr.markForCheck();
+                },
+                SAVED_MARK_MS);
     }
 
     //===========================================================
@@ -801,6 +1060,9 @@ export class PostingSetupView implements OnInit
 
         this.historyItems =
             [];
+
+        this.pageNotice =
+            '';
 
         this.service
             .getHistory(row?.purposeCode ?? null)
@@ -826,11 +1088,13 @@ export class PostingSetupView implements OnInit
                         this.historyLoading =
                             false;
 
-                        this.toast.error(
-                            'Posting Setup',
+                        this.historyOpen =
+                            false;
+
+                        this.pageNotice =
                             this.errorText(
                                 error,
-                                'Unable to load the history.'));
+                                'Unable to load the history.');
 
                         this.cdr.markForCheck();
                     }

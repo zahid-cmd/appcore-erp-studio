@@ -181,7 +181,7 @@ export class CashAccountsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<CashAccount>
     {
@@ -200,9 +200,9 @@ export class CashAccountsService
         model:
             CreateCashAccount
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -215,13 +215,16 @@ export class CashAccountsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateCashAccount
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -234,7 +237,7 @@ export class CashAccountsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -278,7 +281,7 @@ export class CashAccountsService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

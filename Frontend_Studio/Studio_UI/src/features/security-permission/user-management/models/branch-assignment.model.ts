@@ -8,6 +8,10 @@ export interface BranchAssignment
     // Primary Key
     //===========================================================
 
+    // The id used in links and API calls (uuid v7)
+    publicId?:
+        string;
+
     branchAssignmentId:
         number;
 

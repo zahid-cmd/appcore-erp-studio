@@ -56,7 +56,7 @@ export const BANK_DEPOSIT_SLIP_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<DepositSlipPrintData>
     {

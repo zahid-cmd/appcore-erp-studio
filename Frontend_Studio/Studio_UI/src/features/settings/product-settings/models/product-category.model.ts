@@ -17,8 +17,18 @@ export const PRODUCT_CATEGORY_TYPES:
 
 export interface ProductCategory
 {
+    // Sales account (CLS-005 / 006 / 008), set by the server
+    SalesGroupCode?:
+        string;
+
+    SalesGroupName?:
+        string;
+
     ProductCategoryId:
         number;
+
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     CategoryCode:
         string;
@@ -228,6 +238,10 @@ export interface UpdateProductCategory
 
 export interface ProductCategoryDefaults
 {
+    // Sales group code of every Category Type
+    SalesGroupCodes?:
+        Record<string, string>;
+
     //===========================================================
     // Product Category Code
     //===========================================================
@@ -263,4 +277,26 @@ export interface ProductCategoryDefaults
 
     CogsGroupCode:
         string;
+}
+
+
+//===============================================================
+// List page query (server-side paging)
+//===============================================================
+
+export interface ProductCategoryPageQuery
+{
+    page:number;
+
+    pageSize:number;
+
+    search:string;
+
+    // Column field ('' = the default sort)
+    sort:string;
+
+    dir:'asc' | 'desc';
+
+    // true / false (null = all)
+    status:boolean | null;
 }

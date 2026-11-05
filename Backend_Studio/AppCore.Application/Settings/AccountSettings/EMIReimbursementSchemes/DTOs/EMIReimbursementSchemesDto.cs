@@ -13,6 +13,10 @@ public class EmiReimbursementSchemesDto
 {
     public long EmiReimbursementSchemeId { get; set; }
 
+
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     public string SchemeCode { get; set; } = string.Empty;
 
 

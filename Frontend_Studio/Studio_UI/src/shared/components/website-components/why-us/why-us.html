@@ -1,0 +1,57 @@
+<!-- ===========================================================
+     WHY BUY FROM US
+============================================================ -->
+
+<section class="wrap section why">
+
+    <!-- Photo (16:9) on top, the numbers below it -->
+    <div class="visual">
+        <div class="photo">
+            @if (why().photo)
+            {
+                <img [src]="why().photo" alt="" loading="lazy">
+            }
+            @else
+            {
+                <span class="placeholder" aria-hidden="true">
+                    <svg width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"></path></svg>
+                </span>
+            }
+        </div>
+
+        @if (why().stats.length)
+        {
+            <div class="stats">
+                @for (stat of why().stats; track stat.label)
+                {
+                    <div class="stat">
+                        <b>{{ stat.value }}</b>
+                        <span>{{ stat.label }}</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="points">
+        <div class="head">
+            <span class="kicker">{{ t('why.kicker') }}</span>
+            <h2 class="title">{{ t('why.title') }}</h2>
+        </div>
+
+        @for (point of why().points; track point.title; let i = $index)
+        {
+            <div class="point">
+                <span class="no" aria-hidden="true">{{ number(i) }}</span>
+                <div class="point-text">
+                    <b>{{ point.title }}</b>
+                    @if (point.text)
+                    {
+                        <span>{{ point.text }}</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+</section>

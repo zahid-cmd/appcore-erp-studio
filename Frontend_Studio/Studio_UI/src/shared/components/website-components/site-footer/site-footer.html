@@ -1,0 +1,123 @@
+<!-- ===========================================================
+     SITE FOOTER
+============================================================ -->
+
+<footer class="footer">
+
+    <div class="wrap cols">
+
+        <div class="col about">
+            @if (logo())
+            {
+                <img class="logo" [src]="logo()" [alt]="company().name">
+            }
+            @else
+            {
+                <b class="name">{{ company().name }}</b>
+            }
+            @if (company().tagline)
+            {
+                <p class="tagline">{{ company().tagline }}</p>
+            }
+            @if (company().about)
+            {
+                <p>{{ company().about }}</p>
+            }
+            @if (socials().length)
+            {
+                <div class="social">
+                    @for (s of socials(); track s.key)
+                    {
+                        <a class="social-btn" [href]="s.url" target="_blank" rel="noopener" [attr.aria-label]="s.label">
+                            @switch (s.key)
+                            {
+                                @case ('facebook')
+                                {
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v2H7v4h3v8h4v-8h3l1-4h-4V8z"></path></svg>
+                                }
+                                @case ('youtube')
+                                {
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 8.2a3 3 0 0 0-2.1-2.1C18 5.6 12 5.6 12 5.6s-6 0-7.9.5A3 3 0 0 0 2 8.2 31 31 0 0 0 1.6 12 31 31 0 0 0 2 15.8a3 3 0 0 0 2.1 2.1c1.9.5 7.9.5 7.9.5s6 0 7.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .4-3.8 31 31 0 0 0-.4-3.8zM10 15V9l5.2 3L10 15z"></path></svg>
+                                }
+                                @case ('instagram')
+                                {
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1" fill="currentColor"></circle></svg>
+                                }
+                                @default
+                                {
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 3a5 5 0 0 0 4 4v3a8 8 0 0 1-4-1.2V15a6 6 0 1 1-6-6v3.2A2.8 2.8 0 1 0 12.8 15V3H16z"></path></svg>
+                                }
+                            }
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col">
+            <b class="col-title">Explore</b>
+            <button type="button" class="link" (click)="go('models')">Bikes</button>
+            @if (content().emi.enabled)
+            {
+                <button type="button" class="link" (click)="go('emi')">EMI</button>
+            }
+            <button type="button" class="link" (click)="go('service')">Service &amp; parts</button>
+            <button type="button" class="link" (click)="go('branches')">Branches</button>
+            <a class="link" routerLink="/login">Office Login</a>
+        </div>
+
+        @if (policies().length)
+        {
+            <div class="col">
+                <b class="col-title">Policies</b>
+                @for (p of policies(); track p.path)
+                {
+                    <a class="link" [routerLink]="p.path">{{ p.label }}</a>
+                }
+            </div>
+        }
+
+        <div class="col">
+            <b class="col-title">Contact</b>
+            @if (company().address)
+            {
+                <span>{{ company().address }}</span>
+            }
+            @if (call())
+            {
+                <a class="link" [href]="call()">{{ company().hotline }}</a>
+            }
+            @if (mail())
+            {
+                <a class="link" [href]="mail()">{{ company().email }}</a>
+            }
+            @if (company().hours)
+            {
+                <span>{{ company().hours }}</span>
+            }
+            @if (content().payments.length)
+            {
+                <div class="payments" aria-label="We accept">
+                    @for (p of content().payments; track p.name)
+                    {
+                        @if (p.logo)
+                        {
+                            <img class="pay-logo" [src]="p.logo" [alt]="p.name">
+                        }
+                        @else
+                        {
+                            <span class="chip">{{ p.name }}</span>
+                        }
+                    }
+                </div>
+            }
+        </div>
+
+    </div>
+
+    <div class="wrap bottom">
+        <span>© {{ year }} {{ company().name }}</span>
+        <button type="button" class="link" (click)="top()">Back to top ↑</button>
+    </div>
+
+</footer>

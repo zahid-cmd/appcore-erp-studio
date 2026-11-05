@@ -114,6 +114,9 @@ export class MembershipServicesService
                 Number(this.pick(item, name) ?? 0);
 
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             MembershipServiceId:
                 num('MembershipServiceId'),
 
@@ -316,7 +319,7 @@ export class MembershipServicesService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<MembershipService>
     {
@@ -344,13 +347,16 @@ export class MembershipServicesService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateMembershipService
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }

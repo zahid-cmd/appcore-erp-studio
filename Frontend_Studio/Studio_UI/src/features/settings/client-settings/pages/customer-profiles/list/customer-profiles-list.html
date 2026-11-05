@@ -102,7 +102,7 @@
 
             <app-list-table
                 [columns]="columns"
-                [rows]="pagedCustomers"
+                [rows]="customers"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
@@ -121,7 +121,7 @@
 
         <app-pagination
             canvasFooter
-            [totalRecords]="filteredCustomers.length"
+            [totalRecords]="totalRecords"
             [currentPage]="currentPage"
             [pageSize]="pageSize"
             (pageChange)="onPageChange($event)"
@@ -130,6 +130,33 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (location and search applied; not the tab or
+         the status filter)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="cp-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="cp-summary-item">
+                    <span class="cp-summary-label">{{ item.label }}</span>
+                    <b
+                        class="cp-summary-value"
+                        [class.cp-ok]="item.tone === 'ok'"
+                        [class.cp-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="cp-summary-note">
+                Matching the location and search
+            </span>
+
+        </div>
+    }
 
     <!-- =====================================================
          HISTORY
@@ -153,4 +180,4 @@
 
     <app-progress-dialog></app-progress-dialog>
 
-</div>
+</div>

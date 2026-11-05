@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.Paging;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -12,6 +19,14 @@ namespace AppCore.Application.Settings.ProductSettings;
 public interface IAccessoriesRepository
 {
     Task<List<AccessoriesDto>> GetAllAsync();
+
+    // The list page : one page, filtered, sorted, with the counts
+    Task<PagedResult<AccessoriesDto>> GetPagedAsync(
+        AccessoriesPageRequest request);
+
+    // Public Id -> internal id (live rows only; null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 
     Task<AccessoriesDto?> GetByIdAsync(
         long id);

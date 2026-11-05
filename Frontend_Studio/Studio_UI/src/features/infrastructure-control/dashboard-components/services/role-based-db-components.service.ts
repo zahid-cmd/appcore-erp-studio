@@ -98,7 +98,7 @@ export class RoleBasedDashboardComponentsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<RoleBasedDashboardComponents>
     {
@@ -149,13 +149,16 @@ export class RoleBasedDashboardComponentsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateRoleBasedDashboardComponents
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -170,7 +173,7 @@ export class RoleBasedDashboardComponentsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -218,7 +221,7 @@ export class RoleBasedDashboardComponentsService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

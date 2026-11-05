@@ -1,0 +1,1020 @@
+/* =====================================================
+   HERO : model slider
+===================================================== */
+
+.hero
+{
+    position:relative;
+    overflow:hidden;
+    background:var(--w-hero-bg);
+    color:var(--w-hero-text);
+    padding-bottom:36px;
+    isolation:isolate;
+    touch-action:pan-y;
+}
+
+
+/* Faint company letter and a soft ring behind the bike */
+
+.monogram
+{
+    position:absolute;
+    left:-2%;
+    top:-12%;
+    font-family:var(--w-display);
+    font-size:clamp(380px, 52vw, 760px);
+    font-weight:800;
+    line-height:1;
+    color:var(--w-monogram);
+    pointer-events:none;
+    user-select:none;
+}
+
+
+.ring
+{
+    position:absolute;
+    right:-140px;
+    top:40px;
+    width:720px;
+    height:720px;
+    border-radius:50%;
+    border:1px solid rgba(147,180,245,.18);
+    box-shadow:inset 0 0 120px rgba(59,130,246,.14);
+    pointer-events:none;
+    animation:hero-glow 6s ease-in-out infinite;
+}
+
+
+@keyframes hero-glow
+{
+    0%, 100% { opacity:.55; }
+    50%      { opacity:.95; }
+}
+
+
+.hero-inner
+{
+    position:relative;
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items:center;
+    gap:28px;
+    min-height:560px;
+    padding-top:56px;
+}
+
+
+.text
+{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+}
+
+
+.badge
+{
+    align-self:flex-start;
+    padding:6px 12px;
+    border:1px solid var(--w-badge-edge);
+    border-radius:999px;
+    background:var(--w-badge-bg);
+    color:var(--w-badge-text);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+}
+
+
+.tagline
+{
+    margin:0;
+    color:var(--w-kicker);
+    font-size:17px;
+    font-weight:800;
+}
+
+
+.model
+{
+    margin:0;
+    font-family:var(--w-display);
+    font-size:clamp(56px, 8vw, 108px);
+    line-height:.88;
+    font-weight:800;
+    letter-spacing:-.5px;
+    text-transform:uppercase;
+}
+
+
+.tiles
+{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:10px;
+    max-width:500px;
+}
+
+
+.tile
+{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    padding:14px 10px;
+    border:1px solid var(--w-card-edge);
+    border-radius:16px;
+    background:var(--w-glass);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    text-align:center;
+}
+
+
+.tile svg
+{
+    color:var(--w-accent);
+    margin-bottom:2px;
+}
+
+
+.tile b
+{
+    font-family:var(--w-display);
+    font-size:24px;
+    line-height:1.05;
+}
+
+
+.tile span
+{
+    color:var(--w-hero-muted);
+    font-size:12.5px;
+}
+
+
+.actions
+{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:12px;
+    margin-top:6px;
+}
+
+
+.price
+{
+    color:var(--w-hero-muted);
+    font-size:15px;
+}
+
+
+.price b
+{
+    color:var(--w-hero-text);
+    font-size:22px;
+}
+
+
+.visual
+{
+    position:relative;
+    min-height:420px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+}
+
+
+/* Big outlined slide number behind the bike */
+
+.slide-no
+{
+    position:absolute;
+    top:-6px;
+    right:0;
+    font-family:var(--w-display);
+    font-size:190px;
+    font-weight:800;
+    line-height:1;
+    color:transparent;
+    -webkit-text-stroke:1px var(--w-ghost-edge);
+    pointer-events:none;
+    user-select:none;
+    animation:no-in .9s cubic-bezier(.2,.7,.2,1) .2s both;
+}
+
+
+@keyframes no-in
+{
+    from { opacity:0; transform:translateY(-24px); }
+    to   { opacity:1; transform:none; }
+}
+
+
+.shadow
+{
+    position:absolute;
+    bottom:22px;
+    width:78%;
+    height:44px;
+    border-radius:50%;
+    background:radial-gradient(closest-side, rgba(0,0,0,.55), rgba(0,0,0,0));
+}
+
+
+.photo
+{
+    position:relative;
+    width:112%;
+    max-width:none;
+    max-height:520px;
+    object-fit:contain;
+    margin-bottom:-4px;
+    filter:drop-shadow(0 30px 40px rgba(0,0,0,.4));
+    user-select:none;
+    animation:hero-in 1s cubic-bezier(.2,.7,.2,1) .25s both;
+}
+
+
+.back .photo
+{
+    animation-name:hero-in-back;
+}
+
+
+@keyframes hero-in
+{
+    from { opacity:0; transform:translateX(60px) scale(.96); }
+    to   { opacity:1; transform:none; }
+}
+
+
+@keyframes hero-in-back
+{
+    from { opacity:0; transform:translateX(-60px) scale(.96); }
+    to   { opacity:1; transform:none; }
+}
+
+
+.placeholder
+{
+    position:relative;
+    width:100%;
+    height:380px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px dashed var(--w-ghost-edge);
+    border-radius:28px;
+    color:var(--w-hero-muted);
+    opacity:.6;
+}
+
+
+/* =====================================================
+   SLIDE SWITCH : vertical light line + reveal
+   -----------------------------------------------------
+   The line crosses the hero; the new slide is uncovered
+   behind it and its parts rise in one after another.
+===================================================== */
+
+.sweep
+{
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:-2%;
+    z-index:4;
+    width:2px;
+    background:linear-gradient(180deg,
+        rgba(252,211,77,0) 0%,
+        var(--w-accent-2) 18%,
+        #ffffff 50%,
+        var(--w-accent-2) 82%,
+        rgba(252,211,77,0) 100%);
+    box-shadow:
+        0 0 14px 2px var(--w-accent),
+        0 0 70px 14px rgba(245,158,11,.35);
+    pointer-events:none;
+    animation:sweep 1s cubic-bezier(.7,0,.25,1) forwards;
+}
+
+
+/* Soft light trail behind the line */
+
+.sweep::before
+{
+    content:'';
+    position:absolute;
+    top:0;
+    bottom:0;
+    right:1px;
+    width:260px;
+    background:linear-gradient(90deg, rgba(252,211,77,0), rgba(252,211,77,.14));
+}
+
+
+/* Small bright cap that runs along the line */
+
+.sweep::after
+{
+    content:'';
+    position:absolute;
+    left:50%;
+    top:0;
+    width:8px;
+    height:90px;
+    margin-left:-4px;
+    border-radius:8px;
+    background:#ffffff;
+    box-shadow:0 0 18px 4px var(--w-accent-2);
+    animation:sweep-cap 1s cubic-bezier(.5,0,.3,1) forwards;
+}
+
+
+.sweep.back
+{
+    left:102%;
+    animation-name:sweep-back;
+}
+
+
+.sweep.back::before
+{
+    right:auto;
+    left:1px;
+    background:linear-gradient(270deg, rgba(252,211,77,0), rgba(252,211,77,.14));
+}
+
+
+@keyframes sweep
+{
+    0%   { left:-2%;  opacity:1; }
+    85%  { opacity:1; }
+    100% { left:102%; opacity:0; }
+}
+
+
+@keyframes sweep-back
+{
+    0%   { left:102%; opacity:1; }
+    85%  { opacity:1; }
+    100% { left:-2%;  opacity:0; }
+}
+
+
+@keyframes sweep-cap
+{
+    from { top:0; }
+    to   { top:calc(100% - 90px); }
+}
+
+
+.reveal
+{
+    animation:reveal 1s cubic-bezier(.7,0,.25,1) both;
+}
+
+
+.reveal.back
+{
+    animation-name:reveal-back;
+}
+
+
+@keyframes reveal
+{
+    from { clip-path:inset(0 100% 0 0); }
+    to   { clip-path:inset(0 0 0 0); }
+}
+
+
+@keyframes reveal-back
+{
+    from { clip-path:inset(0 0 0 100%); }
+    to   { clip-path:inset(0 0 0 0); }
+}
+
+
+.rise
+{
+    animation:rise .7s cubic-bezier(.2,.7,.2,1) both;
+    animation-delay:calc(180ms + var(--d, 0) * 80ms);
+}
+
+
+@keyframes rise
+{
+    from { opacity:0; transform:translateY(18px); }
+    to   { opacity:1; transform:none; }
+}
+
+
+/* =====================================================
+   BRAND BAR : All brands · one tab per brand
+===================================================== */
+
+.brand-bar
+{
+    position:relative;
+    z-index:3;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    padding-top:26px;
+}
+
+
+.brand-tab
+{
+    height:40px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:0 16px 0 14px;
+    border:1px solid var(--w-brand-tab-edge);
+    border-radius:999px;
+    background:var(--w-brand-tab-bg);
+    color:var(--w-brand-tab-text);
+    font:inherit;
+    font-size:13.5px;
+    font-weight:800;
+    letter-spacing:.3px;
+    cursor:pointer;
+    transition:border-color .2s ease, background .2s ease;
+}
+
+
+.brand-tab:hover
+{
+    border-color:var(--w-ghost-edge);
+}
+
+
+.brand-tab:focus-visible
+{
+    outline:2px solid var(--w-accent);
+    outline-offset:2px;
+}
+
+
+.brand-tab.on
+{
+    border-color:var(--w-accent);
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+}
+
+
+/* Only the logo sits on white (both themes), on a small
+   rounded tile wide enough for word-mark logos */
+.brand-logo
+{
+    height:28px;
+    min-width:28px;
+    max-width:76px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 8px;
+    box-sizing:border-box;
+    border-radius:8px;
+    background:#ffffff;
+    box-shadow:0 1px 3px rgba(19,37,74,.18);
+    overflow:hidden;
+}
+
+
+.brand-logo img
+{
+    max-width:60px;
+    max-height:18px;
+    object-fit:contain;
+}
+
+
+.brand-bar + .sweep + .hero-inner
+{
+    padding-top:22px;
+}
+
+
+/* =====================================================
+   RAIL : tabs with vertical progress lines + arrows
+===================================================== */
+
+.rail
+{
+    position:relative;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding-top:26px;
+}
+
+
+.tabs
+{
+    flex:1 1 auto;
+    min-width:0;
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    scrollbar-width:none;
+}
+
+
+.tabs::-webkit-scrollbar
+{
+    display:none;
+}
+
+
+.tab
+{
+    flex:0 0 auto;
+    min-width:170px;
+    height:62px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:0 16px 0 14px;
+    border:1px solid var(--w-card-edge);
+    border-radius:14px;
+    background:var(--w-glass);
+    color:var(--w-hero-text);
+    font:inherit;
+    text-align:left;
+    cursor:pointer;
+    transition:border-color .25s ease, background .25s ease, transform .25s ease;
+}
+
+
+.tab:hover
+{
+    transform:translateY(-2px);
+    border-color:var(--w-ghost-edge);
+}
+
+
+.tab:focus-visible
+{
+    outline:2px solid var(--w-accent);
+    outline-offset:2px;
+}
+
+
+/* The vertical line : grey track, accent fill */
+
+.tab-line
+{
+    position:relative;
+    flex:0 0 auto;
+    width:3px;
+    height:38px;
+    border-radius:3px;
+    background:var(--w-ghost-edge);
+    overflow:hidden;
+}
+
+
+.tab-fill
+{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:0;
+    border-radius:3px;
+    background:linear-gradient(0deg, var(--w-accent), var(--w-accent-2));
+    box-shadow:0 0 10px var(--w-accent);
+    animation:tab-fill 7s linear forwards;
+}
+
+
+@keyframes tab-fill
+{
+    from { height:0; }
+    to   { height:100%; }
+}
+
+
+/* Autoplay waits only while the visitor is reading or choosing :
+   mouse over the slide text or the tab rail, or keyboard focus
+   in the hero. A mouse click no longer stops it for good. */
+
+.hero:has(.text:hover) .tab-fill,
+.hero:has(.rail:hover) .tab-fill,
+.hero:has(:focus-visible) .tab-fill
+{
+    animation-play-state:paused;
+}
+
+
+.tab-no
+{
+    font-family:var(--w-display);
+    font-size:22px;
+    font-weight:800;
+    color:var(--w-hero-muted);
+    transition:color .25s ease;
+}
+
+
+.tab-text
+{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+}
+
+
+.tab-text b
+{
+    font-size:14px;
+}
+
+
+.tab-text span
+{
+    color:var(--w-hero-muted);
+    font-size:12px;
+}
+
+
+.tab.on
+{
+    border-color:var(--w-accent);
+    background:var(--w-accent-soft);
+}
+
+
+.tab.on .tab-line
+{
+    box-shadow:0 0 12px rgba(245,158,11,.45);
+}
+
+
+.tab.on .tab-no
+{
+    color:var(--w-accent-2);
+}
+
+
+.arrows
+{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+
+.count
+{
+    margin-right:6px;
+    color:var(--w-hero-muted);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.5px;
+}
+
+
+.count b
+{
+    color:var(--w-hero-text);
+    font-family:var(--w-display);
+    font-size:22px;
+}
+
+
+.arrow
+{
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--w-card-edge);
+    border-radius:50%;
+    background:var(--w-glass);
+    color:var(--w-hero-text);
+    cursor:pointer;
+    transition:background .2s ease, border-color .2s ease, color .2s ease;
+}
+
+
+.arrow:hover
+{
+    border-color:var(--w-accent);
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+}
+
+
+.arrow:focus-visible
+{
+    outline:2px solid var(--w-accent);
+    outline-offset:2px;
+}
+
+
+/* =====================================================
+   HERO PHOTO (Website Configuration › Hero)
+===================================================== */
+
+/* Behind the bike slides : the photo, faded towards the text
+   side so the words stay easy to read */
+.hero-bg
+{
+    position:absolute;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    transition:opacity .6s ease;
+}
+
+.hero-bg img
+{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    opacity:var(--hero-photo, .26);
+    filter:saturate(.9);
+}
+
+.hero-bg::after
+{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(90deg,
+            color-mix(in srgb, var(--w-bg) 88%, transparent) 0%,
+            color-mix(in srgb, var(--w-bg) 55%, transparent) 45%,
+            color-mix(in srgb, var(--w-bg) 10%, transparent) 100%),
+        linear-gradient(0deg,
+            color-mix(in srgb, var(--w-bg) 70%, transparent) 0%,
+            transparent 35%);
+}
+
+/* The welcome slide shows the photo itself */
+.hero-bg.off
+{
+    opacity:0;
+}
+
+/* Round image : same place and size as the circle, cropped round,
+   faded towards its edge so it melts into the glow */
+.ring-photo
+{
+    position:absolute;
+    right:-140px;
+    top:40px;
+    width:720px;
+    height:720px;
+    border-radius:50%;
+    overflow:hidden;
+    pointer-events:none;
+    transition:opacity .6s ease;
+    -webkit-mask-image:radial-gradient(circle at 50% 50%, #000 38%, rgba(0,0,0,.55) 58%, transparent 71%);
+            mask-image:radial-gradient(circle at 50% 50%, #000 38%, rgba(0,0,0,.55) 58%, transparent 71%);
+}
+
+.ring-photo img
+{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    opacity:var(--ring-photo, .22);
+    filter:saturate(.85) blur(.4px);
+}
+
+.ring-photo.off
+{
+    opacity:0;
+}
+
+/* Welcome slide */
+.welcome-title
+{
+    font-size:clamp(44px, 6vw, 84px);
+    line-height:.92;
+}
+
+.welcome-text
+{
+    margin:0;
+    max-width:520px;
+    color:var(--w-hero-muted);
+    font-size:17px;
+    font-weight:600;
+    line-height:1.55;
+}
+
+.welcome-address
+{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    margin:0;
+    max-width:520px;
+    color:var(--w-hero-text);
+    font-size:15px;
+    font-weight:700;
+    line-height:1.45;
+}
+
+.welcome-address svg
+{
+    flex:0 0 auto;
+    margin-top:1px;
+    color:var(--w-accent);
+}
+
+.welcome-photo
+{
+    position:relative;
+    z-index:1;
+    width:100%;
+    aspect-ratio:16 / 9;
+    border:1px solid var(--w-card-edge);
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:
+        0 30px 60px rgba(2, 6, 23, .35),
+        0 0 0 6px rgba(255, 255, 255, .04);
+    animation:hero-photo-in .9s cubic-bezier(.2, .7, .2, 1) both;
+}
+
+.welcome-photo img
+{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+}
+
+@keyframes hero-photo-in
+{
+    from { opacity:0; transform:translateY(18px) scale(.97); }
+    to   { opacity:1; transform:none; }
+}
+
+
+@media (max-width: 960px)
+{
+    .hero-inner
+    {
+        grid-template-columns:1fr;
+        min-height:0;
+    }
+
+    .visual
+    {
+        min-height:0;
+    }
+
+    .photo
+    {
+        width:100%;
+    }
+
+    .placeholder
+    {
+        height:220px;
+    }
+
+    .slide-no
+    {
+        font-size:120px;
+    }
+
+    /* Welcome slide on phones : photo first, text below */
+    .welcome .visual
+    {
+        order:-1;
+    }
+
+    .rail
+    {
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .arrows
+    {
+        justify-content:flex-end;
+    }
+}
+
+
+@media (prefers-reduced-motion: reduce)
+{
+    .welcome-photo,
+    .ring,
+    .photo,
+    .slide-no,
+    .reveal,
+    .rise
+    {
+        animation:none;
+    }
+
+    .sweep
+    {
+        display:none;
+    }
+
+    /* No autoplay : the line just shows as full */
+    .tab-fill
+    {
+        animation:none;
+        height:100%;
+    }
+}
+
+
+
+/* -----------------------------------------------------
+   ENQUIRY BAR : over the slide names, centred
+----------------------------------------------------- */
+
+.cta-bar
+{
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding-top:18px;
+}
+
+.cta
+{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    height:46px;
+    padding:0 20px;
+    border:1px solid color-mix(in srgb, var(--w-hero-text) 22%, transparent);
+    border-radius:14px;
+    background:color-mix(in srgb, var(--w-hero-text) 6%, transparent);
+    color:var(--w-hero-text);
+    font-size:15px;
+    font-weight:800;
+    text-decoration:none;
+    white-space:nowrap;
+    backdrop-filter:blur(8px);
+    transition:transform .2s ease, background .2s ease, border-color .2s ease;
+}
+
+.cta:hover
+{
+    transform:translateY(-2px);
+    border-color:var(--w-accent);
+    background:color-mix(in srgb, var(--w-accent) 14%, transparent);
+}
+
+.cta-main
+{
+    border-color:transparent;
+    background:linear-gradient(135deg, var(--w-accent-2), var(--w-accent));
+    color:var(--w-accent-ink);
+    box-shadow:0 12px 26px -12px rgba(245,158,11,.85);
+}
+
+.cta-main:hover
+{
+    background:linear-gradient(135deg, var(--w-accent-2), var(--w-accent));
+}
+
+@media (max-width:640px)
+{
+    .cta-bar
+    {
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+
+    .cta
+    {
+        justify-content:center;
+        padding:0 12px;
+        font-size:14px;
+    }
+}
+
+
+.cta-call
+{
+    border-style:dashed;
+}

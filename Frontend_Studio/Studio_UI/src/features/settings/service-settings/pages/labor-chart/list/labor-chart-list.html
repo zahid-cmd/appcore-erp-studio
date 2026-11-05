@@ -143,6 +143,32 @@
     </app-page-canvas>
 
     <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="lbc-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="lbc-summary-item">
+                    <span class="lbc-summary-label">{{ item.label }}</span>
+                    <b
+                        class="lbc-summary-value"
+                        [class.lbc-ok]="item.tone === 'ok'"
+                        [class.lbc-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="lbc-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
+    <!-- =====================================================
          HISTORY
     ====================================================== -->
 

@@ -39,6 +39,8 @@ export interface ServiceCategory
 {
     ServiceCategoryId:
         number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     CategoryCode:
         string;

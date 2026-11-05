@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
+using AppCore.Application.Common.Paging;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.Settings.ProductSettings;
@@ -24,6 +25,18 @@ namespace AppCore.Api.Controllers.Settings.ProductSettings;
 //   GET    defaults?productSubCategoryId=n   preview of the four codes
 //
 // No image for accessories.
+//
+// A row is opened / changed by its Public Id (uuid), never by
+// the internal number :
+//
+//   GET    paged          the list page (one page, server side;
+//                         see AccessoriesPageRequest)
+//   GET    {publicId}     one row
+//   POST                  create -> its Public Id
+//   PUT    {publicId}     update
+//   DELETE {publicId}     delete
+//
+// GET (all) stays for the dropdowns / lookups of other pages.
 //===============================================================
 
 [ApiController]
@@ -74,6 +87,20 @@ public class AccessoriesController : ControllerBase
 
 
     //===========================================================
+    // Get Paged (the list page)
+    //===========================================================
+
+    [HttpGet("paged")]
+    public async Task<ActionResult<PagedResult<AccessoriesDto>>> GetPaged(
+        [FromQuery] AccessoriesPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(
+                request ?? new AccessoriesPageRequest()));
+    }
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 
@@ -99,20 +126,27 @@ public class AccessoriesController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
-    public async Task<ActionResult<AccessoriesDto>> GetById(
-        long id)
+    [HttpGet("{publicId:guid}")]
+    public async Task<ActionResult<AccessoriesDto>> GetByPublicId(
+        Guid publicId)
     {
-        AccessoriesDto? accessory =
-            await _repository.GetByIdAsync(id);
+        long? id =
+            await _repository.GetIdByPublicIdAsync(publicId);
 
-        if (accessory == null)
+        if (id == null)
         {
             return NotFound();
         }
 
-        return Ok(accessory);
+        AccessoriesDto? row =
+            await _repository.GetByIdAsync(id.Value);
+
+        if (row == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(row);
     }
 
 
@@ -120,19 +154,25 @@ public class AccessoriesController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
 
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateAccessoriesDto dto)
     {
            long userId = this.CurrentUserId();
 
         try
         {
-            return Ok(
+            long id =
                 await _repository.CreateAsync(
                     dto,
-                    userId));
+                    userId);
+
+            AccessoriesDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (InvalidOperationException ex)
         {
@@ -151,11 +191,28 @@ public class AccessoriesController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateAccessoriesDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.AccessoryId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try
@@ -187,11 +244,22 @@ public class AccessoriesController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

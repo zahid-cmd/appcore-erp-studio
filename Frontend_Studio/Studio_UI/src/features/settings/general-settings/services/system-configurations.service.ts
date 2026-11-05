@@ -242,6 +242,7 @@ export function normalizeSystemConfiguration
 {
     return {
         SystemConfigurationId: readNumber(item, 'SystemConfigurationId'),
+        PublicId: readText(item, 'PublicId'),
         NavigationModuleId: readNumber(item, 'NavigationModuleId'),
         ModuleCode: readText(item, 'ModuleCode'),
         ModuleName: readText(item, 'ModuleName'),
@@ -503,7 +504,7 @@ export class SystemConfigurationsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<SystemConfiguration>
     {
@@ -662,7 +663,7 @@ export class SystemConfigurationsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

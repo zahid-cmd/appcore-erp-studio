@@ -54,6 +54,22 @@
     -webkit-filter: none;
 
     z-index: 30000;
+
+    /* Centre over the page area, not the whole window : skip the
+       sidebar (its width comes from the app layout; Top layout has
+       none, so nothing is skipped) */
+    box-sizing: border-box;
+
+    padding-left: var(--sidebar-current-width, 0px);
+}
+
+
+
+/* Already inside the page area (see the component) : no
+   sidebar padding, so the dialog sits in the canvas centre */
+.progress-overlay.in-page-area
+{
+    padding-left: 0;
 }
 
 
@@ -65,6 +81,8 @@
 .progress-overlay.preview-mode
 {
     position:relative;
+
+    padding-left:0;
 
     inset:auto;
 
@@ -618,4 +636,4 @@
         transform:
             rotate(360deg);
     }
-}
+}

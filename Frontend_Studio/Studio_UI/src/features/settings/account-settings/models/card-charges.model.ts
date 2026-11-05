@@ -39,6 +39,9 @@ export interface CardCharges
 {
     POSAccountId: number;
 
+    // The POS Account's Public Id (links and API calls; uuid v7)
+    PublicId?: string;
+
     POSAccountCode: string;
 
     POSAccountName: string;

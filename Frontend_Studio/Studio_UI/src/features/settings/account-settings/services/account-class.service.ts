@@ -248,7 +248,7 @@ export class AccountClassService
 
     getById(
         id:
-            number
+            string
     ):
         Observable<AccountClass>
     {
@@ -266,9 +266,9 @@ export class AccountClassService
         model:
             CreateAccountClass
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
 
             model
@@ -281,13 +281,16 @@ export class AccountClassService
     //===========================================================
 
     update(
+        publicId:
+            string,
+
         model:
             UpdateAccountClass
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -300,7 +303,7 @@ export class AccountClassService
 
     delete(
         id:
-            number
+            string
     ):
         Observable<void>
     {

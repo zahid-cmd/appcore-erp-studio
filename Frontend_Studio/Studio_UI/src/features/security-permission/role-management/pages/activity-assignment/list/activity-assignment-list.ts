@@ -931,7 +931,7 @@ implements OnInit
             [
                 'view',
 
-                item.activityAssignmentId
+                item.publicId
             ],
 
             {
@@ -959,7 +959,7 @@ implements OnInit
             [
                 'edit',
 
-                item.activityAssignmentId
+                item.publicId
             ],
 
             {
@@ -993,7 +993,7 @@ implements OnInit
                 this.activityassignmentservice
                     .delete
                     (
-                        item.activityAssignmentId
+                        item.publicId ?? ''
                     )
                     .subscribe
                     ({
@@ -1238,4 +1238,44 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.activityassignments ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.activityassignments ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

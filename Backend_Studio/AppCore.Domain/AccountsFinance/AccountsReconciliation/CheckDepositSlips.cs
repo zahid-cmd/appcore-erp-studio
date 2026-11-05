@@ -16,6 +16,9 @@ public class CheckDepositSlips
 {
     public long CheckDepositSlipId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
     public string SlipNo { get; set; } = string.Empty;
 
     public DateOnly SlipDate { get; set; }

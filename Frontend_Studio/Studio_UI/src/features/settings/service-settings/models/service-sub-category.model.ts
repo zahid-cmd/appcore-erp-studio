@@ -18,6 +18,8 @@ export interface ServiceSubCategory
 {
     ServiceSubCategoryId:
         number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     SubCategoryCode:
         string;

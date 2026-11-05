@@ -146,6 +146,44 @@ public class CheckReconciliationsController : ControllerBase
             await _repository.GetDepositAccountsAsync(branchId));
     }
 
+    // uuid (print links)
+    [HttpGet("vouchers/{publicId:guid}")]
+
+    public async Task<ActionResult<CheckClearingVoucherDto>> GetVoucherByPublicId(
+        Guid publicId)
+    {
+        long? id =
+            await _repository.GetVoucherIdByPublicIdAsync(publicId);
+
+        CheckClearingVoucherDto? found =
+            id == null
+                ? null
+                : await _repository.GetVoucherAsync(id.Value);
+
+        return found == null
+            ? NotFound()
+            : Ok(found);
+    }
+
+    // uuid (print links)
+    [HttpGet("deposit-slips/{publicId:guid}")]
+
+    public async Task<ActionResult<CheckDepositSlipDto>> GetDepositSlipByPublicId(
+        Guid publicId)
+    {
+        long? id =
+            await _repository.GetDepositSlipIdByPublicIdAsync(publicId);
+
+        CheckDepositSlipDto? found =
+            id == null
+                ? null
+                : await _repository.GetDepositSlipAsync(id.Value);
+
+        return found == null
+            ? NotFound()
+            : Ok(found);
+    }
+
     [HttpGet("vouchers/{id:long}")]
 
     public async Task<ActionResult<CheckClearingVoucherDto>> GetVoucher(

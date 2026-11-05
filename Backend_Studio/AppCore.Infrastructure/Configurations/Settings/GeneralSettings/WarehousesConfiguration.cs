@@ -42,6 +42,22 @@ public class WarehousesConfiguration
 
         builder.HasKey(x => x.WarehouseId);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_Warehouses_PublicId");
+
         builder.Property(x => x.WarehouseId)
                .ValueGeneratedOnAdd();
 

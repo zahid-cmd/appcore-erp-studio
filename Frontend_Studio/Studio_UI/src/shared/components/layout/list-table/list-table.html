@@ -44,7 +44,7 @@
          BODY
     ========================================================= -->
 
-    <div class="list-table-body">
+    <div class="list-table-body appcore-scrollbar">
 
         <!-- =====================================================
              LOADING
@@ -213,7 +213,10 @@
                             *ngIf="column.type==='image'">
 
                             <span
-                                style="display:inline-flex; align-items:center; justify-content:center; width:44px; height:26px; border:1px solid #e2e8f0; border-radius:4px; background:#fff; overflow:hidden; vertical-align:middle;">
+                                style="display:inline-flex; align-items:center; justify-content:center; width:44px; height:26px; border:1px solid #e2e8f0; border-radius:4px; background:#fff; overflow:hidden; vertical-align:middle;"
+                                [style.cursor]="imagePreview && getImageValue(row, column) ? 'zoom-in' : 'default'"
+                                (mouseenter)="showImagePreview($event, getImageValue(row, column), row, column)"
+                                (mouseleave)="hideImagePreview()">
 
                                 <img
                                     *ngIf="getImageValue(row, column) as imageSrc; else noImage"
@@ -627,6 +630,12 @@
                                 !column.link
                             ">
 
+                            <span
+                                *ngIf="getDotColor(row, column)"
+                                class="list-table-dot"
+                                [style.background]="getDotColor(row, column)">
+                            </span>
+
                             {{
                                 getCellValue(
                                     row,
@@ -678,4 +687,51 @@
 
     </div>
 
-</div>
+
+    <!-- =====================================================
+         IMAGE PREVIEW (hover over an 'image' cell)
+         Fixed to the window, so the scrolling body never
+         clips it.
+    ====================================================== -->
+
+    <div
+        class="list-table-image-preview"
+        *ngIf="previewImageSrc"
+        [style.left.px]="previewImageX"
+        [style.top.px]="previewImageY">
+
+        <div
+            class="list-table-image-preview-head"
+            *ngIf="previewImageTitle">
+
+            <div
+                class="list-table-image-preview-title"
+                *ngIf="previewImageTitle">
+                {{ previewImageTitle }}
+            </div>
+
+        </div>
+
+        <div class="list-table-image-preview-body">
+
+            <img
+                [src]="previewImageSrc"
+                alt="Preview">
+
+        </div>
+
+        <!-- Footer : the detail chips (e.g. stock levels) -->
+
+        <div
+            class="list-table-image-preview-foot"
+            *ngIf="previewImageDetails.length">
+
+            <span *ngFor="let d of previewImageDetails">
+                {{ d.label }} <b>{{ d.value }}</b>
+            </span>
+
+        </div>
+
+    </div>
+
+</div>

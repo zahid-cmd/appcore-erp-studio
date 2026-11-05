@@ -22,6 +22,10 @@ public class BranchesDto
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
+
     //===========================================================
     // Company
     //===========================================================

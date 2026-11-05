@@ -28,6 +28,8 @@ using GeneralLedgersEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.GeneralLedgers;
 
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 using AppCore.Domain.Common;
 
 
@@ -103,10 +105,28 @@ public class MotorBikesRepository : IMotorBikesRepository
 
     private IQueryable<MotorBikesDto> MotorBikesQuery()
     {
-        return
-            from x in _context.Set<MotorBikesEntity>().AsNoTracking()
+        return Project(
+            LiveRows());
+    }
 
-            where !x.IsDeleted
+    // Not deleted, no tracking
+    private IQueryable<MotorBikesEntity> LiveRows()
+    {
+        return _context
+            .Set<MotorBikesEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted);
+    }
+
+    // Rows -> DTOs (category / brand / sub category names)
+    private IQueryable<MotorBikesDto>
+        Project
+        (
+            IQueryable<MotorBikesEntity> source
+        )
+    {
+        return
+            from x in source
 
             join c in _context.Set<ProductCategoryEntity>().AsNoTracking()
                 on x.ProductCategoryId equals c.ProductCategoryId into cj
@@ -128,6 +148,9 @@ public class MotorBikesRepository : IMotorBikesRepository
             {
                 MotorBikeId =
                     x.MotorBikeId,
+
+                PublicId =
+                    x.PublicId,
 
                 ProductCategoryId =
                     x.ProductCategoryId,
@@ -170,6 +193,9 @@ public class MotorBikesRepository : IMotorBikesRepository
 
                 CogsLedgerCode =
                     x.CogsLedgerCode,
+
+                SalesLedgerCode =
+                    x.SalesLedgerCode,
 
                 ReorderLevel =
                     x.ReorderLevel,
@@ -227,6 +253,239 @@ public class MotorBikesRepository : IMotorBikesRepository
                     x.ProductCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Filters on the motor bike itself, the counts for the
+    // summary line, then the status, the total and one page.
+    //===========================================================
+
+    private SortMap<MotorBikesEntity> ListSorts()
+    {
+        return new SortMap<MotorBikesEntity>("ProductCode")
+            .Add("ProductCode", x => x.ProductCode)
+            .Add("ProductName", x => x.ProductName)
+            .Add
+            (
+                "CategoryName",
+                x =>
+                    _context
+                        .Set<ProductCategoryEntity>()
+                        .Where(c => c.ProductCategoryId == x.ProductCategoryId)
+                        .Select(c => c.CategoryName)
+                        .FirstOrDefault()
+            )
+            .Add
+            (
+                "SubCategoryName",
+                x =>
+                    _context
+                        .Set<ProductSubCategoryEntity>()
+                        .Where(s => s.ProductSubCategoryId == x.ProductSubCategoryId)
+                        .Select(s => s.SubCategoryName)
+                        .FirstOrDefault()
+            )
+            .Add
+            (
+                "ColorName",
+                x =>
+                    _context
+                        .Set<ColorManagementEntity>()
+                        .Where(c => c.ColorManagementId == x.ColorManagementId)
+                        .Select(c => c.ColorName)
+                        .FirstOrDefault()
+            )
+            .Add("ReorderLevel", x => x.ReorderLevel)
+            .Add("RedLevel", x => x.RedLevel)
+            .Add("MaxStockLevel", x => x.MaxStockLevel)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.MotorBikeId);
+    }
+
+    public async Task<PagedResult<MotorBikesDto>>
+        GetPagedAsync
+        (
+            MotorBikesPageRequest request
+        )
+    {
+        IQueryable<MotorBikesEntity> query =
+            LiveRows();
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.ProductCode, like) ||
+                        EF.Functions.ILike(x.ProductName, like) ||
+                        EF.Functions.ILike(x.InventoryLedgerCode, like) ||
+                        EF.Functions.ILike(x.Remarks, like) ||
+                        _context
+                            .Set<ProductCategoryEntity>()
+                            .Any
+                            (
+                                c =>
+                                    c.ProductCategoryId == x.ProductCategoryId &&
+                                    (
+                                        EF.Functions.ILike(c.CategoryName, like) ||
+                                        EF.Functions.ILike(c.CategoryCode, like) ||
+                                        _context
+                                            .Set<BrandManagementEntity>()
+                                            .Any
+                                            (
+                                                b =>
+                                                    (long?)b.BrandManagementId == c.BrandManagementId &&
+                                                    EF.Functions.ILike(b.BrandName, like)
+                                            )
+                                    )
+                            ) ||
+                        _context
+                            .Set<ProductSubCategoryEntity>()
+                            .Any
+                            (
+                                s =>
+                                    s.ProductSubCategoryId == x.ProductSubCategoryId &&
+                                    EF.Functions.ILike(s.SubCategoryName, like)
+                            ) ||
+                        _context
+                            .Set<ColorManagementEntity>()
+                            .Any
+                            (
+                                c =>
+                                    c.ColorManagementId == x.ColorManagementId &&
+                                    EF.Functions.ILike(c.ColorName, like)
+                            )
+                );
+        }
+
+        //-------------------------------------------------------
+        // Category / Sub Category / Color filters
+        //-------------------------------------------------------
+
+        if (request.ProductCategoryId > 0)
+        {
+            long categoryId = request.ProductCategoryId.Value;
+
+            query = query.Where(x => x.ProductCategoryId == categoryId);
+        }
+
+        if (request.ProductSubCategoryId > 0)
+        {
+            long subCategoryId = request.ProductSubCategoryId.Value;
+
+            query = query.Where(x => x.ProductSubCategoryId == subCategoryId);
+        }
+
+        if (request.ColorManagementId > 0)
+        {
+            long colorId = request.ColorManagementId.Value;
+
+            query = query.Where(x => x.ColorManagementId == colorId);
+        }
+
+        //-------------------------------------------------------
+        // Summary counts : Total / Active / Inactive (search and
+        // filters applied; not the status filter)
+        //-------------------------------------------------------
+
+        var byStatus =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { IsActive = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = byStatus.Sum(x => x.Count),
+                ["Active"] = byStatus.Where(x => x.IsActive).Sum(x => x.Count),
+                ["Inactive"] = byStatus.Where(x => !x.IsActive).Sum(x => x.Count)
+            };
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        if
+        (
+            request.Status.HasValue
+        )
+        {
+            bool active =
+                request.Status.Value;
+
+            query =
+                query.Where(x => x.IsActive == active);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<MotorBikesDto> rows =
+            await Project(
+                    ListSorts()
+                        .Apply(query, request)
+                        .Page(request))
+                .ToListAsync();
+
+        return new PagedResult<MotorBikesDto>
+        {
+            Items = rows,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await LiveRows()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.MotorBikeId)
+            .FirstOrDefaultAsync();
     }
 
 
@@ -698,7 +957,40 @@ public class MotorBikesRepository : IMotorBikesRepository
             0
         )
         {
-            return new MotorBikesDefaultsDto();
+            // Last saved (created or edited) motor bike whose
+            // category and sub category are still usable
+            var last =
+                await (
+                    from b in _context.Set<MotorBikesEntity>().AsNoTracking()
+                    join s in _context.Set<ProductSubCategoryEntity>().AsNoTracking()
+                        on b.ProductSubCategoryId equals s.ProductSubCategoryId
+                    join c in _context.Set<ProductCategoryEntity>().AsNoTracking()
+                        on b.ProductCategoryId equals c.ProductCategoryId
+                    where !b.IsDeleted
+                          && !s.IsDeleted && s.IsActive
+                          && !c.IsDeleted && c.IsActive
+                    orderby (b.ModifiedDate ?? b.CreatedDate) descending, b.MotorBikeId descending
+                    select new { b.ProductCategoryId, b.ProductSubCategoryId, b.ReorderLevel, b.RedLevel, b.MaxStockLevel }
+                )
+                .FirstOrDefaultAsync();
+
+            return new MotorBikesDefaultsDto
+            {
+                LastProductCategoryId =
+                    last?.ProductCategoryId ?? 0,
+
+                LastProductSubCategoryId =
+                    last?.ProductSubCategoryId ?? 0,
+
+                LastReorderLevel =
+                    last?.ReorderLevel ?? 0,
+
+                LastRedLevel =
+                    last?.RedLevel ?? 0,
+
+                LastMaxStockLevel =
+                    last?.MaxStockLevel ?? 0
+            };
         }
 
         long categoryId =
@@ -750,7 +1042,14 @@ public class MotorBikesRepository : IMotorBikesRepository
             CogsLedgerCode =
                 ChildCode(
                     parent.CogsSubGroup.SubGroupCode,
-                    number)
+                    number),
+
+            SalesLedgerCode =
+                ProductSalesAccounts.LedgerCodeOf(
+                    parent.Category.CategoryType,
+                    ChildCode(
+                        parent.InventorySubGroup.SubGroupCode,
+                        number))
         };
     }
 
@@ -1216,8 +1515,12 @@ public class MotorBikesRepository : IMotorBikesRepository
         // Bike + its three ledgers in one transaction
         //=======================================================
 
+        // Joins the caller's transaction when one is open (Model
+        // Onboarding saves model, sub category and bikes as one)
         await using var transaction =
-            await _context.Database.BeginTransactionAsync();
+            _context.Database.CurrentTransaction == null
+                ? await _context.Database.BeginTransactionAsync()
+                : null;
 
         _context
             .Set<MotorBikesEntity>()
@@ -1229,6 +1532,18 @@ public class MotorBikesRepository : IMotorBikesRepository
             parent,
             userId);
 
+        // Sales ledger (CLS-005 / 006 / 008)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Motor Bike",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
+
         await _context.SaveChangesAsync();
 
         AddHistory(
@@ -1239,7 +1554,10 @@ public class MotorBikesRepository : IMotorBikesRepository
 
         await _context.SaveChangesAsync();
 
-        await transaction.CommitAsync();
+        if (transaction != null)
+        {
+            await transaction.CommitAsync();
+        }
 
         return entity.MotorBikeId;
     }
@@ -1360,6 +1678,18 @@ public class MotorBikesRepository : IMotorBikesRepository
             parent,
             userId);
 
+        // Sales ledger (CLS-005 / 006 / 008)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Motor Bike",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
+
         await _context.SaveChangesAsync();
 
         AddHistory(
@@ -1440,6 +1770,18 @@ public class MotorBikesRepository : IMotorBikesRepository
             ledger.DeletedDate =
                 now;
         }
+
+        // Sales ledger follows (refused once it has postings)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Motor Bike",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
 
         await _context.SaveChangesAsync();
 
@@ -1576,6 +1918,18 @@ public class MotorBikesRepository : IMotorBikesRepository
             parent,
             userId);
 
+        // Sales ledger (CLS-005 / 006 / 008)
+        entity.SalesLedgerCode =
+            await ProductSalesAccounts.SyncProductAsync(
+                _context,
+                entity.ProductSubCategoryId,
+                entity.InventoryLedgerCode,
+                entity.ProductCode,
+                "Motor Bike",
+                entity.IsActive,
+                entity.IsDeleted,
+                userId);
+
         await _context.SaveChangesAsync();
 
         AddHistory(
@@ -1671,4 +2025,4 @@ public class MotorBikesRepository : IMotorBikesRepository
                     !x.IsDeleted
             );
     }
-}
+}

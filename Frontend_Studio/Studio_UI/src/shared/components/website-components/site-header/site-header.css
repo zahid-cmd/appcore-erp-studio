@@ -1,0 +1,605 @@
+/* =====================================================
+   SITE HEADER
+===================================================== */
+
+:host
+{
+    position:sticky;
+    top:0;
+    z-index:50;
+}
+
+
+.topline
+{
+    background:var(--w-topbar-bg);
+    color:var(--w-topbar-text);
+    font-size:12.5px;
+}
+
+
+.topline-inner
+{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:4px 20px;
+    min-height:36px;
+}
+
+
+.topline-right
+{
+    display:flex;
+    gap:20px;
+}
+
+
+.topline a
+{
+    color:inherit;
+    font-weight:800;
+    text-decoration:none;
+}
+
+
+.header
+{
+    position:relative;
+    background:var(--w-header-bg);
+    border-bottom:1px solid var(--w-header-edge);
+    backdrop-filter:saturate(150%) blur(14px);
+    -webkit-backdrop-filter:saturate(150%) blur(14px);
+}
+
+
+.header-inner
+{
+    display:flex;
+    align-items:center;
+    gap:24px;
+    min-height:76px;
+}
+
+
+/* Company logo : the full height of the header bar */
+.brand
+{
+    align-self:stretch;
+    display:flex;
+    align-items:center;
+    flex:0 0 auto;
+    color:var(--w-strong);
+    text-decoration:none;
+}
+
+
+/* The company logo on a white rectangle (Light and Deep),
+   shaped like the header buttons, a little taller (48 vs 42).
+   "cover" trims empty space around a square logo file. */
+.brand-logo
+{
+    display:block;
+    box-sizing:border-box;
+    width:140px;
+    height:48px;
+    padding:3px 12px;
+    border:1px solid var(--w-logo-tile-edge);
+    border-radius:12px;
+    background:var(--w-logo-tile-bg);
+    box-shadow:var(--w-logo-tile-shadow);
+    object-fit:cover;
+    object-position:center;
+}
+
+
+.brand-name
+{
+    font-family:var(--w-display);
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+}
+
+
+.nav
+{
+    display:flex;
+    gap:2px;
+    margin-right:auto;
+}
+
+
+.nav-link
+{
+    padding:8px 11px;
+    border:0;
+    border-radius:10px;
+    background:transparent;
+    color:var(--w-nav);
+    font:inherit;
+    font-size:16px;
+    font-weight:700;
+    text-decoration:none;
+    white-space:nowrap;
+    cursor:pointer;
+}
+
+
+.nav-link:hover
+{
+    background:var(--w-switch-bg);
+    color:var(--w-kicker);
+}
+
+
+/* =====================================================
+   BRANDS MENU : hover panel with one card per brand
+===================================================== */
+
+.nav
+{
+    align-self:stretch;
+    align-items:center;
+}
+
+
+/* Full header height, so the pointer reaches the panel */
+.nav-drop
+{
+    align-self:stretch;
+    display:flex;
+    align-items:center;
+}
+
+
+.drop-btn
+{
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+
+
+.chev
+{
+    transition:transform .2s ease;
+}
+
+
+.nav-drop.open .chev
+{
+    transform:rotate(180deg);
+}
+
+
+.mega
+{
+    position:absolute;
+    top:100%;
+    left:50%;
+    z-index:60;
+    width:min(1180px, calc(100% - 32px));
+    box-sizing:border-box;
+    padding:24px 24px 26px;
+    border:1px solid var(--w-mega-edge);
+    border-radius:24px;
+    background:var(--w-mega-bg);
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    box-shadow:var(--w-mega-shadow);
+    opacity:0;
+    visibility:hidden;
+    transform:translate(-50%, 10px);
+    transition:opacity .2s ease, transform .2s ease, visibility 0s linear .2s;
+}
+
+
+.nav-drop.open .mega
+{
+    opacity:1;
+    visibility:visible;
+    transform:translate(-50%, 0);
+    transition:opacity .2s ease, transform .2s ease, visibility 0s;
+}
+
+
+.mega-head
+{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:4px 14px;
+    margin-bottom:18px;
+}
+
+
+.mega-kicker
+{
+    color:var(--w-mega-kicker);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:1.4px;
+    text-transform:uppercase;
+}
+
+
+.mega-sub
+{
+    color:var(--w-mega-sub);
+    font-size:13.5px;
+}
+
+
+.mega-grid
+{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:18px;
+}
+
+
+/* Floating glass card */
+.mega-card
+{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    border:1px solid var(--w-mega-card-edge);
+    border-radius:18px;
+    background:var(--w-mega-card);
+    box-shadow:var(--w-mega-card-shadow);
+    overflow:hidden;
+    transition:transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease, border-color .25s ease;
+}
+
+
+/* Sheen across the top half */
+.mega-card::before
+{
+    content:'';
+    position:absolute;
+    inset:0 0 auto 0;
+    height:50%;
+    background:var(--w-mega-sheen);
+    pointer-events:none;
+}
+
+
+.mega-card:hover
+{
+    border-color:var(--w-accent);
+    transform:translateY(-6px);
+    box-shadow:var(--w-mega-card-lift);
+}
+
+
+.mega-main
+{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    padding:16px 16px 16px;
+    color:var(--w-mega-name);
+    text-align:center;
+    text-decoration:none;
+}
+
+
+/* Logo always on white : any logo colour reads */
+.mega-logo
+{
+    width:100%;
+    height:92px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:8px;
+    box-sizing:border-box;
+    border:1px solid rgba(147,180,245,.35);
+    border-radius:14px;
+    background:linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
+    box-shadow:
+        inset 0 2px 6px rgba(19,37,74,.07),
+        0 8px 18px -12px rgba(19,37,74,.5);
+}
+
+
+.mega-logo img
+{
+    max-width:70%;
+    max-height:58px;
+    object-fit:contain;
+}
+
+
+.mega-logo b
+{
+    color:#13254a;
+    font-family:var(--w-display);
+    font-size:40px;
+}
+
+
+.mega-name
+{
+    color:var(--w-mega-name);
+    font-size:17px;
+    font-weight:800;
+}
+
+
+.mega-meta
+{
+    color:var(--w-mega-meta);
+    font-size:12.5px;
+}
+
+
+/* Bottom : a tray of pill buttons */
+.mega-links
+{
+    position:relative;
+    display:flex;
+    gap:6px;
+    margin-top:auto;
+    padding:10px;
+    border-top:1px solid var(--w-mega-foot-edge);
+    background:var(--w-mega-foot);
+}
+
+
+.mega-links a
+{
+    flex:1 1 0;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--w-mega-pill-edge);
+    border-radius:999px;
+    background:var(--w-mega-pill);
+    box-shadow:var(--w-mega-pill-shadow);
+    color:var(--w-mega-pill-text);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.2px;
+    text-decoration:none;
+    white-space:nowrap;
+    transition:background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+
+.mega-links a:hover
+{
+    border-color:var(--w-accent);
+    background:linear-gradient(180deg, var(--w-accent-2), var(--w-accent));
+    color:var(--w-accent-ink);
+    transform:translateY(-1px);
+}
+
+
+.actions
+{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+
+.theme
+{
+    display:flex;
+    gap:2px;
+    padding:3px;
+    border:1px solid var(--w-ghost-edge);
+    border-radius:12px;
+    background:var(--w-switch-bg);
+}
+
+
+.theme-btn
+{
+    width:34px;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:0;
+    border-radius:9px;
+    background:transparent;
+    color:var(--w-muted);
+    cursor:pointer;
+}
+
+
+.theme-btn.on
+{
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+}
+
+
+.ride
+{
+    height:42px;
+    padding:0 14px;
+    font-size:13.5px;
+}
+
+
+/* Office Login / Open ERP : icon only, tooltip below */
+.office
+{
+    position:relative;
+    width:42px;
+    height:42px;
+    padding:0;
+    justify-content:center;
+}
+
+
+.office::after
+{
+    content:attr(data-tip);
+    position:absolute;
+    top:calc(100% + 10px);
+    left:50%;
+    z-index:70;
+    padding:7px 11px;
+    border-radius:9px;
+    background:#13254a;
+    color:#ffffff;
+    font-size:12.5px;
+    font-weight:800;
+    white-space:nowrap;
+    box-shadow:0 10px 24px -10px rgba(0,0,0,.6);
+    opacity:0;
+    visibility:hidden;
+    transform:translate(-50%, -4px);
+    transition:opacity .15s ease, transform .15s ease, visibility 0s linear .15s;
+    pointer-events:none;
+}
+
+
+/* Little arrow */
+.office::before
+{
+    content:'';
+    position:absolute;
+    top:calc(100% + 4px);
+    left:50%;
+    z-index:70;
+    border:6px solid transparent;
+    border-top:0;
+    border-bottom-color:#13254a;
+    opacity:0;
+    visibility:hidden;
+    transform:translate(-50%, -4px);
+    transition:opacity .15s ease, transform .15s ease, visibility 0s linear .15s;
+    pointer-events:none;
+}
+
+
+.office:hover::after,
+.office:focus-visible::after,
+.office:hover::before,
+.office:focus-visible::before
+{
+    opacity:1;
+    visibility:visible;
+    transform:translate(-50%, 0);
+    transition:opacity .15s ease, transform .15s ease, visibility 0s;
+}
+
+
+.menu-btn
+{
+    display:none;
+    width:42px;
+    height:42px;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--w-ghost-edge);
+    border-radius:12px;
+    background:transparent;
+    color:var(--w-text);
+    cursor:pointer;
+}
+
+
+@media (max-width: 1180px)
+{
+    .menu-btn
+    {
+        display:flex;
+    }
+
+    .nav
+    {
+        position:absolute;
+        top:100%;
+        left:0;
+        right:0;
+        display:none;
+        flex-direction:column;
+        margin:0;
+        padding:10px 16px 16px;
+        background:var(--w-header-bg);
+        border-bottom:1px solid var(--w-header-edge);
+        backdrop-filter:blur(14px);
+        -webkit-backdrop-filter:blur(14px);
+    }
+
+    .nav.open
+    {
+        display:flex;
+    }
+
+    .nav-drop
+    {
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .drop-btn
+    {
+        justify-content:space-between;
+    }
+
+    .mega
+    {
+        position:static;
+        width:auto;
+        display:none;
+        padding:12px;
+        transform:none;
+        box-shadow:none;
+    }
+
+    .nav-drop.open .mega
+    {
+        display:block;
+        transform:none;
+    }
+
+    .mega-grid
+    {
+        grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .mega-logo
+    {
+        height:64px;
+    }
+
+    .header-inner
+    {
+        justify-content:space-between;
+    }
+}
+
+
+@media (max-width: 640px)
+{
+    .ride
+    {
+        display:none;
+    }
+
+    .office
+    {
+        padding:0;
+    }
+
+    .brand-logo
+    {
+        width:112px;
+        height:42px;
+        padding:3px 10px;
+    }
+}

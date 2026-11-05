@@ -1088,7 +1088,7 @@ public class InventoryStatusRepository
 
         public Dictionary<long, string> Colors { get; set; } = new();
 
-        // (product, warehouse) → "R-01 · Shelf 3"
+        // (product, warehouse) → "A-03-05"
         public Dictionary<(long ProductId, long WarehouseId), string> Places { get; set; } = new();
 
         public string LocationOf(long productId, long warehouseId) =>
@@ -1150,7 +1150,7 @@ public class InventoryStatusRepository
 
     //===========================================================
     // SP / AC rack + shelf per product in the warehouses of the
-    // filter (one place = "R-01 · Shelf 3"; more = "3 places").
+    // filter (one place = bin code "A-03-05"; more = "3 places").
     // Also fills labels.Places for the stock card.
     //===========================================================
 
@@ -1181,27 +1181,27 @@ public class InventoryStatusRepository
                     .Select(x => x.WarehouseId)
                     .ToListAsync();
 
-        List<(long ProductId, long WarehouseId, long RackId, int Shelf)> places =
+        List<(long ProductId, long WarehouseId, long RackId, int Shelf, int Bin)> places =
             page == PageSpareParts
                 ? (
                     await _context
                         .Set<SparePartLocationsEntity>()
                         .AsNoTracking()
                         .Where(x => warehouseIds.Contains(x.WarehouseId) && (!productId.HasValue || x.SparePartId == productId.Value))
-                        .Select(x => new { x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber })
+                        .Select(x => new { x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
                         .ToListAsync()
                   )
-                  .Select(x => (x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber))
+                  .Select(x => (x.SparePartId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber))
                   .ToList()
                 : (
                     await _context
                         .Set<AccessoryLocationsEntity>()
                         .AsNoTracking()
                         .Where(x => warehouseIds.Contains(x.WarehouseId) && (!productId.HasValue || x.AccessoryId == productId.Value))
-                        .Select(x => new { x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber })
+                        .Select(x => new { x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
                         .ToListAsync()
                   )
-                  .Select(x => (x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber))
+                  .Select(x => (x.AccessoryId, x.WarehouseId, x.RackManagementId, x.ShelfNumber, x.BinNumber))
                   .ToList();
 
         if (places.Count == 0)
@@ -1215,17 +1215,21 @@ public class InventoryStatusRepository
                 .Distinct()
                 .ToList();
 
-        Dictionary<long, string> racks =
+        var racks =
             await _context
                 .Set<RackManagementEntity>()
                 .AsNoTracking()
                 .Where(x => rackIds.Contains(x.RackManagementId))
-                .ToDictionaryAsync(x => x.RackManagementId, x => x.RackCode ?? string.Empty);
+                .Select(x => new { x.RackManagementId, x.RackCode, x.RackName })
+                .ToDictionaryAsync(x => x.RackManagementId);
 
-        string Text((long ProductId, long WarehouseId, long RackId, int Shelf) place) =>
-            place.Shelf > 0
-                ? $"{racks.GetValueOrDefault(place.RackId, "Rack")} · Shelf {place.Shelf}"
-                : racks.GetValueOrDefault(place.RackId, string.Empty);
+        string Text((long ProductId, long WarehouseId, long RackId, int Shelf, int Bin) place) =>
+            !racks.TryGetValue(place.RackId, out var rack)
+                ? string.Empty
+                : place.Shelf > 0
+                    // The bin code A-03-05 (RackLabels)
+                    ? AppCore.Infrastructure.Repositories.Settings.ProductSettings.RackLabels.BinCode(rack.RackName, place.Shelf, place.Bin)
+                    : rack.RackCode ?? string.Empty;
 
         foreach (var group in places.GroupBy(x => x.ProductId))
         {

@@ -35,6 +35,10 @@ export type PaymentVoucherStatus =
 
 export interface PaymentVoucher
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     PaymentVoucherId:
         number;
 
@@ -162,6 +166,10 @@ export interface UpdatePaymentVoucher
 
 export interface PaymentVoucherSaved
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     PaymentVoucherId:
         number;
 

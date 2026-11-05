@@ -90,11 +90,22 @@ public class MembershipPoliciesController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
     public async Task<ActionResult<MembershipPoliciesDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         MembershipPoliciesDto? policy =
             await _repository.GetByIdAsync(id);
 
@@ -190,11 +201,22 @@ public class MembershipPoliciesController : ControllerBase
     // Delete (soft)
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         if (!await _repository.ExistsAsync(id))
         {
             return NotFound();

@@ -42,6 +42,22 @@ public class GeneralLedgersConfiguration
 
         builder.HasKey(x => x.GeneralLedgerId);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_GeneralLedgers_PublicId");
+
         builder.Property(x => x.GeneralLedgerId)
                .ValueGeneratedOnAdd();
 

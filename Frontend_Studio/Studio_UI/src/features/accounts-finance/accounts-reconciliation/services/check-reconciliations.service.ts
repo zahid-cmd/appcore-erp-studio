@@ -228,7 +228,7 @@ export class CheckReconciliationsService
     getVoucher
     (
         id:
-            number
+            number | string
     ):
         Observable<CheckClearingVoucher>
     {
@@ -240,7 +240,7 @@ export class CheckReconciliationsService
     getDepositSlip
     (
         id:
-            number
+            number | string
     ):
         Observable<CheckDepositSlip>
     {

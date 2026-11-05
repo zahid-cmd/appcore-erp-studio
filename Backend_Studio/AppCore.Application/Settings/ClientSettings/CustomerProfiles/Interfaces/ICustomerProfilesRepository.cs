@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.Common.Paging;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -16,6 +23,23 @@ public interface ICustomerProfilesRepository
     //===========================================================
 
     Task<List<CustomerProfilesDto>> GetAllAsync();
+
+
+    //===========================================================
+    // Get Paged (the list page : one page, server side)
+    //===========================================================
+
+    Task<PagedResult<CustomerProfilesDto>> GetPagedAsync(
+        CustomerProfilesPageRequest request);
+
+
+    //===========================================================
+    // Public Id (the id the browser uses) -> internal id, or
+    // null when there is no live customer with it
+    //===========================================================
+
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
 
 
     //===========================================================
@@ -85,4 +109,4 @@ public interface ICustomerProfilesRepository
         long id,
         string photoPath,
         long userId);
-}
+}

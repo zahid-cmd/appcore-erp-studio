@@ -547,6 +547,11 @@ implements OnInit, OnDestroy
         number =
         0;
 
+    // uuid from the address bar (the record is loaded by it)
+    routePublicId:
+        string =
+        '';
+
     loading:
         boolean =
         false;
@@ -1458,10 +1463,10 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
-            this.entityId =
+            this.routePublicId =
                 id;
 
             this.loadEntity();
@@ -1475,8 +1480,9 @@ implements OnInit, OnDestroy
         this.initializeEntity();
     }
 
+    // The uuid in the address bar ('' = add)
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -1488,13 +1494,11 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
             if
             (
-                id > 0
+                id !== ''
             )
             {
                 return id;
@@ -1504,7 +1508,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     get isAddMode():
@@ -1850,13 +1854,13 @@ implements OnInit, OnDestroy
         void
     {
         const id =
-            this.order?.PurchaseId
+            this.order?.PublicId
             ??
-            0;
+            '';
 
         if
         (
-            !(id > 0)
+            id === ''
             ||
             this.status === 'Draft'
             ||
@@ -2033,7 +2037,7 @@ implements OnInit, OnDestroy
             true;
 
         this.purchasesService
-            .getById(this.entityId)
+            .getById(this.routePublicId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -2046,6 +2050,10 @@ implements OnInit, OnDestroy
                 {
                     this.order =
                         item;
+
+                    // Internal id (actions and save use it; links use the uuid)
+                    this.entityId =
+                        item.PurchaseId;
 
                     // Only a draft opens in Edit
                     if
@@ -8776,7 +8784,7 @@ implements OnInit, OnDestroy
         void this.router.navigate(
             [
                 mode,
-                this.entityId
+                this.order?.PublicId || this.routePublicId
             ],
             {
                 relativeTo:

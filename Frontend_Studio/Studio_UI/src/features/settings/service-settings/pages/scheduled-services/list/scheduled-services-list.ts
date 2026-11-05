@@ -228,6 +228,15 @@ implements OnInit
         ScheduledService[] =
     [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredScheduledServices:
         ScheduledService[] =
     [];
@@ -515,6 +524,9 @@ implements OnInit
                         );
 
                     this.applyFilters();
+
+
+                    this.updateSummary();
 
                     this.loading =
                         false;
@@ -1015,7 +1027,7 @@ implements OnInit
         (
             [
                 'view',
-                item.ScheduledServiceId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1035,7 +1047,7 @@ implements OnInit
         (
             [
                 'edit',
-                item.ScheduledServiceId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1139,4 +1151,32 @@ implements OnInit
 
         this.cdr.detectChanges();
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.scheduledServices ?? [];
+
+        const active =
+            all.filter(x => !!x?.IsActive).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

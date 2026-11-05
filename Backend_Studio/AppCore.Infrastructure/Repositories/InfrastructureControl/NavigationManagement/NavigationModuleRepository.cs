@@ -67,6 +67,9 @@ public class NavigationModuleRepository : INavigationModuleRepository
                 Id =
                     x.Id,
 
+                PublicId =
+                    x.PublicId,
+
                 Code =
                     x.Code,
 
@@ -118,8 +121,8 @@ public class NavigationModuleRepository : INavigationModuleRepository
             DisplayOrder =
                 await GetSuggestedDisplayOrderAsync()
         };
-    }   
-    
+    }
+
     //===============================================================
     // Get Suggested Display Order
     //===============================================================
@@ -184,6 +187,9 @@ public class NavigationModuleRepository : INavigationModuleRepository
             {
                 Id =
                     x.Id,
+
+                PublicId =
+                    x.PublicId,
 
                 Code =
                     x.Code,
@@ -764,4 +770,29 @@ public class NavigationModuleRepository : INavigationModuleRepository
     }
 
 
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.InfrastructureControl.NavigationManagement.NavigationModule>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.Id)
+            .FirstOrDefaultAsync();
+    }
 }

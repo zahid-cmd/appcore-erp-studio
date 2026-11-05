@@ -156,8 +156,9 @@ implements AfterViewInit, OnDestroy
         PrintKit | null =
         null;
 
+    // The record number, or its uuid (pages that use PublicId links)
     private recordId:
-        number =
+        number | string =
         0;
 
     choice:
@@ -406,11 +407,13 @@ implements AfterViewInit, OnDestroy
         const key =
             snapshot.paramMap.get('source') ?? '';
 
+        const rawId =
+            (snapshot.paramMap.get('id') ?? '').trim();
+
         this.recordId =
-            Number(
-                snapshot.paramMap.get('id')
-            )
-            || 0;
+            /^\d+$/.test(rawId)
+                ? Number(rawId)
+                : rawId;
 
         this.choice =
             snapshot.queryParamMap.get('doc') || 'all';
@@ -518,7 +521,9 @@ implements AfterViewInit, OnDestroy
         {
             if
             (
-                !(this.recordId > 0)
+                typeof this.recordId === 'number'
+                    ? !(this.recordId > 0)
+                    : this.recordId === ''
             )
             {
                 throw new Error('Invalid record.');
@@ -749,9 +754,7 @@ implements AfterViewInit, OnDestroy
         // Scale the pages to the panel width (the copied body
         // carries the main preview's zoom : replace it)
         const widest =
-            this.pages.some(page => page.classList.contains('pv-landscape'))
-                ? MM_TO_PX * 297
-                : MM_TO_PX * 210;
+            MM_TO_PX * this.widestPageMm();
 
         (doc.body.style as any).zoom =
             String(
@@ -1140,12 +1143,10 @@ implements AfterViewInit, OnDestroy
 
         // Widest / tallest page at 100 % (CSS px)
         const pageWidth =
-            this.pages.some(page => page.classList.contains('pv-landscape'))
-                ? MM_TO_PX * 297
-                : MM_TO_PX * 210;
+            MM_TO_PX * this.widestPageMm();
 
         const pageHeight =
-            MM_TO_PX * 297;
+            MM_TO_PX * this.tallestPageMm();
 
         const byWidth =
             (stage.clientWidth - 56) / pageWidth;
@@ -1161,6 +1162,24 @@ implements AfterViewInit, OnDestroy
         this.applyZoom(
             Math.max(25, Math.round(scale * 100))
         );
+    }
+
+    // Widest / tallest page (mm) : A4 or the pages' own paper
+    // (label sheets, rolls)
+    private widestPageMm():
+        number
+    {
+        return this.pages.length === 0
+            ? 210
+            : Math.max(...this.pages.map(page => this.engine.pageSizeMm(page).width));
+    }
+
+    private tallestPageMm():
+        number
+    {
+        return this.pages.length === 0
+            ? 297
+            : Math.max(...this.pages.map(page => this.engine.pageSizeMm(page).height));
     }
 
     private applyZoom
@@ -1502,4 +1521,4 @@ html, body { background: transparent !important; }
                   min-width: 120px; padding: 10px 26px; border-radius: 40px; background: rgba(51, 65, 85, 0.88);
                   color: #fff; font: 700 64px/1 "Segoe UI", Arial, sans-serif; text-align: center; }
 .pv-page.pv-current { outline: 12px solid #3b82f6 !important; outline-offset: 10px; }
-`;
+`;

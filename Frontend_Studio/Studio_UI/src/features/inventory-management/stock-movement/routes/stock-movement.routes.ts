@@ -33,6 +33,58 @@ Routes =
 
             // SUBMENU ROUTE PLACEHOLDER
 
+            // AUTO-BEGIN : SUB-012-003-002
+
+                //===========================================================
+                // Mass Storing
+                //===========================================================
+
+                {
+                    path:'mass-storing',
+
+                    data:
+                    {
+                        breadcrumb:'Mass Storing'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './mass-storing.routes'
+                        )
+                        .then(
+                            m =>
+                                m.MassStoringRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-012-003-002
+
+            // AUTO-BEGIN : SUB-012-003-001
+
+                //===========================================================
+                // Product Transfer
+                //===========================================================
+
+                {
+                    path:'product-transfer',
+
+                    data:
+                    {
+                        breadcrumb:'Product Transfer'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './product-transfer.routes'
+                        )
+                        .then(
+                            m =>
+                                m.ProductTransferRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-012-003-001
+
         ]
 
     }

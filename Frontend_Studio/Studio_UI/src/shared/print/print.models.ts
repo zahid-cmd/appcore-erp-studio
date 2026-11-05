@@ -210,7 +210,8 @@ export interface PrintSourceDef<T = any>
 
     title: string;
 
-    load(injector: Injector, id: number): Promise<T>;
+    // id : the record number, or its uuid (pages that use PublicId links)
+    load(injector: Injector, id: number | string): Promise<T>;
 
     // '' when it may print; otherwise the reason shown
     denyReason(data: T, kit: PrintKit): string;
@@ -224,4 +225,4 @@ export interface PrintSourceDef<T = any>
     canRotate?: boolean;
 
     documents: PrintDocumentDef<T>[];
-}
+}

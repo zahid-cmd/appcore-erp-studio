@@ -21,6 +21,13 @@ public class BranchAssignmentDto
         set;
     }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId
+    {
+        get;
+        set;
+    }
+
 
     public long UserProfileId
     {

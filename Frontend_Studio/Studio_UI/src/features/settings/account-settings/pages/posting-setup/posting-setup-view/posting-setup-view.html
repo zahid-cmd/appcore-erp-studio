@@ -54,7 +54,7 @@
 
 
     <!-- =====================================================
-         TOOLBAR : FILTER CHIPS | ACCESS
+         TOOLBAR : FILTER CHIPS | ACCESS · POSTING SWITCHES
     ====================================================== -->
 
     <app-page-toolbar
@@ -101,9 +101,32 @@
 
             </button>
 
+            <!-- Group filter (label-less; "All groups" when empty) -->
+
+            @for (version of [filtersVersion]; track version)
+            {
+                <app-search-dropdown
+
+                    class="ps-group-dd"
+
+                    placeholder="All groups"
+
+                    [items]="groupItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="groupFilter"
+
+                    (valueChange)="onGroupFilter($event)">
+
+                </app-search-dropdown>
+            }
+
             <span class="ps-ready">
 
-                <i class="fa-solid fa-circle-check"></i>
+                <i class="fa-regular fa-circle-check"></i>
 
                 {{ readyCount }} ready
 
@@ -121,94 +144,73 @@
 
             </span>
 
+            <span
+
+                *ngIf="pageNotice"
+
+                class="ps-notice">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                {{ pageNotice }}
+
+            </span>
+
         </div>
 
         <div
 
             pageToolbarRight
 
-            class="ps-access">
+            class="ps-tools">
 
-            <ng-container *ngIf="canChange; else readOnly">
+            <span
 
-                <i class="fa-solid fa-pen-to-square"></i>
+                class="ps-access"
 
-                You can change ledgers
+                [title]="canChange ? 'You can change ledgers' : 'View only (Update permission needed to change)'">
 
-            </ng-container>
+                <i [class]="canChange ? 'fa-regular fa-pen-to-square' : 'fa-solid fa-lock'"></i>
 
-            <ng-template #readOnly>
+                {{ canChange ? 'You can change ledgers' : 'View only' }}
 
-                <i class="fa-solid fa-lock"></i>
+            </span>
 
-                View only (Update permission needed to change)
+            <span class="ps-tools-sep"></span>
 
-            </ng-template>
+            <button
+
+                #switchesButton
+
+                type="button"
+
+                class="ps-bell"
+
+                [class.is-open]="switchesOpen"
+
+                [title]="switchesTitle"
+
+                (click)="toggleSwitches($event, switchesButton)">
+
+                <i class="fa-regular fa-bell"></i>
+
+                <span
+
+                    *ngIf="switches.length > 0"
+
+                    class="ps-bell-badge"
+
+                    [class.is-warn]="switchMissingCount > 0">
+
+                    {{ switchOnCount }}
+
+                </span>
+
+            </button>
 
         </div>
 
     </app-page-toolbar>
-
-
-    <!-- =====================================================
-         POSTING SWITCHES (read-only, System Configurations)
-    ====================================================== -->
-
-    <div
-
-        *ngIf="switches.length > 0"
-
-        class="ps-switches">
-
-        <span class="ps-switches-title">
-
-            <i class="fa-solid fa-toggle-on"></i>
-
-            Posting switches
-
-        </span>
-
-        <div class="ps-switch-list">
-
-            <span
-
-                *ngFor="let item of switches"
-
-                class="ps-switch"
-
-                [class.ps-switch-on]="item.found && item.isEnabled"
-
-                [class.ps-switch-missing]="!item.found"
-
-                [title]="item.configurationCode + (item.value ? ' · Value ' + item.value : '')">
-
-                <span class="ps-switch-page">{{ item.page }}</span>
-
-                <span class="ps-switch-name">{{ item.name }}</span>
-
-                <b>{{ switchState(item) }}</b>
-
-            </span>
-
-        </div>
-
-        <button
-
-            type="button"
-
-            class="ps-link ps-switches-link"
-
-            title="Switches are changed on System Configurations"
-
-            (click)="openSystemConfigurations()">
-
-            System Configurations
-
-            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-
-        </button>
-
-    </div>
 
 
     <!-- =====================================================
@@ -223,11 +225,19 @@
 
         *ngIf="loading"
 
-        class="ps-state">
+        class="ps-loading">
 
-        <i class="fa-solid fa-spinner fa-spin"></i>
+        <app-orbit-loader
 
-        Loading posting setup...
+            title="Loading"
+
+            message="Loading the posting setup..."
+
+            size="medium"
+
+            [overlay]="false">
+
+        </app-orbit-loader>
 
     </div>
 
@@ -275,131 +285,207 @@
 
             class="ps-group">
 
+            <!-- Group : name · count · hairline -->
+
             <div class="ps-group-head">
 
-                <span class="ps-group-icon">
-
-                    <i [class]="groupIcon(group.name)"></i>
-
-                </span>
+                <i [class]="'ps-group-icon ' + groupIcon(group.name)"></i>
 
                 <span class="ps-group-name">{{ group.name }}</span>
 
                 <span class="ps-group-count">{{ group.rows.length }}</span>
 
+                <span class="ps-group-rule"></span>
+
             </div>
 
-            <div class="ps-cards">
+            <div class="ps-tiles">
 
                 <article
 
                     *ngFor="let row of group.rows; trackBy: trackByCode"
 
-                    class="ps-card"
+                    class="ps-tile"
 
-                    [class.ps-card-alert]="needsAttention(row)">
+                    [ngClass]="'tone-' + statusTone(row)"
 
-                    <!-- Purpose -->
+                    [class.is-saved]="savedCode === row.purposeCode">
 
-                    <div class="ps-purpose">
+                    <!-- Head : mark · name / code · status -->
 
-                        <div class="ps-purpose-top">
+                    <header class="ps-tile-head">
 
-                            <span class="ps-purpose-name">{{ row.purposeName }}</span>
+                        <span class="ps-mark">
 
-                            <span class="ps-code">{{ row.purposeCode }}</span>
+                            <i [class]="groupIcon(group.name)"></i>
 
-                            <span
+                        </span>
 
-                                *ngIf="!row.isRequired"
+                        <div class="ps-tile-title">
 
-                                class="ps-tag">
+                            <div class="ps-tile-name">{{ row.purposeName }}</div>
 
-                                Optional
+                            <div class="ps-tile-code">
 
-                            </span>
+                                {{ row.purposeCode }}
 
-                        </div>
+                                <span
 
-                        <div class="ps-desc">{{ row.description }}</div>
+                                    *ngIf="!row.isRequired"
 
-                        <div class="ps-meta">
+                                    class="ps-tile-opt">
 
-                            <span>
+                                    · Optional
 
-                                <i class="fa-solid fa-diagram-project"></i>
-
-                                {{ row.usedBy }}
-
-                            </span>
-
-                            <span>
-
-                                <i class="fa-solid fa-filter"></i>
-
-                                {{ allowedText(row) }}
-
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <!-- Ledger -->
-
-                    <div class="ps-ledger">
-
-                        <ng-container *ngIf="row.ledgerCode; else noLedger">
-
-                            <div class="ps-ledger-code">{{ row.ledgerCode }}</div>
-
-                            <div class="ps-ledger-name">{{ row.ledgerName || '—' }}</div>
-
-                            <div
-
-                                *ngIf="row.subGroupCode"
-
-                                class="ps-ledger-sub">
-
-                                {{ row.subGroupCode }} · {{ row.subGroupName }}
+                                </span>
 
                             </div>
 
-                        </ng-container>
-
-                        <ng-template #noLedger>
-
-                            <div class="ps-ledger-empty">No ledger chosen</div>
-
-                        </ng-template>
-
-                    </div>
-
-                    <!-- Balance -->
-
-                    <div class="ps-balance">
-
-                        <div class="ps-balance-label">Balance</div>
-
-                        <div class="ps-balance-value">{{ row.ledgerName ? formatAmount(row.balance) : '—' }}</div>
-
-                    </div>
-
-                    <!-- Status + actions -->
-
-                    <div class="ps-side">
+                        </div>
 
                         <span
 
-                            [class]="statusClass(row)"
+                            class="ps-status"
 
                             [title]="row.statusText">
+
+                            <span class="ps-status-dot"></span>
 
                             {{ statusLabel(row) }}
 
                         </span>
 
-                        <div class="ps-actions">
+                    </header>
+
+                    <div
+
+                        class="ps-tile-desc"
+
+                        [title]="row.description">
+
+                        {{ row.description }}
+
+                    </div>
+
+                    <!-- Destination : the ledger it posts to -->
+
+                    <div class="ps-dest">
+
+                        <div class="ps-dest-label">
+
+                            <i class="fa-solid fa-arrow-right"></i>
+
+                            Posts to
+
+                        </div>
+
+                        <ng-container *ngIf="row.ledgerCode; else noLedger">
+
+                            <div class="ps-dest-name">{{ row.ledgerName || 'Ledger not found' }}</div>
+
+                            <div class="ps-dest-code">{{ row.ledgerCode }}</div>
+
+                        </ng-container>
+
+                        <ng-template #noLedger>
+
+                            <div class="ps-dest-name is-empty">No ledger chosen</div>
+
+                        </ng-template>
+
+                        <div
+
+                            *ngIf="needsAttention(row)"
+
+                            class="ps-tile-alert">
+
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+
+                            {{ row.statusText }}
+
+                        </div>
+
+                    </div>
+
+                    <!-- Meta : used by · allowed -->
+
+                    <div class="ps-meta">
+
+                        <div
+
+                            class="ps-meta-line"
+
+                            [title]="'Used by : ' + (row.usedBy || '-')">
+
+                            <i class="fa-solid fa-diagram-project"></i>
+
+                            <span>{{ row.usedBy || '—' }}</span>
+
+                        </div>
+
+                        <div
+
+                            class="ps-meta-line"
+
+                            [title]="'Allowed : ' + allowedText(row)">
+
+                            <i class="fa-solid fa-filter"></i>
+
+                            <span>
+
+                                {{ allowedText(row) }}
+
+                                <ng-container *ngIf="row.subGroupName"> · {{ row.subGroupName }}</ng-container>
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Foot : balance | saved · history · change -->
+
+                    <footer class="ps-tile-foot">
+
+                        <div class="ps-bal">
+
+                            <div class="ps-bal-label">Balance</div>
+
+                            <div
+
+                                class="ps-bal-value"
+
+                                [class.is-zero]="!row.ledgerName || !row.balance">
+
+                                {{ row.ledgerName ? balanceAmount(row.balance) : '—' }}
+
+                                <span
+
+                                    *ngIf="row.ledgerName && row.balance"
+
+                                    class="ps-bal-side">
+
+                                    {{ balanceSide(row.balance) }}
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="ps-tile-actions">
+
+                            <span
+
+                                *ngIf="savedCode === row.purposeCode"
+
+                                class="ps-saved">
+
+                                <i class="fa-solid fa-check"></i>
+
+                                Saved
+
+                            </span>
 
                             <button
 
@@ -421,31 +507,19 @@
 
                                 type="button"
 
-                                class="ps-btn"
+                                class="ps-change-btn"
 
                                 (click)="openChange(row)">
 
-                                <i class="fa-solid fa-pen"></i>
-
                                 Change
+
+                                <i class="fa-solid fa-arrow-right-long"></i>
 
                             </button>
 
                         </div>
 
-                    </div>
-
-                    <div
-
-                        *ngIf="needsAttention(row)"
-
-                        class="ps-alert-line">
-
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-
-                        {{ row.statusText }}
-
-                    </div>
+                    </footer>
 
                 </article>
 
@@ -456,6 +530,140 @@
     </ng-container>
 
     </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     POSTING SWITCHES PANEL (from the toolbar bell; read-only,
+     switches change on System Configurations)
+====================================================== -->
+
+<div
+
+    *ngIf="switchesOpen"
+
+    class="ps-sw-panel"
+
+    [style.top.px]="switchesTop"
+
+    [style.right.px]="switchesRight"
+
+    (click)="$event.stopPropagation()">
+
+    <div class="ps-sw-head">
+
+        <div>
+
+            <div class="ps-sw-title">Posting switches</div>
+
+            <div class="ps-sw-sub">
+
+                <span class="on">{{ switchOnCount }} on</span>
+
+                <span>· {{ switchOffCount }} off</span>
+
+                <span
+
+                    *ngIf="switchMissingCount > 0"
+
+                    class="missing">
+
+                    · {{ switchMissingCount }} not set up
+
+                </span>
+
+            </div>
+
+        </div>
+
+        <button
+
+            type="button"
+
+            class="ps-sw-close"
+
+            title="Close"
+
+            (click)="closeSwitches()">
+
+            <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+    </div>
+
+    <div class="ps-sw-list appcore-scrollbar">
+
+        <div
+
+            *ngIf="switches.length === 0"
+
+            class="ps-sw-empty">
+
+            No posting switches found.
+
+        </div>
+
+        <div
+
+            *ngFor="let item of switches"
+
+            class="ps-sw-row"
+
+            [class.is-on]="item.found && item.isEnabled"
+
+            [class.is-missing]="!item.found"
+
+            [title]="item.configurationCode + (item.value ? ' · Value ' + item.value : '')">
+
+            <div class="ps-sw-text">
+
+                <span class="ps-sw-page">{{ item.page }}</span>
+
+                <span class="ps-sw-name">{{ item.name }}</span>
+
+            </div>
+
+            <span class="ps-sw-state">
+
+                <span class="ps-sw-dot"></span>
+
+                {{ switchState(item) }}
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="ps-sw-foot">
+
+        <span>
+
+            <i class="fa-solid fa-lock"></i>
+
+            Read only here
+
+        </span>
+
+        <button
+
+            type="button"
+
+            class="ps-link"
+
+            title="Switches are changed on System Configurations"
+
+            (click)="openSystemConfigurations()">
+
+            System Configurations
+
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+
+        </button>
 
     </div>
 
@@ -714,5 +922,3 @@
     (closed)="closeHistory()">
 
 </app-history-drawer>
-
-<app-toast></app-toast>

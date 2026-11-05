@@ -42,6 +42,22 @@ from '../models/receipt-voucher.model';
 
 import
 {
+    VoucherPageQuery
+}
+from '../models/voucher-page-query.model';
+
+import
+{
+    PagedResult,
+
+    toPagedParams,
+
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     PaymentMode,
     ChargeBorneBy,
     VoucherDebitLine,
@@ -283,6 +299,9 @@ export class ReceiptVoucherService
             ReceiptVoucherId:
                 this.num(item, 'ReceiptVoucherId'),
 
+            PublicId:
+                this.text(item, 'PublicId'),
+
             VoucherNo:
                 this.text(item, 'VoucherNo'),
 
@@ -380,14 +399,87 @@ export class ReceiptVoucherService
     }
 
 
+
+    //===========================================================
+    // Get Paged (the list page : one page from the server, with
+    // the status counts)
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            VoucherPageQuery
+    ):
+        Observable<PagedResult<ReceiptVoucher>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams(
+                            { ...query }
+                        )
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                        toPagedResult(
+                            response,
+                            item =>
+                                this.normalize(item)
+                        )
+                )
+            );
+    }
+
+
     //===========================================================
     // Get By Id (header + debits + credits)
     //===========================================================
 
-    getById
+    // By internal id : the reconciliation print documents load
+    // a source voucher by it (links use the uuid)
+    getByInternalId
     (
         id:
             number
+    ):
+        Observable<ReceiptVoucher>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/by-id/${id}`
+            )
+            .pipe(
+                map(
+                    item =>
+                        this.normalize(item)
+                )
+            );
+    }
+
+
+    // Print Engine : a uuid (from a link) or an internal id (the
+    // reconciliation documents)
+    getForPrint
+    (
+        id:
+            number | string
+    ):
+        Observable<ReceiptVoucher>
+    {
+        return typeof id === 'number' || /^\d+$/.test(String(id))
+            ? this.getByInternalId(Number(id))
+            : this.getById(String(id));
+    }
+
+
+    getById
+    (
+        id:
+            string
     ):
         Observable<ReceiptVoucher>
     {
@@ -485,6 +577,9 @@ export class ReceiptVoucherService
                         ReceiptVoucherId:
                             this.num(item, 'ReceiptVoucherId'),
 
+                        PublicId:
+                            this.text(item, 'PublicId'),
+
                         VoucherNo:
                             this.text(item, 'VoucherNo')
                     })
@@ -518,7 +613,7 @@ export class ReceiptVoucherService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

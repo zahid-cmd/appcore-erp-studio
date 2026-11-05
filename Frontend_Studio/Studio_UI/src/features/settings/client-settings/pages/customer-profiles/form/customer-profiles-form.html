@@ -452,6 +452,75 @@
 
                     </app-dropdown>
 
+
+                    <!-- Walk-in tag : added at a sales counter (Sales
+                         Invoices › Add Customer); can only be cleared -->
+
+                    @if (showWalkIn)
+                    {
+                        <div
+
+                            class="cus-walkin"
+
+                            [class.cus-walkin-cleared]="!entity.IsWalkIn">
+
+                            <span class="cus-walkin-tag">
+
+                                <i class="fa-regular fa-user"></i>
+
+                                Walk-in
+
+                            </span>
+
+                            <span class="cus-walkin-text">
+
+                                {{ entity.IsWalkIn ? 'Added at a sales counter : cash only.' : 'The tag is removed when you update.' }}
+
+                            </span>
+
+                            @if (!isViewMode)
+                            {
+                                @if (entity.IsWalkIn)
+                                {
+                                    <button
+
+                                        type="button"
+
+                                        class="cus-walkin-btn"
+
+                                        [disabled]="isSaving"
+
+                                        (click)="onClearWalkIn()">
+
+                                        <i class="fas fa-xmark"></i>
+
+                                        Clear tag
+
+                                    </button>
+                                }
+                                @else
+                                {
+                                    <button
+
+                                        type="button"
+
+                                        class="cus-walkin-btn"
+
+                                        [disabled]="isSaving"
+
+                                        (click)="onKeepWalkIn()">
+
+                                        <i class="fas fa-rotate-left"></i>
+
+                                        Undo
+
+                                    </button>
+                                }
+                            }
+
+                        </div>
+                    }
+
                 </app-form-section>
 
 
@@ -966,6 +1035,18 @@
 
         </app-form-grid>
 
+
+        <!-- Canvas footer : the Display Name (follows the name and
+             Phone 1; read-only, as on Supplier Profiles) -->
+
+        <div canvasFooter class="cus-footer">
+
+            <span class="cus-footer-label">Display Name</span>
+
+            <b class="cus-footer-name" [class.cus-footer-empty]="!entity.DisplayName">{{ entity.DisplayName || 'Follows the name and Phone 1' }}</b>
+
+        </div>
+
     </app-page-canvas>
 
 </div>
@@ -980,4 +1061,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

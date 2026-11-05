@@ -1,0 +1,90 @@
+/* ============================================================
+   Price Adjustment
+============================================================ */
+
+export interface PriceAdjustment
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Price Adjustment
+============================================================ */
+
+export interface CreatePriceAdjustment
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Price Adjustment
+============================================================ */
+
+export interface UpdatePriceAdjustment
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Price Adjustment Defaults
+============================================================ */
+
+export interface PriceAdjustmentDefaults
+{
+    code:
+        string;
+}

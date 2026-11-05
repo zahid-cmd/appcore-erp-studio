@@ -48,4 +48,13 @@ public interface IReceivingRepository
         long id,
         CancelReceivingDto dto,
         long userId);
+
+    // Public Id -> internal id (null = not found)
+    Task<long?> GetIdByPublicIdAsync(
+        Guid publicId);
+
+    // One page of the list plus the tab counts
+    Task<AppCore.Application.Common.Paging.PagedResult<ReceivingDto>> GetPagedAsync(
+        string pageType,
+        ReceivingPageRequest request);
 }

@@ -59,8 +59,86 @@ Routes =
 
                 // AUTO-END : SUB-012-004-001
 
+            // AUTO-BEGIN : SUB-012-004-002
+
+                //===========================================================
+                // Barcode Management
+                //===========================================================
+
+                {
+                    path:'barcode-management',
+
+                    data:
+                    {
+                        breadcrumb:'Barcode Management'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './barcode-management.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BarcodeManagementRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-012-004-002
+
+            // AUTO-BEGIN : SUB-012-004-003
+
+                //===========================================================
+                // Price List
+                //===========================================================
+
+                {
+                    path:'price-list',
+
+                    data:
+                    {
+                        breadcrumb:'Price List'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './price-list.routes'
+                        )
+                        .then(
+                            m =>
+                                m.PriceListRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-012-004-003
+
+            // AUTO-BEGIN : SUB-012-004-004
+
+                //===========================================================
+                // Price Adjustment
+                //===========================================================
+
+                {
+                    path:'price-adjustment',
+
+                    data:
+                    {
+                        breadcrumb:'Price Adjustment'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './price-adjustment.routes'
+                        )
+                        .then(
+                            m =>
+                                m.PriceAdjustmentRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-012-004-004
+
         ]
 
     }
 
-];
+];

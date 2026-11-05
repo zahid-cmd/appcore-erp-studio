@@ -90,7 +90,7 @@ export class EmiReconciliationsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<EmiReconciliations>
     {
@@ -148,7 +148,7 @@ export class EmiReconciliationsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

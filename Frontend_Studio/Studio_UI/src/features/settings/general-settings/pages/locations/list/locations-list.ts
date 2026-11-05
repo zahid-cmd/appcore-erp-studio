@@ -254,6 +254,15 @@ implements OnInit, OnDestroy
         Location[] =
     [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredLocations:
         Location[] =
     [];
@@ -756,6 +765,9 @@ implements OnInit, OnDestroy
                         response ?? [];
 
                     this.applyFilters();
+
+
+                    this.updateSummary();
 
                     this.loading =
                         false;
@@ -1269,7 +1281,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.LocationId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1289,7 +1301,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.LocationId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1349,7 +1361,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.locationsService.delete(
-                item.LocationId
+                item.PublicId ?? ''
             )
         )
             .subscribe
@@ -1645,4 +1657,32 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.locations ?? [];
+
+        const active =
+            all.filter(x => !!x?.IsActive).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

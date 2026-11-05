@@ -98,7 +98,7 @@ export class CoreComponentsService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<CoreComponents>
     {
@@ -149,13 +149,16 @@ export class CoreComponentsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateCoreComponents
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -170,7 +173,7 @@ export class CoreComponentsService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -218,7 +221,7 @@ export class CoreComponentsService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

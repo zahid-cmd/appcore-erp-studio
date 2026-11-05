@@ -39,6 +39,15 @@ public class PaymentVoucherConfiguration
 
         builder.HasKey(x => x.PaymentVoucherId);
 
+        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_PaymentVoucher_PublicId");
+
         builder.Property(x => x.PaymentVoucherId)
                .ValueGeneratedOnAdd();
 
@@ -182,6 +191,15 @@ public class PaymentVoucherConfiguration
         builder.ToTable("PaymentVoucherPayments");
 
         builder.HasKey(x => x.PaymentVoucherPaymentId);
+
+        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_PaymentVoucherPayments_PublicId");
 
         builder.Property(x => x.PaymentVoucherPaymentId)
                .ValueGeneratedOnAdd();

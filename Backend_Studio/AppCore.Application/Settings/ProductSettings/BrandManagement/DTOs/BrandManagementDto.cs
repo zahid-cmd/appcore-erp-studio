@@ -13,6 +13,10 @@ public class BrandManagementDto
 {
     public long BrandManagementId { get; set; }
 
+
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
     public string BrandCode { get; set; } = string.Empty;
 
     public string BrandName { get; set; } = string.Empty;

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 using AppCore.Api.BackgroundJobs;
+using AppCore.Api.Security;
 using AppCore.Application;
 using AppCore.Application.Platform.CurrentUser;
 using AppCore.Infrastructure;
@@ -91,6 +92,9 @@ builder.Services.AddHostedService<MfsAutoSettlementService>();
 // POS Auto Settlement : the same, switch CFG-MOD-004-0054
 
 builder.Services.AddHostedService<PosAutoSettlementService>();
+
+// Nightly backup of the App database (Data Management)
+builder.Services.AddHostedService<NightlyBackupService>();
 
 
 //===============================================================
@@ -212,37 +216,24 @@ builder.Services.AddAuthorization(
 
 
 //===============================================================
-// CORS
+// API Security : CORS, Rate Limiting, Real Client IP
 //===============================================================
 //
-// The Angular frontend runs on:
+// See Security/ApiSecurityExtensions.cs. Settings : the optional
+// "Security" section (Security/ApiSecurityOptions.cs).
 //
-//     http://localhost:4100
+// CORS : only listed web addresses may call the API from a
+// browser. On the development PC (nothing listed) that is the
+// Angular app at http://localhost:4100. In production the app and
+// the API share one address per dealer, so CORS is not needed.
 //
-// The API / uploaded files run on:
-//
-//     http://localhost:5100
-//
-// CORS is required when Angular HttpClient retrieves
-// uploaded images as Blob resources.
+// Rate limits : per user when logged in, per IP otherwise; login
+// and heavy tasks (backup, restore, reset) have tighter limits.
+// Over the limit the API answers 429 with the seconds to wait.
 //
 //===============================================================
 
-builder.Services.AddCors(
-    options =>
-    {
-        options.AddPolicy(
-            "AllowAll",
-            policy =>
-            {
-                policy
-                    .AllowAnyOrigin()
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
-            }
-        );
-    }
-);
+builder.AddApiSecurity();
 
 
 //===============================================================
@@ -251,6 +242,18 @@ builder.Services.AddCors(
 
 var app =
     builder.Build();
+
+
+//===============================================================
+// Real Client IP (behind nginx / IIS)
+//===============================================================
+//
+// Must run first : later steps (rate limits, website enquiry
+// limit, logs) read the visitor's real IP.
+//
+//===============================================================
+
+app.UseForwardedHeaders();
 
 
 //===============================================================
@@ -287,7 +290,7 @@ app.UseRouting();
 //===============================================================
 
 app.UseCors(
-    "AllowAll"
+    ApiSecurity.CorsPolicy
 );
 
 
@@ -351,6 +354,18 @@ app.UseAuthentication();
 
 
 //===============================================================
+// Rate Limiting
+//===============================================================
+//
+// After authentication (limits are per logged-in user) and before
+// authorization.
+//
+//===============================================================
+
+app.UseRateLimiter();
+
+
+//===============================================================
 // Authorization
 //===============================================================
 
@@ -368,4 +383,4 @@ app.MapControllers();
 // Run Application
 //===============================================================
 
-app.Run();
+app.Run();

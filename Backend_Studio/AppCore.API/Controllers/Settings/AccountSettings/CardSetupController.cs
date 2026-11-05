@@ -136,11 +136,21 @@ public class CardSetupController : ControllerBase
     // Get By Id
     //===============================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<CardSetupDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         try
         {
             CardSetupDto? cardSetup =
@@ -166,9 +176,9 @@ public class CardSetupController : ControllerBase
     // Create
     //===============================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateCardSetupDto dto)
     {
            long userId = this.CurrentUserId();
@@ -180,7 +190,10 @@ public class CardSetupController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            CardSetupDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (InvalidOperationException ex)
         {
@@ -203,11 +216,27 @@ public class CardSetupController : ControllerBase
     // Update
     //===============================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateCardSetupDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.CardSetupId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try
@@ -247,11 +276,22 @@ public class CardSetupController : ControllerBase
     // 409 while the card is used in Card Charges.
     //===============================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

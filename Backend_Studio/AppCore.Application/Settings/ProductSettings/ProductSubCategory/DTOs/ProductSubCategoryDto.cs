@@ -21,12 +21,31 @@ public class ProductSubCategoryDto
         set;
     }
 
+    // Category name (list column)
+    public string ProductCategoryName { get; set; } = string.Empty;
+
+
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
 
     //===========================================================
     // Product Category
     //===========================================================
 
     public long ProductCategoryId
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Bike Model (Motor Bikes categories only; the name is then
+    // built as "Motor Bikes - <Brand> - <Model>")
+    //===========================================================
+
+    public long? BikeModelId
     {
         get;
         set;
@@ -99,6 +118,28 @@ public class ProductSubCategoryDto
 
 
     public string CogsSubGroupName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Sales Account Sub Group
+    //===========================================================
+
+    public string SalesSubGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Sales Account Sub Group Name
+    //===========================================================
+
+    public string SalesSubGroupName
     {
         get;
         set;
@@ -189,4 +230,4 @@ public class ProductSubCategoryDto
         get;
         set;
     }
-}
+}

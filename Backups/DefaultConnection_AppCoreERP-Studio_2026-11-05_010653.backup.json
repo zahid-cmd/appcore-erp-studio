@@ -1,0 +1,15 @@
+{
+  "FileName": "DefaultConnection_AppCoreERP-Studio_2026-11-05_010653.backup",
+  "ConnectionName": "DefaultConnection",
+  "Host": "100.117.11.97",
+  "Database": "AppCoreERP_Studio",
+  "SizeBytes": 889139,
+  "Kind": "Manual",
+  "Note": "First test",
+  "TakenBy": "Zahid",
+  "TakenDate": "2026-11-05T01:06:59.2846524+06:00",
+  "ToolsVersion": "18.6",
+  "TakenOn": "MY-VIVOBOOK",
+  "OnThisPc": true,
+  "OnOtherPc": false
+}

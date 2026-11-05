@@ -25,6 +25,10 @@ export interface MfsReconciliations
     PaymentId:
         number;
 
+    // The payment line's uuid (print links)
+    PaymentPublicId?:
+        string;
+
     // 0 until the first action
     MfsReconciliationId:
         number;
@@ -346,6 +350,10 @@ export interface MfsActionResult
 
     VoucherIds:
         number[];
+
+    // The same vouchers by uuid (print links)
+    VoucherPublicIds?:
+        string[];
 
     TransactionCount:
         number;

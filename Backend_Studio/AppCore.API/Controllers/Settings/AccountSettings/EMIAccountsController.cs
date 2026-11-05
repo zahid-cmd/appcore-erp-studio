@@ -92,11 +92,21 @@ public class EmiAccountsController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<EmiAccountsDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         EmiAccountsDto? item =
             await _repository.GetByIdAsync(id);
 
@@ -113,9 +123,9 @@ public class EmiAccountsController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateEmiAccountsDto dto)
     {
            long userId = this.CurrentUserId();
@@ -127,7 +137,10 @@ public class EmiAccountsController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            EmiAccountsDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (KeyNotFoundException ex)
         {
@@ -152,11 +165,27 @@ public class EmiAccountsController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateEmiAccountsDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.EmiAccountId =
+            id;
+
            long userId = this.CurrentUserId();
 
         try
@@ -193,11 +222,22 @@ public class EmiAccountsController : ControllerBase
     // 409 : in use (future: vouchers / reconciliation)
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

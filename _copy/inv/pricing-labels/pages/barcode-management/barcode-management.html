@@ -1,0 +1,725 @@
+<div class="app-form-page bm-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+         Center : product type, paper, labels to print
+         Right  : Preview, Print, Clear
+    ====================================================== -->
+
+    <app-page-header
+        [icon]="icon"
+        [title]="title"
+        [subtitle]="subtitle">
+
+        <div
+            pageHeaderCenter
+            class="bm-center">
+
+          <div class="bm-ribbon">
+
+            <div class="bm-chip">
+                <span class="bm-chip-icon bm-chip-icon-type">
+                    <i [class]="info.icon"></i>
+                </span>
+                <span class="bm-chip-text">
+                    <span class="bm-chip-label">Product Type</span>
+                    <strong>{{ info.title }}</strong>
+                </span>
+            </div>
+
+            <span class="bm-ribbon-sep"></span>
+
+            <div class="bm-chip">
+                <span class="bm-chip-icon bm-chip-icon-paper">
+                    <i [class]="isMotorBikes ? 'fas fa-tag' : 'fas fa-table-cells'"></i>
+                </span>
+                <span class="bm-chip-text">
+                    <span class="bm-chip-label">{{ isMotorBikes ? 'Hang-Tag' : 'Paper' }}</span>
+                    <strong>{{ paperText }}</strong>
+                </span>
+            </div>
+
+            <span class="bm-ribbon-sep"></span>
+
+            <div class="bm-state">
+                <span class="bm-status" [class.bm-status-on]="labelCount > 0">
+                    {{ labelCount }} {{ labelCount === 1 ? 'label' : 'labels' }} · {{ sheetText }}
+                </span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Preview"
+            command1Icon="fas fa-eye"
+            command1Title="Open the labels in the print viewer, as they will print"
+            (command1Click)="preview()"
+            command2Text="Print"
+            command2Icon="fas fa-print"
+            command2Activity="Print"
+            command2Title="Print the ticked labels"
+            (command2Click)="print()"
+            command3Text="Clear"
+            command3Icon="fas fa-broom"
+            command3Title="Clear the grid"
+            [command3Visible]="rows.length > 0"
+            (command3Click)="clear()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         BODY
+    ====================================================== -->
+
+    <div class="bm-body">
+
+        @if (!settings && settingsLoading)
+        {
+            <div class="bm-loading">
+                <app-orbit-loader
+                    title="Loading Barcode Management"
+                    message="Please wait while the label settings are being loaded."
+                    size="medium"
+                    [showMessage]="true"
+                    [overlay]="false">
+                </app-orbit-loader>
+            </div>
+        }
+        @else if (!settings)
+        {
+            <div class="bm-banner bm-banner-warn">
+                <i class="fas fa-triangle-exclamation"></i>
+                <span>{{ settingsError || 'The label settings are not loaded.' }}</span>
+                <button
+                    type="button"
+                    class="bm-btn bm-btn-light"
+                    (click)="loadSettings()">
+                    <i class="fas fa-rotate-right"></i>
+                    Try Again
+                </button>
+            </div>
+        }
+        @else
+        {
+            <!-- SOURCE : one line -->
+            <div class="bm-card bm-source">
+
+                <div class="bm-line">
+
+                    <span class="bm-tb-title">
+                        <i class="fas fa-database"></i>
+                        Source
+                    </span>
+
+                    <span class="bm-tb-sep"></span>
+
+                    <app-control-segment
+                        class="bm-seg"
+                        name="bm-type"
+                        [items]="typeItems"
+                        [value]="type"
+                        (valueChange)="onTypeChange($event)">
+                    </app-control-segment>
+
+                    <span class="bm-tb-sep"></span>
+
+                    <span class="bm-lbl">Load from</span>
+
+                    <app-control-segment
+                        class="bm-seg"
+                        name="bm-source"
+                        [items]="sourceItems"
+                        [value]="source"
+                        (valueChange)="onSourceChange($event)">
+                    </app-control-segment>
+
+                    @if (usesDocument)
+                    {
+                        <app-search-dropdown
+                            class="bm-dd bm-dd-doc"
+                            [placeholder]="docPlaceholder"
+                            [items]="docItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="$any(docId)"
+                            [disabled]="documentsLoading || !docItems.length"
+                            (valueChange)="onDocChange($event)">
+                        </app-search-dropdown>
+
+                        @if (documentsLoading)
+                        {
+                            <i class="fas fa-spinner fa-spin bm-dim"></i>
+                        }
+                    }
+                    @else
+                    {
+                        <app-search-dropdown
+                            class="bm-dd"
+                            placeholder="All Brands"
+                            [items]="brandItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="$any(brandId)"
+                            (valueChange)="onBrandChange($event)">
+                        </app-search-dropdown>
+
+                        <app-search-dropdown
+                            class="bm-dd"
+                            placeholder="All Categories"
+                            [items]="categoryItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="$any(categoryId)"
+                            (valueChange)="onCategoryChange($event)">
+                        </app-search-dropdown>
+
+                        @if (source === 'products')
+                        {
+                            <app-search-dropdown
+                                class="bm-dd bm-dd-product"
+                                [placeholder]="isMotorBikes ? 'All Models' : 'All Products'"
+                                [items]="productItems"
+                                labelField="label"
+                                valueField="value"
+                                [value]="$any(productId)"
+                                (valueChange)="onProductChange($event)">
+                            </app-search-dropdown>
+                        }
+                    }
+
+                    <button
+                        type="button"
+                        class="bm-btn bm-btn-primary"
+                        [title]="isMotorBikes ? 'Add the motor bikes of the selection to the grid' : 'Add the batches of the selection to the grid (the same batch again adds its labels)'"
+                        [disabled]="!canLoad"
+                        (click)="load()">
+                        <i class="fas fa-plus"></i>
+                        Load
+                    </button>
+
+                    <span class="bm-tip-wrap">
+                        <button
+                            type="button"
+                            class="bm-info-btn"
+                            aria-label="Sources">
+                            <i class="fas fa-circle-info"></i>
+                        </button>
+                        <span class="bm-tip" role="tooltip">
+                            Price Change : the batches of a posted price change, labels = stock in hand.
+                            Purchase : the received batches of a posted purchase, labels = received quantity@if (isMotorBikes) { (Motor Bikes : one hang-tag per bike on hand)}.
+                            Products : the in-stock batches of a brand, category or product, one label each.
+                            Stock : every in-stock batch (brand / category optional), labels = stock in hand.
+                            Loads add up; the same batch twice adds its labels.
+                        </span>
+                    </span>
+
+                </div>
+
+            </div>
+
+            <!-- LABEL : the fields on the label, one line -->
+            <div class="bm-card bm-source bm-labelbar">
+
+                <div class="bm-line bm-line-label">
+
+                    <span class="bm-tb-title">
+                        <i class="fas fa-sliders"></i>
+                        Label
+                    </span>
+
+                    <span class="bm-tb-sep"></span>
+
+                    @if (isMotorBikes)
+                    {
+                        <app-control-segment
+                            class="bm-seg bm-seg-small bm-seg-style"
+                            name="bm-tag-style"
+                            [items]="tagStyleItems"
+                            [value]="tagStyle"
+                            (valueChange)="onTagStyle($event)">
+                        </app-control-segment>
+
+                        <span class="bm-tb-sep"></span>
+                    }
+
+                    <app-checkbox
+                        appearance="switch"
+                        [label]="mrpLocked ? 'MRP (off)' : 'MRP'"
+                        [value]="printMrp && !mrpLocked"
+                        [disabled]="mrpLocked"
+                        (valueChange)="onSwitch('printMrp', $event)">
+                    </app-checkbox>
+
+                    @if (printMrp && !mrpLocked)
+                    {
+                        <input
+                            class="bm-in bm-in-text"
+                            maxlength="40"
+                            [title]="mrpFormatLabel"
+                            [attr.aria-label]="mrpFormatLabel"
+                            [value]="mrpFormat"
+                            (change)="onMrpFormat($any($event.target).value)">
+                    }
+
+                    <span class="bm-tb-sep"></span>
+
+                    @if (!isMotorBikes)
+                    {
+                        <app-checkbox
+                            appearance="switch"
+                            label="Name"
+                            [value]="showName"
+                            (valueChange)="onSwitch('showName', $event)">
+                        </app-checkbox>
+
+                        <app-checkbox
+                            appearance="switch"
+                            label="Part no"
+                            [value]="showPart"
+                            (valueChange)="onSwitch('showPart', $event)">
+                        </app-checkbox>
+                    }
+
+                    <app-checkbox
+                        appearance="switch"
+                        label="Brand"
+                        [value]="showBrand"
+                        (valueChange)="onSwitch('showBrand', $event)">
+                    </app-checkbox>
+
+                    @if (showBrand)
+                    {
+                        <app-control-segment
+                            class="bm-seg bm-seg-small"
+                            name="bm-brand-as"
+                            [items]="brandAsItems"
+                            [value]="brandAs"
+                            (valueChange)="onBrandAs($event)">
+                        </app-control-segment>
+                    }
+
+                    <span class="bm-tb-sep"></span>
+
+                    <app-checkbox
+                        appearance="switch"
+                        label="Batch no"
+                        [value]="showBatch"
+                        (valueChange)="onSwitch('showBatch', $event)">
+                    </app-checkbox>
+
+                    <app-checkbox
+                        appearance="switch"
+                        label="Date"
+                        [value]="showDate"
+                        (valueChange)="onSwitch('showDate', $event)">
+                    </app-checkbox>
+
+                    @if (isMotorBikes)
+                    {
+                        <app-checkbox
+                            appearance="switch"
+                            label="Key no"
+                            [value]="showKey"
+                            (valueChange)="onSwitch('showKey', $event)">
+                        </app-checkbox>
+
+                        <app-checkbox
+                            appearance="switch"
+                            label="Battery no"
+                            [value]="showBattery"
+                            (valueChange)="onSwitch('showBattery', $event)">
+                        </app-checkbox>
+                    }
+
+                    @if (paper.kind !== 'roll')
+                    {
+                        <span class="bm-tb-sep"></span>
+
+                        <app-checkbox
+                            appearance="switch"
+                            label="Cut lines"
+                            title="Dotted scissor lines between the labels, with a small gap round each (for plain paper)"
+                            [value]="cutLines"
+                            (valueChange)="onSwitch('cutLines', $event)">
+                        </app-checkbox>
+                    }
+
+                    <span class="bm-grow"></span>
+
+                    <span class="bm-tip-wrap">
+                        <button
+                            type="button"
+                            class="bm-info-btn"
+                            aria-label="About the label setup">
+                            <i class="fas fa-circle-info"></i>
+                        </button>
+                        <span class="bm-tip bm-tip-right" role="tooltip">
+                            Changes here are for this print; the defaults are the System Configuration switches of this page.
+                            The MRP text puts the amount at {{ '{0}' }} (e.g. "MRP {{ '{0}' }}").
+                            @if (settings?.KeepHistory) { Every print is kept in the print history. }
+                        </span>
+                    </span>
+
+                    <button
+                        type="button"
+                        class="bm-link bm-link-flat"
+                        title="Back to the System Configuration switches"
+                        (click)="resetSetup()">
+                        <i class="fas fa-rotate-left"></i>
+                        Defaults
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- GRID | LABEL PREVIEW -->
+            <div class="bm-main">
+
+                <!-- ---------------- GRID ---------------- -->
+
+                <div class="bm-card bm-grid">
+
+                    <div class="bm-card-header">
+                        <i [class]="isMotorBikes ? 'fas fa-tags' : 'fas fa-barcode'"></i>
+                        <span>{{ isMotorBikes ? 'Hang-Tags' : 'Labels' }}</span>
+                        @if (unpricedCount > 0)
+                        {
+                            <span class="bm-pill bm-pill-warn" title="Batches without an MRP (not saleable)">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                {{ unpricedCount }} unpriced
+                            </span>
+                        }
+                        <span class="bm-count">{{ tickedCount }} of {{ rows.length }} ticked</span>
+                    </div>
+
+                    <div class="bm-table-scroll appcore-scrollbar">
+
+                        <table class="bm-table">
+
+                            <colgroup>
+                                <col class="bm-c-tick">
+                                <col class="bm-c-sl">
+                                <col>
+                                @if (isMotorBikes)
+                                {
+                                    <col class="bm-c-ids">
+                                    <col class="bm-c-color">
+                                }
+                                <col class="bm-c-batch">
+                                <col class="bm-c-mrp">
+                                @if (!isMotorBikes)
+                                {
+                                    <col class="bm-c-stock">
+                                }
+                                <col class="bm-c-qty">
+                                <col class="bm-c-act">
+                            </colgroup>
+
+                            <thead>
+                                <tr>
+                                    <th class="bm-tick">
+                                        <app-checkbox
+                                            title="Tick all"
+                                            [value]="allTicked"
+                                            [disabled]="!rows.length"
+                                            (valueChange)="toggleAll()">
+                                        </app-checkbox>
+                                    </th>
+                                    <th class="bm-sl">SL</th>
+                                    <th>{{ isMotorBikes ? 'Model' : 'Product' }}</th>
+                                    @if (isMotorBikes)
+                                    {
+                                        <th>Chassis / Engine No</th>
+                                        <th>Colour</th>
+                                    }
+                                    <th>Batch</th>
+                                    <th class="bm-num" title="Batch MRP, VAT inclusive : the sale price">MRP</th>
+                                    @if (!isMotorBikes)
+                                    {
+                                        <th class="bm-num" title="Stock in hand of the batch">Stock</th>
+                                    }
+                                    <th class="bm-num">{{ isMotorBikes ? 'Copies' : 'Labels' }}</th>
+                                    <th class="bm-act"></th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (row of rows; track row.Key; let i = $index)
+                                {
+                                    <tr
+                                        [class.bm-off]="!row.Ticked"
+                                        [class.bm-sel]="row.Key === selectedRow?.Key"
+                                        [class.bm-blocked]="row.Ticked && blocked(row)"
+                                        (click)="selectRow(row)">
+
+                                        <td class="bm-tick">
+                                            <app-checkbox
+                                                [value]="row.Ticked"
+                                                (valueChange)="toggleRow(row)">
+                                            </app-checkbox>
+                                        </td>
+
+                                        <td class="bm-sl">{{ i + 1 }}</td>
+
+                                        <td class="bm-prod">
+                                            <div class="bm-name" [title]="row.Name">{{ row.Name || row.Code }}</div>
+                                            <div class="bm-code">
+                                                @if (row.PartNumber) { <span class="bm-mono">{{ row.PartNumber }}</span> · }
+                                                {{ row.Code }}
+                                                @if (row.BrandName) { · {{ row.BrandName }} }
+                                            </div>
+                                        </td>
+
+                                        @if (isMotorBikes)
+                                        {
+                                            <td>
+                                                <div class="bm-mono bm-strong">{{ row.ChassisNo || '—' }}</div>
+                                                <div class="bm-code bm-mono">{{ row.EngineNo || '—' }}</div>
+                                            </td>
+                                            <td class="bm-dimtext">{{ row.Color || '—' }}</td>
+                                        }
+
+                                        <td>
+                                            <div class="bm-mono">{{ row.BatchNo }}</div>
+                                            <div class="bm-code" [title]="row.BarcodeValue">
+                                                {{ row.SourceNo }}@if (row.BatchDate) { · {{ date(row.BatchDate) }} }
+                                            </div>
+                                        </td>
+
+                                        <td class="bm-num">
+                                            @if (unpriced(row))
+                                            {
+                                                <span
+                                                    class="bm-tag bm-tag-warn"
+                                                    title="No MRP : not saleable, no label (price it in Product Pricing)">
+                                                    Unpriced
+                                                </span>
+                                            }
+                                            @else
+                                            {
+                                                <span class="bm-strong">{{ money(row.Mrp) }}</span>
+                                            }
+                                        </td>
+
+                                        @if (!isMotorBikes)
+                                        {
+                                            <td class="bm-num">
+                                                {{ qty(row.Stock) }}
+                                                <span class="bm-unit">{{ row.Unit }}</span>
+                                            </td>
+                                        }
+
+                                        <td class="bm-num">
+                                            <input
+                                                class="bm-in"
+                                                inputmode="numeric"
+                                                maxlength="4"
+                                                [value]="row.Qty"
+                                                [attr.aria-label]="'Labels of ' + row.BatchNo"
+                                                (click)="$event.stopPropagation()"
+                                                (change)="onQty(row, $any($event.target).value)">
+                                        </td>
+
+                                        <td class="bm-act">
+                                            <button
+                                                type="button"
+                                                class="bm-x"
+                                                title="Remove the row"
+                                                aria-label="Remove the row"
+                                                (click)="$event.stopPropagation(); removeRow(row)">
+                                                <i class="fas fa-trash-can"></i>
+                                            </button>
+                                        </td>
+
+                                    </tr>
+                                }
+                                @empty
+                                {
+                                    <tr>
+                                        <td [attr.colspan]="isMotorBikes ? 9 : 8" class="bm-empty">
+                                            <i [class]="icon + ' bm-empty-ico'"></i>
+                                            <b>No {{ isMotorBikes ? 'motor bike' : 'batch' }} yet</b>
+                                            <span>Choose where the labels come from above and press Load. Loads add up.</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <!-- Footer : labels and sheets -->
+                    <div class="bm-foot">
+                        <span><b>{{ labelCount }}</b> {{ labelCount === 1 ? (isMotorBikes ? 'hang-tag' : 'label') : (isMotorBikes ? 'hang-tags' : 'labels') }}</span>
+                        <span class="bm-foot-sep"></span>
+                        <span>
+                            @if (paper.kind === 'roll') { <b>{{ labelCount }}</b> on the roll }
+                            @else { <b>{{ sheetCount }}</b> {{ sheetCount === 1 ? 'sheet' : 'sheets' }} needed }
+                        </span>
+                        <span class="bm-dimtext">{{ paper.title }}@if (paper.kind === 'sheet' && startAt > 1) { · from label {{ startAt }} }</span>
+                        @if (blockedCount > 0)
+                        {
+                            <span class="bm-foot-warn">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                {{ blockedCount }} unpriced {{ blockedCount === 1 ? 'batch is' : 'batches are' }} left out (no MRP)
+                            </span>
+                        }
+                    </div>
+
+                </div>
+
+                <!-- ---------------- LABEL SETUP ---------------- -->
+
+                <aside class="bm-card bm-setup">
+
+                    <div class="bm-card-header">
+                        <i class="fas fa-eye"></i>
+                        <span>Label Preview</span>
+                    </div>
+
+                    <div class="bm-setup-body appcore-scrollbar">
+
+                        <!-- Live preview (grows with the card) -->
+                        <div class="bm-pv">
+                            <div class="bm-pv-stage" #pvStage>
+                                <div
+                                    class="bm-pv-frame"
+                                    [style.width.px]="previewWidth"
+                                    [style.height.px]="previewHeight">
+                                    <div
+                                        class="bm-pv-label"
+                                        [style.transform]="previewTransform"
+                                        [innerHTML]="previewHtml">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bm-pv-cap" [title]="previewCaption">
+                                <i class="fas fa-eye"></i>
+                                {{ previewCaption }}
+                            </div>
+                        </div>
+
+                        <!-- Paper -->
+                        <div class="bm-group">
+
+                            <div class="bm-group-title">Paper</div>
+
+                            @if (isMotorBikes)
+                            {
+                                <div class="bm-note">
+                                    <i class="fas fa-tag"></i>
+                                    <span>Hang-tag · <b>105 × 148.5 mm</b> · 4 per A4 portrait</span>
+                                </div>
+                            }
+                            @else
+                            {
+                                <app-search-dropdown
+                                    class="bm-dd bm-dd-full"
+                                    placeholder="Paper"
+                                    [items]="paperItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="$any(paperCode)"
+                                    (valueChange)="onPaper($event)">
+                                </app-search-dropdown>
+                            }
+
+                            <div class="bm-nums" [class.bm-nums-2]="paper.kind === 'roll'">
+                                @if (paper.kind !== 'roll')
+                                {
+                                    <label class="bm-numfield" [title]="'A part-used sheet : the first free position (1 to ' + perPage + ', left to right)'">
+                                        <span class="bm-numlbl">Start at</span>
+                                        <span class="bm-numbox">
+                                            <input
+                                                class="bm-numin"
+                                                inputmode="numeric"
+                                                maxlength="2"
+                                                [value]="startAt"
+                                                (change)="onStartAt($any($event.target).value)">
+                                            <em>of {{ perPage }}</em>
+                                        </span>
+                                    </label>
+                                }
+                                <label class="bm-numfield" title="Moves every label right (+) or left (-) to fit the printer, in mm">
+                                    <span class="bm-numlbl">Shift X</span>
+                                    <span class="bm-numbox">
+                                        <input
+                                            class="bm-numin"
+                                            inputmode="decimal"
+                                            maxlength="5"
+                                            [value]="nudgeX"
+                                            (change)="onNudge('x', $any($event.target).value)">
+                                        <em>mm</em>
+                                    </span>
+                                </label>
+                                <label class="bm-numfield" title="Moves every label down (+) or up (-) to fit the printer, in mm">
+                                    <span class="bm-numlbl">Shift Y</span>
+                                    <span class="bm-numbox">
+                                        <input
+                                            class="bm-numin"
+                                            inputmode="decimal"
+                                            maxlength="5"
+                                            [value]="nudgeY"
+                                            (change)="onNudge('y', $any($event.target).value)">
+                                        <em>mm</em>
+                                    </span>
+                                </label>
+                            </div>
+
+                        </div>
+
+                        <!-- Codes -->
+                        <div class="bm-group">
+
+                            <div class="bm-group-title">Codes@if (!isMotorBikes) { <span class="bm-group-hint">· one per label</span> }</div>
+
+                            @if (isMotorBikes)
+                            {
+                                <app-checkbox
+                                    appearance="switch"
+                                    label="Code-128 barcode"
+                                    [value]="code128"
+                                    (valueChange)="onSwitch('code128', $event)">
+                                </app-checkbox>
+
+                                <app-checkbox
+                                    appearance="switch"
+                                    label="QR code (with the chassis no)"
+                                    [value]="qr"
+                                    (valueChange)="onSwitch('qr', $event)">
+                                </app-checkbox>
+                            }
+                            @else
+                            {
+                                <app-control-segment
+                                    class="bm-seg bm-seg-full"
+                                    name="bm-code-kind"
+                                    title="One code per label"
+                                    [items]="codeItems"
+                                    [value]="codeKind"
+                                    (valueChange)="onCodeKind($event)">
+                                </app-control-segment>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </aside>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+<app-toast></app-toast>
+
+<app-progress-dialog></app-progress-dialog>

@@ -12,6 +12,8 @@ using ColorManagementEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.ColorManagement;
 
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 
 using AppCore.Domain.Common;
 
@@ -74,6 +76,9 @@ public class ColorManagementRepository : IColorManagementRepository
                     {
                         ColorManagementId =
                             x.ColorManagementId,
+
+                        PublicId =
+                            x.PublicId,
 
                         ColorCode =
                             x.ColorCode,
@@ -138,6 +143,146 @@ public class ColorManagementRepository : IColorManagementRepository
             )
 
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Filters and search on the list query, the counts for the
+    // summary line, then the status, the total and one page.
+    //===========================================================
+
+    private SortMap<ColorManagementDto> ListSorts()
+    {
+        return new SortMap<ColorManagementDto>("ColorCode")
+            .Add("ColorCode", x => x.ColorCode)
+            .Add("ColorName", x => x.ColorName)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.ColorManagementId);
+    }
+
+    public async Task<PagedResult<ColorManagementDto>>
+        GetPagedAsync
+        (
+            ColorManagementPageRequest request
+        )
+    {
+        IQueryable<ColorManagementDto> query =
+            ColorManagementQuery();
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.ColorCode, like) ||
+                        EF.Functions.ILike(x.ColorName, like) ||
+                        EF.Functions.ILike(x.Remarks, like)
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts (search and filters applied; not the
+        // status)
+        //-------------------------------------------------------
+
+        int countAll =
+            await query.CountAsync();
+
+        int countActive =
+            await query.CountAsync(x => x.Status);
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = countAll,
+                ["Active"] = countActive,
+                ["Inactive"] = countAll - countActive
+            };
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        if
+        (
+            request.Status.HasValue
+        )
+        {
+            bool active =
+                request.Status.Value;
+
+            query =
+                query.Where(x => x.Status == active);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<ColorManagementDto> rows =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        return new PagedResult<ColorManagementDto>
+        {
+            Items = rows,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<ColorManagementEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.ColorManagementId)
+            .FirstOrDefaultAsync();
     }
 
 

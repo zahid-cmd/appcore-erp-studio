@@ -1,0 +1,179 @@
+/* =====================================================
+   VISIT US
+===================================================== */
+
+:host
+{
+    display:block;
+    scroll-margin-top:92px;
+}
+
+
+.visit
+{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1.15fr);
+    gap:22px;
+    align-items:stretch;
+}
+
+
+.info
+{
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+    padding:30px;
+}
+
+
+.hours
+{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin:0;
+    padding:16px 18px;
+    border:1px solid var(--w-card-edge);
+    border-radius:16px;
+    background:var(--w-chip);
+    list-style:none;
+}
+
+
+.hours li
+{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    font-size:15px;
+}
+
+
+.days
+{
+    color:var(--w-text);
+    font-weight:700;
+}
+
+
+.dots
+{
+    flex:1 1 auto;
+    border-bottom:1px dashed var(--w-ghost-edge);
+    transform:translateY(-4px);
+}
+
+
+.hours b
+{
+    color:var(--w-strong);
+    white-space:nowrap;
+}
+
+
+.hours b.closed
+{
+    color:#f87171;
+}
+
+
+.lines
+{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+
+.line
+{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    color:var(--w-text);
+    font-size:15px;
+    line-height:1.5;
+    text-decoration:none;
+}
+
+
+a.line:hover
+{
+    color:var(--w-link);
+}
+
+
+.ico
+{
+    flex:0 0 auto;
+    width:36px;
+    height:36px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    background:var(--w-accent-soft);
+    color:var(--w-accent);
+}
+
+
+.line > span:last-child
+{
+    padding-top:7px;
+}
+
+
+.buttons
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:auto;
+}
+
+
+.map
+{
+    min-height:420px;
+    padding:0;
+    overflow:hidden;
+}
+
+
+.map iframe
+{
+    display:block;
+    width:100%;
+    height:100%;
+    min-height:420px;
+    border:0;
+}
+
+
+/* Softer map on the Deep theme */
+:host-context(.website:not(.theme-light)) .map iframe
+{
+    filter:grayscale(.25) brightness(.9) contrast(1.05);
+}
+
+
+.no-map
+{
+    padding:30px;
+}
+
+
+@media (max-width: 900px)
+{
+    .visit
+    {
+        grid-template-columns:1fr;
+    }
+
+    .map,
+    .map iframe
+    {
+        min-height:300px;
+    }
+}

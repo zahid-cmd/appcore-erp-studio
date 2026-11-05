@@ -145,6 +145,9 @@ public class POSAccountsRepository : IPOSAccountsRepository
                         POSAccountId =
                             x.POSAccountId,
 
+                        PublicId =
+                            x.PublicId,
+
                         AccountSubGroupsId =
                             x.AccountSubGroupsId,
 
@@ -224,6 +227,33 @@ public class POSAccountsRepository : IPOSAccountsRepository
         return await POSAccountsQuery()
             .OrderBy(x => x.POSAccountCode)
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<POSAccountsEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.POSAccountId)
+            .FirstOrDefaultAsync();
     }
 
 

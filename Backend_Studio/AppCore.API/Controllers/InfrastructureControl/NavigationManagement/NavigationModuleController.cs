@@ -75,11 +75,22 @@ public class NavigationModuleController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
     public async Task<ActionResult<NavigationModuleDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         NavigationModuleDto? module =
             await _repository.GetByIdAsync(id);
 
@@ -120,11 +131,22 @@ public class NavigationModuleController : ControllerBase
     // Get History
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    [HttpGet("{publicId:guid}/history")]
 
     public async Task<ActionResult<List<ActivityHistoryDto>>> GetHistory(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
 
         List<ActivityHistoryDto> history =
             await _historyRepository.GetHistoryAsync(
@@ -274,11 +296,22 @@ public class NavigationModuleController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
 
         if (!await _repository.ExistsAsync(id))
         {

@@ -1,0 +1,145 @@
+<div class="app-list-page os-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Opening Stock"
+        subtitle="Store Setup : stock already in the warehouses when the system starts, at its cost"
+        icon="fas fa-boxes-stacked">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search voucher no, type, branch, warehouse, ledger…"
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Add"
+                command1Icon="fas fa-plus"
+                command1Permission="add"
+                command1Title="Enter the opening stock of a warehouse"
+                (command1Click)="add()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="refresh()"
+                command3Text="Restore"
+                command3Icon="fas fa-trash-arrow-up"
+                command3Permission="restore"
+                command3Title="Restore the most recently deleted draft"
+                (command3Click)="restore()"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="History"
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : status tabs | product type
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+
+        </app-control-tabs>
+
+        <div
+            pageToolbarRight
+            class="os-types"
+            role="group"
+            aria-label="Product type">
+
+            @for (type of types; track type.id)
+            {
+                <button
+                    type="button"
+                    class="os-type"
+                    [class.is-on]="selectedType === type.id"
+                    [attr.aria-pressed]="selectedType === type.id"
+                    (click)="onTypeChange(type.id)">
+                    <i [class]="type.icon"></i>
+                    {{ type.label }}
+                    <b>{{ typeCount(type.id) }}</b>
+                </button>
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+
+            <app-list-table
+                [columns]="columns"
+                [rows]="pagedRows"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                [actions]="{ view:true, edit:true, delete:true }"
+                (view)="view($event)"
+                (edit)="edit($event)"
+                (delete)="delete($event)"
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="filteredRows.length"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         HISTORY
+    ====================================================== -->
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        [title]="historyTitle"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <!-- =====================================================
+         UTILITIES
+    ====================================================== -->
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

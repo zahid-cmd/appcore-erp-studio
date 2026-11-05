@@ -113,6 +113,9 @@ export class ServicePolicyService
                 Number(this.pick(item, name) ?? 0);
 
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             ServicePolicyId:
                 num('ServicePolicyId'),
 
@@ -320,7 +323,7 @@ export class ServicePolicyService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<ServicePolicy>
     {
@@ -348,9 +351,9 @@ export class ServicePolicyService
         model:
             CreateServicePolicy
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -363,13 +366,16 @@ export class ServicePolicyService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateServicePolicy
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -382,7 +388,7 @@ export class ServicePolicyService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

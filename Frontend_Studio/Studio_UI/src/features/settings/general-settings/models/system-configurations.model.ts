@@ -35,6 +35,9 @@ export interface SystemConfiguration
 {
     SystemConfigurationId: number;
 
+    // The id used in links and API calls (uuid v7)
+    PublicId: string;
+
     NavigationModuleId: number;
 
     ModuleCode: string;

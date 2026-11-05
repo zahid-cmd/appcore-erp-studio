@@ -118,6 +118,9 @@ export class MembershipPoliciesService
             MembershipPolicyId:
                 num('MembershipPolicyId'),
 
+            PublicId:
+                text('PublicId'),
+
             PolicyCode:
                 text('PolicyCode'),
 
@@ -293,7 +296,7 @@ export class MembershipPoliciesService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<MembershipPolicy>
     {
@@ -355,7 +358,7 @@ export class MembershipPoliciesService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

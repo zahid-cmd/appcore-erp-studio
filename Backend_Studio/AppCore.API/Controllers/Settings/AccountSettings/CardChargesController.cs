@@ -138,11 +138,23 @@ public class CardChargesController : ControllerBase
     // Get By POS Account
     //===============================================================
 
-    [HttpGet("{posAccountId:long}")]
+    // The link carries the POS Account's Public Id
+    [HttpGet("{publicId:guid}")]
 
     public async Task<ActionResult<CardChargesDto>> GetByPosAccount(
-        long posAccountId)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetPosAccountIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound("POS Account not found.");
+        }
+
+        long posAccountId =
+            found.Value;
+
         try
         {
             CardChargesDto? cardCharges =
@@ -287,11 +299,23 @@ public class CardChargesController : ControllerBase
     // Delete
     //===============================================================
 
-    [HttpDelete("{posAccountId:long}")]
+    // The link carries the POS Account's Public Id
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long posAccountId)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetPosAccountIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound("POS Account not found.");
+        }
+
+        long posAccountId =
+            found.Value;
+
            long userId = this.CurrentUserId();
 
         try

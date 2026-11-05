@@ -22,6 +22,10 @@ export interface PosReconciliations
     PaymentId:
         number;
 
+    // The payment line's uuid (print links)
+    PaymentPublicId?:
+        string;
+
     // 0 until the first action
     PosReconciliationId:
         number;
@@ -342,6 +346,10 @@ export interface PosActionResult
 
     VoucherIds:
         number[];
+
+    // The same vouchers by uuid (print links)
+    VoucherPublicIds?:
+        string[];
 
     TransactionCount:
         number;

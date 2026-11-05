@@ -1,0 +1,1418 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+         Center : Product Type, Warehouse, status
+         Right  : Add / Edit : Save, Post, Clear / Delete
+                  View       : Print, Cancel (posted)
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-boxes-stacked"
+        [title]="pageTitle"
+        subtitle="Store Setup : stock already in the warehouse when the system starts, at its cost">
+
+        <div
+            pageHeaderCenter
+            class="pof-center">
+
+          <div class="pof-ribbon">
+
+            <div class="pof-chip">
+                <span class="pof-chip-icon pof-chip-icon-branch">
+                    <i [class]="info.icon"></i>
+                </span>
+                <span class="pof-chip-text">
+                    <span class="pof-chip-label">Product Type</span>
+                    <strong>{{ info.title }}</strong>
+                </span>
+            </div>
+
+            <span class="pof-ribbon-sep"></span>
+
+            <div class="pof-chip">
+                <span class="pof-chip-icon pof-chip-icon-year">
+                    <i class="fas fa-warehouse"></i>
+                </span>
+                <span class="pof-chip-text">
+                    <span class="pof-chip-label">Warehouse</span>
+                    <strong>{{ warehouseText }}</strong>
+                </span>
+            </div>
+
+            <span class="pof-ribbon-sep"></span>
+
+            <div class="pof-state">
+                <span [class]="statusClass">{{ statusText }}</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="isView ? 'Print' : (mode === 'edit' ? 'Update' : 'Save')"
+            [command1Icon]="isView ? 'fas fa-print' : (mode === 'edit' ? 'fas fa-pen-to-square' : 'fas fa-floppy-disk')"
+            [command1Permission]="isView ? '' : (mode === 'edit' ? 'update' : 'add')"
+            [command1Activity]="isView ? 'Print' : ''"
+            [command1Title]="isView ? 'Print the Opening Stock note' : (mode === 'edit' ? 'Update the draft' : 'Save as a draft (numbered on the first save)')"
+            [command1Visible]="!isView || !!doc"
+            (command1Click)="isView ? print() : save()"
+            [command2Text]="viewPosted ? 'Cancel' : 'Post'"
+            [command2Icon]="viewPosted ? 'fas fa-ban' : 'fas fa-check-double'"
+            [command2Activity]="viewPosted ? 'Cancel' : 'Post'"
+            [command2Title]="viewPosted ? 'Cancel : the stock and the journal are reversed' : (isView ? 'Post the draft : the stock comes on hand and the journal is made' : 'Save and post : the stock comes on hand and the journal is made')"
+            [command2Visible]="isView ? (doc?.Status === 'Posted' || doc?.Status === 'Draft') : true"
+            (command2Click)="viewPosted ? openCancel() : (isView ? postDraft() : post())"
+            [command3Text]="mode === 'edit' ? 'Delete' : 'Clear'"
+            [command3Icon]="mode === 'edit' ? 'fas fa-trash-can' : 'fas fa-broom'"
+            [command3Activity]="mode === 'edit' ? 'Delete' : ''"
+            [command3Visible]="!isView"
+            (command3Click)="mode === 'edit' ? openDelete() : clear()"
+            rightCommandIcon="fas fa-arrow-left"
+            rightCommandTitle="Back to the list"
+            (rightCommandClick)="back()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         SECTION 02 : BODY
+           LEFT  : Opening Information, Add <item>
+                   (view : Opening Details)
+           RIGHT : Excel Import (view : Journal) + Remarks,
+                   Opening Summary (fills the rest; rows scroll)
+    ====================================================== -->
+
+    <div class="pof-body">
+
+        @if (loading && !defaults && !doc)
+        {
+            <div class="pof-loading">
+                <app-orbit-loader
+                    title="Loading Opening Stock"
+                    message="Please wait while the opening stock is being loaded."
+                    size="medium"
+                    [showMessage]="true"
+                    [overlay]="false">
+                </app-orbit-loader>
+            </div>
+        }
+        @else
+        {
+            @if (error)
+            {
+                <div class="pof-banner pof-banner-warn">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>{{ error }}</span>
+                </div>
+            }
+
+            @if (ledgerMissing)
+            {
+                <div class="pof-banner pof-banner-info">
+                    <i class="fas fa-circle-info"></i>
+                    <span>
+                        @if (ledgerLocked) { No Opening Stock ledger is set on Settings › Account Settings › Posting Setup, and the ledger is locked to it (System Configuration : Lock Opening Stock Ledger). Set it there before saving. }
+                        @else { No Opening Stock ledger is set on Settings › Account Settings › Posting Setup. Choose the credit ledger here, or set it there once for every document. }
+                    </span>
+                </div>
+            }
+
+            @if (doc?.Status === 'Cancelled')
+            {
+                <div class="pof-banner pof-banner-cancelled">
+                    <i class="fas fa-ban"></i>
+                    <span>
+                        <strong>Cancelled</strong>
+                        on {{ date(doc?.CancelledDate ?? '') }} : {{ doc?.CancelReason }}
+                    </span>
+                </div>
+            }
+
+            <div class="pof-grid pur-grid">
+
+              <!-- ================= Row 1 : left ================= -->
+
+              <div class="pof-col pof-col-left pur-top">
+
+                <div class="pof-card">
+
+                    <div class="pof-card-header">
+                        <i class="fas fa-boxes-stacked"></i>
+                        <span>Opening Information</span>
+                    </div>
+
+                    <div class="pof-grid-3 pof-fields">
+
+                        @if (isView)
+                        {
+                            <app-textbox
+                                label="Branch"
+                                [value]="doc ? doc.BranchName + ' · ' + doc.BranchCode : ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="pof-order-no"
+                                label="Opening Voucher No"
+                                [value]="openingNoText"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Opening Date"
+                                [value]="date(doc?.OpeningDate ?? '')"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Product Type"
+                                [value]="info.title"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                [class.pof-span-two]="isBikes"
+                                label="Warehouse"
+                                [value]="doc?.WarehouseName ?? ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            @if (!isBikes)
+                            {
+                                <app-textbox
+                                    label="Cost Basis"
+                                    [value]="doc?.CostBasis === 'MRP' ? 'MRP less Margin %' : 'Unit Cost (typed)'"
+                                    [readonly]="true">
+                                </app-textbox>
+                            }
+
+                            <app-textbox
+                                class="pof-span-all"
+                                label="Credit Ledger"
+                                [value]="doc ? doc.LedgerName + ' · ' + doc.LedgerCode : ''"
+                                [readonly]="true">
+                            </app-textbox>
+                        }
+                        @else
+                        {
+                            <app-search-dropdown
+                                label="Branch"
+                                placeholder="Receiving branch"
+                                [items]="branchItems"
+                                [value]="branchId || null"
+                                [required]="true"
+                                [disabled]="mode !== 'add'"
+                                (valueChange)="onBranchChange($event)">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                class="pof-order-no"
+                                label="Opening Voucher No"
+                                placeholder="Select the branch"
+                                [value]="openingNoText"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-datepicker
+                                label="Opening Date"
+                                [required]="true"
+                                [value]="openingDate"
+                                [maxDate]="maxDate"
+                                (valueChange)="onDateChange($event)">
+                            </app-datepicker>
+
+                            <app-search-dropdown
+                                label="Product Type"
+                                placeholder="Select type"
+                                [items]="typeItems"
+                                [value]="type"
+                                [required]="true"
+                                [disabled]="mode !== 'add' || lines.length > 0"
+                                (valueChange)="onTypeChange($event)">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                [class.pof-span-two]="isBikes"
+                                label="Warehouse"
+                                [placeholder]="warehouseItems.length ? 'Select warehouse' : 'No warehouse in this branch'"
+                                [items]="warehouseItems"
+                                [value]="warehouseId || null"
+                                [required]="true"
+                                (valueChange)="onWarehouseChange($event)">
+                            </app-search-dropdown>
+
+                            @if (!isBikes)
+                            {
+                                <app-search-dropdown
+                                    label="Cost Basis"
+                                    placeholder="Select"
+                                    [items]="costBasisItems"
+                                    [value]="costBasis"
+                                    [required]="true"
+                                    [disabled]="lines.length > 0"
+                                    (valueChange)="onCostBasisChange($event)">
+                                </app-search-dropdown>
+                            }
+
+                            <app-search-dropdown
+                                class="pof-span-all"
+                                [label]="ledgerLocked ? 'Credit Ledger (locked to Posting Setup)' : 'Credit Ledger'"
+                                [placeholder]="ledgerLocked ? 'Not set on Posting Setup' : 'Opening Stock ledger (equity / suspense)'"
+                                [items]="ledgerItems"
+                                [value]="ledgerCode || null"
+                                [required]="true"
+                                [disabled]="ledgerLocked"
+                                (valueChange)="onLedgerChange($event)">
+                            </app-search-dropdown>
+                        }
+
+                    </div>
+
+                </div>
+
+              </div>
+
+              <!-- ================= Row 1 : right ================ -->
+
+              <div class="pof-col pof-col-right pur-top">
+
+                @if (isView)
+                {
+                    <div class="pof-card rc-inv-card">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-book"></i>
+                            <span>Journal</span>
+                            @if (doc?.Status === 'Posted')
+                            {
+                                <span class="rc-pill rc-pill-blue">Posted</span>
+                            }
+                            @else if (doc?.Status === 'Cancelled')
+                            {
+                                <span class="rc-pill rc-pill-amber">Reversed</span>
+                            }
+                        </div>
+
+                        <div class="rc-facts">
+                            @for (fact of facts; track fact.label)
+                            {
+                                <div class="rc-fact" [class.rc-fact-wide]="!!fact.wide">
+                                    <span>{{ fact.label }}</span>
+                                    <strong [title]="fact.value">{{ fact.value || '—' }}</strong>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+                }
+                @else
+                {
+                    <div class="pof-card rc-inv-card">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-file-excel"></i>
+                            <span>Excel Import</span>
+                        </div>
+
+                        <div class="os-import">
+
+                            <div class="os-import-text">
+                                <strong>{{ importColumns.join(' · ') }}</strong>
+                                <span>
+                                    @if (isBikes) { One row per bike; the bikes of a model become one line. }
+                                    @else { One row per product; rack by its code in this warehouse, then shelf and bin (bin 1 when empty). }
+                                    Copy the rows from Excel and paste, or choose a CSV file.
+                                </span>
+                            </div>
+
+                            <div class="os-import-actions">
+                                <button
+                                    type="button"
+                                    class="pof-btn pof-btn-light"
+                                    title="Download the columns as a CSV file to fill in Excel"
+                                    [disabled]="!defaults"
+                                    (click)="downloadTemplate()">
+                                    <i class="fas fa-download"></i>
+                                    Template
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="pof-btn pof-btn-primary"
+                                    [disabled]="!defaults || saving"
+                                    (click)="openImport()">
+                                    <i class="fas fa-file-import"></i>
+                                    Import
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </div>
+                }
+
+                <div class="pof-card pur-narr-card">
+
+                    <div class="pof-card-header">
+                        <i class="fas fa-align-left"></i>
+                        <span>Remarks</span>
+                    </div>
+
+                    <div class="pof-narration pur-narr">
+                        <app-textarea
+                            placeholder="Physical count of …, counted by …"
+                            [rows]="1"
+                            [maxLength]="500"
+                            [value]="isView ? (doc?.Remarks ?? '') : remarks"
+                            [readonly]="isView"
+                            (valueChange)="remarks = $event">
+                        </app-textarea>
+                    </div>
+
+                </div>
+
+              </div>
+
+              <!-- ================= Row 2 : left ================= -->
+
+              <div class="pof-col pof-col-left">
+
+                @if (isView)
+                {
+                    <div class="pof-card pur-add-card">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Opening Details</span>
+                        </div>
+
+                        <div class="rc-facts rc-facts-left">
+                            @for (fact of details; track fact.label)
+                            {
+                                <div class="rc-fact" [class.rc-fact-wide]="!!fact.wide">
+                                    <span>{{ fact.label }}</span>
+                                    <strong [title]="fact.value">{{ fact.value || '—' }}</strong>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+                }
+                @else
+                {
+                    <!-- Add <item> : loads into the summary on the right -->
+
+                    <div
+                        class="pof-card pur-add-card"
+                        [class.pof-locked]="!defaults || !warehouseId">
+
+                        <div class="pof-card-header">
+
+                            <i [class]="editingId ? 'fas fa-pen-to-square' : info.icon"></i>
+
+                            <span>{{ editingId ? 'Edit ' + info.item : 'Add ' + info.item }}</span>
+
+                            <span class="pur-hd-notes">
+                                @if (lineError)
+                                {
+                                    <span class="pof-tip-wrap">
+                                        <span class="pur-hd-ico pur-hd-red" [attr.aria-label]="lineError">
+                                            <i class="fas fa-circle-exclamation"></i>
+                                        </span>
+                                        <span class="pof-tip" role="tooltip">{{ lineError }}</span>
+                                    </span>
+                                }
+                            </span>
+
+                            @if (editingId)
+                            {
+                                <button
+                                    type="button"
+                                    class="pof-cancel-edit"
+                                    title="Cancel edit"
+                                    aria-label="Cancel edit"
+                                    (click)="cancelEdit()">
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+                            }
+
+                            <button
+                                type="button"
+                                class="pof-add"
+                                [class.pof-add-after]="!!editingId"
+                                [disabled]="!defaults || !warehouseId"
+                                (click)="onAddLine()">
+                                <i [class]="editingId ? 'fas fa-check' : 'fas fa-plus'"></i>
+                                {{ editingId ? 'Update' : 'Add' }}
+                            </button>
+
+                        </div>
+
+                        <div class="pof-grid-3 pof-fields">
+
+                            <app-search-dropdown
+                                class="pof-span-two"
+                                [label]="info.item"
+                                [placeholder]="productItems.length ? 'Search code or name' : 'Every product is on the list'"
+                                [items]="productItems"
+                                [value]="pickId || null"
+                                [required]="true"
+                                [disabled]="!!editingId || !warehouseId"
+                                (valueChange)="onPickChange($event)">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                class="rc-num rc-qty"
+                                label="Quantity"
+                                [inputMode]="info.wholeUnits ? 'numeric' : 'decimal'"
+                                [placeholder]="pick ? pick.Unit : '0'"
+                                [required]="true"
+                                [disabled]="!pick"
+                                [value]="pickQty"
+                                (valueChange)="pickQty = '' + $event"
+                                (enterPressed)="onAddLine()">
+                            </app-textbox>
+
+                            @if (mrpBasis)
+                            {
+                                <app-textbox
+                                    class="rc-num rc-qty"
+                                    label="MRP (incl. VAT)"
+                                    inputMode="decimal"
+                                    placeholder="0.00"
+                                    [required]="true"
+                                    [disabled]="!pick"
+                                    [value]="pickMrp"
+                                    (valueChange)="pickMrp = '' + $event"
+                                    (enterPressed)="onAddLine()">
+                                </app-textbox>
+
+                                <app-textbox
+                                    class="rc-num rc-qty"
+                                    label="Margin % on MRP"
+                                    inputMode="decimal"
+                                    placeholder="0"
+                                    [disabled]="!pick"
+                                    [value]="pickMargin"
+                                    (valueChange)="pickMargin = '' + $event"
+                                    (enterPressed)="onAddLine()">
+                                </app-textbox>
+                            }
+                            @else
+                            {
+                                <app-textbox
+                                    class="rc-num rc-qty"
+                                    [label]="vatIncluded ? 'Unit Cost (incl. VAT)' : 'Unit Cost (excl. VAT)'"
+                                    inputMode="decimal"
+                                    placeholder="0.00"
+                                    [required]="true"
+                                    [disabled]="!pick"
+                                    [value]="pickCost"
+                                    (valueChange)="pickCost = '' + $event"
+                                    (enterPressed)="onAddLine()">
+                                </app-textbox>
+
+                                <app-textbox
+                                    class="rc-num"
+                                    label="MRP (incl. VAT)"
+                                    inputMode="decimal"
+                                    placeholder="0.00"
+                                    [disabled]="!pick"
+                                    [value]="pickMrp"
+                                    (valueChange)="pickMrp = '' + $event"
+                                    (enterPressed)="onAddLine()">
+                                </app-textbox>
+                            }
+
+                            <!-- MRP is the sale price : its net (excl. VAT) -->
+                            <app-textbox
+                                class="rc-num"
+                                label="Net Sale (excl. VAT)"
+                                placeholder="—"
+                                [value]="pick && pickSale ? money(saleNet(pickSale, pick.VatType)) : ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            @if (mrpBasis || vatIncluded)
+                            {
+                                <app-textbox
+                                    class="rc-num"
+                                    label="Unit Cost (excl. VAT)"
+                                    placeholder="—"
+                                    [value]="pickUnitCost ? cost(pickUnitCost) : ''"
+                                    [readonly]="true">
+                                </app-textbox>
+                            }
+                            @else
+                            {
+                                <app-textbox
+                                    class="rc-num"
+                                    label="Sales VAT in MRP"
+                                    placeholder="—"
+                                    [value]="pick && pickSale ? money(pickSale - saleNet(pickSale, pick.VatType)) : ''"
+                                    [readonly]="true">
+                                </app-textbox>
+                            }
+
+                            <app-textbox
+                                class="rc-num"
+                                label="Value"
+                                placeholder="—"
+                                [value]="pickValue ? money(pickValue) : ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="rc-num"
+                                [label]="profitOnSale ? 'Profit on Net Sale' : 'Profit on Cost'"
+                                placeholder="—"
+                                [value]="pickProfit === null ? '' : pct(pickProfit)"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            @if (info.hasShelves)
+                            {
+                                <app-search-dropdown
+                                    label="Rack"
+                                    placeholder="No rack"
+                                    badgeField="count"
+                                    [items]="rackItems"
+                                    [value]="pickRackId || null"
+                                    [disabled]="!pick"
+                                    (valueChange)="onPickRackChange($event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Shelf"
+                                    placeholder="—"
+                                    badgeField="count"
+                                    [items]="shelfItems"
+                                    [value]="pickShelf || null"
+                                    [disabled]="!pick || !pickRackId || shelfItems.length === 0"
+                                    (valueChange)="onPickShelfChange($event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Bin"
+                                    [placeholder]="pickShelf && !binItems.length ? 'Full' : '—'"
+                                    [items]="binItems"
+                                    [value]="pickBin || null"
+                                    [disabled]="!pick || !pickShelf || binItems.length === 0"
+                                    (valueChange)="onPickBinChange($event)">
+                                </app-search-dropdown>
+
+                                <div class="rc-default">
+                                    <span class="rc-default-label">Product Default</span>
+                                    <app-checkbox
+                                        label="Save this location"
+                                        appearance="switch"
+                                        [value]="pickDefault"
+                                        [disabled]="!pick || !pickRackId"
+                                        (valueChange)="pickDefault = $event">
+                                    </app-checkbox>
+                                </div>
+                            }
+
+                            <!-- With a place : the notes share the row with the switch -->
+                            <app-textbox
+                                [class]="info.hasShelves ? 'pof-span-two' : 'pof-span-all'"
+                                label="Short Notes"
+                                placeholder="Condition, carton, count note …"
+                                [maxLength]="200"
+                                [disabled]="!pick"
+                                [value]="pickNotes"
+                                (valueChange)="pickNotes = '' + $event"
+                                (enterPressed)="onAddLine()">
+                            </app-textbox>
+
+                        </div>
+
+                        @if (pick && pickVatText)
+                        {
+                            <div class="pof-hint rc-hint">
+                                <i class="fas fa-percent"></i>
+                                <span>{{ pickVatText }}</span>
+                            </div>
+                        }
+
+                        @if (pick && (pick.LastCost > 0 || pick.LastMrp > 0))
+                        {
+                            <div class="pof-hint rc-hint">
+                                <i class="fas fa-clock-rotate-left"></i>
+                                <span>Last batch : cost {{ cost(pick.LastCost) }}@if (pick.LastMrp > 0) { · MRP {{ money(pick.LastMrp) }} }</span>
+                            </div>
+                        }
+
+                        @if (pick && !pick.HasLedger)
+                        {
+                            <div class="pof-hint rc-hint os-hint-red">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                <span>This product has no Inventory ledger : the draft can be saved, but it cannot be posted until the ledger is set on the product.</span>
+                            </div>
+                        }
+
+                        @if (info.hasShelves && pick && defaultShelfText(pick.Id))
+                        {
+                            <div class="pof-hint rc-hint">
+                                <i class="fas fa-location-dot"></i>
+                                <span>Default place here : {{ defaultShelfText(pick.Id) }}</span>
+                            </div>
+                        }
+
+                        @if (isBikes)
+                        {
+                            <div class="pof-hint rc-hint">
+                                <i class="fas fa-motorcycle"></i>
+                                <span>Bikes' Chassis, Engine{{ keyBattery ? ', Key and Battery' : '' }} No : the <i class="fas fa-motorcycle"></i> button on the line in the summary. A draft may be saved before every bike is entered.</span>
+                            </div>
+                        }
+
+                    </div>
+                }
+
+              </div>
+
+              <!-- ================= Row 2 : right ================ -->
+
+              <div class="pof-col pof-col-right">
+
+                <div class="pof-summary-slot">
+
+                    <div class="pof-card pof-summary">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-list-check"></i>
+                            <span>Opening Summary</span>
+                            <span class="pof-count">
+                                {{ rowCount }} {{ rowCount === 1 ? 'line' : 'lines' }}
+                            </span>
+                        </div>
+
+                        <div class="pof-table-scroll appcore-scrollbar">
+
+                            <table class="pof-table">
+
+                                <colgroup>
+                                    <col class="pof-col-sl">
+                                    <col>
+                                    <col class="pof-col-qty">
+                                    <col class="os-col-money">
+                                    <col class="os-col-money">
+                                    @if (vatIncluded)
+                                    {
+                                        <col class="os-col-money">
+                                    }
+                                    <col class="os-col-money">
+                                    <col class="os-col-money">
+                                    @if (info.hasShelves)
+                                    {
+                                        <col class="rc-col-rack">
+                                    }
+                                    <col class="pof-col-action">
+                                </colgroup>
+
+                                <thead>
+                                    <tr>
+                                        <th class="pof-sl">SL</th>
+                                        <th>{{ info.item }}</th>
+                                        <th class="pof-num">Quantity</th>
+                                        <th class="pof-num">Unit Cost</th>
+                                        <th class="pof-num">Value</th>
+                                        @if (vatIncluded)
+                                        {
+                                            <th class="pof-num" title="Unclaimed input VAT carried to the VAT Current Account">VAT</th>
+                                        }
+                                        <th class="pof-num" title="MRP incl. VAT : the sale price">MRP</th>
+                                        @if (info.hasShelves)
+                                        {
+                                            <th>Location</th>
+                                        }
+                                        <th class="pof-action">Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    @if (isView)
+                                    {
+                                        @for (line of doc?.Lines ?? []; track line.OpeningStockLineId)
+                                        {
+                                            <tr>
+                                                <td class="pof-sl">{{ $index + 1 }}</td>
+                                                <td>
+                                                    <div class="pof-ledger">{{ line.ProductName }}</div>
+                                                    <div class="pof-sub">
+                                                        {{ line.ProductCode }}@if (line.BatchNo) { · Batch {{ line.BatchNo }} }@if (line.MarginPercent) { · margin {{ line.MarginPercent }}% }@if (viewProfit(line) !== null) { · profit {{ pct(viewProfit(line)) }} }@if (line.ShortNotes) { · {{ line.ShortNotes }} }
+                                                    </div>
+                                                </td>
+                                                <td class="pof-num">{{ qty(line.Quantity) }} <span class="pof-unit">{{ line.Unit }}</span></td>
+                                                <td class="pof-num rc-dim">{{ cost(line.UnitCost) }}</td>
+                                                <td class="pof-num rc-strong">{{ money(line.LineValue) }}</td>
+                                                @if (vatIncluded)
+                                                {
+                                                    <td class="pof-num">{{ line.VatAmount ? money(line.VatAmount) : '—' }}</td>
+                                                }
+                                                <td class="pof-num">{{ line.Mrp ? money(line.Mrp) : '—' }}</td>
+                                                @if (info.hasShelves)
+                                                {
+                                                    <td>{{ line.RackCode ? (line.BinCode || line.ShelfLabel || line.RackCode) : '—' }}</td>
+                                                }
+                                                <td class="pof-action">
+                                                    @if (isBikes)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="pur-units-btn"
+                                                            title="The bikes"
+                                                            (click)="openViewUnits(line)">
+                                                            <i class="fas fa-motorcycle"></i>
+                                                            {{ unitsOfProduct(line.ProductId).length }}
+                                                        </button>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <span class="rc-dim">—</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    @else
+                                    {
+                                        @for (line of lines; track line.ProductId)
+                                        {
+                                            <tr
+                                                class="pof-row-editable"
+                                                [class.pof-row-editing]="editingId === line.ProductId"
+                                                title="Double-click to edit"
+                                                (dblclick)="startEdit(line)">
+                                                <td class="pof-sl">{{ $index + 1 }}</td>
+                                                <td>
+                                                    <div class="pof-ledger">
+                                                        {{ line.ProductName }}
+                                                        @if (!line.HasLedger)
+                                                        {
+                                                            <span class="os-noledger" title="No Inventory ledger : set it on the product before posting">no ledger</span>
+                                                        }
+                                                    </div>
+                                                    <div class="pof-sub">
+                                                        {{ line.ProductCode }}@if (mrpBasis) { · margin {{ line.MarginPercent }}% }@if (lineProfit(line) !== null) { · profit {{ pct(lineProfit(line)) }} }@if (line.Notes) { · {{ line.Notes }} }
+                                                    </div>
+                                                </td>
+                                                <td class="pof-num rc-strong">{{ qty(line.Quantity) }} <span class="pof-unit">{{ line.Unit }}</span></td>
+                                                <td class="pof-num rc-dim">{{ cost(line.UnitCost) }}</td>
+                                                <td class="pof-num rc-strong">{{ money(value(line)) }}</td>
+                                                @if (vatIncluded)
+                                                {
+                                                    <td class="pof-num">{{ lineVat(line) ? money(lineVat(line)) : '—' }}</td>
+                                                }
+                                                <td class="pof-num" [class.os-missing]="!line.Mrp">{{ line.Mrp ? money(line.Mrp) : 'none' }}</td>
+                                                @if (info.hasShelves)
+                                                {
+                                                    <td>
+                                                        {{ rackText(line) }}
+                                                        @if (line.SaveDefault && line.RackId)
+                                                        {
+                                                            <span class="pof-billed">default</span>
+                                                        }
+                                                    </td>
+                                                }
+                                                <td class="pof-action">
+                                                    @if (isBikes)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="pur-units-btn"
+                                                            [class.pur-units-short]="!unitsComplete(line)"
+                                                            [title]="'Bikes : ' + unitsEntered(line) + ' of ' + line.Units.length + ' with chassis and engine'"
+                                                            [disabled]="saving"
+                                                            (click)="openUnits(line); $event.stopPropagation()">
+                                                            <i class="fas fa-motorcycle"></i>
+                                                            {{ unitsEntered(line) }}/{{ line.Units.length }}
+                                                        </button>
+                                                    }
+                                                    <button
+                                                        type="button"
+                                                        class="pof-remove"
+                                                        title="Remove"
+                                                        [disabled]="saving || editingId === line.ProductId"
+                                                        [attr.aria-label]="'Remove ' + line.ProductName"
+                                                        (click)="removeLine(line); $event.stopPropagation()">
+                                                        <i class="fas fa-xmark"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+
+                                    @if (rowCount === 0)
+                                    {
+                                        <tr>
+                                            <td
+                                                [attr.colspan]="(info.hasShelves ? 8 : 7) + (vatIncluded ? 1 : 0)"
+                                                class="pof-empty">
+                                                No {{ info.itemLower }} yet. Pick one on the left and press Add, or import the list from Excel. Double-click a line to edit it.
+                                            </td>
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <!-- Total : always visible under the rows -->
+
+                        <div class="pof-table-foot">
+
+                            <table class="pof-table">
+
+                                <colgroup>
+                                    <col class="pof-col-sl">
+                                    <col>
+                                    <col class="pof-col-qty">
+                                    <col class="os-col-money">
+                                    <col class="os-col-money">
+                                    @if (vatIncluded)
+                                    {
+                                        <col class="os-col-money">
+                                    }
+                                    <col class="os-col-money">
+                                    <col class="os-col-money">
+                                    @if (info.hasShelves)
+                                    {
+                                        <col class="rc-col-rack">
+                                    }
+                                    <col class="pof-col-action">
+                                </colgroup>
+
+                                <tbody>
+                                    <tr class="pof-payable">
+                                        <td colspan="2">Total Opening Stock</td>
+                                        <td class="pof-num">{{ qty(totalQuantity) }}</td>
+                                        <td></td>
+                                        <td class="pof-num">{{ money(totalValue) }}</td>
+                                        @if (vatIncluded)
+                                        {
+                                            <td class="pof-num">{{ money(totalVat) }}</td>
+                                        }
+                                        <td class="pof-num os-dim-total" title="Quantity × MRP (incl. VAT) : the sale value">{{ totalSale ? money(totalSale) : '' }}</td>
+                                        <td [attr.colspan]="info.hasShelves ? 2 : 1"></td>
+                                    </tr>
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+              </div>
+
+            </div>
+        }
+
+    </div>
+
+    <!-- =====================================================
+         EXCEL IMPORT : paste rows or a CSV file, check, load
+    ====================================================== -->
+
+    @if (importOpen)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx os-im"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="os-im-title">
+
+                <div class="pof-cx-head">
+                    <span class="pof-cx-icon os-im-icon">
+                        <i class="fas fa-file-excel"></i>
+                    </span>
+                    <div class="pof-cx-title">
+                        <strong id="os-im-title">Import from Excel · {{ info.title }}</strong>
+                        <span>{{ warehouseText }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeImport()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="pof-cx-body">
+
+                    <div class="os-im-cols">
+                        @for (column of importColumns; track column; let c = $index)
+                        {
+                            <span [class.os-im-req]="['Product Code', 'Quantity', 'Unit Cost', 'MRP', 'Chassis No', 'Engine No'].includes(column)">{{ column }}</span>
+                        }
+                    </div>
+
+                    <div class="pof-hint">
+                        <i class="fas fa-paste"></i>
+                        <span>
+                            Copy the rows from Excel (these columns, in this order; a header row is skipped) and paste below, or choose a CSV file.
+                            @if (isBikes) { One row per bike : the bikes of a model become one line, its quantity the count of rows. }
+                            @if (vatIncluded) { Unit Cost includes VAT (its VAT goes to the VAT Current Account); } @else { Cost excludes VAT; } MRP includes VAT and is the sale price. A heading row is read by its names, so an older file with a Sale Price column still imports (that column is ignored).
+                            A product already on the list is replaced.
+                        </span>
+                    </div>
+
+                    <app-textarea
+                        class="os-im-text"
+                        placeholder="Paste the rows here…"
+                        [rows]="8"
+                        [value]="importText"
+                        (valueChange)="onImportText($event)">
+                    </app-textarea>
+
+                    <div class="os-im-bar">
+
+                        <label class="pof-btn pof-btn-light os-im-file">
+                            <i class="fas fa-file-csv"></i>
+                            Choose CSV
+                            <input
+                                type="file"
+                                accept=".csv,.txt,text/csv"
+                                (change)="onImportFile($event)">
+                        </label>
+
+                        @if (importFile)
+                        {
+                            <span class="os-im-name"><i class="fas fa-paperclip"></i> {{ importFile }}</span>
+                        }
+
+                        <button
+                            type="button"
+                            class="pof-btn pof-btn-light"
+                            [disabled]="!importText.trim()"
+                            (click)="readImport()">
+                            <i class="fas fa-magnifying-glass"></i>
+                            Check
+                        </button>
+
+                    </div>
+
+                    @if (importResult; as r)
+                    {
+                        <div class="os-im-result">
+
+                            <div class="os-im-sum">
+                                <span class="os-im-ok">
+                                    <i class="fas fa-circle-check"></i>
+                                    {{ r.lines.length }} {{ r.lines.length === 1 ? 'line' : 'lines' }} ready
+                                    @if (isBikes) { · {{ r.rows - r.errors.length }} bikes }
+                                </span>
+                                @if (r.errors.length)
+                                {
+                                    <span class="os-im-bad">
+                                        <i class="fas fa-circle-exclamation"></i>
+                                        {{ r.errors.length }} {{ r.errors.length === 1 ? 'row' : 'rows' }} with a problem
+                                    </span>
+                                }
+                            </div>
+
+                            @if (r.errors.length)
+                            {
+                                <ul class="os-im-errors appcore-scrollbar">
+                                    @for (message of r.errors; track $index)
+                                    {
+                                        <li>{{ message }}</li>
+                                    }
+                                </ul>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+
+                <div class="pof-modal-foot">
+                    <span class="pof-modal-note">
+                        <i class="fas fa-circle-info"></i>
+                        Check first; only the good rows are loaded.
+                    </span>
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="closeImport()">
+                        <i class="fas fa-arrow-left"></i>
+                        Close
+                    </button>
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-primary"
+                        [disabled]="!importResult || importResult.lines.length === 0"
+                        (click)="applyImport()">
+                        <i class="fas fa-check"></i>
+                        Load {{ importResult?.lines?.length || '' }} {{ importResult?.lines?.length === 1 ? 'Line' : 'Lines' }}
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <!-- =====================================================
+         DELETE (draft)
+    ====================================================== -->
+
+    @if (deleteOpen && doc)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="os-del-title">
+
+                <div class="pof-cx-head">
+                    <span class="pof-cx-icon">
+                        <i class="fas fa-trash-can"></i>
+                    </span>
+                    <div class="pof-cx-title">
+                        <strong id="os-del-title">Delete Draft</strong>
+                        <span>{{ doc.OpeningNo }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="deleteOpen = false">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="pof-cx-body">
+                    <div class="pof-cx-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>
+                            The draft and its {{ doc.Lines.length }} {{ doc.Lines.length === 1 ? 'line' : 'lines' }}{{ isBikes ? ' and bikes' : '' }} are deleted. Nothing was posted from it.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="pof-modal-foot">
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="deleteOpen = false">
+                        <i class="fas fa-arrow-left"></i>
+                        Keep Draft
+                    </button>
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-danger"
+                        [disabled]="saving"
+                        (click)="confirmDelete()">
+                        <i class="fas fa-trash-can"></i>
+                        Delete Draft
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <!-- =====================================================
+         CANCEL (view, posted)
+    ====================================================== -->
+
+    @if (cancelOpen && doc)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="os-cx-title">
+
+                <div class="pof-cx-head">
+                    <span class="pof-cx-icon">
+                        <i class="fas fa-ban"></i>
+                    </span>
+                    <div class="pof-cx-title">
+                        <strong id="os-cx-title">Cancel Opening Stock</strong>
+                        <span>{{ doc.OpeningNo }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="cancelOpen = false">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="pof-cx-body">
+
+                    <div class="pof-cx-summary">
+                        <div>
+                            <span>Opening Date</span>
+                            <strong>{{ date(doc.OpeningDate) }}</strong>
+                        </div>
+                        <div>
+                            <span>Warehouse</span>
+                            <strong [title]="doc.WarehouseName">{{ doc.WarehouseName }}</strong>
+                        </div>
+                        <div class="pof-cx-amount">
+                            <span>Value</span>
+                            <strong>{{ money(doc.TotalValue) }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="pof-cx-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>
+                            The stock is taken off{{ isBikes ? ', the bikes too,' : '' }} and the journal is reversed today.
+                            Allowed only while all of it is still on hand in {{ doc.WarehouseName }}.
+                            This cannot be undone.
+                        </span>
+                    </div>
+
+                    <div class="pof-cx-fields">
+                        <app-textarea
+                            class="pof-cx-reason"
+                            label="Reason"
+                            placeholder="Why is this opening stock cancelled?"
+                            [required]="true"
+                            [rows]="4"
+                            [maxLength]="500"
+                            [value]="cancelReason"
+                            (valueChange)="cancelReason = $event">
+                        </app-textarea>
+                    </div>
+
+                </div>
+
+                <div class="pof-modal-foot">
+                    <span class="pof-modal-note">
+                        <i class="fas fa-circle-info"></i>
+                        Reason is required.
+                    </span>
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="cancelOpen = false">
+                        <i class="fas fa-arrow-left"></i>
+                        Keep It
+                    </button>
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-danger"
+                        [disabled]="saving"
+                        (click)="confirmCancel()">
+                        <i class="fas fa-ban"></i>
+                        Cancel Opening Stock
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <!-- =====================================================
+         UNIT DESK (MB) : one row per bike
+    ====================================================== -->
+
+    @if (desk; as d)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx pur-ud"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="os-ud-title">
+
+                <div class="pof-cx-head">
+                    <span class="pof-cx-icon pur-ud-icon">
+                        <i class="fas fa-motorcycle"></i>
+                    </span>
+                    <div class="pof-cx-title">
+                        <strong id="os-ud-title">Unit Desk · {{ d.name }}</strong>
+                        <span>{{ d.code }} · {{ d.rows.length }} bike{{ d.rows.length === 1 ? '' : 's' }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeUnits()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="pof-cx-body">
+
+                    @if (!d.readonly)
+                    {
+                        <div class="pof-hint">
+                            <i class="fas fa-paste"></i>
+                            Copy the {{ d.keys ? 'four columns from Excel (Chassis, Engine, Key, Battery)' : 'two columns from Excel (Chassis, Engine)' }} and paste into a Chassis box : every row fills at once, from that bike down.
+                        </div>
+                    }
+
+                    <div class="pur-ud-scroll appcore-scrollbar">
+
+                        <table class="pof-table pur-ud-table">
+
+                            <colgroup>
+                                <col class="pur-ud-c-sl">
+                                <col class="pur-ud-c-wide">
+                                <col class="pur-ud-c-wide">
+                                @if (d.keys)
+                                {
+                                    <col class="pur-ud-c-key">
+                                    <col class="pur-ud-c-bat">
+                                }
+                                @if (!d.readonly)
+                                {
+                                    <col class="pur-ud-c-act">
+                                }
+                            </colgroup>
+
+                            <thead>
+                                <tr>
+                                    <th class="pof-sl">SL</th>
+                                    <th>Chassis No <b class="pof-req">*</b></th>
+                                    <th>Engine No <b class="pof-req">*</b></th>
+                                    @if (d.keys)
+                                    {
+                                        <th>Key No @if (keyBattery) { <b class="pof-req">*</b> }</th>
+                                        <th>Battery No @if (keyBattery) { <b class="pof-req">*</b> }</th>
+                                    }
+                                    @if (!d.readonly)
+                                    {
+                                        <th class="pur-ud-act" aria-label="Clear"></th>
+                                    }
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @for (row of d.rows; track $index; let u = $index)
+                                {
+                                    <tr>
+                                        <td class="pof-sl">{{ u + 1 }}</td>
+
+                                        @if (d.readonly)
+                                        {
+                                            <td>{{ row.ChassisNo }}</td>
+                                            <td>{{ row.EngineNo }}</td>
+                                            @if (d.keys)
+                                            {
+                                                <td>{{ row.KeyNo || '—' }}</td>
+                                                <td>{{ row.BatteryNo || '—' }}</td>
+                                            }
+                                        }
+                                        @else
+                                        {
+                                            @for (field of d.fields; track field; let c = $index)
+                                            {
+                                                <td
+                                                    [class.pur-ud-bad]="!!unitProblem(row, field)"
+                                                    [attr.title]="unitProblem(row, field) || null"
+                                                    (paste)="onUnitPaste($event, u, c)">
+                                                    <app-textbox
+                                                        [placeholder]="unitPlaceholders[field]"
+                                                        textCase="upper"
+                                                        [maxLength]="50"
+                                                        [value]="row[field]"
+                                                        (valueChange)="onUnitChange(row, field, $event)">
+                                                    </app-textbox>
+                                                </td>
+                                            }
+
+                                            <td class="pur-ud-act">
+                                                <button
+                                                    type="button"
+                                                    class="pur-ud-clear"
+                                                    [title]="d.keys ? 'Clear this bike\'s four numbers' : 'Clear this bike\'s numbers'"
+                                                    [attr.aria-label]="'Clear bike ' + (u + 1)"
+                                                    [disabled]="!row.ChassisNo && !row.EngineNo && !row.KeyNo && !row.BatteryNo"
+                                                    (click)="clearUnit(row)">
+                                                    <i class="fas fa-eraser"></i>
+                                                </button>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+
+                                @if (d.rows.length === 0)
+                                {
+                                    <tr>
+                                        <td [attr.colspan]="d.keys ? 6 : 4" class="pof-empty">No bikes.</td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+                <div class="pof-modal-foot">
+                    <span class="pof-modal-note">
+                        @if (checking)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                            Checking the numbers against the bikes on file…
+                        }
+                        @else
+                        {
+                            <i class="fas fa-circle-info"></i>
+                            {{ keyBattery ? 'To post, every bike needs all four numbers.' : 'To post, every bike needs its Chassis No and Engine No.' }}
+                        }
+                    </span>
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="closeUnits()">
+                        <i class="fas fa-arrow-left"></i>
+                        Close
+                    </button>
+                    @if (!d.readonly)
+                    {
+                        <button
+                            type="button"
+                            class="pof-btn pof-btn-primary"
+                            (click)="saveUnits()">
+                            <i class="fas fa-check"></i>
+                            Save
+                        </button>
+                    }
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+<app-toast></app-toast>
+
+<app-progress-dialog></app-progress-dialog>

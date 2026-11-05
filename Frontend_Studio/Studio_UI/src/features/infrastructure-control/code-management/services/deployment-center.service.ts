@@ -90,7 +90,7 @@ export class DeploymentCenterService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<DeploymentCenter>
     {
@@ -127,13 +127,16 @@ export class DeploymentCenterService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateDeploymentCenter
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${model.id}`,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -148,7 +151,7 @@ export class DeploymentCenterService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -196,7 +199,7 @@ export class DeploymentCenterService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {

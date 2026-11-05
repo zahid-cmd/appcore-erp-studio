@@ -32,6 +32,15 @@ public class OpeningStockConfiguration
 
         builder.HasKey(x => x.OpeningStockId);
 
+        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_OpeningStock_PublicId");
+
         builder.Property(x => x.OpeningStockId)
                .ValueGeneratedOnAdd();
 
@@ -78,7 +87,6 @@ public class OpeningStockConfiguration
         builder.Property(x => x.Quantity).HasPrecision(18, 2);
         builder.Property(x => x.UnitCost).HasPrecision(18, 4);
         builder.Property(x => x.LineValue).HasPrecision(18, 2);
-        builder.Property(x => x.SalePrice).HasPrecision(18, 2);
         builder.Property(x => x.Mrp).HasPrecision(18, 2);
         builder.Property(x => x.MarginPercent).HasPrecision(9, 4);
         builder.Property(x => x.GrossUnitCost).HasPrecision(18, 4);
@@ -86,6 +94,7 @@ public class OpeningStockConfiguration
         builder.Property(x => x.VatAmount).HasPrecision(18, 2);
         builder.Property(x => x.RackCode).IsRequired().HasMaxLength(50);
         builder.Property(x => x.ShelfNumber).IsRequired();
+        builder.Property(x => x.BinNumber).IsRequired();
         builder.Property(x => x.ShortNotes).IsRequired().HasMaxLength(200);
         builder.Property(x => x.BatchNo).IsRequired().HasMaxLength(40);
     }

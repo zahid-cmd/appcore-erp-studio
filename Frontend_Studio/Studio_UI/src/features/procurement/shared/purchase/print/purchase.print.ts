@@ -146,7 +146,7 @@ export function purchasePrintSource
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<PurchasePrintData>
     {
@@ -154,7 +154,7 @@ export function purchasePrintSource
             await firstValueFrom(
                 injector
                     .get(service)
-                    .getById(id)
+                    .getById(String(id))
             );
 
         return {

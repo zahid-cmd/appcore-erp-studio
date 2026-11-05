@@ -90,7 +90,7 @@ export class PurchaseReturnsSpService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<PurchaseReturnsSp>
     {
@@ -148,7 +148,7 @@ export class PurchaseReturnsSpService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

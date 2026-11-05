@@ -254,11 +254,22 @@ public class SystemConfigurationsController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
     public async Task<ActionResult<SystemConfigurationsDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound("Configuration not found.");
+        }
+
+        long id =
+            found.Value;
+
         try
         {
             SystemConfigurationsDto? configuration =
@@ -477,7 +488,8 @@ public class SystemConfigurationsController : ControllerBase
 
     [HttpPost]
 
-    public async Task<ActionResult<long>> Create(
+    // Returns the new row's Public Id
+    public async Task<ActionResult<Guid>> Create(
         [FromBody] CreateSystemConfigurationsDto dto)
     {
         try
@@ -488,7 +500,8 @@ public class SystemConfigurationsController : ControllerBase
                     this.CurrentUserId(),
                     this.CurrentUserName());
 
-            return Ok(id);
+            return Ok(
+                await _repository.GetPublicIdAsync(id));
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -594,11 +607,22 @@ public class SystemConfigurationsController : ControllerBase
     // Delete (admin)
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound("Configuration not found.");
+        }
+
+        long id =
+            found.Value;
+
         try
         {
             await _repository.DeleteAsync(

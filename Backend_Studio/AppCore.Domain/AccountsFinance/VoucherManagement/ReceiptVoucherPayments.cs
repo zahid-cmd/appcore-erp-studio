@@ -23,6 +23,9 @@ public class ReceiptVoucherPayments
 {
     public long ReceiptVoucherPaymentId { get; set; }
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
     public long ReceiptVoucherId { get; set; }
 
     public int LineNo { get; set; }

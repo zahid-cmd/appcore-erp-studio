@@ -34,6 +34,7 @@ from '@angular/router';
 import
 {
     Observable,
+    Subscription,
     defer,
     timer,
     throwError,
@@ -50,15 +51,47 @@ from 'rxjs';
 
 import
 {
-    SpareParts
+    SpareParts,
+    SparePartsPageQuery
 }
 from '../../../models/spare-parts.model';
+
+import
+{
+    PagedResult
+}
+from '../../../../../../shared/paging/paged-result.model';
+
+import
+{
+    movementClassInfo
+}
+from '../../../../../../shared/inventory/storage-labels';
 
 
 // List row : the spare part plus its ready-to-show thumbnail URL
 interface SparePartListRow
 extends SpareParts
 {
+    // Fits Models : a "shared" pill on the Sub Category cell when
+    // the item fits other models (or is shown here as a link)
+    IsShared:
+        boolean;
+
+    SharedTitle:
+        string;
+
+    // Movement class : short label, colour of the dot, rank
+    // (1 fastest; used to sort the column)
+    MovementText:
+        string;
+
+    MovementColor:
+        string;
+
+    MovementRank:
+        number;
+
     ImageUrl:
         string;
 }
@@ -172,6 +205,24 @@ import
 }
 from '../../../services/spare-parts.service';
 
+import
+{
+    ProductCategoryService
+}
+from '../../../services/product-category.service';
+
+import
+{
+    ProductSubCategoryService
+}
+from '../../../services/product-sub-category.service';
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
 
 //===============================================================
 // Component
@@ -209,7 +260,9 @@ from '../../../services/spare-parts.service';
 
         ProgressDialogComponent,
 
-        ToastComponent
+        ToastComponent,
+
+        SearchDropdownComponent
     ],
 
     templateUrl:'./spare-parts-list.html',
@@ -258,6 +311,236 @@ implements OnInit, OnDestroy
         inject(ChangeDetectorRef);
 
 
+    //===========================================================
+    // Toolbar Filters : Category → Sub Category
+    //===========================================================
+
+    private readonly productCategoryService =
+        inject(ProductCategoryService);
+
+    private readonly productSubCategoryService =
+        inject(ProductSubCategoryService);
+
+    categoryFilterItems:
+        any[] =
+        [{ label:'All Categories', value:null }];
+
+    subCategoryFilterItems:
+        any[] =
+        [{ label:'All Sub Categories', value:null }];
+
+    selectedCategoryId:
+        number | null =
+        null;
+
+    selectedSubCategoryId:
+        number | null =
+        null;
+
+    private filterCategories:
+        any[] =
+        [];
+
+    private filterSubCategories:
+        any[] =
+        [];
+
+
+    private loadFilterLookups():
+        void
+    {
+        this.productCategoryService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    list:
+                        any[]
+                ): void =>
+                {
+                    this.filterCategories =
+                        list ?? [];
+
+                    this.buildCategoryFilterItems();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error('Load Category Filter Error', error);
+                }
+            });
+
+        this.productSubCategoryService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    list:
+                        any[]
+                ): void =>
+                {
+                    this.filterSubCategories =
+                        list ?? [];
+
+                    this.buildSubCategoryFilterItems();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error('Load Sub Category Filter Error', error);
+                }
+            });
+    }
+
+
+    // Spare Parts / Lubricants categories (of the tab)
+    private buildCategoryFilterItems():
+        void
+    {
+        const types:
+            string[] =
+            this.selectedTab === 'SP'
+                ? ['spare parts']
+                : this.selectedTab === 'LB'
+                    ? ['lubricants']
+                    : ['spare parts', 'lubricants'];
+
+        const categories =
+            this.filterCategories
+                .filter(
+                    x =>
+                        types.includes(
+                            String(x?.CategoryType ?? '').trim().toLowerCase())
+                );
+
+        this.categoryFilterItems =
+        [
+            { label:'All Categories', value:null },
+            ...categories
+                .map(
+                    x =>
+                    ({
+                        label:`${x.CategoryCode} - ${x.CategoryName}`,
+                        value:Number(x.ProductCategoryId)
+                    })
+                )
+                .sort((a, b) => a.label.localeCompare(b.label))
+        ];
+
+        // A category no longer offered : cleared
+        if
+        (
+            this.selectedCategoryId
+            &&
+            !categories.some(x => Number(x.ProductCategoryId) === this.selectedCategoryId)
+        )
+        {
+            this.selectedCategoryId = null;
+
+            this.selectedSubCategoryId = null;
+        }
+
+        this.buildSubCategoryFilterItems();
+    }
+
+
+    // Sub categories of the chosen category (or of every listed
+    // category when none is chosen)
+    private buildSubCategoryFilterItems():
+        void
+    {
+        const categoryIds =
+            new Set<number>(
+                this.categoryFilterItems
+                    .map(x => Number(x.value ?? 0))
+                    .filter(x => x > 0));
+
+        const categoryId =
+            this.selectedCategoryId;
+
+        const subs =
+            this.filterSubCategories
+                .filter(
+                    x =>
+                        categoryId
+                            ? Number(x?.ProductCategoryId) === categoryId
+                            : categoryIds.has(Number(x?.ProductCategoryId))
+                );
+
+        this.subCategoryFilterItems =
+        [
+            { label:'All Sub Categories', value:null },
+            ...subs
+                .map(
+                    x =>
+                    ({
+                        label:`${x.SubCategoryCode} - ${x.SubCategoryName}`,
+                        value:Number(x.ProductSubCategoryId)
+                    })
+                )
+                .sort((a, b) => a.label.localeCompare(b.label))
+        ];
+
+        if
+        (
+            this.selectedSubCategoryId
+            &&
+            !subs.some(x => Number(x.ProductSubCategoryId) === this.selectedSubCategoryId)
+        )
+        {
+            this.selectedSubCategoryId = null;
+        }
+    }
+
+
+    onCategoryFilterChange
+    (
+        value:
+            number | null
+    ):
+        void
+    {
+        this.selectedCategoryId =
+            Number(value) > 0 ? Number(value) : null;
+
+        // The sub category must belong to the category
+        this.selectedSubCategoryId =
+            null;
+
+        this.buildSubCategoryFilterItems();
+
+        this.reload();
+    }
+
+
+    onSubCategoryFilterChange
+    (
+        value:
+            number | null
+    ):
+        void
+    {
+        this.selectedSubCategoryId =
+            Number(value) > 0 ? Number(value) : null;
+
+        this.reload();
+    }
+
+
 
     //===========================================================
     // Page Tabs
@@ -296,19 +579,55 @@ implements OnInit, OnDestroy
     // Data
     //===========================================================
 
+    // The page shown (the server sends one page at a time)
     spareParts:
         SparePartListRow[] =
     [];
 
 
-    filteredSpareParts:
-        SparePartListRow[] =
+    // Rows matching the tab and search, all pages
+    totalRecords:
+        number =
+        0;
+
+
+    // Summary line below the canvas (filled by each load)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
     [];
 
 
-    pagedSpareParts:
-        SparePartListRow[] =
-    [];
+    private loadSubscription?:
+        Subscription;
+
+
+
+    //===========================================================
+    // Sort & Search Delay
+    //===========================================================
+
+    // '' = the server's default (Product Code)
+    private sortField:
+        string =
+        '';
+
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+
+    private searchTimer?:
+        number;
+
+
+    private readonly SEARCH_DELAY_MS:
+        number =
+        300;
 
 
 
@@ -455,7 +774,8 @@ implements OnInit, OnDestroy
 
             type:'serial',
 
-            width:'50px',
+            // Room for three-digit row numbers (131 …)
+            width:'64px',
 
             align:'center'
         },
@@ -491,11 +811,18 @@ implements OnInit, OnDestroy
         },
 
         {
-            header:'Category',
+            header:'Sub Category',
 
-            field:'CategoryName',
+            field:'SubCategoryName',
 
-            width:'180px',
+            width:'240px',
+
+            // "shared" pill : fits other models / linked here
+            flagField:'IsShared',
+
+            flagText:'shared',
+
+            flagTitleField:'SharedTitle',
 
             align:'left'
         },
@@ -511,9 +838,22 @@ implements OnInit, OnDestroy
         },
 
         {
-            header:'Locations',
+            header:'Movement',
 
+            field:'MovementText',
+
+            // Thin dot + short label (no filled chip)
+            dotField:'MovementColor',
+
+            width:'130px',
+
+            align:'left'
+        },
+
+        {
+            header:'Locations',
             field:'LocationsText',
+            sortable:false,
 
             align:'left'
         },
@@ -582,6 +922,8 @@ implements OnInit, OnDestroy
     ngOnInit():
         void
     {
+        this.loadFilterLookups();
+
         this.loadItems();
     }
 
@@ -595,6 +937,10 @@ implements OnInit, OnDestroy
         void
     {
         this.clearProgressTimer();
+
+        this.clearSearchTimer();
+
+        this.loadSubscription?.unsubscribe();
 
 
         if
@@ -844,8 +1190,36 @@ implements OnInit, OnDestroy
             );
 
 
+        // Shown under a sub category it only fits (filtered by it)
+        const linkedHere =
+            !!this.selectedSubCategoryId
+            &&
+            Number(sparePart.ProductSubCategoryId) !== this.selectedSubCategoryId;
+
+        const fits =
+            sparePart.FitsText ?? '';
+
         return {
             ...sparePart,
+
+            IsShared:
+                linkedHere || !!fits,
+
+            SharedTitle:
+                linkedHere
+                    ? `Linked here : its home is ${sparePart.SubCategoryName}${fits ? ' (also fits ' + fits + ')' : ''}`
+                    : fits
+                        ? `Also fits ${fits}`
+                        : '',
+
+            MovementText:
+                movementClassInfo(sparePart.MovementClass).short,
+
+            MovementColor:
+                movementClassInfo(sparePart.MovementClass).color,
+
+            MovementRank:
+                movementClassInfo(sparePart.MovementClass).rank,
 
             ImageUrl:
                 this.sparePartsService.getImageUrl(
@@ -857,203 +1231,183 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Normalize API Response List
-    //===========================================================
-
-    private normalizeSpareParts
-    (
-        response:
-            any
-    ):
-        SparePartListRow[]
-    {
-        if
-        (
-            !Array.isArray(response)
-        )
-        {
-            return [];
-        }
-
-
-        return response.map
-        (
-            item =>
-                this.normalizeSparePart(
-                    item
-                )
-        );
-    }
-
-
-
-    //===========================================================
-    // Load Items
+    // Load Items (one page from the server)
+    //
+    // The server filters (tab, search), sorts and pages; the
+    // answer also carries the summary counts.
     //===========================================================
 
     loadItems():
         void
     {
+        this.loadSubscription?.unsubscribe();
+
         this.loading =
             true;
-
 
         this.loadFailed =
             false;
 
+        this.cdr.detectChanges();
 
-        this.sparePartsService
-            .getAll()
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        any
-                ):
-                    void =>
-                {
-                    this.spareParts =
-                        this.normalizeSpareParts(
-                            response
+
+        const query:
+            SparePartsPageQuery =
+        {
+            page:
+                this.currentPage,
+
+            pageSize:
+                this.pageSize,
+
+            search:
+                this.searchText.trim(),
+
+            sort:
+                this.sortField,
+
+            dir:
+                this.sortDirection,
+
+            type:
+                this.selectedTab === 'all'
+                    ? ''
+                    : this.selectedTab,
+
+            status:
+                null,
+
+            productCategoryId:
+                this.selectedCategoryId,
+
+            productSubCategoryId:
+                this.selectedSubCategoryId
+        };
+
+
+        this.loadSubscription =
+            this.sparePartsService
+                .getPaged(
+                    query
+                )
+                .subscribe
+                ({
+                    next:
+                    (
+                        response:
+                            PagedResult<SpareParts>
+                    ):
+                        void =>
+                    {
+                        this.spareParts =
+                            response.items.map(
+                                item =>
+                                    this.normalizeSparePart(
+                                        item
+                                    )
+                            );
+
+                        this.totalRecords =
+                            response.totalCount;
+
+                        // The server pulls the page back when rows got
+                        // fewer (e.g. the last row of a page deleted)
+                        this.currentPage =
+                            response.page;
+
+                        this.updateSummary(
+                            response.counts
                         );
 
+                        this.loading =
+                            false;
 
-                    this.applyFilters();
+                        this.cdr.detectChanges();
+                    },
 
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        false;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:
-                (
                     error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
                     (
-                        'Load Spare Parts Error:',
-                        error
-                    );
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error
+                        (
+                            'Load Spare Parts Error:',
+                            error
+                        );
 
+                        this.spareParts =
+                            [];
 
-                    this.spareParts =
-                        [];
+                        this.totalRecords =
+                            0;
 
+                        this.loading =
+                            false;
 
-                    this.filteredSpareParts =
-                        [];
+                        this.loadFailed =
+                            true;
 
+                        this.toast.error
+                        (
+                            'Load Failed',
+                            'Unable to load spare parts.'
+                        );
 
-                    this.pagedSpareParts =
-                        [];
-
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        true;
-
-
-                    this.toast.error
-                    (
-                        'Load Failed',
-
-                        'Unable to load spare parts.'
-                    );
-
-
-                    this.cdr.detectChanges();
-                }
-            });
+                        this.cdr.detectChanges();
+                    }
+                });
     }
 
 
 
     //===========================================================
-    // Apply Filters
+    // Reload from page 1 (the tab, search, sort or page size
+    // changed)
     //===========================================================
 
-    applyFilters():
+    private reload():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-
-        this.filteredSpareParts =
-            this.spareParts.filter
-            (
-                (
-                    item:
-                        SparePartListRow
-                ):
-                    boolean =>
-                {
-                    const values:
-                        unknown[] =
-                    [
-                        item.ProductCode,
-                        item.PartNumber,
-                        item.PartName,
-                        item.CategoryName,
-                        item.BrandName,
-                        item.SubCategoryName,
-                        item.Unit,
-                        item.LocationsText,
-                        item.InventoryLedgerCode
-                    ];
-
-                    const searchMatch =
-                        !keyword
-                        ||
-                        values.some(
-                            value =>
-                                String(value ?? '')
-                                    .toLowerCase()
-                                    .includes(keyword)
-                        )
-                        ||
-                        (item.IsActive ? 'active' : 'inactive')
-                            .includes(keyword);
-
-                    // Tab : the category code prefix (SP- / LB-)
-                    const tabMatch =
-                        this.selectedTab === 'all'
-                        ||
-                        String(item.CategoryCode ?? '')
-                            .toUpperCase()
-                            .startsWith(
-                                `${this.selectedTab}-`
-                            );
-
-                    return searchMatch
-                        &&
-                        tabMatch;
-                }
-            );
-
-
         this.currentPage =
             1;
 
+        this.loadItems();
+    }
 
-        this.updatePagination();
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Spare Parts /
+    // Lubricants / Active / Inactive, with the search applied
+    // (not the tab)
+    //===========================================================
+
+    private updateSummary
+    (
+        counts:
+            Record<string, number>
+    ):
+        void
+    {
+        const value =
+            (
+                key:
+                    string
+            ):
+                string =>
+                    Number(counts[key] ?? 0).toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',       value:value('Total'),    tone:'' },
+            { label:'Spare Parts', value:value('SP'),       tone:'' },
+            { label:'Lubricants',  value:value('LB'),       tone:'' },
+            { label:'Active',      value:value('Active'),   tone:'ok' },
+            { label:'Inactive',    value:value('Inactive'), tone:'bad' }
+        ];
     }
 
 
@@ -1072,15 +1426,16 @@ implements OnInit, OnDestroy
         this.selectedTab =
             value;
 
-        this.applyFilters();
+        // The category list follows the tab
+        this.buildCategoryFilterItems();
 
-        this.cdr.detectChanges();
+        this.reload();
     }
 
 
 
     //===========================================================
-    // Search
+    // Search (asks the server 300 ms after the last key)
     //===========================================================
 
     onSearch
@@ -1095,14 +1450,44 @@ implements OnInit, OnDestroy
             ??
             '';
 
+        this.clearSearchTimer();
 
-        this.applyFilters();
+        this.searchTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.reload();
+                },
+
+                this.SEARCH_DELAY_MS
+            );
+    }
+
+
+    private clearSearchTimer():
+        void
+    {
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
+
+            this.searchTimer =
+                undefined;
+        }
     }
 
 
 
     //===========================================================
-    // Sort
+    // Sort (the server sorts; Movement = fastest first)
     //===========================================================
 
     onSort
@@ -1118,117 +1503,15 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.filteredSpareParts =
-        [
-            ...this.filteredSpareParts
-        ];
+        this.sortField =
+            event.field;
 
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-        this.filteredSpareParts.sort
-        (
-            (
-                a:
-                    SparePartListRow,
-
-                b:
-                    SparePartListRow
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof SparePartListRow
-                    ];
-
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof SparePartListRow
-                    ];
-
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
-                }
-
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
-            }
-        );
-
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
+        this.reload();
     }
 
 
@@ -1240,50 +1523,35 @@ implements OnInit, OnDestroy
     refresh():
         void
     {
+        this.clearSearchTimer();
+
+        this.selectedCategoryId =
+            null;
+
+        this.selectedSubCategoryId =
+            null;
+
         this.searchText =
             '';
 
+        this.selectedTab =
+            'all';
 
-        this.currentPage =
-            1;
+        this.buildCategoryFilterItems();
 
+        this.sortField =
+            '';
 
-        this.loadItems();
+        this.sortDirection =
+            'asc';
+
+        this.reload();
     }
 
 
 
     //===========================================================
-    // Update Pagination
-    //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-
-        this.pagedSpareParts =
-        [
-            ...this.filteredSpareParts.slice
-            (
-                start,
-
-                start + this.pageSize
-            )
-        ];
-    }
-
-
-
-    //===========================================================
-    // Page Change
+    // Pagination
     //===========================================================
 
     onPageChange
@@ -1296,15 +1564,9 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
 
-
-
-    //===========================================================
-    // Page Size Change
-    //===========================================================
 
     onPageSizeChange
     (
@@ -1316,12 +1578,7 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-
-        this.currentPage =
-            1;
-
-
-        this.updatePagination();
+        this.reload();
     }
 
 
@@ -1364,7 +1621,7 @@ implements OnInit, OnDestroy
             [
                 'view',
 
-                item.SparePartId
+                item.PublicId
             ],
 
             {
@@ -1392,7 +1649,7 @@ implements OnInit, OnDestroy
             [
                 'edit',
 
-                item.SparePartId
+                item.PublicId
             ],
 
             {
@@ -1466,7 +1723,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.sparePartsService.delete(
-                item.SparePartId
+                item.PublicId
             )
         )
             .subscribe
@@ -1828,4 +2085,4 @@ implements OnInit, OnDestroy
             false;
     }
 
-}
+}

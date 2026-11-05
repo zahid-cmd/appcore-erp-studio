@@ -92,7 +92,7 @@ export class DashboardsService
     getById 
     ( 
         id: 
-            number 
+            string 
     ): 
         Observable<Dashboards> 
     { 
@@ -157,13 +157,16 @@ export class DashboardsService
  
     update 
     ( 
+        publicId:
+            string,
+
         model: 
             UpdateDashboards 
     ): 
         Observable<void> 
     { 
         return this.http.put<void>( 
-            `${this.apiUrl}/${model.id}`, 
+            `${this.apiUrl}/${publicId}`, 
  
             model 
         ); 
@@ -178,7 +181,7 @@ export class DashboardsService
     delete 
     ( 
         id: 
-            number 
+            string 
     ): 
         Observable<void> 
     { 
@@ -226,7 +229,7 @@ export class DashboardsService
     getEntityHistory 
     ( 
         id: 
-            number 
+            string 
     ): 
         Observable<any[]> 
     { 

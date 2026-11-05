@@ -144,7 +144,7 @@ export const PAYMENT_VOUCHER_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<PvPrintData>
     {
@@ -154,7 +154,7 @@ export const PAYMENT_VOUCHER_PRINT:
                 firstValueFrom(
                     injector
                         .get(PaymentVoucherService)
-                        .getById(id)
+                        .getForPrint(id)
                 ),
                 firstValueFrom(
                     injector

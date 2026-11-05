@@ -323,7 +323,7 @@
                                 <strong>{{ importColumns.join(' · ') }}</strong>
                                 <span>
                                     @if (isBikes) { One row per bike; the bikes of a model become one line. }
-                                    @else { One row per product; rack by its code in this warehouse. }
+                                    @else { One row per product; rack by its code in this warehouse, then shelf and bin (bin 1 when empty). }
                                     Copy the rows from Excel and paste, or choose a CSV file.
                                 </span>
                             </div>
@@ -527,15 +527,13 @@
                                 </app-textbox>
                             }
 
+                            <!-- MRP is the sale price : its net (excl. VAT) -->
                             <app-textbox
                                 class="rc-num"
-                                label="Sale Price (incl. VAT)"
-                                inputMode="decimal"
-                                [placeholder]="pickMrp ? 'MRP ' + pickMrp : '0.00'"
-                                [disabled]="!pick"
-                                [value]="pickPrice"
-                                (valueChange)="pickPrice = '' + $event"
-                                (enterPressed)="onAddLine()">
+                                label="Net Sale (excl. VAT)"
+                                placeholder="—"
+                                [value]="pick && pickSale ? money(saleNet(pickSale, pick.VatType)) : ''"
+                                [readonly]="true">
                             </app-textbox>
 
                             @if (mrpBasis || vatIncluded)
@@ -552,9 +550,9 @@
                             {
                                 <app-textbox
                                     class="rc-num"
-                                    label="Net Sale (excl. VAT)"
+                                    label="Sales VAT in MRP"
                                     placeholder="—"
-                                    [value]="pick && pickSale ? money(saleNet(pickSale, pick.VatType)) : ''"
+                                    [value]="pick && pickSale ? money(pickSale - saleNet(pickSale, pick.VatType)) : ''"
                                     [readonly]="true">
                                 </app-textbox>
                             }
@@ -569,7 +567,7 @@
 
                             <app-textbox
                                 class="rc-num"
-                                label="Profit on Net Sale"
+                                [label]="profitOnSale ? 'Profit on Net Sale' : 'Profit on Cost'"
                                 placeholder="—"
                                 [value]="pickProfit === null ? '' : pct(pickProfit)"
                                 [readonly]="true">
@@ -580,6 +578,7 @@
                                 <app-search-dropdown
                                     label="Rack"
                                     placeholder="No rack"
+                                    badgeField="count"
                                     [items]="rackItems"
                                     [value]="pickRackId || null"
                                     [disabled]="!pick"
@@ -589,16 +588,26 @@
                                 <app-search-dropdown
                                     label="Shelf"
                                     placeholder="—"
+                                    badgeField="count"
                                     [items]="shelfItems"
                                     [value]="pickShelf || null"
                                     [disabled]="!pick || !pickRackId || shelfItems.length === 0"
-                                    (valueChange)="pickShelf = +$event || 0">
+                                    (valueChange)="onPickShelfChange($event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Bin"
+                                    [placeholder]="pickShelf && !binItems.length ? 'Full' : '—'"
+                                    [items]="binItems"
+                                    [value]="pickBin || null"
+                                    [disabled]="!pick || !pickShelf || binItems.length === 0"
+                                    (valueChange)="onPickBinChange($event)">
                                 </app-search-dropdown>
 
                                 <div class="rc-default">
                                     <span class="rc-default-label">Product Default</span>
                                     <app-checkbox
-                                        label="Save this place"
+                                        label="Save this location"
                                         appearance="switch"
                                         [value]="pickDefault"
                                         [disabled]="!pick || !pickRackId"
@@ -607,8 +616,9 @@
                                 </div>
                             }
 
+                            <!-- With a place : the notes share the row with the switch -->
                             <app-textbox
-                                class="pof-span-all"
+                                [class]="info.hasShelves ? 'pof-span-two' : 'pof-span-all'"
                                 label="Short Notes"
                                 placeholder="Condition, carton, count note …"
                                 [maxLength]="200"
@@ -628,11 +638,11 @@
                             </div>
                         }
 
-                        @if (pick && (pick.LastCost > 0 || pick.LastSalePrice > 0))
+                        @if (pick && (pick.LastCost > 0 || pick.LastMrp > 0))
                         {
                             <div class="pof-hint rc-hint">
                                 <i class="fas fa-clock-rotate-left"></i>
-                                <span>Last batch : cost {{ cost(pick.LastCost) }}@if (pick.LastMrp > 0) { · MRP {{ money(pick.LastMrp) }} }@if (pick.LastSalePrice > 0) { · sale price {{ money(pick.LastSalePrice) }} }</span>
+                                <span>Last batch : cost {{ cost(pick.LastCost) }}@if (pick.LastMrp > 0) { · MRP {{ money(pick.LastMrp) }} }</span>
                             </div>
                         }
 
@@ -715,11 +725,10 @@
                                         {
                                             <th class="pof-num" title="Unclaimed input VAT carried to the VAT Current Account">VAT</th>
                                         }
-                                        <th class="pof-num">MRP</th>
-                                        <th class="pof-num">Sale Price</th>
+                                        <th class="pof-num" title="MRP incl. VAT : the sale price">MRP</th>
                                         @if (info.hasShelves)
                                         {
-                                            <th>Rack · Shelf</th>
+                                            <th>Location</th>
                                         }
                                         <th class="pof-action">Action</th>
                                     </tr>
@@ -747,10 +756,9 @@
                                                     <td class="pof-num">{{ line.VatAmount ? money(line.VatAmount) : '—' }}</td>
                                                 }
                                                 <td class="pof-num">{{ line.Mrp ? money(line.Mrp) : '—' }}</td>
-                                                <td class="pof-num">{{ line.SalePrice ? money(line.SalePrice) : '—' }}</td>
                                                 @if (info.hasShelves)
                                                 {
-                                                    <td>{{ line.RackCode ? line.RackCode + (line.ShelfNumber ? ' · Shelf ' + line.ShelfNumber : '') : '—' }}</td>
+                                                    <td>{{ line.RackCode ? (line.BinCode || line.ShelfLabel || line.RackCode) : '—' }}</td>
                                                 }
                                                 <td class="pof-action">
                                                     @if (isBikes)
@@ -802,7 +810,6 @@
                                                     <td class="pof-num">{{ lineVat(line) ? money(lineVat(line)) : '—' }}</td>
                                                 }
                                                 <td class="pof-num" [class.os-missing]="!line.Mrp">{{ line.Mrp ? money(line.Mrp) : 'none' }}</td>
-                                                <td class="pof-num" [class.os-missing]="!line.SalePrice">{{ line.SalePrice ? money(line.SalePrice) : 'none' }}</td>
                                                 @if (info.hasShelves)
                                                 {
                                                     <td>
@@ -845,7 +852,7 @@
                                     {
                                         <tr>
                                             <td
-                                                [attr.colspan]="(info.hasShelves ? 9 : 8) + (vatIncluded ? 1 : 0)"
+                                                [attr.colspan]="(info.hasShelves ? 8 : 7) + (vatIncluded ? 1 : 0)"
                                                 class="pof-empty">
                                                 No {{ info.itemLower }} yet. Pick one on the left and press Add, or import the list from Excel. Double-click a line to edit it.
                                             </td>
@@ -893,8 +900,7 @@
                                         {
                                             <td class="pof-num">{{ money(totalVat) }}</td>
                                         }
-                                        <td></td>
-                                        <td class="pof-num os-dim-total" title="Quantity × sale price (incl. VAT)">{{ totalSale ? money(totalSale) : '' }}</td>
+                                        <td class="pof-num os-dim-total" title="Quantity × MRP (incl. VAT) : the sale value">{{ totalSale ? money(totalSale) : '' }}</td>
                                         <td [attr.colspan]="info.hasShelves ? 2 : 1"></td>
                                     </tr>
                                 </tbody>
@@ -960,7 +966,7 @@
                         <span>
                             Copy the rows from Excel (these columns, in this order; a header row is skipped) and paste below, or choose a CSV file.
                             @if (isBikes) { One row per bike : the bikes of a model become one line, its quantity the count of rows. }
-                            @if (vatIncluded) { Unit Cost includes VAT (its VAT goes to the VAT Current Account); } @else { Cost excludes VAT; } MRP and sale price include it (a blank sale price takes the MRP).
+                            @if (vatIncluded) { Unit Cost includes VAT (its VAT goes to the VAT Current Account); } @else { Cost excludes VAT; } MRP includes VAT and is the sale price. A heading row is read by its names, so an older file with a Sale Price column still imports (that column is ignored).
                             A product already on the list is replaced.
                         </span>
                     </div>

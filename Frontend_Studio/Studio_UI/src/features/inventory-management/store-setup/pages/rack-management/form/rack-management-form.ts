@@ -1,4 +1,27 @@
 //===============================================================
+// Rack Management Form
+//
+// Layout :
+//   1. Rack Information   : Warehouse · Zone · Rack Code (auto) ·
+//                           Rack Name (auto)
+//   2. Shelves & Bins     : Number of Shelves · Bins on every
+//                           shelf (quick fill) → per-shelf table
+//                           (SLF-A-01 · Bins · Prime) and a live
+//                           mini rack preview + total bins
+//   3. Assignment         : Category → Sub Categories (none = the
+//                           whole category; no category = General
+//                           rack) · Prime shelves From / To
+//   4. Location Details   : Rack Type · Status · Remarks
+//      & Status
+//
+// Warehouse → Zone → Rack → Shelf → Bin; the BIN is the location
+// (one item per bin). In edit / view the preview marks the bins
+// that hold an item (GET {id}/bins); the server refuses removing
+// a shelf / bin that holds one, the form warns first.
+//
+// No toasts : errors show on the toolbar; after a save the page
+// goes back to the list.
+//===============================================================
 // Imports
 //===============================================================
 
@@ -27,32 +50,10 @@ from '@angular/router';
 
 import
 {
-    FormsModule
-}
-from '@angular/forms';
-
-import
-{
-    HttpErrorResponse
-}
-from '@angular/common/http';
-
-import
-{
-    Observable,
-    defer,
-    timer,
-    throwError
+    Observable
 }
 from 'rxjs';
 
-import
-{
-    catchError,
-    delayWhen,
-    switchMap
-}
-from 'rxjs/operators';
 
 //===============================================================
 // Shared Components
@@ -101,6 +102,7 @@ import
 }
 from '../../../../../../shared/components/layout/form-section/form-section';
 
+
 //===============================================================
 // Form Controls
 //===============================================================
@@ -129,21 +131,10 @@ import
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
+
 //===============================================================
 // Utilities
 //===============================================================
-
-import
-{
-    ToastComponent
-}
-from '../../../../../../shared/components/utilities/toast/toast';
-
-import
-{
-    ToastService
-}
-from '../../../../../../shared/components/utilities/toast/toast.service';
 
 import
 {
@@ -169,6 +160,26 @@ import
 }
 from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
 
+import
+{
+    ProgressRunner
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-runner';
+
+import
+{
+    OrbitLoaderComponent
+}
+from '../../../../../../shared/components/utilities/orbit-loader/orbit-loader';
+
+import
+{
+    shelfLabel,
+    binCode
+}
+from '../../../../../../shared/inventory/storage-labels';
+
+
 //===============================================================
 // Models & Services
 //===============================================================
@@ -179,9 +190,13 @@ import
     CreateRackManagement,
     UpdateRackManagement,
     RackManagementDefaults,
+    RackCategoryOption,
+    RackSubCategoryOption,
+    RackZone,
+    RackMap,
     RACK_TYPES,
     RACK_MAX_SHELVES,
-    shelfLabel
+    RACK_MAX_BINS_PER_SHELF
 }
 from '../../../../../settings/product-settings/models/rack-management.model';
 
@@ -204,6 +219,89 @@ import
 }
 from '../../../../../settings/general-settings/services/business-configuration.service';
 
+
+//===============================================================
+// View rows
+//===============================================================
+
+// One row of the per-shelf table
+interface ShelfRow
+{
+    ShelfNumber:number;
+
+    // SLF-A-01
+    Label:string;
+
+    // As typed
+    BinText:string;
+
+    BinCount:number;
+
+    IsPrime:boolean;
+
+    // Bins holding an item (edit / view)
+    Used:number;
+
+    // Highest bin that holds an item (0 = none)
+    MinBins:number;
+
+    // "Bin 05 holds SP-… - Brake Pad" when BinCount < MinBins
+    Warning:string;
+}
+
+
+// One bin cell of the mini rack preview
+interface PreviewBin
+{
+    BinNumber:number;
+
+    Occupied:boolean;
+
+    // Holds an item but would be removed by the new count
+    Lost:boolean;
+
+    Title:string;
+}
+
+
+// One shelf of the mini rack preview
+interface PreviewShelf
+{
+    ShelfNumber:number;
+
+    Short:string;
+
+    IsPrime:boolean;
+
+    // Shelf removed by the new count but holding an item
+    Lost:boolean;
+
+    Bins:PreviewBin[];
+}
+
+
+// Sub category choice (thin multi-select)
+interface SubCategoryChip
+{
+    Id:number;
+
+    Code:string;
+
+    Name:string;
+
+    On:boolean;
+}
+
+
+// Holder of one bin (edit / view)
+interface HeldBin
+{
+    BinNumber:number;
+
+    Text:string;
+}
+
+
 //===============================================================
 // Component
 //===============================================================
@@ -217,7 +315,6 @@ from '../../../../../settings/general-settings/services/business-configuration.s
     imports:
     [
         CommonModule,
-        FormsModule,
 
         //=======================================================
         // Layout
@@ -244,9 +341,9 @@ from '../../../../../settings/general-settings/services/business-configuration.s
         // Utilities
         //=======================================================
 
-        ToastComponent,
         ConfirmDialogComponent,
-        ProgressDialogComponent
+        ProgressDialogComponent,
+        OrbitLoaderComponent
     ],
 
     templateUrl:'./rack-management-form.html',
@@ -256,14 +353,6 @@ from '../../../../../settings/general-settings/services/business-configuration.s
         './rack-management-form.css'
     ]
 })
-
-//===============================================================
-// Rack Management Form
-//
-// One rack in one warehouse with a number of shelves. Rack Code
-// R-nnn is numbered per warehouse by the server (preview here).
-// Warehouse is locked after saving.
-//===============================================================
 
 export class RackManagementForm
 implements OnInit, OnDestroy
@@ -281,72 +370,25 @@ implements OnInit, OnDestroy
     private readonly rackManagementService =
         inject(RackManagementService);
 
-
     private readonly warehousesService =
         inject(WarehousesService);
-
 
     // Business lines each warehouse's branch runs today
     private readonly businessConfigurationService =
         inject(BusinessConfigurationService);
 
-
-    // WarehouseId → "Spare Parts, Accessories"
-    private warehouseLines:
-        Map<number, string> =
-        new Map<number, string>();
-
     private readonly confirmDialog =
         inject(ConfirmDialogService);
-
-    private readonly toast =
-        inject(ToastService);
-
-    private readonly progressDialog =
-        inject(ProgressDialogService);
 
     private readonly cdr =
         inject(ChangeDetectorRef);
 
-    //===========================================================
-    // Progress Configuration
-    //===========================================================
-
-    private readonly minimumSaveDurationMs:
-        number =
-        5000;
-
-    private readonly progressCeiling:
-        number =
-        90;
-
-    private readonly progressEaseFactor:
-        number =
-        0.05;
-
-    private readonly progressIntervalMs:
-        number =
-        100;
-
-    private readonly progressCompleteHoldMs:
-        number =
-        600;
-
-    //===========================================================
-    // Progress State
-    //===========================================================
-
-    private progressTimer:
-        ReturnType<typeof setInterval> | null =
-        null;
-
-    private progressValue:
-        number =
-        0;
-
-    isSaving:
-        boolean =
-        false;
+    // Progress dialog around Save / Update
+    readonly progress =
+        new ProgressRunner(
+            inject(ProgressDialogService),
+            () => this.cdr.detectChanges()
+        );
 
     //===========================================================
     // Mode
@@ -356,50 +398,34 @@ implements OnInit, OnDestroy
         'add' | 'edit' | 'view' =
         'add';
 
+    // uuid from the address bar (the record is loaded by it)
+    routePublicId:
+        string =
+        '';
+
     entityId:
         number =
         0;
+
+    // A saved rack is loading (orbit loader)
+    loading:
+        boolean =
+        false;
+
+    // Error shown on the toolbar (no toasts)
+    formError:
+        string =
+        '';
 
     //===========================================================
     // Page Header
     //===========================================================
 
-    pageTitle:
-        string =
-        'Rack Management';
-
-    entityName:
+    readonly entityName:
         string =
         'Rack';
 
-    //===========================================================
-    // Selected Tab
-    //===========================================================
-
-    selectedTab:
-        string =
-        'general';
-
-    //===========================================================
-    // Tabs
-    //===========================================================
-
-    get tabs():
-        ControlTab[]
-    {
-        return [
-            {
-                id:'general',
-                label:this.tabTitle
-            }
-        ];
-    }
-
-    //===========================================================
-    // Tab Title
-    //===========================================================
-
-    get tabTitle():
+    get pageTitle():
         string
     {
         switch
@@ -407,109 +433,188 @@ implements OnInit, OnDestroy
             this.mode
         )
         {
-            case 'add':
-                return `Add ${this.entityName}`;
-
             case 'edit':
-                return `Update ${this.entityName}`;
+                return 'Update Rack';
 
             case 'view':
-                return `View ${this.entityName}`;
+                return 'View Rack';
 
             default:
-                return this.entityName;
+                return 'Add Rack';
         }
     }
+
+    selectedTab:
+        string =
+        'general';
+
+    tabs:
+        ControlTab[] =
+    [
+        {
+            id:'general',
+            label:'Rack'
+        }
+    ];
 
     //===========================================================
     // Lookups
     //
     // All active warehouses of every branch are offered for a new
-    // rack. In edit / view the rack's own (maybe inactive)
-    // warehouse is kept so it still shows. The branch is taken
-    // from the warehouse by the server.
+    // rack; in edit / view the rack's own (maybe inactive)
+    // warehouse, zone and category are kept so they still show.
     //===========================================================
 
     warehouseItems:
-        any[]
-        =
+        any[] =
         [];
 
-    rackTypeItems:
-        any[]
-        =
-        [
-            {
-                label:'Not specified',
-                value:''
-            },
+    zoneItems:
+        any[] =
+        [];
 
-            ...RACK_TYPES.map(
-                type =>
-                ({
-                    label:type,
-                    value:type
-                })
-            )
-        ];
+    categoryItems:
+        any[] =
+        [];
+
+    primeFromItems:
+        any[] =
+        [];
+
+    primeToItems:
+        any[] =
+        [];
+
+    readonly rackTypeItems:
+        any[] =
+    [
+        {
+            label:'Not specified',
+            value:''
+        },
+
+        ...RACK_TYPES.map(
+            type =>
+            ({
+                label:type,
+                value:type
+            })
+        )
+    ];
+
+    readonly statusItems:
+        any[] =
+    [
+        {
+            label:'Active',
+            value:true
+        },
+        {
+            label:'Inactive',
+            value:false
+        }
+    ];
 
     private warehouses:
-        any[]
-        =
+        any[] =
         [];
 
-    // "<Warehouse Code>-R-001" preview
+    // WarehouseId → "Spare Parts, Accessories"
+    private warehouseLines:
+        Map<number, string> =
+        new Map<number, string>();
+
+    private zones:
+        RackZone[] =
+        [];
+
+    private categories:
+        RackCategoryOption[] =
+        [];
+
+    // The warehouse has an active zone : a zone is required
+    zoneRequired:
+        boolean =
+        false;
+
+    zonesLoaded:
+        boolean =
+        false;
+
+    //===========================================================
+    // Codes (preview in add mode)
+    //===========================================================
+
+    // "<Warehouse Code>-R-001"
     fullRackCode:
-        string
-        =
+        string =
         '';
 
-    // Shelf count as typed, and the SLF-A-01 … preview
-    shelfCountText:
-        string
-        =
-        '1';
+    //===========================================================
+    // Shelves & Bins
+    //===========================================================
 
-    shelfPreview:
-        string[]
-        =
-        [];
-
-    readonly maxShelves:
-        number
-        =
+    maxShelves:
+        number =
         RACK_MAX_SHELVES;
 
+    maxBins:
+        number =
+        RACK_MAX_BINS_PER_SHELF;
+
+    shelfCountText:
+        string =
+        '1';
+
+    // Quick fill : bins on every shelf (also for new shelves)
+    binsEveryText:
+        string =
+        '1';
+
+    shelfRows:
+        ShelfRow[] =
+        [];
+
+    previewShelves:
+        PreviewShelf[] =
+        [];
+
+    totalBins:
+        number =
+        0;
+
+    usedBins:
+        number =
+        0;
+
+    primeShelfCount:
+        number =
+        0;
+
+    // Saved occupancy (edit / view) : shelf → held bins
+    private held:
+        Map<number, HeldBin[]> =
+        new Map<number, HeldBin[]>();
+
     //===========================================================
-    // Status Items
+    // Assignment
     //===========================================================
 
-    statusItems:
-        any[]
-        =
-        [
-            {
-                label:'Active',
-                value:true
-            },
-            {
-                label:'Inactive',
-                value:false
-            }
-        ];
+    subCategoryChips:
+        SubCategoryChip[] =
+        [];
+
+    selectedSubCount:
+        number =
+        0;
 
     //===========================================================
     // Entity
     //===========================================================
 
     entity:
-        RackManagement
-        =
+        RackManagement =
         this.createEmptyEntity();
-
-    //===========================================================
-    // Form State
-    //===========================================================
 
     private originalEntity:
         string =
@@ -531,22 +636,9 @@ implements OnInit, OnDestroy
         this.initializeMode();
     }
 
-    //===========================================================
-    // Destroy
-    //===========================================================
-
     ngOnDestroy():
         void
     {
-        this.clearProgressTimer();
-
-        if
-        (
-            this.isSaving
-        )
-        {
-            this.progressDialog.close();
-        }
     }
 
     //===========================================================
@@ -560,11 +652,23 @@ implements OnInit, OnDestroy
             RackManagementId:0,
             BranchId:0,
             WarehouseId:0,
+            RackZoneId:null,
             RackCode:'',
             RackName:'',
             ShelfCount:1,
+            Shelves:
+            [
+                {
+                    ShelfNumber:1,
+                    BinCount:1
+                }
+            ],
             ZoneAisle:'',
             RackType:'',
+            ProductCategoryId:null,
+            SubCategoryIds:[],
+            PrimeShelfFrom:null,
+            PrimeShelfTo:null,
             Remarks:'',
             IsActive:true
         };
@@ -580,49 +684,30 @@ implements OnInit, OnDestroy
         const url =
             this.router.url.toLowerCase();
 
-        //=======================================================
-        // Resolve Mode
-        //=======================================================
-
-        if
-        (
+        this.mode =
             url.includes('/view/')
-        )
-        {
-            this.mode =
-                'view';
-        }
-        else if
-        (
-            url.includes('/edit/')
-        )
-        {
-            this.mode =
-                'edit';
-        }
-        else
-        {
-            this.mode =
-                'add';
-        }
+                ? 'view'
+                : url.includes('/edit/')
+                    ? 'edit'
+                    : 'add';
 
-        //=======================================================
-        // Resolve Entity Id
-        //=======================================================
+        this.tabs =
+        [
+            {
+                id:'general',
+                label:this.pageTitle
+            }
+        ];
 
         const id =
             this.resolveEntityId();
 
-        //=======================================================
-        // Existing Entity
-        //=======================================================
-
         if
         (
-            id > 0
+            id !== ''
         )
         {
-            this.entityId =
+            this.routePublicId =
                 id;
 
             this.loadEntity();
@@ -630,19 +715,11 @@ implements OnInit, OnDestroy
             return;
         }
 
-        //=======================================================
-        // New Entity
-        //=======================================================
-
         this.initializeEntity();
     }
 
-    //===========================================================
-    // Resolve Entity Id
-    //===========================================================
-
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -654,13 +731,12 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                currentRoute.snapshot.paramMap.get('id')
+                ?? '';
 
             if
             (
-                id > 0
+                id !== ''
             )
             {
                 return id;
@@ -670,11 +746,11 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     //===========================================================
-    // Initialize Entity
+    // Initialize Entity (add)
     //===========================================================
 
     private initializeEntity():
@@ -686,42 +762,50 @@ implements OnInit, OnDestroy
         this.fullRackCode =
             '';
 
+        this.formError =
+            '';
+
+        this.held =
+            new Map<number, HeldBin[]>();
+
+        this.binsEveryText =
+            '1';
+
+        this.zones =
+            [];
+
+        this.zoneRequired =
+            false;
+
+        this.zonesLoaded =
+            false;
+
+        this.buildZoneItems();
+
         this.syncShelves();
 
         this.buildWarehouseItems();
+
+        this.buildSubCategoryChips();
+
+        // Categories do not depend on the warehouse
+        this.loadDefaults();
 
         this.setInitialFormState();
     }
 
     //===========================================================
-    // Load Defaults (next rack code for the chosen warehouse)
+    // Load Defaults
+    //
+    // Add  : next code / name, zones and categories
+    // Edit : zones and categories of the rack's warehouse
     //===========================================================
 
     private loadDefaults():
         void
     {
-        if
-        (
-            !this.isAddMode
-        )
-        {
-            return;
-        }
-
         const warehouseId =
             Number(this.entity.WarehouseId ?? 0);
-
-        if
-        (
-            !(warehouseId > 0)
-        )
-        {
-            this.applyDefaults(
-                null
-            );
-
-            return;
-        }
 
         this.rackManagementService
             .getDefaults(
@@ -739,9 +823,7 @@ implements OnInit, OnDestroy
                     // Ignore a late answer for an older choice
                     if
                     (
-                        !this.isAddMode
-                        ||
-                        Number(this.entity.WarehouseId) !== warehouseId
+                        Number(this.entity.WarehouseId ?? 0) !== warehouseId
                     )
                     {
                         return;
@@ -764,17 +846,13 @@ implements OnInit, OnDestroy
                         error
                     );
 
-                    this.applyDefaults(
-                        null
-                    );
-
-                    this.toast.error(
-                        'Error',
-                        this.extractErrorMessage(
+                    this.formError =
+                        this.errorText(
                             error,
-                            'Failed to generate the Rack Code.'
-                        )
-                    );
+                            'The rack defaults (code, zones, categories) could not be loaded.'
+                        );
+
+                    this.cdr.detectChanges();
                 }
             });
     }
@@ -782,29 +860,83 @@ implements OnInit, OnDestroy
     private applyDefaults
     (
         defaults:
-            RackManagementDefaults | null
+            RackManagementDefaults
     ):
         void
     {
-        this.entity.RackCode =
-            defaults?.Code ?? '';
+        this.maxShelves =
+            defaults.MaxShelves || RACK_MAX_SHELVES;
 
-        this.fullRackCode =
-            defaults?.FullCode ?? '';
+        this.maxBins =
+            defaults.MaxBinsPerShelf || RACK_MAX_BINS_PER_SHELF;
 
-        // "Rack A", "Rack B" … (the server assigns it on save)
-        this.entity.RackName =
-            defaults?.Name ?? '';
+        this.categories =
+            defaults.Categories ?? [];
 
-        this.buildShelfPreview();
+        this.zones =
+            defaults.Zones ?? [];
 
-        this.checkForChanges();
+        this.zoneRequired =
+            Boolean(defaults.ZoneRequired);
+
+        this.zonesLoaded =
+            Number(this.entity.WarehouseId) > 0;
+
+        if
+        (
+            this.isAddMode
+        )
+        {
+            this.entity.RackCode =
+                defaults.Code ?? '';
+
+            this.fullRackCode =
+                defaults.FullCode ?? '';
+
+            // "Rack A", "Rack B" … (the server assigns it on save)
+            this.entity.RackName =
+                defaults.Name ?? '';
+
+            // One zone only : take it
+            if
+            (
+                !this.entity.RackZoneId
+                &&
+                this.zones.length === 1
+            )
+            {
+                this.entity.RackZoneId =
+                    this.zones[0].RackZoneId;
+            }
+        }
+
+        this.buildZoneItems();
+
+        this.buildCategoryItems();
+
+        this.buildSubCategoryChips();
+
+        // Labels follow the rack name
+        this.rebuildShelves();
+
+        if
+        (
+            this.isAddMode
+        )
+        {
+            this.checkForChanges();
+        }
+        else
+        {
+            // Edit / view : the lookups don't count as a change
+            this.setInitialFormState();
+        }
 
         this.cdr.detectChanges();
     }
 
     //===========================================================
-    // Load Lookups (warehouses)
+    // Load Lookups (warehouses, business lines)
     //===========================================================
 
     private loadLookups():
@@ -849,7 +981,6 @@ implements OnInit, OnDestroy
                 }
             });
 
-
         this.warehousesService
             .getAll()
             .subscribe
@@ -887,16 +1018,16 @@ implements OnInit, OnDestroy
                         error
                     );
 
-                    this.toast.error(
-                        'Error',
-                        'Failed to load warehouses.'
-                    );
+                    this.formError =
+                        'Failed to load warehouses.';
+
+                    this.cdr.detectChanges();
                 }
             });
     }
 
     //===========================================================
-    // Build Dropdown Items
+    // Dropdown Items
     //===========================================================
 
     private buildWarehouseItems():
@@ -927,16 +1058,161 @@ implements OnInit, OnDestroy
                     })
                 );
 
-        this.updateFullRackCode();
-
         this.cdr.detectChanges();
     }
 
+    // Zones of the warehouse (priority order); the rack's own
+    // (maybe inactive) zone always stays
+    private buildZoneItems():
+        void
+    {
+        const items =
+            this.zones
+                .slice()
+                .sort(
+                    (a, b) =>
+                        (a.Priority - b.Priority)
+                        ||
+                        a.ZoneCode.localeCompare(b.ZoneCode)
+                )
+                .map(
+                    zone =>
+                    ({
+                        label:
+                            `${zone.ZoneCode} - ${zone.ZoneName} (Priority ${zone.Priority})`,
+
+                        value:
+                            zone.RackZoneId
+                    })
+                );
+
+        const ownId =
+            Number(this.entity.RackZoneId ?? 0);
+
+        if
+        (
+            ownId > 0
+            &&
+            !items.some(
+                item =>
+                    item.value === ownId
+            )
+        )
+        {
+            items.unshift(
+                {
+                    label:
+                        this.entity.ZoneCode
+                            ? `${this.entity.ZoneCode} - ${this.entity.ZoneName}`
+                            : `Zone #${ownId}`,
+
+                    value:
+                        ownId
+                }
+            );
+        }
+
+        this.zoneItems =
+            items;
+    }
+
+    // General (no category) + the assignable categories; the
+    // rack's own (maybe inactive) category always stays
+    private buildCategoryItems():
+        void
+    {
+        const ownId =
+            Number(this.entity.ProductCategoryId ?? 0);
+
+        if
+        (
+            ownId > 0
+            &&
+            !this.categories.some(
+                item =>
+                    item.ProductCategoryId === ownId
+            )
+        )
+        {
+            this.categories =
+            [
+                {
+                    ProductCategoryId:ownId,
+                    CategoryCode:this.entity.CategoryCode ?? '',
+                    CategoryName:this.entity.CategoryName ?? `Category #${ownId}`,
+                    CategoryType:this.entity.CategoryType ?? '',
+                    BrandName:'',
+                    SubCategories:this.entity.SubCategories ?? []
+                },
+
+                ...this.categories
+            ];
+        }
+
+        this.categoryItems =
+        [
+            {
+                label:'General (any product)',
+                value:0
+            },
+
+            ...this.categories.map(
+                item =>
+                ({
+                    label:
+                        item.CategoryType
+                            ? `${item.CategoryCode} - ${item.CategoryName} (${item.CategoryType})`
+                            : `${item.CategoryCode} - ${item.CategoryName}`,
+
+                    value:
+                        item.ProductCategoryId
+                })
+            )
+        ];
+    }
+
+    private buildSubCategoryChips():
+        void
+    {
+        const category =
+            this.categories.find(
+                item =>
+                    item.ProductCategoryId === Number(this.entity.ProductCategoryId ?? 0)
+            );
+
+        const chosen =
+            new Set<number>(
+                this.entity.SubCategoryIds ?? []
+            );
+
+        const subs:
+            RackSubCategoryOption[] =
+            category?.SubCategories ?? [];
+
+        this.subCategoryChips =
+            subs.map(
+                sub =>
+                ({
+                    Id:sub.ProductSubCategoryId,
+                    Code:sub.SubCategoryCode,
+                    Name:sub.SubCategoryName,
+                    On:chosen.has(sub.ProductSubCategoryId)
+                })
+            );
+
+        this.selectedSubCount =
+            this.subCategoryChips
+                .filter(
+                    chip =>
+                        chip.On
+                )
+                .length;
+    }
+
     //===========================================================
-    // Warehouse Change (add mode only; locked afterwards)
+    // Value Unwrap (a dropdown may emit the { label, value } item)
     //===========================================================
 
-    // A dropdown may emit the value or the whole { label, value } item
     private unwrapValue
     (
         value:
@@ -953,6 +1229,10 @@ implements OnInit, OnDestroy
                 : value;
     }
 
+    //===========================================================
+    // Section 1 : Warehouse / Zone
+    //===========================================================
+
     onWarehouseChange
     (
         value?:
@@ -962,60 +1242,495 @@ implements OnInit, OnDestroy
     {
         if
         (
-            value !== undefined
+            !this.isAddMode
         )
         {
-            this.entity.WarehouseId =
-                Number(this.unwrapValue(value) ?? 0);
+            return;
         }
+
+        const warehouseId =
+            Number(this.unwrapValue(value) ?? 0);
+
+        // Same warehouse (a dropdown may emit it again) : nothing to do
+        if
+        (
+            warehouseId === Number(this.entity.WarehouseId ?? 0)
+        )
+        {
+            return;
+        }
+
+        this.entity.WarehouseId =
+            warehouseId;
+
+        // A new warehouse clears the code, name and zone
+        this.entity.RackCode =
+            '';
+
+        this.entity.RackName =
+            '';
+
+        this.entity.RackZoneId =
+            null;
+
+        this.fullRackCode =
+            '';
+
+        this.zones =
+            [];
+
+        this.zonesLoaded =
+            false;
+
+        this.zoneRequired =
+            false;
+
+        this.buildZoneItems();
+
+        this.rebuildShelves();
 
         this.loadDefaults();
 
         this.onValueChange();
     }
 
-    // Edit / view : "<Warehouse Code>-<Rack Code>"
-    private updateFullRackCode():
+    onZoneChange
+    (
+        value:
+            any
+    ):
         void
     {
-        if
-        (
-            this.isAddMode
-            ||
-            !this.entity.RackCode
-        )
-        {
-            return;
-        }
+        const id =
+            Number(this.unwrapValue(value) ?? 0);
 
-        const warehouse =
-            this.warehouses.find(
-                item =>
-                    Number(item?.WarehouseId)
-                    ===
-                    Number(this.entity.WarehouseId)
-            );
+        this.entity.RackZoneId =
+            id > 0
+                ? id
+                : null;
 
-        this.fullRackCode =
-            warehouse?.WarehouseCode
-                ? `${warehouse.WarehouseCode}-${this.entity.RackCode}`
-                : this.entity.RackCode;
+        this.onValueChange();
     }
 
     //===========================================================
-    // Shelves (whole number 1 … max) and the SLF-A-01 … preview
+    // Section 2 : Shelves & Bins
     //===========================================================
 
+    private toDigits
+    (
+        value:
+            string | number | null | undefined,
+        length:
+            number
+    ):
+        string
+    {
+        return String(value ?? '')
+            .replace(/[^0-9]/g, '')
+            .replace(/^0+(?=\d)/, '')
+            .slice(0, length);
+    }
+
+    private quickFillCount():
+        number
+    {
+        const value =
+            Number(this.binsEveryText || 0);
+
+        return value >= 1
+            ? Math.min(value, this.maxBins)
+            : 1;
+    }
+
+    // Texts from the entity (load / clear)
     private syncShelves():
         void
     {
         this.shelfCountText =
             String(this.entity.ShelfCount ?? 1);
 
-        this.buildShelfPreview();
+        const counts =
+            (this.entity.Shelves ?? [])
+                .map(
+                    shelf =>
+                        shelf.BinCount
+                );
+
+        // Quick fill shows the common count when every shelf has it
+        if
+        (
+            counts.length > 0
+            &&
+            counts.every(
+                count =>
+                    count === counts[0]
+            )
+        )
+        {
+            this.binsEveryText =
+                String(counts[0]);
+        }
+
+        this.shelfRows =
+            [];
+
+        this.rebuildShelves();
     }
 
-    private buildShelfPreview():
+    onShelfCountChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        const digits =
+            this.toDigits(
+                value,
+                2
+            );
+
+        this.shelfCountText =
+            digits;
+
+        this.entity.ShelfCount =
+            digits
+                ? Number(digits)
+                : 0;
+
+        this.rebuildShelves();
+
+        this.onValueChange();
+    }
+
+    onBinsEveryChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        this.binsEveryText =
+            this.toDigits(
+                value,
+                2
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    // Quick fill : every shelf gets the same number of bins
+    applyQuickFill():
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+        const count =
+            this.quickFillCount();
+
+        this.binsEveryText =
+            String(count);
+
+        this.shelfRows =
+            this.shelfRows.map(
+                row =>
+                ({
+                    ...row,
+                    BinText:String(count),
+                    BinCount:count
+                })
+            );
+
+        this.rebuildShelves();
+
+        this.onValueChange();
+    }
+
+    onShelfBinsChange
+    (
+        shelfNumber:
+            number,
+        value:
+            string
+    ):
+        void
+    {
+        const digits =
+            this.toDigits(
+                value,
+                2
+            );
+
+        this.shelfRows =
+            this.shelfRows.map(
+                row =>
+                    row.ShelfNumber === shelfNumber
+                        ? {
+                            ...row,
+                            BinText:digits,
+                            BinCount:digits ? Number(digits) : 0
+                        }
+                        : row
+            );
+
+        this.rebuildShelves();
+
+        this.onValueChange();
+    }
+
+    // Steppers next to a shelf's bin count
+    stepShelfBins
+    (
+        shelfNumber:
+            number,
+        delta:
+            number
+    ):
+        void
+    {
+        const row =
+            this.shelfRows.find(
+                item =>
+                    item.ShelfNumber === shelfNumber
+            );
+
+        if
+        (
+            !row
+            ||
+            this.isViewMode
+            ||
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+        const next =
+            Math.min(
+                this.maxBins,
+                Math.max(
+                    1,
+                    (row.BinCount || 0) + delta
+                )
+            );
+
+        this.onShelfBinsChange(
+            shelfNumber,
+            String(next)
+        );
+    }
+
+    //-----------------------------------------------------------
+    // Prime toggle in the table : the prime shelves are one range
+    // (From … To), the toggle grows / shrinks it
+    //-----------------------------------------------------------
+
+    togglePrime
+    (
+        shelfNumber:
+            number
+    ):
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+        let from =
+            Number(this.entity.PrimeShelfFrom ?? 0);
+
+        let to =
+            Number(this.entity.PrimeShelfTo ?? 0);
+
+        const inRange =
+            from > 0
+            &&
+            to >= from
+            &&
+            shelfNumber >= from
+            &&
+            shelfNumber <= to;
+
+        if
+        (
+            !(from > 0 && to >= from)
+        )
+        {
+            from = shelfNumber;
+            to = shelfNumber;
+        }
+        else if
+        (
+            !inRange
+        )
+        {
+            // Grow the range up to this shelf
+            from = Math.min(from, shelfNumber);
+            to = Math.max(to, shelfNumber);
+        }
+        else if
+        (
+            shelfNumber === from
+        )
+        {
+            from++;
+        }
+        else if
+        (
+            shelfNumber === to
+        )
+        {
+            to--;
+        }
+        else
+        {
+            // Inside : the range ends before this shelf
+            to = shelfNumber - 1;
+        }
+
+        this.setPrimeRange(
+            from,
+            to
+        );
+    }
+
+    private setPrimeRange
+    (
+        from:
+            number,
+        to:
+            number
+    ):
+        void
+    {
+        const valid =
+            from >= 1
+            &&
+            to >= from;
+
+        this.entity.PrimeShelfFrom =
+            valid
+                ? from
+                : null;
+
+        this.entity.PrimeShelfTo =
+            valid
+                ? to
+                : null;
+
+        this.rebuildShelves();
+
+        this.onValueChange();
+    }
+
+    onPrimeFromChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        const from =
+            Number(this.unwrapValue(value) ?? 0);
+
+        if
+        (
+            !(from > 0)
+        )
+        {
+            this.setPrimeRange(
+                0,
+                0
+            );
+
+            return;
+        }
+
+        const to =
+            Number(this.entity.PrimeShelfTo ?? 0);
+
+        this.setPrimeRange(
+            from,
+            to >= from
+                ? to
+                : from
+        );
+    }
+
+    onPrimeToChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        const to =
+            Number(this.unwrapValue(value) ?? 0);
+
+        if
+        (
+            !(to > 0)
+        )
+        {
+            this.setPrimeRange(
+                0,
+                0
+            );
+
+            return;
+        }
+
+        const from =
+            Number(this.entity.PrimeShelfFrom ?? 0);
+
+        this.setPrimeRange(
+            from > 0 && from <= to
+                ? from
+                : to,
+            to
+        );
+    }
+
+    clearPrime():
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+        this.setPrimeRange(
+            0,
+            0
+        );
+    }
+
+    //-----------------------------------------------------------
+    // Rebuild the table, the preview, the totals and the prime
+    // dropdowns from the shelf count, the rows and the range
+    //-----------------------------------------------------------
+
+    private rebuildShelves():
         void
     {
         const count =
@@ -1027,95 +1742,663 @@ implements OnInit, OnDestroy
                 this.maxShelves
             );
 
-        this.shelfPreview =
-            Array.from(
-                { length: count },
-                (_, index) =>
-                    shelfLabel(
-                        this.entity.RackName,
-                        index + 1
-                    )
+        const fill =
+            this.quickFillCount();
+
+        // Saved / typed counts by shelf (rows first, then entity)
+        const known =
+            new Map<number, { text: string; count: number }>();
+
+        for
+        (
+            const shelf
+            of this.entity.Shelves ?? []
+        )
+        {
+            known.set(
+                shelf.ShelfNumber,
+                {
+                    text:String(shelf.BinCount),
+                    count:shelf.BinCount
+                }
             );
+        }
+
+        for
+        (
+            const row
+            of this.shelfRows
+        )
+        {
+            known.set(
+                row.ShelfNumber,
+                {
+                    text:row.BinText,
+                    count:row.BinCount
+                }
+            );
+        }
+
+        // A range that no longer fits is trimmed
+        let from =
+            Number(this.entity.PrimeShelfFrom ?? 0);
+
+        let to =
+            Number(this.entity.PrimeShelfTo ?? 0);
+
+        if
+        (
+            to > count
+        )
+        {
+            to = count;
+        }
+
+        if
+        (
+            !(from >= 1 && to >= from)
+        )
+        {
+            from = 0;
+            to = 0;
+        }
+
+        if
+        (
+            count > 0
+        )
+        {
+            this.entity.PrimeShelfFrom =
+                from > 0
+                    ? from
+                    : null;
+
+            this.entity.PrimeShelfTo =
+                to > 0
+                    ? to
+                    : null;
+        }
+
+        const rackName =
+            this.entity.RackName;
+
+        this.shelfRows =
+            Array.from(
+                { length:count },
+                (_, index) =>
+                {
+                    const shelfNumber =
+                        index + 1;
+
+                    const saved =
+                        known.get(shelfNumber);
+
+                    const binCount =
+                        saved
+                            ? saved.count
+                            : fill;
+
+                    const heldBins =
+                        this.held.get(shelfNumber) ?? [];
+
+                    const minBins =
+                        heldBins.reduce(
+                            (max, bin) =>
+                                Math.max(max, bin.BinNumber),
+                            0
+                        );
+
+                    const lost =
+                        heldBins
+                            .filter(
+                                bin =>
+                                    bin.BinNumber > binCount
+                            );
+
+                    return {
+                        ShelfNumber:
+                            shelfNumber,
+
+                        Label:
+                            shelfLabel(rackName, shelfNumber) || `Shelf ${shelfNumber}`,
+
+                        BinText:
+                            saved
+                                ? saved.text
+                                : String(fill),
+
+                        BinCount:
+                            binCount,
+
+                        IsPrime:
+                            from > 0
+                            &&
+                            shelfNumber >= from
+                            &&
+                            shelfNumber <= to,
+
+                        Used:
+                            heldBins.length,
+
+                        MinBins:
+                            minBins,
+
+                        Warning:
+                            lost.length > 0
+                                ? `${lost[0].Text} would lose its bin (needs at least ${minBins} bins).`
+                                : ''
+                    };
+                }
+            );
+
+        // Entity follows the rows (payload + change tracking)
+        this.entity.Shelves =
+            this.shelfRows.map(
+                row =>
+                ({
+                    ShelfNumber:row.ShelfNumber,
+                    BinCount:row.BinCount
+                })
+            );
+
+        this.buildPreview(
+            count
+        );
+
+        this.buildPrimeItems(
+            count
+        );
     }
 
-    onShelfCountChange
+    private buildPreview
     (
-        value:
-            string | number
+        count:
+            number
     ):
         void
     {
-        const digits =
-            String(value ?? '')
-                .replace(/[^0-9]/g, '')
-                .replace(/^0+(?=\d)/, '')
-                .slice(0, 2);
+        const rackName =
+            this.entity.RackName;
 
-        this.shelfCountText =
-            digits;
+        const shelves:
+            PreviewShelf[] =
+            this.shelfRows.map(
+                row =>
+                {
+                    const heldBins =
+                        new Map<number, string>(
+                            (this.held.get(row.ShelfNumber) ?? [])
+                                .map(
+                                    bin =>
+                                        [bin.BinNumber, bin.Text] as [number, string]
+                                )
+                        );
 
-        this.entity.ShelfCount =
-            digits
-                ? Number(digits)
-                : 0;
+                    const visible =
+                        Math.max(
+                            Math.min(row.BinCount || 0, this.maxBins),
+                            0
+                        );
 
-        this.buildShelfPreview();
+                    const bins:
+                        PreviewBin[] =
+                        Array.from(
+                            { length:visible },
+                            (_, i) =>
+                            {
+                                const binNumber =
+                                    i + 1;
+
+                                const holder =
+                                    heldBins.get(binNumber);
+
+                                const code =
+                                    binCode(rackName, row.ShelfNumber, binNumber)
+                                    ||
+                                    `Bin ${binNumber}`;
+
+                                return {
+                                    BinNumber:binNumber,
+                                    Occupied:!!holder,
+                                    Lost:false,
+                                    Title:holder ? `${code} : ${holder}` : `${code} : free`
+                                };
+                            }
+                        );
+
+                    // Bins beyond the new count that hold an item
+                    for
+                    (
+                        const [binNumber, holder]
+                        of heldBins
+                    )
+                    {
+                        if
+                        (
+                            binNumber > visible
+                        )
+                        {
+                            bins.push(
+                                {
+                                    BinNumber:binNumber,
+                                    Occupied:true,
+                                    Lost:true,
+                                    Title:`${binCode(rackName, row.ShelfNumber, binNumber)} : ${holder} (bin removed by the new count)`
+                                }
+                            );
+                        }
+                    }
+
+                    return {
+                        ShelfNumber:row.ShelfNumber,
+                        Short:String(row.ShelfNumber).padStart(2, '0'),
+                        IsPrime:row.IsPrime,
+                        Lost:false,
+                        Bins:bins
+                    };
+                }
+            );
+
+        // Removed shelves that hold an item
+        for
+        (
+            const [shelfNumber, heldBins]
+            of this.held
+        )
+        {
+            if
+            (
+                shelfNumber > count
+                &&
+                heldBins.length > 0
+            )
+            {
+                shelves.push(
+                    {
+                        ShelfNumber:shelfNumber,
+                        Short:String(shelfNumber).padStart(2, '0'),
+                        IsPrime:false,
+                        Lost:true,
+                        Bins:heldBins.map(
+                            bin =>
+                            ({
+                                BinNumber:bin.BinNumber,
+                                Occupied:true,
+                                Lost:true,
+                                Title:`${binCode(rackName, shelfNumber, bin.BinNumber)} : ${bin.Text} (shelf removed by the new count)`
+                            })
+                        )
+                    }
+                );
+            }
+        }
+
+        this.previewShelves =
+            shelves.sort(
+                (a, b) =>
+                    a.ShelfNumber - b.ShelfNumber
+            );
+
+        this.totalBins =
+            this.shelfRows.reduce(
+                (sum, row) =>
+                    sum + (row.BinCount || 0),
+                0
+            );
+
+        this.usedBins =
+            Array.from(this.held.values())
+                .reduce(
+                    (sum, bins) =>
+                        sum + bins.length,
+                    0
+                );
+
+        this.primeShelfCount =
+            this.shelfRows
+                .filter(
+                    row =>
+                        row.IsPrime
+                )
+                .length;
+    }
+
+    private buildPrimeItems
+    (
+        count:
+            number
+    ):
+        void
+    {
+        const shelves =
+            Array.from(
+                { length:count },
+                (_, i) =>
+                ({
+                    label:
+                        shelfLabel(this.entity.RackName, i + 1) || `Shelf ${i + 1}`,
+
+                    value:
+                        i + 1
+                })
+            );
+
+        const key =
+            `${count}|${this.entity.RackName}`;
+
+        // Same shelves : keep the arrays (stable items for the dropdowns)
+        if
+        (
+            this.primeItemsKey === key
+        )
+        {
+            return;
+        }
+
+        this.primeItemsKey =
+            key;
+
+        this.primeFromItems =
+        [
+            {
+                label:'None',
+                value:0
+            },
+
+            ...shelves
+        ];
+
+        this.primeToItems =
+        [
+            {
+                label:'None',
+                value:0
+            },
+
+            ...shelves
+        ];
+    }
+
+    private primeItemsKey:
+        string =
+        '';
+
+    //===========================================================
+    // Section 3 : Assignment
+    //===========================================================
+
+    onCategoryChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        const id =
+            Number(this.unwrapValue(value) ?? 0);
+
+        if
+        (
+            id === Number(this.entity.ProductCategoryId ?? 0)
+        )
+        {
+            return;
+        }
+
+        this.entity.ProductCategoryId =
+            id > 0
+                ? id
+                : null;
+
+        // A new category clears the sub categories
+        this.entity.SubCategoryIds =
+            [];
+
+        this.buildSubCategoryChips();
+
+        this.onValueChange();
+    }
+
+    toggleSubCategory
+    (
+        id:
+            number
+    ):
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+        const chosen =
+            new Set<number>(
+                this.entity.SubCategoryIds ?? []
+            );
+
+        if
+        (
+            chosen.has(id)
+        )
+        {
+            chosen.delete(id);
+        }
+        else
+        {
+            chosen.add(id);
+        }
+
+        // Keep the category's order
+        this.entity.SubCategoryIds =
+            this.subCategoryChips
+                .map(
+                    chip =>
+                        chip.Id
+                )
+                .filter(
+                    chipId =>
+                        chosen.has(chipId)
+                );
+
+        this.buildSubCategoryChips();
+
+        this.onValueChange();
+    }
+
+    selectAllSubCategories
+    (
+        on:
+            boolean
+    ):
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.progress.busy
+        )
+        {
+            return;
+        }
+
+        this.entity.SubCategoryIds =
+            on
+                ? this.subCategoryChips.map(
+                    chip =>
+                        chip.Id
+                )
+                : [];
+
+        this.buildSubCategoryChips();
+
+        this.onValueChange();
+    }
+
+    get assignmentSummary():
+        string
+    {
+        const categoryId =
+            Number(this.entity.ProductCategoryId ?? 0);
+
+        if
+        (
+            !(categoryId > 0)
+        )
+        {
+            return 'General rack : any spare part or accessory.';
+        }
+
+        const category =
+            this.categories.find(
+                item =>
+                    item.ProductCategoryId === categoryId
+            );
+
+        const name =
+            category?.CategoryName ?? 'the category';
+
+        return this.selectedSubCount > 0
+            ? `${name} : ${this.selectedSubCount} sub categor${this.selectedSubCount === 1 ? 'y' : 'ies'}.`
+            : `${name} : the whole category.`;
+    }
+
+    //===========================================================
+    // Section 4 : Rack Type / Status / Remarks
+    //===========================================================
+
+    onRackTypeChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.entity.RackType =
+            String(this.unwrapValue(value) ?? '');
+
+        this.onValueChange();
+    }
+
+    onStatusChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.entity.IsActive =
+            Boolean(this.unwrapValue(value));
+
+        this.onValueChange();
+    }
+
+    onRemarksChange
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.entity.Remarks =
+            String(value ?? '');
 
         this.onValueChange();
     }
 
     //===========================================================
-    // Set Initial Form State
-    //===========================================================
-
-    private setInitialFormState():
-        void
-    {
-        this.originalEntity =
-            JSON.stringify(
-                this.entity
-            );
-
-        this.hasChanges =
-            false;
-
-        this.cdr.detectChanges();
-    }
-
-    //===========================================================
-    // Load Entity
+    // Load Entity (edit / view)
     //===========================================================
 
     private loadEntity():
         void
     {
+        this.loading =
+            true;
+
+        this.formError =
+            '';
+
+        this.cdr.detectChanges();
+
         this.rackManagementService
             .getById(
-                this.entityId
+                this.routePublicId
             )
             .subscribe
             ({
                 next:
                 (
-                    response:
-                        any
+                    rack:
+                        RackManagement
                 ): void =>
                 {
+                    // Internal id of the loaded record (links use the uuid)
+                    this.entityId =
+                        Number((rack as any)?.rackManagementId ?? (rack as any)?.RackManagementId ?? 0);
+
                     this.entity =
-                        this.rackManagementService.normalize(
-                            response
+                        rack;
+
+                    // Every shelf has a row (missing = 1 bin)
+                    this.entity.Shelves =
+                        Array.from(
+                            { length:Math.max(rack.ShelfCount, 0) },
+                            (_, i) =>
+                                rack.Shelves.find(
+                                    shelf =>
+                                        shelf.ShelfNumber === i + 1
+                                )
+                                ??
+                                {
+                                    ShelfNumber:i + 1,
+                                    BinCount:1
+                                }
+                        )
+                        .map(
+                            shelf =>
+                            ({
+                                ShelfNumber:shelf.ShelfNumber,
+                                BinCount:shelf.BinCount
+                            })
                         );
 
                     this.fullRackCode =
-                        this.entity.FullRackCode
+                        rack.FullRackCode
                         ||
-                        this.entity.RackCode;
+                        rack.RackCode;
+
+                    this.held =
+                        new Map<number, HeldBin[]>();
+
+                    this.primeItemsKey =
+                        '';
 
                     this.syncShelves();
 
                     this.buildWarehouseItems();
 
+                    this.buildZoneItems();
+
+                    this.buildCategoryItems();
+
+                    this.buildSubCategoryChips();
+
+                    this.loading =
+                        false;
+
                     this.setInitialFormState();
+
+                    // Zones / categories of the warehouse, and the
+                    // bins that hold an item
+                    this.loadDefaults();
+
+                    this.loadOccupancy();
                 },
 
                 error:
@@ -1129,15 +2412,90 @@ implements OnInit, OnDestroy
                         error
                     );
 
-                    this.toast.error(
-                        'Error',
-                        'Failed to load Rack.'
-                    );
-
-                    this.hasChanges =
+                    this.loading =
                         false;
 
-                    this.onBackToList();
+                    this.formError =
+                        this.errorText(
+                            error,
+                            'Failed to load the rack.'
+                        );
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+    // Bins that hold an item (marked on the preview)
+    private loadOccupancy():
+        void
+    {
+        this.rackManagementService
+            .getRackBins(
+                this.entityId
+            )
+            .subscribe
+            ({
+                next:
+                (
+                    map:
+                        RackMap
+                ): void =>
+                {
+                    const held =
+                        new Map<number, HeldBin[]>();
+
+                    for
+                    (
+                        const shelf
+                        of map.Shelves ?? []
+                    )
+                    {
+                        const bins =
+                            (shelf.Bins ?? [])
+                                .filter(
+                                    bin =>
+                                        !!bin.Holder
+                                )
+                                .map(
+                                    bin =>
+                                    ({
+                                        BinNumber:bin.BinNumber,
+                                        Text:`${bin.Holder?.ProductCode} - ${bin.Holder?.ItemName}`
+                                    })
+                                );
+
+                        if
+                        (
+                            bins.length > 0
+                        )
+                        {
+                            held.set(
+                                shelf.ShelfNumber,
+                                bins
+                            );
+                        }
+                    }
+
+                    this.held =
+                        held;
+
+                    this.rebuildShelves();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    // The preview only loses its occupied marks
+                    console.error(
+                        'Load Rack Bins Error',
+                        error
+                    );
                 }
             });
     }
@@ -1146,557 +2504,345 @@ implements OnInit, OnDestroy
     // Track Changes
     //===========================================================
 
+    private setInitialFormState():
+        void
+    {
+        this.originalEntity =
+            this.snapshot();
+
+        this.hasChanges =
+            false;
+
+        this.cdr.detectChanges();
+    }
+
+    // What the user can change
+    private snapshot():
+        string
+    {
+        const e =
+            this.entity;
+
+        return JSON.stringify(
+            [
+                e.WarehouseId,
+                e.RackZoneId,
+                e.ShelfCount,
+                e.Shelves,
+                e.ProductCategoryId,
+                e.SubCategoryIds,
+                e.PrimeShelfFrom,
+                e.PrimeShelfTo,
+                e.RackType,
+                e.Remarks,
+                e.IsActive
+            ]
+        );
+    }
+
     checkForChanges():
         void
     {
         this.hasChanges =
-            JSON.stringify(
-                this.entity
-            )
+            this.snapshot()
             !==
             this.originalEntity;
     }
 
-    //===========================================================
-    // Tab Change
-    //===========================================================
-
-    onTabChange
-    (
-        tabId:
-            string
-    ):
+    onValueChange():
         void
     {
-        this.selectedTab =
-            tabId;
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
     }
 
     //===========================================================
     // Save
     //===========================================================
 
-    onSave():
-        void
+    // First problem in the form, '' when it can be saved
+    private validate():
+        string
     {
-        //=======================================================
-        // Guards
-        //=======================================================
+        const e =
+            this.entity;
 
         if
         (
-            this.isViewMode
-            ||
-            this.isSaving
+            !(Number(e.WarehouseId) > 0)
         )
         {
-            return;
+            return 'Warehouse is required.';
         }
 
-        //=======================================================
-        // Validation
-        //=======================================================
+        if
+        (
+            !e.RackCode?.trim()
+            ||
+            !e.RackName?.trim()
+        )
+        {
+            return 'Rack Code could not be generated. Select the Warehouse again.';
+        }
 
-        const required:
-            { ok: boolean; message: string }[] =
-        [
-            {
-                ok:
-                    Number(this.entity.WarehouseId) > 0,
+        if
+        (
+            this.zoneRequired
+            &&
+            !(Number(e.RackZoneId ?? 0) > 0)
+        )
+        {
+            return 'Zone is required : this warehouse has zones.';
+        }
 
-                message:
-                    'Warehouse is required.'
-            },
-
-            {
-                ok:
-                    !!this.entity.RackCode?.trim(),
-
-                message:
-                    'Rack Code could not be generated. Select the Warehouse again.'
-            },
-
-            {
-                ok:
-                    !!this.entity.RackName?.trim(),
-
-                message:
-                    'Rack Name could not be generated. Select the Warehouse again.'
-            },
-
-            {
-                ok:
-                    this.entity.ShelfCount >= 1
-                    &&
-                    this.entity.ShelfCount <= this.maxShelves,
-
-                message:
-                    `Number of Shelves must be between 1 and ${this.maxShelves}.`
-            }
-        ];
+        if
+        (
+            !(e.ShelfCount >= 1 && e.ShelfCount <= this.maxShelves)
+        )
+        {
+            return `Number of Shelves must be between 1 and ${this.maxShelves}.`;
+        }
 
         for
         (
-            const field
-            of required
+            const row
+            of this.shelfRows
         )
         {
             if
             (
-                !field.ok
+                !(row.BinCount >= 1 && row.BinCount <= this.maxBins)
             )
             {
-                this.toast.error(
-                    'Validation',
-                    field.message
-                );
+                return `${row.Label} : bins must be between 1 and ${this.maxBins}.`;
+            }
 
-                return;
+            if
+            (
+                row.Warning
+            )
+            {
+                return `${row.Label} : ${row.Warning}`;
             }
         }
 
-        //=======================================================
-        // Add / Update
-        //=======================================================
+        // A removed shelf that holds an item
+        for
+        (
+            const [shelfNumber, bins]
+            of this.held
+        )
+        {
+            if
+            (
+                shelfNumber > e.ShelfCount
+                &&
+                bins.length > 0
+            )
+            {
+                return `Shelf ${shelfNumber} holds ${bins[0].Text}. Move it first, or keep at least ${shelfNumber} shelves.`;
+            }
+        }
+
+        const from =
+            Number(e.PrimeShelfFrom ?? 0);
+
+        const to =
+            Number(e.PrimeShelfTo ?? 0);
 
         if
         (
-            this.isAddMode
+            (from > 0) !== (to > 0)
+            ||
+            (from > 0 && !(from <= to && to <= e.ShelfCount))
         )
         {
-            this.saveCreate();
-
-            return;
+            return 'Prime shelves : choose both From and To (From ≤ To ≤ Number of Shelves), or none.';
         }
 
-        this.saveUpdate();
+        return '';
     }
-
-    //===========================================================
-    // Build Payload
-    //===========================================================
 
     private buildPayload():
         CreateRackManagement
     {
+        const e =
+            this.entity;
+
+        const categoryId =
+            Number(e.ProductCategoryId ?? 0);
+
+        const from =
+            Number(e.PrimeShelfFrom ?? 0);
+
+        const to =
+            Number(e.PrimeShelfTo ?? 0);
+
         return {
             WarehouseId:
-                Number(this.entity.WarehouseId),
+                Number(e.WarehouseId),
 
             RackName:
-                this.entity.RackName?.trim() ?? '',
+                e.RackName?.trim() ?? '',
 
             ShelfCount:
-                Number(this.entity.ShelfCount ?? 0),
+                Number(e.ShelfCount ?? 0),
 
+            BinsPerShelf:
+                this.quickFillCount(),
+
+            Shelves:
+                this.shelfRows.map(
+                    row =>
+                    ({
+                        ShelfNumber:row.ShelfNumber,
+                        BinCount:row.BinCount
+                    })
+                ),
+
+            RackZoneId:
+                Number(e.RackZoneId ?? 0) > 0
+                    ? Number(e.RackZoneId)
+                    : null,
+
+            ProductCategoryId:
+                categoryId > 0
+                    ? categoryId
+                    : null,
+
+            SubCategoryIds:
+                categoryId > 0
+                    ? [...(e.SubCategoryIds ?? [])]
+                    : [],
+
+            PrimeShelfFrom:
+                from > 0
+                    ? from
+                    : null,
+
+            PrimeShelfTo:
+                to > 0
+                    ? to
+                    : null,
+
+            // Legacy text : keep what is saved
             ZoneAisle:
-                this.entity.ZoneAisle?.trim() ?? '',
+                null,
 
             RackType:
-                this.entity.RackType ?? '',
+                e.RackType ?? '',
 
             Remarks:
-                this.entity.Remarks?.trim() ?? '',
+                e.Remarks?.trim() ?? '',
 
             IsActive:
-                this.entity.IsActive
+                e.IsActive
         };
     }
 
-    //===========================================================
-    // Create
-    //===========================================================
-
-    private saveCreate():
-        void
-    {
-        const model:
-            CreateRackManagement =
-            this.buildPayload();
-
-        this.isSaving =
-            true;
-
-        this.startProgress(
-            'Saving Rack',
-            'Please wait while the rack is being saved...'
-        );
-
-        this.withMinimumDuration(
-            this.rackManagementService.create(
-                model
-            ),
-            this.minimumSaveDurationMs
-        )
-        .subscribe
-        ({
-            next:
-            ():
-                void =>
-            {
-                this.completeProgress(
-                    'Rack saved successfully.',
-                    ():
-                        void =>
-                    {
-                        this.isSaving =
-                            false;
-
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-                        this.hasChanges =
-                            false;
-
-                        this.toast.success(
-                            'Success',
-                            'Rack created successfully.'
-                        );
-
-                        this.onBackToList();
-                    }
-                );
-            },
-
-            error:
-            (
-                error:
-                    unknown
-            ):
-                void =>
-            {
-                console.error(
-                    'Create Rack Error',
-                    error
-                );
-
-                this.failProgress(
-                    ():
-                        void =>
-                    {
-                        this.isSaving =
-                            false;
-
-                        this.toast.error(
-                            'Validation',
-                            this.extractErrorMessage(
-                                error,
-                                'Failed to create Rack.'
-                            )
-                        );
-
-                        this.cdr.detectChanges();
-                    }
-                );
-            }
-        });
-    }
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    private saveUpdate():
-        void
-    {
-        const model:
-            UpdateRackManagement =
-        {
-            RackManagementId:
-                this.entity.RackManagementId,
-
-            ...this.buildPayload()
-        };
-
-        this.isSaving =
-            true;
-
-        this.startProgress(
-            'Updating Rack',
-            'Please wait while the rack is being updated...'
-        );
-
-        this.withMinimumDuration(
-            this.rackManagementService.update(
-                model
-            ),
-            this.minimumSaveDurationMs
-        )
-        .subscribe
-        ({
-            next:
-            ():
-                void =>
-            {
-                this.completeProgress(
-                    'Rack updated successfully.',
-                    ():
-                        void =>
-                    {
-                        this.isSaving =
-                            false;
-
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-                        this.hasChanges =
-                            false;
-
-                        this.toast.success(
-                            'Success',
-                            'Rack updated successfully.'
-                        );
-
-                        this.onBackToList();
-                    }
-                );
-            },
-
-            error:
-            (
-                error:
-                    unknown
-            ):
-                void =>
-            {
-                console.error(
-                    'Update Rack Error',
-                    error
-                );
-
-                this.failProgress(
-                    ():
-                        void =>
-                    {
-                        this.isSaving =
-                            false;
-
-                        this.toast.error(
-                            'Validation',
-                            this.extractErrorMessage(
-                                error,
-                                'Failed to update Rack.'
-                            )
-                        );
-
-                        this.cdr.detectChanges();
-                    }
-                );
-            }
-        });
-    }
-
-    //===========================================================
-    // Progress : Start (animated easing toward ceiling)
-    //===========================================================
-
-    private startProgress
-    (
-        title:
-            string,
-        message:
-            string
-    ):
-        void
-    {
-        this.clearProgressTimer();
-
-        this.progressValue =
-            0;
-
-        this.progressDialog.show(
-            title,
-            message,
-            false
-        );
-
-        this.progressDialog.update(
-            0,
-            message
-        );
-
-        this.progressTimer =
-            setInterval
-            (
-                ():
-                    void =>
-                {
-                    const step =
-                        Math.max(
-                            0.4,
-                            (
-                                this.progressCeiling -
-                                this.progressValue
-                            )
-                            *
-                            this.progressEaseFactor
-                        );
-
-                    this.progressValue =
-                        Math.min(
-                            this.progressCeiling,
-                            this.progressValue + step
-                        );
-
-                    this.progressDialog.update(
-                        Math.round(
-                            this.progressValue
-                        )
-                    );
-                },
-                this.progressIntervalMs
-            );
-    }
-
-    //===========================================================
-    // Progress : Complete
-    //===========================================================
-
-    private completeProgress
-    (
-        message:
-            string,
-        callback:
-            () => void
-    ):
-        void
-    {
-        this.clearProgressTimer();
-
-        this.progressValue =
-            100;
-
-        this.progressDialog.update(
-            100,
-            message
-        );
-
-        setTimeout
-        (
-            ():
-                void =>
-            {
-                this.progressDialog.close();
-
-                callback();
-            },
-            this.progressCompleteHoldMs
-        );
-    }
-
-    //===========================================================
-    // Progress : Fail
-    //===========================================================
-
-    private failProgress
-    (
-        callback:
-            () => void
-    ):
-        void
-    {
-        this.clearProgressTimer();
-
-        this.progressDialog.close();
-
-        callback();
-    }
-
-    //===========================================================
-    // Progress : Clear Timer
-    //===========================================================
-
-    private clearProgressTimer():
+    onSave():
         void
     {
         if
         (
-            this.progressTimer !== null
+            this.isViewMode
+            ||
+            this.progress.busy
+            ||
+            this.loading
         )
         {
-            clearInterval(
-                this.progressTimer
-            );
-
-            this.progressTimer =
-                null;
+            return;
         }
-    }
 
-    //===========================================================
-    // Minimum Duration Wrapper
-    //===========================================================
+        const problem =
+            this.validate();
 
-    private withMinimumDuration<T>
-    (
-        source:
-            Observable<T>,
-        minimumMs:
-            number
-    ):
-        Observable<T>
-    {
-        return defer
+        if
         (
-            ():
-                Observable<T> =>
-            {
-                const startedAt =
-                    Date.now();
+            problem
+        )
+        {
+            this.formError =
+                problem;
 
-                const remaining =
-                    ():
-                        number =>
-                        Math.max(
-                            0,
-                            minimumMs -
-                            (
-                                Date.now() -
-                                startedAt
-                            )
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+        this.formError =
+            '';
+
+        const payload =
+            this.buildPayload();
+
+        const call$:
+            Observable<unknown> =
+            this.isAddMode
+                ? this.rackManagementService.create(
+                    payload
+                )
+                : this.rackManagementService.update(
+                    {
+                        RackManagementId:this.entity.RackManagementId,
+                        ...payload
+                    } as UpdateRackManagement
+                );
+
+        this.progress
+            .run(
+                this.isAddMode ? 'Saving Rack' : 'Updating Rack',
+
+                this.isAddMode
+                    ? 'Please wait while the rack is being saved...'
+                    : 'Please wait while the rack is being updated...',
+
+                this.isAddMode ? 'Rack saved.' : 'Rack updated.',
+
+                call$
+            )
+            .subscribe
+            ({
+                next:
+                (): void =>
+                {
+                    this.hasChanges =
+                        false;
+
+                    this.goToList();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ): void =>
+                {
+                    console.error(
+                        'Save Rack Error',
+                        error
+                    );
+
+                    this.formError =
+                        this.errorText(
+                            error,
+                            this.isAddMode
+                                ? 'Failed to create the rack.'
+                                : 'Failed to update the rack.'
                         );
 
-                return source.pipe
-                (
-                    delayWhen
-                    (
-                        () =>
-                            timer(
-                                remaining()
-                            )
-                    ),
-
-                    catchError
-                    (
-                        error =>
-                            timer(
-                                remaining()
-                            )
-                            .pipe
-                            (
-                                switchMap
-                                (
-                                    () =>
-                                        throwError(
-                                            () => error
-                                        )
-                                )
-                            )
-                    )
-                );
-            }
-        );
+                    this.cdr.detectChanges();
+                }
+            });
     }
 
     //===========================================================
-    // Extract Error Message
+    // Server Message ({ message } / a text / the fallback)
     //===========================================================
 
-    private extractErrorMessage
+    private errorText
     (
         error:
             unknown,
@@ -1705,39 +2851,40 @@ implements OnInit, OnDestroy
     ):
         string
     {
+        const err =
+            error as any;
+
+        const body =
+            err?.error;
+
         if
         (
-            error instanceof HttpErrorResponse
+            err?.status === 403
         )
         {
-            if
-            (
-                typeof error.error === 'string'
-                &&
-                error.error.trim()
-            )
-            {
-                return error.error;
-            }
-
-            if
-            (
-                error.error?.message
-            )
-            {
-                return error.error.message;
-            }
-
-            if
-            (
-                error.error?.title
-            )
-            {
-                return error.error.title;
-            }
+            return body?.message || body?.Message || 'You do not have permission for this action.';
         }
 
-        return fallback;
+        if
+        (
+            typeof body === 'string'
+            &&
+            body.trim()
+        )
+        {
+            return body.trim();
+        }
+
+        return body?.message || body?.Message || body?.title || fallback;
+    }
+
+    closeError():
+        void
+    {
+        this.formError =
+            '';
+
+        this.cdr.detectChanges();
     }
 
     //===========================================================
@@ -1749,7 +2896,7 @@ implements OnInit, OnDestroy
     {
         if
         (
-            this.isSaving
+            this.progress.busy
         )
         {
             return;
@@ -1774,33 +2921,38 @@ implements OnInit, OnDestroy
     // Back To List
     //===========================================================
 
+    private goToList():
+        void
+    {
+        void this.router.navigate(
+            [
+                '/inventory-management',
+                'store-setup',
+                'rack-management',
+                'list'
+            ]
+        );
+    }
+
     onBackToList():
         void
     {
         if
         (
-            this.isSaving
+            this.progress.busy
         )
         {
             return;
         }
 
-        const listRoute =
-        [
-            '/inventory-management',
-            'store-setup',
-            'rack-management',
-            'list'
-        ];
-
         if
         (
             !this.hasChanges
+            ||
+            this.isViewMode
         )
         {
-            void this.router.navigate(
-                listRoute
-            );
+            this.goToList();
 
             return;
         }
@@ -1810,9 +2962,7 @@ implements OnInit, OnDestroy
             'Any unsaved changes will be lost. Do you want to leave this page?',
             () =>
             {
-                void this.router.navigate(
-                    listRoute
-                );
+                this.goToList();
             },
             'Leave',
             'Stay',
@@ -1821,7 +2971,7 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Save Button Text
+    // Mode Helpers
     //===========================================================
 
     get saveButtonText():
@@ -1832,9 +2982,13 @@ implements OnInit, OnDestroy
             : 'Save';
     }
 
-    //===========================================================
-    // Mode Helpers
-    //===========================================================
+    get saveButtonIcon():
+        string
+    {
+        return this.isEditMode
+            ? 'fas fa-pen-to-square'
+            : 'fas fa-floppy-disk';
+    }
 
     get isViewMode():
         boolean
@@ -1854,57 +3008,42 @@ implements OnInit, OnDestroy
         return this.mode === 'add';
     }
 
-    //===========================================================
-    // Close
-    //===========================================================
+    // Controls are locked while viewing / saving
+    get locked():
+        boolean
+    {
+        return this.isViewMode
+            ||
+            this.progress.busy;
+    }
+
+    get noZoneHint():
+        string
+    {
+        if
+        (
+            !(Number(this.entity.WarehouseId) > 0)
+        )
+        {
+            return 'Select a warehouse first.';
+        }
+
+        if
+        (
+            this.zonesLoaded
+            &&
+            this.zoneItems.length === 0
+        )
+        {
+            return 'No active zone in this warehouse : add one on the Zones tab.';
+        }
+
+        return 'Manage zones on the Zones tab.';
+    }
 
     close():
         void
     {
         this.onBackToList();
-    }
-
-    //===========================================================
-    // Refresh
-    //===========================================================
-
-    refresh():
-        void
-    {
-        if
-        (
-            this.isSaving
-        )
-        {
-            return;
-        }
-
-        if
-        (
-            this.isEditMode
-            ||
-            this.isViewMode
-        )
-        {
-            this.loadEntity();
-
-            return;
-        }
-
-        this.initializeEntity();
-
-        this.cdr.detectChanges();
-    }
-
-    //===========================================================
-    // Value Changed
-    //===========================================================
-
-    onValueChange():
-        void
-    {
-        this.checkForChanges();
-
-        this.cdr.detectChanges();
     }
 }

@@ -93,6 +93,18 @@
 
             </div>
 
+            <!-- Selected color swatch (swatchField) -->
+
+            <span
+
+                class="dropdown-swatch dropdown-swatch-selected"
+
+                *ngIf="selectedSwatch"
+
+                [style.background]="selectedSwatch">
+
+            </span>
+
             <!-- =================================================
                  ICON
             ================================================== -->
@@ -196,6 +208,34 @@
                                 {{ option[labelField] }}
 
                             </div>
+
+                            <span
+
+                                class="dropdown-swatch"
+
+                                *ngIf="swatchField && option[swatchField]"
+
+                                [style.background]="option[swatchField]">
+
+                            </span>
+
+                            <span
+
+                                class="dropdown-badge"
+
+                                *ngIf="
+                                    badgeField
+                                    &&
+                                    option[badgeField] !== null
+                                    &&
+                                    option[badgeField] !== undefined
+                                    &&
+                                    option[badgeField] !== ''
+                                ">
+
+                                {{ option[badgeField] }}
+
+                            </span>
 
                             <div
 

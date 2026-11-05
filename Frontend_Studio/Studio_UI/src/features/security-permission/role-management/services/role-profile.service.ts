@@ -191,7 +191,7 @@ export class RoleProfileService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<RoleProfile>
     {
@@ -249,7 +249,7 @@ export class RoleProfileService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

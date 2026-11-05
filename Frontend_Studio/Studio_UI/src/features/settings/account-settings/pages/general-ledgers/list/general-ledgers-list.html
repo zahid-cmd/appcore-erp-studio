@@ -189,7 +189,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredGeneralLedgers.length"
+            [totalRecords]="totalRecords"
 
             [currentPage]="currentPage"
 
@@ -202,6 +202,32 @@
         </app-pagination>
 
     </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (tab, filters and search)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="gld-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="gld-summary-item">
+                    <span class="gld-summary-label">{{ item.label }}</span>
+                    <b
+                        class="gld-summary-value"
+                        [class.gld-ok]="item.tone === 'ok'"
+                        [class.gld-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="gld-summary-note">
+                This tab, filters and search
+            </span>
+
+        </div>
+    }
 
 
 

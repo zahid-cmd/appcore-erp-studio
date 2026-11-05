@@ -34,6 +34,18 @@ public class UpdateProductSubCategoryDto
 
 
     //===========================================================
+    // Bike Model (Motor Bikes categories only; the name is then
+    // built as "Motor Bikes - <Brand> - <Model>")
+    //===========================================================
+
+    public long? BikeModelId
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
     // Basic Information
     //===========================================================
 
@@ -132,4 +144,4 @@ public class UpdateProductSubCategoryDto
         get;
         set;
     } = true;
-}
+}

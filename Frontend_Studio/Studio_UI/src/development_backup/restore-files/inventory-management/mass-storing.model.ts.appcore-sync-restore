@@ -1,0 +1,90 @@
+/* ============================================================
+   Mass Storing
+============================================================ */
+
+export interface MassStoring
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Mass Storing
+============================================================ */
+
+export interface CreateMassStoring
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Mass Storing
+============================================================ */
+
+export interface UpdateMassStoring
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Mass Storing Defaults
+============================================================ */
+
+export interface MassStoringDefaults
+{
+    code:
+        string;
+}

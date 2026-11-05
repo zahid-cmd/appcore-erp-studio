@@ -432,9 +432,10 @@ implements OnInit, OnDestroy
         'add' | 'edit' | 'view' =
         'add';
 
+    // Public Id from the link (edit / view); '' in Add mode
     entityId:
-        number =
-        0;
+        string =
+        '';
 
 
     //===========================================================
@@ -459,6 +460,12 @@ implements OnInit, OnDestroy
         'inbound';
 
     // Type as saved (edit / view)
+    // The saved customer is tagged Walk-in (the tag can be
+    // cleared here, never set)
+    savedWalkIn:
+        boolean =
+        false;
+
     private savedType:
         CustomerType =
         'Inbound';
@@ -922,6 +929,7 @@ implements OnInit, OnDestroy
     {
         return {
             CustomerId:0,
+            PublicId:'',
             CustomerType:type,
             CustomerCode:'',
             PreviousCode:'',
@@ -944,7 +952,8 @@ implements OnInit, OnDestroy
             ReceivableLedgerName:'',
             CreditLimit:0,
             Remarks:'',
-            IsActive:true
+            IsActive:true,
+            IsWalkIn:false
         };
     }
 
@@ -985,7 +994,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            id
         )
         {
             this.entityId =
@@ -1003,8 +1012,9 @@ implements OnInit, OnDestroy
     // Resolve Entity Id
     //===========================================================
 
+    // The customer's Public Id (uuid) from the link, or ''
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -1016,13 +1026,15 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
+                String(
                     currentRoute.snapshot.paramMap.get('id')
-                );
+                    ??
+                    ''
+                ).trim();
 
             if
             (
-                id > 0
+                id
             )
             {
                 return id;
@@ -1032,7 +1044,7 @@ implements OnInit, OnDestroy
                 currentRoute.parent;
         }
 
-        return 0;
+        return '';
     }
 
     // ?type=Outside from the list's Add (default Inbound)
@@ -1898,8 +1910,8 @@ implements OnInit, OnDestroy
 
     private savePhoto
     (
-        customerId:
-            number
+        publicId:
+            string
     ):
         Observable<boolean>
     {
@@ -1911,12 +1923,12 @@ implements OnInit, OnDestroy
         (
             this.photoFile
             &&
-            customerId > 0
+            publicId
         )
         {
             step =
                 this.customerProfilesService.uploadPhoto(
-                    customerId,
+                    publicId,
                     this.photoFile
                 );
         }
@@ -1924,12 +1936,12 @@ implements OnInit, OnDestroy
         (
             this.photoRemoved
             &&
-            customerId > 0
+            publicId
         )
         {
             step =
                 this.customerProfilesService.deletePhoto(
-                    customerId
+                    publicId
                 );
         }
 
@@ -2034,6 +2046,9 @@ implements OnInit, OnDestroy
 
                     this.savedType =
                         this.entity.CustomerType;
+
+                    this.savedWalkIn =
+                        !!this.entity.IsWalkIn;
 
                     this.savedCode =
                         this.entity.CustomerCode;
@@ -2374,8 +2389,73 @@ implements OnInit, OnDestroy
                 this.entity.Remarks?.trim() ?? '',
 
             IsActive:
-                this.entity.IsActive
+                this.entity.IsActive,
+
+            // Update : false clears the Walk-in tag, null keeps it;
+            // the server clears it when Outside -> Inbound
+            IsWalkIn:
+                this.isEditMode
+                    ? (this.savedWalkIn && !this.entity.IsWalkIn ? false : null)
+                    : false
         };
+    }
+
+
+    //===========================================================
+    // Walk-in tag (Outside customers added at a sales counter)
+    //===========================================================
+
+    // Shown while the saved customer is tagged and still Outside
+    get showWalkIn():
+        boolean
+    {
+        return !this.isAddMode
+            &&
+            this.savedWalkIn
+            &&
+            this.entity.CustomerType === 'Outside';
+    }
+
+    onClearWalkIn():
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        this.entity.IsWalkIn =
+            false;
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+
+    onKeepWalkIn():
+        void
+    {
+        if
+        (
+            this.isViewMode
+            ||
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        this.entity.IsWalkIn =
+            true;
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
     }
 
     //===========================================================
@@ -2404,9 +2484,9 @@ implements OnInit, OnDestroy
                 )
                 .pipe(
                     switchMap(
-                        (id: number) =>
+                        (publicId: string) =>
                             this.savePhoto(
-                                Number(id)
+                                publicId
                             )
                     )
                 ),
@@ -2513,13 +2593,14 @@ implements OnInit, OnDestroy
         this.withMinimumDuration(
             this.customerProfilesService
                 .update(
+                    this.entity.PublicId,
                     model
                 )
                 .pipe(
                     switchMap(
                         () =>
                             this.savePhoto(
-                                this.entity.CustomerId
+                                this.entity.PublicId
                             )
                     )
                 ),
@@ -2979,4 +3060,4 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
-}
+}

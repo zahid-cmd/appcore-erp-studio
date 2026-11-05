@@ -118,11 +118,21 @@ public class AccountClassController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<AccountClassDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         AccountClassDto? accountClass =
             await _repository.GetByIdAsync(id);
 
@@ -139,9 +149,9 @@ public class AccountClassController : ControllerBase
     // Create
     //===========================================================
 
+    // Returns the new row's Public Id
     [HttpPost]
-
-    public async Task<ActionResult<long>> Create(
+    public async Task<ActionResult<Guid>> Create(
         CreateAccountClassDto dto)
     {
            long userId = this.CurrentUserId();
@@ -153,7 +163,10 @@ public class AccountClassController : ControllerBase
                     dto,
                     userId);
 
-            return Ok(id);
+            AccountClassDto? created =
+                await _repository.GetByIdAsync(id);
+
+            return Ok(created?.PublicId ?? Guid.Empty);
         }
         catch (KeyNotFoundException ex)
         {
@@ -176,11 +189,27 @@ public class AccountClassController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateAccountClassDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.AccountClassId =
+            id;
+
         if (!await _repository.ExistsAsync(
                 dto.AccountClassId))
         {
@@ -218,11 +247,22 @@ public class AccountClassController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         if (!await _repository.ExistsAsync(id))
         {
             return NotFound();

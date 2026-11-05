@@ -227,6 +227,9 @@ export class MembershipStatusService
             MembershipId:
                 this.num(item, 'MembershipId'),
 
+            PublicId:
+                this.text(item, 'PublicId'),
+
             MembershipNo:
                 this.text(item, 'MembershipNo'),
 
@@ -520,7 +523,7 @@ export class MembershipStatusService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<Membership>
     {
@@ -574,7 +577,7 @@ export class MembershipStatusService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

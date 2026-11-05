@@ -13,6 +13,9 @@ namespace AppCore.Domain.Entities.Procurement.Shared;
 
 public abstract class PurchaseHeader
 {
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
     public long PurchaseId { get; set; }
     public string PageType { get; set; } = string.Empty;
     public string PurchaseNo { get; set; } = string.Empty;

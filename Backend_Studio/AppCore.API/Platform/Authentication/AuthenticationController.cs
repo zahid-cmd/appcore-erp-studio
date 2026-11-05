@@ -4,6 +4,9 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+
+using AppCore.Api.Security;
 
 using AppCore.Application.Platform.Authentication.DTOs;
 using AppCore.Application.Platform.Authentication.Interfaces;
@@ -36,6 +39,9 @@ public class AuthenticationController
     private readonly IAuthenticationService
         _authenticationService;
 
+    private readonly LoginAttemptGuard
+        _loginAttempts;
+
 
     //===========================================================
     // Constructor
@@ -43,19 +49,34 @@ public class AuthenticationController
 
     public AuthenticationController
     (
-        IAuthenticationService authenticationService
+        IAuthenticationService authenticationService,
+        LoginAttemptGuard loginAttempts
     )
     {
         _authenticationService =
             authenticationService;
+
+        _loginAttempts =
+            loginAttempts;
     }
 
 
     //===========================================================
     // Login
     //===========================================================
+    //
+    // Rate limits : 20 calls a minute per IP (LoginPolicy), and
+    // 5 wrong passwords in 5 minutes per Login ID → wait 60 seconds
+    // (LoginAttemptGuard).
+    // Over the limit : 429 with the seconds to wait.
+    //
+    //===========================================================
 
     [AllowAnonymous]
+
+    [EnableRateLimiting(
+        ApiSecurity.LoginPolicy
+    )]
 
     [HttpPost(
         "login"
@@ -66,10 +87,37 @@ public class AuthenticationController
             [FromBody]
             LoginRequestDto request)
     {
+        int? secondsToWait =
+            _loginAttempts.SecondsToWait(
+                request?.UserName
+            );
+
+        if
+        (
+            secondsToWait is not null
+        )
+        {
+            Response.Headers.RetryAfter =
+                secondsToWait.Value.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture
+                );
+
+            return StatusCode(
+                StatusCodes.Status429TooManyRequests,
+                new LoginResponseDto
+                {
+                    Success = false,
+                    Message =
+                        $"Too many wrong attempts. Please wait {secondsToWait} seconds and try again."
+                }
+            );
+        }
+
+
         LoginResponseDto response =
             await _authenticationService
                 .LoginAsync(
-                    request
+                    request!
                 );
 
 
@@ -78,11 +126,19 @@ public class AuthenticationController
             !response.Success
         )
         {
+            _loginAttempts.RecordFailure(
+                request?.UserName
+            );
+
             return Unauthorized(
                 response
             );
         }
 
+
+        _loginAttempts.RecordSuccess(
+            request?.UserName
+        );
 
         return Ok(
             response
@@ -95,6 +151,10 @@ public class AuthenticationController
     //===========================================================
 
     [AllowAnonymous]
+
+    [EnableRateLimiting(
+        ApiSecurity.LoginPolicy
+    )]
 
     [HttpPost(
         "register"
@@ -134,6 +194,10 @@ public class AuthenticationController
     //===========================================================
 
     [AllowAnonymous]
+
+    [EnableRateLimiting(
+        ApiSecurity.LoginPolicy
+    )]
 
     [HttpPost(
         "forgot-password/check"
@@ -175,6 +239,10 @@ public class AuthenticationController
     //===========================================================
 
     [AllowAnonymous]
+
+    [EnableRateLimiting(
+        ApiSecurity.LoginPolicy
+    )]
 
     [HttpPost(
         "forgot-password/confirm"
@@ -339,4 +407,4 @@ public class AuthenticationController
             response
         );
     }
-}
+}

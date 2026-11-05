@@ -153,6 +153,9 @@ public class ServiceSubCategoryRepository :
                         ServiceSubCategoryId =
                             x.ServiceSubCategoryId,
 
+                        PublicId =
+                            x.PublicId,
+
                         SubCategoryCode =
                             x.SubCategoryCode,
 
@@ -274,6 +277,33 @@ public class ServiceSubCategoryRepository :
                     x.SubCategoryCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<ServiceSubCategoryEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.ServiceSubCategoryId)
+            .FirstOrDefaultAsync();
     }
 
 

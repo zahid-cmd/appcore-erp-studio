@@ -107,11 +107,22 @@ public class NavigationSubmenuController : ControllerBase
     // Get By Id
     //===============================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{publicId:guid}")]
 
     public async Task<ActionResult<NavigationSubmenuDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         NavigationSubmenuDto? submenu =
             await _repository.GetByIdAsync(id);
 
@@ -138,7 +149,7 @@ public class NavigationSubmenuController : ControllerBase
 
         return Ok(submenus);
     }
-    
+
     //===============================================================
     // Create
     //===============================================================
@@ -202,11 +213,22 @@ public class NavigationSubmenuController : ControllerBase
     // Delete
     //===============================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult> Delete(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         if (!await _repository.ExistsAsync(id))
         {
             return NotFound();

@@ -90,12 +90,12 @@ export class MasterActivityService
     //===========================================================
 
     getById(
-        id: number
+        publicId: string
     ):
         Observable<MasterActivity>
     {
         return this.http.get<MasterActivity>(
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${publicId}`
         );
     }
 
@@ -158,12 +158,12 @@ export class MasterActivityService
     //===========================================================
 
     delete(
-        id: number
+        publicId: string
     ):
         Observable<void>
     {
         return this.http.delete<void>(
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${publicId}`
         );
     }
     

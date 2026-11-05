@@ -1313,7 +1313,7 @@ implements OnInit
             [
                 'view',
 
-                item.branchAssignmentId
+                item.publicId
             ],
 
             {
@@ -1341,7 +1341,7 @@ implements OnInit
             [
                 'edit',
 
-                item.branchAssignmentId
+                item.publicId
             ],
 
             {
@@ -1375,7 +1375,7 @@ implements OnInit
                 this.branchassignmentservice
                     .delete
                     (
-                        item.branchAssignmentId
+                        item.publicId ?? ''
                     )
                     .subscribe
                     ({
@@ -1620,4 +1620,44 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.branchassignments ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.branchassignments ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

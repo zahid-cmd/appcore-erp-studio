@@ -217,6 +217,9 @@ public class ActivityAssignmentRepository
                     ActivityAssignmentId =
                         item.Assignment.ActivityAssignmentId,
 
+                    PublicId =
+                        item.Assignment.PublicId,
+
                     RoleProfileId =
                         item.Assignment.RoleProfileId,
 
@@ -282,6 +285,9 @@ public class ActivityAssignmentRepository
                 {
                     ActivityAssignmentId =
                         activityAssignment.ActivityAssignmentId,
+
+                    PublicId =
+                        activityAssignment.PublicId,
 
                     RoleProfileId =
                         activityAssignment.RoleProfileId,
@@ -393,6 +399,9 @@ public class ActivityAssignmentRepository
                 {
                     ActivityAssignmentId =
                         activityAssignment.ActivityAssignmentId,
+
+                    PublicId =
+                        activityAssignment.PublicId,
 
                     RoleProfileId =
                         activityAssignment.RoleProfileId,
@@ -2110,5 +2119,32 @@ public class ActivityAssignmentRepository
 
             throw;
         }
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.SecurityPermission.RoleManagement.ActivityAssignment>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.ActivityAssignmentId)
+            .FirstOrDefaultAsync();
     }
 }

@@ -154,6 +154,9 @@ public class WidgetConfigurationRepository
                     WidgetConfigurationId =
                         item.Configuration.WidgetConfigurationId,
 
+                    PublicId =
+                        item.Configuration.PublicId,
+
                     DashboardId =
                         item.Configuration.DashboardId,
 
@@ -218,6 +221,9 @@ public class WidgetConfigurationRepository
                 {
                     WidgetConfigurationId =
                         widgetConfiguration.WidgetConfigurationId,
+
+                    PublicId =
+                        widgetConfiguration.PublicId,
 
                     DashboardId =
                         widgetConfiguration.DashboardId,
@@ -307,6 +313,9 @@ public class WidgetConfigurationRepository
                 {
                     WidgetConfigurationId =
                         widgetConfiguration.WidgetConfigurationId,
+
+                    PublicId =
+                        widgetConfiguration.PublicId,
 
                     DashboardId =
                         widgetConfiguration.DashboardId,
@@ -2113,5 +2122,32 @@ public class WidgetConfigurationRepository
 
             throw;
         }
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.InfrastructureControl.ApplicationConfiguration.WidgetConfiguration>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.WidgetConfigurationId)
+            .FirstOrDefaultAsync();
     }
 }

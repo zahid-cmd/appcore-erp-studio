@@ -115,6 +115,9 @@ export class LaborChartService
                 Number(this.pick(item, name) ?? 0);
 
         return {
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
             LaborChartId:
                 num('LaborChartId'),
 
@@ -300,7 +303,7 @@ export class LaborChartService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<LaborChart>
     {
@@ -328,9 +331,9 @@ export class LaborChartService
         model:
             CreateLaborChart
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -343,13 +346,16 @@ export class LaborChartService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateLaborChart
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -362,7 +368,7 @@ export class LaborChartService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

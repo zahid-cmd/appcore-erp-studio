@@ -93,11 +93,21 @@ public class MembershipServicesController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
-
+    [HttpGet("{publicId:guid}")]
     public async Task<ActionResult<MembershipServicesDto>> GetById(
-        long id)
+        Guid publicId)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
         MembershipServicesDto? service =
             await _repository.GetByIdAsync(id);
 
@@ -114,11 +124,27 @@ public class MembershipServicesController : ControllerBase
     // Configure (Service Value, status, remarks)
     //===========================================================
 
-    [HttpPut]
-
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateMembershipServicesDto dto)
     {
+        long? found =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (found == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            found.Value;
+
+        dto.MembershipServiceId =
+            id;
+
         if (!await _repository.ExistsAsync(
                 dto.MembershipServiceId))
         {

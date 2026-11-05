@@ -1,0 +1,2005 @@
+/*===============================================================
+  Opening Stock Form
+  Same layout and look as the Purchase page (its styles below,
+  pof- / pur- classes), the receiving's tiles and fields (rc-),
+  plus the opening stock's own bits (os-).
+===============================================================*/
+
+/* Shared controls two sizes larger (voucher pages) */
+@import '../../../../../../shared/styles/voucher-page.css';
+
+
+/*---------------------------------------------------------------
+  Fixed page height : the summary rows scroll inside
+---------------------------------------------------------------*/
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.app-form-page > app-page-header
+{
+    flex: 0 0 auto;
+}
+
+:host > app-toast,
+:host > app-confirm-dialog,
+:host > app-progress-dialog
+{
+    position: absolute;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+.pof-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 2px 6px 8px;
+}
+
+.pof-body > .pof-grid
+{
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.pof-body > .pof-banner
+{
+    flex: 0 0 auto;
+}
+
+.pof-loading
+{
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+}
+
+.pof-center
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+}
+
+.pof-ribbon
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    padding: 6px 8px;
+    border: 1px solid #dbe4f3;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+    box-shadow:
+    0 10px 24px -12px rgba(30, 58, 138, 0.35),
+    0 2px 6px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+    white-space: nowrap;
+}
+
+.pof-ribbon-sep
+{
+    width: 1px;
+    align-self: stretch;
+    margin: 4px 6px;
+    background: #e2e8f0;
+}
+
+.pof-state
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 0 4px;
+    white-space: nowrap;
+}
+
+@media (max-width: 1400px)
+{
+    .pof-ribbon
+    {
+        flex-wrap: wrap;
+        border-radius: 16px;
+    }
+
+}
+
+.pof-chip
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    padding: 2px 10px 2px 4px;
+    border-radius: 999px;
+}
+
+.pof-chip-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    font-size: 14px;
+}
+
+.pof-chip-icon-branch
+{
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.pof-chip-icon-year
+{
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.pof-chip-text
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.pof-chip-label
+{
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.pof-chip-text strong
+{
+    font-size: 14px;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.pof-status
+{
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.pof-status-posted
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.pof-status-cancelled
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.pof-banner
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.pof-banner-warn
+{
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+}
+
+.pof-banner-cancelled
+{
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.pof-overlay
+{
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+    animation: pof-fade-in 0.2s ease-out;
+}
+
+.pof-cx
+{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow:
+    0 30px 70px -24px rgba(15, 23, 42, 0.55),
+    0 2px 8px rgba(15, 23, 42, 0.08);
+    animation: pof-modal-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.pof-cx-head
+{
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #f1d5d5;
+    background:
+    linear-gradient(120deg, #fde2e2 0%, #fdf0f0 45%, #f1f5f9 100%);
+}
+
+.pof-cx-head::before
+{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #991b1b, #ef4444 55%, #94a3b8);
+}
+
+.pof-cx-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #991b1b, #ef4444);
+    color: #ffffff;
+    font-size: 20px;
+    box-shadow: 0 6px 14px -6px rgba(220, 38, 38, 0.7);
+}
+
+.pof-cx-title
+{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.pof-cx-title strong
+{
+    font-size: 19px;
+    color: #1e293b;
+}
+
+.pof-cx-title span
+{
+    font-size: 15px;
+    font-weight: 600;
+    color: #991b1b;
+}
+
+.pof-cx-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 22px 20px;
+}
+
+.pof-cx-summary
+{
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 18px;
+    padding: 12px 16px;
+    border: 1px solid #e3e9f3;
+    border-radius: 12px;
+    background: linear-gradient(120deg, #f5f8ff 0%, #f8fafc 100%);
+}
+
+.pof-cx-summary > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.pof-cx-summary span
+{
+    font-size: 13.5px;
+    color: #64748b;
+}
+
+.pof-cx-summary strong
+{
+    font-size: 16px;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pof-cx-amount
+{
+    text-align: right;
+}
+
+.pof-cx-amount strong
+{
+    color: #1e3a8a;
+    font-variant-numeric: tabular-nums;
+}
+
+.pof-cx-warn
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    background: #fffbeb;
+    font-size: 15px;
+    line-height: 1.45;
+    color: #92400e;
+}
+
+.pof-cx-warn i
+{
+    margin-top: 2px;
+    color: #d97706;
+}
+
+.pof-cx-fields
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pof-cx-reason
+{
+    --textarea-width: 100%;
+    display: block;
+    width: 100%;
+}
+
+@media (max-width: 560px)
+{
+    .pof-cx-summary
+    {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .pof-cx-amount
+    {
+        text-align: left;
+    }
+
+}
+
+.pof-modal-x
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.7);
+    color: #64748b;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.pof-modal-x:hover
+{
+    background: #ffffff;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+.pof-modal-foot
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.pof-modal-note
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-right: auto;
+    font-size: 13.5px;
+    color: #64748b;
+}
+
+.pof-modal-note i
+{
+    color: #94a3b8;
+}
+
+.pof-btn
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.pof-btn-light
+{
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.pof-btn-danger
+{
+    background: linear-gradient(135deg, #991b1b, #dc2626);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(220, 38, 38, 0.55);
+}
+
+.pof-btn-danger:hover
+{
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -6px rgba(220, 38, 38, 0.6);
+}
+
+.pof-btn-primary
+{
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.55);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.pof-btn-primary:hover
+{
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -6px rgba(37, 99, 235, 0.6);
+}
+
+.pof-btn
+{
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.pof-btn-light:hover
+{
+    background: #f1f5f9;
+}
+
+@keyframes pof-fade-in
+{
+    from
+    {
+        opacity: 0;
+    }
+
+    to
+    {
+        opacity: 1;
+    }
+}
+
+@keyframes pof-modal-in
+{
+    from
+    {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+
+    to
+    {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.pof-card
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 24px -16px rgba(30, 58, 138, 0.28);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.pof-card:hover
+{
+    border-color: #d6e0ef;
+    box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 14px 30px -16px rgba(30, 58, 138, 0.34);
+}
+
+.pof-card-header
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 3px 20px;
+    border-bottom: 1px solid #e6ecf5;
+    background:
+    linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #1e293b;
+}
+
+.pof-card-header > i
+{
+    color: #2563eb;
+}
+
+.pof-count
+{
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.pof-add
+{
+    margin-left: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 84px;
+    height: 30px;
+    padding: 0 16px;
+    border: 1px solid #1d4ed8;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7);
+    transition: filter 0.15s ease;
+}
+
+.pof-add:hover:not(:disabled)
+{
+    filter: brightness(1.06);
+}
+
+.pof-add:disabled
+{
+    border-color: #cbd5e1;
+    background: #e2e8f0;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.pof-fields
+{
+    display: grid;
+    gap: 6px 18px;
+    padding: 8px 20px 10px;
+}
+
+.pof-locked .pof-fields
+{
+    opacity: 0.7;
+}
+
+.pof-hint
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: auto 0 0;
+    padding: 6px 20px;
+    border-top: 1px solid #e6ecf5;
+    border-radius: 0;
+    font-size: 15.5px;
+    font-weight: 500;
+}
+
+.pof-hint
+{
+    background:
+    linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    color: #475569;
+}
+
+.pof-summary
+{
+    display: flex;
+    flex-direction: column;
+}
+
+.pof-table-scroll
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.pof-table
+{
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 16.5px;
+}
+
+.pof-col-sl
+{
+    width: 52px;
+}
+
+.pof-table th.pof-sl,
+.pof-table td.pof-sl
+{
+    padding-left: 14px;
+    padding-right: 4px;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.pof-col-action
+{
+    width: 88px;
+}
+
+.pof-table th,
+.pof-table td
+{
+    padding: 10px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pof-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f6f8fc;
+    color: #475569;
+    font-size: 15.5px;
+    font-weight: 600;
+}
+
+.pof-table-foot
+{
+    flex: 0 0 auto;
+    border-top: 2px solid #e2e8f0;
+}
+
+.pof-table-foot td
+{
+    font-size: 17px;
+}
+
+.pof-num
+{
+    text-align: right !important;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.pof-table th.pof-num,
+.pof-table td.pof-num
+{
+    padding-left: 10px;
+    padding-right: 12px;
+    text-overflow: clip;
+}
+
+.pof-action
+{
+    text-align: center !important;
+}
+
+.pof-table th.pof-action,
+.pof-table td.pof-action
+{
+    padding-left: 6px;
+    padding-right: 6px;
+    white-space: nowrap;
+    text-overflow: clip;
+}
+
+.pof-ledger
+{
+    white-space: normal;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.pof-sub
+{
+    margin-top: 3px;
+    font-size: 14.5px;
+    color: #64748b;
+}
+
+.pof-empty
+{
+    padding: 22px 12px !important;
+    text-align: center !important;
+    color: #94a3b8;
+}
+
+.pof-remove
+{
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+.pof-remove:disabled
+{
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.pof-banner-info
+{
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
+.pof-grid
+{
+    display: grid;
+    grid-template-columns: minmax(520px, 9fr) minmax(0, 16fr);
+    gap: 10px 18px;
+    align-items: stretch;
+    min-height: 0;
+}
+
+.pof-col
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+}
+
+.pof-col-left > .pof-card:last-child
+{
+    flex: 1 1 auto;
+}
+
+.pof-summary-slot
+{
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+}
+
+.pof-summary
+{
+    position: absolute;
+    inset: 0;
+}
+
+@media (max-width: 1100px)
+{
+    .pof-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pof-summary
+    {
+        position: static;
+        max-height: 520px;
+    }
+
+}
+
+.pof-fields app-search-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+    flex: none;
+}
+
+.pof-req
+{
+    color: #dc2626;
+    font-weight: 600;
+}
+
+:host ::ng-deep .pof-order-no .textbox input
+{
+    font-size: 13px;
+    letter-spacing: -0.1px;
+    padding-left: 10px;
+    padding-right: 8px;
+    text-overflow: clip;
+}
+
+.pof-narration
+{
+    padding: 10px 20px 12px;
+}
+
+.pof-narration app-textbox
+{
+    display: block;
+    width: 100%;
+}
+
+.pof-col-qty
+{
+    width: 80px;
+}
+
+.pof-billed
+{
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #0369a1;
+}
+
+.pof-payable td
+{
+    font-weight: 700;
+    color: #1e3a8a;
+    background: #eef2ff;
+}
+
+.pof-row-editable
+{
+    cursor: pointer;
+}
+
+.pof-row-editable:hover td
+{
+    background: #f8fafc;
+}
+
+.pof-row-editing td,
+.pof-row-editable.pof-row-editing:hover td
+{
+    background: #fffbeb;
+}
+
+.pof-row-editing td:first-child
+{
+    box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+.pof-cancel-edit
+{
+    margin-left: auto;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.pof-cancel-edit:hover:not(:disabled)
+{
+    background: #f1f5f9;
+}
+
+.pof-add.pof-add-after
+{
+    margin-left: 0;
+}
+
+.pof-unit
+{
+    font-size: 12px;
+    color: #64748b;
+}
+
+.pof-summary .pof-col-sl
+{
+    width: 44px;
+}
+
+.pof-summary .pof-col-qty
+{
+    width: 100px;
+}
+
+.pof-summary .pof-col-action
+{
+    width: 66px;
+}
+
+.pof-summary .pof-table
+{
+    min-width: 880px;
+    font-size: 14.5px;
+}
+
+.pof-summary .pof-table th,
+.pof-summary .pof-table td
+{
+    padding: 8px 10px;
+}
+
+.pof-summary .pof-table th
+{
+    font-size: 14px;
+}
+
+.pof-summary .pof-table-foot td
+{
+    font-size: 15.5px;
+}
+
+.pof-grid-3
+{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1400px)
+{
+    .pof-grid-3
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+.pof-col-left .pof-fields
+{
+    gap: 10px 12px;
+    grid-auto-rows: 58px;
+    align-items: start;
+    padding: 10px 16px 12px;
+}
+
+:host ::ng-deep .pof-col-left .pof-fields .textbox-container,
+:host ::ng-deep .pof-col-left .pof-fields .datepicker-container,
+:host ::ng-deep .pof-col-left .pof-fields .dropdown-container
+{
+    margin-bottom: 0;
+}
+
+:host ::ng-deep .pof-col-left .pof-fields .textbox-label,
+:host ::ng-deep .pof-col-left .pof-fields .datepicker-label,
+:host ::ng-deep .pof-col-left .pof-fields .dropdown-label
+{
+    height: 20px;
+    min-height: 20px;
+    margin-bottom: 6px;
+    line-height: 20px;
+    white-space: nowrap;
+}
+
+.pof-span-all
+{
+    grid-column: 1 / -1;
+}
+
+.pof-fields app-textbox,
+.pof-fields app-datepicker
+{
+    min-width: 0;
+}
+
+:host ::ng-deep .pof-col-left app-textbox .textbox-label,
+:host ::ng-deep .pof-col-left app-textbox .textbox-required,
+:host ::ng-deep .pof-col-left app-datepicker .datepicker-label,
+:host ::ng-deep .pof-col-left app-datepicker .datepicker-required,
+:host ::ng-deep .pof-col-left app-search-dropdown .dropdown-label,
+:host ::ng-deep .pof-col-left app-search-dropdown .dropdown-required
+{
+    font-size: 14.5px;
+}
+
+:host ::ng-deep .pof-col-left app-textbox .textbox input,
+:host ::ng-deep .pof-col-left app-textbox .textbox input::placeholder,
+:host ::ng-deep .pof-col-left app-datepicker .datepicker-value,
+:host ::ng-deep .pof-col-left app-datepicker .datepicker-placeholder,
+:host ::ng-deep .pof-col-left app-search-dropdown .dropdown-selected-text,
+:host ::ng-deep .pof-col-left app-search-dropdown .dropdown-placeholder
+{
+    font-size: 15px;
+}
+
+:host ::ng-deep .pof-col-left .pof-order-no .textbox input
+{
+    font-size: 12.5px;
+}
+
+:host ::ng-deep .pof-col-left app-textbox
+{
+    --textbox-height: 32px;
+}
+
+:host ::ng-deep .pof-col-left app-datepicker
+{
+    --datepicker-height: 32px;
+}
+
+:host ::ng-deep .pof-col-left app-search-dropdown
+{
+    --dropdown-height: 32px;
+}
+
+:host ::ng-deep .pof-col-left app-textbox .textbox input,
+:host ::ng-deep .pof-col-left app-textbox .textbox input::placeholder,
+:host ::ng-deep .pof-col-left app-datepicker .datepicker-value,
+:host ::ng-deep .pof-col-left app-datepicker .datepicker-placeholder,
+:host ::ng-deep .pof-col-left app-search-dropdown .dropdown-selected-text,
+:host ::ng-deep .pof-col-left app-search-dropdown .dropdown-placeholder
+{
+    font-size: 14px;
+}
+
+:host ::ng-deep .pof-col-left app-textbox .textbox-label,
+:host ::ng-deep .pof-col-left app-textbox .textbox-required,
+:host ::ng-deep .pof-col-left app-datepicker .datepicker-label,
+:host ::ng-deep .pof-col-left app-datepicker .datepicker-required,
+:host ::ng-deep .pof-col-left app-search-dropdown .dropdown-label,
+:host ::ng-deep .pof-col-left app-search-dropdown .dropdown-required
+{
+    font-size: 14px;
+}
+
+.pof-tip-wrap
+{
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.pof-tip
+{
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 50;
+    width: max-content;
+    max-width: 340px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.45;
+    white-space: normal;
+    box-shadow: 0 10px 24px -8px rgba(15, 23, 42, 0.45);
+    pointer-events: none;
+}
+
+.pof-tip::before
+{
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 14px;
+    width: 10px;
+    height: 10px;
+    background: #0f172a;
+    transform: rotate(45deg);
+}
+
+.pof-tip-wrap:hover .pof-tip,
+.pof-tip-wrap:focus-within .pof-tip
+{
+    display: block;
+}
+
+.pof-narration
+{
+    box-sizing: border-box;
+    min-height: 58px;
+}
+
+.pof-shelf
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    flex: 0 0 auto;
+    height: 30px;
+    margin-left: auto;
+    padding: 0 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.pof-shelf:hover:not(:disabled)
+{
+    background: #eff6ff;
+}
+
+.pof-shelf:disabled
+{
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.pof-shelf + .pof-add
+{
+    margin-left: 8px;
+}
+
+.pof-span-two
+{
+    grid-column: span 2;
+}
+
+@media (max-width: 1400px)
+{
+    .pof-span-two
+    {
+        grid-column: 1 / -1;
+    }
+
+}
+
+.pof-table:has(.pur-units-btn) .pof-col-action,
+.pof-summary:has(.pur-units-btn) .pof-col-action
+{
+    width: 140px;
+}
+
+.pof-table td.pof-action
+{
+    white-space: nowrap;
+}
+
+.pur-units-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    margin-right: 6px;
+    padding: 0 10px;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+    background: #f0fdf4;
+    color: #15803d;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.pur-units-btn:hover:not(:disabled)
+{
+    filter: brightness(0.97);
+}
+
+.pur-units-btn:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pur-units-btn.pur-units-short
+{
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.pof-cx.pur-ud
+{
+    max-width: 1080px;
+}
+
+.pur-ud-icon
+{
+    background: linear-gradient(135deg, #065f46, #10b981);
+    box-shadow: 0 6px 14px -6px rgba(16, 185, 129, 0.7);
+}
+
+.pur-ud-scroll
+{
+    max-height: calc(100vh - 340px);
+    min-height: 120px;
+    overflow: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.pur-ud-table
+{
+    width: 100%;
+    table-layout: fixed;
+}
+
+.pur-ud-c-sl
+{
+    width: 50px;
+}
+
+.pur-ud-c-wide
+{
+    width: 32.26%;
+}
+
+.pur-ud-c-key
+{
+    width: 16.13%;
+}
+
+.pur-ud-c-bat
+{
+    width: 19.35%;
+}
+
+.pur-ud-table th.pof-sl,
+.pur-ud-table td.pof-sl
+{
+    padding-left: 4px;
+    padding-right: 4px;
+    text-align: center;
+}
+
+.pur-ud-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f8fafc;
+}
+
+.pur-ud-table th,
+.pur-ud-table td
+{
+    padding: 6px 8px;
+}
+
+.pur-ud-table td app-textbox
+{
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+:host ::ng-deep .pur-ud-table app-textbox
+{
+    --textbox-height: 34px;
+}
+
+@keyframes pur-tb-in
+{
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.pur-ud-c-act
+{
+    width: 46px;
+}
+
+.pur-ud-table th.pur-ud-act,
+.pur-ud-table td.pur-ud-act
+{
+    padding-left: 2px;
+    padding-right: 6px;
+    text-align: center;
+}
+
+.pur-ud-clear
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    background: #fff5f5;
+    color: #dc2626;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.pur-ud-clear:hover:not(:disabled)
+{
+    border-color: #f87171;
+    background: #fee2e2;
+}
+
+.pur-ud-clear:disabled
+{
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.pof-grid.pur-grid
+{
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.pur-top > .pof-card:last-child
+{
+    flex: 1 1 auto;
+}
+
+.pur-narr-card
+{
+    min-height: 0;
+}
+
+.pur-narr
+{
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 6px 16px 10px;
+}
+
+.pur-narr app-textarea
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    --textarea-width: 100%;
+    --textarea-height: 44px;
+}
+
+:host ::ng-deep .pur-narr .textarea-container
+{
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+}
+
+:host ::ng-deep .pur-narr .textarea
+{
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-height: 44px;
+    border-radius: 10px;
+}
+
+:host ::ng-deep .pur-narr .textarea textarea
+{
+    height: auto;
+    min-height: 0;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+
+:host ::ng-deep .pur-narr .textarea textarea::-webkit-scrollbar
+{
+    display: none;
+}
+
+@media (max-width: 1100px)
+{
+    .pof-grid.pur-grid
+    {
+        grid-template-rows: none;
+    }
+
+}
+
+:host ::ng-deep .pur-ud-table td.pur-ud-bad .textbox
+{
+    border-color: #ef4444 !important;
+    background: #fef2f2 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+:host ::ng-deep .pur-ud-table td.pur-ud-bad .textbox input
+{
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.pof-col-left > .pof-card:not(.pur-add-card)
+{
+    flex-shrink: 0;
+}
+
+.pof-card.pur-add-card
+{
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.pur-add-card > .pof-fields
+{
+    gap: 6px 12px;
+    grid-auto-rows: 56px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.pur-hd-notes
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 4px;
+}
+
+.pur-hd-ico
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12px;
+    cursor: help;
+}
+
+.pur-hd-ico.pur-hd-red
+{
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #dc2626;
+    animation: pur-hd-pulse 1.2s ease-in-out 2;
+}
+
+@keyframes pur-hd-pulse
+{
+    50% { box-shadow: 0 0 0 5px rgba(220, 38, 38, 0.18); }
+}
+
+.pur-hd-notes .pof-tip
+{
+    max-width: 360px;
+    font-size: 12.5px;
+}
+
+
+/*===============================================================
+  RECEIVING : own parts
+===============================================================*/
+
+/* Purchase Invoice : facts in tiles (two per row; Supplier wide) */
+.rc-inv-card
+{
+    flex-shrink: 0;
+}
+
+.rc-facts
+{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px 10px;
+    padding: 10px 16px 12px;
+}
+
+.rc-facts-left
+{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.rc-fact
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 6px 10px;
+    border: 1px solid #e6ecf5;
+    border-left: 3px solid #c7d6f5;
+    border-radius: 9px;
+    background: #f8fafd;
+}
+
+.rc-fact-wide
+{
+    grid-column: span 2;
+}
+
+.rc-fact > span
+{
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.rc-fact > strong
+{
+    overflow: hidden;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rc-facts-empty
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-height: 58px;
+    padding: 12px 20px;
+    font-size: 15px;
+    color: #64748b;
+}
+
+.rc-facts-empty i
+{
+    color: #94a3b8;
+}
+
+/* Receiving status of the invoice (header pill) */
+.rc-pill
+{
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.rc-pill-blue
+{
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.rc-pill-amber
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Status chip in the header ribbon : New */
+.pof-status-new
+{
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+/* Add card : figures right aligned, Receive Now stands out */
+:host ::ng-deep .rc-num .textbox input
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+:host ::ng-deep .rc-num:not(.rc-qty) .textbox input
+{
+    color: #475569;
+    font-weight: 600;
+}
+
+:host ::ng-deep .rc-qty .textbox
+{
+    border-color: #93c5fd;
+    background: #f5f9ff;
+}
+
+:host ::ng-deep .rc-qty .textbox input
+{
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+/* Save as default : a switch in a field cell */
+.rc-default
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.rc-default-label
+{
+    height: 20px;
+    line-height: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    white-space: nowrap;
+}
+
+.rc-default app-checkbox
+{
+    display: flex;
+    align-items: center;
+    height: 32px;
+}
+
+/* Two hints in a row : the second one follows the first */
+.rc-hint + .rc-hint
+{
+    margin-top: 0;
+}
+
+/* Summary columns */
+.rc-col-recv
+{
+    width: 108px;
+}
+
+.rc-col-rack
+{
+    width: 150px;
+}
+
+.rc-dim
+{
+    color: #94a3b8;
+}
+
+.rc-strong
+{
+    font-weight: 700;
+    color: #0f172a;
+}
+
+@media (max-width: 1200px)
+{
+    .rc-facts
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/*===============================================================
+  OPENING STOCK : own parts
+===============================================================*/
+
+/* Status chip : Draft */
+.pof-status-draft
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Summary : money columns */
+.os-col-money
+{
+    width: 118px;
+}
+
+.os-dim-total
+{
+    color: #64748b;
+}
+
+/* A product without its Inventory ledger */
+.os-noledger
+{
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #b42318;
+    font-size: 11.5px;
+    font-weight: 700;
+    vertical-align: 1px;
+}
+
+.os-hint-red
+{
+    color: #b42318;
+}
+
+.os-hint-red i
+{
+    color: #dc2626;
+}
+
+/* Excel Import card */
+.os-import
+{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px 14px;
+}
+
+.os-import-text
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.os-import-text strong
+{
+    overflow: hidden;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e3a8a;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.os-import-text span
+{
+    font-size: 13.5px;
+    color: #64748b;
+}
+
+.os-import-actions
+{
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Import dialog */
+.pof-cx.os-im
+{
+    max-width: 780px;
+}
+
+.os-im .pof-cx-head
+{
+    background: linear-gradient(120deg, #dcfce7 0%, #f0fdf4 45%, #f1f5f9 100%);
+}
+
+.os-im .pof-cx-head::before
+{
+    background: linear-gradient(90deg, #166534, #22c55e 55%, #94a3b8);
+}
+
+.os-im .pof-cx-title span
+{
+    color: #166534;
+}
+
+.os-im-icon
+{
+    background: linear-gradient(135deg, #166534, #22c55e);
+    box-shadow: 0 6px 14px -6px rgba(34, 197, 94, 0.7);
+}
+
+.os-im-cols
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.os-im-cols span
+{
+    padding: 3px 10px;
+    border: 1px solid #dbe3ef;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.os-im-cols span.os-im-req
+{
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+:host ::ng-deep .os-im-text textarea
+{
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 13px;
+    white-space: pre;
+}
+
+.os-im-bar
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.os-im-file
+{
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.os-im-file input
+{
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.os-im-name
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    color: #475569;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.os-im-bar .pof-btn:last-child
+{
+    margin-left: auto;
+}
+
+.os-im-result
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.os-im-sum
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.os-im-ok
+{
+    color: #15803d;
+}
+
+.os-im-bad
+{
+    color: #b42318;
+}
+
+.os-im-errors
+{
+    max-height: 150px;
+    margin: 0;
+    padding: 8px 12px 8px 28px;
+    overflow-y: auto;
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Summary : a price still missing (needed to post) */
+.os-missing
+{
+    color: #b45309;
+    font-style: italic;
+}

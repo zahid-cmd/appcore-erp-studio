@@ -133,6 +133,25 @@ public class MfsReconciliationsController : ControllerBase
             await _repository.GetWalletsAsync());
     }
 
+    // uuid (print links)
+    [HttpGet("vouchers/{publicId:guid}")]
+
+    public async Task<ActionResult<MfsReconciliationVoucherDto>> GetVoucherByPublicId(
+        Guid publicId)
+    {
+        long? id =
+            await _repository.GetVoucherIdByPublicIdAsync(publicId);
+
+        MfsReconciliationVoucherDto? found =
+            id == null
+                ? null
+                : await _repository.GetVoucherAsync(id.Value);
+
+        return found == null
+            ? NotFound()
+            : Ok(found);
+    }
+
     [HttpGet("vouchers/{id:long}")]
 
     public async Task<ActionResult<MfsReconciliationVoucherDto>> GetVoucher(

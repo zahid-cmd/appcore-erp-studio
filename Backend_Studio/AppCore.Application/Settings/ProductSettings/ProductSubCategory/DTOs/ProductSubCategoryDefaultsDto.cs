@@ -53,4 +53,15 @@ public class ProductSubCategoryDefaultsDto
         get;
         set;
     } = string.Empty;
+
+
+    //===========================================================
+    // Sales Sub Group Code (preview)
+    //===========================================================
+
+    public string SalesSubGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
 }

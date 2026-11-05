@@ -79,7 +79,7 @@ export const CHECK_CLEARING_VOUCHER_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<CheckClearingPrintData>
     {

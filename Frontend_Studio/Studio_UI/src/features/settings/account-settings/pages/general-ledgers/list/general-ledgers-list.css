@@ -1,1 +1,70 @@
 @import '../../../../../../shared/styles/app-list-page.css';
+
+/* Summary line below the canvas : plain text, no chips,
+   light blue gradient */
+
+.gld-summary
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 0;
+    min-height: 50px;
+    padding: 12px 22px;
+    box-sizing: border-box;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
+    font-size: 14.5px;
+}
+
+.gld-summary-item
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 20px;
+}
+
+.gld-summary-item:first-child
+{
+    padding-left: 0;
+}
+
+.gld-summary-item + .gld-summary-item
+{
+    border-left: 1px solid #c9daf5;
+}
+
+.gld-summary-label
+{
+    color: #475569;
+    font-weight: 500;
+}
+
+.gld-summary-value
+{
+    color: #1e293b;
+    font-size: 15.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.gld-summary-value.gld-ok
+{
+    color: #047857;
+}
+
+.gld-summary-value.gld-bad
+{
+    color: #be123c;
+}
+
+.gld-summary-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+}

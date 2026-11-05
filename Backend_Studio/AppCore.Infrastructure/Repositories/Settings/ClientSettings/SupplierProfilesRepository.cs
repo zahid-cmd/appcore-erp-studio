@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Application.Common.Paging;
 using AppCore.Application.Settings.ClientSettings;
 
 using SupplierEntity =
@@ -27,6 +28,7 @@ using GeneralLedgerEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.GeneralLedgers;
 
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Domain.Common;
 
@@ -141,6 +143,15 @@ public class SupplierProfilesRepository :
     private IQueryable<SupplierProfilesDto>
         SupplierQuery()
     {
+        return Project(
+            LiveSuppliers());
+    }
+
+
+    // Live (not deleted) suppliers, not tracked
+    private IQueryable<SupplierEntity>
+        LiveSuppliers()
+    {
         return _context
             .Set<SupplierEntity>()
             .AsNoTracking()
@@ -148,13 +159,26 @@ public class SupplierProfilesRepository :
             (
                 x =>
                     !x.IsDeleted
-            )
+            );
+    }
+
+
+    // Entity rows -> DTO rows (filters / sort / paging stay on the
+    // entity query, before this)
+    private IQueryable<SupplierProfilesDto>
+        Project
+        (
+            IQueryable<SupplierEntity> source
+        )
+    {
+        return source
             .Select
             (
                 x =>
                     new SupplierProfilesDto
                     {
                         SupplierId = x.SupplierId,
+                        PublicId = x.PublicId,
                         SupplierCode = x.SupplierCode,
                         SupplierType = x.SupplierType,
                         SupplyType = x.SupplyType,
@@ -216,6 +240,238 @@ public class SupplierProfilesRepository :
                     x.SupplierCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Filters : type (tab), supply type, brand, status, search.
+    // Counts (the summary line) use the supply type, brand and
+    // search only.
+    //===========================================================
+
+    private const string BrandDistributorType =
+        "Brand Distributor";
+
+    private const string LocalVendorType =
+        "Local Vendor";
+
+    private const string ServiceProviderType =
+        "Service Provider";
+
+
+    private SortMap<SupplierEntity> ListSorts()
+    {
+        return new SortMap<SupplierEntity>("SupplierCode")
+            .Add("SupplierCode", x => x.SupplierCode)
+            .Add("SupplierName", x => x.SupplierName)
+            .Add("DisplayName", x => x.DisplayName)
+            .Add("SupplierType", x => x.SupplierType)
+            .Add("SupplyType", x => x.SupplyType)
+            .Add("Phone1", x => x.Phone1)
+            .Add(
+                "BrandName",
+                x =>
+                    _context
+                        .Set<BrandManagementEntity>()
+                        .Where(b => b.BrandManagementId == x.BrandManagementId)
+                        .Select(b => b.BrandName)
+                        .FirstOrDefault())
+            .Add("PayableLedgerCode", x => x.PayableLedgerCode)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.SupplierId);
+    }
+
+
+    public async Task<PagedResult<SupplierProfilesDto>>
+        GetPagedAsync
+        (
+            SupplierProfilesPageRequest request
+        )
+    {
+        // Brand renames are followed first (as Get All)
+        await SyncDisplayNamesAsync();
+
+        IQueryable<SupplierEntity> query =
+            LiveSuppliers();
+
+        //-------------------------------------------------------
+        // Supply Type / Brand
+        //-------------------------------------------------------
+
+        string supplyType =
+            (request.SupplyType ?? string.Empty).Trim();
+
+        if
+        (
+            supplyType.Length > 0
+        )
+        {
+            query =
+                query.Where(x => x.SupplyType == supplyType);
+        }
+
+        if
+        (
+            request.BrandId is > 0
+        )
+        {
+            long brandId =
+                request.BrandId.Value;
+
+            query =
+                query.Where(x => x.BrandManagementId == brandId);
+        }
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.SupplierCode, like) ||
+                        EF.Functions.ILike(x.SupplierName, like) ||
+                        EF.Functions.ILike(x.DisplayName, like) ||
+                        EF.Functions.ILike(x.SupplierType, like) ||
+                        EF.Functions.ILike(x.SupplyType, like) ||
+                        EF.Functions.ILike(x.ContactPerson, like) ||
+                        EF.Functions.ILike(x.Phone1, like) ||
+                        EF.Functions.ILike(x.Phone2, like) ||
+                        EF.Functions.ILike(x.BinNo, like) ||
+                        EF.Functions.ILike(x.TinNo, like) ||
+                        EF.Functions.ILike(x.PayableLedgerCode, like) ||
+                        EF.Functions.ILike(x.Remarks, like) ||
+                        _context
+                            .Set<BrandManagementEntity>()
+                            .Any
+                            (
+                                b =>
+                                    b.BrandManagementId == x.BrandManagementId &&
+                                    EF.Functions.ILike(b.BrandName, like)
+                            )
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts : Total / per type / Active / Inactive
+        // (supply type, brand and search applied; not the tab or
+        // the status filter)
+        //-------------------------------------------------------
+
+        var groups =
+            await query
+                .GroupBy(x => new { x.SupplierType, x.IsActive })
+                .Select(g => new { g.Key.SupplierType, g.Key.IsActive, Count = g.Count() })
+                .ToListAsync();
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = groups.Sum(x => x.Count),
+                [BrandDistributorType] = groups.Where(x => x.SupplierType == BrandDistributorType).Sum(x => x.Count),
+                [LocalVendorType] = groups.Where(x => x.SupplierType == LocalVendorType).Sum(x => x.Count),
+                [ServiceProviderType] = groups.Where(x => x.SupplierType == ServiceProviderType).Sum(x => x.Count),
+                ["Active"] = groups.Where(x => x.IsActive).Sum(x => x.Count),
+                ["Inactive"] = groups.Where(x => !x.IsActive).Sum(x => x.Count)
+            };
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        if
+        (
+            request.Status.HasValue
+        )
+        {
+            bool active =
+                request.Status.Value;
+
+            query =
+                query.Where(x => x.IsActive == active);
+        }
+
+        //-------------------------------------------------------
+        // Type (the tab)
+        //-------------------------------------------------------
+
+        string type =
+            (request.Type ?? string.Empty).Trim();
+
+        if
+        (
+            type.Length > 0
+        )
+        {
+            query =
+                query.Where(x => x.SupplierType == type);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<SupplierProfilesDto> rows =
+            await Project(
+                    ListSorts()
+                        .Apply(query, request)
+                        .Page(request))
+                .ToListAsync();
+
+        return new PagedResult<SupplierProfilesDto>
+        {
+            Items = rows,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live suppliers only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await LiveSuppliers()
+            .Where(x => x.PublicId == publicId)
+            .Select(x => (long?)x.SupplierId)
+            .FirstOrDefaultAsync();
     }
 
 

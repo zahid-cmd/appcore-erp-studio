@@ -734,6 +734,25 @@
     height:24px;
 }
 
+/* "Select All" : two short lines (SELECT / ALL) beside the
+   checkbox, so it stays inside its 78px column and the
+   common "… All" columns are not covered */
+.permission-header-all .permission-header-label
+{
+    display:block;
+    max-width:50px;
+    white-space:normal;
+    line-height:1.15;
+    overflow-wrap:normal;
+}
+
+.permission-header-all .permission-header-action
+{
+    height:auto;
+    min-height:24px;
+    gap:6px;
+}
+
 /* "RESTORE ALL" fits its 102px column */
 .permission-header-common .permission-header-label
 {
@@ -792,3 +811,16 @@
     height:62px;
     max-height:none;
 }
+
+/* Sub menu cell : name, with its menu underneath */
+.cart-submenu
+{ display:flex; flex-direction:column; gap:3px; line-height:1.25; }
+.cart-submenu-name
+{ font-weight:500; }
+.cart-submenu-menu
+{ display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:500; color:#7b8aa3; }
+.cart-submenu-menu i
+{ font-size:10px; color:#9aa8c0; }
+:host-context(.dark-theme) .cart-submenu-menu,
+:host-context(.theme-dark) .cart-submenu-menu
+{ color:#94a3b8; }

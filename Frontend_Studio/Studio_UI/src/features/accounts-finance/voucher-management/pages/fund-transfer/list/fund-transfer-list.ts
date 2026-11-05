@@ -41,6 +41,7 @@ from '@angular/router';
 import
 {
     Observable,
+    Subscription,
     defer,
     timer,
     throwError,
@@ -59,6 +60,18 @@ import
     FundTransfer
 }
 from '../../../models/fund-transfer.model';
+
+import
+{
+    VoucherPageQuery
+}
+from '../../../models/voucher-page-query.model';
+
+import
+{
+    PagedResult
+}
+from '../../../../../../shared/paging/paged-result.model';
 
 import
 {
@@ -302,17 +315,47 @@ implements OnInit, OnDestroy
     // Data
     //===========================================================
 
+    // The page shown (the server sends one page at a time)
     fundTransfers:
         FundTransferRow[] =
     [];
 
-    filteredFundTransfers:
-        FundTransferRow[] =
+    // Rows matching the tab, filter and search, all pages
+    totalRecords:
+        number =
+        0;
+
+    // Summary line below the canvas (filled by each load)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad' | 'muted';
+        }[] =
     [];
 
-    pagedFundTransfers:
-        FundTransferRow[] =
-    [];
+    private loadSubscription?:
+        Subscription;
+
+    //===========================================================
+    // Sort & Search Delay
+    //===========================================================
+
+    // '' = the server's default (newest voucher date first)
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer?:
+        number;
+
+    private readonly SEARCH_DELAY_MS:
+        number =
+        300;
 
     //===========================================================
     // Search & Loading
@@ -524,6 +567,10 @@ implements OnInit, OnDestroy
         void
     {
         this.clearProgressTimer();
+
+        this.clearSearchTimer();
+
+        this.loadSubscription?.unsubscribe();
 
         if
         (
@@ -757,160 +804,187 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Load Items
+    // Load Items (one page from the server)
+    //
+    // The server filters (tab, transfer type, search), sorts
+    // and pages; the answer also carries the status counts.
     //===========================================================
 
     loadItems():
         void
     {
+        this.loadSubscription?.unsubscribe();
+
         this.loading =
             true;
 
         this.loadFailed =
             false;
 
-        this.fundTransferService
-            .getAll()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe
-            ({
-                next:
-                (
-                    response:
-                        FundTransfer[]
-                ):
-                    void =>
-                {
-                    // Display values
-                    this.fundTransfers =
-                        (response ?? []).map
-                        (
-                            item =>
-                            ({
-                                ...item,
+        this.cdr.detectChanges();
 
-                                VoucherDateText:
-                                    this.toDisplayDate(
-                                        item.VoucherDate
-                                    ),
+        const query:
+            VoucherPageQuery =
+        {
+            page:
+                this.currentPage,
 
-                                PartyText:
-                                    item.PartyName,
+            pageSize:
+                this.pageSize,
 
-                                TotalAmountText:
-                                    formatMoney(
-                                        item.TotalAmount
-                                    )
-                            })
+            search:
+                this.searchText.trim(),
+
+            sort:
+                this.sortField,
+
+            dir:
+                this.sortDirection,
+
+            status:
+                this.selectedTab === 'all'
+                    ? ''
+                    : this.selectedTab,
+
+            ledgerType:
+                this.selectedPartyType ?? ''
+        };
+
+        this.loadSubscription =
+            this.fundTransferService
+                .getPaged(
+                    query
+                )
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe
+                ({
+                    next:
+                    (
+                        response:
+                            PagedResult<FundTransfer>
+                    ):
+                        void =>
+                    {
+                        // Display values
+                        this.fundTransfers =
+                            response.items.map
+                            (
+                                item =>
+                                ({
+                                    ...item,
+
+                                    VoucherDateText:
+                                        this.toDisplayDate(
+                                            item.VoucherDate
+                                        ),
+
+                                    PartyText:
+                                        item.PartyName,
+
+                                    TotalAmountText:
+                                        formatMoney(
+                                            item.TotalAmount
+                                        )
+                                })
+                            );
+
+                        this.totalRecords =
+                            response.totalCount;
+
+                        // The server pulls the page back when rows got
+                        // fewer (e.g. the last row of a page deleted)
+                        this.currentPage =
+                            response.page;
+
+                        this.updateSummary(
+                            response.counts
                         );
 
-                    this.applyFilters();
+                        this.loading =
+                            false;
 
-                    this.loading =
-                        false;
+                        this.cdr.detectChanges();
+                    },
 
-                    this.cdr.detectChanges();
-                },
-
-                error:
-                (
                     error:
-                        unknown
-                ):
-                    void =>
-                {
-                    console.error
                     (
-                        'Load Fund Transfers Error:',
-                        error
-                    );
+                        error:
+                            unknown
+                    ):
+                        void =>
+                    {
+                        console.error
+                        (
+                            'Load FundTransfer Error:',
+                            error
+                        );
 
-                    this.fundTransfers =
-                        [];
+                        this.fundTransfers =
+                            [];
 
-                    this.filteredFundTransfers =
-                        [];
+                        this.totalRecords =
+                            0;
 
-                    this.pagedFundTransfers =
-                        [];
+                        this.loading =
+                            false;
 
-                    this.loading =
-                        false;
+                        this.loadFailed =
+                            true;
 
-                    this.loadFailed =
-                        true;
+                        this.toast.error
+                        (
+                            'Load Failed',
+                            'Unable to load fund transfers.'
+                        );
 
-                    this.toast.error
-                    (
-                        'Load Failed',
-                        'Unable to load fund transfers.'
-                    );
-
-                    this.cdr.detectChanges();
-                }
-            });
+                        this.cdr.detectChanges();
+                    }
+                });
     }
 
     //===========================================================
-    // Apply Filters
+    // Reload from page 1 (tab, filter, search, sort or page size
+    // changed)
     //===========================================================
 
-    applyFilters():
+    private reload():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredFundTransfers =
-            this.fundTransfers.filter
-            (
-                item =>
-                {
-                    const partyMatch =
-                        this.selectedPartyType === null
-                        ||
-                        (item.TransferType ?? '').startsWith(
-                            this.selectedPartyType);
-
-                    const tabMatch =
-                        this.selectedTab === 'all'
-                        ||
-                        item.Status ===
-                        this.selectedTab;
-
-                    const text =
-                        [
-                            item.VoucherNo,
-                            item.VoucherDate,
-                            item.VoucherDateText,
-                            item.BranchName,
-                            item.PartyText,
-                            item.Narration,
-                            item.TotalAmountText,
-                            item.TransferType,
-                            item.Status
-                        ]
-                        .join(' ')
-                        .toLowerCase();
-
-                    return partyMatch
-                        &&
-                        tabMatch
-                        &&
-                        (
-                            !keyword
-                            ||
-                            text.includes(keyword)
-                        );
-                }
-            );
-
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
+    }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Draft / Approved
+    // / Posted / Cancelled, with the transfer type and search
+    // applied (not the tab)
+    //===========================================================
+
+    private updateSummary
+    (
+        counts:
+            Record<string, number>
+    ):
+        void
+    {
+        const value =
+            (
+                key:
+                    string
+            ):
+                string =>
+                    Number(counts[key] ?? 0).toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',     value:value('Total'),     tone:'' },
+            { label:'Draft',     value:value('Draft'),     tone:'muted' },
+            { label:'Approved',  value:value('Approved'),  tone:'' },
+            { label:'Posted',    value:value('Posted'),    tone:'ok' },
+            { label:'Cancelled', value:value('Cancelled'), tone:'bad' }
+        ];
     }
 
     //===========================================================
@@ -927,13 +1001,11 @@ implements OnInit, OnDestroy
         this.selectedTab =
             value;
 
-        this.applyFilters();
-
-        this.cdr.detectChanges();
+        this.reload();
     }
 
     //===========================================================
-    // Search
+    // Search (asks the server 300 ms after the last key)
     //===========================================================
 
     onSearch
@@ -948,7 +1020,37 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        this.clearSearchTimer();
+
+        this.searchTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.reload();
+                },
+
+                this.SEARCH_DELAY_MS
+            );
+    }
+
+    private clearSearchTimer():
+        void
+    {
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(
+                this.searchTimer
+            );
+
+            this.searchTimer =
+                undefined;
+        }
     }
 
     //===========================================================
@@ -967,7 +1069,7 @@ implements OnInit, OnDestroy
             ||
             null;
 
-        this.applyFilters();
+        this.reload();
     }
 
     //===========================================================
@@ -990,7 +1092,8 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Sort
+    // Sort (the server sorts; display columns map to their raw
+    // values there)
     //===========================================================
 
     onSort
@@ -1006,77 +1109,15 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        const direction =
-            event.direction === 'asc'
-                ? 1
-                : -1;
+        this.sortField =
+            event.field;
 
-        // Display columns sort on their raw values
-        const field =
-            event.field === 'VoucherDateText'
-                ? 'VoucherDate'
-                : event.field === 'TotalAmountText'
-                    ? 'TotalAmount'
-                    : event.field;
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-        this.filteredFundTransfers =
-        [
-            ...this.filteredFundTransfers
-        ]
-        .sort
-        (
-            (a: any, b: any): number =>
-            {
-                const valueA =
-                    a[field];
-
-                const valueB =
-                    b[field];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1 * direction;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1 * direction;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return valueA.localeCompare(valueB) * direction;
-                }
-
-                return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * direction;
-            }
-        );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1086,6 +1127,8 @@ implements OnInit, OnDestroy
     refresh():
         void
     {
+        this.clearSearchTimer();
+
         this.searchText =
             '';
 
@@ -1095,32 +1138,18 @@ implements OnInit, OnDestroy
         this.selectedPartyType =
             null;
 
-        this.currentPage =
-            1;
+        this.sortField =
+            '';
 
-        this.loadItems();
+        this.sortDirection =
+            'asc';
+
+        this.reload();
     }
 
     //===========================================================
     // Pagination
     //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (this.currentPage - 1) * this.pageSize;
-
-        this.pagedFundTransfers =
-        [
-            ...this.filteredFundTransfers.slice
-            (
-                start,
-                start + this.pageSize
-            )
-        ];
-    }
 
     onPageChange
     (
@@ -1132,7 +1161,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     onPageSizeChange
@@ -1145,10 +1174,7 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1181,7 +1207,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.FundTransferId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1220,7 +1246,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.FundTransferId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1294,7 +1320,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.fundTransferService.delete(
-                item.FundTransferId
+                item.PublicId ?? ''
             )
         )
             .pipe(takeUntilDestroyed(this.destroyRef))

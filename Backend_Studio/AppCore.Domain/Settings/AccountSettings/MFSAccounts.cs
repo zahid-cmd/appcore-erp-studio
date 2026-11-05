@@ -29,6 +29,10 @@ public class MFSAccounts
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
+
     //===========================================================
     // Account Sub Group
     // (Reserved : SUB-002-002-003 - Cash With MFS)

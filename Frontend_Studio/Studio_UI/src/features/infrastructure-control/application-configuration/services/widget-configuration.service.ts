@@ -109,7 +109,7 @@ export class WidgetConfigurationService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<WidgetConfiguration>
     {
@@ -143,7 +143,7 @@ export class WidgetConfigurationService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
         Observable<any[]>
     {
@@ -268,7 +268,7 @@ export class WidgetConfigurationService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

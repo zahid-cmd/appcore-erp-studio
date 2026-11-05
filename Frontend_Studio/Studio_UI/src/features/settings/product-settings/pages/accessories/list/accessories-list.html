@@ -77,6 +77,43 @@
 
         </app-control-tabs>
 
+        <!-- =================================================
+             FILTERS : Category → Sub Category
+        ================================================== -->
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Categories"
+
+            [items]="categoryFilterItems"
+
+            minWidth="230px"
+
+            [value]="selectedCategoryId"
+
+            (valueChange)="onCategoryFilterChange($event)">
+
+        </app-search-dropdown>
+
+
+        <app-search-dropdown
+
+            pageToolbarRight
+
+            placeholder="All Sub Categories"
+
+            [items]="subCategoryFilterItems"
+
+            minWidth="300px"
+
+            [value]="selectedSubCategoryId"
+
+            (valueChange)="onSubCategoryFilterChange($event)">
+
+        </app-search-dropdown>
+
     </app-page-toolbar>
 
 
@@ -100,7 +137,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedAccessories"
+                [rows]="accessories"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -130,7 +167,7 @@
 
             canvasFooter
 
-            [totalRecords]="filteredAccessories.length"
+            [totalRecords]="totalRecords"
 
             [currentPage]="currentPage"
 
@@ -143,6 +180,34 @@
         </app-pagination>
 
     </app-page-canvas>
+
+
+
+    <!-- =====================================================
+         SUMMARY (search applied)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="acc-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="acc-summary-item">
+                    <span class="acc-summary-label">{{ item.label }}</span>
+                    <b
+                        class="acc-summary-value"
+                        [class.acc-ok]="item.tone === 'ok'"
+                        [class.acc-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="acc-summary-note">
+                Matching the search
+            </span>
+
+        </div>
+    }
 
 
 
@@ -174,4 +239,4 @@
 
     <app-progress-dialog></app-progress-dialog>
 
-</div>
+</div>

@@ -32,9 +32,6 @@ public class OpeningStockLines
 
     public decimal LineValue { get; set; }
 
-    // Optional; 0 = priced later on Product Pricing
-    public decimal SalePrice { get; set; }
-
     // Maximum retail price (VAT inclusive)
     public decimal Mrp { get; set; }
 
@@ -55,6 +52,9 @@ public class OpeningStockLines
     public string RackCode { get; set; } = string.Empty;
 
     public int ShelfNumber { get; set; }
+
+    // Bin on that shelf (1 .. the shelf's BinCount; 0 = no place)
+    public int BinNumber { get; set; }
 
     // Save the place as the product's default in the warehouse
     public bool SaveAsDefault { get; set; }

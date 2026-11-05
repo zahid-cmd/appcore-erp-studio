@@ -36,6 +36,15 @@ public class MotorBikesConfiguration
 
 
         //===========================================================
+        // Sales account (2026-11-04)
+        //===========================================================
+
+        builder.Property(x => x.SalesLedgerCode)
+               .IsRequired()
+               .HasMaxLength(50);
+
+
+        //===========================================================
         // Primary Key
         //===========================================================
 
@@ -43,6 +52,19 @@ public class MotorBikesConfiguration
 
         builder.Property(x => x.MotorBikeId)
                .ValueGeneratedOnAdd();
+
+
+        //===========================================================
+        // Public Id (links and API calls; uuid v7)
+        //===========================================================
+
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_MotorBikes_PublicId");
 
 
         //===========================================================

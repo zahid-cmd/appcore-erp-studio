@@ -120,14 +120,18 @@ public class AutoAccountsRepository : IAutoAccountsRepository
     {
         db => db.Set<ProductCategoryEntity>().AsNoTracking().Select(x => x.InventoryGroupCode),
         db => db.Set<ProductCategoryEntity>().AsNoTracking().Select(x => x.WipGroupCode),
-        db => db.Set<ProductCategoryEntity>().AsNoTracking().Select(x => x.CogsGroupCode)
+        db => db.Set<ProductCategoryEntity>().AsNoTracking().Select(x => x.CogsGroupCode),
+        // Sales group (CLS-005 / 006 / 008), 2026-11-04
+        db => db.Set<ProductCategoryEntity>().AsNoTracking().Select(x => x.SalesGroupCode)
     };
 
     private static readonly CodeSource[] InventorySubGroupSources =
     {
         db => db.Set<ProductSubCategoryEntity>().AsNoTracking().Select(x => x.InventorySubGroupCode),
         db => db.Set<ProductSubCategoryEntity>().AsNoTracking().Select(x => x.WipSubGroupCode),
-        db => db.Set<ProductSubCategoryEntity>().AsNoTracking().Select(x => x.CogsSubGroupCode)
+        db => db.Set<ProductSubCategoryEntity>().AsNoTracking().Select(x => x.CogsSubGroupCode),
+        // Sales sub group (CLS-005 / 006 / 008), 2026-11-04
+        db => db.Set<ProductSubCategoryEntity>().AsNoTracking().Select(x => x.SalesSubGroupCode)
     };
 
     private static readonly CodeSource[] InventoryLedgerSources =
@@ -136,16 +140,19 @@ public class AutoAccountsRepository : IAutoAccountsRepository
         db => db.Set<MotorBikesEntity>().AsNoTracking().Select(x => x.InventoryLedgerCode),
         db => db.Set<MotorBikesEntity>().AsNoTracking().Select(x => x.WipLedgerCode),
         db => db.Set<MotorBikesEntity>().AsNoTracking().Select(x => x.CogsLedgerCode),
+        db => db.Set<MotorBikesEntity>().AsNoTracking().Select(x => x.SalesLedgerCode),
 
         // Spare Parts
         db => db.Set<SparePartsEntity>().AsNoTracking().Select(x => x.InventoryLedgerCode),
         db => db.Set<SparePartsEntity>().AsNoTracking().Select(x => x.WipLedgerCode),
         db => db.Set<SparePartsEntity>().AsNoTracking().Select(x => x.CogsLedgerCode),
+        db => db.Set<SparePartsEntity>().AsNoTracking().Select(x => x.SalesLedgerCode),
 
         // Accessories
         db => db.Set<AccessoriesEntity>().AsNoTracking().Select(x => x.InventoryLedgerCode),
         db => db.Set<AccessoriesEntity>().AsNoTracking().Select(x => x.WipLedgerCode),
-        db => db.Set<AccessoriesEntity>().AsNoTracking().Select(x => x.CogsLedgerCode)
+        db => db.Set<AccessoriesEntity>().AsNoTracking().Select(x => x.CogsLedgerCode),
+        db => db.Set<AccessoriesEntity>().AsNoTracking().Select(x => x.SalesLedgerCode)
     };
 
 

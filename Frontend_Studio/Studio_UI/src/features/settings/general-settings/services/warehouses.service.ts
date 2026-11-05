@@ -325,7 +325,7 @@ export class WarehousesService
     getById
     (
         id:
-            number
+            string
     ):
 
         Observable<Warehouses>
@@ -478,10 +478,10 @@ export class WarehousesService
             CreateWarehouses
     ):
 
-        Observable<number>
+        Observable<string>
 
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
 
             this.apiUrl,
 
@@ -497,6 +497,9 @@ export class WarehousesService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateWarehouses
     ):
@@ -506,7 +509,7 @@ export class WarehousesService
     {
         return this.http.put<void>(
 
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );
@@ -521,7 +524,7 @@ export class WarehousesService
     delete
     (
         id:
-            number
+            string
     ):
 
         Observable<void>
@@ -578,7 +581,7 @@ export class WarehousesService
     getEntityHistory
     (
         id:
-            number
+            string
     ):
 
         Observable<any[]>

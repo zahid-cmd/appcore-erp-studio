@@ -20,6 +20,8 @@ using AccountClassEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.AccountClass;
 
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Settings.AccountSettings.AutoAccounts.DTOs;
 using AppCore.Domain.Common;
 using AppCore.Infrastructure.CodeMaster;
 
@@ -108,6 +110,9 @@ public class GeneralLedgersRepository : IGeneralLedgersRepository
                     {
                         GeneralLedgerId =
                             x.GeneralLedgerId,
+
+                        PublicId =
+                            x.PublicId,
 
                         AccountClassId =
                             x.AccountClassId,
@@ -253,6 +258,286 @@ public class GeneralLedgersRepository : IGeneralLedgersRepository
                     x.LedgerCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page : one page, server side)
+    //
+    // Tab (origin) by ledger CODE against the Auto Accounts
+    // registry, the one place that knows which pages create
+    // ledgers (as the browser did before):
+    //   manual    : neither an inventory nor a financial code
+    //   inventory : Motor Bikes / Spare Parts / Accessories
+    //   financial : any other auto-creating page
+    // Then the class / group / sub group filters, the search,
+    // the summary counts, the status, the sort and the page.
+    //===========================================================
+
+    private static SortMap<GeneralLedgersDto> ListSorts()
+    {
+        return new SortMap<GeneralLedgersDto>("LedgerCode")
+            .Add("AccountClassName", x => x.AccountClassName)
+            .Add("AccountGroupName", x => x.AccountGroupName)
+            .Add("AccountSubGroupName", x => x.AccountSubGroupName)
+            .Add("LedgerCode", x => x.LedgerCode)
+            .Add("LedgerName", x => x.LedgerName)
+            .Add("Mode", x => x.Mode)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.GeneralLedgerId);
+    }
+
+    public async Task<GeneralLedgersPagedResult>
+        GetPagedAsync
+        (
+            GeneralLedgersPageRequest request
+        )
+    {
+        //-------------------------------------------------------
+        // Auto ledger codes (upper case)
+        //-------------------------------------------------------
+
+        AutoAccountCodesDto codes =
+            await new AutoAccountsRepository(_context)
+                .GetCodesAsync();
+
+        List<string> inventoryCodes =
+            codes.InventoryLedgerCodes;
+
+        List<string> financialCodes =
+            codes.FinancialLedgerCodes;
+
+        //-------------------------------------------------------
+        // Tab (origin)
+        //-------------------------------------------------------
+
+        string origin =
+            (request.Origin ?? string.Empty)
+                .Trim()
+                .ToLowerInvariant();
+
+        IQueryable<GeneralLedgersDto> query =
+            GeneralLedgersQuery();
+
+        if
+        (
+            origin == "inventory"
+        )
+        {
+            query =
+                query.Where(x => inventoryCodes.Contains(x.LedgerCode.ToUpper()));
+        }
+        else if
+        (
+            origin == "financial"
+        )
+        {
+            query =
+                query.Where(x => financialCodes.Contains(x.LedgerCode.ToUpper()));
+        }
+        else
+        {
+            query =
+                query.Where
+                (
+                    x =>
+                        !inventoryCodes.Contains(x.LedgerCode.ToUpper()) &&
+                        !financialCodes.Contains(x.LedgerCode.ToUpper())
+                );
+        }
+
+        //-------------------------------------------------------
+        // Filter choices : classes / groups / sub groups holding
+        // ledgers of the tab
+        //-------------------------------------------------------
+
+        var holders =
+            await query
+                .Select
+                (
+                    x =>
+                        new
+                        {
+                            x.AccountClassId,
+                            x.AccountGroupId,
+                            x.AccountSubGroupId
+                        }
+                )
+                .Distinct()
+                .ToListAsync();
+
+        //-------------------------------------------------------
+        // Class / Group / Sub Group filters
+        //-------------------------------------------------------
+
+        if
+        (
+            request.AccountClassId is > 0
+        )
+        {
+            long classId =
+                request.AccountClassId.Value;
+
+            query =
+                query.Where(x => x.AccountClassId == classId);
+        }
+
+        if
+        (
+            request.AccountGroupId is > 0
+        )
+        {
+            long groupId =
+                request.AccountGroupId.Value;
+
+            query =
+                query.Where(x => x.AccountGroupId == groupId);
+        }
+
+        if
+        (
+            request.AccountSubGroupId is > 0
+        )
+        {
+            long subGroupId =
+                request.AccountSubGroupId.Value;
+
+            query =
+                query.Where(x => x.AccountSubGroupId == subGroupId);
+        }
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.AccountClassName, like) ||
+                        EF.Functions.ILike(x.ClassCode, like) ||
+                        EF.Functions.ILike(x.AccountGroupName, like) ||
+                        EF.Functions.ILike(x.GroupCode, like) ||
+                        EF.Functions.ILike(x.AccountSubGroupName, like) ||
+                        EF.Functions.ILike(x.SubGroupCode, like) ||
+                        EF.Functions.ILike(x.LedgerCode, like) ||
+                        EF.Functions.ILike(x.LedgerName, like) ||
+                        EF.Functions.ILike(x.Mode, like) ||
+                        EF.Functions.ILike(x.Remarks, like)
+                );
+        }
+
+        //-------------------------------------------------------
+        // Summary counts (status not applied)
+        //-------------------------------------------------------
+
+        int countAll =
+            await query.CountAsync();
+
+        int countActive =
+            await query.CountAsync(x => x.IsActive);
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        string status =
+            (request.Status ?? string.Empty)
+                .Trim()
+                .ToLowerInvariant();
+
+        if
+        (
+            status == "active"
+        )
+        {
+            query =
+                query.Where(x => x.IsActive);
+        }
+        else if
+        (
+            status == "inactive"
+        )
+        {
+            query =
+                query.Where(x => !x.IsActive);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            status == "active"
+                ? countActive
+                : status == "inactive"
+                    ? countAll - countActive
+                    : countAll;
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<GeneralLedgersDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        return new GeneralLedgersPagedResult
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = new Dictionary<string, int>
+            {
+                ["Total"] = countAll,
+                ["Active"] = countActive,
+                ["Inactive"] = countAll - countActive
+            },
+            ClassIds = holders.Select(x => x.AccountClassId).Distinct().ToList(),
+            GroupIds = holders.Select(x => x.AccountGroupId).Distinct().ToList(),
+            SubGroupIds = holders.Select(x => x.AccountSubGroupId).Distinct().ToList()
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<GeneralLedgersEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.GeneralLedgerId)
+            .FirstOrDefaultAsync();
     }
 
 

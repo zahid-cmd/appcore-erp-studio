@@ -33,6 +33,22 @@ public class EmiReimbursementSchemesConfiguration
 
         builder.HasKey(x => x.EmiReimbursementSchemeId);
 
+
+        // Public Id (links and API calls; uuid v7)
+
+        builder.Property(x => x.PublicId)
+
+               .IsRequired()
+
+               .HasDefaultValueSql("uuidv7()");
+
+
+        builder.HasIndex(x => x.PublicId)
+
+               .IsUnique()
+
+               .HasDatabaseName("UX_EmiReimbursementSchemes_PublicId");
+
         builder.Property(x => x.EmiReimbursementSchemeId)
                .ValueGeneratedOnAdd();
 

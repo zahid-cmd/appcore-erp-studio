@@ -311,6 +311,12 @@ implements OnInit
         0;
 
 
+    // Public Id from the link (uuid v7)
+    routePublicId:
+        string =
+        '';
+
+
 
     //===========================================================
     // Save Button Text
@@ -878,10 +884,10 @@ implements OnInit
 
         if
         (
-            id > 0
+            !!id
         )
         {
-            this.widgetConfigurationId =
+            this.routePublicId =
                 id;
 
 
@@ -910,7 +916,7 @@ implements OnInit
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -923,16 +929,12 @@ implements OnInit
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get(
-                        'id'
-                    )
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -944,7 +946,7 @@ implements OnInit
         }
 
 
-        return 0;
+        return '';
     }
 
 
@@ -1132,7 +1134,7 @@ implements OnInit
 
         this.widgetconfigurationservice
             .getById(
-                this.widgetConfigurationId
+                this.routePublicId
             )
             .subscribe(
             {
@@ -1143,6 +1145,10 @@ implements OnInit
                     ):
                         void =>
                 {
+                    // The internal id (used by the update body)
+                    this.widgetConfigurationId =
+                        Number(response.widgetConfigurationId) || 0;
+
                     const details =
                         (
                             response.details

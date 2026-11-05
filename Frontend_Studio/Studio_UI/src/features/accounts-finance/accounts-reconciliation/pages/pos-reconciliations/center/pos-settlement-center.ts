@@ -2235,8 +2235,10 @@ implements OnInit
     ):
         void
     {
-        const ids =
-            result?.VoucherIds ?? [];
+        // The vouchers' uuids (print links)
+        const ids:
+            (number | string)[] =
+            result?.VoucherPublicIds?.length ? result.VoucherPublicIds : result?.VoucherIds ?? [];
 
         if
         (
@@ -2273,7 +2275,7 @@ implements OnInit
         key:
             string,
         id:
-            number
+            number | string
     ):
         void
     {

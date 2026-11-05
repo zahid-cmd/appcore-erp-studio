@@ -6,6 +6,8 @@
 export interface ColorManagement
 {
     ColorManagementId: number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
 
     ColorCode: string;
 
@@ -58,4 +60,26 @@ export interface UpdateColorManagement
 export interface ColorManagementDefaults
 {
     Code: string;
+}
+
+
+//===============================================================
+// List page query (server-side paging)
+//===============================================================
+
+export interface ColorManagementPageQuery
+{
+    page:number;
+
+    pageSize:number;
+
+    search:string;
+
+    // Column field ('' = the default sort)
+    sort:string;
+
+    dir:'asc' | 'desc';
+
+    // true / false (null = all)
+    status:boolean | null;
 }

@@ -18,6 +18,10 @@ public class POSAccountDto
     public long POSAccountId { get; set; }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; }
+
+
     //===========================================================
     // Account Sub Group
     //===========================================================

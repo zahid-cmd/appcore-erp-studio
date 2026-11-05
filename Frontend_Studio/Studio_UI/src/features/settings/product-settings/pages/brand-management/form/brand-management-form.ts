@@ -318,8 +318,8 @@ implements OnInit, OnDestroy
 
 
     entityId:
-        number =
-        0;
+        string =
+        '';
 
 
 
@@ -668,7 +668,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.entityId =
@@ -700,7 +700,7 @@ implements OnInit, OnDestroy
     //===========================================================
 
     private resolveEntityId():
-        number
+        string
     {
         let currentRoute:
             ActivatedRoute | null =
@@ -713,14 +713,12 @@ implements OnInit, OnDestroy
         )
         {
             const id =
-                Number(
-                    currentRoute.snapshot.paramMap.get('id')
-                );
+                (currentRoute.snapshot.paramMap.get('id') ?? '').trim();
 
 
             if
             (
-                id > 0
+                !!id
             )
             {
                 return id;
@@ -732,7 +730,7 @@ implements OnInit, OnDestroy
         }
 
 
-        return 0;
+        return '';
     }
 
 
@@ -1166,13 +1164,13 @@ implements OnInit, OnDestroy
 
     private saveImage
     (
-        brandId:
-            number
+        publicId:
+            string
     ):
         Observable<boolean>
     {
         return this.runImageStep(
-            brandId
+            publicId
         )
             .pipe(
                 map(
@@ -1206,8 +1204,8 @@ implements OnInit, OnDestroy
 
     private runImageStep
     (
-        brandId:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
@@ -1215,12 +1213,12 @@ implements OnInit, OnDestroy
         (
             this.imageFile
             &&
-            brandId > 0
+            !!publicId
         )
         {
             return this.brandManagementservice
                 .uploadImage(
-                    brandId,
+                    publicId,
                     this.imageFile
                 )
                 .pipe(
@@ -1235,12 +1233,12 @@ implements OnInit, OnDestroy
         (
             this.imageRemoved
             &&
-            brandId > 0
+            !!publicId
         )
         {
             return this.brandManagementservice
                 .deleteImage(
-                    brandId
+                    publicId
                 );
         }
 
@@ -1613,9 +1611,9 @@ implements OnInit, OnDestroy
                 .pipe(
                     // Then upload the picked image to the new brand
                     switchMap(
-                        (id: number) =>
+                        (id: string) =>
                             this.saveImage(
-                                Number(id)
+                                String(id ?? '')
                             )
                     )
                 )
@@ -1729,14 +1727,16 @@ implements OnInit, OnDestroy
         this.withMinimumDuration(
             this.brandManagementservice
                 .update(
-                    model
+                    this.entityId,
+
+model
                 )
                 .pipe(
                     // Then upload / delete the image
                     switchMap(
                         () =>
                             this.saveImage(
-                                this.entity.BrandManagementId
+                                this.entityId
                             )
                     )
                 )

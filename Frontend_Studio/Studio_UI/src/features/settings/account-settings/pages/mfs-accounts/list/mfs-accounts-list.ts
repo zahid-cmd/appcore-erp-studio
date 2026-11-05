@@ -528,6 +528,15 @@ implements OnInit, OnDestroy
         MFSAccountListItem[] =
         [];
 
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
     filteredMFSAccounts:
         MFSAccountListItem[] =
         [];
@@ -860,6 +869,10 @@ implements OnInit, OnDestroy
         return {
             MFSAccountId:
                 resolveMfsAccountId(item),
+
+            // The id used in links and API calls (uuid v7)
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
 
             AccountSubGroupsId:
                 accountSubGroupsId,
@@ -1216,6 +1229,9 @@ implements OnInit, OnDestroy
                 );
 
                 this.applyFilters();
+
+
+                this.updateSummary();
 
                 this.loading =
                     false;
@@ -1638,20 +1654,20 @@ implements OnInit, OnDestroy
         item:
             any
     ):
-        number
+        string
     {
         const id =
-            Number(
-                item?.MFSAccountId
-                ||
-                resolveMfsAccountId(item)
-            );
+            String(
+                item?.PublicId
+                ??
+                item?.publicId
+                ??
+                ''
+            ).trim();
 
         if
         (
             !id
-            ||
-            id <= 0
         )
         {
             console.error(
@@ -1664,7 +1680,7 @@ implements OnInit, OnDestroy
                 'This MFS account has no id from the server, so it cannot be opened.'
             );
 
-            return 0;
+            return '';
         }
 
         return id;
@@ -1679,7 +1695,7 @@ implements OnInit, OnDestroy
         action:
             'add' | 'view' | 'edit',
         id?:
-            number
+            string
     ):
         void
     {
@@ -1747,7 +1763,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.navigateTo(
@@ -1783,7 +1799,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id > 0
+            !!id
         )
         {
             this.navigateTo(
@@ -1819,7 +1835,7 @@ implements OnInit, OnDestroy
 
         if
         (
-            id <= 0
+            !id
         )
         {
             return;
@@ -1863,7 +1879,7 @@ implements OnInit, OnDestroy
     private deleteItem
     (
         id:
-            number,
+            string,
         name:
             string
     ):
@@ -2393,4 +2409,32 @@ implements OnInit, OnDestroy
         this.historyOpened =
             false;
     }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.mfsAccounts ?? [];
+
+        const active =
+            all.filter(x => !!x?.Status).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
 }

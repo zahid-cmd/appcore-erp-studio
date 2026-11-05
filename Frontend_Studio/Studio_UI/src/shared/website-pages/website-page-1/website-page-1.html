@@ -1,0 +1,69 @@
+<!-- ===========================================================
+     WEBSITE PAGE 1 : HOME
+     -----------------------------------------------------------
+     Section ids (menu targets) : models · why · emi · service ·
+     branches · faq · test-ride
+============================================================ -->
+
+@if (content(); as site)
+{
+    <div class="page">
+
+        @if (site.bikes.length || (site.hero.photo && site.hero.welcome))
+        {
+            <app-hero [content]="site"></app-hero>
+        }
+
+        <!-- Offer ribbon centred over the moving strip -->
+        @if (offerActive() || site.tags.length)
+        {
+            <div class="ribbon-zone" [class.with-offer]="offerActive()">
+
+                @if (site.tags.length)
+                {
+                    <app-marquee-strip class="ribbon-back" [tags]="site.tags" [speed]="site.stripSpeed"></app-marquee-strip>
+                }
+
+                @if (offerActive())
+                {
+                    <app-offer-strip
+                        class="ribbon-front"
+                        [offer]="site.offer!"
+                        [company]="site.company">
+                    </app-offer-strip>
+                }
+
+            </div>
+        }
+
+        @if (site.bikes.length)
+        {
+            <app-featured-bikes id="models" [content]="site"></app-featured-bikes>
+        }
+
+        @if (site.why.points.length)
+        {
+            <app-why-us id="why" [why]="site.why"></app-why-us>
+        }
+
+        <app-emi-estimator id="emi" [content]="site"></app-emi-estimator>
+
+        @if (site.services.length)
+        {
+            <app-service-strip id="service" [content]="site"></app-service-strip>
+        }
+
+        @if (site.branches.length)
+        {
+            <app-branch-list id="branches" [branches]="site.branches"></app-branch-list>
+        }
+
+        @if (site.faq.length)
+        {
+            <app-faq-accordion id="faq" [content]="site"></app-faq-accordion>
+        }
+
+        <app-contact id="test-ride" [company]="site.company"></app-contact>
+
+    </div>
+}

@@ -108,6 +108,18 @@
 
             (keydown)="onKeyDown($event)" />
 
+        <span
+
+            *ngIf="blocked"
+
+            class="text-guard-note"
+
+            role="status">
+
+            English only
+
+        </span>
+
         <!-- =====================================================
              SUFFIX ICON
         ====================================================== -->
@@ -124,4 +136,4 @@
 
     </div>
 
-</div>
+</div>

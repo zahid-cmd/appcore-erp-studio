@@ -17,6 +17,9 @@ namespace AppCore.Domain.Entities.InventoryManagement.ProductReceiving;
 
 public abstract class ReceivingHeader
 {
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
     public long ReceivingId { get; set; }
 
     // MB / SP / AC

@@ -124,6 +124,9 @@ public class CustomizedServicesRepository :
                         CustomizedServiceId =
                             x.CustomizedServiceId,
 
+                        PublicId =
+                            x.PublicId,
+
                         ServiceCode =
                             x.ServiceCode,
 
@@ -208,6 +211,33 @@ public class CustomizedServicesRepository :
                     x.ServiceCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<CustomizedServiceEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.CustomizedServiceId)
+            .FirstOrDefaultAsync();
     }
 
 

@@ -1328,6 +1328,83 @@ public class AppDbContext
 
     // AUTO-END : OpeningStock
 
+    // AUTO-BEGIN : PriceAdjustment
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.PriceAdjustment>
+    PriceAdjustments
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PriceAdjustment
+
+    // AUTO-BEGIN : ProductTransfer
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.StockMovement.ProductTransfer>
+    ProductTransfers
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ProductTransfer
+
+    // AUTO-BEGIN : MassStoring
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.StockMovement.MassStoring>
+    MassStorings
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MassStoring
+
+    // AUTO-BEGIN : SalesEnquiries
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.SalesEnquiries>
+    SalesEnquiriess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesEnquiries
+
+    // AUTO-BEGIN : ServiceEnquiries
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.ServiceEnquiries>
+    ServiceEnquiriess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ServiceEnquiries
+
+    // AUTO-BEGIN : SalesInvoicesSp
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.SparePartsLubricantSales.SalesInvoicesSp>
+    SalesInvoicesSps
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesInvoicesSp
+
+    // AUTO-BEGIN : BikeModels
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.BikeModels>
+    BikeModelss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : BikeModels
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 
@@ -1350,6 +1427,22 @@ public class AppDbContext
     // Accessory ↔ Warehouse / Rack / Shelf (one row per warehouse)
     public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.AccessoryLocations>
     AccessoryLocationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Spare Part ↔ other sub categories (models) it also fits
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.SparePartFitments>
+    SparePartFitmentRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Accessory ↔ other sub categories (models) it also fits
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.AccessoryFitments>
+    AccessoryFitmentRows
     {
     get;
     set;
@@ -1436,6 +1529,278 @@ public class AppDbContext
 
     public DbSet<AppCore.Domain.Platform.Inventory.VatRegister>
     VatRegisterRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Product Price Index : the declared MRP of every product
+    public DbSet<AppCore.Domain.Platform.Inventory.ProductPriceIndex>
+    ProductPriceIndexRows
+    {
+    get;
+    set;
+    } = null!;
+
+
+    // Website Configuration page (custom page, General Settings) :
+    // the one configuration row
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.WebsiteConfigurations>
+    WebsiteConfigurationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // opening hours
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.WebsiteOpeningHours>
+    WebsiteOpeningHourRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // strip / why-us / service / FAQ lists
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.WebsiteContentItems>
+    WebsiteContentItemRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // brands shown, order, brand pages
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.WebsiteBrands>
+    WebsiteBrandRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // brands per branch
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.WebsiteBranchBrands>
+    WebsiteBranchBrandRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // warranty / terms / privacy parts
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.WebsitePolicies>
+    WebsitePolicyRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // policy sections
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.WebsitePolicySections>
+    WebsitePolicySectionRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Barcode Management : print history (runs + lines). A new
+    // table needs its DbSet : OnModelCreating applies only the
+    // configurations of entities with a DbSet
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.BarcodePrintRuns>
+    BarcodePrintRunRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.BarcodePrintRunLines>
+    BarcodePrintRunLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Price Adjustment : products, batch lines, supplier groups and
+    // releases (MANUAL : the head PriceAdjustments is in the sync's
+    // AUTO block). A new table needs its DbSet
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.PriceAdjustmentProducts>
+    PriceAdjustmentProductRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.PriceAdjustmentLines>
+    PriceAdjustmentLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.PriceAdjustmentSuppliers>
+    PriceAdjustmentSupplierRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.PriceAdjustmentReleases>
+    PriceAdjustmentReleaseRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Product Transfer : lines, batches taken, bikes (MANUAL : the
+    // head ProductTransfers is in the sync's AUTO block)
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.StockMovement.ProductTransferLines>
+    ProductTransferLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.StockMovement.ProductTransferBatches>
+    ProductTransferBatchRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.StockMovement.ProductTransferUnits>
+    ProductTransferUnitRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Mass Storing : lines (MANUAL : the head MassStorings is in the
+    // sync's AUTO block)
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.StockMovement.MassStoringLines>
+    MassStoringLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Storage Bins : zones, shelves (bins per shelf) and rack sub
+    // categories of Rack Management (MANUAL : the head
+    // RackManagements is in the sync's AUTO block)
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.RackZones>
+    RackZoneRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.RackShelves>
+    RackShelfRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.RackSubCategories>
+    RackSubCategoryRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Enquiry Setup : the five lists of the Enquiry Setup page
+    // (MANUAL : hand-written page, no Code Synchronization)
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.EnquirySetups>
+    EnquirySetupRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Enquiry Contacts : the enquirer list kept from the Sales /
+    // Service Enquiries forms (MANUAL : no page of its own)
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.EnquiryContacts>
+    EnquiryContactRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Service Enquiry Lines : services / parts asked for on a
+    // service enquiry (MANUAL : replaced with the enquiry)
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.ServiceEnquiryLines>
+    ServiceEnquiryLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Service Vehicles : bikes sold from our outlet, with their
+    // service schedule (MANUAL : shown on Service Enquiries)
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.ServiceVehicles>
+    ServiceVehicleRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.ServiceVehicleSchedules>
+    ServiceVehicleScheduleRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Sales Follow-ups : calls / visits logged on sales enquiries
+    // (MANUAL : hand-written page, no Code Sync)
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.SalesFollowUps>
+    SalesFollowUpRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Service Follow-ups : calls / visits logged on service enquiries
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.ServiceFollowUps>
+    ServiceFollowUpRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.ServiceAppointments>
+    ServiceAppointmentRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.SalesTestRides>
+    SalesTestRideRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Sales Invoices - SP : lines and Payment Desk rows (MANUAL : the
+    // head SalesInvoicesSp is in the sync's AUTO block). A new table
+    // needs its DbSet
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.SparePartsLubricantSales.SalesInvoicesSpLines>
+    SalesInvoicesSpLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.SparePartsLubricantSales.SalesInvoicesSpPayments>
+    SalesInvoicesSpPaymentRows
     {
     get;
     set;
@@ -1537,5 +1902,73 @@ public class AppDbContext
                     null;
             }
         );
+    }
+
+
+    //===========================================================
+    // English-only text (the database is Windows-1252)
+    //
+    // Text that Windows-1252 cannot hold (Bangla, emoji, "→" ...)
+    // is refused before saving, with the field named, instead of
+    // the database's 22P05 error. Controllers answer it as 400.
+    //===========================================================
+
+    private static readonly HashSet<char> Win1252Extra =
+        new("€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ");
+
+    private static bool IsStorable(char c)
+    {
+        return c == '\t'
+            || c == '\n'
+            || c == '\r'
+            || (c >= ' ' && c <= '~')
+            || (c >= '\u00A0' && c <= '\u00FF')
+            || Win1252Extra.Contains(c);
+    }
+
+    private void RefuseUnstorableText()
+    {
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State != EntityState.Added && entry.State != EntityState.Modified)
+            {
+                continue;
+            }
+
+            foreach (var property in entry.Properties)
+            {
+                if (property.Metadata.ClrType != typeof(string)
+                    || property.CurrentValue is not string text
+                    || (entry.State == EntityState.Modified && !property.IsModified))
+                {
+                    continue;
+                }
+
+                foreach (char c in text)
+                {
+                    if (!IsStorable(c))
+                    {
+                        throw new InvalidOperationException(
+                            $"\"{property.Metadata.Name}\" has letters that cannot be saved. Use English letters only (no Bangla, emoji or special symbols).");
+                    }
+                }
+            }
+        }
+    }
+
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        RefuseUnstorableText();
+
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        RefuseUnstorableText();
+
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 }

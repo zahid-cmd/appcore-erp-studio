@@ -110,6 +110,33 @@ public class MembershipServicesRepository :
 
 
     //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<MembershipServiceEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.MembershipServiceId)
+            .FirstOrDefaultAsync();
+    }
+
+
+    //===========================================================
     // Get By Id
     //===========================================================
 
@@ -221,6 +248,9 @@ public class MembershipServicesRepository :
                 {
                     MembershipServiceId =
                         row.MembershipServiceId,
+
+                    PublicId =
+                        row.PublicId,
 
                     ServiceCode =
                         row.ServiceCode,

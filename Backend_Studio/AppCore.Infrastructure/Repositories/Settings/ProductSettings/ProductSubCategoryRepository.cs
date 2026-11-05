@@ -25,7 +25,15 @@ using AccountClassEntity =
 using GeneralLedgersEntity =
     AppCore.Domain.Entities.Settings.AccountSettings.GeneralLedgers;
 
+using BikeModelsEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.BikeModels;
+
+using BrandManagementEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.BrandManagement;
+
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.Common.Paging;
 using AppCore.Domain.Common;
 
 
@@ -118,8 +126,30 @@ public class ProductSubCategoryRepository :
                         ProductSubCategoryId =
                             x.ProductSubCategoryId,
 
+                        PublicId =
+                            x.PublicId,
+
                         ProductCategoryId =
                             x.ProductCategoryId,
+
+                        BikeModelId =
+                            x.BikeModelId,
+
+                        ProductCategoryName =
+
+                            _context
+
+                                .Set<ProductCategoryEntity>()
+
+                                .Where(c => c.ProductCategoryId == x.ProductCategoryId)
+
+                                .Select(c => c.CategoryName)
+
+                                .FirstOrDefault()
+
+                            ??
+
+                            string.Empty,
 
                         SubCategoryCode =
                             x.SubCategoryCode,
@@ -144,6 +174,12 @@ public class ProductSubCategoryRepository :
 
                         CogsSubGroupName =
                             x.CogsSubGroupName,
+
+                        SalesSubGroupCode =
+                            x.SalesSubGroupCode,
+
+                        SalesSubGroupName =
+                            x.SalesSubGroupName,
 
                         SubCategoryCreationAllowed =
                             x.SubCategoryCreationAllowed,
@@ -193,6 +229,171 @@ public class ProductSubCategoryRepository :
                     x.SubCategoryCode
             )
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (the list page)
+    //
+    // Filters and search on the list query, the counts for the
+    // summary line, then the status, the total and one page.
+    //===========================================================
+
+    private SortMap<ProductSubCategoryDto> ListSorts()
+    {
+        return new SortMap<ProductSubCategoryDto>("SubCategoryCode")
+            .Add("SubCategoryCode", x => x.SubCategoryCode)
+            .Add("SubCategoryName", x => x.SubCategoryName)
+            .Add("ProductCategoryName", x => x.ProductCategoryName)
+            .Add("InventorySubGroupCode", x => x.InventorySubGroupCode)
+            .Add("WipSubGroupCode", x => x.WipSubGroupCode)
+            .Add("CogsSubGroupCode", x => x.CogsSubGroupCode)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.ProductSubCategoryId);
+    }
+
+    public async Task<PagedResult<ProductSubCategoryDto>>
+        GetPagedAsync
+        (
+            ProductSubCategoryPageRequest request
+        )
+    {
+        IQueryable<ProductSubCategoryDto> query =
+            ProductSubCategoryQuery();
+
+        //-------------------------------------------------------
+        // Search (case-insensitive "contains")
+        //-------------------------------------------------------
+
+        string search =
+            request.SafeSearch;
+
+        if
+        (
+            search.Length > 0
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(search);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.SubCategoryCode, like) ||
+                        EF.Functions.ILike(x.SubCategoryName, like) ||
+                        EF.Functions.ILike(x.ProductCategoryName, like) ||
+                        EF.Functions.ILike(x.InventorySubGroupCode, like) ||
+                        EF.Functions.ILike(x.WipSubGroupCode, like) ||
+                        EF.Functions.ILike(x.CogsSubGroupCode, like) ||
+                        EF.Functions.ILike(x.SalesSubGroupCode, like) ||
+                        EF.Functions.ILike(x.Remarks, like)
+                );
+        }
+
+        //-------------------------------------------------------
+        // Product Category filter
+        //-------------------------------------------------------
+
+        if
+        (
+            request.ProductCategoryId > 0
+        )
+        {
+            long productCategoryId =
+                request.ProductCategoryId.Value;
+
+            query =
+                query.Where(x => x.ProductCategoryId == productCategoryId);
+        }
+
+        //-------------------------------------------------------
+        // Summary counts (search and filters applied; not the
+        // status)
+        //-------------------------------------------------------
+
+        int countAll =
+            await query.CountAsync();
+
+        int countActive =
+            await query.CountAsync(x => x.IsActive);
+
+        Dictionary<string, int> summaryCounts =
+            new()
+            {
+                ["Total"] = countAll,
+                ["Active"] = countActive,
+                ["Inactive"] = countAll - countActive
+            };
+
+        //-------------------------------------------------------
+        // Status
+        //-------------------------------------------------------
+
+        if
+        (
+            request.Status.HasValue
+        )
+        {
+            bool active =
+                request.Status.Value;
+
+            query =
+                query.Where(x => x.IsActive == active);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        List<ProductSubCategoryDto> rows =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        return new PagedResult<ProductSubCategoryDto>
+        {
+            Items = rows,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = summaryCounts
+        };
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<ProductSubCategoryEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.ProductSubCategoryId)
+            .FirstOrDefaultAsync();
     }
 
 
@@ -642,7 +843,14 @@ public class ProductSubCategoryRepository :
             CogsSubGroupCode =
                 SubGroupCode(
                     parent.CogsGroup,
-                    number)
+                    number),
+
+            SalesSubGroupCode =
+                ProductSalesAccounts.SubGroupCodeOf(
+                    parent.Category.CategoryType,
+                    SubGroupCode(
+                        parent.InventoryGroup,
+                        number))
         };
     }
 
@@ -682,6 +890,226 @@ public class ProductSubCategoryRepository :
         }
 
         return name;
+    }
+
+
+    //===========================================================
+    // Name + Bike Model
+    //
+        // Motor Bikes / Spare Parts / Accessories :
+    //     a Bike Model of the category's brand is required; the
+    //     name is built by the server as
+    //     "<Category Type> - <Brand> - <Model>".
+    //     A model is used once per category (A04 can have one
+    //     Motor Bikes, one Spare Parts and one Accessories sub
+    //     category).
+    // Lubricants : no model; the name is typed.
+    //===========================================================
+
+    private static readonly HashSet<string> ModelCategoryTypes =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Motor Bikes",
+            "Spare Parts",
+            "Accessories"
+        };
+
+
+    private async Task<(string Name, long? BikeModelId)>
+        ResolveNameAsync
+        (
+            ProductCategoryEntity category,
+            long? bikeModelId,
+            string? typedName,
+            long excludeSubCategoryId,
+            long? currentBikeModelId
+        )
+    {
+        string categoryType =
+            category.CategoryType?.Trim()
+            ??
+            string.Empty;
+
+        if
+        (
+            !ModelCategoryTypes.Contains(
+                categoryType)
+        )
+        {
+            return (NormalizeName(typedName), null);
+        }
+
+        if
+        (
+            !(bikeModelId > 0)
+        )
+        {
+            throw new InvalidOperationException(
+                $"Model is required for a {categoryType} sub category.");
+        }
+
+        BikeModelsEntity? model =
+            await _context
+                .Set<BikeModelsEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        x.BikeModelId ==
+                        bikeModelId.Value
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            model ==
+            null
+        )
+        {
+            throw new InvalidOperationException(
+                "The selected Bike Model was not found.");
+        }
+
+        // An inactive model is kept only when it is not changed
+        if
+        (
+            !model.Status
+            &&
+            model.BikeModelId !=
+            currentBikeModelId
+        )
+        {
+            throw new InvalidOperationException(
+                $"Bike Model '{model.ModelName}' is inactive.");
+        }
+
+        if
+        (
+            model.BrandManagementId !=
+            category.BrandManagementId
+        )
+        {
+            throw new InvalidOperationException(
+                $"Bike Model '{model.ModelName}' does not belong to the brand of '{category.CategoryName}'.");
+        }
+
+        await EnsureBikeModelFreeAsync(
+            category.ProductCategoryId,
+            model.BikeModelId,
+            excludeSubCategoryId,
+            false);
+
+        string brandName =
+            await _context
+                .Set<BrandManagementEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.BrandManagementId ==
+                        model.BrandManagementId
+                )
+                .Select
+                (
+                    x =>
+                        x.BrandName
+                )
+                .FirstOrDefaultAsync()
+            ??
+            string.Empty;
+
+        string name =
+            string.Join(
+                " - ",
+                new[]
+                {
+                    categoryType,
+                    brandName.Trim(),
+                    model.ModelName.Trim()
+                }
+                .Where(x => x.Length > 0));
+
+        return (NormalizeName(name), model.BikeModelId);
+    }
+
+
+    //===========================================================
+    // A Bike Model is linked to one sub category per category
+    //===========================================================
+
+    private async Task
+        EnsureBikeModelFreeAsync
+        (
+            long productCategoryId,
+            long? bikeModelId,
+            long excludeSubCategoryId,
+            bool forRestore
+        )
+    {
+        if
+        (
+            !(bikeModelId > 0)
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            forRestore
+            &&
+            !await _context
+                .Set<BikeModelsEntity>()
+                .AsNoTracking()
+                .AnyAsync
+                (
+                    x =>
+                        x.BikeModelId ==
+                        bikeModelId.Value
+                        &&
+                        !x.IsDeleted
+                )
+        )
+        {
+            throw new InvalidOperationException(
+                "Its Bike Model is deleted; restore the bike model first.");
+        }
+
+        string? usedBy =
+            await _context
+                .Set<ProductSubCategoryEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.ProductCategoryId ==
+                        productCategoryId
+                        &&
+                        x.BikeModelId ==
+                        bikeModelId
+                        &&
+                        !x.IsDeleted
+                        &&
+                        x.ProductSubCategoryId !=
+                        excludeSubCategoryId
+                )
+                .Select
+                (
+                    x =>
+                        x.SubCategoryName
+                )
+                .FirstOrDefaultAsync();
+
+        if
+        (
+            usedBy !=
+            null
+        )
+        {
+            throw new InvalidOperationException(
+                $"This Bike Model is already used by sub category '{usedBy}' in this category.");
+        }
     }
 
 
@@ -1190,9 +1618,13 @@ public class ProductSubCategoryRepository :
                 dto.ProductCategoryId,
                 true);
 
-        string subCategoryName =
-            NormalizeName(
-                dto.SubCategoryName);
+        (string subCategoryName, long? bikeModelId) =
+            await ResolveNameAsync(
+                parent.Category,
+                dto.BikeModelId,
+                dto.SubCategoryName,
+                0,
+                null);
 
         int number =
             await GetNextSubNumberAsync(
@@ -1226,6 +1658,9 @@ public class ProductSubCategoryRepository :
 
                 SubCategoryName =
                     subCategoryName,
+
+                BikeModelId =
+                    bikeModelId,
 
                 InventorySubGroupCode =
                     inventoryCode,
@@ -1284,8 +1719,12 @@ public class ProductSubCategoryRepository :
         // Sub category + its three sub groups in one transaction
         //=======================================================
 
+        // Joins the caller's transaction when one is open (Model
+        // Onboarding saves model, sub category and bikes as one)
         await using var transaction =
-            await _context.Database.BeginTransactionAsync();
+            _context.Database.CurrentTransaction == null
+                ? await _context.Database.BeginTransactionAsync()
+                : null;
 
         _context
             .Set<ProductSubCategoryEntity>()
@@ -1297,6 +1736,9 @@ public class ProductSubCategoryRepository :
             parent,
             userId);
 
+        // Sales account sub group (CLS-005 / 006 / 008)
+        await ProductSalesAccounts.SyncSubCategoryAsync(_context, entity, userId);
+
         await _context.SaveChangesAsync();
 
         AddHistory(
@@ -1307,7 +1749,10 @@ public class ProductSubCategoryRepository :
 
         await _context.SaveChangesAsync();
 
-        await transaction.CommitAsync();
+        if (transaction != null)
+        {
+            await transaction.CommitAsync();
+        }
 
         return entity.ProductSubCategoryId;
     }
@@ -1367,9 +1812,13 @@ public class ProductSubCategoryRepository :
                 entity.ProductCategoryId,
                 false);
 
-        string subCategoryName =
-            NormalizeName(
-                dto.SubCategoryName);
+        (string subCategoryName, long? bikeModelId) =
+            await ResolveNameAsync(
+                parent.Category,
+                dto.BikeModelId,
+                dto.SubCategoryName,
+                entity.ProductSubCategoryId,
+                entity.BikeModelId);
 
         await EnsureUniqueAsync(
             entity.ProductCategoryId,
@@ -1380,6 +1829,9 @@ public class ProductSubCategoryRepository :
 
         entity.SubCategoryName =
             subCategoryName;
+
+        entity.BikeModelId =
+            bikeModelId;
 
         entity.InventorySubGroupName =
             SubGroupName(
@@ -1432,6 +1884,9 @@ public class ProductSubCategoryRepository :
             entity,
             parent,
             userId);
+
+        // Sales account sub group (CLS-005 / 006 / 008)
+        await ProductSalesAccounts.SyncSubCategoryAsync(_context, entity, userId);
 
         await _context.SaveChangesAsync();
 
@@ -1558,6 +2013,9 @@ public class ProductSubCategoryRepository :
                 now;
         }
 
+        // Sales account sub group follows
+        await ProductSalesAccounts.SyncSubCategoryAsync(_context, entity, userId);
+
         await _context.SaveChangesAsync();
 
         AddHistory(
@@ -1623,6 +2081,12 @@ public class ProductSubCategoryRepository :
                 entity.SubCategoryCode,
                 entity.SubCategoryName,
                 entity.ProductSubCategoryId);
+
+            await EnsureBikeModelFreeAsync(
+                entity.ProductCategoryId,
+                entity.BikeModelId,
+                entity.ProductSubCategoryId,
+                true);
         }
         catch
         (
@@ -1691,6 +2155,9 @@ public class ProductSubCategoryRepository :
             parent,
             userId);
 
+        // Sales account sub group (CLS-005 / 006 / 008)
+        await ProductSalesAccounts.SyncSubCategoryAsync(_context, entity, userId);
+
         await _context.SaveChangesAsync();
 
         AddHistory(
@@ -1728,4 +2195,4 @@ public class ProductSubCategoryRepository :
                     !x.IsDeleted
             );
     }
-}
+}

@@ -1,0 +1,150 @@
+/* =====================================================
+   EMI ESTIMATE
+===================================================== */
+
+.emi
+{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+    border:1px solid var(--w-card-edge);
+    border-radius:28px;
+    overflow:hidden;
+    background:var(--w-panel);
+}
+
+
+.controls
+{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    padding:36px;
+}
+
+
+.controls .title
+{
+    font-size:clamp(36px, 4vw, 52px);
+}
+
+
+.field
+{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+
+.label
+{
+    color:var(--w-muted);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.8px;
+    text-transform:uppercase;
+}
+
+
+.select
+{
+    height:44px;
+    padding:0 12px;
+    border:1px solid var(--w-ghost-edge);
+    border-radius:12px;
+    background:var(--w-bg);
+    color:var(--w-text);
+    font:inherit;
+    font-weight:700;
+}
+
+
+.pills
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+
+.pill
+{
+    height:40px;
+    padding:0 16px;
+    border:1px solid var(--w-ghost-edge);
+    border-radius:11px;
+    background:transparent;
+    color:var(--w-text);
+    font:inherit;
+    font-weight:800;
+    cursor:pointer;
+}
+
+
+.pill.on
+{
+    border-color:var(--w-accent);
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+}
+
+
+.result
+{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+    gap:14px;
+    padding:36px;
+    background:
+        radial-gradient(80% 80% at 70% 30%, rgba(245,158,11,.22), rgba(245,158,11,0)),
+        var(--w-bg-2);
+}
+
+
+.muted
+{
+    color:var(--w-muted);
+    font-size:13.5px;
+    font-weight:700;
+}
+
+
+.amount
+{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:10px;
+}
+
+
+.amount b
+{
+    font-family:var(--w-display);
+    font-size:clamp(56px, 7vw, 88px);
+    line-height:1;
+    color:var(--w-kicker);
+}
+
+
+.amount span
+{
+    color:var(--w-text);
+    font-size:16px;
+}
+
+
+.detail
+{
+    color:var(--w-text);
+    font-size:14px;
+}
+
+
+.note
+{
+    color:var(--w-faint);
+    font-size:12.5px;
+}

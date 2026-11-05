@@ -93,17 +93,67 @@ public class SourceControlController
 
 
     //===========================================================
-    // Get By Id
+    // Get By Internal Id (system use only : the login pages /
+    // git operation load a fixed record by its number)
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    [HttpGet("by-id/{id:long}")]
 
     public async Task<IActionResult>
-        GetById
+        GetByInternalId
     (
         long id
     )
     {
+        var entity =
+            await _repository
+                .GetByIdAsync(
+                    id
+                );
+
+        if
+        (
+            entity is null
+        )
+        {
+            return NotFound(
+                new
+                {
+                    message =
+                        "Source Control repository not found."
+                }
+            );
+        }
+
+        return Ok(
+            entity
+        );
+    }
+
+
+    //===========================================================
+    // Get By Id
+    //===========================================================
+
+    [HttpGet("{publicId:guid}")]
+
+    public async Task<IActionResult>
+        GetById
+    (
+        Guid publicId
+    )
+    {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         try
         {
             var entity =
@@ -245,17 +295,28 @@ public class SourceControlController
     // Update
     //===========================================================
 
-    [HttpPut("{id:long}")]
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult>
         Update
     (
-        long id,
+        Guid publicId,
 
         [FromBody]
         UpdateSourceControlDto dto
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         try
         {
             if
@@ -272,20 +333,9 @@ public class SourceControlController
                 );
             }
 
-
-            if
-            (
-                id != dto.SourceControlId
-            )
-            {
-                return BadRequest(
-                    new
-                    {
-                        message =
-                            "Repository identifier does not match."
-                    }
-                );
-            }
+            // The row comes from the link's Public Id
+            dto.SourceControlId =
+                id;
 
 
             var entity =
@@ -371,14 +421,25 @@ public class SourceControlController
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<IActionResult>
         Delete
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         try
         {
             var entity =
@@ -528,14 +589,25 @@ public class SourceControlController
     // Get Entity History
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    [HttpGet("{publicId:guid}/history")]
 
     public async Task<IActionResult>
         GetEntityHistory
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         try
         {
             var entity =

@@ -204,7 +204,7 @@ export class DepartmentService
 
     getById(
         id:
-            number
+            string
     ):
         Observable<Department>
     {
@@ -256,7 +256,7 @@ export class DepartmentService
 
     delete(
         id:
-            number
+            string
     ):
         Observable<void>
     {

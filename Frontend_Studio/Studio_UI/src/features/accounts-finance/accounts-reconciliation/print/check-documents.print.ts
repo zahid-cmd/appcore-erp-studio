@@ -232,7 +232,7 @@ function checkDocuments
             injector:
                 Injector,
             id:
-                number
+                number | string
         ):
             Promise<CheckDocumentsData>
         {
@@ -243,7 +243,7 @@ function checkDocuments
                 await firstValueFrom(service.getAll(direction));
 
             const check =
-                (checks ?? []).find(item => Number(item.PaymentId) === id);
+                (checks ?? []).find(item => String(item.PaymentPublicId ?? '') === String(id) || String(item.PaymentId) === String(id));
 
             if
             (

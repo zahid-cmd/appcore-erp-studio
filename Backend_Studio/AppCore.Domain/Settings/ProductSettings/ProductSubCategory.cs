@@ -22,11 +22,27 @@ public class ProductSubCategory
     }
 
 
+    // The id used in links and API calls (uuid v7)
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
+
     //===========================================================
     // Product Category
     //===========================================================
 
     public long ProductCategoryId
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
+    // Bike Model (Motor Bikes categories only; the name is then
+    // built as "Motor Bikes - <Brand> - <Model>")
+    //===========================================================
+
+    public long? BikeModelId
     {
         get;
         set;
@@ -95,6 +111,25 @@ public class ProductSubCategory
 
 
     public string CogsSubGroupName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    //===========================================================
+    // Sales Account Sub Group (2026-11-04) : SUB-ccc-ggg-sss
+    // under the category's sales group
+    //===========================================================
+
+    public string SalesSubGroupCode
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string SalesSubGroupName
     {
         get;
         set;
@@ -185,4 +220,4 @@ public class ProductSubCategory
         get;
         set;
     }
-}
+}

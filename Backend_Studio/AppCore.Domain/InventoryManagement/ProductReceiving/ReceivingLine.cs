@@ -50,5 +50,8 @@ public abstract class ReceivingLine
 
     public int ShelfNumber { get; set; }
 
+    // Bin on that shelf (1 .. the shelf's BinCount; 0 = no place)
+    public int BinNumber { get; set; }
+
     public string ShortNotes { get; set; } = string.Empty;
 }

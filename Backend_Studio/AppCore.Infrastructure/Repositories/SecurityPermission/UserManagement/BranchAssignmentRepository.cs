@@ -180,6 +180,9 @@ public class BranchAssignmentRepository
                     BranchAssignmentId =
                         item.Assignment.BranchAssignmentId,
 
+                    PublicId =
+                        item.Assignment.PublicId,
+
                     UserProfileId =
                         item.Assignment.UserProfileId,
 
@@ -241,6 +244,9 @@ public class BranchAssignmentRepository
                 {
                     BranchAssignmentId =
                         branchAssignment.BranchAssignmentId,
+
+                    PublicId =
+                        branchAssignment.PublicId,
 
                     UserProfileId =
                         branchAssignment.UserProfileId,
@@ -341,6 +347,9 @@ public class BranchAssignmentRepository
                 {
                     BranchAssignmentId =
                         branchAssignment.BranchAssignmentId,
+
+                    PublicId =
+                        branchAssignment.PublicId,
 
                     UserProfileId =
                         branchAssignment.UserProfileId,
@@ -1720,5 +1729,32 @@ public class BranchAssignmentRepository
 
             throw;
         }
+    }
+
+
+    //===========================================================
+    // Public Id -> internal id (live rows only)
+    //===========================================================
+
+    public async Task<long?>
+        GetIdByPublicIdAsync
+        (
+            Guid publicId
+        )
+    {
+        if
+        (
+            publicId == Guid.Empty
+        )
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<global::AppCore.Domain.Entities.SecurityPermission.UserManagement.BranchAssignment>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+            .Select(x => (long?)x.BranchAssignmentId)
+            .FirstOrDefaultAsync();
     }
 }

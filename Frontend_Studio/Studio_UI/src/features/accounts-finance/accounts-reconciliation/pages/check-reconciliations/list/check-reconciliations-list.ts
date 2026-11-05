@@ -2073,7 +2073,7 @@ implements OnInit
     {
         this.openPrint(
             row.Direction === 'Issued' ? 'check-issued' : 'check-received',
-            row.PaymentId);
+            row.PaymentPublicId || row.PaymentId);
     }
 
     private openPrint
@@ -2081,7 +2081,7 @@ implements OnInit
         key:
             string,
         id:
-            number
+            number | string
     ):
         void
     {

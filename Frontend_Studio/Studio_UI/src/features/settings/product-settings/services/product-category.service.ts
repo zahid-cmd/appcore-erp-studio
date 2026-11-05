@@ -37,6 +37,20 @@ import
 }
 from '../models/product-category.model';
 
+import
+{
+    ProductCategoryPageQuery
+}
+from '../models/product-category.model';
+
+import
+{
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
 
 //===============================================================
 // Product Category Service
@@ -168,6 +182,12 @@ export class ProductCategoryService
                                     ??
                                     '',
 
+                                SalesGroupCode:
+                                    productCategory.SalesGroupCode ?? productCategory.salesGroupCode ?? '',
+
+                                SalesGroupName:
+                                    productCategory.SalesGroupName ?? productCategory.salesGroupName ?? '',
+
                                 InventoryGroupName:
                                     productCategory.InventoryGroupName
                                     ??
@@ -214,6 +234,42 @@ export class ProductCategoryService
                                         true
                                     )
                             })
+                        )
+                )
+            );
+    }
+
+
+
+    //===========================================================
+    // Get Paged (the list page : one page from the server, with
+    // the summary counts; rows are normalized by the list)
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            ProductCategoryPageQuery
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                {
+                    params:
+                        toPagedParams(
+                            { ...query }
+                        )
+                }
+            )
+            .pipe(
+                map(
+                    response =>
+                        toPagedResult(
+                            response,
+                            item =>
+                                item
                         )
                 )
             );
@@ -306,7 +362,10 @@ export class ProductCategoryService
                             ??
                             response.CogsGroupCode
                             ??
-                            ''
+                            '',
+
+                        SalesGroupCodes:
+                            response.salesGroupCodes ?? response.SalesGroupCodes ?? {}
                     })
                 )
             );
@@ -319,7 +378,7 @@ export class ProductCategoryService
 
     getById(
         id:
-            number
+            string
     ):
         Observable<ProductCategory>
     {
@@ -337,9 +396,9 @@ export class ProductCategoryService
         model:
             CreateProductCategory
     ):
-        Observable<number>
+        Observable<string>
     {
-        return this.http.post<number>(
+        return this.http.post<string>(
             this.apiUrl,
             model
         );
@@ -351,13 +410,16 @@ export class ProductCategoryService
     //===========================================================
 
     update(
+        publicId:
+            string,
+
         model:
             UpdateProductCategory
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -369,7 +431,7 @@ export class ProductCategoryService
 
     delete(
         id:
-            number
+            string
     ):
         Observable<void>
     {
