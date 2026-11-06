@@ -144,6 +144,12 @@ export const PRINT_SOURCES:
             import('../../features/sales-operations/spare-parts-lubricant-sales/print/sales-invoices-sp.print')
                 .then(module => module.SALES_INVOICES_SP_PRINT),
 
+    // Sales Operations : Sales Invoices - AC (same two documents)
+    'sales-invoices-ac':
+        () =>
+            import('../../features/sales-operations/accessories-sales/print/sales-invoices-ac.print')
+                .then(module => module.SALES_INVOICES_AC_PRINT),
+
     // Accounts & Finance : Auto Journal Registers (Journal
     // Register; the id is the page's filter token)
     'auto-journal-registers':

@@ -1,0 +1,804 @@
+@import '../../../../../shared/styles/app-form-page.css';
+
+
+/* =====================================================
+   MODEL ONBOARDING
+   Left : Model (2 x 2 inputs, stock levels) + a floating
+          box with the auto generated codes
+   Right: products by colour (rows scroll on their own)
+   Everything fits the 660 px canvas : the body scrolls
+   instead of clipping when the window is short.
+===================================================== */
+
+.mob-body
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: #f8fafd;
+}
+
+.mob-panels
+{
+    display: flex;
+    flex: 1 1 auto;
+    gap: 16px;
+    min-height: 0;
+}
+
+
+/* ---------- Left column ---------- */
+
+.mob-left
+{
+    display: flex;
+    flex: 5 1 440px;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    min-height: 0;
+    /* safety only : never clip on a very short canvas */
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.mob-panel
+{
+    flex: 0 0 auto;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.mob-panel-head
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 18px;
+    background: #f7f9fc;
+    border-bottom: 1px solid #e3e9f3;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.mob-panel-head i
+{
+    color: #3b4fc4;
+}
+
+.mob-panel-count
+{
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3b4fc4;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.mob-panel-body
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 18px 14px;
+}
+
+.mob-grid-2
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+}
+
+.mob-grid-3
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 16px;
+}
+
+/* The model hint takes no extra row height */
+.mob-field
+{
+    position: relative;
+    min-width: 0;
+}
+
+.mob-hint
+{
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.mob-hint-ok
+{
+    color: #047857;
+}
+
+.mob-hint-bad
+{
+    color: #be123c;
+}
+
+.mob-levels
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 10px;
+    border-top: 1px dashed #dbe3f0;
+}
+
+.mob-levels-title
+{
+    color: #334155;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.mob-levels-title small
+{
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* ---------- Floating box : auto generated codes (fills the
+   rest of the left column) ---------- */
+
+.mob-codes
+{
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 8px;
+    min-height: min-content;
+    padding: 10px 14px;
+    border: 1px solid #d6e2fb;
+    border-radius: 16px;
+    background:
+        radial-gradient(120% 90% at 100% 0%, rgba(99, 102, 241, 0.10) 0%, transparent 60%),
+        linear-gradient(160deg, #f8fbff 0%, #eef3ff 100%);
+    box-shadow: 0 14px 32px rgba(37, 56, 140, 0.10), 0 2px 6px rgba(15, 23, 42, 0.05);
+}
+
+.mob-codes-head
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mob-codes-head > div
+{
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2px 10px;
+    min-width: 0;
+}
+
+.mob-codes-badge
+{
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #3b4fc4 0%, #6366f1 100%);
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(59, 79, 196, 0.30);
+}
+
+.mob-codes-head b
+{
+    color: #1e2a6e;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.mob-codes-head small
+{
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+/* 2 x 2 tiles that stretch to the full height */
+.mob-codes-grid
+{
+    display: grid;
+    flex: 1 1 auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(min-content, 1fr);
+    gap: 8px;
+}
+
+.mob-code
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    min-width: 0;
+    padding: 6px 12px 6px 50px;
+    border: 1px solid rgba(214, 226, 251, 0.9);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(4px);
+}
+
+.mob-code-icon
+{
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    background: #eef2ff;
+    color: #3b4fc4;
+    transform: translateY(-50%);
+}
+
+.mob-code-label
+{
+    line-height: 1.3;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.mob-code-value
+{
+    overflow: hidden;
+    line-height: 1.25;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.mob-code-sub
+{
+    overflow: hidden;
+    line-height: 1.35;
+    color: #475569;
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+/* ---------- Right column : products by colour ---------- */
+
+.mob-right
+{
+    display: flex;
+    flex: 6 1 520px;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Colour palette : premium chips with a glossy orb */
+.mob-palette
+{
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #eef2f7;
+    background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+}
+
+.mob-chip
+{
+    --sw: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    height: 38px;
+    padding: 0 14px 0 5px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.mob-chip:hover
+{
+    border-color: color-mix(in srgb, var(--sw) 45%, #e2e8f0);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--sw) 22%, transparent);
+    transform: translateY(-1px);
+}
+
+.mob-chip.is-on
+{
+    border-color: color-mix(in srgb, var(--sw) 70%, #1e293b);
+    background: color-mix(in srgb, var(--sw) 12%, #ffffff);
+    color: #0f172a;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sw) 18%, transparent), 0 4px 12px color-mix(in srgb, var(--sw) 20%, transparent);
+}
+
+.mob-chip:disabled
+{
+    cursor: default;
+    opacity: 0.7;
+    transform: none;
+}
+
+.mob-chip-dot
+{
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 45%),
+        var(--sw);
+    color: #ffffff;
+    font-size: 11px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.mob-chip.is-plain .mob-chip-dot
+{
+    background: repeating-linear-gradient(45deg, #f1f5f9 0 4px, #e2e8f0 4px 8px);
+    color: #334155;
+    text-shadow: none;
+}
+
+
+/* Product cards : exactly four fill the area; more scroll here
+   (and only here) */
+.mob-rows
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 14px 18px;
+    overflow-y: auto;
+    container-type: size;
+}
+
+.mob-rows-inner
+{
+    display: grid;
+    grid-auto-rows: calc((100cqh - 30px) / 4);
+    gap: 10px;
+    min-height: 100%;
+}
+
+.mob-card
+{
+    --sw: #cbd5e1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    min-height: 64px;
+    padding: 10px 14px 10px 22px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--sw) 28%, #e3e9f3);
+    border-radius: 16px;
+    background:
+        radial-gradient(140% 120% at 100% 50%, color-mix(in srgb, var(--sw) 14%, transparent) 0%, transparent 55%),
+        #ffffff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.mob-card-band
+{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 7px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--sw) 70%, #ffffff) 0%, var(--sw) 100%);
+}
+
+.mob-card-index
+{
+    position: absolute;
+    right: 128px;
+    bottom: -12px;
+    color: color-mix(in srgb, var(--sw) 18%, #eef2f7);
+    font-size: 64px;
+    font-weight: 900;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+.mob-card-main
+{
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.mob-card-title
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.mob-card-orb
+{
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 45%),
+        var(--sw);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sw) 20%, transparent);
+}
+
+.mob-card-title b
+{
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 14.5px;
+    font-weight: 800;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.mob-card-meta
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.mob-card-code
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 7px;
+    background: #1e2a6e;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.mob-card-tag
+{
+    padding: 2px 7px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.mob-card-levels
+{
+    margin-left: 4px;
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.mob-card-levels::before
+{
+    content: 'Levels ';
+    font-weight: 600;
+}
+
+.mob-card-drop
+{
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 64px;
+    height: 52px;
+    border: 1.5px dashed color-mix(in srgb, var(--sw) 45%, #b8c7e6);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #3b4fc4;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.mob-card-drop i
+{
+    font-size: 15px;
+}
+
+.mob-card-drop:hover
+{
+    border-style: solid;
+    background: #ffffff;
+}
+
+.mob-card-drop input
+{
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.mob-card-drop.is-disabled
+{
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.mob-card-photo
+{
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 52px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.mob-card-photo img
+{
+    max-width: 92%;
+    max-height: 92%;
+    object-fit: contain;
+}
+
+.mob-card-photo-clear
+{
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: #be123c;
+    color: #ffffff;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.mob-card-remove
+{
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.mob-card-remove:hover
+{
+    background: #fff1f2;
+    color: #be123c;
+}
+
+
+.mob-empty
+{
+    display: flex;
+    grid-row: span 4;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    color: #64748b;
+    font-size: 13.5px;
+    text-align: center;
+}
+
+.mob-link-button
+{
+    margin-left: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #3b4fc4;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+
+/* ---------- Result of the last save ---------- */
+
+.mob-result
+{
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border: 1px solid #bfe3cf;
+    border-radius: 14px;
+    background: #f3fbf6;
+}
+
+.mob-result-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #047857;
+}
+
+.mob-result-text
+{
+    display: flex;
+    flex: 1 1 320px;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    color: #475569;
+    font-size: 13px;
+}
+
+.mob-result-text b
+{
+    color: #0f172a;
+    font-size: 14.5px;
+}
+
+.mob-result-links
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.mob-result-links a
+{
+    color: #3b4fc4;
+    text-decoration: none;
+}
+
+.mob-result-links a:hover
+{
+    text-decoration: underline;
+}
+
+
+/* ---------- Canvas footer ---------- */
+
+.mob-footer
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
+    color: #475569;
+    font-size: 14px;
+}
+
+.mob-footer-label
+{
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.mob-footer b
+{
+    color: #0f172a;
+    font-size: 16px;
+}
+
+.mob-footer-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+
+/* ---------- Narrow windows : stack ---------- */
+
+@media (max-width: 1100px)
+{
+    .mob-body
+    {
+        overflow-y: auto;
+    }
+
+    .mob-panels
+    {
+        flex-wrap: wrap;
+    }
+
+    .mob-grid-2,
+    .mob-codes-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .mob-rows
+    {
+        height: 420px;
+    }
+}

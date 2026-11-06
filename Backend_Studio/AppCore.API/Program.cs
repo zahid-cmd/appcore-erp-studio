@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 using AppCore.Api.BackgroundJobs;
+using AppCore.Api.Platform.Uploads;
 using AppCore.Api.Security;
 using AppCore.Application;
 using AppCore.Application.Platform.CurrentUser;
@@ -99,6 +100,11 @@ builder.Services.AddHostedService<NightlyBackupService>();
 // Next financial year : created automatically N days before the
 // current one ends when switch CFG-MOD-003-0111 is ON
 builder.Services.AddHostedService<FinancialYearAutoCreateJob>();
+
+// Uploaded pictures mirrored into the database (StoredFiles), so
+// every PC on the same database shows them (Platform\Uploads)
+builder.Services.AddSingleton<UploadsMirror>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<UploadsMirror>());
 
 
 //===============================================================
@@ -319,6 +325,9 @@ app.UseCors(
 //     /uploads/sub-ordinate-components/1/light-image.png
 //
 //===============================================================
+
+// A picture not on this PC yet is fetched from StoredFiles first
+app.UseMiddleware<UploadsFallbackMiddleware>();
 
 app.UseStaticFiles();
 

@@ -10,7 +10,7 @@
 // the page can name them in its messages. '' = the switch is not
 // on this page (its fallback is used).
 //
-// Only SP is wired now; AC / MB are ready for their pages.
+// SP and AC are wired; MB is ready for its page.
 //===============================================================
 
 import
@@ -201,7 +201,7 @@ export const SI_SP_PAGE:
 };
 
 
-// Not wired yet (its page comes later)
+// Sales Invoices - AC (Accessories Sales)
 export const SI_AC_PAGE:
     SalesInvoicePageConfig =
 {
@@ -235,7 +235,7 @@ export const SI_AC_PAGE:
         SELL_AT_BATCH_MRP:'CFG-MOD-008-0052',
         ROUND_DOWN_WHOLE_TAKA:'CFG-MOD-008-0053',
         PRINT_CUSTOMER_PAYMENTS:'CFG-MOD-008-0054',
-        SALES_VAT:''
+        SALES_VAT:'CFG-MOD-013-0004'
     }
 };
 

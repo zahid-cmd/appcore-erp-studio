@@ -39,6 +39,9 @@ using MembershipCardsEntity =
 using SparePartsEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.SpareParts;
 
+using AccessoriesEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.Accessories;
+
 using ProductCategoryEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.ProductCategory;
 
@@ -227,6 +230,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     private const string TypeSpareParts = "Spare Parts";
 
     private const string TypeLubricants = "Lubricants";
+
+    private const string TypeAccessories = "Accessories";
 
     private const string MembershipActive = "Active";
 
@@ -1063,7 +1068,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
     private void RequireWiredPage()
     {
-        if (Page.PageType != "SP")
+        if (Page.PageType != "SP" && Page.PageType != "AC")
         {
             throw new InvalidOperationException(
                 $"{Page.Title} is not built yet.");
@@ -1080,11 +1085,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         RequireWiredPage();
 
         var parts =
-            await _context
-                .Set<SparePartsEntity>()
-                .AsNoTracking()
-                .Where(x => ids.Contains(x.SparePartId) && !x.IsDeleted)
-                .Select(x => new { x.SparePartId, x.ProductCode, x.PartNumber, x.PartName, x.Unit, x.ProductCategoryId, x.InventoryLedgerCode, x.CogsLedgerCode, x.SalesLedgerCode, x.IsActive })
+            await ProductRows()
+                .Where(x => ids.Contains(x.ProductId) && !x.IsDeleted)
                 .ToListAsync();
 
         Dictionary<long, string> categoryTypes =
@@ -1093,15 +1095,17 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         return parts.ToDictionary
         (
-            x => x.SparePartId,
+            x => x.ProductId,
             x => new ProductInfo
             {
-                ProductId = x.SparePartId,
+                ProductId = x.ProductId,
                 ProductCode = x.ProductCode,
                 PartNumber = x.PartNumber ?? string.Empty,
                 PartName = x.PartName ?? string.Empty,
                 ProductName = $"{x.PartNumber} - {x.PartName}",
-                ProductType = TypeOf(categoryTypes, x.ProductCategoryId),
+                ProductType = Page.PageType == "AC"
+                    ? TypeAccessories
+                    : TypeOf(categoryTypes, x.ProductCategoryId),
                 Unit = x.Unit ?? string.Empty,
                 InventoryLedgerCode = (x.InventoryLedgerCode ?? string.Empty).Trim(),
                 CogsLedgerCode = (x.CogsLedgerCode ?? string.Empty).Trim(),
@@ -1109,6 +1113,93 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 IsActive = x.IsActive
             }
         );
+    }
+
+
+    //===========================================================
+    // The page's product table as one shape : SP = Spare Parts
+    // (Spare Parts / Lubricants), AC = Accessories. Every product
+    // query of the engine starts here.
+    //===========================================================
+
+    private sealed class ProductRow
+    {
+        public long ProductId { get; set; }
+
+        public string ProductCode { get; set; } = string.Empty;
+
+        public string PartNumber { get; set; } = string.Empty;
+
+        public string PartName { get; set; } = string.Empty;
+
+        public string Unit { get; set; } = string.Empty;
+
+        public long ProductCategoryId { get; set; }
+
+        public long ProductSubCategoryId { get; set; }
+
+        public string InventoryLedgerCode { get; set; } = string.Empty;
+
+        public string CogsLedgerCode { get; set; } = string.Empty;
+
+        public string SalesLedgerCode { get; set; } = string.Empty;
+
+        public bool IsActive { get; set; }
+
+        public bool IsDeleted { get; set; }
+    }
+
+
+    private IQueryable<ProductRow> ProductRows()
+    {
+        if (Page.PageType == "AC")
+        {
+            return _context
+                .Set<AccessoriesEntity>()
+                .AsNoTracking()
+                .Select
+                (
+                    x =>
+                        new ProductRow
+                        {
+                            ProductId = x.AccessoryId,
+                            ProductCode = x.ProductCode,
+                            PartNumber = x.PartNumber,
+                            PartName = x.AccessoryName,
+                            Unit = x.Unit,
+                            ProductCategoryId = x.ProductCategoryId,
+                            ProductSubCategoryId = x.ProductSubCategoryId,
+                            InventoryLedgerCode = x.InventoryLedgerCode,
+                            CogsLedgerCode = x.CogsLedgerCode,
+                            SalesLedgerCode = x.SalesLedgerCode,
+                            IsActive = x.IsActive,
+                            IsDeleted = x.IsDeleted
+                        }
+                );
+        }
+
+        return _context
+            .Set<SparePartsEntity>()
+            .AsNoTracking()
+            .Select
+            (
+                x =>
+                    new ProductRow
+                    {
+                        ProductId = x.SparePartId,
+                        ProductCode = x.ProductCode,
+                        PartNumber = x.PartNumber,
+                        PartName = x.PartName,
+                        Unit = x.Unit,
+                        ProductCategoryId = x.ProductCategoryId,
+                        ProductSubCategoryId = x.ProductSubCategoryId,
+                        InventoryLedgerCode = x.InventoryLedgerCode,
+                        CogsLedgerCode = x.CogsLedgerCode,
+                        SalesLedgerCode = x.SalesLedgerCode,
+                        IsActive = x.IsActive,
+                        IsDeleted = x.IsDeleted
+                    }
+            );
     }
 
 
@@ -3489,9 +3580,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     )
     {
         var used =
-            await _context
-                .Set<SparePartsEntity>()
-                .AsNoTracking()
+            await ProductRows()
                 .Where(x => !x.IsDeleted && x.IsActive)
                 .Select(x => new { x.ProductCategoryId, x.ProductSubCategoryId })
                 .Distinct()
@@ -3593,11 +3682,9 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 barcode.Groups[1].Value.ToUpperInvariant();
 
             ids =
-                await _context
-                    .Set<SparePartsEntity>()
-                    .AsNoTracking()
+                await ProductRows()
                     .Where(x => !x.IsDeleted && x.ProductCode.Replace("-", "").ToUpper() == key)
-                    .Select(x => x.SparePartId)
+                    .Select(x => x.ProductId)
                     .Take(1)
                     .ToListAsync();
 
@@ -3617,9 +3704,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 text.ToUpperInvariant();
 
             ids =
-                await _context
-                    .Set<SparePartsEntity>()
-                    .AsNoTracking()
+                await ProductRows()
                     .Where
                     (
                         x =>
@@ -3642,7 +3727,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                             )
                     )
                     .OrderBy(x => x.PartNumber)
-                    .Select(x => x.SparePartId)
+                    .Select(x => x.ProductId)
                     .Take(browse ? MaxBrowseResults : 200)
                     .ToListAsync();
 

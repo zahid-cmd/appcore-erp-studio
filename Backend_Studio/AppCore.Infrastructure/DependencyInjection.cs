@@ -165,6 +165,13 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : SalesInvoicesAc
+
+using AppCore.Application.SalesOperations.AccessoriesSales;
+using AppCore.Infrastructure.Configurations.SalesOperations.AccessoriesSales;
+
+// AUTO-END : SalesInvoicesAc
+
 // AUTO-BEGIN : ServiceAppointments
 
 using AppCore.Application.EnquiryManagement.FollowUpsAppointments;
@@ -862,6 +869,56 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : SalesReturnsAc
+
+        services.AddScoped
+        <
+            ISalesReturnsAcRepository,
+            SalesReturnsAcRepository
+        >();
+
+        // AUTO-END : SalesReturnsAc
+
+        // AUTO-BEGIN : SalesReturnsSp
+
+        services.AddScoped
+        <
+            ISalesReturnsSpRepository,
+            SalesReturnsSpRepository
+        >();
+
+        // AUTO-END : SalesReturnsSp
+
+        // AUTO-BEGIN : SalesQuotationsSp
+
+        services.AddScoped
+        <
+            ISalesQuotationsSpRepository,
+            SalesQuotationsSpRepository
+        >();
+
+        // AUTO-END : SalesQuotationsSp
+
+        // AUTO-BEGIN : SalesQuotationsAc
+
+        services.AddScoped
+        <
+            ISalesQuotationsAcRepository,
+            SalesQuotationsAcRepository
+        >();
+
+        // AUTO-END : SalesQuotationsAc
+
+        // AUTO-BEGIN : SalesInvoicesAc
+
+        services.AddScoped
+        <
+            ISalesInvoicesAcRepository,
+            SalesInvoicesAcRepository
+        >();
+
+        // AUTO-END : SalesInvoicesAc
 
         // AUTO-BEGIN : TestRides
 

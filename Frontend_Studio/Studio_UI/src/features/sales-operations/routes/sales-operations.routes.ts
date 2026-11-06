@@ -56,4 +56,30 @@ export const salesOperationsRoutes:
 
     // AUTO-END : MNU-008-003
 
+    // AUTO-BEGIN : MNU-008-004
+
+    //===========================================================
+    // Accessories Sales
+    //===========================================================
+
+    {
+        path:'accessories-sales',
+
+        data:
+        {
+            breadcrumb:'Accessories Sales'
+        },
+
+        loadChildren:() =>
+            import(
+                '../accessories-sales/routes/accessories-sales.routes'
+            )
+            .then(
+                m =>
+                    m.mnu008004Routes
+            )
+    },
+
+    // AUTO-END : MNU-008-004
+
 ];

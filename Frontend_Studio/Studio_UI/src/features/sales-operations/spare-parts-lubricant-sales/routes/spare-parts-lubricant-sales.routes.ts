@@ -59,6 +59,32 @@ Routes =
 
                 // AUTO-END : SUB-008-003-002
 
+            // AUTO-BEGIN : SUB-008-003-001
+
+                //===========================================================
+                // Sales Quotations - SP
+                //===========================================================
+
+                {
+                    path:'sales-quotations-sp',
+
+                    data:
+                    {
+                        breadcrumb:'Sales Quotations - SP'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './sales-quotations-sp.routes'
+                        )
+                        .then(
+                            m =>
+                                m.SalesQuotationsSpRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-008-003-001
+
         ]
 
     }

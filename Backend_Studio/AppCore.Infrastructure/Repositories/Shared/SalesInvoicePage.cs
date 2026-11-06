@@ -34,7 +34,7 @@ namespace AppCore.Infrastructure.Repositories.SalesOperations.Shared;
 //   Sell at Batch MRP             0017  0032  0052  ON
 //   Round Down to Whole Taka      0018  0033  0053  ON
 //
-// Only SP is wired now; AC / MB are here so the engine is ready.
+// SP and AC are wired; MB is here so the engine is ready.
 //===============================================================
 
 public sealed class SalesInvoicePage
@@ -146,8 +146,7 @@ public static class SalesInvoicePages
         };
 
 
-    // Not wired yet (Sales Invoices - AC) : purposes to be made by
-    // its SQL when the page is built
+    // Sales Invoices - AC (purposes made by SalesInvoicesAC_Engine.sql)
     public static readonly SalesInvoicePage Accessories =
         new()
         {
@@ -157,11 +156,11 @@ public static class SalesInvoicePages
             TableName = "SalesInvoicesAc",
             VatLine = "AC",
             MembershipDiscountOf = MembershipAccessories,
-            PurposeSales = "SALES-AC",
-            PurposeVat = "VAT-AC",
-            PurposeCampaignDiscount = "CAMPAIGN-DISCOUNT-AC",
-            PurposeSpecialDiscount = "SPECIAL-DISCOUNT-AC",
-            PurposeFractionalDiscount = "FRACTIONAL-DISCOUNT-AC",
+            PurposeSales = PostingPurposes.SalesAccessories,
+            PurposeVat = PostingPurposes.VatAccessories,
+            PurposeCampaignDiscount = PostingPurposes.CampaignDiscountAccessories,
+            PurposeSpecialDiscount = PostingPurposes.SpecialDiscountAccessories,
+            PurposeFractionalDiscount = PostingPurposes.FractionalDiscountAccessories,
             SwitchPostOnApproval = "CFG-MOD-008-0041",
             SwitchAllowCreditSale = "CFG-MOD-008-0042",
             SwitchEnforceCreditLimit = "CFG-MOD-008-0043",

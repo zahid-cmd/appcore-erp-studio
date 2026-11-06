@@ -1,0 +1,2263 @@
+/*===============================================================
+  Sales Invoice Form (shared by SP / AC / MB)
+
+  Premium thin style : white cards with a soft border, deep greys
+  (#334155 / #1e293b), thin icons, emerald / rose text for money
+  and state, no filled chips. Controls two sizes larger (voucher
+  pages).
+===============================================================*/
+
+@import '../../../../../shared/styles/voucher-page.css';
+
+
+/*---------------------------------------------------------------
+  Tokens
+---------------------------------------------------------------*/
+
+:host
+{
+    --si-navy: #1e3a8a;
+    --si-blue: #2563eb;
+    --si-text: #1e293b;
+    --si-text-2: #334155;
+    --si-muted: #475569;
+    --si-faint: #64748b;
+    --si-border: #e3e9f3;
+    --si-hair: #eef2f7;
+    --si-head: linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    --si-emerald: #047857;
+    --si-rose: #be123c;
+    --si-amber: #b45309;
+
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+
+/*---------------------------------------------------------------
+  Page : fixed height, the body scrolls inside
+---------------------------------------------------------------*/
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.app-form-page > app-page-header
+{
+    flex: 0 0 auto;
+}
+
+:host > app-confirm-dialog,
+:host > app-progress-dialog
+{
+    position: absolute;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+.si-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 2px 6px 8px;
+}
+
+.si-loading
+{
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+}
+
+
+/*---------------------------------------------------------------
+  Header center : floating ribbon
+---------------------------------------------------------------*/
+
+.si-center
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.si-ribbon
+{
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid #dbe4f3;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+    box-shadow:
+        0 10px 24px -12px rgba(30, 58, 138, 0.35),
+        0 2px 6px rgba(15, 23, 42, 0.06);
+    white-space: nowrap;
+}
+
+@media (max-width: 1400px)
+{
+    .si-ribbon
+    {
+        flex-wrap: wrap;
+        border-radius: 16px;
+    }
+}
+
+.si-ribbon-sep
+{
+    width: 1px;
+    align-self: stretch;
+    margin: 4px 6px;
+    background: #e2e8f0;
+}
+
+.si-chip
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 10px 2px 4px;
+    border-radius: 999px;
+}
+
+.si-chip-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #dbe4f3;
+    border-radius: 999px;
+    color: var(--si-navy);
+    font-size: 14px;
+}
+
+.si-chip-text
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.si-chip-label
+{
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--si-faint);
+}
+
+.si-chip-text strong
+{
+    font-size: 14px;
+    color: var(--si-text);
+}
+
+.si-chip-error strong
+{
+    color: var(--si-rose);
+}
+
+.si-state
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 0 4px;
+}
+
+/* Status : dot + text, no filled pill */
+.si-status
+{
+    --tone: #334155;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--tone);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.si-status-dot
+{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tone);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 18%, transparent);
+}
+
+.si-status-new
+{
+    --tone: #1e3a8a;
+}
+
+.si-status-draft
+{
+    --tone: #1e3a8a;
+}
+
+.si-status-approved
+{
+    --tone: #b45309;
+}
+
+.si-status-posted
+{
+    --tone: #047857;
+}
+
+.si-status-cancelled
+{
+    --tone: #be123c;
+}
+
+.si-unsaved
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--si-amber);
+}
+
+.si-unsaved i
+{
+    font-size: 7px;
+}
+
+
+/*---------------------------------------------------------------
+  Inline message lines (no toasts, no filled boxes)
+---------------------------------------------------------------*/
+
+.si-line
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    border-left: 3px solid currentColor;
+    border-radius: 0 8px 8px 0;
+    background: #ffffff;
+    font-size: 15.5px;
+    font-weight: 500;
+    color: var(--si-text-2);
+}
+
+.si-line strong
+{
+    font-weight: 700;
+}
+
+.si-line-ok
+{
+    color: var(--si-emerald);
+}
+
+.si-line-info
+{
+    color: var(--si-navy);
+}
+
+.si-line-warn
+{
+    color: var(--si-amber);
+}
+
+.si-line-error
+{
+    color: var(--si-rose);
+}
+
+.si-line > span
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.si-line-x
+{
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--si-faint);
+    cursor: pointer;
+}
+
+.si-line-x:hover
+{
+    background: #f1f5f9;
+    color: var(--si-text);
+}
+
+
+/*---------------------------------------------------------------
+  Text tones
+---------------------------------------------------------------*/
+
+.si-text-emerald
+{
+    color: var(--si-emerald) !important;
+}
+
+.si-text-rose
+{
+    color: var(--si-rose) !important;
+}
+
+.si-text-amber
+{
+    color: var(--si-amber) !important;
+}
+
+.si-muted
+{
+    color: #94a3b8;
+}
+
+
+/*---------------------------------------------------------------
+  Layout
+  Left  : Invoice Information, Customer, Add Items (~36%)
+  Right : Items (fills, rows scroll), Discount & Narration |
+          Summary
+---------------------------------------------------------------*/
+
+.si-grid
+{
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: minmax(440px, 9fr) minmax(0, 16fr);
+    gap: 10px 16px;
+    min-height: 0;
+}
+
+.si-col
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+}
+
+.si-col-left > .si-card:last-child
+{
+    flex: 1 1 auto;
+}
+
+@media (max-width: 1100px)
+{
+    .si-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+
+/*---------------------------------------------------------------
+  Card
+---------------------------------------------------------------*/
+
+.si-card
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid var(--si-border);
+    border-radius: 14px;
+    overflow: visible;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 10px 24px -16px rgba(30, 58, 138, 0.28);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.si-card:hover
+{
+    border-color: #d6e0ef;
+}
+
+.si-card-header
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    padding: 3px 18px;
+    border-bottom: 1px solid #e6ecf5;
+    border-radius: 14px 14px 0 0;
+    background: var(--si-head);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--si-text);
+}
+
+.si-card-header > i
+{
+    color: var(--si-blue);
+    font-size: 15px;
+}
+
+.si-card-header-danger
+{
+    background: linear-gradient(120deg, #fff1f2 0%, #fdf6f7 55%, #fafbfd 100%);
+}
+
+.si-card-header-danger > i
+{
+    color: var(--si-rose);
+}
+
+.si-head-meta
+{
+    margin-left: auto;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--si-muted);
+    white-space: nowrap;
+}
+
+.si-pricing
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--si-navy);
+}
+
+.si-head-link
+{
+    margin-left: auto;
+}
+
+/* Card footer line (messages) */
+.si-card-foot
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: auto;
+    padding: 6px 18px;
+    border-top: 1px solid #e6ecf5;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--si-muted);
+    line-height: 1.4;
+}
+
+.si-card-foot i
+{
+    margin-top: 3px;
+}
+
+.si-card-foot + .si-card-foot
+{
+    margin-top: 0;
+}
+
+.si-card-foot-error
+{
+    color: var(--si-rose);
+}
+
+.si-card-foot-warn
+{
+    color: var(--si-amber);
+}
+
+
+/*---------------------------------------------------------------
+  Fields
+---------------------------------------------------------------*/
+
+.si-fields
+{
+    display: grid;
+    gap: 6px 16px;
+    padding: 8px 18px 10px;
+}
+
+.si-grid-2
+{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.si-span-2
+{
+    grid-column: 1 / -1;
+}
+
+.si-fields app-search-dropdown,
+.si-desk-entry app-search-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+    flex: none;
+}
+
+:host ::ng-deep .si-invoice-no .textbox input
+{
+    font-size: 14px;
+    letter-spacing: -0.1px;
+    text-overflow: clip;
+}
+
+.si-note
+{
+    padding: 0 18px 8px;
+    font-size: 13.5px;
+    color: var(--si-faint);
+}
+
+.si-note-warn
+{
+    padding: 6px 0 0;
+    color: var(--si-amber);
+}
+
+.si-field-error
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--si-rose);
+}
+
+
+/*---------------------------------------------------------------
+  Buttons (thin; primary = navy gradient)
+---------------------------------------------------------------*/
+
+.si-btn
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.si-btn:disabled
+{
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.si-btn-sm
+{
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13.5px;
+}
+
+.si-btn-light
+{
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: var(--si-text-2);
+}
+
+.si-btn-light:hover:not(:disabled)
+{
+    background: #f1f5f9;
+}
+
+.si-btn-primary
+{
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.55);
+}
+
+.si-btn-primary:hover:not(:disabled)
+{
+    transform: translateY(-1px);
+}
+
+.si-btn-danger
+{
+    background: linear-gradient(135deg, #9f1239, #e11d48);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(225, 29, 72, 0.5);
+}
+
+.si-btn-danger:hover
+{
+    transform: translateY(-1px);
+}
+
+.si-link
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 6px;
+    border: 0;
+    background: transparent;
+    color: var(--si-blue);
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.si-link:hover
+{
+    color: var(--si-navy);
+    text-decoration: underline;
+}
+
+/* + Add (card header right) */
+.si-add
+{
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 84px;
+    height: 30px;
+    padding: 0 16px;
+    border: 1px solid #1d4ed8;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7);
+}
+
+.si-add-clear
+{
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 30px;
+    padding: 0 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.si-add-clear:hover
+{
+    border-color: #fecdd3;
+    color: #be123c;
+}
+
+.si-add-clear + .si-add
+{
+    margin-left: 8px;
+}
+
+.si-add:disabled
+{
+    border-color: #cbd5e1;
+    background: #e2e8f0;
+    color: var(--si-faint);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.si-remove
+{
+    width: 30px;
+    height: 30px;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--si-rose);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.si-remove:hover
+{
+    border-color: #fecdd3;
+    background: #fff1f2;
+}
+
+
+/*---------------------------------------------------------------
+  Customer
+---------------------------------------------------------------*/
+
+
+
+/* One fixed-height slot : the same height before and after
+   a customer is picked, so nothing below it jumps */
+.si-cust-slot
+{
+    position: relative;
+    height: 108px;
+    margin: 2px 18px 12px;
+    overflow: hidden;
+}
+
+.si-cust-slot > *
+{
+    box-sizing: border-box;
+    height: 100%;
+    overflow: hidden;
+}
+
+.si-cust-state
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+    text-align: center;
+}
+
+.si-cust-state > i
+{
+    margin-bottom: 2px;
+    color: #94a3b8;
+    font-size: 22px;
+}
+
+.si-cust-state > strong
+{
+    color: #334155;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.si-cust-state > span
+{
+    color: var(--si-faint);
+    font-size: 13px;
+}
+
+.si-cust-state-missing
+{
+    border-color: #fecdd3;
+    background: #fffafb;
+}
+
+.si-cust-state-missing > i,
+.si-cust-state-missing > strong
+{
+    color: #be123c;
+}
+
+.si-cust-state-missing .si-btn
+{
+    margin-top: 6px;
+}
+
+.si-customer
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--si-hair);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.si-customer-head
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.si-customer-mark
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #dbe4f3;
+    border-radius: 50%;
+    color: var(--si-navy);
+    font-size: 15px;
+}
+
+.si-customer-title
+{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.si-customer-title strong
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15.5px;
+    color: var(--si-text);
+}
+
+.si-customer-title span
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12.5px;
+    color: var(--si-faint);
+}
+
+/* Tag : thin outline, coloured text (no fill) */
+.si-tag
+{
+    flex: 0 0 auto;
+    padding: 1px 10px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.si-tag-inbound
+{
+    color: var(--si-navy);
+}
+
+.si-tag-outside
+{
+    color: var(--si-text-2);
+}
+
+.si-tag-walkin
+{
+    color: #0f766e;
+}
+
+.si-customer-facts
+{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.6fr;
+    gap: 4px 14px;
+    padding-top: 7px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.si-fact
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.35;
+}
+
+.si-fact > span
+{
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--si-faint);
+}
+
+.si-fact > b
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--si-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.si-fact > b i
+{
+    margin-right: 4px;
+}
+
+.si-fact-sub
+{
+    font-size: 12.5px;
+    font-style: normal;
+    color: var(--si-faint);
+}
+
+.si-walkin
+{
+    border: 1px solid #ccfbf1;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #f6fefc 100%);
+}
+
+.si-walkin-title
+{
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    padding: 7px 14px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f766e;
+    white-space: nowrap;
+}
+
+.si-walkin-title > span
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--si-faint);
+}
+
+.si-walkin-title > span.si-text-rose
+{
+    color: #be123c;
+}
+
+.si-walkin-fields
+{
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto;
+    align-items: end;
+    gap: 0 10px;
+    padding: 0 14px 8px;
+}
+
+.si-walkin-actions
+{
+    display: flex;
+    gap: 6px;
+    padding-bottom: 12px;
+}
+
+/* Inside the card : compact notes, membership on one line */
+.si-customer .si-note
+{
+    padding: 0;
+    font-size: 12.5px;
+}
+
+.si-customer .si-fact > b
+{
+    font-size: 14px;
+}
+
+.si-customer .si-fact-wide
+{
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 6px;
+}
+
+.si-customer .si-fact-wide > span
+{
+    grid-column: 1 / -1;
+}
+
+.si-customer .si-fact-sub
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/*---------------------------------------------------------------
+  Add Items : search, results, picked product
+---------------------------------------------------------------*/
+
+.si-add-fields
+{
+    grid-template-columns: minmax(0, 1fr) 120px;
+    align-items: start;
+}
+
+.si-search
+{
+    position: relative;
+    min-width: 0;
+}
+
+.si-results
+{
+    position: absolute;
+    z-index: 20;
+    top: calc(100% - 10px);
+    left: 0;
+    right: 0;
+    /* About 3.5 rows : the half row shows there is more to scroll,
+       and the list never reaches past the card */
+    max-height: 196px;
+    overflow-y: auto;
+    padding: 4px;
+    border: 1px solid #dbe4f3;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 18px 40px -18px rgba(15, 23, 42, 0.45);
+}
+
+.si-results-state
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    font-size: 14.5px;
+    color: var(--si-muted);
+}
+
+.si-result
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.si-result:hover
+{
+    background: #f1f5ff;
+}
+
+.si-result-main,
+.si-result-side
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.35;
+}
+
+.si-result-side
+{
+    flex: 0 0 auto;
+    align-items: flex-end;
+}
+
+.si-result b
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--si-text);
+}
+
+.si-result i
+{
+    font-size: 13px;
+    font-style: normal;
+    color: var(--si-faint);
+}
+
+.si-result-out
+{
+    opacity: 0.75;
+}
+
+.si-result.is-active
+{
+    background: #eef2ff;
+    box-shadow: inset 2px 0 0 #1e3a8a;
+}
+
+/* Search row (labelled) then the label-less narrowing rows,
+   evenly spaced */
+.si-add-fields
+{
+    padding-bottom: 4px;
+}
+
+.si-filter-fields
+{
+    gap: 10px 16px;
+    padding-top: 4px;
+    padding-bottom: 0;
+}
+
+.si-product-field
+{
+    padding-top: 10px;
+    padding-bottom: 12px;
+}
+
+.si-results-hint
+{
+    margin-top: 2px;
+    padding: 6px 8px 4px;
+    border-top: 1px solid var(--si-hair);
+    font-size: 12px;
+    color: var(--si-faint);
+}
+
+.si-results-close
+{
+    display: block;
+    width: 100%;
+    margin-top: 2px;
+    padding: 6px;
+    border: 0;
+    border-top: 1px solid var(--si-hair);
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--si-faint);
+    cursor: pointer;
+}
+
+.si-picked
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) 1fr 1fr;
+    gap: 12px;
+    margin: 0 18px 10px;
+    padding: 8px 12px;
+    border: 1px solid var(--si-hair);
+    border-radius: 10px;
+}
+
+.si-picked-name
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.35;
+}
+
+.si-picked-name b
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    color: var(--si-text);
+}
+
+.si-picked-name i
+{
+    font-size: 13px;
+    font-style: normal;
+    color: var(--si-faint);
+}
+
+
+/*---------------------------------------------------------------
+  Items table
+---------------------------------------------------------------*/
+
+.si-items
+{
+    flex: 1 1 auto;
+    min-height: 280px;
+    overflow: hidden;
+}
+
+.si-table-scroll
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.si-table
+{
+    width: 100%;
+    min-width: 820px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 15.5px;
+    color: var(--si-text);
+}
+
+.si-col-sl
+{
+    width: 46px;
+}
+
+.si-col-qty
+{
+    width: 96px;
+}
+
+.si-col-mrp
+{
+    width: 150px;
+}
+
+.si-col-disc
+{
+    width: 132px;
+}
+
+.si-col-special
+{
+    width: 110px;
+}
+
+.si-col-money
+{
+    width: 112px;
+}
+
+.si-col-vat
+{
+    width: 96px;
+}
+
+.si-col-action
+{
+    width: 48px;
+}
+
+.si-table th,
+.si-table td
+{
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    vertical-align: top;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.si-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f6f8fc;
+    color: var(--si-muted);
+    font-size: 14px;
+    font-weight: 600;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.si-table .si-r
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    text-overflow: clip;
+}
+
+.si-table .si-c
+{
+    text-align: center;
+}
+
+.si-sl
+{
+    color: var(--si-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.si-part
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+    color: var(--si-text);
+}
+
+.si-sub
+{
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--si-faint);
+}
+
+.si-mrp
+{
+    white-space: normal;
+    word-break: break-word;
+    font-weight: 600;
+}
+
+.si-flag
+{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+    white-space: normal;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.si-line-total
+{
+    font-weight: 700;
+    color: var(--si-text);
+}
+
+.si-row-pending td
+{
+    color: var(--si-muted);
+}
+
+.si-empty
+{
+    padding: 26px 12px !important;
+    text-align: center !important;
+    color: var(--si-faint);
+    font-size: 15px;
+}
+
+.si-empty i
+{
+    margin-right: 6px;
+}
+
+/* Inputs inside the table : compact */
+.si-cell-input
+{
+    --textbox-height: 30px;
+    display: block;
+}
+
+:host ::ng-deep .si-cell-input .textbox input
+{
+    font-size: 15px;
+    text-align: right;
+}
+
+:host ::ng-deep .si-cell-input .textbox-label
+{
+    display: none;
+}
+
+.si-qty
+{
+    min-width: 0;
+}
+
+
+/*---------------------------------------------------------------
+  Bottom row : Discount & Narration | Summary
+---------------------------------------------------------------*/
+
+.si-bottom
+{
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
+    gap: 10px 16px;
+}
+
+/* Left of Summary : Sale Rules on top, Narration below, each
+   half the height and bottom-aligned with Summary */
+.si-bottom-left
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.si-bottom-left > .si-card
+{
+    flex: 1 1 0;
+}
+
+.si-rules-grid
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 18px;
+    padding: 12px 18px 14px;
+    align-content: center;
+    flex: 1 1 auto;
+}
+
+.si-rule
+{
+    display: grid;
+    grid-template-columns: 16px auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 13.5px;
+}
+
+.si-rule > i
+{
+    color: #94a3b8;
+    font-size: 12px;
+    text-align: center;
+}
+
+.si-rule-label
+{
+    color: #334155;
+    white-space: nowrap;
+}
+
+.si-rule-value
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+    font-weight: 600;
+}
+
+.si-narration
+{
+    --textarea-width: 100%;
+    --textarea-height: 88px;
+    display: block;
+    width: 100%;
+}
+
+.si-rule-ok
+{
+    color: #047857;
+}
+
+.si-rule-off
+{
+    color: #64748b;
+}
+
+.si-rule-warn
+{
+    color: #b45309;
+}
+
+@media (max-width: 1300px)
+{
+    .si-bottom
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.si-special
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.si-special-label
+{
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--si-text-2);
+}
+
+.si-special-value
+{
+    width: 140px;
+}
+
+.si-extra .si-note
+{
+    padding: 0;
+}
+
+.si-who
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    font-size: 13.5px;
+    color: var(--si-faint);
+}
+
+.si-who b
+{
+    color: var(--si-text-2);
+    font-weight: 600;
+}
+
+.si-sum
+{
+    display: flex;
+    flex-direction: column;
+    padding: 8px 18px 10px;
+}
+
+.si-sum-row
+{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+    font-size: 15.5px;
+    color: var(--si-text-2);
+}
+
+.si-sum-row b
+{
+    font-weight: 600;
+    color: var(--si-text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.si-sum-total
+{
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid #cbd5e1;
+    font-size: 17px;
+}
+
+.si-sum-total b
+{
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--si-text);
+}
+
+.si-sum-pay
+{
+    padding: 1px 0 1px 14px;
+    font-size: 13.5px;
+    color: var(--si-faint);
+}
+
+.si-sum-pay span
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.si-sum-pay b
+{
+    font-weight: 500;
+    color: var(--si-muted);
+}
+
+.si-sum-due
+{
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 3px double #cbd5e1;
+    font-size: 16px;
+}
+
+.si-sum-due b
+{
+    color: var(--si-emerald);
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.si-sum-due-open b
+{
+    color: var(--si-rose);
+}
+
+.si-sum-vat
+{
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--si-faint);
+}
+
+.si-words
+{
+    margin-top: 4px;
+    font-size: 13.5px;
+    font-style: italic;
+    color: var(--si-muted);
+}
+
+
+/*---------------------------------------------------------------
+  Cancel panel (inline)
+---------------------------------------------------------------*/
+
+.si-cancel
+{
+    flex: 0 0 auto;
+    border-color: #fecdd3;
+}
+
+.si-cancel-body
+{
+    padding: 10px 18px 12px;
+}
+
+.si-cancel-note
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-size: 14.5px;
+    color: var(--si-rose);
+}
+
+.si-cancel-note i
+{
+    margin-top: 3px;
+}
+
+.si-cancel-row
+{
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.si-cancel-reason
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.si-cancel-row .si-btn
+{
+    margin-bottom: 14px;
+}
+
+
+/*---------------------------------------------------------------
+  Payment Desk modal (as the Receipt Voucher page)
+---------------------------------------------------------------*/
+
+/* Below the top bar (the page sits in a lower stacking layer, so
+   the top bar would cover the head of the modal) */
+.si-modal-backdrop
+{
+    position: fixed;
+    inset: var(--topbar-height, 64px) 0 0 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+    animation: si-fade-in 0.2s ease-out;
+}
+
+.si-modal
+{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1240px;
+    max-height: calc(100vh - var(--topbar-height, 64px) - 40px);
+    overflow: hidden;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
+    box-shadow:
+        0 30px 70px -24px rgba(15, 23, 42, 0.55),
+        0 2px 8px rgba(15, 23, 42, 0.08);
+    animation: si-modal-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.si-modal-head
+{
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #c9d7ee;
+    background: linear-gradient(120deg, #bcd2ff 0%, #d5e3ff 45%, #e2e8f0 100%);
+}
+
+.si-modal-head::before
+{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1e3a8a, #3b82f6 55%, #94a3b8);
+}
+
+.si-modal-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    font-size: 20px;
+    box-shadow: 0 6px 14px -6px rgba(37, 99, 235, 0.7);
+}
+
+.si-modal-title
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.si-modal-title strong
+{
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--si-text);
+}
+
+.si-modal-title span
+{
+    font-size: 14.5px;
+    color: var(--si-muted);
+}
+
+.si-modal-title span b
+{
+    color: var(--si-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.si-modal-progress
+{
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 190px;
+}
+
+.si-modal-progress-text
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--si-navy);
+}
+
+.si-progress-track
+{
+    display: block;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.35);
+    overflow: hidden;
+}
+
+.si-progress-bar
+{
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2563eb, #60a5fa);
+    transition: width 0.4s ease;
+}
+
+.si-modal-progress-done .si-modal-progress-text
+{
+    color: var(--si-emerald);
+}
+
+.si-modal-progress-done .si-progress-bar
+{
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+.si-modal-x
+{
+    flex: 0 0 auto;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--si-muted);
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
+}
+
+.si-modal-progress + .si-modal-x
+{
+    margin-left: 0;
+}
+
+.si-modal-x:hover
+{
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: var(--si-rose);
+    transform: rotate(90deg);
+}
+
+.si-modal-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    /* The body itself never scrolls : the receipt rows and the
+       details scroll inside their own areas */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 22px;
+}
+
+.si-desk-entry
+{
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) 180px auto;
+    align-items: end;
+    gap: 6px 14px;
+}
+
+.si-desk-add
+{
+    margin: 0 0 6px;
+    height: 36px;
+}
+
+/* Field labels/height inside the modal : compact */
+.si-desk-entry
+{
+    --textbox-height: 36px;
+}
+
+.si-modal-body > .si-note
+{
+    padding: 0;
+    margin-top: -8px;
+}
+
+/* Head + three rows; more rows scroll under the sticky head */
+.si-desk-scroll
+{
+    flex: 0 0 auto;
+    height: 158px;
+    overflow: auto;
+    border: 1px solid var(--si-hair);
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.si-desk-table
+{
+    min-width: 640px;
+    font-size: 14.5px;
+}
+
+.si-desk-table th,
+.si-desk-table td
+{
+    padding: 6px 10px;
+}
+
+.si-desk-table th
+{
+    height: 32px;
+    font-size: 13.5px;
+}
+
+.si-desk-table td .si-sub,
+.si-desk-table td small
+{
+    font-size: 12px;
+}
+
+/* Details (rows, totals, row details) take the rest and scroll
+   inside when a row needs more fields */
+.si-desk-details
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Payment Desk (shared) : tighter spacing inside this modal */
+.si-desk-details ::ng-deep .pd,
+.si-desk-details ::ng-deep .pd-right
+{
+    gap: 8px;
+}
+
+.si-desk-details ::ng-deep .pd-rows-card
+{
+    min-height: 0;
+}
+
+.si-desk-details ::ng-deep .pd-card-header
+{
+    min-height: 34px;
+}
+
+.si-desk-details ::ng-deep .pd-summary-item
+{
+    padding: 5px 12px;
+}
+
+.si-desk-details ::ng-deep .pd-words
+{
+    height: 34px;
+}
+
+.si-desk-details ::ng-deep .pd-grid
+{
+    gap: 6px 16px;
+    padding: 8px 14px 10px;
+}
+
+.si-desk-details ::ng-deep .pd-fixed
+{
+    margin: 8px 14px 0;
+    padding: 6px 12px;
+}
+
+.si-desk-details ::ng-deep .pd-verify-bar
+{
+    height: 46px;
+    margin: 2px 14px 10px;
+    padding: 6px 12px;
+}
+
+.si-desk-details ::ng-deep .pd-row
+{
+    padding: 7px 12px;
+}
+
+.si-desk-details app-payment-desk
+{
+    display: block;
+}
+
+.si-modal-foot
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: linear-gradient(120deg, #f8fafc 0%, #f1f5fb 55%, #eef2f7 100%);
+}
+
+.si-modal-foot-confirm
+{
+    background: linear-gradient(120deg, #fffaf3 0%, #fff1e2 100%);
+}
+
+.si-modal-note
+{
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--si-muted);
+}
+
+@media (max-width: 860px)
+{
+    .si-desk-entry
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .si-modal-head
+    {
+        flex-wrap: wrap;
+    }
+
+    .si-modal-progress
+    {
+        order: 3;
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+@keyframes si-fade-in
+{
+    from
+    {
+        opacity: 0;
+    }
+
+    to
+    {
+        opacity: 1;
+    }
+}
+
+@keyframes si-modal-in
+{
+    from
+    {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+
+    to
+    {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+
+/* =====================================================
+   CUSTOMER LIVE SEARCH (phone 1 / 2, name or code)
+===================================================== */
+
+.si-cust-search
+{
+    position: relative;
+}
+
+.si-cust-spin
+{
+    position: absolute;
+    right: 30px;
+    bottom: 13px;
+    color: #64748b;
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.si-cust-results
+{
+    position: absolute;
+    z-index: 40;
+    top: calc(100% - 6px);
+    left: 18px;
+    right: 18px;
+    max-height: 340px;
+    padding: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 22px 44px -18px rgba(15, 23, 42, 0.35), 0 2px 6px rgba(15, 23, 42, 0.06);
+    overflow-y: auto;
+}
+
+.si-cust-empty
+{
+    padding: 14px 10px;
+    color: #475569;
+    font-size: 13.5px;
+}
+
+.si-cust-row
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.si-cust-row + .si-cust-row
+{
+    margin-top: 2px;
+}
+
+.si-cust-row.is-active
+{
+    background: #eef3fb;
+}
+
+.si-cust-main
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.si-cust-main strong
+{
+    overflow: hidden;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.si-cust-main span
+{
+    overflow: hidden;
+    color: #475569;
+    font-size: 12.5px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.si-cust-side
+{
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.si-cust-tag
+{
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.si-cust-tag.is-inbound
+{
+    color: #1e3a8a;
+}
+
+.si-cust-tag.is-walkin
+{
+    color: #b45309;
+}
+
+.si-cust-match
+{
+    color: #64748b;
+    font-size: 11px;
+}
+
+.si-cust-hint
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 7px 10px 3px;
+    border-top: 1px solid #eef2f7;
+    color: #64748b;
+    font-size: 11.5px;
+}
+
+
+/* Paid : number of payment rows (thin outline, no fill) */
+.si-sum-count
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    margin-left: 6px;
+    padding: 0 6px;
+    border: 1px solid #a7f3d0;
+    border-radius: 999px;
+    color: #047857;
+    font-size: 11.5px;
+    font-style: normal;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+
+/* Below Balance : customer-borne charges, outside the invoice */
+.si-sum-extra
+{
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 13.5px;
+    color: #64748b;
+}
+
+.si-sum-extra > b
+{
+    color: #334155;
+    font-weight: 600;
+}

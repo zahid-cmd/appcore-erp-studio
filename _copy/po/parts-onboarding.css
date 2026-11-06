@@ -1,0 +1,1102 @@
+@import '../../../../../shared/styles/app-form-page.css';
+
+
+/* =====================================================
+   PARTS & ACCESSORIES ONBOARDING
+   Target strip (type, category, sub category, defaults)
+   then one sheet : source bar, tabs, check grid.
+   Everything fits the 660 px canvas : only the grid scrolls.
+===================================================== */
+
+.pao-body
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    min-height: 0;
+    padding: 14px 16px;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: #f8fafd;
+}
+
+
+/* ---------- Target strip ---------- */
+
+.pao-target
+{
+    display: grid;
+    flex: 0 0 auto;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.3fr) minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px 14px;
+    align-items: end;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+}
+
+.pao-field
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.pao-label
+{
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.pao-label small
+{
+    color: #64748b;
+    font-weight: 600;
+}
+
+.pao-required
+{
+    color: #dc2626;
+}
+
+.pao-switch
+{
+    display: flex;
+    gap: 3px;
+    height: 40px;
+    padding: 3px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    background: #eef2f8;
+}
+
+.pao-switch button
+{
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 6px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #64748b;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.pao-switch button.is-on
+{
+    background: #ffffff;
+    color: #1e2a6e;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.pao-switch button:disabled
+{
+    cursor: default;
+}
+
+.pao-levels
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.pao-levels ::ng-deep input
+{
+    text-align: center;
+}
+
+
+/* ---------- Sheet ---------- */
+
+.pao-sheet
+{
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+}
+
+/* ---------- Source : soft premium strip ---------- */
+
+.pao-source
+{
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #eceff8;
+    background:
+        radial-gradient(120% 160% at 0% 0%, #f1efff 0%, transparent 45%),
+        radial-gradient(120% 160% at 100% 100%, #ecf8f4 0%, transparent 45%),
+        #fbfcff;
+}
+
+.pao-source-head
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.pao-source-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: linear-gradient(140deg, #e7e5ff 0%, #d9e4ff 100%);
+    color: #5b5bd6;
+    font-size: 15px;
+    box-shadow: inset 0 0 0 1px rgba(91, 91, 214, 0.12);
+}
+
+.pao-source-text
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.pao-source-text b
+{
+    color: #1f2547;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.pao-source-text small
+{
+    color: #8a90b2;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* Choose File : soft mint pill with an icon tile */
+.pao-file-button
+{
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 9px;
+    height: 40px;
+    padding: 0 16px 0 5px;
+    box-sizing: border-box;
+    border: 1px solid #cfeadf;
+    border-radius: 999px;
+    background: #f2fbf7;
+    color: #1f6b52;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.pao-file-button:hover
+{
+    background: #e8f7f0;
+    box-shadow: 0 6px 16px -8px rgba(31, 107, 82, 0.35);
+    transform: translateY(-1px);
+}
+
+.pao-file-button.is-disabled
+{
+    opacity: 0.55;
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+}
+
+.pao-file-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #21a179;
+    box-shadow: 0 1px 3px rgba(31, 107, 82, 0.18);
+}
+
+/* The native file box stays hidden : the label opens it */
+.pao-file-button input.pao-file
+{
+    display: none !important;
+}
+
+/* Paste / drop zone */
+.pao-drop
+{
+    position: relative;
+    display: flex;
+    flex: 1 1 320px;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    height: 42px;
+    padding: 0 6px 0 12px;
+    box-sizing: border-box;
+    border: 1.5px dashed #c9c6f3;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.75);
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pao-drop:focus-within
+{
+    border-style: solid;
+    border-color: #8b86e8;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(139, 134, 232, 0.16);
+}
+
+.pao-drop.is-dragging
+{
+    border-style: solid;
+    border-color: #6f6ae0;
+    background: #f3f2ff;
+}
+
+.pao-drop.has-file
+{
+    border-color: #bfe3d3;
+}
+
+.pao-keys
+{
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 3px;
+}
+
+.pao-keys kbd
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    box-sizing: border-box;
+    border: 1px solid #dcdaf5;
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: #faf9ff;
+    color: #5b5bd6;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.pao-paste
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 38px;
+    padding: 10px 4px;
+    box-sizing: border-box;
+    border: 0;
+    background: transparent;
+    color: #5b5bd6;
+    font: inherit;
+    font-size: 13.5px;
+    line-height: 1.35;
+    resize: none;
+    overflow: hidden;
+    white-space: nowrap;
+    caret-color: transparent;
+    cursor: pointer;
+}
+
+.pao-paste::placeholder
+{
+    color: #7c79c9;
+}
+
+.pao-paste:focus
+{
+    outline: none;
+}
+
+/* Rows read : a soft mint chip inside the zone */
+.pao-attachment
+{
+    display: inline-flex;
+    flex: 0 1 auto;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    max-width: 260px;
+    height: 28px;
+    padding: 0 3px 0 10px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    background: #e9f7f0;
+    color: #1f6b52;
+    font-size: 12.5px;
+    font-weight: 800;
+}
+
+.pao-attachment-name
+{
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pao-attachment-x
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #6b8f80;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.pao-attachment-x:hover:not(:disabled)
+{
+    background: #fde8ec;
+    color: #c2415d;
+}
+
+/* Analyze : soft indigo → violet */
+.pao-analyze
+{
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #6c7cf0 0%, #8b6fe8 100%);
+    color: #ffffff;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    box-shadow: 0 10px 22px -12px rgba(108, 100, 232, 0.75);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.pao-analyze:hover:not(:disabled)
+{
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px -12px rgba(108, 100, 232, 0.85);
+}
+
+.pao-analyze:disabled
+{
+    background: linear-gradient(135deg, #c9cff5 0%, #d3c9f3 100%);
+    box-shadow: none;
+    cursor: default;
+}
+
+
+/* Generic small buttons (row Done) */
+.pao-button
+{
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    box-sizing: border-box;
+    border: 1px solid #dbe3f0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #334155;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.pao-button:hover
+{
+    border-color: #b8c7e6;
+    background: #f8fbff;
+}
+
+.pao-button.is-disabled,
+.pao-button:disabled
+{
+    opacity: 0.55;
+    cursor: default;
+}
+
+.pao-button-primary
+{
+    border-color: #3b4fc4;
+    background: #3b4fc4;
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.pao-button-primary:hover
+{
+    border-color: #2f3f9e;
+    background: #2f3f9e;
+}
+
+.pao-button-small
+{
+    height: 30px;
+    padding: 0 10px;
+    font-size: 12.5px;
+}
+
+/* The native file box stays hidden : the label opens it */
+.pao-button input.pao-file
+{
+    display: none !important;
+}
+
+
+
+/* ---------- Tabs : soft segmented filter ---------- */
+
+.pao-tabs
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #eceff8;
+    background: #ffffff;
+}
+
+.pao-tab-track
+{
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: #f3f4fa;
+    box-shadow: inset 0 1px 2px rgba(31, 37, 71, 0.06);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.pao-tab-track::-webkit-scrollbar
+{
+    display: none;
+}
+
+.pao-tab
+{
+    --tone: #5b5bd6;
+    --tint: #eeedff;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 8px 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #6b7194;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pao-tab[data-tab="Ready"] { --tone: #1f9d74; --tint: #e5f6ef; }
+.pao-tab[data-tab="Links"] { --tone: #3a63b8; --tint: #eef4ff; }
+.pao-tab[data-tab="Fix"] { --tone: #d0546f; --tint: #fcebef; }
+.pao-tab[data-tab="Duplicates"] { --tone: #c98a2b; --tint: #fbf1e1; }
+.pao-tab[data-tab="All"] { --tone: #5b5bd6; --tint: #eeedff; }
+
+.pao-tab i
+{
+    color: var(--tone);
+    font-size: 12.5px;
+    opacity: 0.75;
+}
+
+.pao-tab:hover
+{
+    color: #2a3058;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.pao-tab.is-on
+{
+    background: #ffffff;
+    color: #1f2547;
+    font-weight: 800;
+    box-shadow:
+        0 1px 2px rgba(31, 37, 71, 0.08),
+        0 6px 14px -8px rgba(31, 37, 71, 0.25),
+        inset 0 -2px 0 var(--tone);
+}
+
+.pao-tab.is-on i
+{
+    opacity: 1;
+}
+
+.pao-tab-count
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 7px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    background: var(--tint);
+    color: var(--tone);
+    font-size: 11.5px;
+    font-weight: 800;
+}
+
+.pao-tabs-hint
+{
+    display: inline-flex;
+    flex: 0 1 auto;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    margin-left: auto;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #f5f6fb;
+    color: #6b7194;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pao-tabs-hint i
+{
+    color: #8b86e8;
+}
+
+.pao-tabs-hint.is-wait
+{
+    background: #fbf4e6;
+    color: #9a6a1f;
+}
+
+.pao-tabs-hint.is-wait i
+{
+    color: #c98a2b;
+}
+
+.pao-tabs-hint.is-bad
+{
+    background: #fcebef;
+    color: #b23a56;
+    font-weight: 700;
+}
+
+.pao-tabs-hint.is-bad i
+{
+    color: #d0546f;
+}
+
+
+/* ---------- Grid (the only part that scrolls) ---------- */
+
+.pao-grid
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.pao-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 13.5px;
+}
+
+.pao-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 10px 8px;
+    background: #f7f9fc;
+    border-bottom: 1px solid #e3e9f3;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.pao-table th:first-child,
+.pao-table td:first-child
+{
+    padding-left: 14px;
+}
+
+.pao-col-sl { width: 44px; }
+.pao-col-row { width: 50px; }
+.pao-col-part { width: 16%; }
+.pao-col-unit { width: 92px; }
+.pao-col-levels { width: 112px; }
+.pao-col-move { width: 130px; }
+.pao-col-code { width: 150px; }
+.pao-col-status { width: 24%; }
+.pao-col-x { width: 44px; }
+
+.pao-table tbody td
+{
+    padding: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pao-table tbody tr:hover td
+{
+    background: #f8fbff;
+}
+
+.pao-table tbody tr.is-problem td
+{
+    background: #fffdf7;
+}
+
+.pao-table tbody tr.is-editing td
+{
+    background: #eef3ff;
+}
+
+.pao-muted
+{
+    color: #64748b;
+}
+
+.pao-strong
+{
+    color: #0f172a;
+    font-weight: 700;
+}
+
+/* A value taken from the defaults (the cell was blank) */
+.pao-default
+{
+    color: #64748b;
+    font-style: italic;
+}
+
+.pao-levels-cell
+{
+    color: #475569;
+}
+
+.pao-code
+{
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #1e2a6e;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.pao-chip
+{
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border: 1px solid #dbe3f0;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 800;
+    vertical-align: middle;
+}
+
+.pao-chip[data-status="Ready"]
+{
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.pao-chip[data-status="Invalid"]
+{
+    border-color: #fecdd3;
+    background: #fff1f2;
+    color: #be123c;
+}
+
+.pao-chip[data-status="Link"]
+{
+    border-color: #c9dcfb;
+    background: #eef4ff;
+    color: #3a63b8;
+}
+
+.pao-code.is-link
+{
+    background: #eef4ff;
+    color: #3a63b8;
+    box-shadow: inset 0 0 0 1px #c9dcfb;
+}
+
+.pao-footer-link b
+{
+    color: #3a63b8 !important;
+}
+
+.pao-chip[data-status="Duplicate"],
+.pao-chip[data-status="Exists"]
+{
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.pao-chip-note
+{
+    margin-left: 8px;
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.pao-cell-input
+{
+    width: 100%;
+    height: 30px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border: 1px solid #b8c7e6;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 13px;
+}
+
+.pao-cell-input:focus
+{
+    outline: none;
+    border-color: #3b4fc4;
+    box-shadow: 0 0 0 2px rgba(59, 79, 196, 0.15);
+}
+
+.pao-cell-levels
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.pao-cell-levels .pao-cell-input
+{
+    padding: 0 4px;
+    text-align: center;
+}
+
+.pao-empty
+{
+    padding: 48px 24px !important;
+    color: #64748b !important;
+    font-size: 13.5px;
+    text-align: center;
+    white-space: normal !important;
+}
+
+.pao-empty i
+{
+    margin-right: 6px;
+    color: #94a3b8;
+}
+
+.pao-icon-button
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.pao-icon-button:hover:not(:disabled)
+{
+    background: #fff1f2;
+    color: #be123c;
+}
+
+.pao-icon-button:disabled
+{
+    opacity: 0.5;
+    cursor: default;
+}
+
+.pao-sr
+{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+
+/* ---------- Result / alert ---------- */
+
+.pao-result
+{
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    border: 1px solid #bfe3cf;
+    border-radius: 14px;
+    background: #f3fbf6;
+}
+
+.pao-result-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #047857;
+}
+
+.pao-result-text
+{
+    display: flex;
+    flex: 1 1 320px;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    color: #475569;
+    font-size: 13px;
+}
+
+.pao-result-text b
+{
+    color: #0f172a;
+    font-size: 14px;
+}
+
+.pao-result-links a
+{
+    color: #3b4fc4;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.pao-result-links a:hover
+{
+    text-decoration: underline;
+}
+
+.pao-alert
+{
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    border: 1px solid #fecdd3;
+    border-radius: 12px;
+    background: #fff1f2;
+    color: #be123c;
+    font-size: 13.5px;
+}
+
+.pao-link-button
+{
+    margin-left: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #3b4fc4;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+
+/* ---------- Canvas footer ---------- */
+
+.pao-footer
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
+    color: #475569;
+    font-size: 14px;
+}
+
+.pao-footer-label
+{
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.pao-footer b
+{
+    color: #0f172a;
+    font-size: 16px;
+}
+
+.pao-footer small
+{
+    color: #64748b;
+}
+
+.pao-footer-target
+{
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pao-footer-target b
+{
+    font-size: 14px;
+}
+
+.pao-footer-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+
+/* ---------- Narrow windows ---------- */
+
+@media (max-width: 1200px)
+{
+    .pao-target
+    {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px)
+{
+    .pao-body
+    {
+        overflow-y: auto;
+    }
+
+    .pao-target
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pao-sheet
+    {
+        flex: 0 0 auto;
+        height: 460px;
+    }
+}
+
+
+/* Unit : editable on the grid */
+.pao-unit-select
+{
+    width: 100%;
+    max-width: 76px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid #e3e7f3;
+    border-radius: 8px;
+    background: #f8f9fe;
+    color: #1f2547;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.pao-unit-select:hover:not(:disabled)
+{
+    border-color: #c9c6f3;
+    background: #ffffff;
+}
+
+.pao-unit-select:focus
+{
+    outline: none;
+    border-color: #8b86e8;
+    box-shadow: 0 0 0 3px rgba(139, 134, 232, 0.16);
+}
+
+.pao-unit-select.pao-default
+{
+    color: #64748b;
+}

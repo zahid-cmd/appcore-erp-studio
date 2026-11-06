@@ -727,9 +727,13 @@ implements OnInit
 
         this.progressDialog.show(
             'Onboarding Model',
-            `Creating ${name}, its sub category and ${picked.length} motor bike(s)...`,
-            true
+            `Creating ${name}, its sub category and ${picked.length} motor bike(s)...`
         );
+
+        // The bar starts at 0 % and rises while the server works
+        this.stopProgress =
+            this.startProgress(
+                900 + picked.length * 250 + picked.filter(p => !!p.imageFile).length * 600);
 
         this.onboardingService
             .onboard
@@ -764,6 +768,8 @@ implements OnInit
                 {
                     console.error('Model Onboarding Error', error);
 
+                    void this.stopProgress?.(false);
+
                     this.progressDialog.close();
 
                     this.isSaving =
@@ -779,6 +785,58 @@ implements OnInit
                     this.cdr.detectChanges();
                 }
             });
+    }
+
+
+    //===========================================================
+    // Progress for the onboarding : rises toward 95 % over the
+    // expected time (save + images), then 100 % when done. The
+    // stop function ends it (a short pause at 100 % on success).
+    //===========================================================
+
+    private stopProgress?:
+        (success: boolean) => Promise<void>;
+
+    private startProgress
+    (
+        expectedMs:
+            number
+    ):
+        (success: boolean) => Promise<void>
+    {
+        const started =
+            Date.now();
+
+        this.progressDialog.update(0);
+
+        const timer =
+            setInterval(
+                () =>
+                {
+                    const t =
+                        (Date.now() - started) / Math.max(300, expectedMs);
+
+                    this.progressDialog.update(
+                        Math.min(95, Math.round(95 * (1 - Math.exp(-2.2 * t)))));
+                },
+                150);
+
+        return async (success: boolean): Promise<void> =>
+        {
+            clearInterval(timer);
+
+            this.stopProgress = undefined;
+
+            if
+            (
+                success
+            )
+            {
+                this.progressDialog.update(100, 'Done');
+
+                await new Promise(resolve => setTimeout(resolve, 350));
+            }
+        };
     }
 
 
@@ -814,11 +872,14 @@ implements OnInit
                     });
 
         const finish =
-            (
+            async (
                 failed:
                     number
-            ): void =>
+            ): Promise<void> =>
             {
+                // 100 % for a moment, then close
+                await this.stopProgress?.(true);
+
                 this.progressDialog.close();
 
                 this.isSaving =

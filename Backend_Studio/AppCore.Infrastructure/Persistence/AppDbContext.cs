@@ -1427,6 +1427,61 @@ public class AppDbContext
 
     // AUTO-END : TestRides
 
+    // AUTO-BEGIN : SalesInvoicesAc
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.AccessoriesSales.SalesInvoicesAc>
+    SalesInvoicesAcs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesInvoicesAc
+
+    // AUTO-BEGIN : SalesQuotationsAc
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.AccessoriesSales.SalesQuotationsAc>
+    SalesQuotationsAcs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesQuotationsAc
+
+    // AUTO-BEGIN : SalesQuotationsSp
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.SparePartsLubricantSales.SalesQuotationsSp>
+    SalesQuotationsSps
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesQuotationsSp
+
+    // AUTO-BEGIN : SalesReturnsSp
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.SparePartsLubricantSales.SalesReturnsSp>
+    SalesReturnsSps
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesReturnsSp
+
+    // AUTO-BEGIN : SalesReturnsAc
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.AccessoriesSales.SalesReturnsAc>
+    SalesReturnsAcs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesReturnsAc
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 
@@ -1813,6 +1868,23 @@ public class AppDbContext
 
     public DbSet<AppCore.Domain.Entities.SalesOperations.SparePartsLubricantSales.SalesInvoicesSpPayments>
     SalesInvoicesSpPaymentRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Sales Invoices - AC : lines and Payment Desk rows (MANUAL : the
+    // head SalesInvoicesAc is in the sync's AUTO block)
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.AccessoriesSales.SalesInvoicesAcLines>
+    SalesInvoicesAcLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.AccessoriesSales.SalesInvoicesAcPayments>
+    SalesInvoicesAcPaymentRows
     {
     get;
     set;

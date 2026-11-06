@@ -66,7 +66,8 @@ public static class PostingPurposes
     // Sales Invoices - SP : gross sales (excluding the VAT inside
     // the MRP) and the discounts that have no ledger of their own
     // (membership discounts post to the card's Discount ledger).
-    // AC / MB get their own purposes when their pages are built.
+    // AC has its own set (below); MB gets its own when its page is
+    // built.
     public const string SalesSpareParts = "SALES-SP";
 
     public const string CampaignDiscountSpareParts = "CAMPAIGN-DISCOUNT-SP";
@@ -74,6 +75,15 @@ public static class PostingPurposes
     public const string SpecialDiscountSpareParts = "SPECIAL-DISCOUNT-SP";
 
     public const string FractionalDiscountSpareParts = "FRACTIONAL-DISCOUNT-SP";
+
+    // Sales Invoices - AC
+    public const string SalesAccessories = "SALES-AC";
+
+    public const string CampaignDiscountAccessories = "CAMPAIGN-DISCOUNT-AC";
+
+    public const string SpecialDiscountAccessories = "SPECIAL-DISCOUNT-AC";
+
+    public const string FractionalDiscountAccessories = "FRACTIONAL-DISCOUNT-AC";
 
 
     //===========================================================
