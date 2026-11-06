@@ -1,8 +1,0 @@
-@import '../../../../../../shared/styles/app-list-page.css';
-
-/* The shared list lays itself out; this wrapper adds no box */
-
-:host
-{
-    display: contents;
-}
