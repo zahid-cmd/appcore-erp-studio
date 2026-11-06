@@ -6,6 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.MembershipManagement.MembershipAssignment;
 
+using AppCore.Application.Common.Paging;
+
+using AppCore.Infrastructure.Persistence.Paging;
+
 using MembershipEntity =
     AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipStatus;
 
@@ -1207,5 +1211,146 @@ public class MembershipStatusRepository :
             .Where(x => !x.IsDeleted && x.PublicId == publicId)
             .Select(x => (long?)x.MembershipId)
             .FirstOrDefaultAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (list page : tab, card, search, sort and page on
+    // the server). Search also matches the card, the customer
+    // and the bike.
+    // Counts : All / <status> (card + search applied).
+    //===========================================================
+
+    private static SortMap<MembershipEntity> PagedSorts()
+    {
+        return new SortMap<MembershipEntity>("MembershipNo")
+            .Add("MembershipNo", x => x.MembershipNo)
+            .Add("ChassisNo", x => x.ChassisNo)
+            .Add("StartDisplay", x => x.StartDate)
+            .Add("ExpiryDisplay", x => x.ExpiryDate)
+            .Add("FeeDisplay", x => x.FeeAmount)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.MembershipId);
+    }
+
+
+    public async Task<PagedResult<MembershipStatusDto>> GetPagedAsync(
+        MembershipStatusPageRequest request)
+    {
+        await SyncExpiredAsync();
+
+        IQueryable<MembershipEntity> query =
+            _context
+                .Set<MembershipEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+        foreach
+        (
+            string word in request.SafeSearch.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where
+                (
+                    x =>
+                        EF.Functions.ILike(x.MembershipNo ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.ChassisNo ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.EngineNo ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Status ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like) ||
+                        _context.Set<MembershipCardEntity>().Any
+                        (
+                            c =>
+                                c.MembershipCardId == x.MembershipCardId &&
+                                (
+                                    EF.Functions.ILike(c.CardCode ?? string.Empty, like) ||
+                                    EF.Functions.ILike(c.CardName ?? string.Empty, like)
+                                )
+                        ) ||
+                        _context.Set<CustomerEntity>().Any
+                        (
+                            c =>
+                                c.CustomerId == x.CustomerId &&
+                                (
+                                    EF.Functions.ILike(c.CustomerCode ?? string.Empty, like) ||
+                                    EF.Functions.ILike(c.DisplayName ?? string.Empty, like)
+                                )
+                        ) ||
+                        _context.Set<MotorBikeEntity>().Any
+                        (
+                            b =>
+                                b.MotorBikeId == x.MotorBikeId &&
+                                (
+                                    EF.Functions.ILike(b.ProductCode ?? string.Empty, like) ||
+                                    EF.Functions.ILike(b.ProductName ?? string.Empty, like)
+                                )
+                        )
+                );
+        }
+
+        if (request.CardId.HasValue && request.CardId.Value > 0)
+        {
+            long cardId = request.CardId.Value;
+
+            query = query.Where(x => x.MembershipCardId == cardId);
+        }
+
+        // Tab counts (card and search applied)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        string tab =
+            (request.Tab ?? string.Empty).Trim();
+
+        if (tab != string.Empty && !string.Equals(tab, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            string status = tab.ToLower();
+
+            query = query.Where(x => x.Status.ToLower() == status);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        IQueryable<MembershipEntity> ordered =
+            string.IsNullOrWhiteSpace(request.Sort)
+                ? query.OrderByDescending(x => x.MembershipId)
+                : PagedSorts().Apply(query, request);
+
+        List<MembershipEntity> rows =
+            await ordered
+                .Page(request)
+                .ToListAsync();
+
+        Dictionary<string, int> counts =
+            new()
+            {
+                ["All"] = statusCounts.Sum(x => x.Count)
+            };
+
+        foreach (var row in statusCounts)
+        {
+            counts[row.Status ?? string.Empty] = row.Count;
+        }
+
+        return new PagedResult<MembershipStatusDto>
+        {
+            Items = await ToDtosAsync(rows, false),
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = counts
+        };
     }
 }

@@ -63,6 +63,19 @@ public class ServiceSubCategoryController : ControllerBase
     }
 
 
+    //===============================================================
+    // Get Paged (server paging; Counts = Total / Active / Inactive)
+    //===============================================================
+
+    [HttpGet("paged")]
+
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] ServiceSettingsPageRequest request)
+    {
+        return Ok(await _repository.GetPagedAsync(request));
+    }
+
+
     //===========================================================
     // Get Defaults
     //===========================================================

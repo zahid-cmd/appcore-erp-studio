@@ -38,6 +38,9 @@ public class SalesTestRideDto
 {
     public long SalesTestRideId { get; set; }
 
+    // Links of the Test Rides page (list / form)
+    public Guid PublicId { get; set; }
+
     public long SalesEnquiryId { get; set; }
 
     public string EnquiryNo { get; set; } = string.Empty;
@@ -94,6 +97,12 @@ public class SalesTestRideDto
     public string EnquiryStatusColor { get; set; } = string.Empty;
 
     public DateTime CreatedDate { get; set; }
+
+    // Booked / Confirmed (holds the slot)
+    public bool IsLive { get; set; }
+
+    // Live and the date has passed
+    public bool IsOverdue { get; set; }
 }
 
 

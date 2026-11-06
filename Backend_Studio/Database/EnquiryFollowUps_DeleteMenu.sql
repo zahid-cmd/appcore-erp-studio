@@ -1,0 +1,7 @@
+-- =====================================================================
+-- EnquiryFollowUps_DeleteMenu.sql : WITHDRAWN (2026-11-06)
+-- ---------------------------------------------------------------------
+-- Service Appointments and Test Rides now have their own pages under
+-- Follow-ups & Appointments, so the menu and its two submenus stay.
+-- Do not run anything from this file. It can be deleted.
+-- =====================================================================

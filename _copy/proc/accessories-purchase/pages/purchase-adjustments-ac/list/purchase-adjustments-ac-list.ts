@@ -921,7 +921,7 @@ implements OnInit
             [
                 'view',
 
-                item.id
+                item.publicId
             ],
 
             {
@@ -949,7 +949,7 @@ implements OnInit
             [
                 'edit',
 
-                item.id
+                item.publicId
             ],
 
             {
@@ -983,7 +983,7 @@ implements OnInit
                 this.purchaseadjustmentsacservice
                     .delete
                     (
-                        item.id
+                        item.publicId ?? ''
                     )
                     .subscribe
                     ({
@@ -1209,4 +1209,47 @@ implements OnInit
             false;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.purchaseadjustmentsacs ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.purchaseadjustmentsacs ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        const value =
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status;
+
+        return typeof value === 'string'
+            ? value.toLowerCase() === 'active'
+            : !!value;
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

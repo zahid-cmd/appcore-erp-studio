@@ -29,6 +29,11 @@ public interface IPOSAccountsRepository
     Task<List<POSAccountDto>> GetAllAsync();
 
 
+    // One list page (server paging) with Total / Active / Inactive
+    Task<AppCore.Application.Common.Paging.PagedResult<POSAccountDto>> GetPagedAsync(
+        AccountSettingsPageRequest request);
+
+
     // Public Id -> internal id (live rows only; null = not found)
 
     Task<long?> GetIdByPublicIdAsync(

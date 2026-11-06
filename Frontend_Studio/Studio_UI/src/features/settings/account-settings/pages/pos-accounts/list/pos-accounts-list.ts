@@ -415,6 +415,34 @@ implements OnInit, OnDestroy
         POSAccountListItem[] =
         [];
 
+
+    // Server paging
+    totalRecords:
+        number =
+        0;
+
+    // Total · Active · Inactive (search and filters applied)
+    private counts:
+        Record<string, number> =
+        {};
+
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer:
+        ReturnType<typeof setTimeout> | null =
+        null;
+
+    // Answers of older calls are dropped
+    private loadSeq:
+        number =
+        0;
+
     //===========================================================
     // Account Sub Group Lookup (Id → "Code - Name")
     //===========================================================
@@ -929,6 +957,9 @@ implements OnInit, OnDestroy
     loadItems():
         void
     {
+        const seq =
+            ++this.loadSeq;
+
         this.loading =
             true;
 
@@ -995,7 +1026,7 @@ implements OnInit, OnDestroy
                     ),
 
             accounts:
-                this.posAccountsService.getAll()
+                this.posAccountsService.getPaged(this.pageQuery())
         })
         .subscribe
         ({
@@ -1010,11 +1041,16 @@ implements OnInit, OnDestroy
                     bankAccounts:
                         any;
                     accounts:
-                        POSAccount[];
+                        any;
                 }
             ):
                 void =>
             {
+                if (seq !== this.loadSeq)
+                {
+                    return;
+                }
+
                 this.bankAccountNames =
                     new Map<string, string>(
                         (Array.isArray(result.bankAccounts) ? result.bankAccounts : [])
@@ -1034,7 +1070,7 @@ implements OnInit, OnDestroy
                 );
 
                 this.posAccounts =
-                    (result.accounts ?? []).map
+                    this.takeServerPage(result.accounts).map
                     (
                         item =>
                             this.toListItem(
@@ -1046,7 +1082,7 @@ implements OnInit, OnDestroy
                     result.branches
                 );
 
-                this.applyFilters();
+                this.showServerPage();
 
 
                 this.updateSummary();
@@ -1067,6 +1103,11 @@ implements OnInit, OnDestroy
             ):
                 void =>
             {
+                if (seq !== this.loadSeq)
+                {
+                    return;
+                }
+
                 console.error(
                     'Load POS Accounts Error:',
                     error
@@ -1140,108 +1181,11 @@ implements OnInit, OnDestroy
     applyFilters():
         void
     {
-        const keyword:
-            string =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        const branchKey:
-            string =
-            this.normalizeKey(
-                this.selectedBranch
-            );
-
-        this.filteredPOSAccounts =
-            this.posAccounts.filter
-            (
-                (
-                    item:
-                        POSAccountListItem
-                ):
-                    boolean =>
-                {
-                    //===============================================
-                    // Branch
-                    //===============================================
-
-                    const branchMatches =
-                        !branchKey
-                        ||
-                        this.normalizeKey(item.Branch) ===
-                        branchKey;
-
-                    if
-                    (
-                        !branchMatches
-                    )
-                    {
-                        return false;
-                    }
-
-                    //===============================================
-                    // Status
-                    //===============================================
-
-                    const statusMatches =
-                        this.selectedStatus === null
-                        ||
-                        item.Status ===
-                        this.selectedStatus;
-
-                    if
-                    (
-                        !statusMatches
-                    )
-                    {
-                        return false;
-                    }
-
-                    //===============================================
-                    // Search
-                    //===============================================
-
-                    if
-                    (
-                        !keyword
-                    )
-                    {
-                        return true;
-                    }
-
-                    const values:
-                        unknown[] =
-                    [
-                        item.POSAccountCode,
-                        item.POSAccountName,
-                        item.TerminalNumber,
-                        item.LinkedBankAccount,
-                        item.LinkedBankAccountName,
-                        item.Branch,
-                        item.AccountSubGroupName,
-                        item.CollectionAccountText,
-                        item.PaymentAccountText,
-                        item.BranchExclusiveText,
-                        item.Remarks,
-                        item.Status ? 'active' : 'inactive'
-                    ];
-
-                    return values.some
-                    (
-                        value =>
-                            String(value ?? '')
-                                .toLowerCase()
-                                .includes(keyword)
-                    );
-                }
-            );
-
+        // Search, filters and paging run on the server
         this.currentPage =
             1;
 
-        this.updatePagination();
-
-        this.cdr.detectChanges();
+        this.loadItems();
     }
 
     //===========================================================
@@ -1260,7 +1204,21 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        if (this.searchTimer)
+        {
+            clearTimeout(this.searchTimer);
+        }
+
+        this.searchTimer =
+            setTimeout(
+                (): void =>
+                {
+                    this.searchTimer = null;
+
+                    this.applyFilters();
+                },
+                300
+            );
     }
 
     //===========================================================
@@ -1279,99 +1237,19 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.filteredPOSAccounts =
-        [
-            ...this.filteredPOSAccounts
-        ];
+        // The server sorts the whole list
+        this.sortField =
+            event.field;
 
-        this.filteredPOSAccounts.sort
-        (
-            (
-                a:
-                    POSAccountListItem,
-                b:
-                    POSAccountListItem
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof POSAccountListItem
-                    ];
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof POSAccountListItem
-                    ];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ? valueA.localeCompare(valueB)
-                        : valueB.localeCompare(valueA);
-                }
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ? -1
-                        : 1;
-                }
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ? 1
-                        : -1;
-                }
-
-                return 0;
-            }
-        );
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -1411,21 +1289,10 @@ implements OnInit, OnDestroy
     updatePagination():
         void
     {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
+        // The server sends one page
         this.pagedPOSAccounts =
         [
-            ...this.filteredPOSAccounts.slice
-            (
-                start,
-                start + this.pageSize
-            )
+            ...this.filteredPOSAccounts
         ];
     }
 
@@ -1443,7 +1310,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -1463,7 +1330,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -2237,12 +2104,11 @@ implements OnInit, OnDestroy
     private updateSummary():
         void
     {
-        const all:
-            any[] =
-            this.posAccounts ?? [];
-
-        const active =
-            all.filter(x => !!x?.Status).length;
+        // Counts from the server : search and filters applied,
+        // the status filter not
+        const count =
+            (key: string): number =>
+                Number(this.counts[key] ?? 0);
 
         const text =
             (value: number): string =>
@@ -2250,10 +2116,66 @@ implements OnInit, OnDestroy
 
         this.summaryItems =
         [
-            { label:'Total',    value:text(all.length),          tone:'' },
-            { label:'Active',   value:text(active),              tone:'ok' },
-            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+            { label:'Total',    value:text(count('Total')),    tone:'' },
+            { label:'Active',   value:text(count('Active')),   tone:'ok' },
+            { label:'Inactive', value:text(count('Inactive')), tone:'bad' }
         ];
     }
 
+
+
+    //===========================================================
+    // Server Paging Helpers
+    //===========================================================
+
+    private pageQuery():
+        Record<string, unknown>
+    {
+        return {
+            page:this.currentPage,
+            pageSize:this.pageSize,
+            search:this.searchText,
+            sort:this.sortField,
+            dir:this.sortDirection,
+            status:this.selectedStatus === null ? '' : (this.selectedStatus ? 'active' : 'inactive'),
+            branch:this.selectedBranch ?? undefined
+        };
+    }
+
+
+    // The rows of the page arrive already filtered and sorted
+    private showServerPage():
+        void
+    {
+        this.filteredPOSAccounts =
+            this.posAccounts;
+
+        this.updatePagination();
+    }
+
+
+    // A server page : keep the totals, give back the rows
+    private takeServerPage
+    (
+        page:
+            any
+    ):
+        any[]
+    {
+        this.totalRecords =
+            Number(page?.totalCount ?? 0);
+
+        this.counts =
+            page?.counts ?? {};
+
+        if (Number(page?.page) > 0)
+        {
+            this.currentPage =
+                Number(page.page);
+        }
+
+        return Array.isArray(page?.items)
+            ? page.items
+            : [];
+    }
 }

@@ -180,30 +180,9 @@ Routes =
                 m =>
                     m.SoldBikeForm
             )
-    },
-
-
-    //===========================================================
-    // Service Appointments (MANUAL, not Code Sync) : the day
-    // board of workshop visits (?enquiry=<id> picks one)
-    //===========================================================
-
-    {
-        path:'appointments',
-
-        data:
-        {
-            breadcrumb:'Service Appointments'
-        },
-
-        loadComponent:() =>
-            import(
-                '../pages/service-enquiries/appointments/service-appointments'
-            )
-            .then(
-                m =>
-                    m.ServiceAppointmentsPage
-            )
     }
+
+    // Service Appointments / Test Rides : their own pages under
+    // Follow-ups & Appointments (2026-11-06)
 
 ];

@@ -1,0 +1,90 @@
+/* ============================================================
+   Service Appointments
+============================================================ */
+
+export interface ServiceAppointments
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Service Appointments
+============================================================ */
+
+export interface CreateServiceAppointments
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Service Appointments
+============================================================ */
+
+export interface UpdateServiceAppointments
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Service Appointments Defaults
+============================================================ */
+
+export interface ServiceAppointmentsDefaults
+{
+    code:
+        string;
+}

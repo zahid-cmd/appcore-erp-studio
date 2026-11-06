@@ -1,0 +1,242 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-building-columns"
+
+        [title]="pageTitle"
+
+        subtitle="Manage bank setup">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            <!-- =================================================
+                 SECTION 01 : BANK INFORMATION
+            ================================================== -->
+
+            <app-form-section
+
+                title="Bank Information"
+
+                icon="fas fa-building-columns">
+
+
+                <!-- Bank Code -->
+
+                <app-textbox
+
+                    label="Bank Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.BankCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Bank Name -->
+
+                <app-textbox
+
+                    label="Bank Name"
+
+                    placeholder="Enter bank name"
+
+                    [(value)]="entity.BankName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =================================================
+                 SECTION 02 : SHORT NAME
+            ================================================== -->
+
+            <app-form-section
+
+                title="Short Name"
+
+                icon="fas fa-tag">
+
+
+                <!-- Short Name -->
+
+                <app-textbox
+
+                    label="Short Name"
+
+                    placeholder="Enter short name"
+
+                    [(value)]="entity.ShortName"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =================================================
+                 SECTION 03 : STATUS
+            ================================================== -->
+
+            <app-form-section
+
+                title="Status"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.Status"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+            </app-form-section>
+
+
+
+            <!-- =================================================
+                 SECTION 04 : DESCRIPTION
+            ================================================== -->
+
+            <app-form-section
+
+                title="Description"
+
+                icon="fas fa-align-left">
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

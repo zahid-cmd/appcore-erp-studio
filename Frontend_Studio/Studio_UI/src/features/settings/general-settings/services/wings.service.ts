@@ -30,6 +30,14 @@ from '../../../../environments/environment';
 
 import
 {
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     Wing,
     CreateWing,
     UpdateWing
@@ -310,5 +318,36 @@ export class WingsService
         return this.http.get<any[]>(
             `${this.apiUrl}/${id}/history`
         );
+    }
+
+
+
+    //===========================================================
+    // One list page (server paging)
+    //
+    // query : page, pageSize, search, sort, dir and the list's
+    //         filters (status, wingId, branchId, division,
+    //         district, yearStatus); blanks are left out
+    // counts: Total · Active · Inactive
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            Record<string, unknown>
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                { params:toPagedParams({ ...query }) }
+            )
+            .pipe(
+                map(
+                    raw =>
+                        toPagedResult(raw, (x: any) => x)
+                )
+            );
     }
 }

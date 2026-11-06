@@ -154,13 +154,13 @@ export const PRICE_ADJUSTMENT_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<PriceAdjustmentPrintData>
     {
         const doc =
             await firstValueFrom(
-                injector.get(PriceAdjustmentService).getById(id)
+                injector.get(PriceAdjustmentService).getById(String(id))
             );
 
         return {

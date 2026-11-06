@@ -234,6 +234,34 @@ implements OnInit
         MembershipService[] =
     [];
 
+
+    // Server paging
+    totalRecords:
+        number =
+        0;
+
+    // Total · Active · Inactive (search and filters applied)
+    private counts:
+        Record<string, number> =
+        {};
+
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer:
+        ReturnType<typeof setTimeout> | null =
+        null;
+
+    // Answers of older calls are dropped
+    private loadSeq:
+        number =
+        0;
+
     //===========================================================
     // Search & Loading
     //===========================================================
@@ -473,6 +501,9 @@ implements OnInit
     loadItems():
         void
     {
+        const seq =
+            ++this.loadSeq;
+
         this.loading =
             true;
 
@@ -480,21 +511,43 @@ implements OnInit
             false;
 
         this.membershipServicesService
-            .getAll()
+            .getPaged(this.pageQuery())
             .subscribe
             ({
                 next:
                 (
                     response:
-                        MembershipService[]
+                        any
                 ):
                     void =>
                 {
+                    if (seq !== this.loadSeq)
+                    {
+                        return;
+                    }
+
+                    // Server page : remember the totals, then the
+                    // rows go through the usual mapping below
+                    this.totalRecords =
+                        Number(response?.totalCount ?? 0);
+
+                    this.counts =
+                        response?.counts ?? {};
+
+                    if (Number(response?.page) > 0)
+                    {
+                        this.currentPage =
+                            Number(response.page);
+                    }
+
+                    response =
+                        response?.items ?? [];
+
                     // Display values
                     this.membershipServices =
                         (response ?? []).map
                         (
-                            item =>
+                            (item: any) =>
                             ({
                                 ...item,
 
@@ -524,7 +577,7 @@ implements OnInit
                             } as MembershipService)
                         );
 
-                    this.applyFilters();
+                    this.showServerPage();
 
 
                     this.updateSummary();
@@ -542,6 +595,11 @@ implements OnInit
                 ):
                     void =>
                 {
+                    if (seq !== this.loadSeq)
+                    {
+                        return;
+                    }
+
                     console.error
                     (
                         'Load Membership Services Error:',
@@ -581,73 +639,11 @@ implements OnInit
     applyFilters():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredMembershipServices =
-            this.membershipServices.filter
-            (
-                item =>
-                {
-                    const tabMatch =
-                        (
-                            this.selectedCardId === null
-                            ||
-                            Number(item.MembershipCardId) ===
-                            this.selectedCardId
-                        )
-                        &&
-                        (
-                            this.selectedReadiness === null
-                            ||
-                            item.Readiness ===
-                            this.selectedReadiness
-                        );
-
-                    const statusMatch =
-                        this.selectedStatus === null
-                        ||
-                        item.IsActive ===
-                        this.selectedStatus;
-
-                    const text =
-                        [
-                            item.ServiceCode,
-                            item.ServiceName,
-                            item.DisplayName,
-                            item.MembershipType,
-                            item.CardCode,
-                            item.Readiness,
-                            item.SubCategoryCode,
-                            item.SubCategoryName,
-                            item.IncomeLedgerCode,
-                            item.ExpenseLedgerCode,
-                            item.Remarks,
-                            item.IsActive
-                                ? 'active'
-                                : 'inactive'
-                        ]
-                        .join(' ')
-                        .toLowerCase();
-
-                    return tabMatch
-                        &&
-                        statusMatch
-                        &&
-                        (
-                            !keyword
-                            ||
-                            text.includes(keyword)
-                        );
-                }
-            );
-
+        // Search, filters and paging run on the server
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -685,7 +681,21 @@ implements OnInit
             ??
             '';
 
-        this.applyFilters();
+        if (this.searchTimer)
+        {
+            clearTimeout(this.searchTimer);
+        }
+
+        this.searchTimer =
+            setTimeout(
+                (): void =>
+                {
+                    this.searchTimer = null;
+
+                    this.applyFilters();
+                },
+                300
+            );
     }
 
     //===========================================================
@@ -823,69 +833,19 @@ implements OnInit
     ):
         void
     {
-        const direction =
-            event.direction === 'asc'
-                ? 1
-                : -1;
+        // The server sorts the whole list
+        this.sortField =
+            event.field;
 
-        this.filteredMembershipServices =
-        [
-            ...this.filteredMembershipServices
-        ]
-        .sort
-        (
-            (a: any, b: any): number =>
-            {
-                const valueA =
-                    a[event.field];
-
-                const valueB =
-                    b[event.field];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1 * direction;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1 * direction;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return valueA.localeCompare(valueB) * direction;
-                }
-
-                return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * direction;
-            }
-        );
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -925,17 +885,10 @@ implements OnInit
     updatePagination():
         void
     {
-        const start:
-            number =
-            (this.currentPage - 1) * this.pageSize;
-
+        // The server sends one page
         this.pagedMembershipServices =
         [
-            ...this.filteredMembershipServices.slice
-            (
-                start,
-                start + this.pageSize
-            )
+            ...this.filteredMembershipServices
         ];
     }
 
@@ -949,7 +902,7 @@ implements OnInit
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     onPageSizeChange
@@ -965,7 +918,7 @@ implements OnInit
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -1116,12 +1069,11 @@ implements OnInit
     private updateSummary():
         void
     {
-        const all:
-            any[] =
-            this.membershipServices ?? [];
-
-        const active =
-            all.filter(x => !!x?.IsActive).length;
+        // Counts from the server : search and filters applied,
+        // the status filter not
+        const count =
+            (key: string): number =>
+                Number(this.counts[key] ?? 0);
 
         const text =
             (value: number): string =>
@@ -1129,10 +1081,41 @@ implements OnInit
 
         this.summaryItems =
         [
-            { label:'Total',    value:text(all.length),          tone:'' },
-            { label:'Active',   value:text(active),              tone:'ok' },
-            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+            { label:'Total',    value:text(count('Total')),    tone:'' },
+            { label:'Active',   value:text(count('Active')),   tone:'ok' },
+            { label:'Inactive', value:text(count('Inactive')), tone:'bad' }
         ];
     }
 
+
+
+    //===========================================================
+    // Server Paging Helpers
+    //===========================================================
+
+    private pageQuery():
+        Record<string, unknown>
+    {
+        return {
+            page:this.currentPage,
+            pageSize:this.pageSize,
+            search:this.searchText,
+            sort:this.sortField,
+            dir:this.sortDirection,
+            status:this.selectedStatus === null ? '' : (this.selectedStatus ? 'active' : 'inactive'),
+            cardId:this.selectedCardId ?? undefined,
+            readiness:this.selectedReadiness ?? undefined
+        };
+    }
+
+
+    // The rows of the page arrive already filtered and sorted
+    private showServerPage():
+        void
+    {
+        this.filteredMembershipServices =
+            this.membershipServices;
+
+        this.updatePagination();
+    }
 }

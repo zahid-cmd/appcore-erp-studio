@@ -54,6 +54,9 @@ export interface OpeningStockUnit
 
 export interface OpeningStock
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:string;
+
     OpeningStockId:number;
     PageType:string;
     OpeningNo:string;
@@ -231,6 +234,9 @@ export interface CreateOpeningStock
 
 export interface OpeningStockSaved
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:string;
+
     OpeningStockId:number;
     OpeningNo:string;
     Status:string;

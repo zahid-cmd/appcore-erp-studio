@@ -6,6 +6,10 @@ using System.Text.RegularExpressions;
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.AccountSettings;
 using AppCore.Application.Settings.AccountSettings.AccountClass.DTOs;
 
@@ -200,6 +204,114 @@ public class AccountClassRepository : IAccountClassRepository
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<AccountClassDto> ListSorts()
+    {
+        return new SortMap<AccountClassDto>("ClassType")
+            .Add("ClassType", x => x.ClassType)
+            .Add("ClassCode", x => x.ClassCode)
+            .Add("ClassName", x => x.ClassName)
+            .Add("Mode", x => x.Mode)
+            .Add("ClassPrefix", x => x.ClassPrefix)
+            .Add("AllowManualGroupCreation", x => x.AllowManualGroupCreation)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.ClassCode);
+    }
+
+
+    public async Task<PagedResult<AccountClassDto>> GetPagedAsync(
+        AccountSettingsPageRequest request)
+    {
+        IQueryable<AccountClassDto> query =
+            AccountClassQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.ClassType ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.ClassCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.ClassName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Mode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.ClassPrefix ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<AccountClassDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<AccountClassDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

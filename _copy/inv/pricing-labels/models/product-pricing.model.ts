@@ -44,6 +44,9 @@ export interface ProductPricingLine
 
 export interface ProductPricing
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:string;
+
     ProductPricingId:number;
     PageType:string;
     PricingNo:string;
@@ -272,6 +275,9 @@ export function priceFromBasis
 
 export interface ProductPricingSaved
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:string;
+
     ProductPricingId:number;
     PricingNo:string;
     Status:string;

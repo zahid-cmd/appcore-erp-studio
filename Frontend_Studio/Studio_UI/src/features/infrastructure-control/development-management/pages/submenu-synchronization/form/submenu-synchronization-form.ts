@@ -301,6 +301,12 @@ implements OnInit
         0;
 
 
+    // The id in the address bar : the uuid (or an internal id
+    // from an older link)
+    routePublicId =
+        '';
+
+
     //===========================================================
     // Header
     //===========================================================
@@ -906,12 +912,13 @@ implements OnInit
     private initializeData():
         void
     {
-        this.synchronizationId =
-            Number(
-                this.route.snapshot.paramMap.get('id')
-            );
+        this.routePublicId =
+            (this.route.snapshot.paramMap.get('id') ?? '').trim();
 
-        if (this.synchronizationId <= 0)
+        this.synchronizationId =
+            0;
+
+        if (!this.routePublicId)
         {
             this.loadDefaults();
 
@@ -997,7 +1004,7 @@ implements OnInit
     {
         this.submenuSynchronizationService
             .getById(
-                this.synchronizationId
+                this.synchronizationId > 0 ? this.synchronizationId : this.routePublicId
             )
             .subscribe(
             {
@@ -1006,6 +1013,9 @@ implements OnInit
                         synchronization
                     ) =>
                     {
+                        this.synchronizationId =
+                            synchronization.id;
+
                         this.setSynchronization(
                             synchronization
                         );

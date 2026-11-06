@@ -1,0 +1,179 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Test Rides"
+        subtitle="Test rides booked for sales enquiries"
+        icon="fas fa-motorcycle">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search enquiry no, customer, mobile, bike, executive..."
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Add"
+                command1Icon="fas fa-calendar-plus"
+                command1Title="Book a test ride"
+                (command1Click)="add()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="refresh()"
+                command3Text="Restore"
+                command3Icon="fas fa-trash-arrow-up"
+                (command3Click)="restore()"
+                command4Text="Board"
+                command4Icon="fas fa-table-cells-large"
+                command4Title="Open the day board (slots, waiting list)"
+                (command4Click)="openBoard()"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="History"
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR : period · status · branch
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+
+        </app-control-tabs>
+
+        <app-search-dropdown
+            pageToolbarRight
+            placeholder="All Status"
+            [items]="statusItems"
+            labelField="label"
+            valueField="value"
+            badgeField="count"
+            swatchField="color"
+            [minWidth]="230"
+            [value]="selectedStatus"
+            (valueChange)="onStatusChange($event)">
+
+        </app-search-dropdown>
+
+        <app-search-dropdown
+            pageToolbarRight
+            placeholder="Branch"
+            [items]="branchItems"
+            labelField="label"
+            valueField="value"
+            [minWidth]="210"
+            [value]="selectedBranch"
+            (valueChange)="onBranchChange($event)">
+
+        </app-search-dropdown>
+
+    </app-page-toolbar>
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+
+            <app-list-table
+                [columns]="columns"
+                [rows]="rows"
+                [rowActions]="rowActions"
+                (rowAction)="onRowAction($event)"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                (view)="view($event)"
+                (edit)="edit($event)"
+                (delete)="delete($event)"
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+
+    <!-- =====================================================
+         SUMMARY (period, branch and search; not the status)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="trl-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="trl-summary-item">
+                    <span class="trl-summary-label">{{ item.label }}</span>
+                    <b
+                        class="trl-summary-value"
+                        [class.trl-ok]="item.tone === 'ok'"
+                        [class.trl-warn]="item.tone === 'warn'"
+                        [class.trl-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="trl-summary-note">
+                Matching {{ summaryNote }}
+            </span>
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         HISTORY / UTILITIES
+    ====================================================== -->
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        [title]="historyTitle"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

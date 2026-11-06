@@ -96,6 +96,10 @@ builder.Services.AddHostedService<PosAutoSettlementService>();
 // Nightly backup of the App database (Data Management)
 builder.Services.AddHostedService<NightlyBackupService>();
 
+// Next financial year : created automatically N days before the
+// current one ends when switch CFG-MOD-003-0111 is ON
+builder.Services.AddHostedService<FinancialYearAutoCreateJob>();
+
 
 //===============================================================
 // JWT Authentication

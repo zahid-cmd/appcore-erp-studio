@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const SupplierProfilesRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Supplier Profiles'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/supplier-profiles/list/supplier-profiles-list'
+            )
+            .then(
+                m =>
+                    m.SupplierProfilesList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Supplier'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/supplier-profiles/form/supplier-profiles-form'
+            )
+            .then(
+                m =>
+                    m.SupplierProfilesForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Supplier'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/supplier-profiles/form/supplier-profiles-form'
+            )
+            .then(
+                m =>
+                    m.SupplierProfilesForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Supplier'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/supplier-profiles/form/supplier-profiles-form'
+            )
+            .then(
+                m =>
+                    m.SupplierProfilesForm
+            )
+    }
+
+];

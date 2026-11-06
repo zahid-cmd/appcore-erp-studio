@@ -75,6 +75,10 @@ export interface PurchaseLine
 
 export interface Purchase
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     PurchaseId:
         number;
     PageType:
@@ -288,6 +292,10 @@ export interface UpdatePurchase
 
 export interface PurchaseSaved
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:
+        string;
+
     PurchaseId:
         number;
     PurchaseNo:

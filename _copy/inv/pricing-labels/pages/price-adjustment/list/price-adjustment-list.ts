@@ -127,7 +127,6 @@ import
     PriceAdjustmentListRow,
     formatAdjustmentDate,
     formatAdjustmentMoney,
-    priceAdjustmentMatches,
     priceAdjustmentType
 }
 from '../../../models/price-adjustment.model';
@@ -275,8 +274,27 @@ export class PriceAdjustmentList
     rows:
         PriceAdjustmentRow[] = [];
 
-    filteredRows:
-        PriceAdjustmentRow[] = [];
+    // Rows on all pages after the tab / type / search (server)
+    totalRecords:
+        number = 0;
+
+    // Tab / type / status counts from the server
+    counts:
+        Record<string, number> = {};
+
+    // Server sort ('' = newest first)
+    private sortField:
+        string = '';
+
+    private sortDirection:
+        'asc' | 'desc' = 'asc';
+
+    private searchTimer?:
+        number;
+
+    // A load that is out of date is ignored
+    private loadSeq:
+        number = 0;
 
     pagedRows:
         PriceAdjustmentRow[] = [];
@@ -371,49 +389,109 @@ export class PriceAdjustmentList
 
         this.loadFailed = false;
 
+        const seq =
+            ++this.loadSeq;
+
         this.cdr.detectChanges();
 
         this.service
-            .getAll()
+            .getPaged
+            ({
+                page:
+                    this.currentPage,
+                pageSize:
+                    this.pageSize,
+                search:
+                    this.searchText,
+                sort:
+                    this.sortField,
+                dir:
+                    this.sortDirection,
+                type:
+                    this.selectedType,
+                tab:
+                    this.selectedTab
+            })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
-                    rows =>
+                    result =>
                     {
+                        if
+                        (
+                            seq !== this.loadSeq
+                        )
+                        {
+                            return;
+                        }
+
                         this.rows =
-                            rows.map
-                            (
-                                x =>
-                                ({
-                                    ...x,
-                                    CutOffText:formatAdjustmentDate(x.CutOffDate),
-                                    TypeText:priceAdjustmentType(x.PageType).title,
-                                    CircularText:[x.CircularRef, formatAdjustmentDate(x.CircularDate)].filter(t => !!t).join(' · ') || '—',
-                                    IncreaseText:x.IncreaseAmount ? formatAdjustmentMoney(x.IncreaseAmount) : '—',
-                                    ReductionText:x.ReductionAmount ? formatAdjustmentMoney(x.ReductionAmount) : '—',
-                                    NetText:formatAdjustmentMoney(x.NetAmount),
-                                    StatusText:x.IsDeleted ? 'Deleted' : x.Status
-                                })
-                            );
+                            result.items.map(x => this.toRow(x));
+
+                        this.pagedRows =
+                            this.rows;
+
+                        this.totalRecords =
+                            result.totalCount;
+
+                        this.currentPage =
+                            result.page || 1;
+
+                        this.counts =
+                            result.counts ?? {};
 
                         this.loading = false;
 
-                        this.applyFilters();
+                        this.cdr.detectChanges();
                     },
 
                 error:
                     () =>
                     {
+                        if
+                        (
+                            seq !== this.loadSeq
+                        )
+                        {
+                            return;
+                        }
+
                         this.loading = false;
 
                         this.loadFailed = true;
 
                         this.rows = [];
 
-                        this.applyFilters();
+                        this.pagedRows = [];
+
+                        this.totalRecords = 0;
+
+                        this.counts = {};
+
+                        this.cdr.detectChanges();
                     }
             });
+    }
+
+    // A list row with its display texts
+    private toRow
+    (
+        x:
+            any
+    ):
+        PriceAdjustmentRow
+    {
+        return ({
+            ...x,
+            CutOffText:formatAdjustmentDate(x.CutOffDate),
+            TypeText:priceAdjustmentType(x.PageType).title,
+            CircularText:[x.CircularRef, formatAdjustmentDate(x.CircularDate)].filter(t => !!t).join(' · ') || '—',
+            IncreaseText:x.IncreaseAmount ? formatAdjustmentMoney(x.IncreaseAmount) : '—',
+            ReductionText:x.ReductionAmount ? formatAdjustmentMoney(x.ReductionAmount) : '—',
+            NetText:formatAdjustmentMoney(x.NetAmount),
+            StatusText:x.IsDeleted ? 'Deleted' : x.Status
+        });
     }
 
     //===========================================================
@@ -463,7 +541,7 @@ export class PriceAdjustmentList
     }
 
     //===========================================================
-    // Filters
+    // Filters (tab / type / search / sort / page on the server)
     //===========================================================
 
     onTabChange
@@ -475,7 +553,7 @@ export class PriceAdjustmentList
     {
         this.selectedTab = tab;
 
-        this.applyFilters();
+        this.reload();
     }
 
     onTypeChange
@@ -487,9 +565,21 @@ export class PriceAdjustmentList
     {
         this.selectedType = type;
 
-        this.applyFilters();
+        this.reload();
     }
 
+    // Live documents of a type (search applied) ; '' = all types
+    typeCount
+    (
+        type:
+            string
+    ):
+        number
+    {
+        return Number(this.counts['Type_' + (type || 'All')] ?? 0);
+    }
+
+    // Search after a short pause in typing
     onSearch
     (
         value:
@@ -499,56 +589,34 @@ export class PriceAdjustmentList
     {
         this.searchText = value ?? '';
 
-        this.applyFilters();
-    }
-
-    // Deleted drafts are counted on the Deleted tab only
-    typeCount
-    (
-        type:
-            string
-    ):
-        number
-    {
-        return this.rows.filter(x => !x.IsDeleted && (!type || x.PageType === type)).length;
-    }
-
-    private tabMatches
-    (
-        row:
-            PriceAdjustmentRow
-    ):
-        boolean
-    {
         if
         (
-            this.selectedTab === 'deleted'
+            this.searchTimer
         )
         {
-            return row.IsDeleted;
+            clearTimeout(this.searchTimer);
         }
 
-        return !row.IsDeleted
-            && (this.selectedTab === 'all' || row.Status.toLowerCase() === this.selectedTab);
+        this.searchTimer =
+            window.setTimeout
+            (
+                () =>
+                {
+                    this.searchTimer = undefined;
+
+                    this.reload();
+                },
+                300
+            );
     }
 
-    private applyFilters():
+    // Back to page 1 and load
+    private reload():
         void
     {
-        this.filteredRows =
-            this.rows.filter
-            (
-                x =>
-                    this.tabMatches(x)
-                    &&
-                    (!this.selectedType || x.PageType === this.selectedType)
-                    &&
-                    priceAdjustmentMatches(x, this.searchText)
-            );
-
         this.currentPage = 1;
 
-        this.paginate();
+        this.load();
     }
 
     onSort
@@ -558,37 +626,11 @@ export class PriceAdjustmentList
     ):
         void
     {
-        const fields:
-            Record<string, string> =
-        {
-            CutOffText:'CutOffDate',
-            IncreaseText:'IncreaseAmount',
-            ReductionText:'ReductionAmount',
-            NetText:'NetAmount'
-        };
+        this.sortField = event?.field ?? '';
 
-        const field =
-            fields[event.field] ?? event.field;
+        this.sortDirection = event?.direction === 'desc' ? 'desc' : 'asc';
 
-        const sign =
-            event.direction === 'asc' ? 1 : -1;
-
-        this.filteredRows =
-            [...this.filteredRows].sort
-            (
-                (a: any, b: any) =>
-                {
-                    const x = a[field];
-
-                    const y = b[field];
-
-                    return (typeof x === 'number' && typeof y === 'number'
-                        ? x - y
-                        : String(x ?? '').localeCompare(String(y ?? ''))) * sign;
-                }
-            );
-
-        this.paginate();
+        this.reload();
     }
 
     onPageChange
@@ -600,7 +642,7 @@ export class PriceAdjustmentList
     {
         this.currentPage = page;
 
-        this.paginate();
+        this.load();
     }
 
     onPageSizeChange
@@ -612,21 +654,48 @@ export class PriceAdjustmentList
     {
         this.pageSize = size;
 
-        this.currentPage = 1;
-
-        this.paginate();
+        this.reload();
     }
 
-    private paginate():
-        void
+    //===========================================================
+    // Summary Line (below the canvas) : documents by status
+    // (search and type applied)
+    //===========================================================
+
+    get summaryTotal():
+        number
     {
-        const start =
-            (this.currentPage - 1) * this.pageSize;
+        return Number(this.counts['All'] ?? 0);
+    }
 
-        this.pagedRows =
-            this.filteredRows.slice(start, start + this.pageSize);
+    // A status count ; the server keys are the status names
+    countOf
+    (
+        status:
+            string
+    ):
+        number
+    {
+        const key =
+            Object.keys(this.counts).find(k => k.toLowerCase() === status.toLowerCase());
 
-        this.cdr.detectChanges();
+        return key ? Number(this.counts[key] ?? 0) : 0;
+    }
+
+    get summaryNote():
+        string
+    {
+        return this.searchText.trim() || this.selectedType
+            ? 'Filtered records'
+            : 'All records';
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 
     //===========================================================
@@ -645,6 +714,10 @@ export class PriceAdjustmentList
         void
     {
         this.searchText = '';
+
+        this.sortField = '';
+
+        this.currentPage = 1;
 
         this.selectedTab = 'all';
 
@@ -680,7 +753,7 @@ export class PriceAdjustmentList
             return;
         }
 
-        this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'view', row.Id]);
+        this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'view', row.PublicId]);
     }
 
     // Only a draft is edited; a posted / cancelled one opens to view
@@ -714,12 +787,12 @@ export class PriceAdjustmentList
             row.Status !== 'Draft'
         )
         {
-            this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'view', row.Id]);
+            this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'view', row.PublicId]);
 
             return;
         }
 
-        this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'edit', row.Id]);
+        this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'edit', row.PublicId]);
     }
 
     onRowAction
@@ -820,7 +893,7 @@ export class PriceAdjustmentList
                 'Deleting Price Adjustment',
                 `Please wait while "${row.AdjustmentNo}" is being deleted...`,
                 'Price adjustment deleted.',
-                this.service.delete(row.Id))
+                this.service.delete(row.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -854,23 +927,35 @@ export class PriceAdjustmentList
             return;
         }
 
-        // The newest deleted draft (highest id)
-        const last =
-            this.rows
-                .filter(x => x.IsDeleted)
-                .sort((a, b) => b.Id - a.Id)[0];
+        // The newest deleted draft (the first row of the Deleted tab)
+        this.service
+            .getPaged({ page:1, pageSize:1, tab:'deleted' })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    result =>
+                    {
+                        const last =
+                            result.items[0];
 
-        if
-        (
-            !last
-        )
-        {
-            this.say('info', 'There is no deleted price adjustment draft to restore.');
+                        if
+                        (
+                            !last
+                        )
+                        {
+                            this.say('info', 'There is no deleted price adjustment draft to restore.');
 
-            return;
-        }
+                            return;
+                        }
 
-        this.restoreRow(last);
+                        this.restoreRow(this.toRow(last));
+                    },
+
+                error:
+                    err =>
+                        this.say('error', errorText(err, 'Failed to find the deleted draft.'))
+            });
     }
 
     private restoreRow
@@ -945,7 +1030,7 @@ export class PriceAdjustmentList
     {
         const url =
             this.router.serializeUrl(
-                this.router.createUrlTree(['/print-viewer', PRICE_ADJUSTMENT_PRINT_KEY, row.Id])
+                this.router.createUrlTree(['/print-viewer', PRICE_ADJUSTMENT_PRINT_KEY, row.PublicId])
             );
 
         const tab =

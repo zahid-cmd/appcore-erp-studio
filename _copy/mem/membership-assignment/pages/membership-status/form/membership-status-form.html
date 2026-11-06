@@ -1,0 +1,681 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-circle-check"
+
+        [title]="pageTitle"
+
+        subtitle="Enroll a motor bike in a membership card and follow its free services">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <!-- Form (Add / Edit / View) or the Service Schedule tab
+             (View / Edit) : one replaces the other in the canvas -->
+
+        @if (!isScheduleTab)
+        {
+            <app-form-grid
+
+                canvasBody
+
+                [columns]="4">
+
+
+
+                <!-- =============================================
+                     SECTION 01
+                     MEMBERSHIP
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Membership"
+
+                    icon="fas fa-id-badge">
+
+
+                    <!-- Membership No : MEM-000001 (central code generator) -->
+
+                    <app-textbox
+
+                        label="Membership No"
+
+                        placeholder="Auto generated"
+
+                        [value]="entity.MembershipNo"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <!-- Cards with an active policy -->
+
+                    <app-search-dropdown
+
+                        label="Membership Card"
+
+                        placeholder="Select membership card"
+
+                        [items]="cardItems"
+
+                        [value]="entity.MembershipCardId"
+
+                        (valueChange)="onCardChange($event)"
+
+                        [disabled]="!canEditDetails"
+
+                        [required]="true">
+
+                    </app-search-dropdown>
+
+
+                    <app-textbox
+
+                        label="Policy Code"
+
+                        placeholder="From the card"
+
+                        [value]="entity.PolicyCode"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <!-- Inbound or Outside customer -->
+
+                    <app-search-dropdown
+
+                        label="Customer"
+
+                        placeholder="Select customer"
+
+                        [items]="customerItems"
+
+                        [value]="entity.CustomerId"
+
+                        (valueChange)="onCustomerChange($event)"
+
+                        [disabled]="!canEditDetails"
+
+                        [required]="true">
+
+                    </app-search-dropdown>
+
+
+                    <app-textbox
+
+                        label="Member Discounts"
+
+                        placeholder="From the policy"
+
+                        [value]="discountDisplay"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+
+                <!-- =============================================
+                     SECTION 02
+                     MOTOR BIKE (Customer Vehicle linked later)
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Motor Bike"
+
+                    icon="fas fa-motorcycle">
+
+
+                    <!-- Customer Vehicle : linked when Customer Vehicles is built -->
+
+                    <app-textbox
+
+                        label="Customer Vehicle"
+
+                        placeholder="Linked later (Customer Vehicles)"
+
+                        [value]="''"
+
+                        [disabled]="true">
+
+                    </app-textbox>
+
+
+                    <!-- Product Settings > Motor Bikes -->
+
+                    <app-search-dropdown
+
+                        label="Motor Bike"
+
+                        placeholder="Select motor bike"
+
+                        [items]="motorBikeItems"
+
+                        [value]="entity.MotorBikeId"
+
+                        (valueChange)="onMotorBikeChange($event)"
+
+                        [disabled]="!canEditDetails"
+
+                        [required]="true">
+
+                    </app-search-dropdown>
+
+
+                    <!-- Chassis No : UPPERCASE; one open membership per chassis -->
+
+                    <app-textbox
+
+                        label="Chassis No"
+
+                        placeholder="e.g. MD2A11CZ5PWC12345"
+
+                        [(value)]="entity.ChassisNo"
+
+                        (valueChange)="onCodeChange('ChassisNo')"
+
+                        [disabled]="!canEditDetails"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Engine No"
+
+                        placeholder="Optional"
+
+                        [(value)]="entity.EngineNo"
+
+                        (valueChange)="onCodeChange('EngineNo')"
+
+                        [disabled]="!canEditDetails">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Free Services"
+
+                        placeholder="From the policy"
+
+                        [value]="freeServiceDisplay"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+
+                <!-- =============================================
+                     SECTION 03
+                     PERIOD & FEE (copied from the policy)
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Period & Fee"
+
+                    icon="fas fa-calendar-days">
+
+
+                    <!-- Dates : app-datepicker draws its own label, identical to
+                         app-textbox. Do not wrap it in a div or add a separate label. -->
+
+                    <app-datepicker
+
+                        label="Enrollment Date"
+
+                        placeholder="Select date"
+
+                        [required]="true"
+
+                        [value]="$any(enrollmentDateValue)"
+
+                        (valueChange)="onEnrollmentDateChange($event)"
+
+                        [disabled]="!canEditDetails">
+
+                    </app-datepicker>
+
+
+                    <app-datepicker
+
+                        label="Start Date"
+
+                        placeholder="Select date"
+
+                        [required]="true"
+
+                        [value]="$any(startDateValue)"
+
+                        (valueChange)="onStartDateChange($event)"
+
+                        [disabled]="!canEditDetails">
+
+                    </app-datepicker>
+
+
+                    <!-- Expiry : Start + validity months - 1 day -->
+
+                    <app-textbox
+
+                        label="Expiry Date"
+
+                        placeholder="Start + validity"
+
+                        [value]="expiryDisplay"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Fee"
+
+                        placeholder="From the policy"
+
+                        [value]="feeDisplay"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Missed Services"
+
+                        placeholder="From the policy"
+
+                        [value]="missedRuleDisplay"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+
+                <!-- =============================================
+                     SECTION 04
+                     STATUS & CONTROL
+                ============================================== -->
+
+                <app-form-section
+
+                    title="Status & Control"
+
+                    icon="fas fa-toggle-on">
+
+
+                    <!-- Set by the system : free card -> Active on save; otherwise Pending -> Active in Membership Fees Collection; Expired : automatic -->
+
+                    <app-textbox
+
+                        label="Current Status"
+
+                        placeholder="Pending"
+
+                        [value]="statusDisplay"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+
+
+                    @if (!isAddMode)
+                    {
+                        <app-dropdown
+
+                            label="Change Status"
+
+                            [items]="statusItems"
+
+                            [(value)]="entity.Status"
+
+                            (valueChange)="onStatusChange()"
+
+                            [disabled]="isViewMode || isSaving || isAddMode">
+
+                        </app-dropdown>
+                    }
+
+
+                    @if (needsReason || (isViewMode && entity.StatusReason))
+                    {
+                        <app-textbox
+
+                            label="Status Reason"
+
+                            placeholder="Why is it suspended / cancelled?"
+
+                            [(value)]="entity.StatusReason"
+
+                            (valueChange)="onValueChange()"
+
+                            [disabled]="isViewMode || isSaving">
+
+                        </app-textbox>
+                    }
+
+
+                    <app-textarea
+
+                        label="Remarks"
+
+                        placeholder="Enter remarks"
+
+                        [rows]="3"
+
+                        [(value)]="entity.Remarks"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode || isSaving">
+
+                    </app-textarea>
+
+                </app-form-section>
+
+
+
+            </app-form-grid>
+        }
+        @else
+        {
+            <div
+                canvasBody
+                class="mst-schedule-page">
+
+                <!-- Totals -->
+
+                <div class="mst-totals">
+
+                    <div class="mst-total">
+                        <span class="mst-total-value">{{ scheduleTotals.total }}</span>
+                        <span class="mst-total-label">Total Services</span>
+                    </div>
+
+                    <div class="mst-total mst-total-taken">
+                        <span class="mst-total-value">{{ scheduleTotals.taken }}</span>
+                        <span class="mst-total-label">Taken</span>
+                    </div>
+
+                    <div class="mst-total mst-total-available">
+                        <span class="mst-total-value">{{ scheduleTotals.available }}</span>
+                        <span class="mst-total-label">Available</span>
+                    </div>
+
+                    <div class="mst-total mst-total-lapsed">
+                        <span class="mst-total-value">{{ scheduleTotals.lapsed }}</span>
+                        <span class="mst-total-label">Lapsed</span>
+                    </div>
+
+                    <div class="mst-total mst-total-rescheduled">
+                        <span class="mst-total-value">{{ scheduleTotals.rescheduled }} / {{ entity.MaxMissedServices }}</span>
+                        <span class="mst-total-label">Rescheduled ({{ scheduleTotals.rescheduleLeft }} left)</span>
+                    </div>
+
+                </div>
+
+
+                <!-- Windows -->
+
+                <div class="mst-schedule">
+
+                    <div class="mst-schedule-head">
+
+                        <i class="fas fa-calendar-check"></i>
+
+                        <span>Free Service Schedule</span>
+
+                        <span class="mst-schedule-count">
+                            {{ entity.MembershipNo }} · {{ freeServiceDisplay }} · {{ missedRuleDisplay }}
+                        </span>
+
+                    </div>
+
+                    <!-- Only the windows scroll; the totals and this header stay -->
+
+                    <div class="mst-schedule-body appcore-scrollbar">
+
+                        @if (entity.Windows.length === 0)
+                        {
+                            <div class="mst-empty">This membership has no free services.</div>
+                        }
+                        @else
+                        {
+                            <table class="mst-table">
+
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Window</th>
+                                        <th>Status</th>
+                                        <th>Taken Date</th>
+                                        <th>Reference</th>
+                                        <th>Rescheduled</th>
+                                        <th class="mst-actions-col">Actions</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    @for (slot of entity.Windows; track slot.MembershipServiceWindowId)
+                                    {
+                                        <tr>
+
+                                            <td>
+                                                {{ slot.WindowNo }}
+                                                @if (slot.IsCarriedOver)
+                                                {
+                                                    <span class="mst-carried">carried</span>
+                                                }
+                                            </td>
+
+                                            <td>{{ windowDate(slot.FromDate) }} – {{ windowDate(slot.ToDate) }}</td>
+
+                                            <td>
+                                                <span [class]="windowStateClass(slot)">{{ slot.State }}</span>
+                                            </td>
+
+                                            <td>{{ takenText(slot) }}</td>
+
+                                            <td class="mst-note">{{ slot.UsedReference || '-' }}</td>
+
+                                            <td class="mst-note">{{ rescheduleText(slot) }}</td>
+
+                                            <td class="mst-actions-col">
+
+                                                @if (isActionOn(slot))
+                                                {
+                                                    <div class="mst-inline">
+
+                                                        @if (actionKind === 'use')
+                                                        {
+                                                            <input
+                                                                type="date"
+                                                                class="mst-input"
+                                                                [value]="actionDate"
+                                                                (input)="onActionDateInput($event)">
+
+                                                            <input
+                                                                type="text"
+                                                                class="mst-input"
+                                                                placeholder="Reference (job card / slip)"
+                                                                [value]="actionText"
+                                                                (input)="onActionTextInput($event)">
+                                                        }
+                                                        @else
+                                                        {
+                                                            <input
+                                                                type="text"
+                                                                class="mst-input mst-input-wide"
+                                                                placeholder="Reason for rescheduling"
+                                                                [value]="actionText"
+                                                                (input)="onActionTextInput($event)">
+                                                        }
+
+                                                        <button
+                                                            type="button"
+                                                            class="mst-btn mst-btn-primary"
+                                                            [disabled]="isActing"
+                                                            (click)="confirmAction(slot)">
+                                                            {{ actionKind === 'use' ? 'Save' : 'Reschedule' }}
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            class="mst-btn"
+                                                            [disabled]="isActing"
+                                                            (click)="cancelAction()">
+                                                            Cancel
+                                                        </button>
+
+                                                    </div>
+                                                }
+                                                @else
+                                                {
+                                                    @if (slot.CanUse)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="mst-btn mst-btn-primary"
+                                                            [disabled]="isActing"
+                                                            (click)="startUse(slot)">
+                                                            <i class="fas fa-check"></i> Mark Taken
+                                                        </button>
+                                                    }
+
+                                                    @if (slot.CanApprove)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="mst-btn mst-btn-warn"
+                                                            [disabled]="isActing"
+                                                            (click)="startApprove(slot)">
+                                                            <i class="fas fa-calendar-plus"></i> Reschedule
+                                                        </button>
+                                                    }
+
+                                                    @if (slot.CanUndo)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="mst-btn"
+                                                            [disabled]="isActing"
+                                                            (click)="undoUse(slot)">
+                                                            <i class="fas fa-rotate-left"></i> Undo
+                                                        </button>
+                                                    }
+                                                }
+
+                                            </td>
+
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

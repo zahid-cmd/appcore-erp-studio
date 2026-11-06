@@ -3,6 +3,9 @@
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
+
+using AppCore.Application.Common.Paging;
+using AppCore.Infrastructure.Persistence.Paging;
 using Microsoft.EntityFrameworkCore.Storage;
 
 using AppCore.Application.Settings.GeneralSettings;
@@ -189,6 +192,119 @@ public class FinancialYearsRepository : IFinancialYearsRepository
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<FinancialYearsDto> ListSorts()
+    {
+        return new SortMap<FinancialYearsDto>("StartDateText")
+            .Add("FinancialYearCode", x => x.FinancialYearCode)
+            .Add("FinancialYearName", x => x.FinancialYearName)
+            .Add("StartDateText", x => x.StartDate)
+            .Add("EndDateText", x => x.EndDate)
+            .Add("DurationText", x => x.EndDate)
+            .Add("CurrentText", x => x.IsCurrent)
+            .Add("YearStatus", x => x.YearStatus)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.FinancialYearId);
+    }
+
+
+    public async Task<PagedResult<FinancialYearsDto>> GetPagedAsync(
+        GeneralSettingsPageRequest request)
+    {
+        IQueryable<FinancialYearsDto> query =
+            FinancialYearsQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.FinancialYearCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.FinancialYearName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.YearStatus ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.YearStatus)) { string yearStatus = request.YearStatus.Trim(); query = query.Where(x => x.YearStatus == yearStatus); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.Status);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.Status);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        // Default : newest year first (as the full list)
+        if (string.IsNullOrWhiteSpace(request.Sort))
+        {
+            request.Sort = "StartDateText";
+
+            request.Dir = "desc";
+        }
+
+        List<FinancialYearsDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<FinancialYearsDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

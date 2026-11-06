@@ -11,6 +11,11 @@ export interface MenuSynchronization
     id: number;
 
 
+    // uuid v7 : links and the address bar
+
+    publicId?: string;
+
+
     //===========================================================
     // Navigation
     //===========================================================

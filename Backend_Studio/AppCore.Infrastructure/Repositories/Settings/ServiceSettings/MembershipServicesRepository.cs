@@ -4,6 +4,10 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.ServiceSettings;
 
 using MembershipServiceEntity =
@@ -79,6 +83,125 @@ public class MembershipServicesRepository :
         _context =
             context;
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<MembershipServicesDto> ListSorts()
+    {
+        return new SortMap<MembershipServicesDto>("CardRank")
+            .Add("CardRank", x => x.CardRank)
+            .Add("ServiceCode", x => x.ServiceCode)
+            .Add("DisplayName", x => x.DisplayName)
+            .Add("MembershipType", x => x.MembershipType)
+            .Add("Readiness", x => x.Readiness)
+            .Add("ServiceValueDisplay", x => x.ServiceValue)
+            .Add("IncomeLedgerCode", x => x.IncomeLedgerCode)
+            .Add("ExpenseLedgerCode", x => x.ExpenseLedgerCode)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.ServiceCode);
+    }
+
+
+    public async Task<PagedResult<MembershipServicesDto>> GetPagedAsync(
+        ServiceSettingsPageRequest request)
+    {
+        IQueryable<MembershipServicesDto> query =
+            (await GetAllAsync()).AsQueryable();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            query =
+                query.Where(
+                    x =>
+                        (x.ServiceCode ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.ServiceName ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.DisplayName ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.MembershipType ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.CardCode ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.Readiness ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.SubCategoryCode ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.SubCategoryName ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.IncomeLedgerCode ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.ExpenseLedgerCode ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.Remarks ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (request.CardId.HasValue) { long cardId = request.CardId.Value; query = query.Where(x => x.MembershipCardId == cardId); }
+
+        if (!string.IsNullOrWhiteSpace(request.Readiness)) { string readiness = request.Readiness.Trim(); query = query.Where(x => x.Readiness == readiness); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToList();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        int total =
+            query.Count();
+
+        PagingQuery.FitPage(request, total);
+
+        List<MembershipServicesDto> items =
+            ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToList();
+
+        PagedResult<MembershipServicesDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

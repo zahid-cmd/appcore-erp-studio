@@ -307,6 +307,34 @@ implements OnInit, OnDestroy
     [];
 
 
+    // Server paging
+    totalRecords:
+        number =
+        0;
+
+    // Total · Active · Inactive (search and filters applied)
+    private counts:
+        Record<string, number> =
+        {};
+
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer:
+        ReturnType<typeof setTimeout> | null =
+        null;
+
+    // Answers of older calls are dropped
+    private loadSeq:
+        number =
+        0;
+
+
     //===========================================================
     // Search & Loading
     //===========================================================
@@ -901,6 +929,9 @@ implements OnInit, OnDestroy
     loadItems():
         void
     {
+        const seq =
+            ++this.loadSeq;
+
         this.loading =
             true;
 
@@ -908,16 +939,38 @@ implements OnInit, OnDestroy
             false;
 
         this.accountClassService
-            .getAll()
+            .getPaged(this.pageQuery())
             .subscribe
             ({
                 next:
                 (
                     response:
-                        AccountClass[]
+                        any
                 ):
                     void =>
                 {
+                    if (seq !== this.loadSeq)
+                    {
+                        return;
+                    }
+
+                    // Server page : remember the totals, then the
+                    // rows go through the usual mapping below
+                    this.totalRecords =
+                        Number(response?.totalCount ?? 0);
+
+                    this.counts =
+                        response?.counts ?? {};
+
+                    if (Number(response?.page) > 0)
+                    {
+                        this.currentPage =
+                            Number(response.page);
+                    }
+
+                    response =
+                        response?.items ?? [];
+
                     console.log
                     (
                         'Account Class API Response:',
@@ -935,7 +988,7 @@ implements OnInit, OnDestroy
                         this.accountClasses
                     );
 
-                    this.applyFilters();
+                    this.showServerPage();
 
 
                     this.updateSummary();
@@ -956,6 +1009,11 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
+                    if (seq !== this.loadSeq)
+                    {
+                        return;
+                    }
+
                     console.error
                     (
                         'Load Account Classes Error:',
@@ -997,106 +1055,11 @@ implements OnInit, OnDestroy
     applyFilters():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredAccountClasses =
-            this.accountClasses.filter
-            (
-                (
-                    item:
-                        AccountClass
-                ):
-                    boolean =>
-                {
-                    const classType =
-                        item.ClassType
-                        ??
-                        '';
-
-                    const classCode =
-                        item.ClassCode
-                        ??
-                        '';
-
-                    const className =
-                        item.ClassName
-                        ??
-                        '';
-
-                    const classPrefix =
-                        item.ClassPrefix
-                        ??
-                        '';
-
-                    const mode =
-                        item.Mode
-                        ??
-                        '';
-
-                    const remarks =
-                        item.Remarks
-                        ??
-                        '';
-
-                    const status =
-                        item.IsActive
-                            ? 'active'
-                            : 'inactive';
-
-                    return (
-                        !keyword
-
-                        ||
-
-                        classType
-                            .toLowerCase()
-                            .includes(keyword)
-
-                        ||
-
-                        classCode
-                            .toLowerCase()
-                            .includes(keyword)
-
-                        ||
-
-                        className
-                            .toLowerCase()
-                            .includes(keyword)
-
-                        ||
-
-                        classPrefix
-                            .toLowerCase()
-                            .includes(keyword)
-
-                        ||
-
-                        mode
-                            .toLowerCase()
-                            .includes(keyword)
-
-                        ||
-
-                        remarks
-                            .toLowerCase()
-                            .includes(keyword)
-
-                        ||
-
-                        status
-                            .includes(keyword)
-                    );
-                }
-            );
-
+        // Search, filters and paging run on the server
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1117,7 +1080,21 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        if (this.searchTimer)
+        {
+            clearTimeout(this.searchTimer);
+        }
+
+        this.searchTimer =
+            setTimeout(
+                (): void =>
+                {
+                    this.searchTimer = null;
+
+                    this.applyFilters();
+                },
+                300
+            );
     }
 
 
@@ -1139,108 +1116,19 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.filteredAccountClasses =
-        [
-            ...this.filteredAccountClasses
-        ];
+        // The server sorts the whole list
+        this.sortField =
+            event.field;
 
-        this.filteredAccountClasses.sort
-        (
-            (
-                a:
-                    AccountClass,
-
-                b:
-                    AccountClass
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-
-                    a[
-                        event.field as keyof AccountClass
-                    ];
-
-                const valueB:
-                    any =
-
-                    b[
-                        event.field as keyof AccountClass
-                    ];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                            valueA.localeCompare(valueB)
-                        :
-                            valueB.localeCompare(valueA);
-                }
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                            -1
-                        :
-                            1;
-                }
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                            1
-                        :
-                            -1;
-                }
-
-                return 0;
-            }
-        );
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1270,22 +1158,10 @@ implements OnInit, OnDestroy
     updatePagination():
         void
     {
-        const start:
-            number =
-
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
+        // The server sends one page
         this.pagedAccountClasses =
         [
-            ...this.filteredAccountClasses.slice
-            (
-                start,
-                start + this.pageSize
-            )
+            ...this.filteredAccountClasses
         ];
     }
 
@@ -1305,7 +1181,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1327,7 +1203,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1809,12 +1685,11 @@ implements OnInit, OnDestroy
     private updateSummary():
         void
     {
-        const all:
-            any[] =
-            this.accountClasses ?? [];
-
-        const active =
-            all.filter(x => !!x?.IsActive).length;
+        // Counts from the server : search and filters applied,
+        // the status filter not
+        const count =
+            (key: string): number =>
+                Number(this.counts[key] ?? 0);
 
         const text =
             (value: number): string =>
@@ -1822,10 +1697,38 @@ implements OnInit, OnDestroy
 
         this.summaryItems =
         [
-            { label:'Total',    value:text(all.length),          tone:'' },
-            { label:'Active',   value:text(active),              tone:'ok' },
-            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+            { label:'Total',    value:text(count('Total')),    tone:'' },
+            { label:'Active',   value:text(count('Active')),   tone:'ok' },
+            { label:'Inactive', value:text(count('Inactive')), tone:'bad' }
         ];
     }
 
+
+
+    //===========================================================
+    // Server Paging Helpers
+    //===========================================================
+
+    private pageQuery():
+        Record<string, unknown>
+    {
+        return {
+            page:this.currentPage,
+            pageSize:this.pageSize,
+            search:this.searchText,
+            sort:this.sortField,
+            dir:this.sortDirection
+        };
+    }
+
+
+    // The rows of the page arrive already filtered and sorted
+    private showServerPage():
+        void
+    {
+        this.filteredAccountClasses =
+            this.accountClasses;
+
+        this.updatePagination();
+    }
 }

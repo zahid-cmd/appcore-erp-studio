@@ -201,6 +201,7 @@ public partial class ServiceEnquiriesRepository
         return new ServiceAppointmentDto
         {
             ServiceAppointmentId = x.ServiceAppointmentId,
+            PublicId = x.PublicId,
             ServiceEnquiryId = x.ServiceEnquiryId,
             EnquiryNo = x.EnquiryNo,
             BranchId = x.BranchId,
@@ -224,7 +225,9 @@ public partial class ServiceEnquiriesRepository
             RequestSummary = enquiry?.RequestSummary ?? string.Empty,
             EnquiryStatusName = enquiry?.StatusName ?? string.Empty,
             EnquiryStatusColor = enquiry?.StatusColor ?? string.Empty,
-            CreatedDate = x.CreatedDate
+            CreatedDate = x.CreatedDate,
+            IsLive = ServiceAppointmentStatuses.IsLive(x.Status),
+            IsOverdue = ServiceAppointmentStatuses.IsLive(x.Status) && x.AppointmentDate < Today()
         };
     }
 

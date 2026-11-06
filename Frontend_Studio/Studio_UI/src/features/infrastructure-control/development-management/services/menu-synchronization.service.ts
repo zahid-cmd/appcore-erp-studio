@@ -76,14 +76,20 @@ export class MenuSynchronizationService
     // Get By Id
     //===========================================================
 
+    // uuid (links, address bar) or the internal id
     getById
     (
-        id:number
+        id:number | string
     ):
         Observable<MenuSynchronization>
     {
+        const path =
+            /^\d+$/.test(String(id))
+                ? `by-id/${id}`
+                : String(id);
+
         return this.http.get<MenuSynchronization>(
-            `${this.apiUrl}/${id}`);
+            `${this.apiUrl}/${path}`);
     }
 
 
@@ -234,9 +240,10 @@ export class MenuSynchronizationService
     // Delete
     //===========================================================
 
+    // By the uuid
     delete
     (
-        id:number
+        id:string
     ):
         Observable<void>
     {

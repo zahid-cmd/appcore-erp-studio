@@ -75,6 +75,19 @@ public class AccountClassController : ControllerBase
     }
 
 
+    //===============================================================
+    // Get Paged (server paging; Counts = Total / Active / Inactive)
+    //===============================================================
+
+    [HttpGet("paged")]
+
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] AccountSettingsPageRequest request)
+    {
+        return Ok(await _repository.GetPagedAsync(request));
+    }
+
+
     //===========================================================
     // Get Next Code
     //

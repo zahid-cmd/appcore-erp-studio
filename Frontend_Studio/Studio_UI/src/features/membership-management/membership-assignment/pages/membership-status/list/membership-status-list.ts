@@ -53,6 +53,18 @@ import
 }
 from '../../../models/membership-status.model';
 
+import
+{
+    MembershipCard
+}
+from '../../../../membership-setup/models/membership-cards.model';
+
+import
+{
+    MembershipCardsService
+}
+from '../../../../membership-setup/services/membership-cards.service';
+
 //===============================================================
 // Shared Components
 //===============================================================
@@ -209,6 +221,10 @@ implements OnInit, OnDestroy
     private readonly membershipStatusService =
         inject(MembershipStatusService);
 
+
+    private readonly membershipCardsService =
+        inject(MembershipCardsService);
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
@@ -279,6 +295,34 @@ implements OnInit, OnDestroy
     pagedMemberships:
         Membership[] =
     [];
+
+
+    // Server paging
+    totalRecords:
+        number =
+        0;
+
+    // Total · Active · Inactive (search and filters applied)
+    private counts:
+        Record<string, number> =
+        {};
+
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer:
+        ReturnType<typeof setTimeout> | null =
+        null;
+
+    // Answers of older calls are dropped
+    private loadSeq:
+        number =
+        0;
 
     //===========================================================
     // Search & Loading
@@ -510,6 +554,8 @@ implements OnInit, OnDestroy
     ngOnInit():
         void
     {
+        this.buildCardFilter();
+
         this.loadItems();
     }
 
@@ -760,6 +806,9 @@ implements OnInit, OnDestroy
     loadItems():
         void
     {
+        const seq =
+            ++this.loadSeq;
+
         this.loading =
             true;
 
@@ -767,21 +816,43 @@ implements OnInit, OnDestroy
             false;
 
         this.membershipStatusService
-            .getAll()
+            .getPaged(this.pageQuery())
             .subscribe
             ({
                 next:
                 (
                     response:
-                        Membership[]
+                        any
                 ):
                     void =>
                 {
+                    if (seq !== this.loadSeq)
+                    {
+                        return;
+                    }
+
+                    // Server page : remember the totals, then the
+                    // rows go through the usual mapping below
+                    this.totalRecords =
+                        Number(response?.totalCount ?? 0);
+
+                    this.counts =
+                        response?.counts ?? {};
+
+                    if (Number(response?.page) > 0)
+                    {
+                        this.currentPage =
+                            Number(response.page);
+                    }
+
+                    response =
+                        response?.items ?? [];
+
                     // Display values
                     this.memberships =
                         (response ?? []).map
                         (
-                            item =>
+                            (item: any) =>
                             ({
                                 ...item,
 
@@ -807,9 +878,8 @@ implements OnInit, OnDestroy
                             } as Membership)
                         );
 
-                    this.buildCardFilter();
 
-                    this.applyFilters();
+                    this.showServerPage();
 
                     this.loading =
                         false;
@@ -824,6 +894,11 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
+                    if (seq !== this.loadSeq)
+                    {
+                        return;
+                    }
+
                     console.error
                     (
                         'Load Membership Status Error:',
@@ -863,60 +938,11 @@ implements OnInit, OnDestroy
     applyFilters():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredMemberships =
-            this.memberships.filter
-            (
-                item =>
-                {
-                    const statusMatch =
-                        this.selectedTab === 'all'
-                        ||
-                        item.Status ===
-                        this.selectedTab;
-
-                    const text =
-                        [
-                            item.MembershipNo,
-                            item.CardCode,
-                            item.CardName,
-                            item.CustomerCode,
-                            item.CustomerName,
-                            item.MotorBikeName,
-                            item.ChassisNo,
-                            item.EngineNo,
-                            item.Status,
-                            item.Remarks
-                        ]
-                        .join(' ')
-                        .toLowerCase();
-
-                    const cardMatch =
-                        this.selectedCardId === null
-                        ||
-                        Number(item.MembershipCardId) ===
-                        this.selectedCardId;
-
-                    return cardMatch
-                        &&
-                        statusMatch
-                        &&
-                        (
-                            !keyword
-                            ||
-                            text.includes(keyword)
-                        );
-                }
-            );
-
+        // Search, filters and paging run on the server
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -954,7 +980,21 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        if (this.searchTimer)
+        {
+            clearTimeout(this.searchTimer);
+        }
+
+        this.searchTimer =
+            setTimeout(
+                (): void =>
+                {
+                    this.searchTimer = null;
+
+                    this.applyFilters();
+                },
+                300
+            );
     }
 
     //===========================================================
@@ -964,36 +1004,44 @@ implements OnInit, OnDestroy
     private buildCardFilter():
         void
     {
-        const seen =
-            new Map<number, string>();
+        // Every membership card (the list holds one page only)
+        this.membershipCardsService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                    (cards: MembershipCard[]): void =>
+                    {
+                        this.cardFilterItems =
+                        [
+                            {
+                                label:'All Membership Cards',
+                                value:null
+                            },
+                            ...(cards ?? []).map(
+                                card =>
+                                ({
+                                    label:`${card.CardCode} - ${card.CardName}`,
+                                    value:Number(card.MembershipCardId)
+                                })
+                            )
+                        ];
 
-        for
-        (
-            const item
-            of this.memberships
-        )
-        {
-            seen.set(
-                Number(item.MembershipCardId),
-                `${item.CardCode} - ${item.CardName}`
-            );
-        }
+                        this.cdr.detectChanges();
+                    },
 
-        this.cardFilterItems =
-        [
-            {
-                label:'All Membership Cards',
-                value:null
-            },
-
-            ...[...seen.entries()].map(
-                ([id, label]) =>
-                ({
-                    label,
-                    value:id
-                })
-            )
-        ];
+                error:
+                    (): void =>
+                    {
+                        this.cardFilterItems =
+                        [
+                            {
+                                label:'All Membership Cards',
+                                value:null
+                            }
+                        ];
+                    }
+            });
     }
 
 
@@ -1103,69 +1151,19 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        const direction =
-            event.direction === 'asc'
-                ? 1
-                : -1;
+        // The server sorts the whole list
+        this.sortField =
+            event.field;
 
-        this.filteredMemberships =
-        [
-            ...this.filteredMemberships
-        ]
-        .sort
-        (
-            (a: any, b: any): number =>
-            {
-                const valueA =
-                    a[event.field];
-
-                const valueB =
-                    b[event.field];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1 * direction;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1 * direction;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return valueA.localeCompare(valueB) * direction;
-                }
-
-                return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * direction;
-            }
-        );
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -1200,17 +1198,10 @@ implements OnInit, OnDestroy
     updatePagination():
         void
     {
-        const start:
-            number =
-            (this.currentPage - 1) * this.pageSize;
-
+        // The server sends one page
         this.pagedMemberships =
         [
-            ...this.filteredMemberships.slice
-            (
-                start,
-                start + this.pageSize
-            )
+            ...this.filteredMemberships
         ];
     }
 
@@ -1224,7 +1215,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     onPageSizeChange
@@ -1240,7 +1231,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems();
     }
 
     //===========================================================
@@ -1659,7 +1650,8 @@ implements OnInit, OnDestroy
     get summaryTotal():
         number
     {
-        return (this.memberships ?? []).length;
+        // Server counts : card and search applied
+        return Number(this.counts['All'] ?? 0);
     }
 
     summaryCount(
@@ -1667,9 +1659,10 @@ implements OnInit, OnDestroy
     ):
         number
     {
-        return (this.memberships ?? [])
-            .filter(x => String((x as any)?.Status ?? '').toLowerCase() === status)
-            .length;
+        const key =
+            Object.keys(this.counts).find(k => k.toLowerCase() === status.toLowerCase());
+
+        return key ? Number(this.counts[key] ?? 0) : 0;
     }
 
     summaryText(
@@ -1678,5 +1671,36 @@ implements OnInit, OnDestroy
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+
+    //===========================================================
+    // Server Paging Helpers
+    //===========================================================
+
+    private pageQuery():
+        Record<string, unknown>
+    {
+        return {
+            page:this.currentPage,
+            pageSize:this.pageSize,
+            search:this.searchText,
+            sort:this.sortField,
+            dir:this.sortDirection,
+            tab:this.selectedTab,
+            cardId:this.selectedCardId ?? undefined
+        };
+    }
+
+
+    // The rows of the page arrive already filtered and sorted
+    private showServerPage():
+        void
+    {
+        this.filteredMemberships =
+            this.memberships;
+
+        this.updatePagination();
     }
 }

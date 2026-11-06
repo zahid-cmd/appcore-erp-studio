@@ -28,6 +28,11 @@ public interface IMFSAccountsRepository
     Task<List<MFSAccountDto>> GetAllAsync();
 
 
+    // One list page (server paging) with Total / Active / Inactive
+    Task<AppCore.Application.Common.Paging.PagedResult<MFSAccountDto>> GetPagedAsync(
+        AccountSettingsPageRequest request);
+
+
     // Public Id -> internal id (live rows only; null = not found)
 
     Task<long?> GetIdByPublicIdAsync(

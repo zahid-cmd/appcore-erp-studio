@@ -1,0 +1,356 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-id-card"
+
+        [title]="pageTitle"
+
+        subtitle="Manage complimentary services for card members">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 BASIC INFORMATION
+                 Created by Membership Cards (read only)
+            ============================================== -->
+
+            <app-form-section
+
+                title="Basic Information"
+
+                icon="fas fa-id-card">
+
+
+                <!-- Membership Card : the card that created this row -->
+
+                <app-textbox
+
+                    label="Membership Card"
+
+                    placeholder="From Membership Cards"
+
+                    [value]="cardDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Service Sub Category"
+
+                    placeholder="Membership Services sub category"
+
+                    [value]="subCategoryDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Service Code : MSC-ccc-sss-nnnnn (central code generator) -->
+
+                <app-textbox
+
+                    label="Service Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.ServiceCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Display Name : "<Service Name> - <Card Name>" -->
+
+                <app-textbox
+
+                    label="Service Name"
+
+                    placeholder="Follows the sub category and card"
+
+                    [(value)]="entity.DisplayName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 SERVICE VALUE & INCOME LEDGER
+                 Billed on the invoice at the Service Value
+            ============================================== -->
+
+            <app-form-section
+
+                title="Service Value & Income Ledger"
+
+                icon="fas fa-gift">
+
+
+                <!-- Service Value : the only value set on this page -->
+
+                <app-textbox
+
+                    label="Service Value"
+
+                    placeholder="e.g. 300.00"
+
+                    [value]="serviceValueText"
+
+                    (valueChange)="onServiceValueChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Readiness : Pending until a Service Value is saved -->
+
+                <app-textbox
+
+                    label="Readiness"
+
+                    placeholder="Pending"
+
+                    [value]="readinessDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Income Ledger : under SUB-007-005-001, created with the card -->
+
+                <app-textbox
+
+                    label="Income Ledger Code"
+
+                    placeholder="Created with the card"
+
+                    [(value)]="entity.IncomeLedgerCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Income Ledger Name"
+
+                    placeholder="Sub group name - card name"
+
+                    [(value)]="entity.IncomeLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 EXPENSE LEDGER (the same amount discounted)
+                 Under SUB-004-002-001, created with the card
+            ============================================== -->
+
+            <app-form-section
+
+                title="Expense Ledger"
+
+                icon="fas fa-receipt">
+
+
+                <app-textbox
+
+                    label="Expense Sub Group"
+
+                    placeholder="SUB-004-002-001"
+
+                    [value]="expenseSubGroupDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Expense Ledger Code"
+
+                    placeholder="Created with the card"
+
+                    [(value)]="entity.ExpenseLedgerCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Expense Ledger Name"
+
+                    placeholder="Sub group name - card name"
+
+                    [(value)]="entity.ExpenseLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS & CONTROL
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Control"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Status : cannot be active while the card is inactive -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

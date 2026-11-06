@@ -1191,4 +1191,44 @@ implements OnInit
         this.historyOpened =
             false;
     }
+
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : every clone run
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return this.pageClonings.length;
+    }
+
+    summaryCount
+    (
+        status:
+            string
+    ):
+        number
+    {
+        return this.pageClonings
+            .filter(x => String(x.RunStatus ?? '').toLowerCase() === status.toLowerCase())
+            .length;
+    }
+
+    get summaryNote():
+        string
+    {
+        return 'All records';
+    }
+
+    summaryText
+    (
+        value:
+            number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

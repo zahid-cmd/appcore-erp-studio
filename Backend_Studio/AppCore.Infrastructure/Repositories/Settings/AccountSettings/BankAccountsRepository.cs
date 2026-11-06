@@ -4,6 +4,10 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.AccountSettings;
 using AppCore.Application.Settings.AccountSettings.BankAccounts.DTOs;
 
@@ -212,6 +216,119 @@ public class BankAccountsRepository : IBankAccountsRepository
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<BankAccountDto> ListSorts()
+    {
+        return new SortMap<BankAccountDto>("BankAccountCode")
+            .Add("BankAccountCode", x => x.BankAccountCode)
+            .Add("DisplayName", x => x.DisplayName)
+            .Add("Bank", x => x.Bank)
+            .Add("Branch", x => x.Branch)
+            .Add("CollectionAccountText", x => x.CollectionAccount)
+            .Add("PaymentAccountText", x => x.PaymentAccount)
+            .Add("BranchExclusiveText", x => x.BranchExclusive)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.BankAccountId);
+    }
+
+
+    public async Task<PagedResult<BankAccountDto>> GetPagedAsync(
+        AccountSettingsPageRequest request)
+    {
+        IQueryable<BankAccountDto> query =
+            BankAccountsQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.BankAccountCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.BankAccountName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.DisplayName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Bank ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.FullAccountNumber ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.BankBranchName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Branch ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Branch)) { string branch = request.Branch.Trim().ToUpper(); query = query.Where(x => (x.Branch ?? string.Empty).Trim().ToUpper() == branch); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.Status);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.Status);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<BankAccountDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<BankAccountDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

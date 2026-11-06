@@ -31,6 +31,14 @@ import
 }
 from '../../../../environments/environment';
 
+import
+{
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
 
 import
 {
@@ -338,5 +346,111 @@ export class AccountClassService
         return this.http.get<any[]>(
             `${this.apiUrl}/history`
         );
+    }
+
+
+
+    //===========================================================
+    // One list page (server paging)
+    //
+    // query : page, pageSize, search, sort, dir and the list's
+    //         filters; blanks are left out
+    // counts: Total · Active · Inactive
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            Record<string, unknown>
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                { params:toPagedParams({ ...query }) }
+            )
+            .pipe(
+                map(
+                    raw =>
+                        toPagedResult(raw, (x: any) => ([x] as any[]).map(
+                            accountClass =>
+                            ({
+                                ...accountClass,
+
+                                AccountClassId:
+                                    Number(
+                                        accountClass.AccountClassId
+                                        ??
+                                        accountClass.accountClassId
+                                        ??
+                                        accountClass.id
+                                        ??
+                                        accountClass.Id
+                                    ),
+
+                                ClassType:
+                                    accountClass.ClassType
+                                    ??
+                                    accountClass.classType
+                                    ??
+                                    '',
+
+                                ClassCode:
+                                    accountClass.ClassCode
+                                    ??
+                                    accountClass.classCode
+                                    ??
+                                    '',
+
+                                ClassName:
+                                    accountClass.ClassName
+                                    ??
+                                    accountClass.className
+                                    ??
+                                    '',
+
+                                Mode:
+                                    accountClass.Mode
+                                    ??
+                                    accountClass.mode
+                                    ??
+                                    '',
+
+                                ClassPrefix:
+                                    accountClass.ClassPrefix
+                                    ??
+                                    accountClass.classPrefix
+                                    ??
+                                    '',
+
+                                AllowManualGroupCreation:
+                                    Boolean(
+                                        accountClass.AllowManualGroupCreation
+                                        ??
+                                        accountClass.allowManualGroupCreation
+                                        ??
+                                        false
+                                    ),
+
+                                Remarks:
+                                    accountClass.Remarks
+                                    ??
+                                    accountClass.remarks
+                                    ??
+                                    '',
+
+                                IsActive:
+                                    Boolean(
+                                        accountClass.IsActive
+                                        ??
+                                        accountClass.isActive
+                                        ??
+                                        true
+                                    )
+                            })
+                        )[0])
+                )
+            );
     }
 }

@@ -1017,7 +1017,7 @@ implements OnInit
 
             'view',
 
-            item.id
+            item.publicId || item.id
         ]);
     }
 
@@ -1049,7 +1049,7 @@ implements OnInit
 
             'edit',
 
-            item.id
+            item.publicId || item.id
         ]);
     }
 
@@ -1081,7 +1081,7 @@ implements OnInit
 
             'synchronize',
 
-            item.id
+            item.publicId || item.id
         ]);
     }
 
@@ -1118,7 +1118,7 @@ implements OnInit
                 this.moduleSynchronizationService
 
                     .delete(
-                        item.id
+                        item.publicId ?? ''
                     )
 
                     .subscribe(
@@ -1376,5 +1376,47 @@ implements OnInit
     {
         this.historyOpened =
             false;
+    }
+
+
+
+    //===========================================================
+    // Summary Line (below the canvas) : the open tab's records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return this.synchronizations.length;
+    }
+
+    summaryCount
+    (
+        status:
+            string
+    ):
+        number
+    {
+        return this.synchronizations
+            .filter(x => (x.status ?? '').toLowerCase() === status.toLowerCase())
+            .length;
+    }
+
+    get summaryNote():
+        string
+    {
+        return this.selectedTab === 'backend'
+            ? 'All backend records'
+            : 'All frontend records';
+    }
+
+    summaryText
+    (
+        value:
+            number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 }

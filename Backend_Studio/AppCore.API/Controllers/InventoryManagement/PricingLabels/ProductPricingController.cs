@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.InventoryManagement.PricingLabels;
+using AppCore.Application.InventoryManagement;
 using AppCore.Application.Settings.ProductSettings;
 
 using AppCore.Application.Platform.EffectiveAccess.Interfaces;
@@ -164,6 +165,15 @@ public class ProductPricingController
     {
         return Run(
             async () => Ok(await _repository.GetAllAsync(type)),
+            "Failed to load the price changes.");
+    }
+
+    [HttpGet("paged")]
+    public Task<IActionResult> GetPaged(
+        [FromQuery] InventoryDocumentPageRequest request)
+    {
+        return Run(
+            async () => Ok(await _repository.GetPagedAsync(request ?? new InventoryDocumentPageRequest())),
             "Failed to load the price changes.");
     }
 

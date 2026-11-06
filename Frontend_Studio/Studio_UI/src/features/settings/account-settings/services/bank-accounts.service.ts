@@ -32,6 +32,14 @@ from '../../../../environments/environment';
 
 import
 {
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     BankAccount,
     CreateBankAccount,
     UpdateBankAccount
@@ -321,5 +329,103 @@ export class BankAccountsService
         return this.http.get<any[]>(
             `${this.apiUrl}/${id}/history`
         );
+    }
+
+
+
+    //===========================================================
+    // One list page (server paging)
+    //
+    // query : page, pageSize, search, sort, dir and the list's
+    //         filters; blanks are left out
+    // counts: Total · Active · Inactive
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            Record<string, unknown>
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                { params:toPagedParams({ ...query }) }
+            )
+            .pipe(
+                map(
+                    raw =>
+                        toPagedResult(raw, (x: any) => ([x] as any[]).map(
+                            bankAccount =>
+
+                            ({
+                                ...bankAccount,
+
+                                BankAccountId:
+                                    Number(bankAccount.BankAccountId ?? bankAccount.bankAccountId ?? bankAccount.id ?? bankAccount.Id),
+
+                                AccountSubGroupsId:
+                                    Number(bankAccount.AccountSubGroupsId ?? bankAccount.accountSubGroupsId ?? 0),
+
+                                BankAccountCode:
+                                    bankAccount.BankAccountCode ?? bankAccount.bankAccountCode ?? '',
+
+                                BankAccountName:
+                                    bankAccount.BankAccountName ?? bankAccount.bankAccountName ?? '',
+
+                                Remarks:
+                                    bankAccount.Remarks ?? bankAccount.remarks ?? '',
+
+                                Status:
+                                    Boolean(bankAccount.Status ?? bankAccount.status ?? true),
+
+                                Branch:
+                                    bankAccount.Branch ?? bankAccount.branch ?? '',
+
+                                DisplayName:
+                                    bankAccount.DisplayName ?? bankAccount.displayName ?? '',
+
+                                CollectionAccount:
+                                    Boolean(bankAccount.CollectionAccount ?? bankAccount.collectionAccount ?? false),
+
+                                PaymentAccount:
+                                    Boolean(bankAccount.PaymentAccount ?? bankAccount.paymentAccount ?? false),
+
+                                Bank:
+                                    bankAccount.Bank ?? bankAccount.bank ?? '',
+
+                                FullAccountNumber:
+                                    bankAccount.FullAccountNumber ?? bankAccount.fullAccountNumber ?? '',
+
+                                ShortAccountName:
+                                    bankAccount.ShortAccountName ?? bankAccount.shortAccountName ?? '',
+
+                                ShortAccountNumber:
+                                    bankAccount.ShortAccountNumber ?? bankAccount.shortAccountNumber ?? '',
+
+                                ShortBranchName:
+                                    bankAccount.ShortBranchName ?? bankAccount.shortBranchName ?? '',
+
+                                SwiftCode:
+                                    bankAccount.SwiftCode ?? bankAccount.swiftCode ?? '',
+
+                                RoutingNumber:
+                                    bankAccount.RoutingNumber ?? bankAccount.routingNumber ?? '',
+
+                                BranchExclusive:
+                                    Boolean(bankAccount.BranchExclusive ?? bankAccount.branchExclusive ?? false),
+
+                                BankBranchName:
+                                    bankAccount.BankBranchName ?? bankAccount.bankBranchName ?? '',
+
+                                SanctionLimit:
+                                    (bankAccount.SanctionLimit ?? bankAccount.sanctionLimit ?? null) === null
+                                        ? null
+                                        : Number(bankAccount.SanctionLimit ?? bankAccount.sanctionLimit)
+                            })
+                        )[0])
+                )
+            );
     }
 }

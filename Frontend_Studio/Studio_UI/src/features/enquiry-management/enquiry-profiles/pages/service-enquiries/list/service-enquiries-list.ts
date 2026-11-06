@@ -2,13 +2,11 @@
 // Service Enquiries List
 //
 // Toolbar : status tabs (All · Open · Due · Converted ·
-// Suspended) on the left; the centre group (Website ·
-// Appointments · Sold Bikes); Service / Parts on the right.
+// Suspended) on the left; the centre group (Website · Sold
+// Bikes); Service / Parts on the right.
 //   Website : sent from the website, nobody has taken it yet
-//   Appointments : opens the Service Appointments page (the
-//             count is today's booked / confirmed / arrived);
-//             the calendar icon of an open Service enquiry opens
-//             it with that enquiry picked
+//   (Service Appointments have their own page : Follow-ups &
+//   Appointments › Service Appointments, 2026-11-06)
 //   Sold Bikes : bikes sold from the outlet and their service
 //             schedules (from the sale + Service Policy). The
 //             table, Add, Restore, History and the right chips
@@ -20,8 +18,8 @@
 //
 // Server paging : the tab, the Service / Parts chip, the search
 // and the sort go to the server (GET paged), which answers one
-// page, the chip counts and the summary counts. Appointments and
-// Sold Bikes stay on this page's own lists. Links and Delete use
+// page, the chip counts and the summary counts. Sold Bikes stay
+// on this page's own list. Links and Delete use
 // the enquiry's uuid (PublicId).
 //===============================================================
 
@@ -78,43 +76,12 @@ import { ProgressDialogService } from '../../../../../../shared/components/utili
 import { ProgressRunner } from '../../../../../../shared/components/utilities/progress-dialog/progress-runner';
 import { ToastService } from '../../../../../../shared/components/utilities/toast/toast.service';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
-import { AuthenticationStorageService } from '../../../../../../core/authentication/authentication-storage.service';
-import { ServiceAppointmentsService } from '../../../services/service-appointments.service';
-import { ActiveAppointment } from '../../../models/service-appointments.model';
-import { slotLabel } from '../../../models/enquiry-setup.model';
 
 import
 {
     ServiceEnquiriesService
 }
 from '../../../services/service-enquiries.service';
-
-
-// Appointments view row (live appointment or visit request)
-type AppointmentRow =
-    ActiveAppointment
-    &
-    {
-        DateText:string;
-        TimeText:string;
-        CustomerText:string;
-        BikeText:string;
-        RequestText:string;
-        AdvisorText:string;
-        SourceText:string;
-        StatusText:string;
-        StatusDot:string;
-        Overdue:boolean;
-    };
-
-
-const APPOINTMENT_COLORS: Record<string, string> =
-{
-    'Requested':'#7C3AED',
-    'Booked':'#2563EB',
-    'Confirmed':'#0D9488',
-    'Overdue':'#DC2626'
-};
 
 
 // Row with its display texts
@@ -226,133 +193,59 @@ implements OnInit
 
     private readonly route = inject(ActivatedRoute);
 
-    private readonly appointmentsService = inject(ServiceAppointmentsService);
-
-    private readonly auth = inject(AuthenticationStorageService);
-
     //===========================================================
-    // Appointments view (centre "Appointments") : live
-    // appointments of every date + visit requests not booked yet
-    // (website "Book a service" included). "Book" opens the
-    // Service Appointments board.
-    //===========================================================
-
-    get isAppts(): boolean
-    {
-        return this.selectedTab === 'appointments';
-    }
-
-    private appts: AppointmentRow[] = [];
-
-    filteredAppts: AppointmentRow[] = [];
-
-    pagedAppts: AppointmentRow[] = [];
-
-    apptsLoading = false;
-
-    apptsFailed = false;
-
-    // Pill : every active row
-    appointmentsCount = 0;
-
-    selectedApptChip = 'all';
-
-    apptChips: TypeChip[] = [];
-
-    readonly apptColumns:
-        ListTableColumn[] =
-    [
-        { header:'#',          field:'serial',       type:'serial', width:'50px', align:'center' },
-        { header:'Date',       field:'DateText',     width:'150px', align:'left' },
-        { header:'Time',       field:'TimeText',     width:'180px', align:'left' },
-        { header:'Enquiry No', field:'EnquiryNo',    width:'200px', align:'center' },
-        { header:'Customer',   field:'CustomerText', align:'left' },
-        { header:'Bike',       field:'BikeText',     width:'170px', align:'left' },
-        { header:'Request',    field:'RequestText',  width:'210px', align:'left' },
-        { header:'Advisor',    field:'AdvisorText',  width:'130px', align:'left' },
-        { header:'Source',     field:'SourceText',   width:'110px', align:'left' },
-        { header:'Status',     field:'StatusText',   width:'130px', align:'left', dotField:'StatusDot' },
-        { header:'Actions',    field:'actions',      type:'actions', width:'110px', align:'center' }
-    ];
-
-    readonly apptRowActions: ListTableRowAction[] =
-    [
-        {
-            key:'board',
-            icon:'fas fa-calendar-check',
-            title:'Open on the appointment board',
-            tone:'primary',
-            visible:(): boolean => true
-        }
-    ];
-
-
-    //===========================================================
-    // Table bindings (enquiries · sold bikes · appointments)
+    // Table bindings (enquiries · sold bikes)
     //===========================================================
 
     private readonly fullActions = { view:true, edit:true, delete:true };
 
-    private readonly viewOnlyActions = { view:true, edit:false, delete:false };
-
     get tableColumns(): ListTableColumn[]
     {
-        return this.isAppts ? this.apptColumns : this.isBikes ? this.bikeColumns : this.columns;
+        return this.isBikes ? this.bikeColumns : this.columns;
     }
 
     get tableRows(): any[]
     {
-        return this.isAppts ? this.pagedAppts : this.isBikes ? this.pagedBikes : this.pagedRows;
+        return this.isBikes ? this.pagedBikes : this.pagedRows;
     }
 
     get tableTotal(): number
     {
-        return this.isAppts ? this.filteredAppts.length : this.isBikes ? this.filteredBikes.length : this.totalRecords;
+        return this.isBikes ? this.filteredBikes.length : this.totalRecords;
     }
 
     get tableLoading(): boolean
     {
-        return this.isAppts ? this.apptsLoading : this.isBikes ? this.bikesLoading : this.loading;
+        return this.isBikes ? this.bikesLoading : this.loading;
     }
 
     get tableFailed(): boolean
     {
-        return this.isAppts ? this.apptsFailed : this.isBikes ? this.bikesFailed : this.loadFailed;
+        return this.isBikes ? this.bikesFailed : this.loadFailed;
     }
 
     get tableRowActions(): ListTableRowAction[]
     {
-        return this.isAppts ? this.apptRowActions : this.isBikes ? [] : this.rowActions;
+        return this.isBikes ? [] : this.rowActions;
     }
 
     get tableActions(): { view:boolean; edit:boolean; delete:boolean }
     {
-        return this.isAppts ? this.viewOnlyActions : this.fullActions;
+        return this.fullActions;
     }
 
     get chipList(): TypeChip[]
     {
-        return this.isAppts ? this.apptChips : this.isBikes ? this.bikeChips : this.typeChips;
+        return this.isBikes ? this.bikeChips : this.typeChips;
     }
 
     get chipSelected(): string
     {
-        return this.isAppts ? this.selectedApptChip : this.isBikes ? this.selectedBikeStatus : this.selectedType;
+        return this.isBikes ? this.selectedBikeStatus : this.selectedType;
     }
 
     onChip(id: string): void
     {
-        if (this.isAppts)
-        {
-            this.selectedApptChip = id;
-
-            this.applyApptFilters();
-
-            this.cdr.detectChanges();
-
-            return;
-        }
-
         if (this.isBikes)
         {
             this.onBikeStatusChange(id);
@@ -365,11 +258,9 @@ implements OnInit
 
     get searchPlaceholder(): string
     {
-        return this.isAppts
-            ? 'Search appointments, customer, mobile, bike...'
-            : this.isBikes
-                ? 'Search sold bikes, chassis, customer, mobile, service...'
-                : 'Search enquiries, mobile, bike, registration, part...';
+        return this.isBikes
+            ? 'Search sold bikes, chassis, customer, mobile, service...'
+            : 'Search enquiries, mobile, bike, registration, part...';
     }
 
     private readonly cdr = inject(ChangeDetectorRef);
@@ -532,197 +423,7 @@ implements OnInit
             this.selectedTab = 'bikes';
         }
 
-        // ?tab=appointments (back from the appointment board)
-        if (this.route.snapshot.queryParamMap.get('tab') === 'appointments')
-        {
-            this.selectedTab = 'appointments';
-        }
-
         this.loadItems();
-    }
-
-
-    loadAppts(): void
-    {
-        this.apptsLoading = true;
-
-        this.apptsFailed = false;
-
-        this.appointmentsService
-            .getActive(Number(this.auth.getUser()?.branchId ?? 0))
-            .subscribe
-            ({
-                next:(rows: ActiveAppointment[]): void =>
-                {
-                    this.appts = (rows ?? []).map(x => this.toApptRow(x));
-
-                    this.appointmentsCount = this.appts.length;
-
-                    this.apptsLoading = false;
-
-                    this.applyApptFilters();
-
-                    this.cdr.detectChanges();
-                },
-
-                error:(error: unknown): void =>
-                {
-                    console.error('Load Appointments Error:', error);
-
-                    this.appts = [];
-                    this.filteredAppts = [];
-                    this.pagedAppts = [];
-
-                    this.apptsLoading = false;
-
-                    this.apptsFailed = true;
-
-                    if (this.isAppts)
-                    {
-                        this.toast.error('Load Failed', this.errorText(error, 'Unable to load the appointments. Run ServiceAppointments_Tables.sql.'));
-                    }
-
-                    this.cdr.detectChanges();
-                }
-            });
-    }
-
-    private toApptRow(item: ActiveAppointment): AppointmentRow
-    {
-        const overdue = item.Date < this.today;
-
-        const weekday =
-            new Date(Number(item.Date.slice(0, 4)), Number(item.Date.slice(5, 7)) - 1, Number(item.Date.slice(8, 10)))
-                .toLocaleDateString('en-GB', { weekday:'short' });
-
-        const label =
-            item.Status === 'Requested' ? 'Requested' : item.Status;
-
-        return {
-            ...item,
-
-            DateText:
-                `${weekday}, ${this.formatDate(item.Date)}`
-                + (item.Date === this.today ? ' · Today' : ''),
-
-            TimeText:
-                item.SlotStart
-                    ? `${slotLabel(item.SlotStart)} - ${slotLabel(item.SlotEnd)}`
-                    : 'Asked date · no slot yet',
-
-            CustomerText: `${item.EnquirerName} - ${item.EnquirerMobile}`,
-
-            BikeText: [item.ModelName, item.BrandName].filter(x => !!x).join(' · ') || '—',
-
-            RequestText: item.RequestSummary || '—',
-
-            AdvisorText: item.AdvisorName || 'Unassigned',
-
-            SourceText:
-                item.FromWebsite
-                    ? 'Website'
-                    : item.FromSchedule
-                        ? 'Scheduled'
-                        : item.SourceName || '—',
-
-            StatusText:
-                overdue
-                    ? `${label} · overdue`
-                    : label + (item.RescheduleCount ? ` · moved ${item.RescheduleCount}x` : ''),
-
-            StatusDot:
-                overdue
-                    ? APPOINTMENT_COLORS['Overdue']
-                    : APPOINTMENT_COLORS[item.Status] ?? '#64748B',
-
-            Overdue:overdue
-        };
-    }
-
-    private inApptChip(item: AppointmentRow, id: string): boolean
-    {
-        switch (id)
-        {
-            case 'today':     return item.Date === this.today;
-            case 'requested': return item.Kind === 'Request';
-            case 'booked':    return item.Status === 'Booked';
-            case 'confirmed': return item.Status === 'Confirmed';
-            case 'overdue':   return item.Overdue;
-            default:          return true;
-        }
-    }
-
-    applyApptFilters(): void
-    {
-        const keyword = this.searchText.trim().toLowerCase();
-
-        const inView =
-            this.appts.filter(item =>
-                !keyword
-                ||
-                [
-                    item.EnquiryNo,
-                    item.DateText,
-                    item.TimeText,
-                    item.EnquirerName,
-                    item.EnquirerMobile,
-                    item.ModelName,
-                    item.BrandName,
-                    item.RequestText,
-                    item.AdvisorText,
-                    item.SourceText,
-                    item.StatusText,
-                    item.Note
-                ]
-                .join(' ')
-                .toLowerCase()
-                .includes(keyword));
-
-        const chip = (id: string, label: string, color: string): TypeChip =>
-            ({ id, label, color, count:inView.filter(x => this.inApptChip(x, id)).length });
-
-        this.apptChips =
-        [
-            chip('all',       'All',       ''),
-            chip('today',     'Today',     '#0EA5E9'),
-            chip('requested', 'Requested', APPOINTMENT_COLORS['Requested']),
-            chip('booked',    'Booked',    APPOINTMENT_COLORS['Booked']),
-            chip('confirmed', 'Confirmed', APPOINTMENT_COLORS['Confirmed']),
-            chip('overdue',   'Overdue',   APPOINTMENT_COLORS['Overdue'])
-        ];
-
-        this.filteredAppts = inView.filter(x => this.inApptChip(x, this.selectedApptChip));
-
-        // The enquiries keep their server page while hidden
-        if (this.isAppts)
-        {
-            this.currentPage = 1;
-        }
-
-        this.updatePagination();
-    }
-
-    // The board : its day, the enquiry picked
-    openBoard(row: AppointmentRow): void
-    {
-        void this.router.navigate(
-            ['appointments'],
-            {
-                relativeTo:this.route.parent,
-                queryParams:{ enquiry:row.ServiceEnquiryId, date:row.Date }
-            });
-    }
-
-
-    // The Service Appointments page (optionally with an enquiry)
-    openAppointments(enquiryId: number = 0): void
-    {
-        void this.router.navigate(
-            ['appointments'],
-            {
-                relativeTo:this.route.parent,
-                queryParams:enquiryId > 0 ? { enquiry:enquiryId } : {}
-            });
     }
 
 
@@ -763,8 +464,7 @@ implements OnInit
     //===========================================================
 
     // Fresh load (open, refresh, after a change) : the server
-    // raises due service enquiries first, then the bikes and the
-    // appointments load
+    // raises due service enquiries first, then the bikes load
     loadItems(): void
     {
         this.loadPage(true);
@@ -781,14 +481,14 @@ implements OnInit
         this.loadFailed = false;
 
         const tab =
-            this.isAppts || this.isBikes ? 'all' : this.selectedTab;
+            this.isBikes ? 'all' : this.selectedTab;
 
         this.service
             .getPaged(
                 {
                     page:this.currentPage,
                     pageSize:this.pageSize,
-                    search:this.isAppts || this.isBikes ? '' : this.searchText,
+                    search:this.isBikes ? '' : this.searchText,
                     sort:this.sortField,
                     dir:this.sortDirection,
                     tab,
@@ -820,7 +520,7 @@ implements OnInit
 
                     // The server moves back to the last page when
                     // the list became shorter
-                    if (!this.isAppts && !this.isBikes && response.page > 0)
+                    if (!this.isBikes && response.page > 0)
                     {
                         this.currentPage = response.page;
                     }
@@ -836,8 +536,6 @@ implements OnInit
                     if (fresh)
                     {
                         this.loadBikes();
-
-                        this.loadAppts();
                     }
                 },
 
@@ -865,8 +563,6 @@ implements OnInit
                     if (fresh)
                     {
                         this.loadBikes();
-
-                        this.loadAppts();
                     }
                 }
             });
@@ -1133,11 +829,7 @@ implements OnInit
     {
         this.selectedTab = value;
 
-        if (this.isAppts)
-        {
-            this.applyApptFilters();
-        }
-        else if (this.isBikes)
+        if (this.isBikes)
         {
             this.applyBikeFilters();
         }
@@ -1150,7 +842,7 @@ implements OnInit
     }
 
     // Centre group : a second click goes back to All Enquiries
-    onInboxClick(id: 'website' | 'appointments' | 'bikes'): void
+    onInboxClick(id: 'website' | 'bikes'): void
     {
         this.onTabChange(this.selectedTab === id ? 'all' : id);
     }
@@ -1173,11 +865,7 @@ implements OnInit
     {
         this.searchText = value ?? '';
 
-        if (this.isAppts)
-        {
-            this.applyApptFilters();
-        }
-        else if (this.isBikes)
+        if (this.isBikes)
         {
             this.applyBikeFilters();
         }
@@ -1203,7 +891,7 @@ implements OnInit
         const sign = event.direction === 'asc' ? 1 : -1;
 
         const field =
-            event.field === 'DateText' ? (this.isAppts ? 'Date' : 'EnquiryDate')
+            event.field === 'DateText' ? 'EnquiryDate'
             : event.field === 'TimeText' ? 'SlotStart'
             : event.field === 'SaleText' ? 'SaleDate'
             : event.field === 'NextDueText' ? 'NextDueDate'
@@ -1229,11 +917,7 @@ implements OnInit
                 return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * sign;
             };
 
-        if (this.isAppts)
-        {
-            this.filteredAppts = [...this.filteredAppts].sort(compare);
-        }
-        else if (this.isBikes)
+        if (this.isBikes)
         {
             this.filteredBikes = [...this.filteredBikes].sort(compare);
         }
@@ -1267,20 +951,18 @@ implements OnInit
 
     updatePagination(): void
     {
-        // Appointments / Sold Bikes only (the enquiries come a page
-        // at a time from the server)
+        // Sold Bikes only (the enquiries come a page at a time from
+        // the server)
         const start = (this.currentPage - 1) * this.pageSize;
 
         this.pagedBikes = this.filteredBikes.slice(start, start + this.pageSize);
-
-        this.pagedAppts = this.filteredAppts.slice(start, start + this.pageSize);
     }
 
     onPageChange(page: number): void
     {
         this.currentPage = page;
 
-        if (this.isAppts || this.isBikes)
+        if (this.isBikes)
         {
             this.updatePagination();
 
@@ -1298,7 +980,7 @@ implements OnInit
 
         this.updatePagination();
 
-        if (!this.isAppts && !this.isBikes)
+        if (!this.isBikes)
         {
             this.loadPage();
         }
@@ -1311,14 +993,6 @@ implements OnInit
 
     add(): void
     {
-        // Appointments view : "Book" opens the board
-        if (this.isAppts)
-        {
-            this.openAppointments();
-
-            return;
-        }
-
         void this.router.navigate(this.isBikes ? ['bike', 'add'] : ['add'], { relativeTo:this.route.parent });
     }
 
@@ -1334,13 +1008,6 @@ implements OnInit
             title:'Log a call',
             tone:'success',
             visible:(row: any): boolean => !row.IsConverted && row.StatusStage !== 'Lost'
-        },
-        {
-            key:'book',
-            icon:'fas fa-calendar-plus',
-            title:'Book an appointment',
-            tone:'primary',
-            visible:(row: any): boolean => !row.IsConverted && row.StatusStage !== 'Lost' && row.EnquiryType === 'Service'
         }
     ];
 
@@ -1348,20 +1015,6 @@ implements OnInit
 
     onRowAction(event: ListTableRowActionEvent): void
     {
-        if (event.key === 'board' && this.isAppts)
-        {
-            this.openBoard(event.row as AppointmentRow);
-
-            return;
-        }
-
-        if (event.key === 'book' && !this.isBikes)
-        {
-            this.openAppointments(Number((event.row as ServiceEnquiry).ServiceEnquiryId));
-
-            return;
-        }
-
         if (event.key === 'call' && !this.isBikes)
         {
             this.callEnquiry = event.row as ServiceEnquiry;
@@ -1386,13 +1039,6 @@ implements OnInit
 
     view(item: any): void
     {
-        if (this.isAppts)
-        {
-            this.openBoard(item as AppointmentRow);
-
-            return;
-        }
-
         if (this.isBikes)
         {
             void this.router.navigate(['bike', 'view', (item as SoldBikeRow).ServiceVehicleId], { relativeTo:this.route.parent });
@@ -1405,11 +1051,6 @@ implements OnInit
 
     edit(item: any): void
     {
-        if (this.isAppts)
-        {
-            return;
-        }
-
         if (this.isBikes)
         {
             void this.router.navigate(['bike', 'edit', (item as SoldBikeRow).ServiceVehicleId], { relativeTo:this.route.parent });
@@ -1434,7 +1075,7 @@ implements OnInit
 
     delete(item: any): void
     {
-        if (this.progress.busy || this.isAppts)
+        if (this.progress.busy)
         {
             return;
         }

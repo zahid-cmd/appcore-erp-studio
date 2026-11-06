@@ -266,15 +266,26 @@
 
                     @if (loading)
                     {
-                        <div class="aj-empty"><i class="fas fa-spinner fa-spin"></i> Loading journals…</div>
+                        <div class="aj-empty">
+                            <i class="fas fa-spinner fa-spin aj-empty-icon"></i>
+                            <span class="aj-empty-title">Loading journals…</span>
+                        </div>
                     }
                     @else if (loadError)
                     {
-                        <div class="aj-empty aj-error"><i class="fas fa-triangle-exclamation"></i> {{ loadError }}</div>
+                        <div class="aj-empty aj-error">
+                            <i class="fas fa-triangle-exclamation aj-empty-icon"></i>
+                            <span class="aj-empty-title">Journals could not be loaded</span>
+                            <span class="aj-empty-text">{{ loadError }}</span>
+                        </div>
                     }
                     @else if (journals.length === 0)
                     {
-                        <div class="aj-empty"><i class="far fa-folder-open"></i> No journals in this period.</div>
+                        <div class="aj-empty">
+                            <i class="fas fa-book-open aj-empty-icon"></i>
+                            <span class="aj-empty-title">No journals in this period</span>
+                            <span class="aj-empty-text">Pick another period, branch or journal source on the left.</span>
+                        </div>
                     }
                     @else
                     {

@@ -31,15 +31,11 @@
 
             <app-command-center
 
-                [class.se-cc-wide]="isAppts"
+                command1Text="Add"
 
-                [command1Text]="isAppts ? 'Book Appointment' : 'Add'"
+                command1Icon="fas fa-plus"
 
-                [command1Icon]="isAppts ? 'fas fa-calendar-plus' : 'fas fa-plus'"
-
-                [command1Permission]="isAppts ? 'update' : 'add'"
-
-                [command1Title]="isAppts ? 'Open the appointment board to book' : ''"
+                command1Permission="add"
 
                 (command1Click)="add()"
 
@@ -55,15 +51,11 @@
 
                 command3Permission="restore"
 
-                [command3Visible]="!isAppts"
-
                 (command3Click)="restore()"
 
                 rightCommandIcon="fas fa-clock-rotate-left"
 
                 rightCommandTitle="History"
-
-                [rightCommandVisible]="!isAppts"
 
                 (rightCommandClick)="openHistory()">
 
@@ -78,7 +70,7 @@
     <!-- =====================================================
          PAGE TOOLBAR
            left   : All · Open · Due Today · Converted · Suspended
-           centre : Website · Appointments · Sold Bikes (counts)
+           centre : Website · Sold Bikes (counts)
            right  : Service / Parts (Sold Bikes : schedule status)
     ====================================================== -->
 
@@ -140,35 +132,6 @@
                 </button>
 
 
-                <button
-
-                    type="button"
-
-                    class="se-inbox-btn se-inbox-ride"
-
-                    [class.se-inbox-on]="isAppts"
-
-                    [class.se-inbox-live]="appointmentsCount > 0"
-
-                    [attr.aria-pressed]="isAppts"
-
-                    title="Active service appointments of every date and visit requests not booked yet (website bookings included)"
-
-                    (click)="onInboxClick('appointments')">
-
-                    <span class="se-inbox-icon">
-
-                        <i class="fas fa-calendar-check"></i>
-
-                    </span>
-
-                    <span class="se-inbox-label">Appointments</span>
-
-                    <span class="se-inbox-count">{{ appointmentsCount }}</span>
-
-                </button>
-
-
                 <!-- Bikes sold from the outlet : their service schedules -->
 
                 <button
@@ -214,9 +177,9 @@
 
             role="group"
 
-            [attr.aria-label]="isAppts ? 'Filter appointments' : isBikes ? 'Filter by schedule' : 'Filter by type'">
+            [attr.aria-label]="isBikes ? 'Filter by schedule' : 'Filter by type'">
 
-            @if (!isBikes && !isAppts)
+            @if (!isBikes)
             {
                 <span class="se-interest-title">
 
@@ -325,7 +288,7 @@
          SUMMARY (search applied; tab and type not)
     ====================================================== -->
 
-    @if (!isAppts && !isBikes && summaryTotal > 0)
+    @if (!isBikes && summaryTotal > 0)
     {
         <div class="ics-summary">
 

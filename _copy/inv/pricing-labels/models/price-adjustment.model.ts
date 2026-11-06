@@ -49,6 +49,9 @@ export type PriceAdjustmentReductionTo =
 
 export interface PriceAdjustmentListRow
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:string;
+
     Id:number;
     AdjustmentNo:string;
     PageType:string;
@@ -214,6 +217,9 @@ export interface PriceAdjustmentAnalysis
 
 export interface PriceAdjustmentDetail
 {
+    // The id used in links and API calls (uuid v7)
+    PublicId?:string;
+
     Id:number;
     AdjustmentNo:string;
     PageType:string;

@@ -1,0 +1,369 @@
+<!-- =====================================================
+     SERVICE SCHEDULE PAGE (opened from the command center)
+====================================================== -->
+
+@if (showSchedule)
+{
+<service-schedule
+
+    [schedules]="entity.Schedules"
+
+    [warrantyYears]="entity.WarrantyYears"
+
+    [warrantyKm]="entity.WarrantyKm"
+
+    [brandName]="selectedBrandName"
+
+    [policyCode]="entity.PolicyCode"
+
+    [readonly]="isViewMode"
+
+    (applied)="onScheduleApplied($event)"
+
+    (closed)="onScheduleClosed()">
+
+</service-schedule>
+}
+@else
+{
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-scale-balanced"
+
+        [title]="pageTitle"
+
+        subtitle="Free and paid scheduled services per brand">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Text]="scheduleButtonText"
+
+            command3Icon="fas fa-calendar-check"
+
+            (command3Click)="openSchedule()"
+
+            [command3Visible]="true"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 BASIC INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Basic Information"
+
+                icon="fas fa-scale-balanced">
+
+
+                <!-- Policy Code : SVP-nnn -->
+
+                <app-textbox
+
+                    label="Policy Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.PolicyCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Brand : one policy per brand, declared first; locked once saved -->
+
+                <app-search-dropdown
+
+                    label="Brand"
+
+                    [items]="brandItems"
+
+                    [(value)]="entity.BrandManagementId"
+
+                    (valueChange)="onBrandChange($event)"
+
+                    [disabled]="!isAddMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 FREE SERVICE LIMIT (WARRANTY)
+                 Every free service must be taken within this
+                 period or km, whichever comes first.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Free Service Limit"
+
+                icon="fas fa-shield-halved">
+
+
+                <app-textbox
+
+                    label="Warranty (Years)"
+
+                    placeholder="e.g. 3"
+
+                    [value]="numberText(entity.WarrantyYears)"
+
+                    (valueChange)="onWarrantyValueChange('WarrantyYears', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Warranty Km"
+
+                    placeholder="e.g. 40000"
+
+                    [value]="numberText(entity.WarrantyKm)"
+
+                    (valueChange)="onWarrantyValueChange('WarrantyKm', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Required; set on the Service Schedule page
+                     (command center : Schedule) -->
+
+                <app-textbox
+
+                    label="Service Schedule"
+
+                    placeholder="Required : use Schedule above"
+
+                    [value]="scheduleSummary"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 FREE SERVICE CLAIM
+                 ASSOCIATED LEDGER : the brand's receivable for
+                 reimbursed free services, created with the
+                 policy under the Associated Sub Group (the
+                 same sub group for every policy). Its name is
+                 "<Sub Group Name> - <Brand Name>", built from
+                 the current names.
+            ============================================== -->
+
+            <app-form-section
+
+                title="Associated Ledger"
+
+                icon="fas fa-hand-holding-dollar">
+
+
+                <!-- Associated Sub Group : chosen by the first policy,
+                     fixed for every policy after that -->
+
+                <app-search-dropdown
+
+                    label="Associated Sub Group"
+
+                    [items]="subGroupItems"
+
+                    [(value)]="entity.AssociatedSubGroupId"
+
+                    (valueChange)="onSubGroupChange($event)"
+
+                    [disabled]="isSubGroupLocked || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <app-textbox
+
+                    label="Associated Ledger Code"
+
+                    [placeholder]="ledgerCodePlaceholder"
+
+                    [(value)]="entity.AssociatedLedgerCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Associated Ledger Name"
+
+                    placeholder="Sub Group Name - Brand Name"
+
+                    [(value)]="entity.AssociatedLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS & CONTROL
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Control"
+
+                icon="fas fa-toggle-on">
+
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+}
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

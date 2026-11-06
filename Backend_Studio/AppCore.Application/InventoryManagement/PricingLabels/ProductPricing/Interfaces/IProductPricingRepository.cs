@@ -21,6 +21,10 @@ public interface IProductPricingRepository
     // type '' = every type
     Task<List<ProductPricingDto>> GetAllAsync(string? pageType);
 
+    // One list page : tab, type, search, sort on the server
+    Task<AppCore.Application.Common.Paging.PagedResult<ProductPricingDto>> GetPagedAsync(
+        AppCore.Application.InventoryManagement.InventoryDocumentPageRequest request);
+
     Task<ProductPricingDto?> GetByIdAsync(long id);
 
     Task<ProductPricingDefaultsDto> GetDefaultsAsync(string pageType);

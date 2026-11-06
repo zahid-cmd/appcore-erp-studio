@@ -430,10 +430,19 @@ implements OnInit, AfterViewInit, OnDestroy
         this.load();
     }
 
-    // Back to the list's Appointments view
+    // Back : to the Sales Enquiries list's Test Rides view when
+    // opened from there (?from=enquiries), else to the Test Rides
+    // list
     back(): void
     {
-        void this.router.navigate(['list'], { relativeTo:this.route.parent, queryParams:{ tab:'test-rides' } });
+        if (this.route.snapshot.queryParamMap.get('from') === 'enquiries')
+        {
+            void this.router.navigate(['/enquiry-management/enquiry-profiles/sales-enquiries/list'], { queryParams:{ tab:'test-rides' } });
+
+            return;
+        }
+
+        void this.router.navigate(['/enquiry-management/follow-ups-appointments/test-rides/list']);
     }
 
 
@@ -1127,7 +1136,7 @@ implements OnInit, AfterViewInit, OnDestroy
 
     openEnquiry(id: number): void
     {
-        void this.router.navigate(['view', id], { relativeTo:this.route.parent });
+        void this.router.navigate(['/enquiry-management/enquiry-profiles/sales-enquiries/view', id]);
     }
 
 

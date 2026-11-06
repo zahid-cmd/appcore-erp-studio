@@ -18,6 +18,11 @@ public interface ILocationsRepository
     Task<List<LocationsDto>> GetAllAsync();
 
 
+    // One list page (server paging) with Total / Active / Inactive
+    Task<AppCore.Application.Common.Paging.PagedResult<LocationsDto>> GetPagedAsync(
+        GeneralSettingsPageRequest request);
+
+
     // Public Id -> internal id (live rows only; null = not found)
 
     Task<long?> GetIdByPublicIdAsync(

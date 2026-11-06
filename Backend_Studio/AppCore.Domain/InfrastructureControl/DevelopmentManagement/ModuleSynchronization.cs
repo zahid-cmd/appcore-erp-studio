@@ -17,6 +17,13 @@ using AppCore.Domain.Common;
 public class ModuleSynchronization : BaseEntity
 {
     //===========================================================
+    // Public Id (uuid v7) : the id used in links and the address
+    // bar; the internal id stays inside the server
+    //===========================================================
+
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
+
+    //===========================================================
     // Navigation
     //===========================================================
 

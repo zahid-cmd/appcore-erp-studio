@@ -90,6 +90,8 @@ public class ShellRepository : IShellRepository
 
     private readonly IDataManagementService _dataManagement;
 
+    private readonly IFinancialYearAutoCreateService _financialYearAuto;
+
 
     //===========================================================
     // Constructor
@@ -103,9 +105,14 @@ public class ShellRepository : IShellRepository
 
         ISystemConfigurationsRepository configurations,
 
-        IDataManagementService dataManagement
+        IDataManagementService dataManagement,
+
+        IFinancialYearAutoCreateService financialYearAuto
     )
     {
+        _financialYearAuto =
+            financialYearAuto;
+
         _context =
             context;
 
@@ -331,6 +338,14 @@ public class ShellRepository : IShellRepository
         if (backup != null)
         {
             items.Add(backup);
+        }
+
+        ShellNotificationDto? financialYear =
+            await FinancialYearAlertAsync(userId);
+
+        if (financialYear != null)
+        {
+            items.Add(financialYear);
         }
 
         return items
@@ -744,6 +759,108 @@ public class ShellRepository : IShellRepository
     }
 
 
+    //-----------------------------------------------------------
+    // Next financial year (users who can open Financial Years) :
+    //   • switch ON  : from 10 days before the create day, every
+    //     day : "FY 2027-2028 will be created automatically on
+    //     31-May-2027 · no action needed";
+    //   • switch OFF : from (days + 10) before the year ends,
+    //     every day : the next year is not created yet;
+    //   • for 7 days after an automatic one : it was created.
+    // The key holds today's date, so it shows as new each day.
+    //-----------------------------------------------------------
+
+    private const string FinancialYearsRoute =
+        "/settings/general-settings/financial-years/list";
+
+    private async Task<ShellNotificationDto?> FinancialYearAlertAsync
+    (
+        long userId
+    )
+    {
+        try
+        {
+            FinancialYearAutoStatusDto s =
+                await _financialYearAuto.GetStatusAsync();
+
+            if (s.RecentlyAutoCreated)
+            {
+                if (!await CanOpenPageAsync(userId, "financial-years"))
+                {
+                    return null;
+                }
+
+                return new ShellNotificationDto
+                {
+                    Key = $"fy-made-{s.NextYearName}",
+                    Kind = "financial-year",
+                    Title = $"{s.NextYearName} was created automatically",
+                    Detail = $"{s.NextStart:dd-MMM-yyyy} to {s.NextEnd:dd-MMM-yyyy} · Open, not set as current. No action needed.",
+                    Route = FinancialYearsRoute,
+                    Date = DateTime.UtcNow
+                };
+            }
+
+            if (s.NextExists
+                || s.NotifyFrom == null
+                || s.CreateOn == null
+                || s.NextStart == null
+                || s.Today < s.NotifyFrom.Value)
+            {
+                return null;
+            }
+
+            if (!await CanOpenPageAsync(userId, "financial-years"))
+            {
+                return null;
+            }
+
+            if (s.AutoCreate)
+            {
+                bool due =
+                    s.Today >= s.CreateOn.Value;
+
+                int daysLeft =
+                    s.CreateOn.Value.DayNumber - s.Today.DayNumber;
+
+                return new ShellNotificationDto
+                {
+                    Key = $"fy-auto-{s.Today:yyyyMMdd}",
+                    Kind = "financial-year",
+                    Title = due
+                        ? $"{s.NextYearName} is being created automatically today"
+                        : $"{s.NextYearName} will be created automatically on {s.CreateOn:dd-MMM-yyyy}",
+                    Detail = due
+                        ? $"Starts {s.NextStart:dd-MMM-yyyy}. No action needed."
+                        : $"In {daysLeft} day{(daysLeft == 1 ? "" : "s")} · starts {s.NextStart:dd-MMM-yyyy}. No action needed.",
+                    Route = FinancialYearsRoute,
+                    Date = DateTime.UtcNow
+                };
+            }
+
+            int daysToStart =
+                s.NextStart.Value.DayNumber - s.Today.DayNumber;
+
+            return new ShellNotificationDto
+            {
+                Key = $"fy-missing-{s.Today:yyyyMMdd}",
+                Kind = "financial-year",
+                Title = $"{s.NextYearName} is not created yet",
+                Detail = daysToStart > 0
+                    ? $"It must exist before {s.NextStart:dd-MMM-yyyy} ({daysToStart} day{(daysToStart == 1 ? "" : "s")} left). Create it on Financial Years, or turn on Auto Create Next Financial Year."
+                    : $"It should have started on {s.NextStart:dd-MMM-yyyy}. Vouchers dated in it cannot be saved until it is created.",
+                Route = FinancialYearsRoute,
+                Date = DateTime.UtcNow
+            };
+        }
+        catch
+        {
+            // the bell never fails because of the year check
+            return null;
+        }
+    }
+
+
     // The user can open a page whose route contains this part
     private async Task<bool> CanOpenPageAsync
     (
@@ -852,4 +969,4 @@ public class ShellRepository : IShellRepository
                 DateTime.UtcNow,
                 zone));
     }
-}
+}

@@ -565,15 +565,15 @@ export class OpeningStockForm
         void
     {
         const id =
-            Number(this.route.snapshot.paramMap.get('id')) || 0;
+            this.route.snapshot.paramMap.get('id') ?? '';
 
         // view/:id or edit/:id
         const viewing =
-            /\/view\/\d+/.test(this.router.url);
+            /\/view\//.test(this.router.url);
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
             this.mode = viewing ? 'view' : 'edit';
@@ -633,7 +633,7 @@ export class OpeningStockForm
     private loadDocument
     (
         id:
-            number
+            string
     ):
         void
     {
@@ -660,7 +660,7 @@ export class OpeningStockForm
                         {
                             this.mode = 'view';
 
-                            this.router.navigate([OPENING_STOCK_ROUTE, 'view', doc.OpeningStockId], { replaceUrl:true });
+                            this.router.navigate([OPENING_STOCK_ROUTE, 'view', doc.PublicId], { replaceUrl:true });
                         }
 
                         // Edit needs the products; view (MB) the bike rules
@@ -3616,7 +3616,7 @@ export class OpeningStockForm
                             !this.doc
                         )
                         {
-                            this.doc = { OpeningStockId:saved.OpeningStockId } as OpeningStock;
+                            this.doc = { OpeningStockId:saved.OpeningStockId, PublicId:saved.PublicId } as OpeningStock;
                         }
 
                         return this.service.post(saved.OpeningStockId);
@@ -3657,7 +3657,7 @@ export class OpeningStockForm
                             this.mode === 'add' && this.doc?.OpeningStockId
                         )
                         {
-                            this.router.navigate([OPENING_STOCK_ROUTE, 'edit', this.doc.OpeningStockId], { replaceUrl:true });
+                            this.router.navigate([OPENING_STOCK_ROUTE, 'edit', this.doc.PublicId], { replaceUrl:true });
 
                             return;
                         }
@@ -3764,7 +3764,7 @@ export class OpeningStockForm
                 'Deleting Opening Stock',
                 `Please wait while "${doc.OpeningNo}" is being deleted...`,
                 'Opening stock deleted.',
-                this.service.delete(doc.OpeningStockId))
+                this.service.delete(doc.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -3809,7 +3809,7 @@ export class OpeningStockForm
 
         const url =
             this.router.serializeUrl(
-                this.router.createUrlTree(['/print-viewer', OPENING_STOCK_PRINT_KEY, this.doc.OpeningStockId])
+                this.router.createUrlTree(['/print-viewer', OPENING_STOCK_PRINT_KEY, this.doc.PublicId])
             );
 
         const tab =

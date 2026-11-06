@@ -90,7 +90,7 @@ export class OpeningStockService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<OpeningStock>
     {
@@ -286,7 +286,7 @@ export class OpeningStockService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -437,6 +437,7 @@ function toSaved
     OpeningStockSaved
 {
     return {
+        PublicId:text(pick(x, 'PublicId')),
         OpeningStockId:num(pick(x, 'OpeningStockId')),
         OpeningNo:text(pick(x, 'OpeningNo')),
         Status:text(pick(x, 'Status'))
@@ -489,6 +490,7 @@ function toOpeningStock
     OpeningStock
 {
     return {
+        PublicId:text(pick(x, 'PublicId')),
         OpeningStockId:num(pick(x, 'OpeningStockId')),
         PageType:text(pick(x, 'PageType')),
         OpeningNo:text(pick(x, 'OpeningNo')),

@@ -17,6 +17,10 @@ public interface IMembershipStatusRepository
 
     Task<List<MembershipStatusDto>> GetAllAsync();
 
+    // One list page : tab, card, search, sort on the server
+    Task<AppCore.Application.Common.Paging.PagedResult<MembershipStatusDto>> GetPagedAsync(
+        MembershipStatusPageRequest request);
+
     Task<MembershipStatusDto?> GetByIdAsync(
         long id);
 

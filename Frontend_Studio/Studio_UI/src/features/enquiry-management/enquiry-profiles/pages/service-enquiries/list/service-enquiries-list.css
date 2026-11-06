@@ -556,3 +556,27 @@
     color: #64748b;
     font-size: 13px;
 }
+
+
+/* =====================================================
+   The right group keeps one width for the Service / Parts
+   chips and the six Sold Bikes chips, so the centre group
+   (Website · Sold Bikes) does not move when the view changes
+===================================================== */
+
+.se-interest
+{
+    flex:0 0 auto;
+
+    width:600px;
+
+    justify-content:flex-end;
+}
+
+@media (max-width:1700px)
+{
+    .se-interest
+    {
+        width:560px;
+    }
+}

@@ -265,8 +265,27 @@ export class OpeningStockList
     rows:
         OpeningStockRow[] = [];
 
-    filteredRows:
-        OpeningStockRow[] = [];
+    // Rows on all pages after the tab / type / search (server)
+    totalRecords:
+        number = 0;
+
+    // Tab / type / status counts from the server
+    counts:
+        Record<string, number> = {};
+
+    // Server sort ('' = newest first)
+    private sortField:
+        string = '';
+
+    private sortDirection:
+        'asc' | 'desc' = 'asc';
+
+    private searchTimer?:
+        number;
+
+    // A load that is out of date is ignored
+    private loadSeq:
+        number = 0;
 
     pagedRows:
         OpeningStockRow[] = [];
@@ -335,20 +354,37 @@ export class OpeningStockList
 
         this.loadFailed = false;
 
+        const seq =
+            ++this.loadSeq;
+
         this.cdr.detectChanges();
 
         this.service
-            .getAll()
+            .getPaged
+            ({
+                page:this.currentPage,
+                pageSize:this.pageSize,
+                search:this.searchText,
+                sort:this.sortField,
+                dir:this.sortDirection,
+                type:this.selectedType,
+                tab:this.selectedTab
+            })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
-                    rows =>
+                    result =>
                     {
+                        if (seq !== this.loadSeq)
+                        {
+                            return;
+                        }
+
                         this.rows =
-                            rows.map
+                            result.items.map
                             (
-                                x =>
+                                (x: any) =>
                                 ({
                                     ...x,
                                     DateText:formatOpeningDate(x.OpeningDate),
@@ -358,21 +394,44 @@ export class OpeningStockList
                                 })
                             );
 
+                        this.pagedRows =
+                            this.rows;
+
+                        this.totalRecords =
+                            result.totalCount;
+
+                        this.currentPage =
+                            result.page || 1;
+
+                        this.counts =
+                            result.counts ?? {};
+
                         this.loading = false;
 
-                        this.applyFilters();
+                        this.cdr.detectChanges();
                     },
 
                 error:
                     () =>
                     {
+                        if (seq !== this.loadSeq)
+                        {
+                            return;
+                        }
+
                         this.loading = false;
 
                         this.loadFailed = true;
 
                         this.rows = [];
 
-                        this.applyFilters();
+                        this.pagedRows = [];
+
+                        this.totalRecords = 0;
+
+                        this.counts = {};
+
+                        this.cdr.detectChanges();
                     }
             });
     }
@@ -390,7 +449,7 @@ export class OpeningStockList
     {
         this.selectedTab = tab;
 
-        this.applyFilters();
+        this.reload();
     }
 
     onTypeChange
@@ -402,9 +461,10 @@ export class OpeningStockList
     {
         this.selectedType = type;
 
-        this.applyFilters();
+        this.reload();
     }
 
+    // Search after a short pause in typing
     onSearch
     (
         value:
@@ -414,9 +474,25 @@ export class OpeningStockList
     {
         this.searchText = value ?? '';
 
-        this.applyFilters();
+        if (this.searchTimer)
+        {
+            clearTimeout(this.searchTimer);
+        }
+
+        this.searchTimer =
+            window.setTimeout
+            (
+                () =>
+                {
+                    this.searchTimer = undefined;
+
+                    this.reload();
+                },
+                300
+            );
     }
 
+    // Documents of a type (search applied) ; '' = all types
     typeCount
     (
         type:
@@ -424,28 +500,16 @@ export class OpeningStockList
     ):
         number
     {
-        return type
-            ? this.rows.filter(x => x.PageType === type).length
-            : this.rows.length;
+        return Number(this.counts['Type_' + (type || 'All')] ?? 0);
     }
 
-    private applyFilters():
+    // Back to page 1 and load (search, filters, paging on the server)
+    private reload():
         void
     {
-        this.filteredRows =
-            this.rows.filter
-            (
-                x =>
-                    (this.selectedTab === 'all' || x.Status.toLowerCase() === this.selectedTab)
-                    &&
-                    (!this.selectedType || x.PageType === this.selectedType)
-                    &&
-                    openingStockMatches(x, this.searchText)
-            );
-
         this.currentPage = 1;
 
-        this.paginate();
+        this.load();
     }
 
     onSort
@@ -455,34 +519,11 @@ export class OpeningStockList
     ):
         void
     {
-        const field =
-            event.field === 'DateText'
-                ? 'OpeningDate'
-                : event.field === 'QuantityText'
-                    ? 'TotalQuantity'
-                    : event.field === 'ValueText'
-                        ? 'TotalValue'
-                        : event.field;
+        this.sortField = event?.field ?? '';
 
-        const sign =
-            event.direction === 'asc' ? 1 : -1;
+        this.sortDirection = event?.direction === 'desc' ? 'desc' : 'asc';
 
-        this.filteredRows =
-            [...this.filteredRows].sort
-            (
-                (a: any, b: any) =>
-                {
-                    const x = a[field];
-
-                    const y = b[field];
-
-                    return (typeof x === 'number' && typeof y === 'number'
-                        ? x - y
-                        : String(x ?? '').localeCompare(String(y ?? ''))) * sign;
-                }
-            );
-
-        this.paginate();
+        this.reload();
     }
 
     onPageChange
@@ -494,7 +535,7 @@ export class OpeningStockList
     {
         this.currentPage = page;
 
-        this.paginate();
+        this.load();
     }
 
     onPageSizeChange
@@ -506,21 +547,7 @@ export class OpeningStockList
     {
         this.pageSize = size;
 
-        this.currentPage = 1;
-
-        this.paginate();
-    }
-
-    private paginate():
-        void
-    {
-        const start =
-            (this.currentPage - 1) * this.pageSize;
-
-        this.pagedRows =
-            this.filteredRows.slice(start, start + this.pageSize);
-
-        this.cdr.detectChanges();
+        this.reload();
     }
 
     //===========================================================
@@ -543,6 +570,10 @@ export class OpeningStockList
         this.selectedTab = 'all';
 
         this.selectedType = '';
+
+        this.sortField = '';
+
+        this.currentPage = 1;
 
         this.load();
     }
@@ -771,10 +802,11 @@ export class OpeningStockList
     // (all records, every type)
     //===========================================================
 
+    // Summary : documents by status (type and search applied)
     get summaryTotal():
         number
     {
-        return (this.rows ?? []).length;
+        return Number(this.counts['All'] ?? 0);
     }
 
     summaryCount(
@@ -782,9 +814,10 @@ export class OpeningStockList
     ):
         number
     {
-        return (this.rows ?? [])
-            .filter(x => String((x as any)?.Status ?? '').toLowerCase() === status)
-            .length;
+        const key =
+            Object.keys(this.counts).find(k => k.toLowerCase() === status.toLowerCase());
+
+        return key ? Number(this.counts[key] ?? 0) : 0;
     }
 
     summaryText(

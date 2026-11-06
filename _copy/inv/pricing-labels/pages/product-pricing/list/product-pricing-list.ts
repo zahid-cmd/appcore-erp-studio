@@ -548,7 +548,7 @@ export class ProductPricingList
             row?.ProductPricingId
         )
         {
-            this.router.navigate([PRODUCT_PRICING_ROUTE, 'view', row.ProductPricingId]);
+            this.router.navigate([PRODUCT_PRICING_ROUTE, 'view', row.PublicId]);
         }
     }
 
@@ -580,7 +580,7 @@ export class ProductPricingList
             return;
         }
 
-        this.router.navigate([PRODUCT_PRICING_ROUTE, 'edit', row.ProductPricingId]);
+        this.router.navigate([PRODUCT_PRICING_ROUTE, 'edit', row.PublicId]);
     }
 
     //===========================================================
@@ -634,7 +634,7 @@ export class ProductPricingList
                 'Deleting Price Change',
                 `Please wait while "${row.PricingNo}" is being deleted...`,
                 'Price change deleted.',
-                this.service.delete(row.ProductPricingId))
+                this.service.delete(row.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -753,6 +753,35 @@ export class ProductPricingList
         this.historyOpened = false;
 
         this.cdr.detectChanges();
+    }
+
+    //===========================================================
+    // Summary Line (below the canvas) : documents by status
+    // (all records, every type)
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.rows ?? []).length;
+    }
+
+    summaryCount(
+        status: string
+    ):
+        number
+    {
+        return (this.rows ?? [])
+            .filter(x => String((x as any)?.Status ?? '').toLowerCase() === status)
+            .length;
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 }
 

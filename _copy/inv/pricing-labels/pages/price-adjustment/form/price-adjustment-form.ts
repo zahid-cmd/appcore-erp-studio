@@ -575,14 +575,14 @@ export class PriceAdjustmentForm
         this.destroyRef.onDestroy(() => this.stopReanalyse());
 
         const id =
-            Number(this.route.snapshot.paramMap.get('id')) || 0;
+            this.route.snapshot.paramMap.get('id') ?? '';
 
         const viewing =
-            /\/view\/\d+/.test(this.router.url);
+            /\/view\//.test(this.router.url);
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
             this.mode = viewing ? 'view' : 'edit';
@@ -675,7 +675,7 @@ export class PriceAdjustmentForm
     private loadDocument
     (
         id:
-            number
+            string
     ):
         void
     {
@@ -701,7 +701,7 @@ export class PriceAdjustmentForm
                         {
                             this.mode = 'view';
 
-                            this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'view', doc.Id], { replaceUrl:true });
+                            this.router.navigate([PRICE_ADJUSTMENT_ROUTE, 'view', doc.PublicId], { replaceUrl:true });
                         }
 
                         // Edit : the products to pick from again
@@ -2758,7 +2758,7 @@ export class PriceAdjustmentForm
                 'Deleting Price Adjustment',
                 `Please wait while "${doc.AdjustmentNo}" is being deleted...`,
                 'Price adjustment deleted.',
-                this.service.delete(doc.Id))
+                this.service.delete(doc.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -2799,7 +2799,7 @@ export class PriceAdjustmentForm
 
         const url =
             this.router.serializeUrl(
-                this.router.createUrlTree(['/print-viewer', PRICE_ADJUSTMENT_PRINT_KEY, this.doc.Id])
+                this.router.createUrlTree(['/print-viewer', PRICE_ADJUSTMENT_PRINT_KEY, this.doc.PublicId])
             );
 
         const tab =

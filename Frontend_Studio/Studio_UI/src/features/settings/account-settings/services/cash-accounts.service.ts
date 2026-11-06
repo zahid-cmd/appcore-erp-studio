@@ -31,6 +31,14 @@ from '../../../../environments/environment';
 
 import
 {
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     CashAccount,
     CreateCashAccount,
     UpdateCashAccount
@@ -288,5 +296,71 @@ export class CashAccountsService
         return this.http.get<any[]>(
             `${this.apiUrl}/${id}/history`
         );
+    }
+
+
+
+    //===========================================================
+    // One list page (server paging)
+    //
+    // query : page, pageSize, search, sort, dir and the list's
+    //         filters; blanks are left out
+    // counts: Total · Active · Inactive
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            Record<string, unknown>
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                { params:toPagedParams({ ...query }) }
+            )
+            .pipe(
+                map(
+                    raw =>
+                        toPagedResult(raw, (x: any) => ([x] as any[]).map(
+                            cashAccount =>
+
+                            ({
+                                ...cashAccount,
+
+                                CashAccountId:
+                                    Number(cashAccount.CashAccountId ?? cashAccount.cashAccountId ?? cashAccount.id ?? cashAccount.Id),
+
+                                AccountSubGroupsId:
+                                    Number(cashAccount.AccountSubGroupsId ?? cashAccount.accountSubGroupsId ?? 0),
+
+                                CashAccountCode:
+                                    cashAccount.CashAccountCode ?? cashAccount.cashAccountCode ?? '',
+
+                                CashAccountName:
+                                    cashAccount.CashAccountName ?? cashAccount.cashAccountName ?? '',
+
+                                Remarks:
+                                    cashAccount.Remarks ?? cashAccount.remarks ?? '',
+
+                                Status:
+                                    Boolean(cashAccount.Status ?? cashAccount.status ?? true),
+
+                                Branch:
+                                    cashAccount.Branch ?? cashAccount.branch ?? '',
+
+                                DisplayName:
+                                    cashAccount.DisplayName ?? cashAccount.displayName ?? '',
+
+                                CollectionAccount:
+                                    Boolean(cashAccount.CollectionAccount ?? cashAccount.collectionAccount ?? false),
+
+                                PaymentAccount:
+                                    Boolean(cashAccount.PaymentAccount ?? cashAccount.paymentAccount ?? false)
+                            })
+                        )[0])
+                )
+            );
     }
 }

@@ -21,6 +21,11 @@ public interface IMembershipServicesRepository
     Task<List<MembershipServicesDto>> GetAllAsync();
 
 
+    // One list page (server paging) with Total / Active / Inactive
+    Task<AppCore.Application.Common.Paging.PagedResult<MembershipServicesDto>> GetPagedAsync(
+        ServiceSettingsPageRequest request);
+
+
     // Public Id -> internal id (live rows only; null = not found)
 
     Task<long?> GetIdByPublicIdAsync(

@@ -1,0 +1,308 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-motorcycle"
+        title="Test Rides"
+        subtitle="Test rides booked for sales enquiries">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            command3Text="Board"
+            command3Icon="fas fa-table-cells-large"
+            command3Title="Open the day on the board"
+            (command3Click)="openBoard()"
+            rightCommandIcon="fas fa-arrow-left"
+            rightCommandTitle="Back to the list"
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+        @if (record?.IsOverdue)
+        {
+            <span
+                pageToolbarRight
+                class="trf-flag trf-flag-bad">
+                <i class="fas fa-triangle-exclamation"></i>
+                Overdue : the date has passed and it is still {{ footerStatus.toLowerCase() }}
+            </span>
+        }
+        @else if (record && !record.IsLive)
+        {
+            <span
+                pageToolbarRight
+                class="trf-flag">
+                <i class="fas fa-lock"></i>
+                {{ footerStatus }} : only the executive and the note can change
+            </span>
+        }
+
+    </app-page-toolbar>
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+            canvasBody
+            [columns]="3">
+
+
+            <!-- =============================================
+                 SECTION 01 : THE ENQUIRY
+            ============================================== -->
+
+            <app-form-section
+                title="Sales Enquiry"
+                icon="fas fa-user-tag">
+
+                @if (isAddMode)
+                {
+                    <!-- Open sales enquiries with no live ride -->
+                    <app-search-dropdown
+                        label="Sales Enquiry"
+                        [placeholder]="enquiryItems.length ? 'Choose an enquiry' : 'No open sales enquiry is waiting'"
+                        [items]="enquiryItems"
+                        [value]="enquiryId || null"
+                        (valueChange)="onEnquiryChange($event)"
+                        [disabled]="busy"
+                        [required]="true">
+
+                    </app-search-dropdown>
+                }
+                @else
+                {
+                    <app-textbox
+                        label="Enquiry No"
+                        [value]="enquiryNo"
+                        [readonly]="true">
+
+                    </app-textbox>
+                }
+
+                <app-textbox
+                    label="Customer"
+                    placeholder="From the enquiry"
+                    [value]="customerText"
+                    [readonly]="true">
+
+                </app-textbox>
+
+                <app-textbox
+                    label="Mobile"
+                    placeholder="From the enquiry"
+                    [value]="mobileText"
+                    [readonly]="true">
+
+                </app-textbox>
+
+                <app-textbox
+                    label="Interest"
+                    placeholder="From the enquiry"
+                    [value]="interestText"
+                    [readonly]="true">
+
+                </app-textbox>
+
+                @if (enquiryNote)
+                {
+                    <div class="trf-note">
+                        <i class="fas fa-circle-info"></i>
+                        {{ enquiryNote }}
+                    </div>
+                }
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 02 : BIKE, DATE, SLOT, EXECUTIVE
+            ============================================== -->
+
+            <app-form-section
+                title="Test Ride"
+                icon="fas fa-calendar-day">
+
+                <!-- The enquiry's model or its second model -->
+                <app-dropdown
+                    label="Bike to Ride"
+                    [placeholder]="modelItems.length ? 'Choose the bike' : 'Choose the enquiry first'"
+                    [items]="modelItems"
+                    [value]="modelId || null"
+                    (valueChange)="onModelChange($event)"
+                    [disabled]="!canMove || busy || modelItems.length < 2"
+                    [required]="true">
+
+                </app-dropdown>
+
+                <app-datepicker
+                    label="Date"
+                    [value]="dateValue"
+                    [minDate]="canMove ? today : null"
+                    (valueChange)="onDateChange($event)"
+                    [disabled]="!canMove || busy"
+                    [required]="true">
+
+                </app-datepicker>
+
+                <app-search-dropdown
+                    label="Time Slot"
+                    [placeholder]="loadingSlots ? 'Loading the slots...' : 'Choose a slot'"
+                    [items]="slotItems"
+                    swatchField="color"
+                    [value]="slotStart || null"
+                    (valueChange)="onSlotChange($event)"
+                    [disabled]="!canMove || busy || loadingSlots"
+                    [required]="true">
+
+                </app-search-dropdown>
+
+                @if (slotHint && canMove)
+                {
+                    <div
+                        class="trf-note"
+                        [class.trf-note-warn]="!!defaults?.Message || slotItems.length === 0">
+                        <i class="fas fa-clock"></i>
+                        {{ slotHint }}
+                    </div>
+                }
+
+                <app-search-dropdown
+                    label="Sales Executive"
+                    placeholder="Choose the executive"
+                    [items]="advisorItems"
+                    [value]="advisorId || null"
+                    (valueChange)="onAdvisorChange($event)"
+                    [disabled]="isViewMode || busy">
+
+                </app-search-dropdown>
+
+                <app-textbox
+                    label="Branch"
+                    [value]="branchName"
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SECTION 03 : STATUS & NOTE
+            ============================================== -->
+
+            <app-form-section
+                title="Status & Note"
+                icon="fas fa-list-check">
+
+                <app-dropdown
+                    label="Status"
+                    [items]="statusItems"
+                    [value]="status"
+                    (valueChange)="onStatusChange($event)"
+                    [disabled]="!canChangeStatus || busy"
+                    [required]="true">
+
+                </app-dropdown>
+
+                @if (showsReason)
+                {
+                    <app-textbox
+                        label="Cancel Reason"
+                        placeholder="Why it is cancelled"
+                        [value]="reason"
+                        (valueChange)="onReasonChange($event)"
+                        [disabled]="!canChangeStatus || busy"
+                        [required]="canChangeStatus">
+
+                    </app-textbox>
+                }
+
+                <app-textarea
+                    label="Note"
+                    placeholder="e.g. bring the driving licence"
+                    [rows]="3"
+                    [value]="note"
+                    (valueChange)="onNoteChange($event)"
+                    [disabled]="isViewMode || busy">
+
+                </app-textarea>
+
+                @if (record)
+                {
+                    <div class="trf-note">
+                        <i class="fas fa-clock-rotate-left"></i>
+                        Booked {{ record.CreatedDate | date:'dd-MMM-yyyy hh:mm a' }}{{ record.RescheduleCount > 0 ? ' · moved ' + record.RescheduleCount + (record.RescheduleCount === 1 ? ' time' : ' times') : '' }}
+                    </div>
+                }
+
+            </app-form-section>
+
+        </app-form-grid>
+
+
+        <!-- Canvas footer : the ride in one line -->
+
+        <div
+            canvasFooter
+            class="trf-footer">
+
+            <span class="trf-footer-label">Test Ride</span>
+
+            <b
+                class="trf-footer-text"
+                [class.trf-footer-empty]="!footerText">{{ footerText || 'Choose the enquiry, the date and a slot' }}</b>
+
+            <span
+                class="trf-footer-status"
+                [style.--status]="footerColor">
+                <span class="trf-footer-dot"></span>
+                {{ footerStatus }}
+            </span>
+
+        </div>
+
+    </app-page-canvas>
+
+</div>
+
+
+<!-- =====================================================
+     UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

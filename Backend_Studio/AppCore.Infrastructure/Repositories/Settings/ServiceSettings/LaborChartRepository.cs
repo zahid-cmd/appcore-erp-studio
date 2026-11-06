@@ -4,6 +4,10 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.ServiceSettings;
 
 using LaborChartEntity =
@@ -236,6 +240,126 @@ public class LaborChartRepository :
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<LaborChartDto> ListSorts()
+    {
+        return new SortMap<LaborChartDto>("LaborCode")
+            .Add("LaborCode", x => x.LaborCode)
+            .Add("ServiceName", x => x.ServiceName)
+            .Add("Section", x => x.Section)
+            .Add("AppliesTo", x => x.AppliesTo)
+            .Add("BrandName", x => x.BrandName)
+            .Add("StandardTimeDisplay", x => x.StandardMinutes)
+            .Add("ServiceChargeDisplay", x => x.ServiceCharge)
+            .Add("IncomeLedgerCode", x => x.IncomeLedgerCode)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.LaborChartId);
+    }
+
+
+    public async Task<PagedResult<LaborChartDto>> GetPagedAsync(
+        ServiceSettingsPageRequest request)
+    {
+        await SyncBrandNamesAsync();
+
+        IQueryable<LaborChartDto> query =
+            LaborChartQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.LaborCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.ServiceName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.OperationName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Section ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.AppliesTo ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.BrandName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.SubCategoryCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.IncomeLedgerCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+        if (request.BrandId.HasValue) { long brandId = request.BrandId.Value; query = query.Where(x => x.BrandManagementId == brandId); }
+
+        if (!string.IsNullOrWhiteSpace(request.Section)) { string section = request.Section.Trim(); query = query.Where(x => x.Section == section); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<LaborChartDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<LaborChartDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

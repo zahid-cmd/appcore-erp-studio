@@ -421,10 +421,19 @@ implements OnInit, AfterViewInit, OnDestroy
         this.load();
     }
 
-    // Back to the list's Appointments view
+    // Back : to the Service Enquiries list's Appointments view when
+    // opened from there (?from=enquiries), else to the Service
+    // Appointments list
     back(): void
     {
-        void this.router.navigate(['list'], { relativeTo:this.route.parent, queryParams:{ tab:'appointments' } });
+        if (this.route.snapshot.queryParamMap.get('from') === 'enquiries')
+        {
+            void this.router.navigate(['/enquiry-management/enquiry-profiles/service-enquiries/list'], { queryParams:{ tab:'appointments' } });
+
+            return;
+        }
+
+        void this.router.navigate(['/enquiry-management/follow-ups-appointments/service-appointments/list']);
     }
 
 
@@ -1069,7 +1078,7 @@ implements OnInit, AfterViewInit, OnDestroy
 
     openEnquiry(id: number): void
     {
-        void this.router.navigate(['view', id], { relativeTo:this.route.parent });
+        void this.router.navigate(['/enquiry-management/enquiry-profiles/service-enquiries/view', id]);
     }
 
 

@@ -1,0 +1,1245 @@
+<div class="app-list-page cos-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Chart of Services"
+
+        subtitle="Category types, categories, sub categories and services"
+
+        icon="fa-solid fa-sitemap">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [(value)]="searchText"
+
+                placeholder="Search types, categories, sub categories..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Print"
+
+                command1Icon="fas fa-print"
+
+                (command1Click)="openPrint()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                [command3Visible]="false"
+
+                [rightCommandIcon]="allExpanded ? 'fas fa-angles-up' : 'fas fa-angles-down'"
+
+                (rightCommandClick)="toggleAll()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR : TAB + SCOPED STATS | STATUS
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <div
+
+            pageToolbarLeft
+
+            class="cos-toolbar-left">
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab">
+
+            </app-control-tabs>
+
+
+            <!-- STAT STRIP (one capsule, four readings) -->
+
+            <div class="cos-stats" aria-label="Counts in scope">
+
+                <div class="cos-stat" title="Category types in scope">
+                    <i class="fas fa-layer-group"></i>
+                    <span class="cos-stat-value">{{ countTypes }}</span>
+                    <span class="cos-stat-label">Category Types</span>
+                </div>
+
+                <div class="cos-stat" title="Service categories in scope">
+                    <i class="fas fa-folder-tree"></i>
+                    <span class="cos-stat-value">{{ countCategories }}</span>
+                    <span class="cos-stat-label">Categories</span>
+                </div>
+
+                <div class="cos-stat" title="Service sub categories in scope">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="cos-stat-value">{{ countSubCategories }}</span>
+                    <span class="cos-stat-label">Sub Categories</span>
+                </div>
+
+                <div class="cos-stat cos-stat-accent" title="Services in scope">
+                    <i class="fas fa-screwdriver-wrench"></i>
+                    <span class="cos-stat-value">{{ countServices }}</span>
+                    <span class="cos-stat-label">Services</span>
+                </div>
+
+            </div>
+
+            <!-- LINK ISSUES : shown only when the link check finds some -->
+
+            @if (issues.length > 0)
+            {
+                <button
+
+                    type="button"
+
+                    class="cos-scope"
+
+                    style="border-color:#f59e0b; color:#b45309; background:#fffbeb"
+
+                    [title]="issuesOpen ? 'Back to the chart' : 'Show items that are linked wrongly'"
+
+                    (click)="toggleIssues()">
+
+                    <i class="fas fa-triangle-exclamation"></i>
+
+                    <span class="cos-scope-value">
+                        {{ issues.length }} Link {{ issues.length === 1 ? 'Issue' : 'Issues' }}
+                    </span>
+
+                    @if (issuesOpen)
+                    {
+                        <i class="fas fa-xmark cos-scope-x"></i>
+                    }
+
+                </button>
+            }
+
+            @if (scopeLabel)
+            {
+                <button
+
+                    type="button"
+
+                    class="cos-scope"
+
+                    title="Show the whole chart"
+
+                    (click)="clearSelection()">
+
+                    <i class="fas fa-crosshairs"></i>
+
+                    <span class="cos-scope-value">{{ scopeLabel }}</span>
+
+                    <i class="fas fa-xmark cos-scope-x"></i>
+
+                </button>
+            }
+
+        </div>
+
+
+        <div
+
+            pageToolbarRight
+
+            style="width:200px">
+
+            <app-search-dropdown
+
+                placeholder="All Status"
+
+                [items]="statusFilterItems"
+
+                labelField="label"
+
+                valueField="value"
+
+                [value]="selectedStatus"
+
+                (valueChange)="onStatusFilterChange($event)">
+
+            </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         BODY : NAVIGATOR | PREVIEW
+    ====================================================== -->
+
+    @if (loadFailed)
+    {
+        <div class="cos-state">
+
+            <app-empty-state
+
+                icon="fas fa-triangle-exclamation"
+
+                title="Unable to Load Chart of Services"
+
+                subtitle="Check your connection and try again."
+
+                actionText="Try Again"
+
+                [showAction]="true"
+
+                (action)="refresh()">
+
+            </app-empty-state>
+
+        </div>
+    }
+    @else
+    {
+        <div class="cos-split">
+
+            <!-- ===============================================
+                 NAVIGATOR
+            ================================================ -->
+
+            <aside class="cos-nav">
+
+                <div class="cos-nav-head">
+
+                    <div class="cos-heading">
+
+                        <span class="cos-tile">
+                            <i class="fas fa-sitemap"></i>
+                        </span>
+
+                        <div class="cos-heading-text">
+                            <span class="cos-heading-title">Navigator</span>
+                            <span class="cos-heading-sub">Type › Category › Sub Category</span>
+                        </div>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="cos-expand-btn"
+
+                        [title]="allExpanded ? 'Collapse all' : 'Expand all'"
+
+                        [disabled]="loading || navTypes.length === 0"
+
+                        (click)="toggleAll()">
+
+                        <i [class]="allExpanded ? 'fas fa-angles-up' : 'fas fa-angles-down'"></i>
+
+                        {{ allExpanded ? 'Collapse all' : 'Expand all' }}
+
+                    </button>
+
+                </div>
+
+                <div class="cos-nav-body appcore-scrollbar">
+
+                    @if (loading)
+                    {
+                        @for (n of [1, 2, 3, 4, 5, 6]; track n)
+                        {
+                            <span class="cos-skeleton"></span>
+                        }
+                    }
+                    @else
+                    {
+                        <!-- ROOT -->
+
+                        <div
+
+                            class="cos-node cos-node-root"
+
+                            [class.cos-node-active]="!selection"
+
+                            (click)="clearSelection()">
+
+                            <span class="cos-root-icon">
+                                <i class="fas fa-house"></i>
+                            </span>
+
+                            <span class="cos-node-name">All Category Types</span>
+
+                            <span class="cos-badge" title="Category Types">{{ navTypes.length }}</span>
+
+                        </div>
+
+                        @if (navTypes.length === 0)
+                        {
+                            <div class="cos-nav-empty">
+
+                                <i class="fas fa-magnifying-glass"></i>
+
+                                {{ searchText ? 'Nothing matches the search.' : 'No category types found.' }}
+
+                            </div>
+                        }
+                        @else
+                        {
+                            <ul class="cos-tree">
+
+                                @for (cls of navTypes; track cls.node.Id)
+                                {
+                                    <li>
+
+                                        <!-- TYPE -->
+
+                                        <div
+
+                                            class="cos-node cos-lv1"
+
+                                            [class.cos-node-active]="isSelected('type', cls.node.Id)"
+
+                                            [class.cos-node-off]="!cls.node.Status"
+
+                                            [attr.title]="cls.node.Code + ' · ' + cls.node.Name"
+
+                                            (click)="select('type', cls.node.Id)">
+
+                                            <button
+
+                                                type="button"
+
+                                                class="cos-caret"
+
+                                                [class.cos-caret-open]="isExpanded(typeKey(cls.node.Id))"
+
+                                                [style.visibility]="cls.categories.length ? 'visible' : 'hidden'"
+
+                                                [attr.aria-label]="isExpanded(typeKey(cls.node.Id)) ? 'Collapse' : 'Expand'"
+
+                                                (click)="toggle(typeKey(cls.node.Id), $event)">
+
+                                                <i class="fas fa-chevron-right"></i>
+
+                                            </button>
+
+                                            <span class="cos-node-code">{{ cls.node.Code }}</span>
+
+                                            <span class="cos-node-name">{{ cls.node.Name }}</span>
+
+                                            <span class="cos-badge" title="Categories">{{ cls.categories.length }}</span>
+
+                                        </div>
+
+                                        @if (isExpanded(typeKey(cls.node.Id)) && cls.categories.length)
+                                        {
+                                            <ul>
+
+                                                @for (grp of cls.categories; track grp.node.Id)
+                                                {
+                                                    <li>
+
+                                                        <!-- CATEGORY -->
+
+                                                        <div
+
+                                                            class="cos-node cos-lv2"
+
+                                                            [class.cos-node-active]="isSelected('category', grp.node.Id)"
+
+                                                            [class.cos-node-off]="!grp.node.Status"
+
+                                                            [attr.title]="grp.node.Code + ' · ' + grp.node.Name"
+
+                                                            (click)="select('category', grp.node.Id)">
+
+                                                            <button
+
+                                                                type="button"
+
+                                                                class="cos-caret"
+
+                                                                [class.cos-caret-open]="isExpanded(categoryKey(grp.node.Id))"
+
+                                                                [style.visibility]="grp.subCategories.length ? 'visible' : 'hidden'"
+
+                                                                [attr.aria-label]="isExpanded(categoryKey(grp.node.Id)) ? 'Collapse' : 'Expand'"
+
+                                                                (click)="toggle(categoryKey(grp.node.Id), $event)">
+
+                                                                <i class="fas fa-chevron-right"></i>
+
+                                                            </button>
+
+                                                            <span class="cos-node-code">{{ grp.node.Code }}</span>
+
+                                                            <span class="cos-node-name">{{ grp.node.Name }}</span>
+
+                                                            <span class="cos-badge" title="Sub Categories">{{ grp.subCategories.length }}</span>
+
+                                                        </div>
+
+                                                        @if (isExpanded(categoryKey(grp.node.Id)) && grp.subCategories.length)
+                                                        {
+                                                            <ul>
+
+                                                                @for (sub of grp.subCategories; track sub.node.Id)
+                                                                {
+                                                                    <li>
+
+                                                                        <!-- SUB CATEGORY -->
+
+                                                                        <div
+
+                                                                            class="cos-node cos-lv3"
+
+                                                                            [class.cos-node-active]="isSelected('subcategory', sub.node.Id)"
+
+                                                                            [class.cos-node-off]="!sub.node.Status"
+
+                                                                            [attr.title]="sub.node.Code + ' · ' + sub.node.Name"
+
+                                                                            (click)="select('subcategory', sub.node.Id)">
+
+                                                                            <span class="cos-leaf">
+                                                                                <span class="cos-leaf-dot"></span>
+                                                                            </span>
+
+                                                                            <span class="cos-node-code">{{ sub.node.Code }}</span>
+
+                                                                            <span class="cos-node-name">{{ sub.node.Name }}</span>
+
+                                                                            <span class="cos-badge cos-badge-service" title="Services">{{ sub.services }}</span>
+
+                                                                        </div>
+
+                                                                    </li>
+                                                                }
+
+                                                            </ul>
+                                                        }
+
+                                                    </li>
+                                                }
+
+                                            </ul>
+                                        }
+
+                                    </li>
+                                }
+
+                            </ul>
+                        }
+                    }
+
+                </div>
+
+            </aside>
+
+
+
+            <!-- ===============================================
+                 PREVIEW
+            ================================================ -->
+
+            <section class="cos-preview">
+
+                <!-- PREVIEW HEAD : one compact bar, same height as the navigator head
+                     tile | title + count / path | filter -->
+
+                <div class="cos-preview-head">
+
+                    <div class="cos-heading">
+
+                        <span class="cos-tile">
+                            <i [class]="previewIcon"></i>
+                        </span>
+
+                        <div class="cos-heading-text">
+
+                            <span class="cos-heading-title">
+
+                                {{ previewTitle }}
+
+                                <span class="cos-count">{{ previewRows.length }}</span>
+
+                            </span>
+
+                            <!-- PATH : where this list sits -->
+
+                            <nav class="cos-path" aria-label="Path">
+
+                                @for (step of path; track $index; let last = $last)
+                                {
+                                    <button
+
+                                        type="button"
+
+                                        class="cos-path-step"
+
+                                        [class.cos-path-current]="last"
+
+                                        [disabled]="last"
+
+                                        (click)="onPathClick(step)">
+
+                                        {{ step.label }}
+
+                                    </button>
+
+                                    @if (!last)
+                                    {
+                                        <i class="fas fa-chevron-right cos-path-sep"></i>
+                                    }
+                                }
+
+                            </nav>
+
+                        </div>
+
+                    </div>
+
+                    <label class="cos-filter">
+
+                        <i class="fas fa-filter"></i>
+
+                        <input
+
+                            type="text"
+
+                            placeholder="Filter rows..."
+
+                            [ngModel]="rowFilterText"
+
+                            (ngModelChange)="onRowFilterChange($event)">
+
+                    </label>
+
+                </div>
+
+                <div class="cos-table-wrap appcore-scrollbar">
+
+                    <table class="cos-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th class="cos-col-no">#</th>
+
+                                @for (col of previewColumns; track col.key)
+                                {
+                                    <th
+
+                                        [style.width]="col.width ?? null"
+
+                                        [style.text-align]="col.align">
+
+                                        {{ col.label }}
+
+                                    </th>
+                                }
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @if (loading || (servicesLoading && previewRows.length === 0))
+                            {
+                                @for (n of [1, 2, 3, 4, 5, 6]; track n)
+                                {
+                                    <tr class="cos-row-skeleton">
+                                        <td [attr.colspan]="previewColumns.length + 1">
+                                            <span class="cos-skeleton"></span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            @else
+                            {
+                                @for (row of previewRows; track row.level + row.id; let i = $index)
+                                {
+                                    <tr
+
+                                        [class.cos-row-drill]="row.drillable"
+
+                                        [class.cos-row-off]="!row.status"
+
+                                        [attr.title]="row.drillable ? 'Open ' + row.name : null"
+
+                                        (click)="onRowClick(row)">
+
+                                        <td class="cos-col-no">{{ i + 1 }}</td>
+
+                                        @for (col of previewColumns; track col.key)
+                                        {
+                                            <td [style.text-align]="col.align">
+
+                                                @switch (col.key)
+                                                {
+                                                    @case ('code')
+                                                    {
+                                                        <span class="cos-code">{{ row.code }}</span>
+                                                    }
+
+                                                    @case ('name')
+                                                    {
+                                                        <span class="cos-name">
+
+                                                            <span class="cos-name-text">{{ row.name }}</span>
+
+                                                            @if (row.drillable)
+                                                            {
+                                                                <span class="cos-open">
+                                                                    Open
+                                                                    <i class="fas fa-arrow-right"></i>
+                                                                </span>
+                                                            }
+
+                                                        </span>
+                                                    }
+
+                                                    @case ('type')
+                                                    {
+                                                        <span
+
+                                                            class="cos-type"
+
+                                                            [attr.data-type]="row.cells['type']">
+
+                                                            {{ row.cells['type'] }}
+
+                                                        </span>
+                                                    }
+
+                                                    @case ('branch')
+                                                    {
+                                                        <span class="cos-branch">{{ row.cells['branch'] }}</span>
+                                                    }
+
+                                                    @case ('level')
+                                                    {
+                                                        <span class="cos-branch">{{ row.cells['level'] }}</span>
+                                                    }
+
+                                                    @case ('problem')
+                                                    {
+                                                        <span
+                                                            class="cos-branch"
+                                                            style="white-space:normal; color:#b45309">
+                                                            {{ row.cells['problem'] }}
+                                                        </span>
+                                                    }
+
+                                                    @case ('status')
+                                                    {
+                                                        <span
+
+                                                            class="cos-status"
+
+                                                            [class.cos-status-on]="row.status">
+
+                                                            <span class="cos-status-dot"></span>
+
+                                                            {{ row.status ? 'Active' : 'Inactive' }}
+
+                                                        </span>
+                                                    }
+
+                                                    @default
+                                                    {
+                                                        <span
+
+                                                            class="cos-num"
+
+                                                            [class.cos-num-zero]="!row.cells[col.key]">
+
+                                                            {{ row.cells[col.key] }}
+
+                                                        </span>
+                                                    }
+                                                }
+
+                                            </td>
+                                        }
+
+                                    </tr>
+                                }
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                    <!-- EMPTY : fills the space under the header, centered -->
+
+                    @if (!loading && !servicesLoading && previewRows.length === 0)
+                    {
+                        <div class="cos-empty">
+
+                            <span class="cos-empty-icon">
+                                <i class="fas fa-inbox"></i>
+                            </span>
+
+                            <span>{{ previewEmptyText }}</span>
+
+                        </div>
+                    }
+
+                </div>
+
+            </section>
+
+        </div>
+    }
+
+</div>
+
+
+
+<!-- =====================================================
+     PRINT DIALOG
+     Left  : options (scope, depth, columns, page)
+     Right : live paper preview built from the real chart
+====================================================== -->
+
+@if (printOpen)
+{
+    <div
+
+        class="cos-modal-overlay"
+
+        (click)="closePrint()">
+
+        <div
+
+            class="cos-modal"
+
+            role="dialog"
+
+            aria-modal="true"
+
+            aria-labelledby="cosPrintTitle"
+
+            (click)="$event.stopPropagation()">
+
+            <!-- HEAD -->
+
+            <div class="cos-modal-head">
+
+                <div class="cos-modal-brand">
+
+                    <span class="cos-modal-icon">
+                        <i class="fas fa-print"></i>
+                    </span>
+
+                    <div>
+
+                        <div
+
+                            id="cosPrintTitle"
+
+                            class="cos-modal-title">
+
+                            Print Chart of Services
+
+                        </div>
+
+                        <div class="cos-modal-sub">Shape the printout — the preview follows every choice</div>
+
+                    </div>
+
+                </div>
+
+                <button
+
+                    type="button"
+
+                    class="cos-modal-close"
+
+                    aria-label="Close"
+
+                    [disabled]="printing"
+
+                    (click)="closePrint()">
+
+                    <i class="fas fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <!-- BODY -->
+
+            <div class="cos-modal-body">
+
+                <!-- ===========================================
+                     OPTIONS
+                ============================================ -->
+
+                <div class="cos-print-options">
+
+                    <!-- 1 · SCOPE -->
+
+                    <section class="cos-field">
+
+                        <span class="cos-field-label">
+                            <span class="cos-field-no">1</span>
+                            Scope
+                        </span>
+
+                        <div class="cos-choice-grid">
+
+                            <button
+
+                                type="button"
+
+                                class="cos-choice"
+
+                                [class.cos-choice-on]="printOptions.scope === 'all'"
+
+                                (click)="setPrintScope('all')">
+
+                                <span class="cos-choice-icon">
+                                    <i class="fas fa-layer-group"></i>
+                                </span>
+
+                                <span class="cos-choice-text">
+                                    <span class="cos-choice-title">Full Chart</span>
+                                    <span class="cos-choice-sub">Every category type</span>
+                                </span>
+
+                                <span class="cos-choice-check">
+                                    <i class="fas fa-check"></i>
+                                </span>
+
+                            </button>
+
+                            <button
+
+                                type="button"
+
+                                class="cos-choice"
+
+                                [class.cos-choice-on]="printOptions.scope === 'selection'"
+
+                                [disabled]="!selection"
+
+                                (click)="setPrintScope('selection')">
+
+                                <span class="cos-choice-icon">
+                                    <i class="fas fa-crosshairs"></i>
+                                </span>
+
+                                <span class="cos-choice-text">
+                                    <span class="cos-choice-title">Current Selection</span>
+                                    <span
+
+                                        class="cos-choice-sub"
+
+                                        [attr.title]="scopeLabel || null">
+
+                                        {{ selection ? scopeLabel : 'Pick a node in the navigator' }}
+
+                                    </span>
+                                </span>
+
+                                <span class="cos-choice-check">
+                                    <i class="fas fa-check"></i>
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 2 · DEPTH -->
+
+                    <section class="cos-field">
+
+                        <span class="cos-field-label">
+                            <span class="cos-field-no">2</span>
+                            Print down to
+                        </span>
+
+                        <div class="cos-depth">
+
+                            @for (item of printDepthItems; track item.value; let i = $index)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    class="cos-depth-step"
+
+                                    [class.cos-depth-reached]="i <= printDepthIndex"
+
+                                    [class.cos-depth-on]="i === printDepthIndex"
+
+                                    [attr.title]="item.label"
+
+                                    (click)="setPrintDepth(item.value)">
+
+                                    <span class="cos-depth-dot">
+                                        <i class="fas fa-check"></i>
+                                    </span>
+
+                                    <span class="cos-depth-label">{{ item.short }}</span>
+
+                                </button>
+                            }
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 3 · COLUMNS -->
+
+                    <section class="cos-field">
+
+                        <span class="cos-field-label">
+                            <span class="cos-field-no">3</span>
+                            Columns
+                        </span>
+
+                        <div class="cos-chips">
+
+                            <span class="cos-chip cos-chip-locked">
+                                <i class="fas fa-lock"></i>
+                                Code &amp; Name
+                            </span>
+
+                            <button
+
+                                type="button"
+
+                                class="cos-chip"
+
+                                [class.cos-chip-on]="printOptions.showCharge"
+
+                                (click)="togglePrintColumn('showCharge')">
+
+                                <i [class]="printOptions.showCharge ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                Charge
+
+                            </button>
+
+                            <button
+
+                                type="button"
+
+                                class="cos-chip"
+
+                                [class.cos-chip-on]="printOptions.showLedger"
+
+                                (click)="togglePrintColumn('showLedger')">
+
+                                <i [class]="printOptions.showLedger ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                Income Ledger
+
+                            </button>
+
+                            <button
+
+                                type="button"
+
+                                class="cos-chip"
+
+                                [class.cos-chip-on]="printOptions.showStatus"
+
+                                (click)="togglePrintColumn('showStatus')">
+
+                                <i [class]="printOptions.showStatus ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                Status
+
+                            </button>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 4 · PAGE -->
+
+                    <section class="cos-field">
+
+                        <span class="cos-field-label">
+                            <span class="cos-field-no">4</span>
+                            Page
+                        </span>
+
+                        <div class="cos-page-row">
+
+                            <div class="cos-orient">
+
+                                <button
+
+                                    type="button"
+
+                                    class="cos-orient-btn"
+
+                                    [class.cos-orient-on]="!printOptions.landscape"
+
+                                    (click)="setPrintLandscape(false)">
+
+                                    <span class="cos-orient-sheet"></span>
+
+                                    Portrait
+
+                                </button>
+
+                                <button
+
+                                    type="button"
+
+                                    class="cos-orient-btn"
+
+                                    [class.cos-orient-on]="printOptions.landscape"
+
+                                    (click)="setPrintLandscape(true)">
+
+                                    <span class="cos-orient-sheet cos-orient-wide"></span>
+
+                                    Landscape
+
+                                </button>
+
+                            </div>
+
+                            <label class="cos-switch">
+
+                                <input
+
+                                    type="checkbox"
+
+                                    [ngModel]="printOptions.includeInactive"
+
+                                    (ngModelChange)="setPrintIncludeInactive($event)">
+
+                                <span class="cos-switch-track">
+                                    <span class="cos-switch-thumb"></span>
+                                </span>
+
+                                Include inactive
+
+                            </label>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+
+                <!-- ===========================================
+                     LIVE PREVIEW
+                ============================================ -->
+
+                <div class="cos-print-stage">
+
+                    <div
+
+                        class="cos-paper"
+
+                        [class.cos-paper-wide]="printOptions.landscape">
+
+                        <div class="cos-paper-head">
+
+                            <div>
+                                <div class="cos-paper-company">{{ printCompanyName }}</div>
+                                <div class="cos-paper-title">Chart of Services</div>
+                            </div>
+
+                            <div class="cos-paper-meta">{{ printScopeText }}</div>
+
+                        </div>
+
+                        <div class="cos-paper-row cos-paper-cols">
+
+                            <span class="cos-paper-code">Code</span>
+                            <span class="cos-paper-name">Name</span>
+
+                            @if (printOptions.showCharge)
+                            {
+                                <span class="cos-paper-cell">Charge</span>
+                            }
+
+                            @if (printOptions.showLedger)
+                            {
+                                <span class="cos-paper-cell">Income Ledger</span>
+                            }
+
+                            @if (printOptions.showStatus)
+                            {
+                                <span class="cos-paper-cell">Status</span>
+                            }
+
+                        </div>
+
+                        @for (line of printPreviewLines; track $index)
+                        {
+                            <div
+
+                                class="cos-paper-row"
+
+                                [attr.data-lv]="line.level"
+
+                                [class.cos-paper-summary]="line.summary">
+
+                                <span class="cos-paper-code">{{ line.code }}</span>
+
+                                <span
+
+                                    class="cos-paper-name"
+
+                                    [style.padding-left.px]="(line.level - 1) * 7">
+
+                                    {{ line.name }}
+
+                                </span>
+
+                                @if (printOptions.showCharge)
+                                {
+                                    <span class="cos-paper-cell">{{ line.type }}</span>
+                                }
+
+                                @if (printOptions.showLedger)
+                                {
+                                    <span class="cos-paper-cell"><span class="cos-paper-bar"></span></span>
+                                }
+
+                                @if (printOptions.showStatus)
+                                {
+                                    <span class="cos-paper-cell">
+                                        <span
+
+                                            class="cos-paper-dot"
+
+                                            [class.cos-paper-dot-off]="!line.status">
+
+                                        </span>
+                                    </span>
+                                }
+
+                            </div>
+                        }
+
+                        @if (printPreviewLines.length === 0)
+                        {
+                            <div class="cos-paper-empty">Nothing to print for this choice.</div>
+                        }
+
+                        @if (printMoreRows > 0)
+                        {
+                            <div class="cos-paper-more">+ {{ printMoreRows }} more rows</div>
+                        }
+
+                        <div class="cos-paper-foot">Page 1</div>
+
+                    </div>
+
+                    <div class="cos-stage-caption">
+
+                        <span class="cos-stage-live"></span>
+
+                        Live preview · A4 {{ printOptions.landscape ? 'Landscape' : 'Portrait' }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOT -->
+
+            <div class="cos-modal-foot">
+
+                <div class="cos-foot-summary">
+
+                    <i class="fas fa-file-lines"></i>
+
+                    <span><b>{{ printRowEstimate }}</b> rows</span>
+
+                    <span class="cos-foot-dot"></span>
+
+                    <span>{{ printOptions.includeInactive ? 'Including inactive' : 'Active only' }}</span>
+
+                </div>
+
+                <div class="cos-foot-actions">
+
+                    <button
+
+                        type="button"
+
+                        class="cos-btn cos-btn-ghost"
+
+                        [disabled]="printing"
+
+                        (click)="closePrint()">
+
+                        Cancel
+
+                    </button>
+
+                    <button
+
+                        type="button"
+
+                        class="cos-btn cos-btn-primary"
+
+                        [disabled]="printing || printRowEstimate === 0"
+
+                        (click)="runPrint()">
+
+                        <i [class]="printing ? 'fas fa-spinner fa-spin' : 'fas fa-print'"></i>
+
+                        {{ printing ? 'Preparing…' : 'Print' }}
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+
+
+<!-- =====================================================
+     UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>

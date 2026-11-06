@@ -246,6 +246,37 @@
     </app-page-canvas>
 
 
+    <!-- =====================================================
+         SUMMARY (all records of the open tab)
+    ====================================================== -->
+
+    @if (summaryTotal > 0)
+    {
+        <div class="ics-summary">
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Total</span>
+                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Synchronized</span>
+                <b class="ics-summary-value ics-ok">{{ summaryText(summaryCount('Synchronized')) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Pending</span>
+                <b class="ics-summary-value">{{ summaryText(summaryCount('Pending')) }}</b>
+            </span>
+
+            <span class="ics-summary-note">
+                {{ summaryNote }}
+            </span>
+
+        </div>
+    }
+
+
     <!-- =========================================================
         HISTORY DRAWER
     ========================================================= -->

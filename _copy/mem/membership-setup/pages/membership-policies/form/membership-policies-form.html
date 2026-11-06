@@ -1,0 +1,448 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-file-shield"
+
+        [title]="pageTitle"
+
+        subtitle="Validity, fees, member discounts and free services of a card">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 POLICY INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Policy Information"
+
+                icon="fas fa-file-shield">
+
+
+                <!-- Policy Code : MSP-001 (central code generator) -->
+
+                <app-textbox
+
+                    label="Policy Code"
+
+                    placeholder="Auto generated"
+
+                    [value]="entity.PolicyCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Membership Card : cards without a policy; locked after saving -->
+
+                <app-search-dropdown
+
+                    label="Membership Card"
+
+                    placeholder="Select membership card"
+
+                    [items]="cardItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="entity.MembershipCardId"
+
+                    (valueChange)="onCardChange($event)"
+
+                    [disabled]="isViewMode || isSaving || !isAddMode"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <app-textbox
+
+                    label="Card Rank"
+
+                    placeholder="From the card"
+
+                    [value]="cardRankText"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Validity (Months)"
+
+                    placeholder="1 to 120"
+
+                    [value]="texts.ValidityMonths"
+
+                    (valueChange)="onNumberChange('ValidityMonths', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 FEES & DISCOUNTS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Fees & Discounts"
+
+                icon="fas fa-percent">
+
+
+                <!-- Fees post to the card's Fee Ledger (0 = free) -->
+
+                <app-textbox
+
+                    label="Enrollment Fee"
+
+                    placeholder="0.00"
+
+                    [value]="texts.EnrollmentFee"
+
+                    (valueChange)="onNumberChange('EnrollmentFee', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Renewal Fee"
+
+                    placeholder="0.00"
+
+                    [value]="texts.RenewalFee"
+
+                    (valueChange)="onNumberChange('RenewalFee', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Discounts post to the card's Discount Ledger -->
+
+                <app-textbox
+
+                    label="Spare Parts Discount %"
+
+                    placeholder="0 to 100"
+
+                    [value]="texts.SparePartsDiscountPercent"
+
+                    (valueChange)="onNumberChange('SparePartsDiscountPercent', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Accessories Discount %"
+
+                    placeholder="0 to 100"
+
+                    [value]="texts.AccessoriesDiscountPercent"
+
+                    (valueChange)="onNumberChange('AccessoriesDiscountPercent', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Service Charge Discount %"
+
+                    placeholder="0 to 100"
+
+                    [value]="texts.ServiceChargeDiscountPercent"
+
+                    (valueChange)="onNumberChange('ServiceChargeDiscountPercent', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 FREE SERVICES
+            ============================================== -->
+
+            <app-form-section
+
+                title="Free Services"
+
+                icon="fas fa-gift">
+
+
+                <!-- Fixed windows from the membership start; one free service per window -->
+
+                <app-textbox
+
+                    label="No. of Free Services"
+
+                    placeholder="0 = none"
+
+                    [value]="texts.FreeServiceCount"
+
+                    (valueChange)="onNumberChange('FreeServiceCount', $event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+
+                <app-dropdown
+
+                    label="Interval Unit"
+
+                    [items]="unitItems"
+
+                    [(value)]="entity.ServiceIntervalUnit"
+
+                    (valueChange)="onUnitChange()"
+
+                    [disabled]="isViewMode || isSaving || !hasFreeServices">
+
+                </app-dropdown>
+
+                <app-textbox
+
+                    label="Service Interval"
+
+                    placeholder="e.g. 2"
+
+                    [value]="texts.ServiceInterval"
+
+                    (valueChange)="onNumberChange('ServiceInterval', $event)"
+
+                    [disabled]="isViewMode || isSaving || !hasFreeServices">
+
+                </app-textbox>
+
+
+                <!-- Missed services : only with approval; other windows never move -->
+
+                <app-textbox
+
+                    label="Grace Period After Expiry (Days)"
+
+                    placeholder="0 to 365"
+
+                    [value]="texts.MissedServiceGraceDays"
+
+                    (valueChange)="onNumberChange('MissedServiceGraceDays', $event)"
+
+                    [disabled]="isViewMode || isSaving || !hasFreeServices">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Max Missed Services Allowed"
+
+                    placeholder="0 to No. of Free Services"
+
+                    [value]="texts.MaxMissedServices"
+
+                    (valueChange)="onNumberChange('MaxMissedServices', $event)"
+
+                    [disabled]="isViewMode || isSaving || !hasFreeServices">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS & CONTROL
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Control"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Status : cannot be active while the card is inactive -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+
+                <app-textbox
+
+                    label="Summary"
+
+                    placeholder="No free services"
+
+                    [value]="freeServiceSummary"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

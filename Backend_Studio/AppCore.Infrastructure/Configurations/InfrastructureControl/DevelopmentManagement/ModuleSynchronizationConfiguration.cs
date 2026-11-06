@@ -39,6 +39,17 @@ public class ModuleSynchronizationConfiguration
             x => x.Id
         );
 
+
+        // Public Id (links and the address bar; uuid v7;
+        // INF_ModuleSynchronization_PublicId.sql)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_INF_ModuleSynchronization_PublicId");
+
         //=======================================================
         // Navigation
         //=======================================================

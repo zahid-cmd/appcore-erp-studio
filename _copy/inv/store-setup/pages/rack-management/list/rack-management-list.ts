@@ -1555,7 +1555,7 @@ implements OnInit, OnDestroy
             [
                 'view',
 
-                item.RackManagementId
+                item.PublicId
             ],
 
             {
@@ -1597,7 +1597,7 @@ implements OnInit, OnDestroy
             [
                 'edit',
 
-                item.RackManagementId
+                item.PublicId
             ],
 
             {
@@ -1676,7 +1676,7 @@ implements OnInit, OnDestroy
                 'Rack deleted.',
 
                 this.rackManagementService.delete(
-                    item.RackManagementId
+                    item.PublicId ?? ''
                 )
             )
             .subscribe
@@ -2564,4 +2564,44 @@ implements OnInit, OnDestroy
         return body?.message || body?.Message || body?.title || fallback;
     }
 
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return (this.racks ?? []).length;
+    }
+
+    get summaryActive():
+        number
+    {
+        return (this.racks ?? [])
+            .filter(x => this.isSummaryActive(x))
+            .length;
+    }
+
+    private isSummaryActive(
+        item: any
+    ):
+        boolean
+    {
+        return !!(
+            item?.isActive
+            ?? item?.IsActive
+            ?? item?.status
+            ?? item?.Status
+        );
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
+    }
 }

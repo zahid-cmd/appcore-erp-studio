@@ -4,6 +4,10 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.AccountSettings;
 using AppCore.Application.Settings.AccountSettings.CashAccounts.DTOs;
 
@@ -169,6 +173,112 @@ public class CashAccountsRepository : ICashAccountsRepository
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<CashAccountDto> ListSorts()
+    {
+        return new SortMap<CashAccountDto>("CashAccountCode")
+            .Add("CashAccountCode", x => x.CashAccountCode)
+            .Add("CashAccountName", x => x.CashAccountName)
+            .Add("DisplayName", x => x.DisplayName)
+            .Add("Branch", x => x.Branch)
+            .Add("CollectionAccountText", x => x.CollectionAccount)
+            .Add("PaymentAccountText", x => x.PaymentAccount)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.CashAccountId);
+    }
+
+
+    public async Task<PagedResult<CashAccountDto>> GetPagedAsync(
+        AccountSettingsPageRequest request)
+    {
+        IQueryable<CashAccountDto> query =
+            CashAccountsQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.CashAccountCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.CashAccountName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.DisplayName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Branch ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Branch)) { string branch = request.Branch.Trim().ToUpper(); query = query.Where(x => (x.Branch ?? string.Empty).Trim().ToUpper() == branch); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.Status);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.Status);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<CashAccountDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<CashAccountDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

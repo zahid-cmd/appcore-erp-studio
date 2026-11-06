@@ -1,0 +1,1372 @@
+@import '../../../../../../shared/styles/app-form-page.css';
+
+/*===============================================================
+  Check Clearing Center
+  Fixed page height : Voucher Information on top; Available
+  (left, about 40%) | Selected (right) fill the rest. Only the
+  card lists scroll.
+===============================================================*/
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.ccc-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    gap: 12px;
+    overflow: hidden;
+}
+
+/* Toast / confirm / progress are fixed overlays; their host boxes
+   take no page height */
+:host > app-toast,
+:host > app-confirm-dialog,
+:host > app-progress-dialog
+{
+    position: absolute;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+/* Dropdown / calendar lists open in the CDK overlay; the host left
+   in the page takes no space */
+:host ::ng-deep .ccc-page app-overlay
+{
+    display: block;
+    height: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+}
+
+
+/*---------------------------------------------------------------
+  Header ribbon (center) and mode switch (toolbar)
+---------------------------------------------------------------*/
+
+/* Same look as the voucher pages : Branch | Financial Year | state */
+.ccc-ribbon
+{
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid #dbe4f3;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+    box-shadow:
+        0 10px 24px -12px rgba(30, 58, 138, 0.35),
+        0 2px 6px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+    white-space: nowrap;
+}
+
+.ccc-ribbon-sep
+{
+    width: 1px;
+    align-self: stretch;
+    margin: 4px 6px;
+    background: #e2e8f0;
+}
+
+.ccc-rchip
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    padding: 2px 10px 2px 4px;
+    border-radius: 999px;
+}
+
+.ccc-rchip-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    font-size: 14px;
+}
+
+.ccc-rchip-icon-branch
+{
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.ccc-rchip-icon-year
+{
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.ccc-rchip-text
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.ccc-rchip-label
+{
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.ccc-rchip-text strong
+{
+    font-size: 14px;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.ccc-rchip-error
+{
+    background: #fef2f2;
+}
+
+.ccc-rchip-error strong
+{
+    color: #b91c1c;
+}
+
+.ccc-rstate
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 0 4px;
+    white-space: nowrap;
+}
+
+/* Mode pill : blue (clearing), teal (deposit), red (dishonour) */
+.ccc-mode-pill
+{
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ccc-deposit .ccc-mode-pill
+{
+    background: #ccfbf1;
+    color: #115e59;
+}
+
+.mfc-reject .ccc-mode-pill
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.ccc-rcount
+{
+    font-size: 12px;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1200px)
+{
+    .ccc-ribbon
+    {
+        flex-wrap: wrap;
+        border-radius: 16px;
+    }
+}
+
+/* Mode : off = plain; on = solid colour, white text */
+.ccc-modes
+{
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.ccc-mode
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #64748b;
+    font-size: 14.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ccc-mode:hover:not(.ccc-mode-on):not(:disabled)
+{
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.ccc-mode-on
+{
+    color: #ffffff;
+    font-weight: 600;
+    cursor: default;
+}
+
+.ccc-mode-deposit.ccc-mode-on
+{
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
+    box-shadow: 0 4px 10px -4px rgba(20, 184, 166, 0.7);
+}
+
+.mfc-mode-settle.ccc-mode-on
+{
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    box-shadow: 0 4px 10px -4px rgba(37, 99, 235, 0.7);
+}
+
+.mfc-mode-reject.ccc-mode-on
+{
+    background: linear-gradient(135deg, #991b1b, #ef4444);
+    box-shadow: 0 4px 10px -4px rgba(220, 38, 38, 0.7);
+}
+
+
+/*---------------------------------------------------------------
+  Body
+---------------------------------------------------------------*/
+
+.ccc-body
+{
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: minmax(360px, 2fr) minmax(0, 3fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 8px;
+    min-height: 0;
+}
+
+/* Left : Voucher Information · Narration · Available (fills) */
+.ccc-left
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    min-height: 0;
+}
+
+.ccc-available
+{
+    flex: 1 1 auto;
+}
+
+/*---------------------------------------------------------------
+  Floating ribbon (page toolbar) : Voucher Information while
+  Available Checks is maximized
+---------------------------------------------------------------*/
+
+/* Takes the free toolbar space between the tabs and the modes */
+:host ::ng-deep .ccc-float-wrap
+{
+    flex: 1 1 auto !important;
+    justify-content: center;
+    min-width: 0;
+}
+
+.ccc-float
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+    height: 34px;
+    padding: 0 6px 0 8px;
+    border: 1px solid #c7d5f0;
+    border-radius: 999px;
+    background: linear-gradient(120deg, #edf3ff 0%, #ffffff 100%);
+    box-shadow: 0 8px 18px -12px rgba(30, 58, 138, 0.55);
+    color: #1e293b;
+    font: inherit;
+    font-size: 13.5px;
+    cursor: pointer;
+    animation: ccc-float-in 0.22s ease-out;
+}
+
+.ccc-float:hover
+{
+    border-color: #2563eb;
+}
+
+.ccc-float-item
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 0 8px;
+    border-right: 1px solid #dbe3ef;
+    white-space: nowrap;
+}
+
+.ccc-float-item i
+{
+    color: #2563eb;
+    font-size: 12px;
+}
+
+.ccc-deposit .ccc-float-item i
+{
+    color: #0f766e;
+}
+
+.mfc-reject .ccc-float-item i
+{
+    color: #dc2626;
+}
+
+.ccc-float-bank i,
+.ccc-float-note i
+{
+    margin-right: 6px;
+}
+
+.ccc-float-no
+{
+    font-weight: 700;
+    color: #0b2a5b;
+    font-variant-numeric: tabular-nums;
+}
+
+.ccc-float-bank,
+.ccc-float-note
+{
+    /* Block so the text can end in … */
+    display: block;
+    line-height: 34px;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ccc-float-note
+{
+    color: #475569;
+}
+
+.ccc-float-restore
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 11px;
+}
+
+@keyframes ccc-float-in
+{
+    from
+    {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to
+    {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Maximized : Available Checks takes the whole left column */
+.ccc-left-max .ccc-info,
+.ccc-left-max .ccc-narration
+{
+    display: none;
+}
+
+.ccc-max
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-left: 4px;
+    border: 1px solid #c7d5f0;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #2563eb;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.ccc-max:hover,
+.ccc-max[aria-pressed="true"]
+{
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #ffffff;
+}
+
+
+/*---------------------------------------------------------------
+  Cards (house look : white, soft shadow, light header)
+---------------------------------------------------------------*/
+
+.ccc-card
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    background: #ffffff;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 10px 24px -16px rgba(30, 58, 138, 0.28);
+}
+
+.ccc-card-header
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    padding: 3px 16px;
+    border-bottom: 1px solid #e6ecf5;
+    background: linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.ccc-card-header > i
+{
+    color: #2563eb;
+}
+
+.ccc-deposit .ccc-card-header > i
+{
+    color: #0f766e;
+}
+
+.mfc-reject .ccc-card-header > i
+{
+    color: #dc2626;
+}
+
+.ccc-count
+{
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.ccc-header-note
+{
+    margin-left: auto;
+    font-size: 13.5px;
+    font-weight: 400;
+    color: #64748b;
+}
+
+.ccc-header-note b
+{
+    color: #1e293b;
+}
+
+.ccc-link
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    border: 0;
+    background: none;
+    color: #2563eb;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.ccc-link:disabled
+{
+    color: #94a3b8;
+    cursor: default;
+}
+
+.ccc-link-danger:not(:disabled):hover
+{
+    color: #dc2626;
+}
+
+.ccc-scroll
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.ccc-state
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 36px 12px;
+    color: #64748b;
+}
+
+
+/*---------------------------------------------------------------
+  Voucher Information
+---------------------------------------------------------------*/
+
+.ccc-info
+{
+    flex: 0 0 auto;
+}
+
+.ccc-info-grid
+{
+    display: grid;
+    /* Voucher No needs the room; the date is short */
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.9fr) minmax(0, 1.25fr);
+    gap: 10px 10px;
+    padding: 8px 14px 10px;
+}
+
+.ccc-span-2
+{
+    grid-column: span 2;
+}
+
+.ccc-info-note span
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ccc-info-note
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #f0fdfa;
+    color: #0f766e;
+    font-size: 14px;
+}
+
+/*---------------------------------------------------------------
+  Voucher No (preview)
+---------------------------------------------------------------*/
+
+:host ::ng-deep .ccc-info-grid > app-textbox[readonly] input,
+:host ::ng-deep .ccc-info-grid > app-textbox:first-child input
+{
+    font-weight: 600;
+    color: #0b2a5b;
+    letter-spacing: -0.1px;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+}
+
+:host ::ng-deep .ccc-vno-warn input::placeholder
+{
+    color: #b45309;
+}
+
+
+/*---------------------------------------------------------------
+  Narration / Reason
+---------------------------------------------------------------*/
+
+.ccc-narration
+{
+    flex: 0 0 auto;
+}
+
+.ccc-narration-body
+{
+    padding: 8px 14px;
+}
+
+:host ::ng-deep .ccc-narration-body > *
+{
+    display: block;
+    width: 100%;
+    max-width: 100%;
+}
+
+.ccc-required
+{
+    color: #ef4444;
+    font-weight: 700;
+}
+
+:host ::ng-deep .ccc-info-grid > *,
+:host ::ng-deep .ccc-filters > *
+{
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+}
+
+
+/*---------------------------------------------------------------
+  Available : filters + check cards
+---------------------------------------------------------------*/
+
+.ccc-filters
+{
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.ccc-cards
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+}
+
+.ccc-cards > *
+{
+    flex: 0 0 auto;
+}
+
+/* One line : check no · payee · date · amount · + */
+.ccc-check
+{
+    display: grid;
+    grid-template-columns: minmax(84px, auto) minmax(0, 1fr) auto auto 26px;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+    padding: 4px 6px 4px 10px;
+    border: 1px solid #dbe3ef;
+    border-left: 4px solid #93c5fd;
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.ccc-deposit .ccc-check
+{
+    border-left-color: #5eead4;
+}
+
+.mfc-reject .ccc-check
+{
+    border-left-color: #fca5a5;
+}
+
+.ccc-check:hover
+{
+    border-color: #93c5fd;
+    background: #f8fbff;
+    box-shadow: 0 6px 14px -12px rgba(30, 58, 138, 0.45);
+}
+
+.ccc-check-off
+{
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ccc-check-off:hover
+{
+    background: #ffffff;
+    box-shadow: none;
+}
+
+.ccc-check-no
+{
+    font-weight: 700;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ccc-check-party
+{
+    min-width: 0;
+    overflow: hidden;
+    color: #1e293b;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.ccc-check-date
+{
+    color: #64748b;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.ccc-check-amount
+{
+    min-width: 92px;
+    text-align: right;
+    font-weight: 700;
+    color: #0b2a5b;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ccc-tag
+{
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.ccc-tag-wait
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.ccc-add
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.ccc-deposit .ccc-add
+{
+    background: linear-gradient(135deg, #0f766e, #14b8a6);
+}
+
+.mfc-reject .ccc-add
+{
+    background: linear-gradient(135deg, #991b1b, #ef4444);
+}
+
+.ccc-add:disabled
+{
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+
+/*---------------------------------------------------------------
+  Selected : table, totals, status
+---------------------------------------------------------------*/
+
+.ccc-table
+{
+    width: 100%;
+    /* Fills the list; the filler row takes the free height so the
+       total row sits at the bottom */
+    height: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14.5px;
+    color: #1e293b;
+}
+
+.ccc-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 9px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.ccc-table tbody tr:not(.ccc-fill) td
+{
+    height: 1px;
+}
+
+.ccc-table tbody td
+{
+    padding: 7px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.ccc-table tbody tr.ccc-fill
+{
+    height: 100%;
+}
+
+.ccc-table tbody tr.ccc-fill td,
+.ccc-table tbody tr.ccc-fill:hover td
+{
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.ccc-table tbody tr:not(.ccc-fill):hover td
+{
+    background: #f8fbff;
+}
+
+.ccc-col-sl
+{
+    width: 40px;
+}
+
+.ccc-col-money
+{
+    width: 130px;
+}
+
+.ccc-col-notes
+{
+    width: 22%;
+}
+
+.ccc-col-x
+{
+    width: 40px;
+}
+
+.ccc-c
+{
+    text-align: center !important;
+}
+
+.ccc-r
+{
+    text-align: right !important;
+}
+
+.ccc-sl
+{
+    color: #64748b;
+}
+
+.ccc-main
+{
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.ccc-sub
+{
+    margin-top: 2px;
+    font-size: 13px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.ccc-clip
+{
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ccc-amount
+{
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ccc-net
+{
+    color: #0b2a5b;
+}
+
+.ccc-input
+{
+    --textbox-height: 30px;
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+/* Inputs inside the cart table look like cells : no box, no
+   radius; a thin underline shows where to type. The text starts
+   at the cell padding, so it lines up with the header. */
+:host ::ng-deep .ccc-table .ccc-input .textbox
+{
+    border: 0 !important;
+    border-bottom: 1px solid #dbe3ef !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+:host ::ng-deep .ccc-table .ccc-input .textbox:hover
+{
+    border-bottom-color: #93c5fd !important;
+}
+
+:host ::ng-deep .ccc-table .ccc-input .textbox:focus-within
+{
+    border-bottom: 1px solid #2563eb !important;
+    background: #f5f9ff !important;
+}
+
+:host ::ng-deep .ccc-table .ccc-input input
+{
+    padding: 0 !important;
+    font-size: 14.5px;
+    font-weight: 500;
+}
+
+/* Remove : a plain icon, no box */
+.ccc-remove
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.ccc-remove:hover:not(:disabled)
+{
+    color: #dc2626;
+}
+
+.ccc-table tfoot td
+{
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    padding: 9px 10px;
+    border-top: 1px solid #c7d5f0;
+    background: #eef3fc;
+    color: #0b2a5b;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Money inputs (charge / fee / recovery) : right aligned like the amounts */
+:host ::ng-deep .ccc-input-money input
+{
+    text-align: right !important;
+    font-weight: 600 !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ccc-table tfoot td.ccc-r,
+.ccc-table thead th.ccc-col-money
+{
+    text-align: right;
+}
+
+/* Recovery : read only (follows the bank charges) */
+:host ::ng-deep .ccc-table .ccc-input-ro .textbox,
+:host ::ng-deep .ccc-table .ccc-input-ro .textbox:hover
+{
+    border-bottom-color: transparent !important;
+}
+
+:host ::ng-deep .ccc-input-ro input
+{
+    color: #475569;
+    cursor: default;
+}
+
+/* Footer : status (like the voucher pages' balance strip) */
+.ccc-status
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    /* 2px gap under the total row */
+    margin-top: 2px;
+    padding: 0 14px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 14.5px;
+    font-weight: 500;
+}
+
+.ccc-status-ok
+{
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.ccc-status-warn
+{
+    background: #fffbeb;
+    color: #92400e;
+}
+
+
+/*---------------------------------------------------------------
+  Narrow screens : stack, the page body scrolls
+---------------------------------------------------------------*/
+
+@media (max-width: 1100px)
+{
+    .ccc-body
+    {
+        overflow-y: auto;
+    }
+
+    .ccc-body
+    {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto;
+    }
+
+    .ccc-available,
+    .ccc-selected
+    {
+        max-height: 70vh;
+    }
+}
+
+
+/*===============================================================
+  POS Settlement Center (the Check Clearing Center frame above;
+  Settle = blue, Reject = red)
+===============================================================*/
+
+/* POS Accounts of the bank : one read-only line under the
+   Voucher Information fields (same width as the Check Center) */
+.mfc-into
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    height: 34px;
+    margin: 0 14px 10px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.mfc-into i
+{
+    color: #2563eb;
+}
+
+.mfc-into-label
+{
+    color: #64748b;
+}
+
+.mfc-into-value
+{
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+}
+
+.mfc-reject .mfc-into
+{
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.mfc-reject .mfc-into i
+{
+    color: #dc2626;
+}
+
+.mfc-into-warn,
+.mfc-reject .mfc-into-warn
+{
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.mfc-into-warn i
+{
+    color: #d97706;
+}
+
+/* Search | Received up to | Branch */
+.mfc-filters
+{
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 1fr);
+}
+
+.mfc-upto
+{
+    position: relative;
+    min-width: 0;
+}
+
+:host ::ng-deep .mfc-upto > app-datepicker
+{
+    display: block;
+    width: 100%;
+}
+
+.mfc-upto-x
+{
+    position: absolute;
+    top: 50%;
+    right: 34px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.mfc-upto-x:hover
+{
+    background: #cbd5e1;
+    color: #0f172a;
+}
+
+/* Txn card : txn id is text, not a number */
+.mfc-txn .ccc-check-no
+{
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mfc-tag-direct
+{
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.mfc-tag-auto
+{
+    background: #ecfdf5;
+    color: #047857;
+}
+
+/* Cart columns */
+.mfc-col-pct
+{
+    width: 72px;
+}
+
+.mfc-col-net
+{
+    width: 120px;
+}
+
+.mfc-pct
+{
+    color: #64748b;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Settle cart (9 columns) : fixed layout in % of the cart, no
+   sideways scroll; Received From kept short (clips with a
+   tooltip), the money columns get the room */
+.mfc-settle .ccc-selected .ccc-scroll
+{
+    overflow-x: hidden;
+}
+
+.mfc-settle .ccc-table
+{
+    table-layout: fixed;
+    width: 100%;
+}
+
+.mfc-settle .ccc-table td
+{
+    overflow: hidden;
+}
+
+.mfc-settle .ccc-table td > div
+{
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Inputs never wider than their cell */
+:host ::ng-deep .mfc-settle .ccc-table .ccc-input,
+:host ::ng-deep .mfc-settle .ccc-table .ccc-input .textbox-container,
+:host ::ng-deep .mfc-settle .ccc-table .ccc-input .textbox
+{
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+
+.mfc-settle .ccc-table thead th,
+.mfc-settle .ccc-table tbody td,
+.mfc-settle .ccc-table tfoot td
+{
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.mfc-settle .ccc-col-sl
+{
+    width: 36px;
+}
+
+.mfc-col-txn
+{
+    width: 16%;
+}
+
+/* Received From : the column without a width takes what is left
+   (about 17%) */
+
+.mfc-settle .ccc-table th.ccc-r:not(.mfc-col-pct):not(.mfc-col-net)
+{
+    width: 12%;
+}
+
+.mfc-settle .mfc-col-pct
+{
+    width: 9%;
+}
+
+.mfc-settle .ccc-col-money
+{
+    width: 11%;
+}
+
+.mfc-settle .mfc-col-net
+{
+    width: 12%;
+}
+
+.mfc-settle .ccc-col-notes
+{
+    width: 15%;
+}
+
+.mfc-settle .ccc-col-x
+{
+    width: 30px;
+}
+
+
+/* =====================================================
+   CHARGE AUDIT : edited charges (Edit Charges ON)
+   Std = the system charge; the reason box sits under the
+   short notes and is required
+===================================================== */
+
+.mfc-std
+{
+    margin-top: 3px;
+
+    color: #92400e;
+
+    font-size: 10.5px;
+
+    font-weight: 600;
+
+    text-align: right;
+
+    white-space: nowrap;
+}
+
+:host ::ng-deep .mfc-settle .ccc-table .mfc-reason
+{
+    display: block;
+
+    margin-top: 4px;
+}
+
+:host ::ng-deep .mfc-settle .ccc-table .mfc-reason .textbox
+{
+    border-color: #fcd34d;
+
+    background: #fffbeb;
+}

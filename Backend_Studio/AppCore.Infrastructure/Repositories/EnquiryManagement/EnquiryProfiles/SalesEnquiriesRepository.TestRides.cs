@@ -11,7 +11,7 @@ using SalesEnquiriesEntity =
 using EnquirySetupsEntity =
     AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.EnquirySetups;
 using SalesTestRidesEntity =
-    AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.SalesTestRides;
+    AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.TestRides;
 using SalesFollowUpsEntity =
     AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.SalesFollowUps;
 using BranchesEntity =
@@ -233,6 +233,7 @@ public partial class SalesEnquiriesRepository
         return new SalesTestRideDto
         {
             SalesTestRideId = x.SalesTestRideId,
+            PublicId = x.PublicId,
             SalesEnquiryId = x.SalesEnquiryId,
             EnquiryNo = x.EnquiryNo,
             BranchId = x.BranchId,
@@ -259,7 +260,9 @@ public partial class SalesEnquiriesRepository
             InterestLevelColor = enquiry?.InterestLevelColor ?? string.Empty,
             EnquiryStatusName = enquiry?.StatusName ?? string.Empty,
             EnquiryStatusColor = enquiry?.StatusColor ?? string.Empty,
-            CreatedDate = x.CreatedDate
+            CreatedDate = x.CreatedDate,
+            IsLive = SalesTestRideStatuses.IsLive(x.Status),
+            IsOverdue = SalesTestRideStatuses.IsLive(x.Status) && x.RideDate < Today()
         };
     }
 

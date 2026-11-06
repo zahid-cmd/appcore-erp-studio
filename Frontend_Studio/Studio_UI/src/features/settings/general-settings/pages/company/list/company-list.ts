@@ -299,6 +299,34 @@ implements OnInit, OnDestroy
     [];
 
 
+    // Server paging
+    totalRecords:
+        number =
+        0;
+
+    // Total · Active · Inactive (search and filters applied)
+    private counts:
+        Record<string, number> =
+        {};
+
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer:
+        ReturnType<typeof setTimeout> | null =
+        null;
+
+    // Answers of older calls are dropped
+    private loadSeq:
+        number =
+        0;
+
+
 
     //===========================================================
     // Search & Loading
@@ -976,6 +1004,9 @@ implements OnInit, OnDestroy
     loadItems():
         void
     {
+        const seq =
+            ++this.loadSeq;
+
         this.loading =
             true;
 
@@ -985,23 +1016,45 @@ implements OnInit, OnDestroy
 
 
         this.companyservice
-            .getAll()
+            .getPaged(this.pageQuery())
             .subscribe
             ({
                 next:
                 (
                     response:
-                        Company[]
+                        any
                 ):
                     void =>
                 {
+                    if (seq !== this.loadSeq)
+                    {
+                        return;
+                    }
+
+                    // Server page : remember the totals, then the
+                    // rows go through the usual mapping below
+                    this.totalRecords =
+                        Number(response?.totalCount ?? 0);
+
+                    this.counts =
+                        response?.counts ?? {};
+
+                    if (Number(response?.page) > 0)
+                    {
+                        this.currentPage =
+                            Number(response.page);
+                    }
+
+                    response =
+                        response?.items ?? [];
+
                     this.companies =
                         this.normalizeCompanies(
                             response
                         );
 
 
-                    this.applyFilters();
+                    this.showServerPage();
 
 
 
@@ -1027,6 +1080,11 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
+                    if (seq !== this.loadSeq)
+                    {
+                        return;
+                    }
+
                     console.error
                     (
                         'Load Companies Error:',
@@ -1076,114 +1134,11 @@ implements OnInit, OnDestroy
     applyFilters():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-
-        this.filteredCompanies =
-            this.companies.filter
-            (
-                (
-                    item:
-                        Company
-                ):
-                    boolean =>
-                {
-                    const companyCode =
-                        item.CompanyCode
-                        ??
-                        '';
-
-
-                    const companyName =
-                        item.CompanyName
-                        ??
-                        '';
-
-
-                    const companyShortName =
-                        item.CompanyShortName
-                        ??
-                        '';
-
-
-                    const phone =
-                        item.Phone
-                        ??
-                        '';
-
-
-                    const mobile =
-                        item.Mobile
-                        ??
-                        '';
-
-
-                    const email =
-                        item.Email
-                        ??
-                        '';
-
-
-                    const website =
-                        item.Website
-                        ??
-                        '';
-
-
-                    const status =
-                        item.IsActive
-                            ? 'active'
-                            : 'inactive';
-
-
-                    const searchMatch =
-                        !keyword
-                        ||
-                        companyCode
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        companyName
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        companyShortName
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        phone
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        mobile
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        email
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        website
-                            .toLowerCase()
-                            .includes(keyword)
-                        ||
-                        status
-                            .includes(keyword);
-
-
-                    return searchMatch;
-                }
-            );
-
-
+        // Search, filters and paging run on the server
         this.currentPage =
             1;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1205,7 +1160,21 @@ implements OnInit, OnDestroy
             '';
 
 
-        this.applyFilters();
+        if (this.searchTimer)
+        {
+            clearTimeout(this.searchTimer);
+        }
+
+        this.searchTimer =
+            setTimeout(
+                (): void =>
+                {
+                    this.searchTimer = null;
+
+                    this.applyFilters();
+                },
+                300
+            );
     }
 
 
@@ -1227,117 +1196,19 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        this.filteredCompanies =
-        [
-            ...this.filteredCompanies
-        ];
+        // The server sorts the whole list
+        this.sortField =
+            event.field;
 
-
-        this.filteredCompanies.sort
-        (
-            (
-                a:
-                    Company,
-
-                b:
-                    Company
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof Company
-                    ];
-
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof Company
-                    ];
-
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
-                }
-
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
-            }
-        );
-
+        this.sortDirection =
+            event.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
         this.currentPage =
             1;
 
-
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1369,23 +1240,10 @@ implements OnInit, OnDestroy
     updatePagination():
         void
     {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
-
-
+        // The server sends one page
         this.pagedCompanies =
         [
-            ...this.filteredCompanies.slice
-            (
-                start,
-
-                start + this.pageSize
-            )
+            ...this.filteredCompanies
         ];
     }
 
@@ -1406,7 +1264,7 @@ implements OnInit, OnDestroy
             page;
 
 
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1430,7 +1288,7 @@ implements OnInit, OnDestroy
             1;
 
 
-        this.updatePagination();
+        this.loadItems();
     }
 
 
@@ -1946,12 +1804,11 @@ implements OnInit, OnDestroy
     private updateSummary():
         void
     {
-        const all:
-            any[] =
-            this.companies ?? [];
-
-        const active =
-            all.filter(x => !!x?.IsActive).length;
+        // Counts from the server : search and filters applied,
+        // the status filter not
+        const count =
+            (key: string): number =>
+                Number(this.counts[key] ?? 0);
 
         const text =
             (value: number): string =>
@@ -1959,10 +1816,38 @@ implements OnInit, OnDestroy
 
         this.summaryItems =
         [
-            { label:'Total',    value:text(all.length),          tone:'' },
-            { label:'Active',   value:text(active),              tone:'ok' },
-            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+            { label:'Total',    value:text(count('Total')),    tone:'' },
+            { label:'Active',   value:text(count('Active')),   tone:'ok' },
+            { label:'Inactive', value:text(count('Inactive')), tone:'bad' }
         ];
     }
 
+
+
+    //===========================================================
+    // Server Paging Helpers
+    //===========================================================
+
+    private pageQuery():
+        Record<string, unknown>
+    {
+        return {
+            page:this.currentPage,
+            pageSize:this.pageSize,
+            search:this.searchText,
+            sort:this.sortField,
+            dir:this.sortDirection
+        };
+    }
+
+
+    // The rows of the page arrive already filtered and sorted
+    private showServerPage():
+        void
+    {
+        this.filteredCompanies =
+            this.companies;
+
+        this.updatePagination();
+    }
 }

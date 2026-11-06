@@ -300,6 +300,9 @@ implements
             case 'backup':
                 return 'fa-solid fa-triangle-exclamation';
 
+            case 'financial-year':
+                return 'fa-solid fa-calendar-plus';
+
             default:
                 return 'fa-regular fa-bell';
         }
@@ -405,4 +408,4 @@ implements
             );
     }
 
-}
+}

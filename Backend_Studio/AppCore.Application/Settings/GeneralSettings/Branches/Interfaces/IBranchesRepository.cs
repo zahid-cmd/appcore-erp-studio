@@ -25,6 +25,11 @@ public interface IBranchesRepository
     Task<List<BranchesDto>> GetAllAsync();
 
 
+    // One list page (server paging) with Total / Active / Inactive
+    Task<AppCore.Application.Common.Paging.PagedResult<BranchesDto>> GetPagedAsync(
+        GeneralSettingsPageRequest request);
+
+
     // Public Id -> internal id (live rows only; null = not found)
 
     Task<long?> GetIdByPublicIdAsync(

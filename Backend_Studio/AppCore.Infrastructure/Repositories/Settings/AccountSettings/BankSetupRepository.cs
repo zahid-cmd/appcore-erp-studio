@@ -3,6 +3,10 @@
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
+
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
 using Microsoft.EntityFrameworkCore.Storage;
 
 using AppCore.Application.Settings.AccountSettings;
@@ -146,6 +150,107 @@ public class BankSetupRepository : IBankSetupRepository
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<BankSetupDto> ListSorts()
+    {
+        return new SortMap<BankSetupDto>("BankCode")
+            .Add("BankCode", x => x.BankCode)
+            .Add("BankName", x => x.BankName)
+            .Add("ShortName", x => x.ShortName)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.BankSetupId);
+    }
+
+
+    public async Task<PagedResult<BankSetupDto>> GetPagedAsync(
+        AccountSettingsPageRequest request)
+    {
+        IQueryable<BankSetupDto> query =
+            BankSetupQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.BankCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.BankName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.ShortName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.Status);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.Status);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<BankSetupDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<BankSetupDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

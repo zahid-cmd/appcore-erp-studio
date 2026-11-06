@@ -146,13 +146,13 @@ export const PRODUCT_PRICING_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<ProductPricingPrintData>
     {
         const doc =
             await firstValueFrom(
-                injector.get(ProductPricingService).getById(id)
+                injector.get(ProductPricingService).getById(String(id))
             );
 
         return {

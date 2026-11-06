@@ -4,6 +4,10 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.ServiceSettings;
 
 using ScheduledServiceEntity =
@@ -285,6 +289,132 @@ public class ScheduledServicesRepository :
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<ScheduledServicesDto> ListSorts()
+    {
+        return new SortMap<ScheduledServicesDto>("BrandName")
+            .Add("BrandName", x => x.BrandName)
+            .Add("SequenceNo", x => x.SequenceNo)
+            .Add("ServiceType", x => x.ServiceType)
+            .Add("ServiceCodeDisplay", x => x.ServiceCode)
+            .Add("ServiceName", x => x.ServiceName)
+            .Add("DueAfterDisplay", x => x.IntervalDays)
+            .Add("CustomerChargeDisplay", x => x.CustomerCharge)
+            .Add("BrandReimbursementDisplay", x => x.BrandReimbursement)
+            .Add("IncomeLedgerDisplay", x => x.IncomeLedgerCode)
+            .Add("Readiness", x => x.Readiness)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.SequenceNo);
+    }
+
+
+    public async Task<PagedResult<ScheduledServicesDto>> GetPagedAsync(
+        ServiceSettingsPageRequest request)
+    {
+        await ScheduledServicesSync.SyncAllAsync(
+            _context,
+            1);
+
+        IQueryable<ScheduledServicesDto> query =
+            ScheduledServiceQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.ServiceCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.ServiceName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.PositionName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.BrandName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.PolicyCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.ServiceType ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.SubCategoryCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.IncomeLedgerCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Readiness ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+        if (request.BrandId.HasValue) { long brandId = request.BrandId.Value; query = query.Where(x => x.BrandManagementId == brandId); }
+
+        if (!string.IsNullOrWhiteSpace(request.Tab) && !string.Equals(request.Tab.Trim(), "all", StringComparison.OrdinalIgnoreCase)) { string tab = request.Tab.Trim(); query = query.Where(x => x.Readiness == tab); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<ScheduledServicesDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<ScheduledServicesDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

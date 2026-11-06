@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const ServiceAppointmentsRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Service Appointments'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/service-appointments/list/service-appointments-list'
+            )
+            .then(
+                m =>
+                    m.ServiceAppointmentsList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Service Appointments'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/service-appointments/form/service-appointments-form'
+            )
+            .then(
+                m =>
+                    m.ServiceAppointmentsForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Service Appointments'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/service-appointments/form/service-appointments-form'
+            )
+            .then(
+                m =>
+                    m.ServiceAppointmentsForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Service Appointments'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/service-appointments/form/service-appointments-form'
+            )
+            .then(
+                m =>
+                    m.ServiceAppointmentsForm
+            )
+    }
+
+];

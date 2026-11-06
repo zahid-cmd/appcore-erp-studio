@@ -64,6 +64,20 @@ public class MembershipStatusController : ControllerBase
 
 
     //===========================================================
+    // Get Paged (tab, card, search, sort and page on the server)
+    //===========================================================
+
+    [HttpGet("paged")]
+
+    public async Task<IActionResult> GetPaged(
+        [FromQuery] MembershipStatusPageRequest request)
+    {
+        return Ok(
+            await _repository.GetPagedAsync(request ?? new MembershipStatusPageRequest()));
+    }
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 

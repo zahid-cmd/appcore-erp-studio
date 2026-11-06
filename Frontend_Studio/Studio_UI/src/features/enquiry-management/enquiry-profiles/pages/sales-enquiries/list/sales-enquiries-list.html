@@ -31,15 +31,11 @@
 
             <app-command-center
 
-                [class.se-cc-wide]="isRides"
+                command1Text="Add"
 
-                [command1Text]="isRides ? 'Book Test Ride' : 'Add'"
+                command1Icon="fas fa-plus"
 
-                [command1Icon]="isRides ? 'fas fa-motorcycle' : 'fas fa-plus'"
-
-                [command1Permission]="isRides ? 'update' : 'add'"
-
-                [command1Title]="isRides ? 'Open the test ride board to book' : ''"
+                command1Permission="add"
 
                 (command1Click)="add()"
 
@@ -55,8 +51,6 @@
 
                 command3Permission="restore"
 
-                [command3Visible]="!isRides"
-
                 (command3Click)="restore()"
 
                 command4Text="Print"
@@ -67,15 +61,11 @@
 
                 command4Title="Print the enquiries on the list (tab, interest, search)"
 
-                [command4Visible]="!isRides"
-
                 (command4Click)="print()"
 
                 rightCommandIcon="fas fa-clock-rotate-left"
 
                 rightCommandTitle="History"
-
-                [rightCommandVisible]="!isRides"
 
                 (rightCommandClick)="openHistory()">
 
@@ -90,7 +80,7 @@
     <!-- =====================================================
          PAGE TOOLBAR
            left   : All · Open · Due · Matured · Suspended
-           centre : Website · Test Rides (waiting counts)
+           centre : Website (waiting count)
            right  : interest levels
     ====================================================== -->
 
@@ -152,34 +142,6 @@
                 </button>
 
 
-                <button
-
-                    type="button"
-
-                    class="se-inbox-btn se-inbox-ride"
-
-                    [class.se-inbox-on]="selectedTab === 'rides'"
-
-                    [class.se-inbox-live]="ridesCount > 0"
-
-                    [attr.aria-pressed]="selectedTab === 'rides'"
-
-                    title="Test rides booked and asked for (date-wise) · book on the Test Rides board"
-
-                    (click)="onInboxClick('rides')">
-
-                    <span class="se-inbox-icon">
-
-                        <i class="fas fa-motorcycle"></i>
-
-                    </span>
-
-                    <span class="se-inbox-label">Test Rides</span>
-
-                    <span class="se-inbox-count">{{ ridesCount }}</span>
-
-                </button>
-
             </div>
 
         </div>
@@ -199,9 +161,9 @@
 
             <span class="se-interest-title">
 
-                <i [class]="isRides ? 'fas fa-motorcycle' : 'fas fa-temperature-half'"></i>
+                <i class="fas fa-temperature-half"></i>
 
-                {{ isRides ? 'Rides' : 'Interest' }}
+                Interest
 
             </span>
 
@@ -303,7 +265,7 @@
          SUMMARY (search applied; tab and interest not)
     ====================================================== -->
 
-    @if (!isRides && summaryTotal > 0)
+    @if (summaryTotal > 0)
     {
         <div class="ics-summary">
 

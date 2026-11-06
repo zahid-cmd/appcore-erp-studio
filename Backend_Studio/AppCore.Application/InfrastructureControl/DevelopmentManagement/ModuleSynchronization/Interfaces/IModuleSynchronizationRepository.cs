@@ -50,6 +50,13 @@ public interface IModuleSynchronizationRepository
     );
 
 
+    // Internal id of a live row (null when missing or deleted)
+    Task<long?> GetIdByPublicIdAsync
+    (
+        Guid publicId
+    );
+
+
 
     //===========================================================
     // Analyze

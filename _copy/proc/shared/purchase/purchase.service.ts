@@ -29,6 +29,15 @@ from '../../../../environments/environment';
 
 import
 {
+    PagedQuery,
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     PurchaseOrderLastTerms,
     PurchaseOrderVatApplicability
 }
@@ -249,6 +258,7 @@ export abstract class PurchaseService
     {
         return {
             PurchaseId:this.num(item, 'PurchaseId'),
+            PublicId:this.text(item, 'PublicId'),
             PageType:this.text(item, 'PageType'),
             PurchaseNo:this.text(item, 'PurchaseNo'),
             PurchaseDate:this.text(item, 'PurchaseDate').substring(0, 10),
@@ -426,10 +436,49 @@ export abstract class PurchaseService
     }
 
 
+    // One page of the list plus the tab counts (server paging)
+    getPaged
+    (
+        query:
+            PagedQuery & { tab?:string; supplier?:string }
+    ):
+        Observable<PagedResult<Purchase>>
+    {
+        return this.http
+            .get<any>(`${this.apiUrl}/paged`, { params:toPagedParams({ ...query }) })
+            .pipe(
+                map(raw => toPagedResult(raw, item => this.normalize(item)))
+            );
+    }
+
+
+    // The suppliers on this page's documents (list filter)
+    getListSuppliers():
+        Observable<{ code:string; name:string }[]>
+    {
+        return this.http
+            .get<any[]>(`${this.apiUrl}/list-suppliers`)
+            .pipe(
+                map
+                (
+                    rows =>
+                        (rows ?? []).map
+                        (
+                            row =>
+                            ({
+                                code:this.text(row, 'SupplierCode'),
+                                name:this.text(row, 'SupplierName')
+                            })
+                        )
+                )
+            );
+    }
+
+
     getById
     (
         id:
-            number
+            string
     ):
         Observable<Purchase>
     {
@@ -725,6 +774,7 @@ export abstract class PurchaseService
                     item =>
                     ({
                         PurchaseId:this.num(item, 'PurchaseId'),
+                        PublicId:this.text(item, 'PublicId'),
                         PurchaseNo:this.text(item, 'PurchaseNo')
                     })
                 )
@@ -746,7 +796,7 @@ export abstract class PurchaseService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

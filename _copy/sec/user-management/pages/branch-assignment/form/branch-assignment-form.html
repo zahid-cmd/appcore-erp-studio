@@ -1,0 +1,547 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-code-branch"
+
+        [title]="pageTitle"
+
+        subtitle="Manage branch assignments.">
+
+        <!-- =================================================
+             CENTER
+        ================================================== -->
+
+        <app-record-counter
+
+            pageHeaderCenter
+
+            [sections]="recordCounterSections"
+
+            [compact]="true">
+
+        </app-record-counter>
+
+
+        <!-- =================================================
+             RIGHT
+        ================================================== -->
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar
+
+        leftFlex="0 0 auto"
+
+        rightFlex="1 1 auto">
+
+        <!-- =================================================
+             LEFT
+        ================================================== -->
+
+        <div
+
+            pageToolbarLeft
+
+            class="branch-toolbar-left">
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab"
+
+                (selectedTabChange)="onTabChange($event)">
+
+            </app-control-tabs>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT
+        ================================================== -->
+
+        <div
+
+            pageToolbarRight
+
+            class="branch-toolbar-right">
+
+
+            <!-- =============================================
+                 USER PROFILE
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select User Profile"
+
+                [items]="userProfiles"
+
+                labelField="fullName"
+
+                valueField="userProfileId"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    isUserProfileLocked
+                "
+
+                [(value)]="selectedUserProfileId"
+
+                (valueChange)="onUserProfileChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 BRANCH
+            ============================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Branch"
+
+                [items]="branches"
+
+                labelField="BranchName"
+
+                valueField="BranchId"
+
+                [disabled]="isViewMode"
+
+                [(value)]="selectedBranchId"
+
+                (valueChange)="onBranchChanged($event)">
+
+            </app-search-dropdown>
+
+
+
+            <!-- =============================================
+                 ADD BUTTON
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="branch-add-button"
+
+                [disabled]="addDisabled"
+
+                (click)="onAddSelection()">
+
+                <i class="fas fa-plus"></i>
+
+                <span>
+                    Add
+                </span>
+
+            </button>
+
+
+
+            <!-- =============================================
+                 RESET BUTTON
+            ============================================== -->
+
+            <button
+
+                type="button"
+
+                class="branch-reset-button"
+
+                [disabled]="
+                    isViewMode
+                    ||
+                    selectedBranchId == null
+                "
+
+                (click)="onResetSelection()">
+
+                <i class="fas fa-arrows-rotate"></i>
+
+                <span>
+                    Reset
+                </span>
+
+            </button>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+        <!-- =================================================
+             BODY
+        ================================================== -->
+
+        <ng-container canvasBody>
+
+            <!-- =================================================
+                 BRANCH ASSIGNMENT TABLE CONTAINER
+            ================================================== -->
+
+            <div class="branch-assignment-table-container">
+
+                <!-- =============================================
+                     TABLE
+                ============================================== -->
+
+                <table class="branch-assignment-table">
+
+                    <!-- =========================================
+                         TABLE HEADER
+                    ========================================== -->
+
+                    <thead>
+
+                        <tr>
+
+                            <!-- =================================
+                                 SERIAL
+                            ================================== -->
+
+                            <th
+
+                                class="col-serial"
+
+                                [style.width]="
+                                    columns[0].width
+                                ">
+
+                                #
+
+                            </th>
+
+
+
+                            <!-- =================================
+                                 BRANCH CODE
+                            ================================== -->
+
+                            <th
+
+                                class="col-code"
+
+                                [style.width]="
+                                    columns[1].width
+                                ">
+
+                                Branch Code
+
+                            </th>
+
+
+
+                            <!-- =================================
+                                 BRANCH
+                            ================================== -->
+
+                            <th
+
+                                class="col-name">
+
+                                Branch
+
+                            </th>
+
+
+
+                            <!-- =================================
+                                 ACTION
+                            ================================== -->
+
+                            <th
+
+                                class="col-action"
+
+                                [style.width]="
+                                    columns[3].width
+                                ">
+
+                                Actions
+
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+
+                    <!-- =========================================
+                         TABLE BODY
+                    ========================================== -->
+
+                    <tbody>
+
+
+                        <!-- =====================================
+                             DATA ROWS
+                        ====================================== -->
+
+                        <tr
+
+                            *ngFor="
+                                let row of pagedBranchAssignmentRows;
+                                let i = index
+                            "
+
+                            class="branch-data-row">
+
+
+                            <!-- =================================
+                                 SERIAL
+                            ================================== -->
+
+                            <td
+
+                                class="col-serial"
+
+                                [style.width]="
+                                    columns[0].width
+                                ">
+
+                                {{
+                                    (
+                                        (
+                                            currentPage - 1
+                                        )
+                                        *
+                                        pageSize
+                                    )
+                                    +
+                                    i
+                                    +
+                                    1
+                                }}
+
+                            </td>
+
+
+
+                            <!-- =================================
+                                 BRANCH CODE
+                            ================================== -->
+
+                            <td
+
+                                class="col-code"
+
+                                [style.width]="
+                                    columns[1].width
+                                "
+
+                                [title]="
+                                    row.branchCode
+                                ">
+
+                                {{
+                                    row.branchCode
+                                    ||
+                                    '-'
+                                }}
+
+                            </td>
+
+
+
+                            <!-- =================================
+                                 BRANCH
+                            ================================== -->
+
+                            <td
+
+                                class="col-name"
+
+                                [title]="
+                                    row.branchName
+                                ">
+
+                                {{
+                                    row.branchName
+                                    ||
+                                    '-'
+                                }}
+
+                            </td>
+
+
+
+                            <!-- =================================
+                                 ACTION
+                            ================================== -->
+
+                            <td
+
+                                class="col-action"
+
+                                [style.width]="
+                                    columns[3].width
+                                ">
+
+
+                                <button
+
+                                    type="button"
+
+                                    class="branch-remove-button"
+
+                                    [disabled]="isViewMode"
+
+                                    title="Remove Branch"
+
+                                    (click)="
+                                        onRemoveAssignment(row)
+                                    ">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+
+
+                        <!-- =====================================
+                             EMPTY STATE
+                        ====================================== -->
+
+                        <tr
+
+                            *ngIf="
+                                branchAssignmentRows.length === 0
+                            "
+
+                            class="empty-row">
+
+                            <td
+
+                                colspan="4"
+
+                                class="empty-cell">
+
+                                <div class="branch-empty-state">
+
+                                    <i class="fas fa-code-branch"></i>
+
+                                    <div>
+
+                                        <strong>
+                                            No Branches Assigned
+                                        </strong>
+
+                                        <span>
+                                            Select a User Profile and Branch, then click Add.
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </ng-container>
+
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <ng-container canvasFooter>
+
+            <app-pagination
+
+                [totalRecords]="branchAssignmentRows.length"
+
+                [currentPage]="currentPage"
+
+                [pageSize]="pageSize"
+
+                (pageChange)="onPageChange($event)"
+
+                (pageSizeChange)="onPageSizeChange($event)">
+
+            </app-pagination>
+
+        </ng-container>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =========================================================
+     UTILITIES
+========================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

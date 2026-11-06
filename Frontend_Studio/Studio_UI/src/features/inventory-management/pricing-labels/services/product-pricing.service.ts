@@ -30,6 +30,14 @@ from '../../../../environments/environment';
 
 import
 {
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     CreateProductPricing,
     ProductPricing,
     ProductPricingBatch,
@@ -86,6 +94,20 @@ export class ProductPricingService
         return this.http
             .get<any[]>(this.apiUrl, { params:{ type } })
             .pipe(map(x => list(x).map(toPricing)));
+    }
+
+    // One list page : tab / type / search / sort / page on the
+    // server ; counts = All · <status> · Type_<type> · Type_All
+    getPaged
+    (
+        query:
+            Record<string, unknown>
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(`${this.apiUrl}/paged`, { params:toPagedParams({ ...query }) })
+            .pipe(map(raw => toPagedResult(raw, toPricing)));
     }
 
     getById

@@ -1,0 +1,301 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-location-dot"
+
+        [title]="pageTitle"
+
+        subtitle="Areas, thanas and upazilas used on customer addresses">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 LOCATION INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Location Information"
+
+                icon="fas fa-location-dot">
+
+
+                <!-- Location Code : LOC-0001 (central code generator) -->
+
+                <app-textbox
+
+                    label="Location Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.LocationCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Location Name : typed, unique within its district -->
+
+                <app-textbox
+
+                    label="Location Name"
+
+                    placeholder="e.g. Mirpur"
+
+                    [(value)]="entity.LocationName"
+
+                    (valueChange)="onLocationNameChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Display Name : "<Location Name>, <District>" -->
+
+                <app-textbox
+
+                    label="Display Name"
+
+                    placeholder="Follows the name and district"
+
+                    [(value)]="entity.DisplayName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 GEOGRAPHY
+            ============================================== -->
+
+            <app-form-section
+
+                title="Geography"
+
+                icon="fas fa-map">
+
+
+                <!-- Division : fixed list -->
+
+                <app-search-dropdown
+
+                    label="Division"
+
+                    placeholder="Select division"
+
+                    [items]="divisionItems"
+
+                    [value]="entity.Division"
+
+                    (valueChange)="onDivisionChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- District : districts of the selected division -->
+
+                <app-search-dropdown
+
+                    label="District"
+
+                    [placeholder]="entity.Division ? 'Select district' : 'Select division first'"
+
+                    [items]="districtItems"
+
+                    [value]="entity.District"
+
+                    (valueChange)="onDistrictChange($event)"
+
+                    [disabled]="isViewMode || isSaving || !entity.Division"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Postal Code : optional, 4 digits -->
+
+                <app-textbox
+
+                    label="Postal Code"
+
+                    placeholder="e.g. 1216 (optional)"
+
+                    [value]="entity.PostalCode"
+
+                    (valueChange)="onPostalCodeChange($event)"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 REMARKS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Remarks"
+
+                icon="fas fa-note-sticky">
+
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status"
+
+                icon="fas fa-toggle-on">
+
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+            </app-form-section>
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

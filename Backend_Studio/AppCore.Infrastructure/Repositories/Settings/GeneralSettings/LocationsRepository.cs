@@ -4,6 +4,9 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Application.Common.Paging;
+using AppCore.Infrastructure.Persistence.Paging;
+
 using AppCore.Application.Settings.GeneralSettings;
 
 using LocationEntity =
@@ -147,6 +150,117 @@ public class LocationsRepository :
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<LocationsDto> ListSorts()
+    {
+        return new SortMap<LocationsDto>("LocationCode")
+            .Add("LocationCode", x => x.LocationCode)
+            .Add("LocationName", x => x.LocationName)
+            .Add("District", x => x.District)
+            .Add("Division", x => x.Division)
+            .Add("PostalCode", x => x.PostalCode)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.LocationId);
+    }
+
+
+    public async Task<PagedResult<LocationsDto>> GetPagedAsync(
+        GeneralSettingsPageRequest request)
+    {
+        IQueryable<LocationsDto> query =
+            LocationQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.LocationCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.LocationName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.DisplayName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Division ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.District ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.PostalCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Division)) { string division = request.Division.Trim(); query = query.Where(x => x.Division == division); }
+
+        if (!string.IsNullOrWhiteSpace(request.District)) { string district = request.District.Trim(); query = query.Where(x => x.District == district); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<LocationsDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<LocationsDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

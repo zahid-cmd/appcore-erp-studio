@@ -1,0 +1,387 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-id-card"
+
+        [title]="pageTitle"
+
+        subtitle="A card creates its fee, discount and complimentary service ledgers">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+
+            <!-- =============================================
+                 SECTION 01
+                 CARD INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Card Information"
+
+                icon="fas fa-id-card">
+
+
+                <!-- Card Code : MCD-001 (central code generator) -->
+
+                <app-textbox
+
+                    label="Card Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.CardCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Card Name : as typed, unique -->
+
+                <app-textbox
+
+                    label="Card Name"
+
+                    placeholder="e.g. Gold Card"
+
+                    [(value)]="entity.CardName"
+
+                    (valueChange)="onCardNameChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Card Rank : 1 = lowest card; unique (upgrade order) -->
+
+                <app-textbox
+
+                    label="Card Rank"
+
+                    placeholder="1 = lowest card"
+
+                    [value]="cardRankText"
+
+                    (valueChange)="onCardRankChange($event)"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 02
+                 INCOME LEDGERS (created with the card)
+                 Membership fee income + billed service value
+            ============================================== -->
+
+            <app-form-section
+
+                title="Income Ledgers"
+
+                icon="fas fa-sack-dollar">
+
+
+                <!-- Fee Ledger : membership fee income, under SUB-009-001-001 -->
+
+                <app-textbox
+
+                    label="Fee Sub Group"
+
+                    placeholder="SUB-009-001-001"
+
+                    [value]="feeSubGroupDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Fee Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.FeeLedgerCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Fee Ledger Name"
+
+                    placeholder="Sub group name - card name"
+
+                    [(value)]="entity.FeeLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Income Ledger : billed service value, under SUB-007-005-001 -->
+
+                <app-textbox
+
+                    label="Income Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.ServiceIncomeLedgerCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Income Ledger Name"
+
+                    placeholder="Sub group name - card name"
+
+                    [(value)]="entity.ServiceIncomeLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 03
+                 EXPENSE LEDGERS (created with the card)
+                 Member discounts + complimentary service discount
+            ============================================== -->
+
+            <app-form-section
+
+                title="Expense Ledgers"
+
+                icon="fas fa-receipt">
+
+
+
+                <!-- Discount Ledger : member discounts, under SUB-004-002-002 -->
+
+                <app-textbox
+
+                    label="Discount Sub Group"
+
+                    placeholder="SUB-004-002-002"
+
+                    [value]="discountSubGroupDisplay"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Discount Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.DiscountLedgerCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Discount Ledger Name"
+
+                    placeholder="Sub group name - card name"
+
+                    [(value)]="entity.DiscountLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <!-- Expense Ledger : the same amount discounted, under SUB-004-002-001 -->
+
+                <app-textbox
+
+                    label="Expense Ledger Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.ServiceExpenseLedgerCode"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Expense Ledger Name"
+
+                    placeholder="Sub group name - card name"
+
+                    [(value)]="entity.ServiceExpenseLedgerName"
+
+                    [readonly]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =============================================
+                 SECTION 04
+                 STATUS & CONTROL
+            ============================================== -->
+
+            <app-form-section
+
+                title="Status & Control"
+
+                icon="fas fa-toggle-on">
+
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.IsActive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

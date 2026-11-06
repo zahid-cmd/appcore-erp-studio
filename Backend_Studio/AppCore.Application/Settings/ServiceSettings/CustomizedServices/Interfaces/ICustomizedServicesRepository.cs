@@ -18,6 +18,11 @@ public interface ICustomizedServicesRepository
     Task<List<CustomizedServicesDto>> GetAllAsync();
 
 
+    // One list page (server paging) with Total / Active / Inactive
+    Task<AppCore.Application.Common.Paging.PagedResult<CustomizedServicesDto>> GetPagedAsync(
+        ServiceSettingsPageRequest request);
+
+
     // Public Id -> internal id (live rows only; null = not found)
 
     Task<long?> GetIdByPublicIdAsync(

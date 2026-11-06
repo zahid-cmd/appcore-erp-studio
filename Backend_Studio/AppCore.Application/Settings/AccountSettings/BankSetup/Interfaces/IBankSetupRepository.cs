@@ -26,6 +26,11 @@ public interface IBankSetupRepository
     Task<List<BankSetupDto>> GetAllAsync();
 
 
+    // One list page (server paging) with Total / Active / Inactive
+    Task<AppCore.Application.Common.Paging.PagedResult<BankSetupDto>> GetPagedAsync(
+        AccountSettingsPageRequest request);
+
+
     // Public Id -> internal id (live rows only; null = not found)
 
     Task<long?> GetIdByPublicIdAsync(

@@ -35,6 +35,9 @@ namespace AppCore.Api.Controllers.Procurement.Shared;
 //   Create : Add          Update : Update      Delete : Delete
 //   Restore : Restore     Approve : Approve    Return : Return
 //   Post : Post           Cancel : Cancel
+//
+// Point 2 (06-11) : save (PUT) and every action address the
+// purchase by its uuid (PublicId) ; the number stays inside.
 //===============================================================
 
 public abstract class PurchaseControllerBase : ControllerBase
@@ -370,10 +373,24 @@ public abstract class PurchaseControllerBase : ControllerBase
     }
 
 
-    [HttpPut]
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdatePurchaseDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Purchase not found.");
+        }
+
+        // The uuid in the address decides the record ; an id in
+        // the body is ignored
+        dto.PurchaseId =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =
@@ -457,10 +474,21 @@ public abstract class PurchaseControllerBase : ControllerBase
     // Workflow
     //===========================================================
 
-    [HttpPut("{id:long}/approve")]
+    [HttpPut("{publicId:guid}/approve")]
     public async Task<IActionResult> Approve(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Purchase not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =
@@ -482,10 +510,21 @@ public abstract class PurchaseControllerBase : ControllerBase
     }
 
 
-    [HttpPut("{id:long}/return-to-draft")]
+    [HttpPut("{publicId:guid}/return-to-draft")]
     public async Task<IActionResult> ReturnToDraft(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Purchase not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =
@@ -507,10 +546,21 @@ public abstract class PurchaseControllerBase : ControllerBase
     }
 
 
-    [HttpPut("{id:long}/post")]
+    [HttpPut("{publicId:guid}/post")]
     public async Task<IActionResult> Post(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Purchase not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =
@@ -532,11 +582,22 @@ public abstract class PurchaseControllerBase : ControllerBase
     }
 
 
-    [HttpPut("{id:long}/cancel")]
+    [HttpPut("{publicId:guid}/cancel")]
     public async Task<IActionResult> Cancel(
-        long id,
+        Guid publicId,
         CancelPurchaseDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Purchase not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =

@@ -1,0 +1,1216 @@
+<!-- ===========================================================
+     WEBSITE CONFIGURATION
+     One record : opens straight into the form. Six tabs.
+============================================================ -->
+
+<div class="app-form-page">
+
+    <app-page-header
+        title="Update Website Configuration"
+        subtitle="What the company's public website shows. Company, branches, bikes, prices and stock come from their own pages."
+        icon="fa-solid fa-globe">
+
+        <app-command-center
+            pageHeaderRight
+
+            command1Text="Update"
+            command1Icon="fa-solid fa-pen-to-square"
+            command1Permission="update"
+            [command1Visible]="!!model"
+            (command1Click)="save()"
+
+            command2Text="Website"
+            command2Icon="fa-solid fa-eye"
+            (command2Click)="preview()"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fa-solid fa-clock-rotate-left"
+            rightCommandTitle="History"
+            (rightCommandClick)="openHistory()">
+        </app-command-center>
+
+    </app-page-header>
+
+
+    <app-page-toolbar>
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [(selectedTab)]="selectedTab">
+        </app-control-tabs>
+    </app-page-toolbar>
+
+
+    <!-- Frame : canvas (scrolls) + its own footer (stays put).
+         Ends 10 px above the app footer (fitFrame). -->
+    <div
+        class="wc-frame"
+        #frame
+        [class.wc-frame-fit]="frameHeight !== null"
+        [style.height.px]="frameHeight">
+
+    <!-- Own canvas : only this area scrolls -->
+    <div class="wc-canvas appcore-scrollbar">
+
+            @if (loading)
+            {
+                <app-orbit-loader
+                    title="Loading Website Configuration"
+                    message="Reading the website settings, brands and branches."
+                    size="medium"
+                    [showMessage]="true"
+                    [overlay]="false">
+                </app-orbit-loader>
+            }
+            @if (!loading && loadError)
+            {
+                <div class="wc-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>{{ loadError }}</span>
+                    <button type="button" class="wc-btn" (click)="load()">Try again</button>
+                </div>
+            }
+            @if (!loading && !loadError && model; as m)
+            {
+                @if (!m.exists)
+                {
+                    <div class="wc-note">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>Not saved yet : the website still shows its sample file. After the first Update it shows what is set here.</span>
+                    </div>
+                }
+
+                @switch (selectedTab)
+                {
+
+                    @case ('general')
+                    {
+                        <!-- SECTION 01 / GENERAL -->
+                        <app-form-grid
+                            [columns]="2">
+
+                            <app-form-section
+                                title="Website"
+                                icon="fa-solid fa-power-off">
+
+                                <app-checkbox
+                                    label="Public website on"
+                                    appearance="switch"
+                                    color="success"
+                                    [value]="m.isEnabled"
+                                    (valueChange)="m.isEnabled = $event">
+                                </app-checkbox>
+                                <span class="wc-hint">Off : the website address opens the ERP login page.</span>
+
+                                <div class="wc-field">
+                                    <span class="wc-label">Default theme</span>
+                                    <div class="wc-seg" role="group" aria-label="Default theme">
+                                        @for (t of themes; track t.id)
+                                        {
+                                            <button
+                                                type="button"
+                                                [class.on]="m.defaultTheme === t.id"
+                                                [attr.aria-pressed]="m.defaultTheme === t.id"
+                                                (click)="m.defaultTheme = t.id">
+                                                {{ t.label }}
+                                            </button>
+                                        }
+                                    </div>
+                                    <span class="wc-hint">For a visitor's first visit; their own ☀ / ☾ choice is remembered after that.</span>
+                                </div>
+
+                                <app-textbox
+                                    label="Currency symbol"
+                                    textCase="none"
+                                    placeholder="৳"
+                                    [maxLength]="5"
+                                    [value]="m.currencySymbol"
+                                    (valueChange)="m.currencySymbol = str($event)">
+                                </app-textbox>
+
+                            </app-form-section>
+
+                            <app-form-section
+                                title="Company on the website"
+                                icon="fa-solid fa-building">
+
+                                <div class="wc-company">
+                                    @if (m.company.logoPath)
+                                    {
+                                        <img [src]="fileUrl(m.company.logoPath)" [alt]="m.company.name">
+                                    }
+                                    <div>
+                                        <b>{{ m.company.name || 'No company yet' }}</b>
+                                        <span class="wc-hint">Name, logo and address come from Settings › Company.</span>
+                                    </div>
+                                </div>
+
+                                <app-textbox
+                                    label="Tagline"
+                                    placeholder="One line under the company name"
+                                    [maxLength]="200"
+                                    [value]="m.tagline"
+                                    (valueChange)="m.tagline = str($event)">
+                                </app-textbox>
+
+                                <app-textarea
+                                    label="About (footer)"
+                                    placeholder="Two lines about the company"
+                                    [rows]="3"
+                                    [maxLength]="1000"
+                                    [value]="m.about"
+                                    (valueChange)="m.about = $event">
+                                </app-textarea>
+
+                            </app-form-section>
+
+                            <app-form-section
+                                class="wc-span"
+                                title="Menu & sections"
+                                icon="fa-solid fa-table-cells-large">
+
+                                <span class="wc-hint">Turn home-page parts on or off. Empty parts hide by themselves.</span>
+
+                                <div class="wc-switches">
+                                    <app-checkbox label="Brands menu" appearance="switch" color="success" [value]="m.showBrandsMenu" (valueChange)="m.showBrandsMenu = $event"></app-checkbox>
+                                    <app-checkbox label="Offer ribbon" appearance="switch" color="success" [value]="m.showOfferRibbon" (valueChange)="m.showOfferRibbon = $event"></app-checkbox>
+                                    <app-checkbox label="Moving strip" appearance="switch" color="success" [value]="m.showMovingStrip" (valueChange)="m.showMovingStrip = $event"></app-checkbox>
+                                    <app-checkbox label="Why us" appearance="switch" color="success" [value]="m.showWhyUs" (valueChange)="m.showWhyUs = $event"></app-checkbox>
+                                    <app-checkbox label="EMI calculator" appearance="switch" color="success" [value]="m.showEmi" (valueChange)="m.showEmi = $event"></app-checkbox>
+                                    <app-checkbox label="Service" appearance="switch" color="success" [value]="m.showService" (valueChange)="m.showService = $event"></app-checkbox>
+                                    <app-checkbox label="Branches" appearance="switch" color="success" [value]="m.showBranches" (valueChange)="m.showBranches = $event"></app-checkbox>
+                                    <app-checkbox label="FAQ" appearance="switch" color="success" [value]="m.showFaq" (valueChange)="m.showFaq = $event"></app-checkbox>
+                                </div>
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('contact')
+                    {
+                        <!-- SECTION 02 / CONTACT & LOCATION -->
+                        <app-form-grid
+                            [columns]="2">
+
+                            <app-form-section
+                                class="wc-span"
+                                title="Contact"
+                                icon="fa-solid fa-phone">
+
+                                <span class="wc-hint">Shown in the top bar, "Visit us" and the footer. Filled from the Company page; change them here for the website only.</span>
+
+                                <div class="wc-four">
+                                    <app-textbox
+                                        label="Hotline"
+                                        [placeholder]="m.company.mobile || m.company.phone || 'From Company'"
+                                        [maxLength]="30"
+                                        [value]="m.hotline"
+                                        (valueChange)="m.hotline = str($event)">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        label="WhatsApp Number"
+                                        placeholder="e.g. 8801XXXXXXXXX"
+                                        inputMode="tel"
+                                        [maxLength]="30"
+                                        [value]="m.whatsApp"
+                                        (valueChange)="m.whatsApp = str($event)">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        label="Email"
+                                        type="email"
+                                        [placeholder]="m.company.email || 'From Company'"
+                                        [maxLength]="150"
+                                        [value]="m.email"
+                                        (valueChange)="m.email = str($event)">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        label="Address (from Company)"
+                                        [value]="m.company.address"
+                                        [readonly]="true">
+                                    </app-textbox>
+                                </div>
+
+                                <span class="wc-hint">WhatsApp : country code and number only, no + or spaces (e.g. 8801312890087). The address is changed on the Company page.</span>
+
+                            </app-form-section>
+
+                            <app-form-section
+                                class="wc-span"
+                                title="Map location"
+                                icon="fa-solid fa-location-dot">
+
+                                <div class="wc-map-grid">
+
+                                    <div class="wc-map-fields">
+
+                                        <app-textbox
+                                            label="Google Maps Link"
+                                            textCase="none"
+                                            placeholder="Paste the link here, e.g. https://maps.app.goo.gl/…"
+                                            [maxLength]="1000"
+                                            [value]="m.mapLink"
+                                            (valueChange)="onMapLink(str($event))">
+                                        </app-textbox>
+
+                                        <ol class="wc-steps">
+                                            <li>Open your showroom in Google Maps</li>
+                                            <li>Press <b>Share</b>, then <b>Copy link</b></li>
+                                            <li>Paste it above : the pin is found by itself</li>
+                                        </ol>
+
+                                        @switch (mapState)
+                                        {
+                                            @case ('busy')
+                                            {
+                                                <span class="wc-pin wc-pin-busy"><i class="fa-solid fa-spinner fa-spin"></i> {{ mapMessage }}</span>
+                                            }
+                                            @case ('ok')
+                                            {
+                                                <span class="wc-pin wc-pin-ok"><i class="fa-solid fa-location-dot"></i> Pinned{{ mapName ? ' : ' + mapName : '' }} · {{ m.mapQuery }}</span>
+                                            }
+                                            @case ('bad')
+                                            {
+                                                <span class="wc-pin wc-pin-bad"><i class="fa-solid fa-triangle-exclamation"></i> {{ mapMessage }}</span>
+                                            }
+                                        }
+
+                                        <app-textbox
+                                            label="Pin (Place Name Or Coordinates)"
+                                            textCase="none"
+                                            placeholder="Filled from the link · or type e.g. 23.8069,90.3687"
+                                            [maxLength]="300"
+                                            [value]="m.mapQuery"
+                                            (valueChange)="m.mapQuery = str($event)">
+                                        </app-textbox>
+                                        <span class="wc-hint">Filled from the link. Without a link, type the place name or coordinates. Both empty : company name + address.</span>
+
+                                        @if (mapLink())
+                                        {
+                                            <a class="wc-link" [href]="mapLink()" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> Open in Google Maps</a>
+                                        }
+
+                                    </div>
+
+                                    <div class="wc-map-box">
+                                        @if (mapPreview(); as src)
+                                        {
+                                            <iframe
+                                                class="wc-map"
+                                                [src]="src"
+                                                title="Map preview"
+                                                loading="lazy"
+                                                referrerpolicy="no-referrer-when-downgrade">
+                                            </iframe>
+                                        }
+                                        @else
+                                        {
+                                            <div class="wc-map wc-map-empty"><i class="fa-solid fa-map-location-dot"></i> Paste a link to see the map</div>
+                                        }
+                                    </div>
+
+                                </div>
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('hours')
+                    {
+                        <!-- SECTION 03 / HOURS & SOCIAL -->
+                        <app-form-grid
+                            [columns]="2">
+
+                            <app-form-section
+                                title="Opening hours"
+                                icon="fa-solid fa-clock">
+
+                                <span class="wc-hint">Shown in "Visit us" above the website footer, top to bottom.</span>
+
+                                <table class="wc-table">
+                                    <thead>
+                                        <tr><th>Days</th><th>Opens</th><th>Closes</th><th>Closed</th><th></th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (h of m.openingHours; track $index; let i = $index)
+                                        {
+                                            <tr>
+                                                <td><input class="wc-in" maxlength="80" placeholder="e.g. Saturday - Thursday" aria-label="Days" [value]="h.days" (input)="h.days = $any($event.target).value"></td>
+                                                <td><input class="wc-in wc-time" type="time" aria-label="Opens" [disabled]="h.isClosed" [value]="h.opensAt" (input)="h.opensAt = $any($event.target).value"></td>
+                                                <td><input class="wc-in wc-time" type="time" aria-label="Closes" [disabled]="h.isClosed" [value]="h.closesAt" (input)="h.closesAt = $any($event.target).value"></td>
+                                                <td><input class="wc-ck" type="checkbox" aria-label="Closed" [checked]="h.isClosed" (change)="setClosed(h, $any($event.target).checked)"></td>
+                                                <td class="wc-row-btns">
+                                                    <button type="button" class="wc-icon" title="Up" aria-label="Move up" (click)="move(m.openingHours, i, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                                                    <button type="button" class="wc-icon wc-danger" title="Remove" aria-label="Remove" (click)="removeAt(m.openingHours, i)"><i class="fa-solid fa-trash"></i></button>
+                                                </td>
+                                            </tr>
+                                        }
+                                        @empty
+                                        {
+                                            <tr><td colspan="5" class="wc-empty">No hours yet.</td></tr>
+                                        }
+                                    </tbody>
+                                </table>
+
+                                <div><button type="button" class="wc-add" (click)="addHour()"><i class="fa-solid fa-plus"></i> Add a row</button></div>
+
+                                @if (m.openingHours.length)
+                                {
+                                    <div class="wc-hours-preview">
+                                        <span class="wc-label"><i class="fa-solid fa-eye"></i> On the website</span>
+                                        @for (h of m.openingHours; track $index)
+                                        {
+                                            <div class="wc-hours-line">
+                                                <span>{{ h.days || 'Days not set' }}</span>
+                                                <b [class.wc-closed]="h.isClosed">{{ hourLine(h) }}</b>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                            </app-form-section>
+
+                            <app-form-section
+                                title="Social links"
+                                icon="fa-solid fa-share-nodes">
+
+                                <span class="wc-hint">Full links starting with https:// — empty ones are hidden on the website.</span>
+
+                                <div class="wc-socials">
+                                    @for (s of socials; track s.key)
+                                    {
+                                        <div class="wc-social">
+                                            <span class="wc-social-icon" [style.background]="s.color" aria-hidden="true"><i [class]="s.icon"></i></span>
+                                            <app-textbox
+                                                [label]="s.label + ' Link'"
+                                                textCase="none"
+                                                [placeholder]="s.placeholder"
+                                                [maxLength]="300"
+                                                [value]="socialOf(s.key)"
+                                                (valueChange)="setSocial(s.key, str($event))">
+                                            </app-textbox>
+                                            @if (isLink(socialOf(s.key)))
+                                            {
+                                                <a class="wc-icon wc-social-open" [href]="socialOf(s.key)" target="_blank" rel="noopener" [title]="'Open ' + s.label" [attr.aria-label]="'Open ' + s.label"><i class="fa-solid fa-up-right-from-square"></i></a>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('brands')
+                    {
+                        <!-- SECTION 04 / BRANDS : two cards side by side -->
+                        <app-form-grid class="wc-fill"
+                            [columns]="2">
+
+                            <app-form-section
+                                title="Brands on the website"
+                                icon="fa-solid fa-tag">
+
+                                <span class="wc-hint">From Brand Management. The order here is the order on the website. One brand shown : "Authorised dealer of …"; two or more : brand tabs, brand filter and the Brands menu.</span>
+
+                                <div class="wc-brand-list">
+                                    <div class="wc-brand-head">
+                                        <span></span>
+                                        <span>Brand</span>
+                                        <span class="wc-c">Bikes</span>
+                                        <span class="wc-c">Show</span>
+                                        <span class="wc-c">Page</span>
+                                        <span>About (brand page)</span>
+                                    </div>
+                                    @for (b of m.brands; track b.brandManagementId; let i = $index; let last = $last)
+                                    {
+                                        <div class="wc-brand-row" [class.wc-off]="!b.showOnWebsite">
+                                            <span class="wc-order">
+                                                <button type="button" aria-label="Move up" title="Up" [disabled]="i === 0" (click)="move(m.brands, i, -1)"><i class="fa-solid fa-chevron-up"></i></button>
+                                                <button type="button" aria-label="Move down" title="Down" [disabled]="last" (click)="move(m.brands, i, 1)"><i class="fa-solid fa-chevron-down"></i></button>
+                                            </span>
+                                            <span class="wc-brand-cell">
+                                                <span class="wc-logo wc-logo-sm">
+                                                    @if (b.logoPath)
+                                                    {
+                                                        <img [src]="fileUrl(b.logoPath)" [alt]="b.brandName">
+                                                    }
+                                                    @else
+                                                    {
+                                                        <b>{{ b.brandName.charAt(0) }}</b>
+                                                    }
+                                                </span>
+                                                <span class="wc-brand-name"><b>{{ b.brandName }}</b><small>{{ b.brandCode }}</small></span>
+                                            </span>
+                                            <span class="wc-c wc-count">{{ b.bikeModels }}</span>
+                                            <span class="wc-c"><app-checkbox appearance="switch" color="success" [value]="b.showOnWebsite" (valueChange)="b.showOnWebsite = $event"></app-checkbox></span>
+                                            <span class="wc-c"><app-checkbox appearance="switch" color="success" [disabled]="!b.showOnWebsite" [value]="b.showBrandPage" (valueChange)="b.showBrandPage = $event"></app-checkbox></span>
+                                            <input class="wc-in" maxlength="1000" placeholder="A short line for the brand page" [attr.aria-label]="'About ' + b.brandName" [title]="b.about" [value]="b.about" (input)="b.about = $any($event.target).value">
+                                        </div>
+                                    }
+                                    @empty
+                                    {
+                                        <p class="wc-empty">No active brands in Brand Management.</p>
+                                    }
+                                </div>
+
+                            </app-form-section>
+
+                            <app-form-section
+                                title="Brands per branch"
+                                icon="fa-solid fa-code-branch">
+
+                                <span class="wc-hint">Shown on the website's branch cards. Only brands switched on in "Brands on the website" are listed.</span>
+
+                                <div class="wc-scroll-x">
+                                    <table class="wc-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Branch</th>
+                                                @for (b of shownBrands(); track b.brandManagementId)
+                                                {
+                                                    <th class="wc-c">{{ b.brandName }}</th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (br of m.branches; track br.branchId)
+                                            {
+                                                <tr>
+                                                    <td><b>{{ br.branchName }}</b><div class="wc-hint">{{ br.wingName }}</div></td>
+                                                    @for (b of shownBrands(); track b.brandManagementId)
+                                                    {
+                                                        <td class="wc-c">
+                                                            <input
+                                                                class="wc-ck"
+                                                                type="checkbox"
+                                                                [attr.aria-label]="br.branchName + ' sells ' + b.brandName"
+                                                                [checked]="hasBrand(br, b)"
+                                                                (change)="toggleBranchBrand(br, b, $any($event.target).checked)">
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+                                            @empty
+                                            {
+                                                <tr><td [attr.colspan]="shownBrands().length + 1" class="wc-empty">No active branches.</td></tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('hero')
+                    {
+                        <!-- SECTION 05 / HERO : showroom photo settings + preview -->
+                        <app-form-grid class="wc-fill"
+                            [columns]="2">
+
+                            <app-form-section
+                                title="Hero photo"
+                                icon="fa-solid fa-image">
+
+                                <span class="wc-hint">Your showroom photo in the hero, 16:9 (e.g. 1600 × 900). No photo, or both switches off : the hero stays as it is now.</span>
+
+                                <div class="wc-hero-top">
+                                    <app-image-hub
+                                        label="Photo"
+                                        placeholder="No photo"
+                                        [imageUrl]="fileUrl(m.heroPhotoPath)"
+                                        (imageChange)="uploadHeroPhoto($event)">
+                                    </app-image-hub>
+
+                                    <div class="wc-hero-switches">
+                                        <app-checkbox label="Welcome slide" appearance="switch" color="success" [value]="m.heroWelcome" (valueChange)="m.heroWelcome = $event"></app-checkbox>
+                                        <span class="wc-hint">First slide : the photo, a welcome title and line, then the bikes.</span>
+                                        <app-checkbox label="Photo behind the bikes" appearance="switch" color="success" [value]="m.heroBackground" (valueChange)="m.heroBackground = $event"></app-checkbox>
+                                        <span class="wc-hint">The photo stays softly behind every bike slide.</span>
+                                        <app-checkbox label="Address &amp; Get directions" appearance="switch" color="success" [disabled]="!m.heroWelcome" [value]="m.heroShowAddress" (valueChange)="m.heroShowAddress = $event"></app-checkbox>
+                                    </div>
+                                </div>
+
+                                <div class="wc-speed-row" [class.wc-dim]="!m.heroBackground">
+                                    <span class="wc-label"><i class="fa-solid fa-circle-half-stroke"></i> Background</span>
+                                    <span class="wc-speed-track">
+                                        <i class="fa-regular fa-eye-slash" title="Subtle"></i>
+                                        <input
+                                            type="range"
+                                            class="wc-range"
+                                            min="1"
+                                            max="5"
+                                            step="1"
+                                            aria-label="Hero background strength"
+                                            [disabled]="!m.heroBackground"
+                                            [value]="m.heroStrength"
+                                            [style.--fill]="((m.heroStrength - 1) / 4 * 100) + '%'"
+                                            (input)="setStrength($any($event.target).value)">
+                                        <i class="fa-regular fa-eye" title="Strong"></i>
+                                    </span>
+                                    <span class="wc-speed-value">{{ m.heroStrength }} · {{ strengthWord(m.heroStrength) }}</span>
+                                </div>
+
+                                <div class="wc-hero-round">
+                                    <app-image-hub
+                                        label="Round image"
+                                        placeholder="No image"
+                                        [imageUrl]="fileUrl(m.heroRoundPath)"
+                                        (imageChange)="uploadRoundPhoto($event)">
+                                    </app-image-hub>
+                                    <div class="wc-hero-round-side">
+                                        <app-checkbox label="Round image in the circle" appearance="switch" color="success" [value]="m.heroRoundOn" (valueChange)="m.heroRoundOn = $event"></app-checkbox>
+                                        <span class="wc-hint">A second photo, shown softly inside the big circle behind the bike (bike slides). Square, e.g. 1200 × 1200 : showroom inside, service bay, a sign. Off or empty : just the glow, as now.</span>
+                                        <div class="wc-speed-row" [class.wc-dim]="!m.heroRoundPath || !m.heroRoundOn">
+                                            <span class="wc-label"><i class="fa-regular fa-circle"></i> Round</span>
+                                            <span class="wc-speed-track">
+                                                <i class="fa-regular fa-eye-slash" title="Subtle"></i>
+                                                <input
+                                                    type="range"
+                                                    class="wc-range"
+                                                    min="1"
+                                                    max="5"
+                                                    step="1"
+                                                    aria-label="Round image strength"
+                                                    [disabled]="!m.heroRoundPath || !m.heroRoundOn"
+                                                    [value]="m.heroRoundStrength"
+                                                    [style.--fill]="((m.heroRoundStrength - 1) / 4 * 100) + '%'"
+                                                    (input)="setRoundStrength($any($event.target).value)">
+                                                <i class="fa-regular fa-eye" title="Strong"></i>
+                                            </span>
+                                            <span class="wc-speed-value">{{ m.heroRoundStrength }} · {{ strengthWord(m.heroRoundStrength) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="wc-offer-grid" [class.wc-dim]="!m.heroWelcome">
+                                    <label class="wc-field wc-offer-wide">
+                                        <span class="wc-label">Welcome title</span>
+                                        <input class="wc-in" maxlength="150" [placeholder]="'Welcome to ' + (m.company.name || 'our showroom')" [disabled]="!m.heroWelcome" [value]="m.heroTitle" (input)="m.heroTitle = $any($event.target).value">
+                                    </label>
+                                    <label class="wc-field wc-offer-wide">
+                                        <span class="wc-label">Welcome line</span>
+                                        <input class="wc-in" maxlength="300" [placeholder]="m.tagline || 'One line under the title'" [disabled]="!m.heroWelcome" [value]="m.heroText" (input)="m.heroText = $any($event.target).value">
+                                    </label>
+                                </div>
+
+                            </app-form-section>
+
+                            <app-form-section
+                                title="Preview"
+                                icon="fa-solid fa-eye">
+
+                                <span class="wc-hint">A rough look at both slides (deep version). Exact look : Website button after Update.</span>
+
+                                @if (m.heroPhotoPath || m.heroRoundPath)
+                                {
+                                    @if (m.heroPhotoPath)
+                                    {
+                                    <span class="wc-label">Welcome slide @if (!m.heroWelcome) { <small class="wc-count-note">off</small> }</span>
+                                    <div class="wc-hp" [class.wc-dim]="!m.heroWelcome">
+                                        <div class="wc-hp-text">
+                                            <span class="wc-hp-badge">{{ m.company.name }}</span>
+                                            <b>{{ m.heroTitle || ('Welcome to ' + m.company.name) }}</b>
+                                            <small>{{ m.heroText || m.tagline }}</small>
+                                            @if (m.heroShowAddress && m.company.address)
+                                            {
+                                                <small class="wc-hp-addr"><i class="fa-solid fa-location-dot"></i> {{ m.company.address }}</small>
+                                            }
+                                            <span class="wc-hp-btns"><i>Get directions</i><i>Book a test ride</i></span>
+                                        </div>
+                                        <img [src]="fileUrl(m.heroPhotoPath)" alt="">
+                                    </div>
+
+                                    }
+
+                                    <span class="wc-label">Bike slides @if (m.heroPhotoPath && !m.heroBackground) { <small class="wc-count-note">background off</small> }</span>
+                                    <div class="wc-hp wc-hp-bg">
+                                        @if (m.heroPhotoPath && m.heroBackground)
+                                        {
+                                            <img class="wc-hp-photo" [src]="fileUrl(m.heroPhotoPath)" alt="" [style.opacity]="heroOpacity()">
+                                        }
+                                        <div class="wc-hp-text">
+                                            <span class="wc-hp-badge">Brand · Model</span>
+                                            <b>BIKE MODEL</b>
+                                            <span class="wc-hp-btns"><i>View specification</i></span>
+                                        </div>
+                                        <span class="wc-hp-bike">
+                                            @if (m.heroRoundPath && m.heroRoundOn)
+                                            {
+                                                <span class="wc-hp-round"><img [src]="fileUrl(m.heroRoundPath)" alt="" [style.opacity]="roundOpacity()"></span>
+                                            }
+                                            <i class="fa-solid fa-motorcycle"></i>
+                                        </span>
+                                    </div>
+                                }
+                                @else
+                                {
+                                    <div class="wc-hp-empty"><i class="fa-regular fa-image"></i> Add a photo to see the preview. Without one, the hero stays as it is now.</div>
+                                }
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('home')
+                    {
+                        <!-- SECTION 04 / HOME SECTIONS -->
+                        <app-form-grid class="wc-fill"
+                            [columns]="2">
+
+                            <div class="wc-stack">
+
+                                <app-form-section
+                                    title="Moving strip"
+                                    icon="fa-solid fa-arrows-left-right">
+
+                                    <span class="wc-hint">Selling points that scroll under the offer ribbon.</span>
+
+                                    <div class="wc-chips">
+                                        @for (t of itemsOf('tag'); track $index)
+                                        {
+                                            <span class="wc-chip" [class.wc-chip-editing]="editingTag === t">
+                                                {{ t.title }}
+                                                <button type="button" class="wc-chip-edit" [attr.aria-label]="'Edit ' + t.title" title="Edit" (click)="editTag(t)"><i class="fa-solid fa-pencil"></i></button>
+                                                <button type="button" [attr.aria-label]="'Remove ' + t.title" title="Remove" (click)="removeTag(t)"><i class="fa-solid fa-xmark"></i></button>
+                                            </span>
+                                        }
+                                    </div>
+
+                                    <div class="wc-inline-add">
+                                        <input class="wc-in" maxlength="200" placeholder="e.g. Free servicing" [attr.aria-label]="editingTag ? 'Edit selling point' : 'New selling point'" [value]="newTag" (input)="newTag = $any($event.target).value" (keydown.enter)="addTag()" (keydown.escape)="cancelTag()">
+                                        @if (editingTag)
+                                        {
+                                            <button type="button" class="wc-add" (click)="addTag()"><i class="fa-solid fa-check"></i> Update</button>
+                                            <button type="button" class="wc-add wc-add-quiet" (click)="cancelTag()"><i class="fa-solid fa-xmark"></i> Cancel</button>
+                                        }
+                                        @else
+                                        {
+                                            <button type="button" class="wc-add" (click)="addTag()"><i class="fa-solid fa-plus"></i> Add</button>
+                                        }
+                                    </div>
+
+                                    <div class="wc-speed-row">
+                                        <span class="wc-label"><i class="fa-solid fa-gauge-high"></i> Speed</span>
+                                        <span class="wc-speed-track">
+                                            <i class="fa-solid fa-person-walking" title="Slow"></i>
+                                            <input
+                                                type="range"
+                                                class="wc-range"
+                                                min="1"
+                                                max="10"
+                                                step="1"
+                                                aria-label="Moving strip speed"
+                                                [value]="m.stripSpeed"
+                                                [style.--fill]="((m.stripSpeed - 1) / 9 * 100) + '%'"
+                                                (input)="setSpeed($any($event.target).value)">
+                                            <i class="fa-solid fa-person-running" title="Fast"></i>
+                                        </span>
+                                        <span class="wc-speed-value">{{ m.stripSpeed }} · {{ speedWord(m.stripSpeed) }}</span>
+                                    </div>
+
+                                </app-form-section>
+
+                                <app-form-section
+                                    title="Offer ribbon"
+                                    icon="fa-solid fa-tag">
+
+                                    <span class="wc-hint">Shows under the hero while "Offer ribbon" is on (General) and a title is set; hides itself after the end date.</span>
+
+                                    <div class="wc-offer-grid">
+                                        <label class="wc-field">
+                                            <span class="wc-label">Offer title</span>
+                                            <input class="wc-in" maxlength="150" placeholder="e.g. Eid offer : free helmet with every bike" [value]="m.offerTitle" (input)="m.offerTitle = $any($event.target).value">
+                                        </label>
+
+                                        <div class="wc-field">
+                                            <span class="wc-label">Ends on</span>
+                                            <div class="wc-inline-add">
+                                                <input class="wc-in" type="date" aria-label="Offer ends on" [value]="m.offerEndsOn ?? ''" (input)="m.offerEndsOn = $any($event.target).value || null">
+                                                <button type="button" class="wc-icon" title="No end date" aria-label="Clear end date" (click)="m.offerEndsOn = null"><i class="fa-solid fa-xmark"></i></button>
+                                            </div>
+                                        </div>
+
+                                        <label class="wc-field wc-offer-wide">
+                                            <span class="wc-label">Offer details</span>
+                                            <input class="wc-in" maxlength="300" placeholder="One line : what, who, until when" [value]="m.offerText" (input)="m.offerText = $any($event.target).value">
+                                        </label>
+                                    </div>
+
+                                </app-form-section>
+
+                            </div>
+
+                            <app-form-section
+                                title="Why us"
+                                icon="fa-solid fa-star">
+
+                                <div class="wc-why">
+                                    <app-image-hub
+                                        label="Photo"
+                                        placeholder="No photo"
+                                        [imageUrl]="fileUrl(m.whyPhotoPath)"
+                                        (imageChange)="uploadWhyPhoto($event)">
+                                    </app-image-hub>
+
+                                    <div class="wc-list">
+                                        <span class="wc-label">Points @if (itemsOf('why-point').length > 5) { <small class="wc-count-note">{{ itemsOf('why-point').length }} · scroll for more</small> }</span>
+                                        <div class="wc-numbers">
+                                        @for (p of itemsOf('why-point'); track $index; let i = $index)
+                                        {
+                                            <div class="wc-item">
+                                                <input class="wc-in" maxlength="200" placeholder="Title" aria-label="Point title" [value]="p.title" (input)="p.title = $any($event.target).value">
+                                                <input class="wc-in" maxlength="2000" placeholder="One line" aria-label="Point text" [value]="p.text" (input)="p.text = $any($event.target).value">
+                                                <span class="wc-row-btns">
+                                                    <button type="button" class="wc-icon" aria-label="Move up" (click)="moveItem(p, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                                                    <button type="button" class="wc-icon wc-danger" aria-label="Remove" (click)="removeItem(p)"><i class="fa-solid fa-trash"></i></button>
+                                                </span>
+                                            </div>
+                                        }
+                                        </div>
+                                        <div><button type="button" class="wc-add" (click)="addItem('why-point')"><i class="fa-solid fa-plus"></i> Add a point</button></div>
+                                    </div>
+                                </div>
+
+                                <span class="wc-label">Numbers @if (itemsOf('why-stat').length > 5) { <small class="wc-count-note">{{ itemsOf('why-stat').length }} · scroll for more</small> }</span>
+                                <div class="wc-numbers">
+                                @for (s of itemsOf('why-stat'); track $index)
+                                {
+                                    <div class="wc-item">
+                                        <input class="wc-in" maxlength="200" placeholder="e.g. 12 years" aria-label="Number" [value]="s.title" (input)="s.title = $any($event.target).value">
+                                        <input class="wc-in" maxlength="2000" placeholder="e.g. on the road" aria-label="Label" [value]="s.text" (input)="s.text = $any($event.target).value">
+                                        <span class="wc-row-btns">
+                                            <button type="button" class="wc-icon" aria-label="Move up" (click)="moveItem(s, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                                            <button type="button" class="wc-icon wc-danger" aria-label="Remove" (click)="removeItem(s)"><i class="fa-solid fa-trash"></i></button>
+                                        </span>
+                                    </div>
+                                }
+                                </div>
+                                <div><button type="button" class="wc-add" (click)="addItem('why-stat')"><i class="fa-solid fa-plus"></i> Add a number</button></div>
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('service')
+                    {
+                        <!-- SECTION 06 / SERVICE & FAQ : 5 rows each, then the rows scroll -->
+                        <app-form-grid class="wc-fill"
+                            [columns]="2">
+
+                            <app-form-section
+                                title="Service cards"
+                                icon="fa-solid fa-screwdriver-wrench">
+
+                                <span class="wc-hint">Cards in "Service, parts &amp; care" on the home page. A photo is optional (camera button).
+                                    @if (itemsOf('service').length > 5) { <small class="wc-count-note">{{ itemsOf('service').length }} cards · scroll for more</small> }
+                                </span>
+
+                                <div class="wc-rows wc-rows-service">
+                                    @for (c of itemsOf('service'); track $index; let i = $index; let last = $last)
+                                    {
+                                        <div class="wc-srow">
+                                            <span class="wc-thumb wc-thumb-xs">
+                                                @if (c.photoPath)
+                                                {
+                                                    <img [src]="fileUrl(c.photoPath)" alt="">
+                                                }
+                                                @else
+                                                {
+                                                    <i class="fa-regular fa-image"></i>
+                                                }
+                                            </span>
+                                            <input class="wc-in" maxlength="200" placeholder="Title" aria-label="Card title" [value]="c.title" (input)="c.title = $any($event.target).value">
+                                            <input class="wc-in" maxlength="2000" placeholder="One or two lines" aria-label="Card text" [title]="c.text" [value]="c.text" (input)="c.text = $any($event.target).value">
+                                            <span class="wc-mini-btns">
+                                                <label class="wc-mini" title="Photo"><i class="fa-solid fa-camera"></i><input type="file" accept="image/png,image/jpeg,image/webp" hidden (change)="uploadItemPhoto(c, $event)"></label>
+                                                <button type="button" class="wc-mini" title="Up" aria-label="Move up" [disabled]="i === 0" (click)="moveItem(c, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                                                <button type="button" class="wc-mini wc-danger" title="Remove" aria-label="Remove" (click)="removeItem(c)"><i class="fa-solid fa-trash"></i></button>
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div><button type="button" class="wc-add" (click)="addItem('service')"><i class="fa-solid fa-plus"></i> Add a card</button></div>
+
+                            </app-form-section>
+
+                            <app-form-section
+                                title="FAQ"
+                                icon="fa-solid fa-circle-question">
+
+                                <span class="wc-hint">Questions in "Before you buy" on the home page, in this order.
+                                    @if (itemsOf('faq').length > 5) { <small class="wc-count-note">{{ itemsOf('faq').length }} questions · scroll for more</small> }
+                                </span>
+
+                                <div class="wc-rows wc-rows-faq">
+                                    @for (f of itemsOf('faq'); track $index; let i = $index; let last = $last)
+                                    {
+                                        <div class="wc-frow">
+                                            <input class="wc-in" maxlength="200" placeholder="Question" aria-label="Question" [value]="f.title" (input)="f.title = $any($event.target).value">
+                                            <span class="wc-mini-btns">
+                                                <button type="button" class="wc-mini" title="Up" aria-label="Move up" [disabled]="i === 0" (click)="moveItem(f, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                                                <button type="button" class="wc-mini" title="Down" aria-label="Move down" [disabled]="last" (click)="moveItem(f, 1)"><i class="fa-solid fa-arrow-down"></i></button>
+                                                <button type="button" class="wc-mini wc-danger" title="Remove" aria-label="Remove" (click)="removeItem(f)"><i class="fa-solid fa-trash"></i></button>
+                                            </span>
+                                            <textarea class="wc-in wc-answer" rows="2" maxlength="2000" placeholder="Answer" aria-label="Answer" [value]="f.text" (input)="f.text = $any($event.target).value"></textarea>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div><button type="button" class="wc-add" (click)="addItem('faq')"><i class="fa-solid fa-plus"></i> Add a question</button></div>
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('emi')
+                    {
+                        <!-- SECTION 05 / EMI -->
+                        <app-form-grid
+                            [columns]="2">
+
+                            <app-form-section
+                                title="EMI calculator"
+                                icon="fa-solid fa-credit-card">
+
+                                <app-checkbox
+                                    label="Show the EMI calculator (home page and bike pages)"
+                                    appearance="switch"
+                                    color="success"
+                                    [value]="m.showEmi"
+                                    (valueChange)="m.showEmi = $event">
+                                </app-checkbox>
+
+                                <div class="wc-field">
+                                    <span class="wc-label">Down payment options (%)</span>
+                                    <div class="wc-chips">
+                                        @for (p of m.emiDownPercents; track p; let i = $index)
+                                        {
+                                            <span class="wc-chip">{{ p }}%<button type="button" [attr.aria-label]="'Remove ' + p + '%'" (click)="removeAt(m.emiDownPercents, i)"><i class="fa-solid fa-xmark"></i></button></span>
+                                        }
+                                    </div>
+                                    <div class="wc-inline-add">
+                                        <input class="wc-in wc-short" inputmode="numeric" placeholder="e.g. 25" aria-label="New down payment %" [value]="newPercent" (input)="newPercent = $any($event.target).value" (keydown.enter)="addPercent()">
+                                        <button type="button" class="wc-add" (click)="addPercent()"><i class="fa-solid fa-plus"></i> Add</button>
+                                    </div>
+                                </div>
+
+                                <div class="wc-field">
+                                    <span class="wc-label">Months</span>
+                                    <div class="wc-chips">
+                                        @for (n of m.emiMonths; track n; let i = $index)
+                                        {
+                                            <span class="wc-chip">{{ n }}<button type="button" [attr.aria-label]="'Remove ' + n + ' months'" (click)="removeAt(m.emiMonths, i)"><i class="fa-solid fa-xmark"></i></button></span>
+                                        }
+                                    </div>
+                                    <div class="wc-inline-add">
+                                        <input class="wc-in wc-short" inputmode="numeric" placeholder="e.g. 36" aria-label="New months option" [value]="newMonth" (input)="newMonth = $any($event.target).value" (keydown.enter)="addMonth()">
+                                        <button type="button" class="wc-add" (click)="addMonth()"><i class="fa-solid fa-plus"></i> Add</button>
+                                    </div>
+                                </div>
+
+                                <app-textbox
+                                    label="Example Price (When No Bike Has An MRP)"
+                                    inputMode="decimal"
+                                    [value]="m.emiExamplePrice || ''"
+                                    (valueChange)="m.emiExamplePrice = num($event)">
+                                </app-textbox>
+
+                                <app-textarea
+                                    label="Note under the result"
+                                    [rows]="2"
+                                    [maxLength]="500"
+                                    placeholder="Estimate only. The final instalment depends on the bank, card and charges."
+                                    [value]="m.emiNote"
+                                    (valueChange)="m.emiNote = $event">
+                                </app-textarea>
+
+                            </app-form-section>
+
+                            <app-form-section
+                                title="Preview"
+                                icon="fa-solid fa-eye">
+
+                                @if (emiPreview(); as e)
+                                {
+                                    <span class="wc-hint">Price {{ money(e.price) }} · down {{ e.down }}% · {{ e.months }} months (plain division, bank charges not added)</span>
+                                    <div class="wc-emi">
+                                        <div><span>Down {{ e.down }}%</span><b>{{ money(e.downAmount) }}</b></div>
+                                        <div><span>{{ e.months }} months</span><b>{{ money(e.price - e.downAmount) }}</b></div>
+                                        <div class="wc-emi-main"><span>per month</span><b>≈ {{ money(e.monthly) }}</b></div>
+                                    </div>
+                                }
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('payments')
+                    {
+                        <!-- SECTION 08 / PAYMENTS : list on the left, footer preview on the right -->
+                        <app-form-grid class="wc-fill"
+                            [columns]="2">
+
+                            <app-form-section
+                                title="Payment methods"
+                                icon="fa-solid fa-money-check-dollar">
+
+                                <span class="wc-hint">Shown in the website footer, in this order. Add a logo with the camera button, or leave the name alone.
+                                    @if (itemsOf('payment').length > 5) { <small class="wc-count-note">{{ itemsOf('payment').length }} methods · scroll for more</small> }
+                                </span>
+
+                                <div class="wc-rows wc-rows-service">
+                                    @for (p of itemsOf('payment'); track $index; let i = $index)
+                                    {
+                                        <div class="wc-srow wc-prow">
+                                            <span class="wc-thumb wc-thumb-xs wc-pay-logo">
+                                                @if (p.photoPath)
+                                                {
+                                                    <img [src]="fileUrl(p.photoPath)" alt="">
+                                                }
+                                                @else
+                                                {
+                                                    <i class="fa-regular fa-image"></i>
+                                                }
+                                            </span>
+                                            <input class="wc-in" maxlength="200" placeholder="e.g. bKash" aria-label="Payment method" [value]="p.title" (input)="p.title = $any($event.target).value">
+                                            <span class="wc-mini-btns">
+                                                <label class="wc-mini" title="Logo"><i class="fa-solid fa-camera"></i><input type="file" accept="image/png,image/jpeg,image/webp" hidden (change)="uploadItemPhoto(p, $event)"></label>
+                                                <button type="button" class="wc-mini" title="Up" aria-label="Move up" [disabled]="i === 0" (click)="moveItem(p, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                                                <button type="button" class="wc-mini wc-danger" title="Remove" aria-label="Remove" (click)="removeItem(p)"><i class="fa-solid fa-trash"></i></button>
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="wc-inline-add">
+                                    <input class="wc-in" maxlength="200" placeholder="e.g. Nagad" aria-label="New payment method" [value]="newPayment" (input)="newPayment = $any($event.target).value" (keydown.enter)="addPayment()">
+                                    <button type="button" class="wc-add" (click)="addPayment()"><i class="fa-solid fa-plus"></i> Add</button>
+                                </div>
+
+                            </app-form-section>
+
+                            <app-form-section
+                                title="In the website footer"
+                                icon="fa-solid fa-eye">
+
+                                <span class="wc-hint">How the list looks to visitors (deep version).</span>
+
+                                <div class="wc-pay-preview">
+                                    <span class="wc-pay-kicker">We accept</span>
+                                    <div class="wc-pay-chips">
+                                        @for (p of itemsOf('payment'); track $index)
+                                        {
+                                            @if (p.title.trim())
+                                            {
+                                                <span class="wc-pay-chip">
+                                                    @if (p.photoPath)
+                                                    {
+                                                        <img [src]="fileUrl(p.photoPath)" [alt]="p.title">
+                                                    }
+                                                    @else
+                                                    {
+                                                        {{ p.title }}
+                                                    }
+                                                </span>
+                                            }
+                                        }
+                                        @empty
+                                        {
+                                            <span class="wc-pay-none">No payment methods yet</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="wc-pay-tips">
+                                    <span class="wc-label"><i class="fa-solid fa-lightbulb"></i> Logo tips</span>
+                                    <ul>
+                                        <li>PNG with a transparent background looks best on both light and deep pages.</li>
+                                        <li>About 240 × 96 px (wide, short); it is shown about 28 px tall.</li>
+                                        <li>Use each brand's official logo (bKash, Nagad, Visa…), as they provide it.</li>
+                                        <li>No logo : the name is shown as a neat text chip instead.</li>
+                                    </ul>
+                                </div>
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('texts')
+                    {
+                        <!-- SECTION 09 / SECTION HEADINGS : one card per section, two columns,
+                             boxes styled like the website's own headings -->
+                        <div class="wc-heads-page">
+
+                            <div class="wc-heads-intro">
+                                <span class="wc-hint"><b>Small line</b> (gold, capitals) · <b>Heading</b> (big) · <b>line under it</b> where a section has one. Empty boxes keep the website's wording, shown in grey.</span>
+                            </div>
+
+                            <div class="wc-heads">
+                                @for (c of headCards; track c.name)
+                                {
+                                    <div class="wc-head" [class.wc-head-set]="getText(c.title) || (c.kicker && getText(c.kicker)) || (c.lead && getText(c.lead))">
+                                        <div class="wc-head-top">
+                                            <span class="wc-head-icon"><i [class]="c.icon"></i></span>
+                                            <span class="wc-head-name"><b>{{ c.name }}</b><small>{{ c.where }}</small></span>
+                                            @if (c.kicker)
+                                            {
+                                                <input class="wc-in wc-kicker-in" maxlength="200" [placeholder]="c.d['k']" [attr.aria-label]="c.name + ' small line'" [value]="getText(c.kicker)" (input)="setText(c.kicker, $any($event.target).value)">
+                                            }
+                                        </div>
+                                        <input class="wc-in" [class.wc-title-in]="!c.plain" [maxLength]="c.plain ? 2000 : 200" [placeholder]="c.d['t']" [attr.aria-label]="c.name + (c.plain ? '' : ' heading')" [value]="getText(c.title)" (input)="setText(c.title, $any($event.target).value)">
+                                        @if (c.lead)
+                                        {
+                                            <input class="wc-in wc-lead-in" maxlength="2000" [placeholder]="c.d['l']" [attr.aria-label]="c.name + ' line under it'" [value]="getText(c.lead)" (input)="setText(c.lead, $any($event.target).value)">
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                        </div>
+                    }
+
+                    @case ('policies')
+                    {
+                        <!-- SECTION 07 / POLICIES -->
+                        <div class="wc-policies">
+
+                            <aside class="wc-pages">
+                                <span class="wc-label">Pages</span>
+                                @for (c of policyChoices; track choiceId(c))
+                                {
+                                    <button
+                                        type="button"
+                                        class="wc-page"
+                                        [class.on]="selectedPolicy === choiceId(c)"
+                                        [class.wc-sub]="c.brandManagementId !== 0"
+                                        (click)="selectPolicy(choiceId(c))">
+                                        <b>{{ c.label }}</b>
+                                        <span>{{ c.sub }} · {{ sectionCount(c) }} {{ sectionCount(c) === 1 ? 'section' : 'sections' }}</span>
+                                    </button>
+                                }
+
+                                @if (brandsWithoutPart().length)
+                                {
+                                    <div class="wc-field">
+                                        <span class="wc-label">Add a brand's warranty</span>
+                                        <div class="wc-inline-add">
+                                            <select class="wc-in" aria-label="Brand" [value]="addBrandPartId" (change)="addBrandPartId = +$any($event.target).value">
+                                                <option [value]="0">Choose a brand</option>
+                                                @for (b of brandsWithoutPart(); track b.brandManagementId)
+                                                {
+                                                    <option [value]="b.brandManagementId">{{ b.brandName }}</option>
+                                                }
+                                            </select>
+                                            <button type="button" class="wc-add" (click)="addBrandPart()"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                    </div>
+                                }
+                            </aside>
+
+                            @if (currentPolicy(); as p)
+                            {
+                                <app-form-section
+                                    [title]="p.brandManagementId ? 'Warranty · ' + (p.brandName || brandName(p.brandManagementId)) : (p.policyKey === 'warranty' ? 'Warranty · General' : (p.policyKey === 'terms' ? 'Terms' : 'Privacy'))"
+                                    icon="fa-solid fa-shield-halved">
+
+                                    <div class="wc-two">
+                                        <app-textbox
+                                            label="Page title"
+                                            [maxLength]="150"
+                                            [value]="p.title"
+                                            (valueChange)="p.title = str($event)">
+                                        </app-textbox>
+
+                                        <div class="wc-field">
+                                            <span class="wc-label">Last updated</span>
+                                            <div class="wc-inline-add">
+                                                <input class="wc-in" type="date" aria-label="Last updated" [value]="p.updatedOn ?? ''" (input)="p.updatedOn = $any($event.target).value || null">
+                                                <button type="button" class="wc-add" (click)="p.updatedOn = today()">Today</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <span class="wc-label">Sections @if (p.sections.length > 5) { <small class="wc-count-note">{{ p.sections.length }} · scroll for more</small> }</span>
+
+                                    <div class="wc-rows wc-rows-faq">
+                                        @for (s of p.sections; track $index; let i = $index; let last = $last)
+                                        {
+                                            <div class="wc-frow">
+                                                <input class="wc-in" maxlength="200" placeholder="Heading" aria-label="Section heading" [value]="s.heading" (input)="s.heading = $any($event.target).value">
+                                                <span class="wc-mini-btns">
+                                                    <button type="button" class="wc-mini" title="Up" aria-label="Move up" [disabled]="i === 0" (click)="move(p.sections, i, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                                                    <button type="button" class="wc-mini" title="Down" aria-label="Move down" [disabled]="last" (click)="move(p.sections, i, 1)"><i class="fa-solid fa-arrow-down"></i></button>
+                                                    <button type="button" class="wc-mini wc-danger" title="Remove" aria-label="Remove" (click)="removeAt(p.sections, i)"><i class="fa-solid fa-trash"></i></button>
+                                                </span>
+                                                <textarea class="wc-in wc-answer" rows="2" maxlength="4000" placeholder="Text" aria-label="Section text" [value]="s.text" (input)="s.text = $any($event.target).value"></textarea>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    @if (!p.sections.length)
+                                    {
+                                        <p class="wc-empty">No sections yet : the page shows "not available yet" on the website.</p>
+                                    }
+
+                                    <div class="wc-actions">
+                                        <button type="button" class="wc-add" (click)="addSection(p)"><i class="fa-solid fa-plus"></i> Add a section</button>
+                                        @if (p.brandManagementId)
+                                        {
+                                            <button type="button" class="wc-add wc-danger" (click)="removeBrandPart(p)"><i class="fa-solid fa-trash"></i> Remove this brand part</button>
+                                        }
+                                    </div>
+
+                                </app-form-section>
+                            }
+
+                        </div>
+                    }
+
+                }
+            }
+
+    </div>
+
+    <!-- Frame footer -->
+    <div class="wc-foot">
+        <span class="wc-foot-tab">
+            <i [class]="tabNote().icon"></i>
+            <b>{{ tabLabel() }}</b>
+            <span class="wc-foot-text">{{ tabNote().text }}</span>
+        </span>
+        <span class="wc-foot-save">
+            <i class="fa-solid fa-circle-info"></i>
+            Changes reach the website after <b>Update</b>
+        </span>
+    </div>
+
+    </div>
+
+</div>
+
+
+<app-toast></app-toast>
+
+<app-progress-dialog></app-progress-dialog>
+
+<app-history-drawer
+    title="Website Configuration History"
+    [opened]="historyOpen"
+    [items]="historyItems"
+    (closed)="historyOpen = false">
+</app-history-drawer>

@@ -1,0 +1,90 @@
+/* ============================================================
+   Test Rides
+============================================================ */
+
+export interface TestRides
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Test Rides
+============================================================ */
+
+export interface CreateTestRides
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Test Rides
+============================================================ */
+
+export interface UpdateTestRides
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Test Rides Defaults
+============================================================ */
+
+export interface TestRidesDefaults
+{
+    code:
+        string;
+}

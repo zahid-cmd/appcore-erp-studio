@@ -109,15 +109,21 @@ export class ModuleSynchronizationService
     // Get By Id
     //===========================================================
 
+    // uuid (links, address bar) or the internal id
     getById
     (
-        id:number
+        id:number | string
     ):
         Observable<ModuleSynchronization>
     {
+        const path =
+            /^\d+$/.test(String(id))
+                ? `by-id/${id}`
+                : String(id);
+
         return this.http.get<ModuleSynchronization>
         (
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${path}`
         );
     }
 
@@ -295,9 +301,10 @@ export class ModuleSynchronizationService
     // Delete
     //===========================================================
 
+    // By the uuid
     delete
     (
-        id:number
+        id:string
     ):
         Observable<void>
     {

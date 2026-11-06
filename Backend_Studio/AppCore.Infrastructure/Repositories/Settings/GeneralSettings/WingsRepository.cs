@@ -4,6 +4,9 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Application.Common.Paging;
+using AppCore.Infrastructure.Persistence.Paging;
+
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Application.Settings.GeneralSettings.Wings.DTOs;
 
@@ -148,6 +151,108 @@ public class WingsRepository : IWingsRepository
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<WingDto> ListSorts()
+    {
+        return new SortMap<WingDto>("WingCode")
+            .Add("CompanyName", x => _context.Set<CompanyEntity>().Where(c => c.CompanyId == x.CompanyId).Select(c => c.CompanyName).FirstOrDefault())
+            .Add("WingCode", x => x.WingCode)
+            .Add("WingName", x => x.WingName)
+            .Add("Remarks", x => x.Remarks)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.WingId);
+    }
+
+
+    public async Task<PagedResult<WingDto>> GetPagedAsync(
+        GeneralSettingsPageRequest request)
+    {
+        IQueryable<WingDto> query =
+            WingsQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.WingCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.WingName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(_context.Set<CompanyEntity>().Where(c => c.CompanyId == x.CompanyId).Select(c => c.CompanyName).FirstOrDefault() ?? string.Empty, like));
+        }
+
+
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<WingDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<WingDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

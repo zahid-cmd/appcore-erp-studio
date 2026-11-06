@@ -1,0 +1,2461 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Component,
+    OnInit,
+    OnDestroy,
+    inject,
+    ChangeDetectorRef
+}
+from '@angular/core';
+
+import
+{
+    HttpErrorResponse
+}
+from '@angular/common/http';
+
+import
+{
+    CommonModule
+}
+from '@angular/common';
+
+import
+{
+    ActivatedRoute,
+    Router
+}
+from '@angular/router';
+
+import
+{
+    Observable,
+    defer,
+    timer,
+    throwError,
+    delayWhen,
+    catchError,
+    switchMap
+}
+from 'rxjs';
+
+//===============================================================
+// Models
+//===============================================================
+
+import
+{
+    AccountSubGroup
+}
+from '../../../models/account-sub-group.model';
+
+import
+{
+    AccountClass
+}
+from '../../../models/account-class.model';
+
+import
+{
+    AccountGroup
+}
+from '../../../models/account-group.model';
+
+//===============================================================
+// Shared Components
+//===============================================================
+
+import
+{
+    PageHeaderComponent
+}
+from '../../../../../../shared/components/layout/page-header/page-header';
+
+import
+{
+    PageToolbarComponent
+}
+from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
+
+import
+{
+    PageCanvasComponent,
+    PageCanvasConfig
+}
+from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    ControlTabsComponent,
+    ControlTab
+}
+from '../../../../../../shared/components/controls/control-tabs/control-tabs';
+
+import
+{
+    SearchBoxComponent
+}
+from '../../../../../../shared/components/utilities/search-box/search-box';
+
+import
+{
+    CommandCenterComponent
+}
+from '../../../../../../shared/components/utilities/command-center/command-center';
+
+import
+{
+    ListTableComponent,
+    ListTableColumn
+}
+from '../../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    PaginationComponent
+}
+from '../../../../../../shared/components/controls/pagination/pagination';
+
+import
+{
+    HistoryDrawerComponent
+}
+from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
+
+import
+{
+    ConfirmDialogService
+}
+from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+
+import
+{
+    ConfirmDialogComponent
+}
+from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
+
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
+    ToastService
+}
+from '../../../../../../shared/components/utilities/toast/toast.service';
+
+import
+{
+    ToastComponent
+}
+from '../../../../../../shared/components/utilities/toast/toast';
+
+import
+{
+    SearchDropdownComponent
+}
+from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
+
+//===============================================================
+// Service
+//===============================================================
+
+import
+{
+    AccountSubGroupService
+}
+from '../../../services/account-sub-group.service';
+
+import
+{
+    AccountClassService
+}
+from '../../../services/account-class.service';
+
+import
+{
+    AccountGroupService
+}
+from '../../../services/account-group.service';
+
+import
+{
+    AutoAccountsService,
+    emptyAutoAccountCodes,
+    subGroupOrigin
+}
+from '../../../services/auto-accounts.service';
+
+import
+{
+    AccountOrigin,
+    AutoAccountCodes
+}
+from '../../../models/auto-accounts.model';
+
+//===============================================================
+// Component
+//===============================================================
+
+@Component(
+{
+    selector:'account-sub-group-list',
+    standalone:true,
+    imports:
+    [
+        CommonModule,
+        PageHeaderComponent,
+        PageToolbarComponent,
+        ControlTabsComponent,
+        SearchBoxComponent,
+        CommandCenterComponent,
+        PageCanvasComponent,
+        ListTableComponent,
+        PaginationComponent,
+        HistoryDrawerComponent,
+        ConfirmDialogComponent,
+        ProgressDialogComponent,
+        SearchDropdownComponent,
+        ToastComponent
+    ],
+    templateUrl:'./account-sub-group-list.html',
+    styleUrl:'./account-sub-group-list.css'
+})
+
+//===============================================================
+// Account Sub Group List
+//===============================================================
+
+export class AccountSubGroupList
+implements OnInit, OnDestroy
+{
+    //===========================================================
+    // Dependency Injection
+    //===========================================================
+
+    private readonly accountSubGroupService =
+        inject(AccountSubGroupService);
+
+    private readonly accountClassService =
+        inject(AccountClassService);
+
+    private readonly accountGroupService =
+        inject(AccountGroupService);
+
+    private readonly autoAccountsService =
+        inject(AutoAccountsService);
+
+    private readonly confirmDialog =
+        inject(ConfirmDialogService);
+
+    private readonly progressDialog =
+        inject(ProgressDialogService);
+
+    private readonly toast =
+        inject(ToastService);
+
+    private readonly router =
+        inject(Router);
+
+    private readonly route =
+        inject(ActivatedRoute);
+
+    private readonly cdr =
+        inject(ChangeDetectorRef);
+
+    //===========================================================
+    // Page Tabs
+    //===========================================================
+
+    tabs:
+        ControlTab[] =
+    [
+        {
+            id:'all',
+            label:'All Account Sub Groups'
+        },
+        {
+            id:'auto-inventory',
+            label:'Auto Inventory Sub Groups'
+        },
+        {
+            id:'auto-financial',
+            label:'Auto Financial Sub Groups'
+        }
+    ];
+
+    //===========================================================
+    // Auto Accounts
+    //
+    // Codes of the sub groups created by other pages (from the
+    // server, matched by CODE only):
+    //   all tab            : sub groups created on this page's form
+    //   auto-inventory tab : sub groups of Product Sub Category
+    //   auto-financial tab : sub groups of any other page (Service
+    //                        Sub Category, …)
+    // Auto sub groups are read only here.
+    //===========================================================
+
+    private autoCodes:
+        AutoAccountCodes =
+        emptyAutoAccountCodes();
+
+    // Rows are shown only once the auto codes are known (or failed
+    // to load), so auto records never flash on the first tab.
+    private autoCodesReady:
+        boolean =
+        false;
+
+    private itemsLoaded:
+        boolean =
+        false;
+
+    // Raw classes / groups for the filters of the selected tab
+    private accountClasses:
+        AccountClass[] =
+        [];
+
+    private accountGroupsAll:
+        AccountGroup[] =
+        [];
+
+    selectedTab:
+        string =
+        'all';
+
+    //===========================================================
+    // Data
+    //===========================================================
+
+    accountSubGroups:
+        AccountSubGroup[] =
+    [];
+
+    // Summary line below the canvas (all records)
+    summaryItems:
+        {
+            label:string;
+            value:string;
+            tone:'' | 'ok' | 'bad';
+        }[] =
+    [];
+
+    filteredAccountSubGroups:
+        AccountSubGroup[] =
+    [];
+
+    pagedAccountSubGroups:
+        AccountSubGroup[] =
+    [];
+
+    //===========================================================
+    // Search & Loading
+    //===========================================================
+
+    searchText:
+        string =
+        '';
+
+    loading:
+        boolean =
+        false;
+
+    loadFailed:
+        boolean =
+        false;
+
+    // Prevents a second Delete / Restore while one is running
+    isProcessing:
+        boolean =
+        false;
+
+    //===========================================================
+    // Filters
+    //===========================================================
+
+    accountClassFilterItems:
+        any[] =
+    [
+        {
+            label:'All Account Classes',
+            value:null
+        }
+    ];
+
+    selectedAccountClassId:
+        number | null =
+        null;
+
+
+    accountGroupFilterItems:
+        any[] =
+    [
+        {
+            label:'All Account Groups',
+            value:null
+        }
+    ];
+
+    selectedAccountGroupId:
+        number | null =
+        null;
+
+    statusFilterItems:
+        any[] =
+    [
+        {
+            label:'All Status',
+            value:null
+        },
+        {
+            label:'Active',
+            value:true
+        },
+        {
+            label:'Inactive',
+            value:false
+        }
+    ];
+
+    selectedStatus:
+        boolean | null =
+        null;
+
+    //===========================================================
+    // Progress Dialog Settings
+    //===========================================================
+
+    // Minimum time the dialog stays open
+    private readonly MIN_PROGRESS_MS:
+        number =
+        3000;
+
+    // Animation tick
+    private readonly PROGRESS_TICK_MS:
+        number =
+        100;
+
+    // Highest % reached before the server answers
+    private readonly PROGRESS_CEILING:
+        number =
+        90;
+
+    // How long 100% is shown before closing
+    private readonly PROGRESS_COMPLETE_HOLD_MS:
+        number =
+        600;
+
+    private progressTimer?:
+        number;
+
+    private progressValue:
+        number =
+        0;
+
+    //===========================================================
+    // Pagination
+    //===========================================================
+
+    currentPage:
+        number =
+        1;
+
+    pageSize:
+        number =
+        10;
+
+    //===========================================================
+    // History
+    //===========================================================
+
+    historyOpened:
+        boolean =
+        false;
+
+    historyTitle:
+        string =
+        'Account Sub Group History';
+
+    historyItems:
+        any[] =
+    [];
+
+    //===========================================================
+    // Page Canvas Configuration
+    //===========================================================
+
+    readonly canvasConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:true,
+        reserveFooterSpace:true,
+        bodyScrollable:true,
+        fixedHeight:true,
+        visibleRows:10,
+        rowHeight:32,
+        headerHeight:36,
+        footerHeight:56
+    };
+
+    //===========================================================
+    // Table Columns
+    //===========================================================
+
+    readonly columns:
+        ListTableColumn[] =
+    [
+        {
+            header:'#',
+            field:'serial',
+            type:'serial',
+            width:'50px',
+            align:'center'
+        },
+        {
+            header:'Account Class',
+            field:'AccountClassName',
+            width:'180px',
+            align:'left'
+        },
+        {
+            header:'Group Code',
+            field:'GroupCode',
+            width:'130px',
+            align:'left'
+        },
+        {
+            header:'Group Name',
+            field:'AccountGroupName',
+            width:'220px',
+            align:'left'
+        },
+        {
+            header:'Sub Group Code',
+            field:'SubGroupCode',
+            width:'180px',
+            align:'left'
+        },
+        {
+            header:'Sub Group Name',
+            field:'SubGroupName',
+            width:'240px',
+            align:'left'
+        },
+        {
+            header:'Mode',
+            field:'Mode',
+            width:'90px',
+            align:'center'
+        },
+        {
+            header:'Ledger Creation',
+            field:'AllowManualLedger',
+            type:'boolean',
+            width:'130px',
+            align:'center'
+        },
+        {
+            header:'Status',
+            field:'IsActive',
+            type:'status',
+            width:'120px',
+            align:'center'
+        },
+        {
+            header:'Actions',
+            field:'actions',
+            type:'actions',
+            width:'80px',
+            align:'center'
+        }
+    ];
+
+
+    //===========================================================
+    // Inventory Auto Sub Group Columns
+    //
+    // System-generated sub groups : read only, so no
+    // View / Edit / Delete actions.
+    //===========================================================
+
+    readonly inventoryAutoSubGroupColumns:
+        ListTableColumn[] =
+    [
+        {
+            header:'#',
+            field:'serial',
+            type:'serial',
+            width:'50px',
+            align:'center'
+        },
+        {
+            header:'Account Class',
+            field:'AccountClassName',
+            width:'180px',
+            align:'left'
+        },
+        {
+            header:'Group Code',
+            field:'GroupCode',
+            width:'130px',
+            align:'left'
+        },
+        {
+            header:'Group Name',
+            field:'AccountGroupName',
+            width:'220px',
+            align:'left'
+        },
+        {
+            header:'Sub Group Code',
+            field:'SubGroupCode',
+            width:'180px',
+            align:'left'
+        },
+        {
+            header:'Sub Group Name',
+            field:'SubGroupName',
+            width:'240px',
+            align:'left'
+        },
+        {
+            header:'Mode',
+            field:'Mode',
+            width:'90px',
+            align:'center'
+        },
+        {
+            header:'Ledger Creation',
+            field:'AllowManualLedger',
+            type:'boolean',
+            width:'130px',
+            align:'center'
+        },
+        {
+            header:'Status',
+            field:'IsActive',
+            type:'status',
+            width:'120px',
+            align:'center'
+        }
+    ];
+
+    //===========================================================
+    // Display Columns (by tab)
+    //===========================================================
+
+    get displayColumns():
+        ListTableColumn[]
+    {
+        // Auto sub groups (inventory or financial) are read only : no actions
+        return this.selectedTab !== 'all'
+            ? this.inventoryAutoSubGroupColumns
+            : this.columns;
+    }
+
+    //===========================================================
+    // Initialize
+    //===========================================================
+
+    ngOnInit():
+        void
+    {
+        this.loadAccountClasses();
+        this.loadAccountGroups();
+        this.loadAutoCodes();
+        this.loadItems();
+    }
+
+    //===========================================================
+    // Destroy
+    //===========================================================
+
+    ngOnDestroy():
+        void
+    {
+        this.clearProgressTimer();
+
+        if
+        (
+            this.isProcessing
+        )
+        {
+            this.progressDialog.close();
+        }
+    }
+
+    //===========================================================
+    // Progress Dialog (Animated)
+    //
+    // The bar eases from 0% toward 90% while the request runs,
+    // then jumps to 100% on success before closing.
+    //===========================================================
+
+    private startProgress
+    (
+        title:
+            string,
+
+        message:
+            string
+    ):
+        void
+    {
+        this.isProcessing =
+            true;
+
+        this.progressValue =
+            0;
+
+        // Determinate : we drive the percentage ourselves
+        this.progressDialog.show(
+            title,
+            message,
+            false
+        );
+
+        this.clearProgressTimer();
+
+        this.progressTimer =
+            window.setInterval(
+                () =>
+                {
+                    // Ease-out : big steps first, smaller near the ceiling
+                    const step =
+                        Math.max(
+                            0.4,
+                            (this.PROGRESS_CEILING - this.progressValue) * 0.06
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            this.PROGRESS_CEILING,
+                            this.progressValue + step
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        )
+                    );
+                },
+
+                this.PROGRESS_TICK_MS
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    //-----------------------------------------------------------
+    // Success : show 100%, pause briefly, then close
+    //-----------------------------------------------------------
+
+    private completeProgress
+    (
+        message:
+            string,
+
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.update(
+            100,
+            message
+        );
+
+        window.setTimeout(
+            () =>
+            {
+                this.progressDialog.close();
+
+                this.isProcessing =
+                    false;
+
+                this.cdr.detectChanges();
+
+                done();
+            },
+
+            this.PROGRESS_COMPLETE_HOLD_MS
+        );
+    }
+
+    //-----------------------------------------------------------
+    // Error : close immediately, then report
+    //-----------------------------------------------------------
+
+    private failProgress
+    (
+        done:
+            () => void
+    ):
+        void
+    {
+        this.clearProgressTimer();
+
+        this.progressDialog.close();
+
+        this.isProcessing =
+            false;
+
+        this.cdr.detectChanges();
+
+        done();
+    }
+
+    private clearProgressTimer():
+        void
+    {
+        if
+        (
+            this.progressTimer
+        )
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+    //===========================================================
+    // Minimum Progress Duration
+    //
+    // Keeps the progress dialog visible for at least
+    // MIN_PROGRESS_MS, on both success and error.
+    //===========================================================
+
+    private withMinimumDuration<T>
+    (
+        source$:
+            Observable<T>
+    ):
+        Observable<T>
+    {
+        return defer(
+            () =>
+            {
+                const startedAt:
+                    number =
+                    Date.now();
+
+                const remaining =
+                    (): number =>
+                        Math.max(
+                            0,
+                            this.MIN_PROGRESS_MS - (Date.now() - startedAt)
+                        );
+
+                return source$.pipe(
+
+                    delayWhen(
+                        () =>
+                            timer(remaining())
+                    ),
+
+                    catchError(
+                        error =>
+                            timer(remaining()).pipe(
+                                switchMap(
+                                    () =>
+                                        throwError(() => error)
+                                )
+                            )
+                    )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Normalize API Response
+    //===========================================================
+
+    private normalizeAccountSubGroup
+    (
+        item:
+            any
+    ):
+        AccountSubGroup
+    {
+        return {
+            AccountSubGroupId:
+                Number(
+                    item?.AccountSubGroupId
+                    ??
+                    item?.accountSubGroupId
+                    ??
+                    item?.id
+                    ??
+                    item?.Id
+                    ??
+                    0
+                ),
+
+            PublicId:
+                String(item?.PublicId ?? item?.publicId ?? ''),
+
+            AccountClassId:
+                Number(
+                    item?.AccountClassId
+                    ??
+                    item?.accountClassId
+                    ??
+                    0
+                ),
+
+            AccountClassName:
+                [
+                    item?.ClassCode
+                    ??
+                    item?.classCode
+                    ??
+                    '',
+
+                    item?.AccountClassName
+                    ??
+                    item?.accountClassName
+                    ??
+                    ''
+                ]
+                    .filter(
+                        value =>
+                            value
+                            &&
+                            String(value).trim()
+                    )
+                    .join(' - '),
+
+            AccountGroupId:
+                Number(
+                    item?.AccountGroupId
+                    ??
+                    item?.accountGroupId
+                    ??
+                    0
+                ),
+
+            AccountGroupName:
+                item?.AccountGroupName
+                ??
+                item?.accountGroupName
+                ??
+                '',
+
+            ClassCode:
+                item?.ClassCode
+                ??
+                item?.classCode
+                ??
+                '',
+
+            Mode:
+                item?.Mode
+                ??
+                item?.mode
+                ??
+                '',
+
+            GroupCode:
+                item?.GroupCode
+                ??
+                item?.groupCode
+                ??
+                '',
+
+            SubGroupCode:
+                item?.SubGroupCode
+                ??
+                item?.subGroupCode
+                ??
+                '',
+
+            SubGroupName:
+                item?.SubGroupName
+                ??
+                item?.subGroupName
+                ??
+                '',
+
+            //===========================================================
+            // Configuration
+            //===========================================================
+
+            AllowManualLedger:
+                Boolean(
+                    item?.AllowManualLedger
+                    ??
+                    item?.allowManualLedger
+                    ??
+                    false
+                ),
+
+            Remarks:
+                item?.Remarks
+                ??
+                item?.remarks
+                ??
+                '',
+
+            //===========================================================
+            // Status
+            //===========================================================
+
+            IsActive:
+                Boolean(
+                    item?.IsActive
+                    ??
+                    item?.isActive
+                    ??
+                    true
+                )
+        };
+    }
+
+    //===========================================================
+    // Normalize API Response List
+    //===========================================================
+
+    private normalizeAccountSubGroups
+    (
+        response:
+            any
+    ):
+        AccountSubGroup[]
+    {
+        if
+        (
+            !Array.isArray(response)
+        )
+        {
+            return [];
+        }
+
+        return response.map
+        (
+            item =>
+                this.normalizeAccountSubGroup(
+                    item
+                )
+        );
+    }
+
+    //===========================================================
+    // Load Items
+    //===========================================================
+
+    loadItems():
+        void
+    {
+        this.loading =
+            true;
+
+        this.itemsLoaded =
+            false;
+
+        this.loadFailed =
+            false;
+
+        this.accountSubGroupService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        AccountSubGroup[]
+                ):
+                    void =>
+                {
+                    console.log
+                    (
+                        'Account Sub Group API Response:',
+                        response
+                    );
+
+                    this.accountSubGroups =
+                        this.normalizeAccountSubGroups(
+                            response
+                        );
+
+                    console.log
+                    (
+                        'Normalized Account Sub Groups:',
+                        this.accountSubGroups
+                    );
+
+                    this.buildFilterItems();
+
+                    this.itemsLoaded =
+                        true;
+
+                    this.applyFilters();
+
+
+                    this.updateSummary();
+
+                    // keep the loader until the auto codes are known
+                    this.loading =
+                        !this.autoCodesReady;
+
+                    this.loadFailed =
+                        false;
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'Load Account Sub Groups Error:',
+                        error
+                    );
+
+                    this.accountSubGroups =
+                        [];
+
+                    this.filteredAccountSubGroups =
+                        [];
+
+                    this.pagedAccountSubGroups =
+                        [];
+
+                    this.loading =
+                        false;
+
+                    this.loadFailed =
+                        true;
+
+                    this.toast.error
+                    (
+                        'Load Failed',
+                        'Unable to load account sub groups.'
+                    );
+
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+    //===========================================================
+    // Load Account Classes
+    //===========================================================
+
+    private loadAccountClasses():
+        void
+    {
+        this.accountClassService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        AccountClass[]
+                ):
+                    void =>
+                {
+                    this.accountClasses =
+                        response ?? [];
+
+                    this.buildFilterItems();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Account Classes Error:',
+                        error
+                    );
+
+                    this.accountClasses =
+                        [];
+
+                    this.buildFilterItems();
+                }
+            });
+    }
+
+    //===========================================================
+    // Load Account Groups
+    //===========================================================
+
+    private loadAccountGroups():
+        void
+    {
+        this.accountGroupService
+            .getAll()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        AccountGroup[]
+                ):
+                    void =>
+                {
+                    this.accountGroupsAll =
+                        response ?? [];
+
+                    this.buildFilterItems();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Account Groups Error:',
+                        error
+                    );
+
+                    this.accountGroupsAll =
+                        [];
+
+                    this.buildFilterItems();
+                }
+            });
+    }
+
+    //===========================================================
+    // Load Auto Codes (which sub groups other pages created)
+    //===========================================================
+
+    private loadAutoCodes():
+        void
+    {
+        this.autoCodesReady =
+            false;
+
+        this.autoAccountsService
+            .getCodes()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        AutoAccountCodes
+                ):
+                    void =>
+                {
+                    this.autoCodes =
+                        response;
+
+                    this.autoCodesReady =
+                        true;
+
+                    if
+                    (
+                        this.itemsLoaded
+                    )
+                    {
+                        this.loading =
+                            false;
+                    }
+
+                    // Re-split the tabs and filters now that the
+                    // origins are known
+                    this.buildFilterItems();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error(
+                        'Load Auto Account Codes Error:',
+                        error
+                    );
+
+                    this.autoCodes =
+                        emptyAutoAccountCodes();
+
+                    this.autoCodesReady =
+                        true;
+
+                    if
+                    (
+                        this.itemsLoaded
+                    )
+                    {
+                        this.loading =
+                            false;
+                    }
+
+                    this.buildFilterItems();
+
+                    this.applyFilters();
+
+                    this.cdr.detectChanges();
+
+                    this.toast.error
+                    (
+                        'Load Failed',
+                        'Unable to load the auto sub group codes. Every sub group is shown on the first tab.'
+                    );
+                }
+            });
+    }
+
+    //===========================================================
+    // Origin / Tab
+    //===========================================================
+
+    private originOf
+    (
+        item:
+            AccountSubGroup
+    ):
+        AccountOrigin
+    {
+        return subGroupOrigin(
+            this.autoCodes,
+            item.SubGroupCode
+        );
+    }
+
+    private get selectedOrigin():
+        AccountOrigin
+    {
+        return this.selectedTab === 'auto-inventory'
+            ? 'inventory'
+            : this.selectedTab === 'auto-financial'
+                ? 'financial'
+                : 'manual';
+    }
+
+    //===========================================================
+    // Filters (classes / groups holding sub groups of the tab)
+    //===========================================================
+
+    private buildFilterItems():
+        void
+    {
+        const origin =
+            this.selectedOrigin;
+
+        const inTab =
+            this.accountSubGroups
+                .filter
+                (
+                    item =>
+                        this.originOf(item) === origin
+                );
+
+        // sub groups not loaded yet : no narrowing
+        const loaded =
+            this.accountSubGroups.length > 0;
+
+        const classIds =
+            new Set<number>(
+                inTab.map
+                (
+                    item =>
+                        Number(item.AccountClassId)
+                )
+            );
+
+        const groupIds =
+            new Set<number>(
+                inTab.map
+                (
+                    item =>
+                        Number(item.AccountGroupId)
+                )
+            );
+
+        this.accountClassFilterItems =
+        [
+            {
+                label:'All Account Classes',
+                value:null
+            },
+
+            ...this.accountClasses
+                .filter
+                (
+                    item =>
+                        item.IsActive
+                        &&
+                        (
+                            !loaded
+                            ||
+                            classIds.has(
+                                Number(item.AccountClassId)
+                            )
+                        )
+                )
+                .map
+                (
+                    (
+                        item:
+                            AccountClass
+                    ) =>
+                    ({
+                        label:
+                            `${item.ClassCode} - ${item.ClassName}`,
+
+                        value:
+                            item.AccountClassId
+                    })
+                )
+        ];
+
+        this.accountGroupFilterItems =
+        [
+            {
+                label:'All Account Groups',
+                value:null
+            },
+
+            ...this.accountGroupsAll
+                .filter
+                (
+                    item =>
+                        item.IsActive
+                        &&
+                        (
+                            this.selectedAccountClassId === null
+                            ||
+                            item.AccountClassId ===
+                            this.selectedAccountClassId
+                        )
+                        &&
+                        (
+                            !loaded
+                            ||
+                            groupIds.has(
+                                Number(item.AccountGroupId)
+                            )
+                        )
+                )
+                .map
+                (
+                    (
+                        item:
+                            AccountGroup
+                    ) =>
+                    ({
+                        label:
+                            `${item.GroupCode} - ${item.GroupName}`,
+
+                        value:
+                            item.AccountGroupId,
+
+                        AccountClassId:
+                            item.AccountClassId
+                    })
+                )
+        ];
+    }
+
+    //===========================================================
+    // Apply Filters
+    //===========================================================
+
+    applyFilters():
+        void
+    {
+        // Tabs can only be split once the auto codes are known
+        if
+        (
+            !this.autoCodesReady
+        )
+        {
+            this.filteredAccountSubGroups =
+                [];
+
+            this.pagedAccountSubGroups =
+                [];
+
+            return;
+        }
+
+        const keyword =
+            this.searchText
+                .trim()
+                .toLowerCase();
+
+        this.filteredAccountSubGroups =
+            this.accountSubGroups.filter
+            (
+                (
+                    item:
+                        AccountSubGroup
+                ):
+                    boolean =>
+                {
+                    const accountClassMatch =
+                        this.selectedAccountClassId === null
+                        ||
+                        item.AccountClassId ===
+                        this.selectedAccountClassId;
+
+                    const accountGroupMatch =
+                        this.selectedAccountGroupId === null
+                        ||
+                        item.AccountGroupId ===
+                        this.selectedAccountGroupId;
+
+                    //===================================================
+                    // Tab split (by origin, matched by sub group code)
+                    //   all tab            : sub groups created manually
+                    //   auto-inventory tab : sub groups of Product Sub Category
+                    //   auto-financial tab : sub groups of other pages
+                    //===================================================
+
+                    const inventoryAutoSubGroupMatch =
+                        this.originOf(item) ===
+                        this.selectedOrigin;
+
+                    const statusMatch =
+                        this.selectedStatus === null
+                        ||
+                        item.IsActive ===
+                        this.selectedStatus;
+
+                    const accountClass =
+                        item.AccountClassName
+                        ??
+                        '';
+
+                    const classCode =
+                        item.ClassCode
+                        ??
+                        '';
+
+                    const accountGroup =
+                        item.AccountGroupName
+                        ??
+                        '';
+
+                    const groupCode =
+                        item.GroupCode
+                        ??
+                        '';
+
+                    const subGroupCode =
+                        item.SubGroupCode
+                        ??
+                        '';
+
+                    const subGroupName =
+                        item.SubGroupName
+                        ??
+                        '';
+
+                    const mode =
+                        item.Mode
+                        ??
+                        '';
+
+                    const remarks =
+                        item.Remarks
+                        ??
+                        '';
+
+                    const status =
+                        item.IsActive
+                            ? 'active'
+                            : 'inactive';
+
+                    return (
+                        inventoryAutoSubGroupMatch
+                        &&
+                        accountClassMatch
+                        &&
+                        accountGroupMatch
+                        &&
+                        statusMatch
+                        &&
+                        (
+                            !keyword
+                            ||
+                            accountClass
+                                .toLowerCase()
+                                .includes(keyword)
+                            ||
+                            classCode
+                                .toLowerCase()
+                                .includes(keyword)
+                            ||
+                            accountGroup
+                                .toLowerCase()
+                                .includes(keyword)
+                            ||
+                            groupCode
+                                .toLowerCase()
+                                .includes(keyword)
+                            ||
+                            subGroupCode
+                                .toLowerCase()
+                                .includes(keyword)
+                            ||
+                            subGroupName
+                                .toLowerCase()
+                                .includes(keyword)
+                            ||
+                            mode
+                                .toLowerCase()
+                                .includes(keyword)
+                            ||
+                            remarks
+                                .toLowerCase()
+                                .includes(keyword)
+                            ||
+                            status
+                                .includes(keyword)
+                        )
+                    );
+                }
+            );
+
+        this.currentPage =
+            1;
+
+        this.updatePagination();
+    }
+
+    //===========================================================
+    // Tab Change
+    //===========================================================
+
+    onTabChange
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.selectedTab =
+            value;
+
+        this.selectedAccountClassId =
+            null;
+
+        this.selectedAccountGroupId =
+            null;
+
+        this.currentPage =
+            1;
+
+        this.buildFilterItems();
+
+        this.applyFilters();
+    }
+
+
+    //===========================================================
+    // Search
+    //===========================================================
+
+    onSearch
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.searchText =
+            value
+            ??
+            '';
+
+        this.applyFilters();
+    }
+
+    //===========================================================
+    // Sort
+    //===========================================================
+
+    onSort
+    (
+        event:
+        {
+            field:
+                string;
+
+            direction:
+                'asc' | 'desc';
+        }
+    ):
+        void
+    {
+        this.filteredAccountSubGroups =
+        [
+            ...this.filteredAccountSubGroups
+        ];
+
+        this.filteredAccountSubGroups.sort
+        (
+            (
+                a:
+                    AccountSubGroup,
+
+                b:
+                    AccountSubGroup
+            ):
+                number =>
+            {
+                const valueA:
+                    any =
+                    a[
+                        event.field as keyof AccountSubGroup
+                    ];
+
+                const valueB:
+                    any =
+                    b[
+                        event.field as keyof AccountSubGroup
+                    ];
+
+                if
+                (
+                    valueA == null
+                    &&
+                    valueB == null
+                )
+                {
+                    return 0;
+                }
+
+                if
+                (
+                    valueA == null
+                )
+                {
+                    return -1;
+                }
+
+                if
+                (
+                    valueB == null
+                )
+                {
+                    return 1;
+                }
+
+                if
+                (
+                    typeof valueA === 'string'
+                    &&
+                    typeof valueB === 'string'
+                )
+                {
+                    return event.direction === 'asc'
+                        ?
+                            valueA.localeCompare(valueB)
+                        :
+                            valueB.localeCompare(valueA);
+                }
+
+                if
+                (
+                    valueA < valueB
+                )
+                {
+                    return event.direction === 'asc'
+                        ?
+                            -1
+                        :
+                            1;
+                }
+
+                if
+                (
+                    valueA > valueB
+                )
+                {
+                    return event.direction === 'asc'
+                        ?
+                            1
+                        :
+                            -1;
+                }
+
+                return 0;
+            }
+        );
+
+        this.currentPage =
+            1;
+
+        this.updatePagination();
+    }
+
+    //===========================================================
+    // Account Class Filter
+    //===========================================================
+
+    onAccountClassFilterChange
+    (
+        value:
+            number | null
+    ):
+        void
+    {
+        this.selectedAccountClassId =
+            value === null
+                ? null
+                : Number(value);
+
+        this.selectedAccountGroupId =
+            null;
+
+        this.loadAccountGroups();
+
+        this.applyFilters();
+    }
+
+    //===========================================================
+    // Account Group Filter
+    //===========================================================
+
+    onAccountGroupFilterChange
+    (
+        value:
+            number | null
+    ):
+        void
+    {
+        this.selectedAccountGroupId =
+            value === null
+                ? null
+                : Number(value);
+
+        this.applyFilters();
+    }
+
+    //===========================================================
+    // Status Filter
+    //===========================================================
+
+    onStatusFilterChange
+    (
+        value:
+            boolean | null
+    ):
+        void
+    {
+        this.selectedStatus =
+            value === null
+                ? null
+                : Boolean(value);
+
+        this.applyFilters();
+    }
+
+    //===========================================================
+    // Refresh
+    //===========================================================
+
+    refresh():
+        void
+    {
+        this.searchText =
+            '';
+
+        this.selectedTab =
+            'all';
+
+        this.selectedAccountClassId =
+            null;
+
+        this.selectedAccountGroupId =
+            null;
+
+        this.selectedStatus =
+            null;
+
+        this.currentPage =
+            1;
+
+        this.loadAccountClasses();
+
+        this.loadAccountGroups();
+
+        this.loadAutoCodes();
+
+        this.loadItems();
+    }
+
+    //===========================================================
+    // Update Pagination
+    //===========================================================
+
+    updatePagination():
+        void
+    {
+        const start:
+            number =
+            (
+                this.currentPage - 1
+            )
+            *
+            this.pageSize;
+
+        this.pagedAccountSubGroups =
+        [
+            ...this.filteredAccountSubGroups.slice
+            (
+                start,
+                start + this.pageSize
+            )
+        ];
+    }
+
+    //===========================================================
+    // Page Change
+    //===========================================================
+
+    onPageChange
+    (
+        page:
+            number
+    ):
+        void
+    {
+        this.currentPage =
+            page;
+
+        this.updatePagination();
+    }
+
+    //===========================================================
+    // Page Size Change
+    //===========================================================
+
+    onPageSizeChange
+    (
+        size:
+            number
+    ):
+        void
+    {
+        this.pageSize =
+            size;
+
+        this.currentPage =
+            1;
+
+        this.updatePagination();
+    }
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    add():
+        void
+    {
+        void this.router.navigate
+        (
+            [
+                'add'
+            ],
+            {
+                relativeTo:
+                    this.route.parent
+            }
+        );
+    }
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    view
+    (
+        item:
+            AccountSubGroup
+    ):
+        void
+    {
+        void this.router.navigate
+        (
+            [
+                'view',
+                item.PublicId
+            ],
+            {
+                relativeTo:
+                    this.route.parent
+            }
+        );
+    }
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    edit
+    (
+        item:
+            AccountSubGroup
+    ):
+        void
+    {
+        void this.router.navigate
+        (
+            [
+                'edit',
+                item.PublicId
+            ],
+            {
+                relativeTo:
+                    this.route.parent
+            }
+        );
+    }
+
+    //===========================================================
+    // Delete
+    //===========================================================
+
+    delete
+    (
+        item:
+            AccountSubGroup
+    ):
+        void
+    {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
+        this.confirmDialog.open
+        (
+            'Delete Account Sub Group',
+            `Are you sure you want to delete "${item.SubGroupName}" ?`,
+            ():
+                void =>
+            {
+                // Next tick : let the confirm dialog close first,
+                // so it cannot hide the progress dialog.
+                setTimeout(
+                    () =>
+                        this.deleteItem(
+                            item
+                        )
+                );
+            }
+        );
+    }
+
+    //===========================================================
+    // Delete Item
+    //===========================================================
+
+    private deleteItem
+    (
+        item:
+            AccountSubGroup
+    ):
+        void
+    {
+        this.startProgress(
+            'Deleting Account Sub Group',
+            `Please wait while "${item.SubGroupName}" is being deleted...`
+        );
+
+        this.withMinimumDuration(
+            this.accountSubGroupService.delete(
+                item.PublicId ?? ''
+            )
+        )
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
+                {
+                    this.completeProgress(
+
+                        'Account sub group deleted.',
+
+                        () =>
+                        {
+                            this.toast.success
+                            (
+                                'Delete Successful',
+                                `${item.SubGroupName} deleted successfully.`
+                            );
+
+                            this.loadItems();
+                        }
+                    );
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'Delete Account Sub Group Error:',
+                        error
+                    );
+
+                    this.failProgress(
+                        () =>
+                        {
+                            //===========================================
+                            // Deletion Blocked
+                            //===========================================
+
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                            )
+                            {
+                                let message =
+                                    'Account Sub Group cannot be deleted because it is already configured.';
+
+                                if
+                                (
+                                    typeof error.error === 'string'
+                                    &&
+                                    error.error.trim()
+                                )
+                                {
+                                    message =
+                                        error.error;
+                                }
+                                else if
+                                (
+                                    error.error?.message
+                                )
+                                {
+                                    message =
+                                        error.error.message;
+                                }
+                                else if
+                                (
+                                    error.error?.title
+                                )
+                                {
+                                    message =
+                                        error.error.title;
+                                }
+
+                                this.toast.info
+                                (
+                                    'Delete Blocked',
+                                    message
+                                );
+
+                                return;
+                            }
+
+                            //===========================================
+                            // Delete Failed
+                            //===========================================
+
+                            this.toast.error
+                            (
+                                'Delete Failed',
+                                'Failed to delete account sub group.'
+                            );
+                        }
+                    );
+                }
+            });
+    }
+
+    //===========================================================
+    // Restore
+    //===========================================================
+
+    restore():
+        void
+    {
+        if
+        (
+            this.isProcessing
+        )
+        {
+            return;
+        }
+
+        this.confirmDialog.open
+        (
+            'Restore Account Sub Group',
+            'Are you sure you want to restore the most recently deleted account sub group?',
+            ():
+                void =>
+            {
+                // Next tick : same as Delete, for consistency.
+                setTimeout(
+                    () =>
+                        this.restoreItem()
+                );
+            },
+            'Restore',
+            'Cancel',
+            'primary'
+        );
+    }
+
+    //===========================================================
+    // Restore Item
+    //===========================================================
+
+    private restoreItem():
+        void
+    {
+        this.startProgress(
+            'Restoring Account Sub Group',
+            'Please wait while the most recently deleted account sub group is being restored...'
+        );
+
+        this.withMinimumDuration(
+            this.accountSubGroupService.restore()
+        )
+            .subscribe
+            ({
+                next:
+                ():
+                    void =>
+                {
+                    this.completeProgress(
+
+                        'Account sub group restored.',
+
+                        () =>
+                        {
+                            this.toast.success
+                            (
+                                'Restore Successful',
+                                'The most recently deleted account sub group has been restored.'
+                            );
+
+                            this.loadItems();
+                        }
+                    );
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'Restore Account Sub Group Error:',
+                        error
+                    );
+
+                    this.failProgress(
+                        () =>
+                        {
+                            if
+                            (
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 404
+                            )
+                            {
+                                this.toast.info
+                                (
+                                    'No Data to Restore',
+                                    'There is no deleted account sub group record to restore.'
+                                );
+
+                                return;
+                            }
+
+                            this.toast.error
+                            (
+                                'Restore Failed',
+                                'Failed to restore account sub group.'
+                            );
+                        }
+                    );
+                }
+            });
+    }
+
+    //===========================================================
+    // Open History
+    //===========================================================
+
+    openHistory():
+        void
+    {
+        this.accountSubGroupService
+            .getHistory()
+            .subscribe
+            ({
+                next:
+                (
+                    response:
+                        any[]
+                ):
+                    void =>
+                {
+                    this.historyItems =
+                        response.map
+                        (
+                            history =>
+                            ({
+                                title:
+                                    history.activityTitle
+                                    ??
+                                    history.ActivityTitle,
+
+                                description:
+                                    history.activityDescription
+                                    ??
+                                    history.ActivityDescription,
+
+                                user:
+                                    history.performedByName
+                                    ??
+                                    history.PerformedByName
+                                    ??
+                                    'System',
+
+                                dateTime:
+                                    new Date
+                                    (
+                                        history.performedDate
+                                        ??
+                                        history.PerformedDate
+                                    )
+                                    .toLocaleString(),
+
+                                badge:
+                                    history.activityType
+                                    ??
+                                    history.ActivityType
+                            })
+                        );
+
+                    this.historyTitle =
+                        'Account Sub Group Management History';
+
+                    this.historyOpened =
+                        true;
+
+                    this.cdr.detectChanges();
+                },
+
+                error:
+                (
+                    error:
+                        unknown
+                ):
+                    void =>
+                {
+                    console.error
+                    (
+                        'History Load Failed:',
+                        error
+                    );
+
+                    this.toast.error
+                    (
+                        'History',
+                        'Failed to load account sub group history.'
+                    );
+                }
+            });
+    }
+
+    //===========================================================
+    // Close History
+    //===========================================================
+
+    closeHistory():
+        void
+    {
+        this.historyOpened =
+            false;
+    }
+
+    //===========================================================
+    // Summary Line (below the canvas) : Total / Active / Inactive
+    // of all records
+    //===========================================================
+
+    private updateSummary():
+        void
+    {
+        const all:
+            any[] =
+            this.accountSubGroups ?? [];
+
+        const active =
+            all.filter(x => !!x?.IsActive).length;
+
+        const text =
+            (value: number): string =>
+                value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total',    value:text(all.length),          tone:'' },
+            { label:'Active',   value:text(active),              tone:'ok' },
+            { label:'Inactive', value:text(all.length - active), tone:'bad' }
+        ];
+    }
+
+}

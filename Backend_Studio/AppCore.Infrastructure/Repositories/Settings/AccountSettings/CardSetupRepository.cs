@@ -6,6 +6,10 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.AccountSettings;
 using AppCore.Application.Settings.AccountSettings.CardSetup.DTOs;
 
@@ -136,6 +140,110 @@ public class CardSetupRepository : ICardSetupRepository
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<CardSetupDto> ListSorts()
+    {
+        return new SortMap<CardSetupDto>("CardCode")
+            .Add("CardCode", x => x.CardCode)
+            .Add("CardName", x => x.CardName)
+            .Add("ShortName", x => x.ShortName)
+            .Add("IssuingBank", x => x.IssuingBank)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.CardSetupId);
+    }
+
+
+    public async Task<PagedResult<CardSetupDto>> GetPagedAsync(
+        AccountSettingsPageRequest request)
+    {
+        IQueryable<CardSetupDto> query =
+            CardSetupQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.CardCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.CardName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.ShortName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.IssuingBank ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.Status);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.Status);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<CardSetupDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<CardSetupDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

@@ -2,6 +2,8 @@
 // Namespace
 //===============================================================
 
+using AppCore.Application.Common.Paging;
+using AppCore.Application.EnquiryManagement.FollowUpsAppointments;
 using AppCore.Application.Public.Website;
 
 namespace AppCore.Application.EnquiryManagement.EnquiryProfiles;
@@ -135,6 +137,38 @@ public interface ISalesEnquiriesRepository
 
     Task SetTestRideStatusAsync(
         TestRideStatusDto dto,
+        long userId);
+
+
+    //===========================================================
+    // Test Rides : list and form (Follow-ups & Appointments ›
+    // Test Rides page)
+    //===========================================================
+
+    // One list page (period, status, branch, search) + counts
+    Task<PagedResult<SalesTestRideDto>> GetTestRidePageAsync(
+        TestRidesPageRequest request);
+
+    // Internal id of a live row (null when missing or deleted)
+    Task<long?> GetTestRideIdByPublicIdAsync(
+        Guid publicId);
+
+    Task<SalesTestRideDto?> GetTestRideAsync(
+        long id);
+
+    // The form's save : move, bike / executive / note, status
+    Task UpdateTestRideAsync(
+        long id,
+        UpdateTestRidesDto dto,
+        long userId);
+
+    // Closed rides only
+    Task DeleteTestRideAsync(
+        long id,
+        long userId);
+
+    // The most recently deleted ride; false when none
+    Task<bool> RestoreTestRideAsync(
         long userId);
 
     // Website : free ride times of a day at a showroom

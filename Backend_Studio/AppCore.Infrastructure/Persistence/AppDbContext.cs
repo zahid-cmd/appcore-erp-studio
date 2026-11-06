@@ -1405,6 +1405,28 @@ public class AppDbContext
 
     // AUTO-END : BikeModels
 
+    // AUTO-BEGIN : ServiceAppointments
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.ServiceAppointments>
+    ServiceAppointmentss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : ServiceAppointments
+
+    // AUTO-BEGIN : TestRides
+
+    public DbSet<AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.TestRides>
+    TestRidess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : TestRides
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 
@@ -1774,19 +1796,9 @@ public class AppDbContext
     set;
     } = null!;
 
-    public DbSet<AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.ServiceAppointments>
-    ServiceAppointmentRows
-    {
-    get;
-    set;
-    } = null!;
-
-    public DbSet<AppCore.Domain.Entities.EnquiryManagement.FollowUpsAppointments.SalesTestRides>
-    SalesTestRideRows
-    {
-    get;
-    set;
-    } = null!;
+    // Service Appointments and Test Rides (table SalesTestRides) :
+    // their DbSets are the Code Sync AUTO blocks ServiceAppointmentss
+    // and TestRidess (2026-11-06); the repositories use Set<T>().
 
     // Sales Invoices - SP : lines and Payment Desk rows (MANUAL : the
     // head SalesInvoicesSp is in the sync's AUTO block). A new table

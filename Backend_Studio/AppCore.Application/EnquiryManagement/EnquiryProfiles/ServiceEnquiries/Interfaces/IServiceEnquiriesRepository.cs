@@ -2,6 +2,8 @@
 // Namespaces
 //===============================================================
 
+using AppCore.Application.Common.Paging;
+using AppCore.Application.EnquiryManagement.FollowUpsAppointments;
 using AppCore.Application.Public.Website;
 
 
@@ -171,6 +173,38 @@ public interface IServiceEnquiriesRepository
 
     Task SetAppointmentStatusAsync(
         ServiceAppointmentStatusDto dto,
+        long userId);
+
+
+    //===========================================================
+    // Appointments : list and form (Follow-ups & Appointments ›
+    // Service Appointments page)
+    //===========================================================
+
+    // One list page (period, status, branch, search) + counts
+    Task<PagedResult<ServiceAppointmentDto>> GetAppointmentPageAsync(
+        ServiceAppointmentsPageRequest request);
+
+    // Internal id of a live row (null when missing or deleted)
+    Task<long?> GetAppointmentIdByPublicIdAsync(
+        Guid publicId);
+
+    Task<ServiceAppointmentDto?> GetAppointmentAsync(
+        long id);
+
+    // The form's save : move, advisor / note, status
+    Task UpdateAppointmentAsync(
+        long id,
+        UpdateServiceAppointmentsDto dto,
+        long userId);
+
+    // Closed appointments only
+    Task DeleteAppointmentAsync(
+        long id,
+        long userId);
+
+    // The most recently deleted appointment; false when none
+    Task<bool> RestoreAppointmentAsync(
         long userId);
 
 

@@ -1,0 +1,261 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Bank Accounts"
+
+        subtitle="Manage bank accounts"
+
+        icon="fas fa-building-columns">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [(value)]="searchText"
+
+                placeholder="Search bank accounts..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Add"
+
+                command1Icon="fas fa-plus"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                (command3Click)="restore()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+
+        <!-- =================================================
+             FILTERS (Branch + Status)
+        ================================================== -->
+
+        <div
+
+            pageToolbarRight
+
+            style="display:flex; align-items:center; gap:12px;">
+
+
+            <!-- Branch Filter -->
+
+            <div style="width:300px;">
+
+                <app-search-dropdown
+
+                    placeholder="All Branches"
+
+                    [items]="branchFilterItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="selectedBranch"
+
+                    (valueChange)="onBranchFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+
+            <!-- Status Filter -->
+
+            <div style="width:220px;">
+
+                <app-search-dropdown
+
+                    placeholder="All Status"
+
+                    [items]="statusFilterItems"
+
+                    labelField="label"
+
+                    valueField="value"
+
+                    [value]="selectedStatus"
+
+                    (valueChange)="onStatusFilterChange($event)">
+
+                </app-search-dropdown>
+
+            </div>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+
+        <!-- =================================================
+             LIST TABLE
+        ================================================== -->
+
+        <div canvasBody>
+
+            <app-list-table
+
+                [columns]="columns"
+
+                [rows]="pagedBankAccounts"
+
+                [serialOffset]="(currentPage - 1) * pageSize"
+
+                [loading]="loading"
+
+                [error]="loadFailed"
+
+                (view)="view($event)"
+
+                (edit)="edit($event)"
+
+                (delete)="delete($event)"
+
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+
+        <!-- =================================================
+             PAGINATION
+        ================================================== -->
+
+        <app-pagination
+
+            canvasFooter
+
+            [totalRecords]="filteredBankAccounts.length"
+
+            [currentPage]="currentPage"
+
+            [pageSize]="pageSize"
+
+            (pageChange)="onPageChange($event)"
+
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="bka-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="bka-summary-item">
+                    <span class="bka-summary-label">{{ item.label }}</span>
+                    <b
+                        class="bka-summary-value"
+                        [class.bka-ok]="item.tone === 'ok'"
+                        [class.bka-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="bka-summary-note">
+                All records
+            </span>
+
+        </div>
+    }
+
+
+
+    <!-- =====================================================
+         HISTORY
+    ====================================================== -->
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+
+
+    <!-- =====================================================
+         UTILITIES
+    ====================================================== -->
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

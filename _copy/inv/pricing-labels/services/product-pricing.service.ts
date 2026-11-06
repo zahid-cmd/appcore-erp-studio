@@ -91,7 +91,7 @@ export class ProductPricingService
     getById
     (
         id:
-            number
+            string
     ):
         Observable<ProductPricing>
     {
@@ -391,7 +391,7 @@ export class ProductPricingService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -541,6 +541,7 @@ function toSaved
     ProductPricingSaved
 {
     return {
+        PublicId:text(pick(x, 'PublicId')),
         ProductPricingId:num(pick(x, 'ProductPricingId')),
         PricingNo:text(pick(x, 'PricingNo')),
         Status:text(pick(x, 'Status'))
@@ -611,6 +612,7 @@ function toPricing
     ProductPricing
 {
     return {
+        PublicId:text(pick(x, 'PublicId')),
         ProductPricingId:num(pick(x, 'ProductPricingId')),
         PageType:text(pick(x, 'PageType')),
         PricingNo:text(pick(x, 'PricingNo')),

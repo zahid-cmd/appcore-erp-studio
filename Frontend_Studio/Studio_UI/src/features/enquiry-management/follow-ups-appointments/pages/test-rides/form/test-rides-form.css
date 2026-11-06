@@ -1,0 +1,128 @@
+@import '../../../../../../shared/styles/app-form-page.css';
+
+
+/* Small notes under a field (slot rules, the enquiry's ask) */
+
+.trf-note
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #dbeafe;
+    border-radius: 10px;
+    background: #f5f9ff;
+    color: #475569;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.trf-note i
+{
+    margin-top: 2px;
+    color: #2563eb;
+}
+
+.trf-note-warn
+{
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.trf-note-warn i
+{
+    color: #d97706;
+}
+
+
+/* Toolbar flag : overdue / closed */
+
+.trf-flag
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.trf-flag-bad
+{
+    border-color: #fecdd3;
+    background: #fff1f2;
+    color: #be123c;
+}
+
+
+/* Canvas footer : the appointment in one line + its status */
+
+.trf-footer
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.trf-footer-label
+{
+    flex: none;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.trf-footer-text
+{
+    min-width: 0;
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 800;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.trf-footer-empty
+{
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.trf-footer-status
+{
+    --status: #64748b;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    height: 28px;
+    padding: 0 12px;
+    border: 1px solid color-mix(in srgb, var(--status) 35%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--status) 9%, #ffffff);
+    color: var(--status);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.trf-footer-dot
+{
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--status);
+}

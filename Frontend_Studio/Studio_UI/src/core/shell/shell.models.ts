@@ -110,7 +110,11 @@ export type ShellNotificationKind =
     'website'
     |
     // Nightly backup failed / overdue (Data Management)
-    'backup';
+    'backup'
+    |
+    // Next financial year : will be / was created automatically,
+    // or not created yet (Financial Years)
+    'financial-year';
 
 
 export interface ShellNotificationDto

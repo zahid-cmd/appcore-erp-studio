@@ -4,6 +4,10 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.AccountSettings;
 using AppCore.Application.Settings.AccountSettings.MFSAccounts.DTOs;
 
@@ -246,6 +250,120 @@ public class MFSAccountsRepository : IMFSAccountsRepository
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<MFSAccountDto> ListSorts()
+    {
+        return new SortMap<MFSAccountDto>("MFSAccountCode")
+            .Add("MFSAccountCode", x => x.MFSAccountCode)
+            .Add("DisplayName", x => x.DisplayName)
+            .Add("AccountType", x => x.AccountType)
+            .Add("Branch", x => x.Branch)
+            .Add("CollectionAccountText", x => x.CollectionAccount)
+            .Add("PaymentAccountText", x => x.PaymentAccount)
+            .Add("BranchExclusiveText", x => x.BranchExclusive)
+            .Add("MFSChargesText", x => x.MFSCharges)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.MFSAccountId);
+    }
+
+
+    public async Task<PagedResult<MFSAccountDto>> GetPagedAsync(
+        AccountSettingsPageRequest request)
+    {
+        IQueryable<MFSAccountDto> query =
+            MFSAccountsQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.MFSAccountCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.MFSAccountName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.MFSAccountNumber ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.DisplayName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.AccountType ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Branch ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.LinkedBankAccountName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Branch)) { string branch = request.Branch.Trim().ToUpper(); query = query.Where(x => (x.Branch ?? string.Empty).Trim().ToUpper() == branch); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.Status);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.Status);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<MFSAccountDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<MFSAccountDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

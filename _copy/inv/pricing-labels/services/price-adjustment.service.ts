@@ -30,6 +30,15 @@ from '../../../../environments/environment';
 
 import
 {
+    PagedQuery,
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     CreatePriceAdjustment,
     PriceAdjustmentAnalyseInput,
     PriceAdjustmentAnalysis,
@@ -88,10 +97,23 @@ export class PriceAdjustmentService
             .pipe(map(x => list(x).map(toListRow)));
     }
 
+    // One page of the list plus the tab / type counts (server paging)
+    getPaged
+    (
+        query:
+            PagedQuery & { type?:string; tab?:string }
+    ):
+        Observable<PagedResult<PriceAdjustmentListRow>>
+    {
+        return this.http
+            .get<any>(`${this.apiUrl}/paged`, { params:toPagedParams({ ...query }) })
+            .pipe(map(raw => toPagedResult(raw, toListRow)));
+    }
+
     getById
     (
         id:
-            number
+            string
     ):
         Observable<PriceAdjustmentDetail>
     {
@@ -198,7 +220,7 @@ export class PriceAdjustmentService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {
@@ -363,6 +385,7 @@ function toListRow
     PriceAdjustmentListRow
 {
     return {
+        PublicId:text(pick(x, 'PublicId')),
         Id:num(pick(x, 'Id')) || num(pick(x, 'PriceAdjustmentId')),
         AdjustmentNo:text(pick(x, 'AdjustmentNo')),
         PageType:text(pick(x, 'PageType')),
@@ -524,6 +547,7 @@ function toDetail
     PriceAdjustmentDetail
 {
     return {
+        PublicId:text(pick(x, 'PublicId')),
         Id:num(pick(x, 'Id')) || num(pick(x, 'PriceAdjustmentId')),
         AdjustmentNo:text(pick(x, 'AdjustmentNo')),
         PageType:text(pick(x, 'PageType')),

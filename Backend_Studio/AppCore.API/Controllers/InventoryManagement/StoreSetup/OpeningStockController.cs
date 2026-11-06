@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 using AppCore.Application.InventoryManagement.StoreSetup;
+using AppCore.Application.InventoryManagement;
 using AppCore.Application.Platform.EffectiveAccess.Interfaces;
 using AppCore.Api.Extensions;
 
@@ -148,6 +149,15 @@ public class OpeningStockController
     {
         return Run(
             async () => Ok(await _repository.GetAllAsync(type)),
+            "Failed to load the opening stocks.");
+    }
+
+    [HttpGet("paged")]
+    public Task<IActionResult> GetPaged(
+        [FromQuery] InventoryDocumentPageRequest request)
+    {
+        return Run(
+            async () => Ok(await _repository.GetPagedAsync(request ?? new InventoryDocumentPageRequest())),
             "Failed to load the opening stocks.");
     }
 

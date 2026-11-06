@@ -331,13 +331,49 @@ public class MenuSynchronizationController : ControllerBase
     // Get By Id
     //===========================================================
 
-    [HttpGet("{id:long}")]
+    // By the internal id (older links, boards)
+    [HttpGet("by-id/{id:long}")]
 
-    public async Task<ActionResult<MenuSynchronizationDto>> GetById
+    public async Task<ActionResult<MenuSynchronizationDto>> GetByInternalId
     (
         long id
     )
     {
+        MenuSynchronizationDto? row =
+            await _repository.GetByIdAsync(id);
+
+        if (row == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(row);
+    }
+
+
+
+    //===========================================================
+    // Get By Public Id (links and the address bar)
+    //===========================================================
+
+    [HttpGet("{publicId:guid}")]
+
+    public async Task<ActionResult<MenuSynchronizationDto>> GetById
+    (
+        Guid publicId
+    )
+    {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         var synchronization =
             await _repository.GetByIdAsync
             (
@@ -435,13 +471,24 @@ public class MenuSynchronizationController : ControllerBase
     // Delete
     //===========================================================
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{publicId:guid}")]
 
     public async Task<ActionResult> Delete
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         try
         {
             var deleted =

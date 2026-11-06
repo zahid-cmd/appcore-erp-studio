@@ -33,8 +33,69 @@ Routes =
 
             // SUBMENU ROUTE PLACEHOLDER
 
+            //===================================================
+            // Service Appointments (SUB-010-002-003) and Test Rides
+            // (SUB-010-002-004) : full CRUD pages written over the
+            // Code Sync baseline (2026-11-06), each with a 'board'
+            // child (the day board). The two AUTO blocks below stay
+            // as the sync wrote them; never run Code Sync or its
+            // rollback again for these submenus.
+            //===================================================
+
+            // AUTO-BEGIN : SUB-010-002-003
+
+                //===========================================================
+                // Service Appointments
+                //===========================================================
+
+                {
+                    path:'service-appointments',
+
+                    data:
+                    {
+                        breadcrumb:'Service Appointments'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './service-appointments.routes'
+                        )
+                        .then(
+                            m =>
+                                m.ServiceAppointmentsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-010-002-003
+
+            // AUTO-BEGIN : SUB-010-002-004
+
+                //===========================================================
+                // Test Rides
+                //===========================================================
+
+                {
+                    path:'test-rides',
+
+                    data:
+                    {
+                        breadcrumb:'Test Rides'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './test-rides.routes'
+                        )
+                        .then(
+                            m =>
+                                m.TestRidesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-010-002-004
+
         ]
 
     }
 
-];
+];

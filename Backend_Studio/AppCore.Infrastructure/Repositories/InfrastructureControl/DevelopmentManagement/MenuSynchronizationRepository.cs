@@ -168,6 +168,7 @@ public class MenuSynchronizationRepository
                 x => new MenuSynchronizationDto
                 {
                     Id = x.Id,
+                    PublicId = x.PublicId,
 
                     ModuleId = x.ModuleId,
                     ModuleCode = x.ModuleCode,
@@ -272,6 +273,24 @@ public class MenuSynchronizationRepository
 
 
     //===========================================================
+    // Internal Id By Public Id (live rows only)
+    //===========================================================
+
+    public async Task<long?> GetIdByPublicIdAsync
+    (
+        Guid publicId
+    )
+    {
+        return await _context.MenuSynchronizations
+            .AsNoTracking()
+            .Where(x => x.PublicId == publicId && !x.IsDeleted)
+            .Select(x => (long?)x.Id)
+            .FirstOrDefaultAsync();
+    }
+
+
+
+    //===========================================================
     // Get By Id
     //===========================================================
 
@@ -299,6 +318,7 @@ public class MenuSynchronizationRepository
                 x => new MenuSynchronizationDto
                 {
                     Id = x.Id,
+                    PublicId = x.PublicId,
 
                     ModuleId = x.ModuleId,
                     ModuleCode = x.ModuleCode,

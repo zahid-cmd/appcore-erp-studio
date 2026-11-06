@@ -217,6 +217,7 @@ public class ModuleSynchronizationRepository
                 {
                     Id =
                         x.Id,
+                    PublicId = x.PublicId,
 
 
                     //===================================================
@@ -387,6 +388,24 @@ public class ModuleSynchronizationRepository
 
 
     //===========================================================
+    // Internal Id By Public Id (live rows only)
+    //===========================================================
+
+    public async Task<long?> GetIdByPublicIdAsync
+    (
+        Guid publicId
+    )
+    {
+        return await _context.ModuleSynchronizations
+            .AsNoTracking()
+            .Where(x => x.PublicId == publicId && !x.IsDeleted)
+            .Select(x => (long?)x.Id)
+            .FirstOrDefaultAsync();
+    }
+
+
+
+    //===========================================================
     // Get By Id
     //===========================================================
 
@@ -414,6 +433,7 @@ public class ModuleSynchronizationRepository
                 {
                     Id =
                         x.Id,
+                    PublicId = x.PublicId,
 
 
                     //===================================================

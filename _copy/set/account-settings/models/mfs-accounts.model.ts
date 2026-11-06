@@ -1,0 +1,120 @@
+// PAGE-CLONED : Bank Accounts -> MFS Accounts
+//===============================================================
+// MFS Accounts
+//===============================================================
+
+export interface MFSAccount
+{
+    MFSAccountId: number;
+    // The id used in links and API calls (uuid v7)
+    PublicId?: string;
+
+    AccountSubGroupsId: number;
+
+    MFSAccountCode: string;
+
+    MFSAccountName: string;
+
+    Remarks: string;
+
+    Status: boolean;
+
+    Branch: string;
+
+    DisplayName: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    // Bank Accounts → BankAccountCode (stored by code)
+    LinkedBankAccount: string;
+
+    // Display name of the linked bank account (read only, list)
+    LinkedBankAccountName?: string;
+
+    MFSAccountNumber: string;
+
+    AccountType: string;
+
+    BranchExclusive: boolean;
+
+    MFSCharges: number;
+
+}
+
+
+//===============================================================
+// Create MFS Accounts
+//===============================================================
+
+export interface CreateMFSAccount
+{
+    AccountSubGroupsId: number;
+
+    MFSAccountCode: string;
+
+    MFSAccountName: string;
+
+    Remarks: string;
+
+    Status: boolean;
+
+    Branch: string;
+
+    DisplayName: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    LinkedBankAccount: string;
+
+    MFSAccountNumber: string;
+
+    AccountType: string;
+
+    BranchExclusive: boolean;
+
+    MFSCharges: number;
+
+}
+
+
+//===============================================================
+// Update MFS Accounts
+//===============================================================
+
+export interface UpdateMFSAccount
+{
+    MFSAccountId: number;
+
+    AccountSubGroupsId: number;
+
+    MFSAccountCode: string;
+
+    MFSAccountName: string;
+
+    Remarks: string;
+
+    Status: boolean;
+
+    Branch: string;
+
+    DisplayName: string;
+
+    CollectionAccount: boolean;
+
+    PaymentAccount: boolean;
+
+    LinkedBankAccount: string;
+
+    MFSAccountNumber: string;
+
+    AccountType: string;
+
+    BranchExclusive: boolean;
+
+    MFSCharges: number;
+
+}

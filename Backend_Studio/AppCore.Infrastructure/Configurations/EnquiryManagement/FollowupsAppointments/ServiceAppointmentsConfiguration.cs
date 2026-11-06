@@ -15,7 +15,12 @@ namespace AppCore.Infrastructure.Configurations.EnquiryManagement.FollowUpsAppoi
 
 
 //===============================================================
-// Service Appointments Configuration (ServiceAppointments_Tables.sql)
+// Service Appointments Configuration
+// (ServiceAppointments_Tables.sql)
+//
+// HAND-WRITTEN over the Code Sync baseline (2026-11-06). Never
+// run Code Synchronization or its rollback again for the Service
+// Appointments submenu.
 //===============================================================
 
 public class ServiceAppointmentsConfiguration
@@ -29,6 +34,14 @@ public class ServiceAppointmentsConfiguration
         builder.HasKey(x => x.ServiceAppointmentId);
 
         builder.Property(x => x.ServiceAppointmentId).ValueGeneratedOnAdd();
+
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_ServiceAppointments_PublicId");
 
         builder.Property(x => x.ServiceEnquiryId).IsRequired();
 

@@ -38,6 +38,9 @@ public class ServiceAppointmentDto
 {
     public long ServiceAppointmentId { get; set; }
 
+    // Links of the Service Appointments page (list / form)
+    public Guid PublicId { get; set; }
+
     public long ServiceEnquiryId { get; set; }
 
     public string EnquiryNo { get; set; } = string.Empty;
@@ -87,6 +90,12 @@ public class ServiceAppointmentDto
     public string EnquiryStatusColor { get; set; } = string.Empty;
 
     public DateTime CreatedDate { get; set; }
+
+    // Booked / Confirmed (holds the slot)
+    public bool IsLive { get; set; }
+
+    // Live and the date has passed
+    public bool IsOverdue { get; set; }
 }
 
 

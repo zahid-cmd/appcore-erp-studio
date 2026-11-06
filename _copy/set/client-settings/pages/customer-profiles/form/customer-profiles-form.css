@@ -1,0 +1,212 @@
+@import '../../../../../../shared/styles/app-form-page.css';
+
+/* =====================================================
+   Customer Profiles Form
+===================================================== */
+
+/* Date of Birth (the datepicker has no label of its own) */
+.cus-date-field
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.cus-date-label
+{
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+/* Inline warning under a box (phone / NID) : Save is blocked */
+.cus-warning
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: -8px 0 12px;
+    font-size: 12px;
+    color: #b91c1c;
+}
+
+/* Outside -> Inbound conversion notice */
+.cus-note
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* =====================================================
+   Inbound pager (page toolbar, right) : Next / Back
+===================================================== */
+
+.cus-pager
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cus-pager-step
+{
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.cus-pager-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 16px;
+    border: 1px solid #1e3a8a;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #1e40af, #1e3a8a);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.cus-pager-btn:hover
+{
+    filter: brightness(1.1);
+}
+
+.cus-pager-btn:active
+{
+    transform: translateY(1px);
+}
+
+.cus-pager-btn-back
+{
+    border-color: #cbd5e1;
+    background: #ffffff;
+    color: #1e293b;
+}
+
+/* =====================================================
+   Walk-in tag (Outside customers added at a sales counter) :
+   thin outline, teal text, no fill
+===================================================== */
+
+.cus-walkin
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    margin: 0 0 12px;
+    padding: 8px 0 0;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 13px;
+    color: #334155;
+}
+
+.cus-walkin-tag
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 10px;
+    border: 1px solid #99f6e4;
+    border-radius: 999px;
+    color: #0f766e;
+    font-weight: 700;
+}
+
+.cus-walkin-cleared .cus-walkin-tag
+{
+    border-style: dashed;
+    color: #64748b;
+    text-decoration: line-through;
+}
+
+.cus-walkin-text
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.cus-walkin-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cus-walkin-btn:hover:not(:disabled)
+{
+    border-color: #fecdd3;
+    color: #be123c;
+}
+
+.cus-walkin-btn:disabled
+{
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* Canvas footer : Display Name (same as Supplier Profiles) */
+.cus-footer
+{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    min-width:0;
+    padding:0 20px;
+    box-sizing:border-box;
+}
+
+.cus-footer-label
+{
+    flex:none;
+    color:#64748b;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+}
+
+.cus-footer-name
+{
+    min-width:0;
+    overflow:hidden;
+    color:#0f172a;
+    font-size:15px;
+    font-weight:800;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.cus-footer-empty
+{
+    color:#94a3b8;
+    font-weight:600;
+}

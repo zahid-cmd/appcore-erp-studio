@@ -4,6 +4,9 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Application.Common.Paging;
+using AppCore.Infrastructure.Persistence.Paging;
+
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Application.Settings.GeneralSettings.Warehouses.DTOs;
 
@@ -173,6 +176,120 @@ public class WarehousesRepository : IWarehousesRepository
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<WarehousesDto> ListSorts()
+    {
+        return new SortMap<WarehousesDto>("WarehouseCode")
+            .Add("CompanyName", x => _context.Set<CompanyEntity>().Where(c => c.CompanyId == x.CompanyId).Select(c => c.CompanyName).FirstOrDefault())
+            .Add("WarehouseCode", x => x.WarehouseCode)
+            .Add("WarehouseName", x => x.WarehouseName)
+            .Add("DisplayName", x => x.DisplayName)
+            .Add("Mobile", x => x.Mobile)
+            .Add("DefaultStatus", x => x.IsDefault)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.WarehouseId);
+    }
+
+
+    public async Task<PagedResult<WarehousesDto>> GetPagedAsync(
+        GeneralSettingsPageRequest request)
+    {
+        IQueryable<WarehousesDto> query =
+            WarehousesQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.WarehouseCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.WarehouseName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.DisplayName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Mobile ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Email ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Address ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(_context.Set<CompanyEntity>().Where(c => c.CompanyId == x.CompanyId).Select(c => c.CompanyName).FirstOrDefault() ?? string.Empty, like));
+        }
+
+        if (request.WingId.HasValue && request.WingId.Value > 0) { long wingId = request.WingId.Value; query = query.Where(x => x.WingId == wingId); }
+
+        if (request.BranchId.HasValue && request.BranchId.Value > 0) { long branchId = request.BranchId.Value; query = query.Where(x => x.BranchId == branchId); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<WarehousesDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<WarehousesDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

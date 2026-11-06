@@ -120,30 +120,9 @@ Routes =
                 m =>
                     m.SalesEnquiriesForm
             )
-    },
-
-
-    //===========================================================
-    // Test Rides (MANUAL, not Code Sync) : the day board of test
-    // rides (?enquiry=<id> picks one, ?date= opens a day)
-    //===========================================================
-
-    {
-        path:'test-rides',
-
-        data:
-        {
-            breadcrumb:'Test Rides'
-        },
-
-        loadComponent:() =>
-            import(
-                '../pages/sales-enquiries/test-rides/sales-test-rides'
-            )
-            .then(
-                m =>
-                    m.SalesTestRidesPage
-            )
     }
+
+    // Service Appointments / Test Rides : their own pages under
+    // Follow-ups & Appointments (2026-11-06)
 
 ];

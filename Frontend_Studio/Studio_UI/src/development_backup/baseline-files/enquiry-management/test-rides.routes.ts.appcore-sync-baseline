@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const TestRidesRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'Test Rides'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/test-rides/list/test-rides-list'
+            )
+            .then(
+                m =>
+                    m.TestRidesList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add Test Rides'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/test-rides/form/test-rides-form'
+            )
+            .then(
+                m =>
+                    m.TestRidesForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit Test Rides'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/test-rides/form/test-rides-form'
+            )
+            .then(
+                m =>
+                    m.TestRidesForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View Test Rides'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/test-rides/form/test-rides-form'
+            )
+            .then(
+                m =>
+                    m.TestRidesForm
+            )
+    }
+
+];

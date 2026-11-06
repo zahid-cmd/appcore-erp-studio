@@ -49,6 +49,17 @@ public class SubmenuSynchronizationConfiguration
         );
 
 
+        // Public Id (links and the address bar; uuid v7;
+        // INF_SubmenuSynchronization_PublicId.sql)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_INF_SubmenuSynchronization_PublicId");
+
+
         //=======================================================
         // Navigation
         //=======================================================

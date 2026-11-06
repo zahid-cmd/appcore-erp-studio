@@ -340,9 +340,32 @@ implements OnInit, OnDestroy
         PurchaseOrderRow[] =
     [];
 
-    filteredPurchaseOrders:
-        PurchaseOrderRow[] =
-    [];
+    // Rows on all pages after the tab / supplier / search (server)
+    totalRecords:
+        number =
+        0;
+
+    // Status counts from the server (supplier and search applied)
+    counts:
+        Record<string, number> =
+        {};
+
+    // Server sort ('' = newest first)
+    private sortField:
+        string =
+        '';
+
+    private sortDirection:
+        'asc' | 'desc' =
+        'asc';
+
+    private searchTimer?:
+        number;
+
+    // A load that is out of date is ignored
+    private loadSeq:
+        number =
+        0;
 
     pagedPurchaseOrders:
         PurchaseOrderRow[] =
@@ -370,7 +393,7 @@ implements OnInit, OnDestroy
         false;
 
     //===========================================================
-    // Supplier Filter (built from the loaded orders)
+    // Supplier Filter (suppliers on this page's documents, from the server)
     //===========================================================
 
     supplierFilterItems:
@@ -552,6 +575,14 @@ implements OnInit, OnDestroy
         void
     {
         this.clearProgressTimer();
+
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(this.searchTimer);
+        }
 
         if
         (
@@ -785,10 +816,17 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Load Items
+    // Load Items : one page from the server (tab / supplier /
+    // search / sort / page). withSuppliers also reloads the
+    // supplier filter (start, refresh, after delete / restore).
     //===========================================================
 
-    loadItems():
+    loadItems
+    (
+        withSuppliers:
+            boolean =
+            true
+    ):
         void
     {
         this.loading =
@@ -797,58 +835,69 @@ implements OnInit, OnDestroy
         this.loadFailed =
             false;
 
+        const seq =
+            ++this.loadSeq;
+
+        if
+        (
+            withSuppliers
+        )
+        {
+            this.loadSuppliers();
+        }
+
         this.purchaseOrdersService
-            .getAll(this.pageType)
+            .getPaged
+            ({
+                page:
+                    this.currentPage,
+                pageSize:
+                    this.pageSize,
+                search:
+                    this.searchText,
+                sort:
+                    this.sortField,
+                dir:
+                    this.sortDirection,
+                tab:
+                    this.selectedTab,
+                supplier:
+                    this.selectedSupplier ?? ''
+            })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
-                (
-                    response:
-                        PurchaseOrder[]
-                ):
-                    void =>
-                {
-                    // Display values
-                    this.purchaseOrders =
-                        (response ?? []).map
+                    result =>
+                    {
+                        if
                         (
-                            item =>
-                            ({
-                                ...item,
+                            seq !== this.loadSeq
+                        )
+                        {
+                            return;
+                        }
 
-                                OrderDateText:
-                                    this.toDisplayDate(
-                                        item.OrderDate
-                                    ),
+                        this.purchaseOrders =
+                            result.items.map(item => this.toRow(item));
 
-                                ExpectedDateText:
-                                    this.toDisplayDate(
-                                        item.ExpectedDate
-                                    ),
+                        this.pagedPurchaseOrders =
+                            this.purchaseOrders;
 
-                                TotalQuantityText:
-                                    String(item.TotalQuantity || 0),
+                        this.totalRecords =
+                            result.totalCount;
 
-                                TotalPayableText:
-                                    formatMoney(
-                                        item.TotalPayable
-                                    ),
+                        this.currentPage =
+                            result.page || 1;
 
-                                InvoiceText:
-                                    item.InvoicePriceBasis === 'MRP' ? 'MRP' : 'DP'
-                            })
-                        );
+                        this.counts =
+                            result.counts ?? {};
 
-                    this.buildSupplierFilter();
+                        this.loading =
+                            false;
 
-                    this.applyFilters();
-
-                    this.loading =
-                        false;
-
-                    this.cdr.detectChanges();
-                },
+                        this.cdr.detectChanges();
+                    },
 
                 error:
                 (
@@ -857,20 +906,31 @@ implements OnInit, OnDestroy
                 ):
                     void =>
                 {
+                    if
+                    (
+                        seq !== this.loadSeq
+                    )
+                    {
+                        return;
+                    }
+
                     console.error
                     (
-                        'Load Purchase Orders Error:',
+                        'Load Error:',
                         error
                     );
 
                     this.purchaseOrders =
                         [];
 
-                    this.filteredPurchaseOrders =
-                        [];
-
                     this.pagedPurchaseOrders =
                         [];
+
+                    this.totalRecords =
+                        0;
+
+                    this.counts =
+                        {};
 
                     this.loading =
                         false;
@@ -889,129 +949,91 @@ implements OnInit, OnDestroy
             });
     }
 
-    //===========================================================
-    // Supplier Filter Items (one per supplier on the list)
-    //===========================================================
-
-    private buildSupplierFilter():
-        void
+    // A list row with its display values
+    private toRow
+    (
+        item:
+            PurchaseOrder
+    ):
+        PurchaseOrderRow
     {
-        const suppliers =
-            new Map<string, string>();
+        return ({
+                ...item,
 
-        for
-        (
-            const item of this.purchaseOrders
-        )
-        {
-            if
-            (
-                item.SupplierCode
-            )
-            {
-                suppliers.set(
-                    item.SupplierCode,
-                    item.SupplierName || item.SupplierCode
-                );
-            }
-        }
+                OrderDateText:
+                    this.toDisplayDate(
+                        item.OrderDate
+                    ),
 
-        this.supplierFilterItems =
-        [
-            {
-                label:'All Suppliers',
-                value:null
-            },
+                ExpectedDateText:
+                    this.toDisplayDate(
+                        item.ExpectedDate
+                    ),
 
-            ...[...suppliers.entries()]
-                .sort((a, b) => a[1].localeCompare(b[1]))
-                .map
-                (
-                    ([code, name]) =>
-                    ({
-                        label:name,
-                        value:code
-                    })
-                )
-        ];
+                TotalQuantityText:
+                    String(item.TotalQuantity || 0),
 
-        // Supplier no longer on the list → clear the filter
-        if
-        (
-            this.selectedSupplier
-            &&
-            !suppliers.has(this.selectedSupplier)
-        )
-        {
-            this.selectedSupplier =
-                null;
-        }
+                TotalPayableText:
+                    formatMoney(
+                        item.TotalPayable
+                    ),
+
+                InvoiceText:
+                    item.InvoicePriceBasis === 'MRP' ? 'MRP' : 'DP'
+            });
     }
 
     //===========================================================
-    // Apply Filters
+    // Supplier Filter Items (suppliers on this page's documents)
     //===========================================================
 
-    applyFilters():
+    private loadSuppliers():
         void
     {
-        const keyword =
-            this.searchText
-                .trim()
-                .toLowerCase();
-
-        this.filteredPurchaseOrders =
-            this.purchaseOrders.filter
-            (
-                item =>
-                {
-                    const supplierMatch =
-                        this.selectedSupplier === null
-                        ||
-                        item.SupplierCode ===
-                        this.selectedSupplier;
-
-                    // "Closed" tab holds Closed Short and Cancelled
-                    const tabMatch =
-                        this.selectedTab === 'all'
-                        ||
-                        (
-                            this.selectedTab === 'Closed'
-                                ? item.Status === 'Closed Short' || item.Status === 'Cancelled'
-                                : item.Status === this.selectedTab
-                        );
-
-                    const text =
+        this.purchaseOrdersService
+            .getListSuppliers()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    suppliers =>
+                    {
+                        this.supplierFilterItems =
                         [
-                            item.OrderNo,
-                            item.OrderDate,
-                            item.OrderDateText,
-                            item.ExpectedDateText,
-                            item.SupplierName,
-                            item.InvoicePriceBasis,
-                            item.Narration,
-                            item.TotalPayableText,
-                            item.Status
-                        ]
-                        .join(' ')
-                        .toLowerCase();
+                            {
+                                label:'All Suppliers',
+                                value:null
+                            },
 
-                    return supplierMatch
-                        &&
-                        tabMatch
-                        &&
-                        (
-                            !keyword
-                            ||
-                            text.includes(keyword)
-                        );
-                }
-            );
+                            ...suppliers.map
+                            (
+                                x =>
+                                ({
+                                    label:x.name || x.code,
+                                    value:x.code
+                                })
+                            )
+                        ];
 
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    () =>
+                    {
+                        // The list still works without the filter options
+                    }
+            });
+    }
+
+    // Back to page 1 and load (filters / sort changed)
+    private reload():
+        void
+    {
         this.currentPage =
             1;
 
-        this.updatePagination();
+        this.loadItems(false);
     }
 
     //===========================================================
@@ -1028,13 +1050,11 @@ implements OnInit, OnDestroy
         this.selectedTab =
             value;
 
-        this.applyFilters();
-
-        this.cdr.detectChanges();
+        this.reload();
     }
 
     //===========================================================
-    // Search
+    // Search (after a short pause in typing)
     //===========================================================
 
     onSearch
@@ -1049,7 +1069,26 @@ implements OnInit, OnDestroy
             ??
             '';
 
-        this.applyFilters();
+        if
+        (
+            this.searchTimer
+        )
+        {
+            clearTimeout(this.searchTimer);
+        }
+
+        this.searchTimer =
+            window.setTimeout
+            (
+                () =>
+                {
+                    this.searchTimer =
+                        undefined;
+
+                    this.reload();
+                },
+                300
+            );
     }
 
     //===========================================================
@@ -1068,7 +1107,7 @@ implements OnInit, OnDestroy
             ||
             null;
 
-        this.applyFilters();
+        this.reload();
     }
 
     //===========================================================
@@ -1091,7 +1130,7 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Sort
+    // Sort (on the server)
     //===========================================================
 
     onSort
@@ -1106,84 +1145,15 @@ implements OnInit, OnDestroy
     ):
         void
     {
-        const direction =
-            event.direction === 'asc'
-                ? 1
-                : -1;
+        this.sortField =
+            event?.field ?? '';
 
-        // Display columns sort on their raw values
-        const rawFields:
-            Record<string, string> =
-        {
-            OrderDateText:'OrderDate',
-            ExpectedDateText:'ExpectedDate',
-            TotalQuantityText:'TotalQuantity',
-            TotalPayableText:'TotalPayable'
-        };
+        this.sortDirection =
+            event?.direction === 'desc'
+                ? 'desc'
+                : 'asc';
 
-        const field =
-            rawFields[event.field]
-            ??
-            event.field;
-
-        this.filteredPurchaseOrders =
-        [
-            ...this.filteredPurchaseOrders
-        ]
-        .sort
-        (
-            (a: any, b: any): number =>
-            {
-                const valueA =
-                    a[field];
-
-                const valueB =
-                    b[field];
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1 * direction;
-                }
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1 * direction;
-                }
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return valueA.localeCompare(valueB) * direction;
-                }
-
-                return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * direction;
-            }
-        );
-
-        this.currentPage =
-            1;
-
-        this.updatePagination();
+        this.reload();
     }
 
     //===========================================================
@@ -1202,6 +1172,9 @@ implements OnInit, OnDestroy
         this.selectedSupplier =
             null;
 
+        this.sortField =
+            '';
+
         this.currentPage =
             1;
 
@@ -1209,25 +1182,8 @@ implements OnInit, OnDestroy
     }
 
     //===========================================================
-    // Pagination
+    // Pagination (on the server)
     //===========================================================
-
-    updatePagination():
-        void
-    {
-        const start:
-            number =
-            (this.currentPage - 1) * this.pageSize;
-
-        this.pagedPurchaseOrders =
-        [
-            ...this.filteredPurchaseOrders.slice
-            (
-                start,
-                start + this.pageSize
-            )
-        ];
-    }
 
     onPageChange
     (
@@ -1239,7 +1195,7 @@ implements OnInit, OnDestroy
         this.currentPage =
             page;
 
-        this.updatePagination();
+        this.loadItems(false);
     }
 
     onPageSizeChange
@@ -1252,10 +1208,48 @@ implements OnInit, OnDestroy
         this.pageSize =
             size;
 
-        this.currentPage =
-            1;
+        this.reload();
+    }
 
-        this.updatePagination();
+    //===========================================================
+    // Summary Line (below the canvas) : documents by status
+    // (supplier and search applied)
+    //===========================================================
+
+    get summaryTotal():
+        number
+    {
+        return Number(this.counts['All'] ?? 0);
+    }
+
+    // A status count ; the server keys are the status names
+    countOf
+    (
+        status:
+            string
+    ):
+        number
+    {
+        const key =
+            Object.keys(this.counts).find(k => k.toLowerCase() === status.toLowerCase());
+
+        return key ? Number(this.counts[key] ?? 0) : 0;
+    }
+
+    get summaryNote():
+        string
+    {
+        return this.searchText.trim() || this.selectedSupplier
+            ? 'Filtered records'
+            : 'All records';
+    }
+
+    summaryText(
+        value: number
+    ):
+        string
+    {
+        return value.toLocaleString('en-US');
     }
 
     //===========================================================
@@ -1288,7 +1282,7 @@ implements OnInit, OnDestroy
         (
             [
                 'view',
-                item.PurchaseOrderId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1327,7 +1321,7 @@ implements OnInit, OnDestroy
         (
             [
                 'edit',
-                item.PurchaseOrderId
+                item.PublicId
             ],
             {
                 relativeTo:
@@ -1401,7 +1395,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.purchaseOrdersService.delete(
-                item.PurchaseOrderId
+                item.PublicId ?? ''
             )
         )
             .pipe(takeUntilDestroyed(this.destroyRef))

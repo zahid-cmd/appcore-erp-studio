@@ -4,6 +4,10 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.ServiceSettings;
 
 using ServicePolicyEntity =
@@ -275,6 +279,110 @@ public class ServicePolicyRepository :
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<ServicePolicyDto> ListSorts()
+    {
+        return new SortMap<ServicePolicyDto>("PolicyCode")
+            .Add("PolicyCode", x => x.PolicyCode)
+            .Add("BrandName", x => x.BrandName)
+            .Add("WarrantyDisplay", x => x.WarrantyYears)
+            .Add("ScheduleDisplay", x => x.FreeServiceCount)
+            .Add("AssociatedLedgerCode", x => x.AssociatedLedgerCode)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.ServicePolicyId);
+    }
+
+
+    public async Task<PagedResult<ServicePolicyDto>> GetPagedAsync(
+        ServiceSettingsPageRequest request)
+    {
+        IQueryable<ServicePolicyDto> query =
+            (await GetAllAsync()).AsQueryable();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            query =
+                query.Where(
+                    x =>
+                        (x.PolicyCode ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.BrandName ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.AssociatedSubGroupName ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.AssociatedLedgerCode ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.AssociatedLedgerName ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (x.Remarks ?? string.Empty).Contains(word, StringComparison.OrdinalIgnoreCase));
+        }
+
+
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToList();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        int total =
+            query.Count();
+
+        PagingQuery.FitPage(request, total);
+
+        List<ServicePolicyDto> items =
+            ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToList();
+
+        PagedResult<ServicePolicyDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

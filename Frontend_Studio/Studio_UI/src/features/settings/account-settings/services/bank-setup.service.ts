@@ -31,6 +31,14 @@ from '../../../../environments/environment';
 
 import
 {
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     BankSetup,
     CreateBankSetup,
     UpdateBankSetup
@@ -266,5 +274,59 @@ export class BankSetupService
         return this.http.get<any[]>(
             `${this.apiUrl}/${id}/history`
         );
+    }
+
+
+
+    //===========================================================
+    // One list page (server paging)
+    //
+    // query : page, pageSize, search, sort, dir and the list's
+    //         filters; blanks are left out
+    // counts: Total · Active · Inactive
+    //===========================================================
+
+    getPaged
+    (
+        query:
+            Record<string, unknown>
+    ):
+        Observable<PagedResult<any>>
+    {
+        return this.http
+            .get<any>(
+                `${this.apiUrl}/paged`,
+                { params:toPagedParams({ ...query }) }
+            )
+            .pipe(
+                map(
+                    raw =>
+                        toPagedResult(raw, (x: any) => ([x] as any[]).map(
+                            bankSetup =>
+
+                            ({
+                                ...bankSetup,
+
+                                BankSetupId:
+                                    Number(bankSetup.BankSetupId ?? bankSetup.bankSetupId ?? bankSetup.id ?? bankSetup.Id),
+
+                                BankCode:
+                                    bankSetup.BankCode ?? bankSetup.bankCode ?? '',
+
+                                BankName:
+                                    bankSetup.BankName ?? bankSetup.bankName ?? '',
+
+                                Remarks:
+                                    bankSetup.Remarks ?? bankSetup.remarks ?? '',
+
+                                Status:
+                                    Boolean(bankSetup.Status ?? bankSetup.status ?? true),
+
+                                ShortName:
+                                    bankSetup.ShortName ?? bankSetup.shortName ?? ''
+                            })
+                        )[0])
+                )
+            );
     }
 }

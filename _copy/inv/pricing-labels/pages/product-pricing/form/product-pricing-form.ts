@@ -601,14 +601,14 @@ export class ProductPricingForm
         void
     {
         const id =
-            Number(this.route.snapshot.paramMap.get('id')) || 0;
+            this.route.snapshot.paramMap.get('id') ?? '';
 
         const viewing =
-            /\/view\/\d+/.test(this.router.url);
+            /\/view\//.test(this.router.url);
 
         if
         (
-            id > 0
+            id !== ''
         )
         {
             this.mode = viewing ? 'view' : 'edit';
@@ -701,7 +701,7 @@ export class ProductPricingForm
     private loadDocument
     (
         id:
-            number
+            string
     ):
         void
     {
@@ -729,7 +729,7 @@ export class ProductPricingForm
                         {
                             this.mode = 'view';
 
-                            this.router.navigate([PRODUCT_PRICING_ROUTE, 'view', doc.ProductPricingId], { replaceUrl:true });
+                            this.router.navigate([PRODUCT_PRICING_ROUTE, 'view', doc.PublicId], { replaceUrl:true });
                         }
 
                         return this.service.getDefaults(doc.PageType);
@@ -4768,7 +4768,7 @@ export class ProductPricingForm
                             !this.doc
                         )
                         {
-                            this.doc = { ProductPricingId:saved.ProductPricingId } as ProductPricing;
+                            this.doc = { ProductPricingId:saved.ProductPricingId, PublicId:saved.PublicId } as ProductPricing;
                         }
 
                         return this.service.post(saved.ProductPricingId);
@@ -4808,7 +4808,7 @@ export class ProductPricingForm
                             this.mode === 'add' && this.doc?.ProductPricingId
                         )
                         {
-                            this.router.navigate([PRODUCT_PRICING_ROUTE, 'edit', this.doc.ProductPricingId], { replaceUrl:true });
+                            this.router.navigate([PRODUCT_PRICING_ROUTE, 'edit', this.doc.PublicId], { replaceUrl:true });
 
                             return;
                         }
@@ -4938,7 +4938,7 @@ export class ProductPricingForm
                 'Deleting Price Change',
                 `Please wait while "${doc.PricingNo}" is being deleted...`,
                 'Price change deleted.',
-                this.service.delete(doc.ProductPricingId))
+                this.service.delete(doc.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -4981,7 +4981,7 @@ export class ProductPricingForm
 
         const url =
             this.router.serializeUrl(
-                this.router.createUrlTree(['/print-viewer', PRODUCT_PRICING_PRINT_KEY, this.doc.ProductPricingId])
+                this.router.createUrlTree(['/print-viewer', PRODUCT_PRICING_PRINT_KEY, this.doc.PublicId])
             );
 
         const tab =

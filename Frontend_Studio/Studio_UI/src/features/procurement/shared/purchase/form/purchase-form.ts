@@ -8182,6 +8182,7 @@ implements OnInit, OnDestroy
 
             this.withMinimumDuration(
                 this.purchasesService.update(
+                    this.order?.PublicId || this.routePublicId,
                     {
                         ...payload,
                         PurchaseId:this.entityId
@@ -8512,8 +8513,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             this.postOnApproval ? 'Approving and Posting' : 'Approving Purchase',
                             this.postOnApproval ? 'Purchase approved and posted.' : 'Purchase approved.',
-                            id =>
-                                this.purchasesService.approve(id)
+                            publicId =>
+                                this.purchasesService.approve(publicId)
                         )
                 ),
             'Approve',
@@ -8534,8 +8535,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Returning to Draft',
                             'Purchase returned to draft.',
-                            id =>
-                                this.purchasesService.returnToDraft(id)
+                            publicId =>
+                                this.purchasesService.returnToDraft(publicId)
                         )
                 ),
             'Return',
@@ -8556,8 +8557,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Posting Purchase',
                             'Purchase posted.',
-                            id =>
-                                this.purchasesService.post(id)
+                            publicId =>
+                                this.purchasesService.post(publicId)
                         )
                 ),
             'Post',
@@ -8645,8 +8646,8 @@ implements OnInit, OnDestroy
         this.runWorkflow(
             'Cancelling Purchase',
             'Purchase cancelled.',
-            id =>
-                this.purchasesService.cancel(id, reason)
+            publicId =>
+                this.purchasesService.cancel(publicId, reason)
         );
     }
 
@@ -8661,7 +8662,7 @@ implements OnInit, OnDestroy
         doneMessage:
             string,
         call:
-            (id: number) => Observable<void>
+            (publicId: string) => Observable<void>
     ):
         void
     {
@@ -8674,15 +8675,16 @@ implements OnInit, OnDestroy
             return;
         }
 
-        const id:
-            number =
-            this.order?.PurchaseId
+        // The record is addressed by its uuid (never the number)
+        const publicId:
+            string =
+            this.order?.PublicId
             ||
-            this.entityId;
+            this.routePublicId;
 
         if
         (
-            !(id > 0)
+            !publicId
         )
         {
             return;
@@ -8694,7 +8696,7 @@ implements OnInit, OnDestroy
         );
 
         this.withMinimumDuration(
-            call(id)
+            call(publicId)
         )
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe

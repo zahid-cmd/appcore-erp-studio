@@ -45,6 +45,17 @@ public class MenuSynchronizationConfiguration
         );
 
 
+        // Public Id (links and the address bar; uuid v7;
+        // INF_MenuSynchronization_PublicId.sql)
+        builder.Property(x => x.PublicId)
+               .IsRequired()
+               .HasDefaultValueSql("uuidv7()");
+
+        builder.HasIndex(x => x.PublicId)
+               .IsUnique()
+               .HasDatabaseName("UX_INF_MenuSynchronization_PublicId");
+
+
         //=======================================================
         // Navigation
         //=======================================================

@@ -16,6 +16,10 @@ public interface IOpeningStockRepository
     // type '' = every type
     Task<List<OpeningStockDto>> GetAllAsync(string? pageType);
 
+    // One list page : tab, type, search, sort on the server
+    Task<AppCore.Application.Common.Paging.PagedResult<OpeningStockDto>> GetPagedAsync(
+        AppCore.Application.InventoryManagement.InventoryDocumentPageRequest request);
+
     Task<OpeningStockDto?> GetByIdAsync(long id);
 
     Task<OpeningStockDefaultsDto> GetDefaultsAsync(string pageType);

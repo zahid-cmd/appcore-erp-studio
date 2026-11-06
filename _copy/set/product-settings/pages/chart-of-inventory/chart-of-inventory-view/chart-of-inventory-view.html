@@ -1,0 +1,1245 @@
+<div class="app-list-page coi-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Chart of Inventory"
+
+        subtitle="Category types, categories, sub categories and products"
+
+        icon="fa-solid fa-sitemap">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [(value)]="searchText"
+
+                placeholder="Search types, categories, sub categories..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Print"
+
+                command1Icon="fas fa-print"
+
+                (command1Click)="openPrint()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                [command3Visible]="false"
+
+                [rightCommandIcon]="allExpanded ? 'fas fa-angles-up' : 'fas fa-angles-down'"
+
+                (rightCommandClick)="toggleAll()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         PAGE TOOLBAR : TAB + SCOPED STATS | STATUS
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <div
+
+            pageToolbarLeft
+
+            class="coi-toolbar-left">
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [(selectedTab)]="selectedTab">
+
+            </app-control-tabs>
+
+
+            <!-- STAT STRIP (one capsule, four readings) -->
+
+            <div class="coi-stats" aria-label="Counts in scope">
+
+                <div class="coi-stat" title="Category types in scope">
+                    <i class="fas fa-layer-group"></i>
+                    <span class="coi-stat-value">{{ countTypes }}</span>
+                    <span class="coi-stat-label">Category Types</span>
+                </div>
+
+                <div class="coi-stat" title="Product categories in scope">
+                    <i class="fas fa-folder-tree"></i>
+                    <span class="coi-stat-value">{{ countCategories }}</span>
+                    <span class="coi-stat-label">Categories</span>
+                </div>
+
+                <div class="coi-stat" title="Product sub categories in scope">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="coi-stat-value">{{ countSubCategories }}</span>
+                    <span class="coi-stat-label">Sub Categories</span>
+                </div>
+
+                <div class="coi-stat coi-stat-accent" title="Products in scope">
+                    <i class="fas fa-box"></i>
+                    <span class="coi-stat-value">{{ countProducts }}</span>
+                    <span class="coi-stat-label">Products</span>
+                </div>
+
+            </div>
+
+            <!-- LINK ISSUES : shown only when the link check finds some -->
+
+            @if (issues.length > 0)
+            {
+                <button
+
+                    type="button"
+
+                    class="coi-scope"
+
+                    style="border-color:#f59e0b; color:#b45309; background:#fffbeb"
+
+                    [title]="issuesOpen ? 'Back to the chart' : 'Show items that are linked wrongly'"
+
+                    (click)="toggleIssues()">
+
+                    <i class="fas fa-triangle-exclamation"></i>
+
+                    <span class="coi-scope-value">
+                        {{ issues.length }} Link {{ issues.length === 1 ? 'Issue' : 'Issues' }}
+                    </span>
+
+                    @if (issuesOpen)
+                    {
+                        <i class="fas fa-xmark coi-scope-x"></i>
+                    }
+
+                </button>
+            }
+
+            @if (scopeLabel)
+            {
+                <button
+
+                    type="button"
+
+                    class="coi-scope"
+
+                    title="Show the whole chart"
+
+                    (click)="clearSelection()">
+
+                    <i class="fas fa-crosshairs"></i>
+
+                    <span class="coi-scope-value">{{ scopeLabel }}</span>
+
+                    <i class="fas fa-xmark coi-scope-x"></i>
+
+                </button>
+            }
+
+        </div>
+
+
+        <div
+
+            pageToolbarRight
+
+            style="width:200px">
+
+            <app-search-dropdown
+
+                placeholder="All Status"
+
+                [items]="statusFilterItems"
+
+                labelField="label"
+
+                valueField="value"
+
+                [value]="selectedStatus"
+
+                (valueChange)="onStatusFilterChange($event)">
+
+            </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         BODY : NAVIGATOR | PREVIEW
+    ====================================================== -->
+
+    @if (loadFailed)
+    {
+        <div class="coi-state">
+
+            <app-empty-state
+
+                icon="fas fa-triangle-exclamation"
+
+                title="Unable to Load Chart of Inventory"
+
+                subtitle="Check your connection and try again."
+
+                actionText="Try Again"
+
+                [showAction]="true"
+
+                (action)="refresh()">
+
+            </app-empty-state>
+
+        </div>
+    }
+    @else
+    {
+        <div class="coi-split">
+
+            <!-- ===============================================
+                 NAVIGATOR
+            ================================================ -->
+
+            <aside class="coi-nav">
+
+                <div class="coi-nav-head">
+
+                    <div class="coi-heading">
+
+                        <span class="coi-tile">
+                            <i class="fas fa-sitemap"></i>
+                        </span>
+
+                        <div class="coi-heading-text">
+                            <span class="coi-heading-title">Navigator</span>
+                            <span class="coi-heading-sub">Type › Category › Sub Category</span>
+                        </div>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="coi-expand-btn"
+
+                        [title]="allExpanded ? 'Collapse all' : 'Expand all'"
+
+                        [disabled]="loading || navTypes.length === 0"
+
+                        (click)="toggleAll()">
+
+                        <i [class]="allExpanded ? 'fas fa-angles-up' : 'fas fa-angles-down'"></i>
+
+                        {{ allExpanded ? 'Collapse all' : 'Expand all' }}
+
+                    </button>
+
+                </div>
+
+                <div class="coi-nav-body appcore-scrollbar">
+
+                    @if (loading)
+                    {
+                        @for (n of [1, 2, 3, 4, 5, 6]; track n)
+                        {
+                            <span class="coi-skeleton"></span>
+                        }
+                    }
+                    @else
+                    {
+                        <!-- ROOT -->
+
+                        <div
+
+                            class="coi-node coi-node-root"
+
+                            [class.coi-node-active]="!selection"
+
+                            (click)="clearSelection()">
+
+                            <span class="coi-root-icon">
+                                <i class="fas fa-house"></i>
+                            </span>
+
+                            <span class="coi-node-name">All Category Types</span>
+
+                            <span class="coi-badge" title="Category Types">{{ navTypes.length }}</span>
+
+                        </div>
+
+                        @if (navTypes.length === 0)
+                        {
+                            <div class="coi-nav-empty">
+
+                                <i class="fas fa-magnifying-glass"></i>
+
+                                {{ searchText ? 'Nothing matches the search.' : 'No category types found.' }}
+
+                            </div>
+                        }
+                        @else
+                        {
+                            <ul class="coi-tree">
+
+                                @for (cls of navTypes; track cls.node.Id)
+                                {
+                                    <li>
+
+                                        <!-- TYPE -->
+
+                                        <div
+
+                                            class="coi-node coi-lv1"
+
+                                            [class.coi-node-active]="isSelected('type', cls.node.Id)"
+
+                                            [class.coi-node-off]="!cls.node.Status"
+
+                                            [attr.title]="cls.node.Code + ' · ' + cls.node.Name"
+
+                                            (click)="select('type', cls.node.Id)">
+
+                                            <button
+
+                                                type="button"
+
+                                                class="coi-caret"
+
+                                                [class.coi-caret-open]="isExpanded(typeKey(cls.node.Id))"
+
+                                                [style.visibility]="cls.categories.length ? 'visible' : 'hidden'"
+
+                                                [attr.aria-label]="isExpanded(typeKey(cls.node.Id)) ? 'Collapse' : 'Expand'"
+
+                                                (click)="toggle(typeKey(cls.node.Id), $event)">
+
+                                                <i class="fas fa-chevron-right"></i>
+
+                                            </button>
+
+                                            <span class="coi-node-code">{{ cls.node.Code }}</span>
+
+                                            <span class="coi-node-name">{{ cls.node.Name }}</span>
+
+                                            <span class="coi-badge" title="Categories">{{ cls.categories.length }}</span>
+
+                                        </div>
+
+                                        @if (isExpanded(typeKey(cls.node.Id)) && cls.categories.length)
+                                        {
+                                            <ul>
+
+                                                @for (grp of cls.categories; track grp.node.Id)
+                                                {
+                                                    <li>
+
+                                                        <!-- CATEGORY -->
+
+                                                        <div
+
+                                                            class="coi-node coi-lv2"
+
+                                                            [class.coi-node-active]="isSelected('category', grp.node.Id)"
+
+                                                            [class.coi-node-off]="!grp.node.Status"
+
+                                                            [attr.title]="grp.node.Code + ' · ' + grp.node.Name"
+
+                                                            (click)="select('category', grp.node.Id)">
+
+                                                            <button
+
+                                                                type="button"
+
+                                                                class="coi-caret"
+
+                                                                [class.coi-caret-open]="isExpanded(categoryKey(grp.node.Id))"
+
+                                                                [style.visibility]="grp.subCategories.length ? 'visible' : 'hidden'"
+
+                                                                [attr.aria-label]="isExpanded(categoryKey(grp.node.Id)) ? 'Collapse' : 'Expand'"
+
+                                                                (click)="toggle(categoryKey(grp.node.Id), $event)">
+
+                                                                <i class="fas fa-chevron-right"></i>
+
+                                                            </button>
+
+                                                            <span class="coi-node-code">{{ grp.node.Code }}</span>
+
+                                                            <span class="coi-node-name">{{ grp.node.Name }}</span>
+
+                                                            <span class="coi-badge" title="Sub Categories">{{ grp.subCategories.length }}</span>
+
+                                                        </div>
+
+                                                        @if (isExpanded(categoryKey(grp.node.Id)) && grp.subCategories.length)
+                                                        {
+                                                            <ul>
+
+                                                                @for (sub of grp.subCategories; track sub.node.Id)
+                                                                {
+                                                                    <li>
+
+                                                                        <!-- SUB CATEGORY -->
+
+                                                                        <div
+
+                                                                            class="coi-node coi-lv3"
+
+                                                                            [class.coi-node-active]="isSelected('subcategory', sub.node.Id)"
+
+                                                                            [class.coi-node-off]="!sub.node.Status"
+
+                                                                            [attr.title]="sub.node.Code + ' · ' + sub.node.Name"
+
+                                                                            (click)="select('subcategory', sub.node.Id)">
+
+                                                                            <span class="coi-leaf">
+                                                                                <span class="coi-leaf-dot"></span>
+                                                                            </span>
+
+                                                                            <span class="coi-node-code">{{ sub.node.Code }}</span>
+
+                                                                            <span class="coi-node-name">{{ sub.node.Name }}</span>
+
+                                                                            <span class="coi-badge coi-badge-product" title="Products">{{ sub.products }}</span>
+
+                                                                        </div>
+
+                                                                    </li>
+                                                                }
+
+                                                            </ul>
+                                                        }
+
+                                                    </li>
+                                                }
+
+                                            </ul>
+                                        }
+
+                                    </li>
+                                }
+
+                            </ul>
+                        }
+                    }
+
+                </div>
+
+            </aside>
+
+
+
+            <!-- ===============================================
+                 PREVIEW
+            ================================================ -->
+
+            <section class="coi-preview">
+
+                <!-- PREVIEW HEAD : one compact bar, same height as the navigator head
+                     tile | title + count / path | filter -->
+
+                <div class="coi-preview-head">
+
+                    <div class="coi-heading">
+
+                        <span class="coi-tile">
+                            <i [class]="previewIcon"></i>
+                        </span>
+
+                        <div class="coi-heading-text">
+
+                            <span class="coi-heading-title">
+
+                                {{ previewTitle }}
+
+                                <span class="coi-count">{{ previewRows.length }}</span>
+
+                            </span>
+
+                            <!-- PATH : where this list sits -->
+
+                            <nav class="coi-path" aria-label="Path">
+
+                                @for (step of path; track $index; let last = $last)
+                                {
+                                    <button
+
+                                        type="button"
+
+                                        class="coi-path-step"
+
+                                        [class.coi-path-current]="last"
+
+                                        [disabled]="last"
+
+                                        (click)="onPathClick(step)">
+
+                                        {{ step.label }}
+
+                                    </button>
+
+                                    @if (!last)
+                                    {
+                                        <i class="fas fa-chevron-right coi-path-sep"></i>
+                                    }
+                                }
+
+                            </nav>
+
+                        </div>
+
+                    </div>
+
+                    <label class="coi-filter">
+
+                        <i class="fas fa-filter"></i>
+
+                        <input
+
+                            type="text"
+
+                            placeholder="Filter rows..."
+
+                            [ngModel]="rowFilterText"
+
+                            (ngModelChange)="onRowFilterChange($event)">
+
+                    </label>
+
+                </div>
+
+                <div class="coi-table-wrap appcore-scrollbar">
+
+                    <table class="coi-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th class="coi-col-no">#</th>
+
+                                @for (col of previewColumns; track col.key)
+                                {
+                                    <th
+
+                                        [style.width]="col.width ?? null"
+
+                                        [style.text-align]="col.align">
+
+                                        {{ col.label }}
+
+                                    </th>
+                                }
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @if (loading || (productsLoading && previewRows.length === 0))
+                            {
+                                @for (n of [1, 2, 3, 4, 5, 6]; track n)
+                                {
+                                    <tr class="coi-row-skeleton">
+                                        <td [attr.colspan]="previewColumns.length + 1">
+                                            <span class="coi-skeleton"></span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            @else
+                            {
+                                @for (row of previewRows; track row.level + row.id; let i = $index)
+                                {
+                                    <tr
+
+                                        [class.coi-row-drill]="row.drillable"
+
+                                        [class.coi-row-off]="!row.status"
+
+                                        [attr.title]="row.drillable ? 'Open ' + row.name : null"
+
+                                        (click)="onRowClick(row)">
+
+                                        <td class="coi-col-no">{{ i + 1 }}</td>
+
+                                        @for (col of previewColumns; track col.key)
+                                        {
+                                            <td [style.text-align]="col.align">
+
+                                                @switch (col.key)
+                                                {
+                                                    @case ('code')
+                                                    {
+                                                        <span class="coi-code">{{ row.code }}</span>
+                                                    }
+
+                                                    @case ('name')
+                                                    {
+                                                        <span class="coi-name">
+
+                                                            <span class="coi-name-text">{{ row.name }}</span>
+
+                                                            @if (row.drillable)
+                                                            {
+                                                                <span class="coi-open">
+                                                                    Open
+                                                                    <i class="fas fa-arrow-right"></i>
+                                                                </span>
+                                                            }
+
+                                                        </span>
+                                                    }
+
+                                                    @case ('type')
+                                                    {
+                                                        <span
+
+                                                            class="coi-type"
+
+                                                            [attr.data-type]="row.cells['type']">
+
+                                                            {{ row.cells['type'] }}
+
+                                                        </span>
+                                                    }
+
+                                                    @case ('branch')
+                                                    {
+                                                        <span class="coi-branch">{{ row.cells['branch'] }}</span>
+                                                    }
+
+                                                    @case ('level')
+                                                    {
+                                                        <span class="coi-branch">{{ row.cells['level'] }}</span>
+                                                    }
+
+                                                    @case ('problem')
+                                                    {
+                                                        <span
+                                                            class="coi-branch"
+                                                            style="white-space:normal; color:#b45309">
+                                                            {{ row.cells['problem'] }}
+                                                        </span>
+                                                    }
+
+                                                    @case ('status')
+                                                    {
+                                                        <span
+
+                                                            class="coi-status"
+
+                                                            [class.coi-status-on]="row.status">
+
+                                                            <span class="coi-status-dot"></span>
+
+                                                            {{ row.status ? 'Active' : 'Inactive' }}
+
+                                                        </span>
+                                                    }
+
+                                                    @default
+                                                    {
+                                                        <span
+
+                                                            class="coi-num"
+
+                                                            [class.coi-num-zero]="!row.cells[col.key]">
+
+                                                            {{ row.cells[col.key] }}
+
+                                                        </span>
+                                                    }
+                                                }
+
+                                            </td>
+                                        }
+
+                                    </tr>
+                                }
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                    <!-- EMPTY : fills the space under the header, centered -->
+
+                    @if (!loading && !productsLoading && previewRows.length === 0)
+                    {
+                        <div class="coi-empty">
+
+                            <span class="coi-empty-icon">
+                                <i class="fas fa-inbox"></i>
+                            </span>
+
+                            <span>{{ previewEmptyText }}</span>
+
+                        </div>
+                    }
+
+                </div>
+
+            </section>
+
+        </div>
+    }
+
+</div>
+
+
+
+<!-- =====================================================
+     PRINT DIALOG
+     Left  : options (scope, depth, columns, page)
+     Right : live paper preview built from the real chart
+====================================================== -->
+
+@if (printOpen)
+{
+    <div
+
+        class="coi-modal-overlay"
+
+        (click)="closePrint()">
+
+        <div
+
+            class="coi-modal"
+
+            role="dialog"
+
+            aria-modal="true"
+
+            aria-labelledby="coiPrintTitle"
+
+            (click)="$event.stopPropagation()">
+
+            <!-- HEAD -->
+
+            <div class="coi-modal-head">
+
+                <div class="coi-modal-brand">
+
+                    <span class="coi-modal-icon">
+                        <i class="fas fa-print"></i>
+                    </span>
+
+                    <div>
+
+                        <div
+
+                            id="coiPrintTitle"
+
+                            class="coi-modal-title">
+
+                            Print Chart of Inventory
+
+                        </div>
+
+                        <div class="coi-modal-sub">Shape the printout — the preview follows every choice</div>
+
+                    </div>
+
+                </div>
+
+                <button
+
+                    type="button"
+
+                    class="coi-modal-close"
+
+                    aria-label="Close"
+
+                    [disabled]="printing"
+
+                    (click)="closePrint()">
+
+                    <i class="fas fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <!-- BODY -->
+
+            <div class="coi-modal-body">
+
+                <!-- ===========================================
+                     OPTIONS
+                ============================================ -->
+
+                <div class="coi-print-options">
+
+                    <!-- 1 · SCOPE -->
+
+                    <section class="coi-field">
+
+                        <span class="coi-field-label">
+                            <span class="coi-field-no">1</span>
+                            Scope
+                        </span>
+
+                        <div class="coi-choice-grid">
+
+                            <button
+
+                                type="button"
+
+                                class="coi-choice"
+
+                                [class.coi-choice-on]="printOptions.scope === 'all'"
+
+                                (click)="setPrintScope('all')">
+
+                                <span class="coi-choice-icon">
+                                    <i class="fas fa-layer-group"></i>
+                                </span>
+
+                                <span class="coi-choice-text">
+                                    <span class="coi-choice-title">Full Chart</span>
+                                    <span class="coi-choice-sub">Every category type</span>
+                                </span>
+
+                                <span class="coi-choice-check">
+                                    <i class="fas fa-check"></i>
+                                </span>
+
+                            </button>
+
+                            <button
+
+                                type="button"
+
+                                class="coi-choice"
+
+                                [class.coi-choice-on]="printOptions.scope === 'selection'"
+
+                                [disabled]="!selection"
+
+                                (click)="setPrintScope('selection')">
+
+                                <span class="coi-choice-icon">
+                                    <i class="fas fa-crosshairs"></i>
+                                </span>
+
+                                <span class="coi-choice-text">
+                                    <span class="coi-choice-title">Current Selection</span>
+                                    <span
+
+                                        class="coi-choice-sub"
+
+                                        [attr.title]="scopeLabel || null">
+
+                                        {{ selection ? scopeLabel : 'Pick a node in the navigator' }}
+
+                                    </span>
+                                </span>
+
+                                <span class="coi-choice-check">
+                                    <i class="fas fa-check"></i>
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 2 · DEPTH -->
+
+                    <section class="coi-field">
+
+                        <span class="coi-field-label">
+                            <span class="coi-field-no">2</span>
+                            Print down to
+                        </span>
+
+                        <div class="coi-depth">
+
+                            @for (item of printDepthItems; track item.value; let i = $index)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    class="coi-depth-step"
+
+                                    [class.coi-depth-reached]="i <= printDepthIndex"
+
+                                    [class.coi-depth-on]="i === printDepthIndex"
+
+                                    [attr.title]="item.label"
+
+                                    (click)="setPrintDepth(item.value)">
+
+                                    <span class="coi-depth-dot">
+                                        <i class="fas fa-check"></i>
+                                    </span>
+
+                                    <span class="coi-depth-label">{{ item.short }}</span>
+
+                                </button>
+                            }
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 3 · COLUMNS -->
+
+                    <section class="coi-field">
+
+                        <span class="coi-field-label">
+                            <span class="coi-field-no">3</span>
+                            Columns
+                        </span>
+
+                        <div class="coi-chips">
+
+                            <span class="coi-chip coi-chip-locked">
+                                <i class="fas fa-lock"></i>
+                                Code &amp; Name
+                            </span>
+
+                            <button
+
+                                type="button"
+
+                                class="coi-chip"
+
+                                [class.coi-chip-on]="printOptions.showUnit"
+
+                                (click)="togglePrintColumn('showUnit')">
+
+                                <i [class]="printOptions.showUnit ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                Unit
+
+                            </button>
+
+                            <button
+
+                                type="button"
+
+                                class="coi-chip"
+
+                                [class.coi-chip-on]="printOptions.showLedger"
+
+                                (click)="togglePrintColumn('showLedger')">
+
+                                <i [class]="printOptions.showLedger ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                Inventory Ledger
+
+                            </button>
+
+                            <button
+
+                                type="button"
+
+                                class="coi-chip"
+
+                                [class.coi-chip-on]="printOptions.showStatus"
+
+                                (click)="togglePrintColumn('showStatus')">
+
+                                <i [class]="printOptions.showStatus ? 'fas fa-check' : 'fas fa-plus'"></i>
+
+                                Status
+
+                            </button>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 4 · PAGE -->
+
+                    <section class="coi-field">
+
+                        <span class="coi-field-label">
+                            <span class="coi-field-no">4</span>
+                            Page
+                        </span>
+
+                        <div class="coi-page-row">
+
+                            <div class="coi-orient">
+
+                                <button
+
+                                    type="button"
+
+                                    class="coi-orient-btn"
+
+                                    [class.coi-orient-on]="!printOptions.landscape"
+
+                                    (click)="setPrintLandscape(false)">
+
+                                    <span class="coi-orient-sheet"></span>
+
+                                    Portrait
+
+                                </button>
+
+                                <button
+
+                                    type="button"
+
+                                    class="coi-orient-btn"
+
+                                    [class.coi-orient-on]="printOptions.landscape"
+
+                                    (click)="setPrintLandscape(true)">
+
+                                    <span class="coi-orient-sheet coi-orient-wide"></span>
+
+                                    Landscape
+
+                                </button>
+
+                            </div>
+
+                            <label class="coi-switch">
+
+                                <input
+
+                                    type="checkbox"
+
+                                    [ngModel]="printOptions.includeInactive"
+
+                                    (ngModelChange)="setPrintIncludeInactive($event)">
+
+                                <span class="coi-switch-track">
+                                    <span class="coi-switch-thumb"></span>
+                                </span>
+
+                                Include inactive
+
+                            </label>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+
+                <!-- ===========================================
+                     LIVE PREVIEW
+                ============================================ -->
+
+                <div class="coi-print-stage">
+
+                    <div
+
+                        class="coi-paper"
+
+                        [class.coi-paper-wide]="printOptions.landscape">
+
+                        <div class="coi-paper-head">
+
+                            <div>
+                                <div class="coi-paper-company">{{ printCompanyName }}</div>
+                                <div class="coi-paper-title">Chart of Inventory</div>
+                            </div>
+
+                            <div class="coi-paper-meta">{{ printScopeText }}</div>
+
+                        </div>
+
+                        <div class="coi-paper-row coi-paper-cols">
+
+                            <span class="coi-paper-code">Code</span>
+                            <span class="coi-paper-name">Name</span>
+
+                            @if (printOptions.showUnit)
+                            {
+                                <span class="coi-paper-cell">Unit</span>
+                            }
+
+                            @if (printOptions.showLedger)
+                            {
+                                <span class="coi-paper-cell">Inventory Ledger</span>
+                            }
+
+                            @if (printOptions.showStatus)
+                            {
+                                <span class="coi-paper-cell">Status</span>
+                            }
+
+                        </div>
+
+                        @for (line of printPreviewLines; track $index)
+                        {
+                            <div
+
+                                class="coi-paper-row"
+
+                                [attr.data-lv]="line.level"
+
+                                [class.coi-paper-summary]="line.summary">
+
+                                <span class="coi-paper-code">{{ line.code }}</span>
+
+                                <span
+
+                                    class="coi-paper-name"
+
+                                    [style.padding-left.px]="(line.level - 1) * 7">
+
+                                    {{ line.name }}
+
+                                </span>
+
+                                @if (printOptions.showUnit)
+                                {
+                                    <span class="coi-paper-cell">{{ line.type }}</span>
+                                }
+
+                                @if (printOptions.showLedger)
+                                {
+                                    <span class="coi-paper-cell"><span class="coi-paper-bar"></span></span>
+                                }
+
+                                @if (printOptions.showStatus)
+                                {
+                                    <span class="coi-paper-cell">
+                                        <span
+
+                                            class="coi-paper-dot"
+
+                                            [class.coi-paper-dot-off]="!line.status">
+
+                                        </span>
+                                    </span>
+                                }
+
+                            </div>
+                        }
+
+                        @if (printPreviewLines.length === 0)
+                        {
+                            <div class="coi-paper-empty">Nothing to print for this choice.</div>
+                        }
+
+                        @if (printMoreRows > 0)
+                        {
+                            <div class="coi-paper-more">+ {{ printMoreRows }} more rows</div>
+                        }
+
+                        <div class="coi-paper-foot">Page 1</div>
+
+                    </div>
+
+                    <div class="coi-stage-caption">
+
+                        <span class="coi-stage-live"></span>
+
+                        Live preview · A4 {{ printOptions.landscape ? 'Landscape' : 'Portrait' }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOT -->
+
+            <div class="coi-modal-foot">
+
+                <div class="coi-foot-summary">
+
+                    <i class="fas fa-file-lines"></i>
+
+                    <span><b>{{ printRowEstimate }}</b> rows</span>
+
+                    <span class="coi-foot-dot"></span>
+
+                    <span>{{ printOptions.includeInactive ? 'Including inactive' : 'Active only' }}</span>
+
+                </div>
+
+                <div class="coi-foot-actions">
+
+                    <button
+
+                        type="button"
+
+                        class="coi-btn coi-btn-ghost"
+
+                        [disabled]="printing"
+
+                        (click)="closePrint()">
+
+                        Cancel
+
+                    </button>
+
+                    <button
+
+                        type="button"
+
+                        class="coi-btn coi-btn-primary"
+
+                        [disabled]="printing || printRowEstimate === 0"
+
+                        (click)="runPrint()">
+
+                        <i [class]="printing ? 'fas fa-spinner fa-spin' : 'fas fa-print'"></i>
+
+                        {{ printing ? 'Preparing…' : 'Print' }}
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+
+
+<!-- =====================================================
+     UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>

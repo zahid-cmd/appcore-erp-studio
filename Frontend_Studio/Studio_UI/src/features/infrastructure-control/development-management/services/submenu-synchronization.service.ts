@@ -78,15 +78,21 @@ export class SubmenuSynchronizationService
     // Get By Id
     //===========================================================
 
+    // uuid (links, address bar) or the internal id
     getById
     (
-        id:number
+        id:number | string
     ):
         Observable<SubmenuSynchronization>
     {
+        const path =
+            /^\d+$/.test(String(id))
+                ? `by-id/${id}`
+                : String(id);
+
         return this.http.get<SubmenuSynchronization>
         (
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${path}`
         );
     }
 
@@ -227,9 +233,10 @@ export class SubmenuSynchronizationService
     // Delete
     //===========================================================
 
+    // By the uuid
     delete
     (
-        id:number
+        id:string
     ):
         Observable<void>
     {

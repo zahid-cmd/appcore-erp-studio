@@ -165,6 +165,13 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : ServiceAppointments
+
+using AppCore.Application.EnquiryManagement.FollowUpsAppointments;
+using AppCore.Infrastructure.Configurations.EnquiryManagement.FollowUpsAppointments;
+
+// AUTO-END : ServiceAppointments
+
 // AUTO-BEGIN : SalesInvoicesSp
 
 using AppCore.Application.SalesOperations.SparePartsLubricantSales;
@@ -855,6 +862,26 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : TestRides
+
+        services.AddScoped
+        <
+            ITestRidesRepository,
+            TestRidesRepository
+        >();
+
+        // AUTO-END : TestRides
+
+        // AUTO-BEGIN : ServiceAppointments
+
+        services.AddScoped
+        <
+            IServiceAppointmentsRepository,
+            ServiceAppointmentsRepository
+        >();
+
+        // AUTO-END : ServiceAppointments
 
         // AUTO-BEGIN : BikeModels
 
@@ -2128,6 +2155,19 @@ public static class DependencyInjection
         <
             IPartsOnboardingService,
             PartsOnboardingService
+        >();
+
+
+        //=======================================================
+        // Financial Year : Auto Create Next (switch
+        // CFG-MOD-003-0111; background job + bell). Outside the
+        // AUTO blocks : hand-written.
+        //=======================================================
+
+        services.AddScoped
+        <
+            IFinancialYearAutoCreateService,
+            FinancialYearAutoCreateService
         >();
 
 

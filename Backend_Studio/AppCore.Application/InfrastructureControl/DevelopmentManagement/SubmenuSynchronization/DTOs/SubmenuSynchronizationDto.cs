@@ -18,6 +18,9 @@ public class SubmenuSynchronizationDto
 
     public long Id { get; set; }
 
+    // uuid v7 : links and the address bar
+    public Guid PublicId { get; set; }
+
 
     //===========================================================
     // Navigation

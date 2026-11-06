@@ -25,6 +25,11 @@ public interface IFinancialYearsRepository
     Task<List<FinancialYearsDto>> GetAllAsync();
 
 
+    // One list page (server paging) with Total / Active / Inactive
+    Task<AppCore.Application.Common.Paging.PagedResult<FinancialYearsDto>> GetPagedAsync(
+        GeneralSettingsPageRequest request);
+
+
     // Public Id -> internal id (live rows only; null = not found)
 
     Task<long?> GetIdByPublicIdAsync(

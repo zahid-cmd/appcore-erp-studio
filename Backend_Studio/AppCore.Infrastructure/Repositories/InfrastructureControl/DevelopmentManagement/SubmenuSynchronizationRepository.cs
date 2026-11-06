@@ -524,6 +524,7 @@ public class SubmenuSynchronizationRepository
                 {
                     Id =
                         x.Id,
+                    PublicId = x.PublicId,
 
                     ModuleId =
                         x.ModuleId,
@@ -736,6 +737,24 @@ public class SubmenuSynchronizationRepository
 
 
     //===========================================================
+    // Internal Id By Public Id (live rows only)
+    //===========================================================
+
+    public async Task<long?> GetIdByPublicIdAsync
+    (
+        Guid publicId
+    )
+    {
+        return await _context.SubmenuSynchronizations
+            .AsNoTracking()
+            .Where(x => x.PublicId == publicId && !x.IsDeleted)
+            .Select(x => (long?)x.Id)
+            .FirstOrDefaultAsync();
+    }
+
+
+
+    //===========================================================
     // Get By Id
     //===========================================================
 
@@ -763,6 +782,7 @@ public class SubmenuSynchronizationRepository
                 {
                     Id =
                         x.Id,
+                    PublicId = x.PublicId,
 
                     ModuleId =
                         x.ModuleId,

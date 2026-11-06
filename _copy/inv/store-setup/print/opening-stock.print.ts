@@ -144,13 +144,13 @@ export const OPENING_STOCK_PRINT:
         injector:
             Injector,
         id:
-            number
+            number | string
     ):
         Promise<OpeningStockPrintData>
     {
         const doc =
             await firstValueFrom(
-                injector.get(OpeningStockService).getById(id)
+                injector.get(OpeningStockService).getById(String(id))
             );
 
         return {

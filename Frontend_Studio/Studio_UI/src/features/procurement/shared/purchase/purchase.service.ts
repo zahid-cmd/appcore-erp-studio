@@ -782,14 +782,18 @@ export abstract class PurchaseService
     }
 
 
+    // Saved by the uuid in the address (the server ignores the id
+    // inside the body)
     update
     (
+        publicId:
+            string,
         model:
             UpdatePurchase
     ):
         Observable<void>
     {
-        return this.http.put<void>(this.apiUrl, model);
+        return this.http.put<void>(`${this.apiUrl}/${publicId}`, model);
     }
 
 
@@ -820,30 +824,30 @@ export abstract class PurchaseService
 
 
     //===========================================================
-    // Workflow
+    // Workflow (by uuid)
     //===========================================================
 
-    approve(id: number): Observable<void>
+    approve(publicId: string): Observable<void>
     {
-        return this.http.put<void>(`${this.apiUrl}/${id}/approve`, {});
+        return this.http.put<void>(`${this.apiUrl}/${publicId}/approve`, {});
     }
 
 
-    returnToDraft(id: number): Observable<void>
+    returnToDraft(publicId: string): Observable<void>
     {
-        return this.http.put<void>(`${this.apiUrl}/${id}/return-to-draft`, {});
+        return this.http.put<void>(`${this.apiUrl}/${publicId}/return-to-draft`, {});
     }
 
 
-    post(id: number): Observable<void>
+    post(publicId: string): Observable<void>
     {
-        return this.http.put<void>(`${this.apiUrl}/${id}/post`, {});
+        return this.http.put<void>(`${this.apiUrl}/${publicId}/post`, {});
     }
 
 
-    cancel(id: number, reason: string): Observable<void>
+    cancel(publicId: string, reason: string): Observable<void>
     {
-        return this.http.put<void>(`${this.apiUrl}/${id}/cancel`, { Reason:reason });
+        return this.http.put<void>(`${this.apiUrl}/${publicId}/cancel`, { Reason:reason });
     }
 
 

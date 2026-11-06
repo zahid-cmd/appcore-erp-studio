@@ -7,11 +7,8 @@
 // show their Enquiry Setup colour. Matured enquiries open in View
 // only (no edit / delete).
 //
-// Test Rides (centre pill) : the table shows active test rides
-// date-wise (live rides of every date + ride requests not booked
-// yet, website ones included); Book Test Ride opens the Test Rides
-// board. The motorcycle icon of an open row opens the board with
-// that enquiry picked.
+// Test Rides have their own page (Follow-ups & Appointments ›
+// Test Rides, 2026-11-06).
 //
 // Interest chips (toolbar right) : All · Super Hot · Hot … with
 // counts, combined with the tab and the search. An open enquiry
@@ -21,7 +18,7 @@
 // Server paging : the tab, the interest chip, the search and the
 // sort go to the server (GET paged), which answers one page, the
 // chip counts, the summary counts and the ids of the whole view
-// (for Print). The Test Rides view stays on this page's own list.
+// (for Print).
 // Links and Delete use the enquiry's uuid (PublicId).
 //===============================================================
 // Imports
@@ -67,47 +64,6 @@ import
     EnquiryOption
 }
 from '../../../models/sales-enquiries.model';
-
-
-import
-{
-    ActiveTestRide
-}
-from '../../../models/sales-test-rides.model';
-
-import
-{
-    slotLabel
-}
-from '../../../models/enquiry-setup.model';
-
-
-// Test Rides view : status colours
-const RIDE_COLORS: Record<string, string> =
-{
-    'Requested':'#7C3AED',
-    'Booked':'#2563EB',
-    'Confirmed':'#0D9488',
-    'Overdue':'#DC2626'
-};
-
-
-// Test Rides view : one row
-type TestRideRow =
-    ActiveTestRide
-    &
-    {
-        DateText:string;
-        TimeText:string;
-        CustomerText:string;
-        BikeText:string;
-        InterestText:string;
-        AdvisorText:string;
-        SourceText:string;
-        StatusText:string;
-        StatusDot:string;
-        Overdue:boolean;
-    };
 
 
 // One interest chip on the toolbar
@@ -273,17 +229,6 @@ import
 }
 from '../../../services/sales-enquiries.service';
 
-import
-{
-    SalesTestRidesService
-}
-from '../../../services/sales-test-rides.service';
-
-import
-{
-    AuthenticationStorageService
-}
-from '../../../../../../core/authentication/authentication-storage.service';
 
 
 //===============================================================
@@ -337,12 +282,6 @@ implements OnInit
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
-    private readonly testRidesService =
-        inject(SalesTestRidesService);
-
-    private readonly auth =
-        inject(AuthenticationStorageService);
-
     private readonly toast =
         inject(ToastService);
 
@@ -384,12 +323,8 @@ implements OnInit
         'all';
 
 
-    // Centre group (Website · Test Rides) : waiting counts
+    // Centre group (Website) : waiting count
     websiteCount:
-        number =
-        0;
-
-    ridesCount:
         number =
         0;
 
@@ -412,306 +347,62 @@ implements OnInit
 
 
 
-    //===========================================================
-    // Test Rides view (centre "Test Rides") : live rides of every
-    // date + ride requests not booked yet. "Book Test Ride" opens
-    // the Test Rides board.
-    //===========================================================
-
-    get isRides(): boolean
-    {
-        return this.selectedTab === 'rides';
-    }
-
-    private rides: TestRideRow[] = [];
-
-    filteredRides: TestRideRow[] = [];
-
-    pagedRides: TestRideRow[] = [];
-
-    ridesLoading = false;
-
-    ridesFailed = false;
-
-    selectedRideChip = 'all';
-
-    rideChips: InterestChip[] = [];
-
-    readonly rideColumns:
-        ListTableColumn[] =
-    [
-        { header:'#',          field:'serial',       type:'serial', width:'50px', align:'center' },
-        { header:'Date',       field:'DateText',     width:'150px', align:'left' },
-        { header:'Time',       field:'TimeText',     width:'190px', align:'left' },
-        { header:'Enquiry No', field:'EnquiryNo',    width:'200px', align:'center' },
-        { header:'Customer',   field:'CustomerText', align:'left' },
-        { header:'Bike',       field:'BikeText',     width:'180px', align:'left' },
-        { header:'Interest',   field:'InterestText', width:'110px', align:'left', dotField:'InterestLevelColor' },
-        { header:'Executive',  field:'AdvisorText',  width:'130px', align:'left' },
-        { header:'Source',     field:'SourceText',   width:'110px', align:'left' },
-        { header:'Status',     field:'StatusText',   width:'140px', align:'left', dotField:'StatusDot' },
-        { header:'Actions',    field:'actions',      type:'actions', width:'110px', align:'center' }
-    ];
-
-    readonly rideRowActions: ListTableRowAction[] =
-    [
-        {
-            key:'board',
-            icon:'fas fa-calendar-check',
-            title:'Open on the test ride board',
-            tone:'primary',
-            visible:(): boolean => true
-        }
-    ];
-
     private readonly fullActions = { view:true, edit:true, delete:true };
-
-    private readonly viewOnlyActions = { view:true, edit:false, delete:false };
 
     get tableColumns(): ListTableColumn[]
     {
-        return this.isRides ? this.rideColumns : this.columns;
+        return this.columns;
     }
 
     get tableRows(): any[]
     {
-        return this.isRides ? this.pagedRides : this.pagedRows;
+        return this.pagedRows;
     }
 
     get tableTotal(): number
     {
-        return this.isRides ? this.filteredRides.length : this.totalRecords;
+        return this.totalRecords;
     }
 
     get tableLoading(): boolean
     {
-        return this.isRides ? this.ridesLoading : this.loading;
+        return this.loading;
     }
 
     get tableFailed(): boolean
     {
-        return this.isRides ? this.ridesFailed : this.loadFailed;
+        return this.loadFailed;
     }
 
     get tableRowActions(): ListTableRowAction[]
     {
-        return this.isRides ? this.rideRowActions : this.rowActions;
+        return this.rowActions;
     }
 
     get tableActions(): { view:boolean; edit:boolean; delete:boolean }
     {
-        return this.isRides ? this.viewOnlyActions : this.fullActions;
+        return this.fullActions;
     }
 
     get chipList(): InterestChip[]
     {
-        return this.isRides ? this.rideChips : this.interestChips;
+        return this.interestChips;
     }
 
     get chipSelected(): string
     {
-        return this.isRides ? this.selectedRideChip : this.selectedInterest;
+        return this.selectedInterest;
     }
 
     onChip(id: string): void
     {
-        if (this.isRides)
-        {
-            this.selectedRideChip = id;
-
-            this.applyRideFilters();
-
-            this.cdr.detectChanges();
-
-            return;
-        }
-
         this.onInterestChange(id);
     }
 
     get searchPlaceholder(): string
     {
-        return this.isRides
-            ? 'Search test rides, customer, mobile, bike...'
-            : 'Search enquiries, mobile, model...';
+        return 'Search enquiries, mobile, model...';
     }
-
-
-    loadRides(): void
-    {
-        this.ridesLoading = true;
-
-        this.ridesFailed = false;
-
-        this.testRidesService
-            .getActive(Number(this.auth.getUser()?.branchId ?? 0))
-            .subscribe
-            ({
-                next:(rows: ActiveTestRide[]): void =>
-                {
-                    this.rides = (rows ?? []).map(x => this.toRideRow(x));
-
-                    // Pill : rides and requests still to come
-                    this.ridesCount = this.rides.filter(x => !x.Overdue).length;
-
-                    this.ridesLoading = false;
-
-                    this.applyRideFilters();
-
-                    this.cdr.detectChanges();
-                },
-
-                error:(error: unknown): void =>
-                {
-                    console.error('Load Test Rides Error:', error);
-
-                    this.rides = [];
-                    this.filteredRides = [];
-                    this.pagedRides = [];
-
-                    this.ridesLoading = false;
-
-                    this.ridesFailed = true;
-
-                    if (this.isRides)
-                    {
-                        this.toast.error('Load Failed', this.errorText(error, 'Unable to load the test rides. Run SalesTestRides_Tables.sql.'));
-                    }
-
-                    this.cdr.detectChanges();
-                }
-            });
-    }
-
-    private toRideRow(item: ActiveTestRide): TestRideRow
-    {
-        const overdue = item.Date < this.today;
-
-        const weekday =
-            new Date(Number(item.Date.slice(0, 4)), Number(item.Date.slice(5, 7)) - 1, Number(item.Date.slice(8, 10)))
-                .toLocaleDateString('en-GB', { weekday:'short' });
-
-        return {
-            ...item,
-
-            DateText:
-                `${weekday}, ${this.formatDate(item.Date)}`
-                + (item.Date === this.today ? ' · Today' : ''),
-
-            TimeText:
-                item.SlotStart
-                    ? `${slotLabel(item.SlotStart)} - ${slotLabel(item.SlotEnd)}`
-                    : `Asked${item.AskedSlot ? ' ' + item.AskedSlot : ''} · not booked`,
-
-            CustomerText: `${item.EnquirerName} - ${item.EnquirerMobile}`,
-
-            BikeText: [item.ModelName, item.BrandName].filter(x => !!x).join(' · ') || '—',
-
-            InterestText: item.InterestLevelName || '—',
-
-            AdvisorText: item.AdvisorName || 'Unassigned',
-
-            SourceText: item.FromWebsite ? 'Website' : item.SourceName || '—',
-
-            StatusText:
-                overdue
-                    ? `${item.Status} · overdue`
-                    : item.Status + (item.RescheduleCount ? ` · moved ${item.RescheduleCount}x` : ''),
-
-            StatusDot:
-                overdue
-                    ? RIDE_COLORS['Overdue']
-                    : RIDE_COLORS[item.Status] ?? '#64748B',
-
-            Overdue:overdue
-        };
-    }
-
-    private inRideChip(item: TestRideRow, id: string): boolean
-    {
-        switch (id)
-        {
-            case 'today':     return item.Date === this.today;
-            case 'requested': return item.Kind === 'Request';
-            case 'booked':    return item.Status === 'Booked';
-            case 'confirmed': return item.Status === 'Confirmed';
-            case 'overdue':   return item.Overdue;
-            default:          return true;
-        }
-    }
-
-    applyRideFilters(): void
-    {
-        const keyword = this.searchText.trim().toLowerCase();
-
-        const inView =
-            this.rides.filter(item =>
-                !keyword
-                ||
-                [
-                    item.EnquiryNo,
-                    item.DateText,
-                    item.TimeText,
-                    item.EnquirerName,
-                    item.EnquirerMobile,
-                    item.ModelName,
-                    item.BrandName,
-                    item.InterestText,
-                    item.AdvisorText,
-                    item.SourceText,
-                    item.StatusText,
-                    item.Note
-                ]
-                .join(' ')
-                .toLowerCase()
-                .includes(keyword));
-
-        const chip = (id: string, label: string, color: string): InterestChip =>
-            ({ id, label, color, count:inView.filter(x => this.inRideChip(x, id)).length });
-
-        this.rideChips =
-        [
-            chip('all',       'All',       ''),
-            chip('today',     'Today',     '#0EA5E9'),
-            chip('requested', 'Requested', RIDE_COLORS['Requested']),
-            chip('booked',    'Booked',    RIDE_COLORS['Booked']),
-            chip('confirmed', 'Confirmed', RIDE_COLORS['Confirmed']),
-            chip('overdue',   'Overdue',   RIDE_COLORS['Overdue'])
-        ];
-
-        this.filteredRides = inView.filter(x => this.inRideChip(x, this.selectedRideChip));
-
-        // The enquiries keep their server page while hidden
-        if (this.isRides)
-        {
-            this.currentPage = 1;
-        }
-
-        this.updatePagination();
-    }
-
-    // The board : its day, the enquiry picked
-    openBoard(row: TestRideRow): void
-    {
-        void this.router.navigate(
-            ['test-rides'],
-            {
-                relativeTo:this.route.parent,
-                queryParams:{ enquiry:row.SalesEnquiryId, date:row.Date }
-            });
-    }
-
-    // The Test Rides page (optionally with an enquiry)
-    openTestRides(enquiryId: number = 0): void
-    {
-        void this.router.navigate(
-            ['test-rides'],
-            {
-                relativeTo:this.route.parent,
-                queryParams:enquiryId > 0 ? { enquiry:enquiryId } : {}
-            });
-    }
-
 
 
     //===========================================================
@@ -848,21 +539,9 @@ implements OnInit
     ngOnInit():
         void
     {
-        // ?tab=test-rides (back from the Test Rides board)
-        if
-        (
-            this.route.snapshot.queryParamMap.get('tab') === 'test-rides'
-        )
-        {
-            this.selectedTab =
-                'rides';
-        }
-
         this.loadInterestLevels();
 
         this.loadItems();
-
-        this.loadRides();
     }
 
 
@@ -974,7 +653,7 @@ implements OnInit
                     search:this.searchText,
                     sort:this.sortField,
                     dir:this.sortDirection,
-                    tab:this.isRides ? 'all' : this.selectedTab,
+                    tab:this.selectedTab,
                     interest:this.selectedInterest
                 }
             )
@@ -1017,8 +696,6 @@ implements OnInit
                     // the list became shorter
                     if
                     (
-                        !this.isRides
-                        &&
                         response.page > 0
                     )
                     {
@@ -1164,7 +841,7 @@ implements OnInit
     onInboxClick
     (
         id:
-            'website' | 'rides'
+            'website'
     ):
         void
     {
@@ -1327,18 +1004,6 @@ implements OnInit
         this.selectedTab =
             value;
 
-        if
-        (
-            this.isRides
-        )
-        {
-            this.applyRideFilters();
-
-            this.cdr.detectChanges();
-
-            return;
-        }
-
         this.applyFilters();
 
         this.cdr.detectChanges();
@@ -1354,16 +1019,6 @@ implements OnInit
     {
         this.searchText =
             value ?? '';
-
-        if
-        (
-            this.isRides
-        )
-        {
-            this.applyRideFilters();
-
-            return;
-        }
 
         if
         (
@@ -1405,7 +1060,7 @@ implements OnInit
         // Date columns sort by their real value
         const field =
             event.field === 'DateText'
-                ? (this.isRides ? 'Date' : 'EnquiryDate')
+                ? 'EnquiryDate'
                 : event.field === 'NextFollowUpText'
                     ? 'NextFollowUpDate'
                     : event.field === 'TimeText'
@@ -1438,22 +1093,6 @@ implements OnInit
                 return (valueA < valueB ? -1 : valueA > valueB ? 1 : 0) * sign;
             };
 
-        if
-        (
-            this.isRides
-        )
-        {
-            this.filteredRides =
-                [...this.filteredRides].sort(compare);
-
-            this.currentPage =
-                1;
-
-            this.updatePagination();
-
-            return;
-        }
-
         // Enquiries : the server sorts the whole view
         this.sortField =
             event.field === 'DateText'
@@ -1482,21 +1121,6 @@ implements OnInit
             1;
 
         this.loadItems();
-
-        this.loadRides();
-    }
-
-
-    updatePagination():
-        void
-    {
-        // Test Rides view only (the enquiries come a page at a
-        // time from the server)
-        const start =
-            (this.currentPage - 1) * this.pageSize;
-
-        this.pagedRides =
-            this.filteredRides.slice(start, start + this.pageSize);
     }
 
 
@@ -1509,16 +1133,6 @@ implements OnInit
     {
         this.currentPage =
             page;
-
-        if
-        (
-            this.isRides
-        )
-        {
-            this.updatePagination();
-
-            return;
-        }
 
         this.loadItems();
     }
@@ -1537,15 +1151,7 @@ implements OnInit
         this.currentPage =
             1;
 
-        this.updatePagination();
-
-        if
-        (
-            !this.isRides
-        )
-        {
-            this.loadItems();
-        }
+        this.loadItems();
     }
 
 
@@ -1554,20 +1160,9 @@ implements OnInit
     // Add / View / Edit
     //===========================================================
 
-    // Test Rides view : Book Test Ride (the board)
     add():
         void
     {
-        if
-        (
-            this.isRides
-        )
-        {
-            this.openTestRides();
-
-            return;
-        }
-
         void this.router.navigate(['add'], { relativeTo:this.route.parent });
     }
 
@@ -1585,13 +1180,6 @@ implements OnInit
             title:'Log a call',
             tone:'success',
             visible:(row: any): boolean => !row.IsMatured && row.StatusStage !== 'Lost'
-        },
-        {
-            key:'ride',
-            icon:'fas fa-motorcycle',
-            title:'Book a test ride',
-            tone:'primary',
-            visible:(row: any): boolean => !row.IsMatured && row.StatusStage !== 'Lost'
         }
     ];
 
@@ -1605,28 +1193,6 @@ implements OnInit
     ):
         void
     {
-        if
-        (
-            event.key === 'board'
-            &&
-            this.isRides
-        )
-        {
-            this.openBoard(event.row as TestRideRow);
-
-            return;
-        }
-
-        if
-        (
-            event.key === 'ride'
-        )
-        {
-            this.openTestRides((event.row as SalesEnquiry).SalesEnquiryId);
-
-            return;
-        }
-
         if
         (
             event.key === 'call'
@@ -1644,8 +1210,6 @@ implements OnInit
         this.callEnquiry = null;
 
         this.loadItems();
-
-        this.loadRides();
     }
 
     onCallClosed():
@@ -1664,16 +1228,6 @@ implements OnInit
     ):
         void
     {
-        if
-        (
-            this.isRides
-        )
-        {
-            this.openBoard(item as unknown as TestRideRow);
-
-            return;
-        }
-
         void this.router.navigate(['view', item.PublicId || item.SalesEnquiryId], { relativeTo:this.route.parent });
     }
 
@@ -2042,9 +1596,7 @@ implements OnInit
         const view =
             this.selectedTab === 'website'
                 ? 'Website'
-                : this.selectedTab === 'rides'
-                    ? 'Test Rides'
-                    : this.tabs.find(x => x.id === this.selectedTab)?.label ?? 'All Enquiries';
+                : this.tabs.find(x => x.id === this.selectedTab)?.label ?? 'All Enquiries';
 
         const interest =
             this.interestChips.find(x => x.id === this.selectedInterest)?.label ?? 'All';

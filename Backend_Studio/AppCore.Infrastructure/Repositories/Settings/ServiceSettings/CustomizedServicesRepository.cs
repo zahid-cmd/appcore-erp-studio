@@ -4,6 +4,10 @@
 
 using Microsoft.EntityFrameworkCore;
 
+using AppCore.Infrastructure.Persistence.Paging;
+
+using AppCore.Application.Common.Paging;
+
 using AppCore.Application.Settings.ServiceSettings;
 
 using CustomizedServiceEntity =
@@ -195,6 +199,114 @@ public class CustomizedServicesRepository :
                     }
             );
     }
+
+
+    //===========================================================
+    // List Page (server paging)
+    //
+    // Search : every word must match one of the list's columns
+    // Counts : Total · Active · Inactive (search + filters, not
+    //          the status filter)
+    //===========================================================
+
+    private SortMap<CustomizedServicesDto> ListSorts()
+    {
+        return new SortMap<CustomizedServicesDto>("ServiceCode")
+            .Add("ServiceCode", x => x.ServiceCode)
+            .Add("ServiceName", x => x.ServiceName)
+            .Add("SubCategoryDisplay", x => x.SubCategoryCode)
+            .Add("StandardTimeDisplay", x => x.StandardMinutes)
+            .Add("ServiceChargeDisplay", x => x.ServiceCharge)
+            .Add("IncomeLedgerCode", x => x.IncomeLedgerCode)
+            .Add("IsActive", x => x.IsActive)
+            .Tie(x => x.CustomizedServiceId);
+    }
+
+
+    public async Task<PagedResult<CustomizedServicesDto>> GetPagedAsync(
+        ServiceSettingsPageRequest request)
+    {
+        IQueryable<CustomizedServicesDto> query =
+            CustomizedServiceQuery();
+
+        foreach
+        (
+            string word in request.SafeSearch
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            query =
+                query.Where(
+                    x =>
+                        EF.Functions.ILike(x.ServiceCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.ServiceName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.SubCategoryCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.SubCategoryName ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.IncomeLedgerCode ?? string.Empty, like)
+                        ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like));
+        }
+
+        if (request.SubCategoryId.HasValue) { long subCategoryId = request.SubCategoryId.Value; query = query.Where(x => x.ServiceSubCategoryId == subCategoryId); }
+
+        // Summary counts (before the status filter)
+        var statusCounts =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        int activeCount =
+            statusCounts.Where(x => x.Active).Sum(x => x.Count);
+
+        int inactiveCount =
+            statusCounts.Where(x => !x.Active).Sum(x => x.Count);
+
+        string status =
+            (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (status == "active")
+        {
+            query = query.Where(x => x.IsActive);
+        }
+        else if (status == "inactive")
+        {
+            query = query.Where(x => !x.IsActive);
+        }
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(request, total);
+
+        List<CustomizedServicesDto> items =
+            await ListSorts()
+                .Apply(query, request)
+                .Page(request)
+                .ToListAsync();
+
+        PagedResult<CustomizedServicesDto> result = new()
+        {
+            Items = items,
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize
+        };
+
+        result.Counts["Total"] = activeCount + inactiveCount;
+        result.Counts["Active"] = activeCount;
+        result.Counts["Inactive"] = inactiveCount;
+
+        return result;
+    }
+
 
 
     //===========================================================

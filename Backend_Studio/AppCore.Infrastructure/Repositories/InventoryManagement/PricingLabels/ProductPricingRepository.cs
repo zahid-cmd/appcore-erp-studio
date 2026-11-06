@@ -11,6 +11,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 using AppCore.Application.Common.ActivityHistory.DTOs;
 
 using AppCore.Application.InventoryManagement.PricingLabels;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.InventoryManagement;
+using AppCore.Application.Common.Paging;
 
 using AppCore.Application.Platform.Accounting;
 
@@ -2811,5 +2814,194 @@ public class ProductPricingRepository
             .Where(x => x.PublicId == publicId)
             .Select(x => (long?)x.ProductPricingId)
             .FirstOrDefaultAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (list page : tab, type, search, sort and page on
+    // the server)
+    // Counts : All / <status> (type + search applied),
+    //          Type_<type> / Type_All (search applied).
+    //===========================================================
+
+    private SortMap<ProductPricing> PagedSorts()
+    {
+        return new SortMap<ProductPricing>("PricingNo")
+            .Add("PricingNo", x => x.PricingNo)
+            .Add("DateText", x => x.PricingDate)
+            .Add("TypeText", x => x.PageType)
+            .Add("ProductCount", x => x.ProductCount)
+            .Add("BatchCount", x => x.BatchCount)
+            .Add("Remarks", x => x.Remarks)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.ProductPricingId);
+    }
+
+
+    // A search word that is a date (25-10-2026, 25/10/2026 or
+    // 2026-10-25), null otherwise
+    private static DateOnly? PagedSearchDate(
+        string text)
+    {
+        string[] formats =
+        {
+            "d-M-yyyy", "dd-MM-yyyy", "d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"
+        };
+
+        return DateOnly.TryParseExact(
+            (text ?? string.Empty).Trim(),
+            formats,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out DateOnly date)
+            ? date
+            : null;
+    }
+
+
+    public async Task<PagedResult<ProductPricingDto>>
+        GetPagedAsync
+        (
+            InventoryDocumentPageRequest request
+        )
+    {
+        IQueryable<ProductPricing> query =
+            _context
+                .Set<ProductPricing>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+        //-------------------------------------------------------
+        // Search : every word must match (text columns or a date)
+        //-------------------------------------------------------
+
+        foreach
+        (
+            string word in request.SafeSearch.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            DateOnly? date =
+                PagedSearchDate(word);
+
+            if (date.HasValue)
+            {
+                DateOnly day = date.Value;
+
+                query =
+                    query.Where
+                    (
+                        x =>
+                            x.PricingDate == day ||
+                            EF.Functions.ILike(x.PricingNo ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.PageType ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Status ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.SupplierName ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.PurchaseNo ?? string.Empty, like)
+                    );
+            }
+            else
+            {
+                query =
+                    query.Where
+                    (
+                        x =>
+                            EF.Functions.ILike(x.PricingNo ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.PageType ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Status ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.SupplierName ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.PurchaseNo ?? string.Empty, like)
+                    );
+            }
+        }
+
+        //-------------------------------------------------------
+        // Type buttons (search applied)
+        //-------------------------------------------------------
+
+        var typeCounts =
+            await query
+                .GroupBy(x => x.PageType)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        string type =
+            (request.Type ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (type != string.Empty)
+        {
+            query = query.Where(x => x.PageType == type);
+        }
+
+        //-------------------------------------------------------
+        // Tab counts (type and search applied)
+        //-------------------------------------------------------
+
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        string tab =
+            (request.Tab ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (tab != string.Empty && tab != "all")
+        {
+            query = query.Where(x => x.Status.ToLower() == tab);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page (newest first unless sorted)
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        IQueryable<ProductPricing> ordered =
+            string.IsNullOrWhiteSpace(request.Sort)
+                ? query
+                    .OrderByDescending(x => x.PricingDate)
+                    .ThenByDescending(x => x.ProductPricingId)
+                : PagedSorts().Apply(query, request);
+
+        List<ProductPricing> rows =
+            await ordered
+                .Page(request)
+                .ToListAsync();
+
+        Dictionary<string, int> counts =
+            new()
+            {
+                ["All"] = statusCounts.Sum(x => x.Count),
+                ["Type_All"] = typeCounts.Sum(x => x.Count)
+            };
+
+        foreach (var row in statusCounts)
+        {
+            counts[row.Status ?? string.Empty] = row.Count;
+        }
+
+        foreach (var row in typeCounts)
+        {
+            counts["Type_" + row.Key] = row.Count;
+        }
+
+        return new PagedResult<ProductPricingDto>
+        {
+            Items = rows.Select(ToDto).ToList(),
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = counts
+        };
     }
 }

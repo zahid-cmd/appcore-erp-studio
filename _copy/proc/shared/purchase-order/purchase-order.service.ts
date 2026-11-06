@@ -29,6 +29,15 @@ from '../../../../environments/environment';
 
 import
 {
+    PagedQuery,
+    PagedResult,
+    toPagedParams,
+    toPagedResult
+}
+from '../../../../shared/paging/paged-result.model';
+
+import
+{
     PurchaseOrder,
     PurchaseOrderLine,
     PurchaseOrderDefaults,
@@ -220,6 +229,7 @@ export abstract class PurchaseOrderService
     {
         return {
             PurchaseOrderId:this.num(item, 'PurchaseOrderId'),
+            PublicId:this.text(item, 'PublicId'),
             PageType:this.text(item, 'PageType'),
             OrderNo:this.text(item, 'OrderNo'),
             OrderDate:this.text(item, 'OrderDate').substring(0, 10),
@@ -374,10 +384,49 @@ export abstract class PurchaseOrderService
     }
 
 
+    // One page of the list plus the tab counts (server paging)
+    getPaged
+    (
+        query:
+            PagedQuery & { tab?:string; supplier?:string }
+    ):
+        Observable<PagedResult<PurchaseOrder>>
+    {
+        return this.http
+            .get<any>(`${this.apiUrl}/paged`, { params:toPagedParams({ ...query }) })
+            .pipe(
+                map(raw => toPagedResult(raw, item => this.normalize(item)))
+            );
+    }
+
+
+    // The suppliers on this page's documents (list filter)
+    getListSuppliers():
+        Observable<{ code:string; name:string }[]>
+    {
+        return this.http
+            .get<any[]>(`${this.apiUrl}/list-suppliers`)
+            .pipe(
+                map
+                (
+                    rows =>
+                        (rows ?? []).map
+                        (
+                            row =>
+                            ({
+                                code:this.text(row, 'SupplierCode'),
+                                name:this.text(row, 'SupplierName')
+                            })
+                        )
+                )
+            );
+    }
+
+
     getById
     (
         id:
-            number
+            string
     ):
         Observable<PurchaseOrder>
     {
@@ -502,6 +551,7 @@ export abstract class PurchaseOrderService
                     item =>
                     ({
                         PurchaseOrderId:this.num(item, 'PurchaseOrderId'),
+                        PublicId:this.text(item, 'PublicId'),
                         OrderNo:this.text(item, 'OrderNo')
                     })
                 )
@@ -523,7 +573,7 @@ export abstract class PurchaseOrderService
     delete
     (
         id:
-            number
+            string
     ):
         Observable<void>
     {

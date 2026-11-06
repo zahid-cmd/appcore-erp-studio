@@ -1,0 +1,283 @@
+<div class="app-list-page">
+    
+    <!-- =========================================================
+        PAGE HEADER
+    ========================================================= -->
+
+    <app-page-header
+
+        title="Submenu Synchronization"
+
+        subtitle="Manage submenu synchronization."
+
+        icon="fas fa-arrows-rotate">
+
+
+        <!-- =====================================================
+            PAGE HEADER CENTER
+        ====================================================== -->
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [(value)]="searchText"
+
+                placeholder="Search submenus..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <!-- =====================================================
+            PAGE HEADER RIGHT
+        ====================================================== -->
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Add"
+
+                command1Icon="fas fa-plus"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                (command3Click)="restore()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+    <!-- =========================================================
+        PAGE TOOLBAR
+    ========================================================= -->
+
+    <app-page-toolbar
+
+        leftFlex="0 0 auto"
+
+        rightFlex="1 1 auto">
+
+
+        <!-- =====================================================
+            LEFT
+        ====================================================== -->
+
+        <div pageToolbarLeft>
+
+            <!-- =================================================
+                SYNCHRONIZATION TYPE
+            ================================================== -->
+
+            <app-control-tabs
+
+                [tabs]="tabs"
+
+                [selectedTab]="selectedTab"
+
+                (selectedTabChange)="onSelectedTabChange($event)">
+
+            </app-control-tabs>
+
+        </div>
+
+
+        <!-- =====================================================
+            RIGHT
+        ====================================================== -->
+
+        <div pageToolbarRight>
+
+
+            <!-- =================================================
+                MODULE FILTER
+            ================================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Module"
+
+                [items]="modules"
+
+                labelField="text"
+
+                valueField="value"
+
+                [(value)]="selectedModuleId"
+
+                (valueChange)="onModuleChange($event)">
+
+            </app-search-dropdown>
+
+
+            <!-- =================================================
+                MENU FILTER
+            ================================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Menu"
+
+                [items]="menus"
+
+                labelField="text"
+
+                valueField="value"
+
+                [(value)]="selectedMenuId"
+
+                (valueChange)="onMenuChange($event)">
+
+            </app-search-dropdown>
+
+
+            <!-- =================================================
+                STATUS FILTER
+            ================================================== -->
+
+            <app-search-dropdown
+
+                placeholder="Select Status"
+
+                [items]="statuses"
+
+                labelField="text"
+
+                valueField="value"
+
+                [(value)]="selectedStatus"
+
+                (valueChange)="onStatusChange($event)">
+
+            </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+    <!-- =========================================================
+        PAGE CANVAS
+    ========================================================= -->
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+
+        <!-- =====================================================
+            CANVAS BODY
+        ====================================================== -->
+
+        <div canvasBody>
+
+            <app-list-table
+
+                [columns]="columns"
+
+                [rows]="pagedSynchronizations"
+
+                [serialOffset]="
+                    (currentPage - 1) * pageSize
+                "
+
+                [loading]="loading"
+
+                [error]="loadFailed"
+
+                (view)="view($event)"
+
+                (edit)="edit($event)"
+
+                (delete)="delete($event)"
+
+                (operation)="synchronize($event)"
+
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+
+        <!-- =====================================================
+            CANVAS FOOTER
+        ====================================================== -->
+
+        <app-pagination
+
+            canvasFooter
+
+            [totalRecords]="
+                filteredSynchronizations.length
+            "
+
+            [currentPage]="currentPage"
+
+            [pageSize]="pageSize"
+
+            (pageChange)="onPageChange($event)"
+
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+
+    <!-- =========================================================
+        HISTORY DRAWER
+    ========================================================= -->
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+
+    <!-- =========================================================
+        TOAST
+    ========================================================= -->
+
+    <app-toast>
+
+    </app-toast>
+
+
+    <!-- =========================================================
+        CONFIRM DIALOG
+    ========================================================= -->
+
+    <app-confirm-dialog>
+
+    </app-confirm-dialog>
+    
+</div>

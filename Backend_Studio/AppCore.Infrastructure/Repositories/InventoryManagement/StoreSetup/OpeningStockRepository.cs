@@ -9,6 +9,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
 using AppCore.Application.InventoryManagement.StoreSetup;
+using AppCore.Infrastructure.Persistence.Paging;
+using AppCore.Application.InventoryManagement;
+using AppCore.Application.Common.Paging;
 using AppCore.Application.Platform.Accounting;
 using AppCore.Domain.Common;
 using AppCore.Domain.Entities.InventoryManagement.StoreSetup;
@@ -3244,5 +3247,234 @@ public class OpeningStockRepository
             .Where(x => x.PublicId == publicId)
             .Select(x => (long?)x.OpeningStockId)
             .FirstOrDefaultAsync();
+    }
+
+
+    //===========================================================
+    // Get Paged (list page : tab, type, search, sort and page on
+    // the server)
+    // Counts : All / <status> (type + search applied),
+    //          Type_<type> / Type_All (search applied).
+    //===========================================================
+
+    private SortMap<OpeningStock> PagedSorts()
+    {
+        return new SortMap<OpeningStock>("OpeningNo")
+            .Add("OpeningNo", x => x.OpeningNo)
+            .Add("DateText", x => x.OpeningDate)
+            .Add("TypeText", x => x.PageType)
+            .Add("BranchName", x => x.BranchName)
+            .Add("WarehouseName", x => x.WarehouseName)
+            .Add("LedgerName", x => x.LedgerName)
+            .Add("LineCount", x => _context.Set<OpeningStockLines>().Count(l => l.OpeningStockId == x.OpeningStockId))
+            .Add("QuantityText", x => x.TotalQuantity)
+            .Add("ValueText", x => x.TotalValue)
+            .Add("Status", x => x.Status)
+            .Tie(x => x.OpeningStockId);
+    }
+
+
+    // A search word that is a date (25-10-2026, 25/10/2026 or
+    // 2026-10-25), null otherwise
+    private static DateOnly? PagedSearchDate(
+        string text)
+    {
+        string[] formats =
+        {
+            "d-M-yyyy", "dd-MM-yyyy", "d/M/yyyy", "dd/MM/yyyy", "yyyy-MM-dd"
+        };
+
+        return DateOnly.TryParseExact(
+            (text ?? string.Empty).Trim(),
+            formats,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out DateOnly date)
+            ? date
+            : null;
+    }
+
+
+    public async Task<PagedResult<OpeningStockDto>>
+        GetPagedAsync
+        (
+            InventoryDocumentPageRequest request
+        )
+    {
+        IQueryable<OpeningStock> query =
+            _context
+                .Set<OpeningStock>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+        //-------------------------------------------------------
+        // Search : every word must match (text columns or a date)
+        //-------------------------------------------------------
+
+        foreach
+        (
+            string word in request.SafeSearch.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        )
+        {
+            string like =
+                PagingQuery.LikePattern(word);
+
+            DateOnly? date =
+                PagedSearchDate(word);
+
+            if (date.HasValue)
+            {
+                DateOnly day = date.Value;
+
+                query =
+                    query.Where
+                    (
+                        x =>
+                            x.OpeningDate == day ||
+                            EF.Functions.ILike(x.OpeningNo ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.PageType ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.BranchName ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.BranchCode ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.WarehouseName ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.LedgerName ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Status ?? string.Empty, like)
+                    );
+            }
+            else
+            {
+                query =
+                    query.Where
+                    (
+                        x =>
+                            EF.Functions.ILike(x.OpeningNo ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.PageType ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.BranchName ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.BranchCode ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.WarehouseName ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.LedgerName ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Remarks ?? string.Empty, like) ||
+                        EF.Functions.ILike(x.Status ?? string.Empty, like)
+                    );
+            }
+        }
+
+        //-------------------------------------------------------
+        // Type buttons (search applied)
+        //-------------------------------------------------------
+
+        var typeCounts =
+            await query
+                .GroupBy(x => x.PageType)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        string type =
+            (request.Type ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (type != string.Empty)
+        {
+            query = query.Where(x => x.PageType == type);
+        }
+
+        //-------------------------------------------------------
+        // Tab counts (type and search applied)
+        //-------------------------------------------------------
+
+        var statusCounts =
+            await query
+                .GroupBy(x => x.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+        string tab =
+            (request.Tab ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (tab != string.Empty && tab != "all")
+        {
+            query = query.Where(x => x.Status.ToLower() == tab);
+        }
+
+        //-------------------------------------------------------
+        // Total, then the page (newest first unless sorted)
+        //-------------------------------------------------------
+
+        int total =
+            await query.CountAsync();
+
+        PagingQuery.FitPage(
+            request,
+            total);
+
+        IQueryable<OpeningStock> ordered =
+            string.IsNullOrWhiteSpace(request.Sort)
+                ? query
+                    .OrderByDescending(x => x.OpeningDate)
+                    .ThenByDescending(x => x.OpeningStockId)
+                : PagedSorts().Apply(query, request);
+
+        List<OpeningStock> rows =
+            await ordered
+                .Page(request)
+                .ToListAsync();
+
+        Dictionary<string, int> counts =
+            new()
+            {
+                ["All"] = statusCounts.Sum(x => x.Count),
+                ["Type_All"] = typeCounts.Sum(x => x.Count)
+            };
+
+        foreach (var row in statusCounts)
+        {
+            counts[row.Status ?? string.Empty] = row.Count;
+        }
+
+        foreach (var row in typeCounts)
+        {
+            counts["Type_" + row.Key] = row.Count;
+        }
+
+        return new PagedResult<OpeningStockDto>
+        {
+            Items = await WithLineCountsAsync(rows),
+            TotalCount = total,
+            Page = request.SafePage,
+            PageSize = request.SafePageSize,
+            Counts = counts
+        };
+    }
+
+
+    // List rows with their line counts (one query for the page)
+    private async Task<List<OpeningStockDto>> WithLineCountsAsync(
+        List<OpeningStock> rows)
+    {
+        List<long> ids =
+            rows.Select(x => x.OpeningStockId).ToList();
+
+        Dictionary<long, int> counts =
+            await _context
+                .Set<OpeningStockLines>()
+                .AsNoTracking()
+                .Where(x => ids.Contains(x.OpeningStockId))
+                .GroupBy(x => x.OpeningStockId)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Key, x => x.Count);
+
+        return rows
+            .Select
+            (
+                x =>
+                {
+                    OpeningStockDto dto =
+                        ToDto(x);
+
+                    dto.LineCount = counts.GetValueOrDefault(x.OpeningStockId);
+
+                    return dto;
+                }
+            )
+            .ToList();
     }
 }

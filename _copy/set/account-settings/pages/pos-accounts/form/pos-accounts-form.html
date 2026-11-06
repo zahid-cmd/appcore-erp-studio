@@ -1,0 +1,372 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-cash-register"
+
+        [title]="pageTitle"
+
+        subtitle="Manage POS accounts">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            <!-- =================================================
+                 SECTION 01 : PARENT INFORMATION
+            ================================================== -->
+
+            <app-form-section
+
+                title="Parent Information"
+
+                icon="fas fa-sitemap">
+
+
+                <!-- Branch -->
+
+                <app-search-dropdown
+
+                    label="Branch"
+
+                    [items]="branchItems"
+
+                    [(value)]="entity.Branch"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Account Sub Group (reserved, locked) -->
+
+                <app-search-dropdown
+
+                    label="Account Sub Group"
+
+                    [items]="accountSubGroupItems"
+
+                    [(value)]="entity.AccountSubGroupsId"
+
+                    [disabled]="true"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- POS Account Code -->
+
+                <app-textbox
+
+                    label="POS Account Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.POSAccountCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =================================================
+                 SECTION 02 : POS ACCOUNT INFORMATION
+            ================================================== -->
+
+            <app-form-section
+
+                title="POS Account Information"
+
+                icon="fas fa-cash-register">
+
+
+                <!-- Issuing Bank (Bank Setup) -->
+
+                <app-search-dropdown
+
+                    label="Issuing Bank"
+
+                    [items]="issuingBankItems"
+
+                    [(value)]="entity.IssuingBank"
+
+                    (valueChange)="onNamePartChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- Terminal Number -->
+
+                <app-textbox
+
+                    label="Terminal Number"
+
+                    placeholder="Enter terminal number"
+
+                    [(value)]="entity.TerminalNumber"
+
+                    (valueChange)="onNamePartChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <!-- Linked Bank Account (settlement account) -->
+
+                <app-search-dropdown
+
+                    label="Linked Bank Account"
+
+                    [items]="linkedBankAccountItems"
+
+                    [(value)]="entity.LinkedBankAccount"
+
+                    (valueChange)="onNamePartChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-search-dropdown>
+
+
+                <!-- POS Account Name (auto generated) -->
+
+                <app-textbox
+
+                    label="POS Account Name"
+
+                    placeholder="POS - ISSUING BANK - TERMINAL - BANK"
+
+                    [(value)]="entity.POSAccountName"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+            </app-form-section>
+
+
+
+            <!-- =================================================
+                 SECTION 03 : CONFIGURATION
+            ================================================== -->
+
+            <app-form-section
+
+                title="Configuration"
+
+                icon="fas fa-toggle-on">
+
+
+                <!-- Collection Account -->
+
+                <app-dropdown
+
+                    label="Collection Account"
+
+                    [items]="yesNoItems"
+
+                    [(value)]="entity.CollectionAccount"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Payment Account -->
+
+                <app-dropdown
+
+                    label="Payment Account"
+
+                    [items]="yesNoItems"
+
+                    [(value)]="entity.PaymentAccount"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Branch Exclusive -->
+
+                <app-dropdown
+
+                    label="Branch Exclusive"
+
+                    [items]="yesNoItems"
+
+                    [(value)]="entity.BranchExclusive"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+            </app-form-section>
+
+
+
+            <!-- =================================================
+                 SECTION 04 : STATUS & DESCRIPTION
+            ================================================== -->
+
+            <app-form-section
+
+                title="Status & Description"
+
+                icon="fas fa-align-left">
+
+
+                <!-- Status -->
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.Status"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <!-- Remarks -->
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving">
+
+                </app-textarea>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>
