@@ -6,22 +6,55 @@
 
     <app-page-header
         icon="fas fa-rocket"
-        [title]="title"
-        subtitle="Details and log of a deployment / rollback">
+        [title]="pageTitle"
+        [subtitle]="pageSubtitle">
 
-        <app-command-center
-            pageHeaderRight
-            command1Text="Refresh"
-            command1Icon="fas fa-rotate-right"
-            (command1Click)="load()"
-            command2Text="Copy Log"
-            command2Icon="fas fa-copy"
-            [command2Visible]="!!item?.log"
-            (command2Click)="copyLog()"
-            rightCommandIcon="fas fa-arrow-left"
-            rightCommandTitle="Back to the list"
-            (rightCommandClick)="onBackToList()">
-        </app-command-center>
+        @if (mode !== 'view')
+        {
+            <app-command-center
+                pageHeaderRight
+                [command1Text]="saving ? 'Saving' : (mode === 'add' ? 'Save' : 'Update')"
+                [command1Icon]="saving ? 'fas fa-spinner fa-spin' : 'fas fa-floppy-disk'"
+                (command1Click)="save()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                command2Title="Read the repository again (commit, release notes)"
+                (command2Click)="loadDraftDefaults(mode === 'add')"
+                rightCommandIcon="fas fa-arrow-left"
+                rightCommandTitle="Back to the list"
+                (rightCommandClick)="mode === 'edit' ? goView() : onBackToList()">
+            </app-command-center>
+        }
+        @else
+        {
+            <app-command-center
+                pageHeaderRight
+                [command1Text]="item?.deployStatus === 'Running' ? 'Progress' : 'Deploy'"
+                [command1Icon]="item?.deployStatus === 'Running' ? 'fas fa-spinner fa-spin' : 'fas fa-rocket'"
+                command1Title="Check git, build, send this release to its server"
+                [command1Visible]="item?.deployStatus === 'Draft' || item?.deployStatus === 'Running'"
+                (command1Click)="deploy()"
+                command2Text="Edit"
+                command2Icon="fas fa-pen"
+                [command2Visible]="item?.deployStatus === 'Draft'"
+                (command2Click)="edit()"
+                command3Text="Delete"
+                command3Icon="fas fa-trash"
+                [command3Visible]="item?.deployStatus === 'Draft'"
+                (command3Click)="deleteDraft()"
+                command4Text="Open Site"
+                command4Icon="fas fa-up-right-from-square"
+                [command4Visible]="item?.deployStatus === 'Succeeded' && !!server?.appUrl"
+                (command4Click)="openSite()"
+                command5Text="Copy Log"
+                command5Icon="fas fa-copy"
+                [command5Visible]="!!item?.log && item?.deployStatus !== 'Draft'"
+                (command5Click)="copyLog()"
+                rightCommandIcon="fas fa-arrow-left"
+                rightCommandTitle="Back to the list"
+                (rightCommandClick)="onBackToList()">
+            </app-command-center>
+        }
 
     </app-page-header>
 
@@ -30,67 +63,336 @@
          PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="canvasConfig">
 
-        <div canvasBody class="dc-page">
+        <div canvasBody class="dc-page appcore-scrollbar" [class.dc-page-form]="mode !== 'view'">
 
             @if (loading)
             {
-                <div class="dc-empty">Loading ...</div>
+                <div class="dc-empty"><i class="fas fa-spinner fa-spin"></i> Loading ...</div>
             }
-            @else if (loadFailed || !item)
+            @else if (loadFailed)
             {
                 <div class="dc-empty">This deployment could not be loaded.</div>
             }
-            @else
+            @else if (mode !== 'view')
             {
-                <div class="dc-result" [ngClass]="'dc-' + tone">
+                <!-- =============================================
+                     ADD / EDIT : repository status
+                ============================================== -->
 
-                    <div class="dc-result-head">
-                        @if (item.deployStatus === 'Running')
-                        {
-                            <i class="fas fa-spinner fa-spin"></i>
-                        }
-                        <b>{{ item.deployStatus }}</b>
-                        <span class="dc-result-step">{{ item.step }}</span>
-                        <span class="dc-result-percent">{{ item.percent }}%</span>
+                <div class="dc-repo">
+
+                    <span class="dc-repo-icon"><i class="fas fa-code-branch"></i></span>
+
+                    @if (draftLoading && !draft)
+                    {
+                        <div class="dc-repo-main">
+                            <b>Reading the repository ...</b>
+                            <span>Commit, branch and what changed since the last release.</span>
+                        </div>
+                    }
+                    @else if (draft)
+                    {
+                        <div class="dc-repo-main">
+                            <b>
+                                {{ short(draft.commitHash) }} &nbsp; {{ draft.commitMessage }}
+                            </b>
+                            <span>
+                                Branch {{ draft.branch }}
+                                &nbsp;|&nbsp;
+                                Last release on this server : {{ draft.lastRelease || 'none yet' }}
+                                &nbsp;|&nbsp;
+                                {{ draft.newCommits }} commit(s) since then
+                            </span>
+                        </div>
+
+                        <div class="dc-repo-chips">
+                            <span class="dc-mini" [class.dc-mini-bad]="draft.localChanges > 0">
+                                {{ draft.localChanges }} changed
+                            </span>
+                            <span class="dc-mini" [class.dc-mini-bad]="draft.ahead > 0">
+                                {{ draft.ahead }} not pushed
+                            </span>
+                            <span class="dc-mini" [class.dc-mini-bad]="draft.behind > 0">
+                                {{ draft.behind }} to pull
+                            </span>
+                        </div>
+                    }
+
+                </div>
+
+                @if (mode === 'edit' && draft && item && draft.commitHash && draft.commitHash !== item.commitHash)
+                {
+                    <button type="button" class="dc-toggle" [class.dc-toggle-on]="updateCommit" (click)="toggleUpdateCommit()">
+                        <i [class]="updateCommit ? 'fas fa-square-check' : 'far fa-square'"></i>
+                        Take the latest commit on save : {{ short(item.commitHash) }} &rarr; {{ short(draft.commitHash) }} {{ draft.commitMessage }}
+                    </button>
+                }
+
+
+                <!-- =============================================
+                     ADD / EDIT : fields
+                ============================================== -->
+
+                <div class="dc-fields">
+
+                    <div class="dc-card">
+                        <div class="dc-card-head">
+                            <span><i class="fas fa-tag"></i> Release</span>
+                        </div>
+
+                        <div class="dc-row">
+                            <app-textbox
+                                label="Release"
+                                [value]="mode === 'add' ? (draft?.nextRelease || 'Auto generated') : (item?.code || '')"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Title"
+                                placeholder="e.g. Deployment Center drafts"
+                                textCase="none"
+                                [(value)]="title">
+                            </app-textbox>
+                        </div>
                     </div>
 
-                    <div class="dc-bar">
-                        <div class="dc-bar-fill" [style.width.%]="item.percent"></div>
+                    <div class="dc-card">
+                        <div class="dc-card-head">
+                            <span><i class="fas fa-server"></i> Target</span>
+                        </div>
+
+                        <div class="dc-row">
+                            <app-dropdown
+                                label="Server"
+                                placeholder="Choose a server"
+                                [items]="serverItems"
+                                labelField="text"
+                                valueField="value"
+                                [(value)]="serverPublicId"
+                                (valueChange)="onServerChange($event)"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <app-textbox
+                                label="Live Release / Site"
+                                [value]="(server?.currentRelease || 'none yet') + '   ' + (server?.appUrl || '')"
+                                [readonly]="true">
+                            </app-textbox>
+                        </div>
                     </div>
 
                 </div>
+
+                <div class="dc-card dc-grow">
+                    <div class="dc-card-head">
+                        <span><i class="fas fa-list-check"></i> What is in this release</span>
+
+                        @if (draft)
+                        {
+                            <button type="button" class="dc-btn dc-btn-ghost dc-btn-sm" (click)="refillNotes()">
+                                <i class="fas fa-wand-magic-sparkles"></i> Fill from commits ({{ draft.newCommits }})
+                            </button>
+                        }
+                    </div>
+
+                    <textarea
+                        class="dc-textarea dc-textarea-fill appcore-scrollbar"
+                        placeholder="One change per line"
+                        [value]="releaseNotes"
+                        (input)="onNotesInput($event)"></textarea>
+                </div>
+
+                <div class="dc-card dc-card-inline">
+                    <span class="dc-inline-label"><i class="fas fa-comment"></i> Remarks</span>
+
+                    <input
+                        class="dc-input"
+                        type="text"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        (input)="onRemarksInput($event)">
+                </div>
+
+            }
+            @else if (item)
+            {
+                <!-- =============================================
+                     VIEW : result
+                ============================================== -->
+
+                <div class="dc-result" [ngClass]="'dc-' + toneOf(item.deployStatus)">
+
+                    <div class="dc-result-head">
+                        <span class="dc-result-icon">
+                            @switch (item.deployStatus)
+                            {
+                                @case ('Draft')       { <i class="fas fa-file-pen"></i> }
+                                @case ('Running')     { <i class="fas fa-spinner fa-spin"></i> }
+                                @case ('Succeeded')   { <i class="fas fa-circle-check"></i> }
+                                @case ('Rolled back') { <i class="fas fa-rotate-left"></i> }
+                                @default              { <i class="fas fa-circle-xmark"></i> }
+                            }
+                        </span>
+
+                        <div class="dc-result-text">
+                            <b>{{ item.deployStatus }}</b>
+                            <span>
+                                {{ item.deployStatus === 'Draft' ? 'Not deployed yet. Review it, then press Deploy.' : item.step }}
+                            </span>
+                        </div>
+
+                        @if (item.deployStatus === 'Draft')
+                        {
+                            <button type="button" class="dc-btn dc-btn-primary" (click)="deploy()">
+                                <i class="fas fa-rocket"></i> Deploy {{ item.code }}
+                            </button>
+                        }
+                        @else
+                        {
+                            <span class="dc-result-percent">{{ item.percent }}<small>%</small></span>
+                        }
+                    </div>
+
+                    @if (item.deployStatus !== 'Draft')
+                    {
+                        <div class="dc-track dc-track-thin">
+                            <div class="dc-fill" [style.width.%]="item.percent"></div>
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- =============================================
+                     VIEW : details
+                ============================================== -->
 
                 <div class="dc-grid">
 
                     <div class="dc-field"><span>Release</span><b>{{ item.code }}</b></div>
+                    <div class="dc-field dc-wide"><span>Title</span><b>{{ item.name || '-' }}</b></div>
                     <div class="dc-field"><span>Kind</span><b>{{ item.kind }}</b></div>
+
                     <div class="dc-field"><span>Server</span><b>{{ item.serverName }}</b></div>
-                    <div class="dc-field"><span>By</span><b>{{ item.performedByName || '-' }}</b></div>
-
-                    <div class="dc-field"><span>Started</span><b>{{ dateText(item.startedDate) }}</b></div>
-                    <div class="dc-field"><span>Finished</span><b>{{ dateText(item.finishedDate) }}</b></div>
-                    <div class="dc-field"><span>Duration</span><b>{{ item.deployStatus === 'Running' ? '...' : durationText(item.durationSeconds) }}</b></div>
-                    <div class="dc-field"><span>Package</span><b>{{ item.packageMb ? item.packageMb + ' MB' : '-' }}</b></div>
-
                     <div class="dc-field"><span>Branch</span><b>{{ item.branch || '-' }}</b></div>
-                    <div class="dc-field dc-wide"><span>Commit</span><b>{{ item.commitHash ? item.commitHash.substring(0, 10) + '  ' + item.commitMessage : '-' }}</b></div>
-                    <div class="dc-field"><span>Previous release</span><b>{{ item.previousRelease || '-' }}</b></div>
+                    <div class="dc-field dc-wide"><span>Commit</span><b>{{ item.commitHash ? short(item.commitHash) + '  ' + item.commitMessage : '-' }}</b></div>
 
-                    <div class="dc-field dc-full"><span>Database backup (on the server)</span><b>{{ item.backupFile || '-' }}</b></div>
+                    @if (item.deployStatus !== 'Draft')
+                    {
+                        <div class="dc-field"><span>Started</span><b>{{ dateText(item.startedDate) }}</b></div>
+                        <div class="dc-field"><span>Finished</span><b>{{ dateText(item.finishedDate) }}</b></div>
+                        <div class="dc-field"><span>Duration</span><b>{{ item.deployStatus === 'Running' ? '...' : durationText(item.durationSeconds) }}</b></div>
+                        <div class="dc-field"><span>Package</span><b>{{ item.packageMb ? item.packageMb + ' MB' : '-' }}</b></div>
+
+                        <div class="dc-field"><span>By</span><b>{{ item.performedByName || '-' }}</b></div>
+                        <div class="dc-field"><span>Previous release</span><b>{{ item.previousRelease || '-' }}</b></div>
+                        <div class="dc-field dc-wide"><span>Database backup (on the server)</span><b>{{ item.backupFile || '-' }}</b></div>
+                    }
+                    @else
+                    {
+                        <div class="dc-field"><span>Prepared by</span><b>{{ item.performedByName || '-' }}</b></div>
+                        <div class="dc-field dc-wide"><span>Remarks</span><b>{{ item.remarks || '-' }}</b></div>
+                    }
 
                 </div>
 
-                <div class="dc-log-head">
-                    <span>Log</span>
-                    <label class="dc-follow">
-                        <input type="checkbox" [checked]="followLog" (change)="followLog = !followLog">
-                        Follow the end
-                    </label>
+
+                <!-- =============================================
+                     VIEW : release notes
+                ============================================== -->
+
+                <div class="dc-card">
+                    <div class="dc-card-head">
+                        <span><i class="fas fa-list-check"></i> What is in this release</span>
+                        <small>{{ notesLines.length }} line(s)</small>
+                    </div>
+
+                    @if (notesLines.length > 0)
+                    {
+                        <ul class="dc-notes appcore-scrollbar">
+                            @for (line of notesLines; track $index)
+                            {
+                                <li>{{ line }}</li>
+                            }
+                        </ul>
+                    }
+                    @else
+                    {
+                        <div class="dc-muted">No release notes.</div>
+                    }
                 </div>
 
-                <pre class="dc-log appcore-scrollbar">{{ item.log || 'No log yet.' }}</pre>
+
+                <!-- =============================================
+                     VIEW : log
+                ============================================== -->
+
+                @if (item.deployStatus !== 'Draft')
+                {
+                    <div class="dc-card">
+                        <div class="dc-card-head">
+                            <span><i class="fas fa-terminal"></i> Log</span>
+                        </div>
+
+                        <pre
+                            #savedLog
+                            class="dc-log appcore-scrollbar"
+                            (scroll)="onSavedLogScroll()">{{ item.log || 'No log yet.' }}</pre>
+                    </div>
+                }
+            }
+
+        </div>
+
+
+        <!-- =================================================
+             CANVAS FOOTER : repository status for Deploy
+        ================================================== -->
+
+        <div canvasFooter class="dc-footer" [ngClass]="'dc-footer-' + footerTone">
+
+            @if (draftLoading && !draft)
+            {
+                <i class="fas fa-spinner fa-spin"></i>
+                <span class="dc-footer-text">Reading the repository ...</span>
+            }
+            @else if (draft && draft.problems.length > 0)
+            {
+                <i class="fas fa-triangle-exclamation"></i>
+                <span class="dc-footer-text">
+                    <b>Save is fine now. Before Deploy :</b>
+                    @for (problem of draft.problems; track $index)
+                    {
+                        <span class="dc-footer-item">{{ problem }}</span>
+                    }
+                </span>
+
+                <span class="dc-footer-actions">
+                    <button type="button" class="dc-btn dc-btn-ghost dc-btn-sm" (click)="loadDraftDefaults(!releaseNotes.trim())">
+                        <i class="fas fa-rotate-right"></i> Check again
+                    </button>
+
+                    <button type="button" class="dc-btn dc-btn-primary dc-btn-sm" (click)="openSourceControl()">
+                        <i class="fas fa-code-branch"></i> Open Source Control
+                    </button>
+                </span>
+            }
+            @else if (draft)
+            {
+                <i class="fas fa-circle-check"></i>
+                <span class="dc-footer-text">
+                    <b>Repository ready :</b>
+                    <span>everything is committed and pushed; the draft can be deployed after saving.</span>
+                </span>
+
+                <span class="dc-footer-actions">
+                    <button type="button" class="dc-btn dc-btn-ghost dc-btn-sm" (click)="openSourceControl()">
+                        <i class="fas fa-code-branch"></i> Source Control
+                    </button>
+                </span>
             }
 
         </div>
@@ -99,9 +401,301 @@
 
 
     <!-- =====================================================
+         POPUP : repository check -> confirm -> live job
+    ====================================================== -->
+
+    @if (liveOpen)
+    {
+        <div class="dc-overlay">
+
+            <div class="dc-modal" [ngClass]="'dc-' + liveTone()">
+
+                <!-- Head -->
+
+                <div class="dc-modal-head">
+
+                    <span class="dc-modal-icon">
+                        @switch (popupMode)
+                        {
+                            @case ('check')    { <i class="fas fa-spinner fa-spin"></i> }
+                            @case ('confirm')  { <i class="fas fa-rocket"></i> }
+                            @case ('problems') { <i class="fas fa-triangle-exclamation"></i> }
+                            @default
+                            {
+                                <i [class]="live?.finished ? 'fas fa-rocket' : 'fas fa-spinner fa-spin'"></i>
+                            }
+                        }
+                    </span>
+
+                    <span class="dc-modal-title">
+                        {{ liveTitle }}
+                        <small>{{ server?.code }} - {{ server?.name }}</small>
+                    </span>
+
+                    @switch (popupMode)
+                    {
+                        @case ('check')    { <span class="dc-chip">Checking</span> }
+                        @case ('confirm')  { <span class="dc-chip dc-chip-ok">Ready</span> }
+                        @case ('problems') { <span class="dc-chip dc-chip-bad">Not ready</span> }
+                        @default
+                        {
+                            @if (live)
+                            {
+                                <span class="dc-chip">{{ live.deployStatus }}</span>
+                            }
+                        }
+                    }
+
+                    @if (popupMode === 'job' && live)
+                    {
+                        <span class="dc-time">
+                            <i class="far fa-clock"></i> {{ durationText(live.elapsedSeconds) }}
+                        </span>
+                    }
+
+                    <button
+                        type="button"
+                        class="dc-icon-btn"
+                        [title]="popupMode === 'job' && live && !live.finished ? 'Hide (the job continues)' : 'Close'"
+                        [disabled]="checking"
+                        (click)="popupMode === 'job' ? closeLive() : cancelPopup()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+
+                <!-- Repository check -->
+
+                @if (popupMode === 'check')
+                {
+                    <div class="dc-progress">
+                        <div class="dc-track">
+                            <div class="dc-fill dc-indeterminate"></div>
+                        </div>
+                    </div>
+
+                    <div class="dc-step">
+                        Checking the repository : committed, pushed and up to date with GitHub ...
+                    </div>
+                }
+
+
+                <!-- Ready : what will be deployed -->
+
+                @if (popupMode === 'confirm' && preflight)
+                {
+                    <div class="dc-facts">
+                        <div class="dc-fact">
+                            <span>Release</span>
+                            <b>{{ item?.code }}</b>
+                        </div>
+                        <div class="dc-fact">
+                            <span>Branch</span>
+                            <b>{{ preflight.branch }}</b>
+                        </div>
+                        <div class="dc-fact dc-fact-wide">
+                            <span>Commit</span>
+                            <b>{{ preflight.commitHash.substring(0, 7) }} &nbsp; {{ preflight.commitMessage }}</b>
+                        </div>
+                        <div class="dc-fact dc-fact-wide">
+                            <span>Server</span>
+                            <b>{{ server?.name }} &nbsp; {{ server?.appUrl }}</b>
+                        </div>
+                    </div>
+
+                    @if (commitChanged)
+                    {
+                        <div class="dc-callout dc-callout-warn">
+                            <i class="fas fa-code-commit"></i>
+                            <span>
+                                The draft was saved with commit {{ short(item?.commitHash) }}; GitHub now has
+                                {{ short(preflight.commitHash) }}. The newest commit is deployed (it is pushed and checked).
+                            </span>
+                        </div>
+                    }
+
+                    <div class="dc-callout">
+                        <i class="fas fa-circle-info"></i>
+                        <span>
+                            This PC builds the API and the UI (a few minutes). The server then backs up its
+                            database, installs the release and restarts the site (about 1 minute offline).
+                            If the new site does not start, the server switches back by itself.
+                        </span>
+                    </div>
+                }
+
+
+                <!-- Not ready -->
+
+                @if (popupMode === 'problems')
+                {
+                    <div class="dc-problems">
+                        @if (preflightError)
+                        {
+                            <div class="dc-problem">
+                                <i class="fas fa-circle-xmark"></i>
+                                <span>{{ preflightError }}</span>
+                            </div>
+                        }
+
+                        @for (problem of preflight?.problems ?? []; track $index)
+                        {
+                            <div class="dc-problem">
+                                <i class="fas fa-circle-xmark"></i>
+                                <span>{{ problem }}</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="dc-callout">
+                        <i class="fas fa-code-branch"></i>
+                        <span>
+                            Fix it in Source Control (commit, push or pull) : it opens in a new tab.
+                            Come back to this tab and it checks again by itself.
+                        </span>
+                    </div>
+                }
+
+
+                <!-- Live job -->
+
+                @if (popupMode === 'job')
+                {
+                    <div class="dc-progress">
+                        <div class="dc-track">
+                            <div
+                                class="dc-fill"
+                                [class.dc-running]="live && !live.finished"
+                                [style.width.%]="live?.percent ?? 0">
+                            </div>
+                        </div>
+                        <span class="dc-percent">{{ live?.percent ?? 0 }}<small>%</small></span>
+                    </div>
+
+                    <div class="dc-stages">
+                        @for (stage of stages; track stage.label)
+                        {
+                            <div class="dc-stage" [ngClass]="'dc-stage-' + stage.state">
+                                <span class="dc-stage-dot">
+                                    @switch (stage.state)
+                                    {
+                                        @case ('done')    { <i class="fas fa-check"></i> }
+                                        @case ('failed')  { <i class="fas fa-xmark"></i> }
+                                        @case ('current') { <i class="fas fa-spinner fa-spin"></i> }
+                                        @default          { <i [class]="stage.icon"></i> }
+                                    }
+                                </span>
+                                <span class="dc-stage-label">{{ stage.label }}</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="dc-step">{{ live?.step || 'Starting ...' }}</div>
+
+                    <pre
+                        #logBox
+                        class="dc-log appcore-scrollbar"
+                        (scroll)="onLogScroll()">{{ liveLogText }}</pre>
+                }
+
+
+                <!-- Foot -->
+
+                <div class="dc-modal-foot">
+
+                    @switch (popupMode)
+                    {
+                        @case ('check')
+                        {
+                            <span class="dc-foot-note">This takes a few seconds.</span>
+
+                            <button type="button" class="dc-btn dc-btn-ghost" disabled>
+                                Cancel
+                            </button>
+                        }
+
+                        @case ('confirm')
+                        {
+                            <span class="dc-foot-note">Nothing changes on the server until you press Deploy.</span>
+
+                            <button type="button" class="dc-btn dc-btn-ghost" (click)="cancelPopup()">
+                                <i class="fas fa-xmark"></i> Cancel
+                            </button>
+
+                            <button type="button" class="dc-btn dc-btn-primary" [disabled]="starting" (click)="confirmDeploy()">
+                                <i [class]="starting ? 'fas fa-spinner fa-spin' : 'fas fa-rocket'"></i>
+                                Deploy {{ item?.code }}
+                            </button>
+                        }
+
+                        @case ('problems')
+                        {
+                            <span class="dc-foot-note"></span>
+
+                            <button type="button" class="dc-btn dc-btn-ghost" (click)="cancelPopup()">
+                                Close
+                            </button>
+
+                            <button type="button" class="dc-btn dc-btn-ghost" (click)="runPreflight()">
+                                <i class="fas fa-rotate-right"></i> Check again
+                            </button>
+
+                            <button type="button" class="dc-btn dc-btn-primary" (click)="openSourceControl()">
+                                <i class="fas fa-code-branch"></i> Open Source Control
+                            </button>
+                        }
+
+                        @default
+                        {
+                            @if (live && !live.finished)
+                            {
+                                <span class="dc-foot-note">
+                                    <i class="fas fa-circle-info"></i>
+                                    You can hide this window or leave the page: the job continues.
+                                </span>
+                            }
+                            @else
+                            {
+                                <span class="dc-foot-note"></span>
+                            }
+
+                            @if (live?.finished && live?.deployStatus === 'Succeeded' && server?.appUrl)
+                            {
+                                <button type="button" class="dc-btn dc-btn-success" (click)="openSite()">
+                                    <i class="fas fa-up-right-from-square"></i> Open Site
+                                </button>
+                            }
+
+                            @if (live?.finished)
+                            {
+                                <button type="button" class="dc-btn dc-btn-primary" (click)="closeLive()">
+                                    <i class="fas fa-check"></i> Close
+                                </button>
+                            }
+                            @else
+                            {
+                                <button type="button" class="dc-btn dc-btn-primary" (click)="hideLive()">
+                                    <i class="fas fa-eye-slash"></i> Hide
+                                </button>
+                            }
+                        }
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- =====================================================
          UTILITIES
     ====================================================== -->
 
     <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
 
 </div>

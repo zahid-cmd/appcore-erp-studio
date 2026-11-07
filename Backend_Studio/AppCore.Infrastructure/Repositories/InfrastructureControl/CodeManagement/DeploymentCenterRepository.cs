@@ -153,7 +153,16 @@ public class DeploymentCenterRepository
         entity.Status = true;
         entity.CreatedBy = userId;
         entity.CreatedDate = DateTime.UtcNow;
-        entity.StartedDate ??= DateTime.UtcNow;
+
+        if (entity.DeployStatus != "Draft")
+        {
+            entity.StartedDate ??= DateTime.UtcNow;
+        }
+
+        entity.Name = Cut(Ascii(entity.Name), 200);
+        entity.ReleaseNotes = Ascii(entity.ReleaseNotes);
+        entity.Remarks = Cut(Ascii(entity.Remarks), 1000);
+        entity.CommitMessage = Cut(Ascii(entity.CommitMessage), 500);
 
         await _context.Set<DeploymentEntity>().AddAsync(entity);
 
@@ -162,14 +171,143 @@ public class DeploymentCenterRepository
         AddHistory(
             entity.Id,
             entity.Kind,
-            entity.Kind == "Rollback" ? "Rollback Started" : "Deployment Started",
-            entity.Kind == "Rollback"
-                ? $"Rollback of {entity.ServerName} to {entity.Code} started."
-                : $"{entity.Code} to {entity.ServerName} started.\nCommit: {Short(entity.CommitHash)} {entity.CommitMessage}");
+            entity.DeployStatus == "Draft"
+                ? "Draft Created"
+                : entity.Kind == "Rollback" ? "Rollback Started" : "Deployment Started",
+            entity.DeployStatus == "Draft"
+                ? $"{entity.Code} for {entity.ServerName} prepared.\nCommit: {Short(entity.CommitHash)} {entity.CommitMessage}"
+                : entity.Kind == "Rollback"
+                    ? $"Rollback of {entity.ServerName} to {entity.Code} started."
+                    : $"{entity.Code} to {entity.ServerName} started.\nCommit: {Short(entity.CommitHash)} {entity.CommitMessage}");
 
         await _context.SaveChangesAsync();
 
         return entity.Id;
+    }
+
+
+    //===========================================================
+    // Draft : Update / Delete
+    //===========================================================
+
+    public async Task<bool>
+        UpdateDraftAsync(DeploymentEntity entity)
+    {
+        var existing = await _context
+            .Set<DeploymentEntity>()
+            .FirstOrDefaultAsync(x => x.Id == entity.Id && !x.IsDeleted);
+
+        if (existing is null || existing.DeployStatus != "Draft")
+        {
+            return false;
+        }
+
+        existing.Name = Cut(Ascii(entity.Name), 200);
+        existing.ServerManagementId = entity.ServerManagementId;
+        existing.ServerName = Cut(Ascii(entity.ServerName), 200);
+        existing.ReleaseNotes = Ascii(entity.ReleaseNotes);
+        existing.Remarks = Cut(Ascii(entity.Remarks), 1000);
+        existing.Branch = Cut(entity.Branch, 100);
+        existing.CommitHash = Cut(entity.CommitHash, 64);
+        existing.CommitMessage = Cut(Ascii(entity.CommitMessage), 500);
+        existing.ModifiedBy = 1;
+        existing.ModifiedDate = DateTime.UtcNow;
+
+        AddHistory(
+            existing.Id,
+            existing.Kind,
+            "Draft Updated",
+            $"{existing.Code} for {existing.ServerName}.\nCommit: {Short(existing.CommitHash)} {existing.CommitMessage}");
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool>
+        DeleteDraftAsync(long id)
+    {
+        var existing = await _context
+            .Set<DeploymentEntity>()
+            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+
+        if (existing is null || existing.DeployStatus != "Draft")
+        {
+            return false;
+        }
+
+        existing.IsDeleted = true;
+        existing.IsActive = false;
+        existing.ModifiedBy = 1;
+        existing.ModifiedDate = DateTime.UtcNow;
+
+        AddHistory(existing.Id, existing.Kind, "Draft Deleted", $"{existing.Code} for {existing.ServerName} deleted.");
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+
+    //===========================================================
+    // Draft -> Running
+    //===========================================================
+
+    public async Task
+        StartAsync(DeploymentEntity entity)
+    {
+        var existing = await _context
+            .Set<DeploymentEntity>()
+            .FirstOrDefaultAsync(x => x.Id == entity.Id && !x.IsDeleted);
+
+        if (existing is null)
+        {
+            return;
+        }
+
+        existing.DeployStatus = "Running";
+        existing.Step = "Starting";
+        existing.Percent = 0;
+        existing.StartedDate = entity.StartedDate ?? DateTime.UtcNow;
+        existing.FinishedDate = null;
+        existing.DurationSeconds = 0;
+        existing.PerformedByName = Cut(Ascii(entity.PerformedByName), 200);
+        existing.Log = string.Empty;
+        existing.ModifiedBy = 1;
+        existing.ModifiedDate = DateTime.UtcNow;
+
+        AddHistory(
+            existing.Id,
+            existing.Kind,
+            "Deployment Started",
+            $"{existing.Code} to {existing.ServerName} started by {existing.PerformedByName}.");
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    //===========================================================
+    // Last successful deployment on a server
+    //===========================================================
+
+    public async Task<DeploymentEntity?>
+        GetLastSucceededAsync(long serverManagementId)
+    {
+        return await _context
+            .Set<DeploymentEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted
+                     && x.Kind == "Deploy"
+                     && x.DeployStatus == "Succeeded"
+                     && x.ServerManagementId == serverManagementId)
+            .OrderByDescending(x => x.StartedDate)
+            .Select(x => new DeploymentEntity
+            {
+                Id = x.Id,
+                Code = x.Code,
+                CommitHash = x.CommitHash
+            })
+            .FirstOrDefaultAsync();
     }
 
 
@@ -273,6 +411,17 @@ public class DeploymentCenterRepository
 
     private static string Short(string hash) =>
         string.IsNullOrEmpty(hash) ? string.Empty : hash.Length > 7 ? hash.Substring(0, 7) : hash;
+
+    // the database is WIN1252 : other letters -> '?'
+    private static string Ascii(string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        return new string(text.Replace("\r", string.Empty).Select(c => c == '\n' || c == '\t' || (c >= ' ' && c <= '~') ? c : '?').ToArray());
+    }
 
     private static string Cut(string? text, int max)
     {

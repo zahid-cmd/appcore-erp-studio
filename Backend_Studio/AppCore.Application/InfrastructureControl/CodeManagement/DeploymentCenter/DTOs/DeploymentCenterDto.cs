@@ -27,12 +27,16 @@ public class DeploymentCenterDto
     // Deploy / Rollback
     public string Kind { get; set; } = string.Empty;
 
-    // Running / Succeeded / Failed / Rolled back
+    // Draft / Running / Succeeded / Failed / Rolled back
     public string DeployStatus { get; set; } = string.Empty;
 
     public string Step { get; set; } = string.Empty;
 
     public int Percent { get; set; }
+
+    public Guid? ServerPublicId { get; set; }
+
+    public string ReleaseNotes { get; set; } = string.Empty;
 
     public string Branch { get; set; } = string.Empty;
 
@@ -134,4 +138,38 @@ public class ServerReleaseDto
     public DateTime CreatedAt { get; set; }
 
     public bool IsCurrent { get; set; }
+}
+
+
+//===============================================================
+// New deployment : what would go into the next release
+//===============================================================
+
+public class DeploymentDraftDefaultsDto
+{
+    public string NextRelease { get; set; } = string.Empty;
+
+    public string Branch { get; set; } = string.Empty;
+
+    public string CommitHash { get; set; } = string.Empty;
+
+    public string CommitMessage { get; set; } = string.Empty;
+
+    public int Ahead { get; set; }
+
+    public int Behind { get; set; }
+
+    public int LocalChanges { get; set; }
+
+    // the last release that went live on this server
+    public string LastRelease { get; set; } = string.Empty;
+
+    public string LastCommit { get; set; } = string.Empty;
+
+    // commit messages since LastCommit (one per line)
+    public string ReleaseNotes { get; set; } = string.Empty;
+
+    public int NewCommits { get; set; }
+
+    public List<string> Problems { get; set; } = new();
 }

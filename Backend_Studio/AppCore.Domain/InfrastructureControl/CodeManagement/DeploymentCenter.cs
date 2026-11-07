@@ -35,7 +35,7 @@ public class DeploymentCenter
     // Progress / Result
     //===========================================================
 
-    // Running / Succeeded / Failed / Rolled back
+    // Draft / Running / Succeeded / Failed / Rolled back
     public string DeployStatus { get; set; } = "Running";
 
     public string Step { get; set; } = string.Empty;
@@ -67,6 +67,9 @@ public class DeploymentCenter
     public string CommitHash { get; set; } = string.Empty;
 
     public string CommitMessage { get; set; } = string.Empty;
+
+    // what is in the release (commit messages; editable)
+    public string ReleaseNotes { get; set; } = string.Empty;
 
     //===========================================================
     // Audit

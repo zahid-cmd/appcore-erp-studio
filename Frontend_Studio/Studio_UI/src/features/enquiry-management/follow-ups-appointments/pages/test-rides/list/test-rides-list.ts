@@ -184,6 +184,14 @@ implements OnInit, OnDestroy
 
     pageSize = 10;
 
+    // Auto page size (page canvas across monitors) : as many rows
+    // as the canvas holds; the pager's "Auto (n)" choice. The
+    // first page loads with 10 and is reloaded once the rows
+    // that fit are known (only when that number differs).
+    autoPageSize = true;
+
+    autoRows = 0;
+
     private sortField = '';
 
     private sortDirection: 'asc' | 'desc' = 'asc';
@@ -227,12 +235,12 @@ implements OnInit, OnDestroy
         { header:'#',          field:'serial',       type:'serial', width:'50px',  align:'center' },
         { header:'Date',       field:'DateText',     width:'140px', align:'center' },
         { header:'Time',       field:'SlotText',     width:'170px', align:'center' },
-        { header:'Enquiry No', field:'EnquiryNo',    width:'140px', align:'center' },
+        { header:'Enquiry No', field:'EnquiryNo',    width:'140px', align:'center', priority:2 },
         { header:'Customer',   field:'CustomerText', width:'230px', align:'left' },
         { header:'Bike to Ride', field:'ModelName',  width:'190px', align:'left' },
-        { header:'Interest',   field:'InterestLevelName', width:'130px', align:'left', dotField:'InterestLevelColor' },
-        { header:'Executive',  field:'AdvisorName',  width:'160px', align:'left' },
-        { header:'Moved',      field:'MovedText',    width:'80px',  align:'center' },
+        { header:'Interest',   field:'InterestLevelName', width:'130px', align:'left', dotField:'InterestLevelColor', priority:3 },
+        { header:'Executive',  field:'AdvisorName',  width:'160px', align:'left', priority:2 },
+        { header:'Moved',      field:'MovedText',    width:'80px',  align:'center', priority:3 },
         { header:'Status',     field:'StatusText',   width:'170px', align:'left', dotField:'StatusColor' },
         { header:'Actions',    field:'actions',      type:'actions', width:'130px', align:'center' }
     ];
@@ -481,9 +489,39 @@ implements OnInit, OnDestroy
 
     onPageSizeChange(size: number): void
     {
-        this.pageSize = size;
+        // 0 = Auto (the rows that fit the canvas)
+        this.autoPageSize = size === 0;
+
+        this.pageSize =
+            size === 0
+                ? (this.autoRows > 0 ? this.autoRows : this.pageSize)
+                : size;
 
         this.reload();
+    }
+
+
+    // The list table measured how many rows fit
+    onFitRows(rows: number): void
+    {
+        this.autoRows = rows;
+
+        if (!this.autoPageSize || rows === this.pageSize)
+        {
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+        // Keep the first record on screen in view
+        const first =
+            (this.currentPage - 1) * this.pageSize;
+
+        this.pageSize = rows;
+
+        this.currentPage = Math.floor(first / rows) + 1;
+
+        this.loadItems();
     }
 
 

@@ -274,18 +274,56 @@ public static class DeploymentRunner
 
 
     //===========================================================
+    // Release notes : commit messages since a commit
+    //===========================================================
+
+    public static async Task<(string Notes, int Count)> ReleaseNotesAsync(
+        string repositoryPath,
+        string branch,
+        string sinceCommit)
+    {
+        if (string.IsNullOrWhiteSpace(repositoryPath) || !Directory.Exists(repositoryPath))
+        {
+            return (string.Empty, 0);
+        }
+
+        // since the last deployed commit; first release : the last 20
+        var range =
+            string.IsNullOrWhiteSpace(sinceCommit)
+                ? new[] { "log", "--no-merges", "-20", "--format=- %s", $"origin/{branch}" }
+                : new[] { "log", "--no-merges", "-200", "--format=- %s", $"{sinceCommit}..origin/{branch}" };
+
+        var result = await GitAsync(repositoryPath, TimeSpan.FromSeconds(30), range);
+
+        if (result.ExitCode != 0)
+        {
+            return (string.Empty, 0);
+        }
+
+        var lines = result.Output
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.TrimEnd())
+            .Where(line => line.Length > 2)
+            .ToList();
+
+        return (string.Join("\n", lines), lines.Count);
+    }
+
+
+    //===========================================================
     // Start a deployment
     //===========================================================
 
+    // record = a Draft (prepared in the Deployment Center)
     public static async Task<(DeploymentCenter? Record, string? Error)> StartDeploymentAsync(
         IServiceScopeFactory scopes,
         IDeploymentCenterRepository repository,
+        DeploymentCenter record,
         ServerManagement server,
         string token,
         string repositoryPath,
         string branch,
-        string userName,
-        string remarks)
+        string userName)
     {
         if (!await Gate.WaitAsync(0))
         {
@@ -294,23 +332,20 @@ public static class DeploymentRunner
 
         try
         {
-            var record = new DeploymentCenter
-            {
-                Code = await repository.GetNextReleaseAsync(),
-                Kind = "Deploy",
-                ServerManagementId = server.Id,
-                ServerName = server.Name,
-                Branch = branch,
-                DeployStatus = "Running",
-                Step = "Starting",
-                StartedDate = DateTime.UtcNow,
-                PerformedByName = userName,
-                Remarks = remarks ?? string.Empty
-            };
+            record.Kind = "Deploy";
+            record.ServerManagementId = server.Id;
+            record.ServerName = server.Name;
+            record.Branch = branch;
+            record.DeployStatus = "Running";
+            record.Step = "Starting";
+            record.Percent = 0;
+            record.StartedDate = DateTime.UtcNow;
+            record.FinishedDate = null;
+            record.DurationSeconds = 0;
+            record.PerformedByName = userName;
+            record.Log = string.Empty;
 
-            record.Name = $"Deploy {record.Code} to {server.Name}";
-
-            await repository.CreateAsync(record);
+            await repository.StartAsync(record);
 
             var job = new LiveJob { Record = record };
 
@@ -454,7 +489,10 @@ public static class DeploymentRunner
                 return;
             }
 
-            record.Name = Cut($"{record.Code}: {check.CommitMessage}", 200);
+            if (string.IsNullOrWhiteSpace(record.Name))
+            {
+                record.Name = Cut($"{record.Code}: {check.CommitMessage}", 200);
+            }
 
             job.Log($"Commit {check.CommitHash} \"{check.CommitMessage}\" on {branch}");
 

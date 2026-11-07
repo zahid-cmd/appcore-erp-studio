@@ -63,7 +63,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Add Deployment Center'
+            breadcrumb:'New Deployment'
         },
 
         loadComponent:() =>
@@ -86,7 +86,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Edit Deployment Center'
+            breadcrumb:'Edit Deployment'
         },
 
         loadComponent:() =>
@@ -109,7 +109,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'View Deployment Center'
+            breadcrumb:'Deployment'
         },
 
         loadComponent:() =>

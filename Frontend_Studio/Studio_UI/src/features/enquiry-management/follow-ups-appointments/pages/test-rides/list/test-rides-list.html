@@ -1,4 +1,4 @@
-<div class="app-list-page">
+<div class="app-list-page" data-canvas="fit">
 
     <!-- =====================================================
          PAGE HEADER
@@ -111,7 +111,8 @@
                 (view)="view($event)"
                 (edit)="edit($event)"
                 (delete)="delete($event)"
-                (sortChange)="onSort($event)">
+                (sortChange)="onSort($event)"
+                (fitRowsChange)="onFitRows($event)">
 
             </app-list-table>
 
@@ -122,6 +123,8 @@
             [totalRecords]="totalRecords"
             [currentPage]="currentPage"
             [pageSize]="pageSize"
+            [autoRows]="autoRows"
+            [autoActive]="autoPageSize"
             (pageChange)="onPageChange($event)"
             (pageSizeChange)="onPageSizeChange($event)">
 

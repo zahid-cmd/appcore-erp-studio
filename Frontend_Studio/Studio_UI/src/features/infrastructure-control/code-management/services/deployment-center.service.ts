@@ -35,7 +35,8 @@ import
     DeploymentPreflight,
     DeploymentServerOption,
     ServerRelease,
-    StartDeployment,
+    DeploymentDraftDefaults,
+    SaveDeploymentDraft,
     StartRollback,
     StartedJob
 }
@@ -124,15 +125,77 @@ export class DeploymentCenterService
         );
     }
 
-    deploy
+    // next release, commit and release notes (New)
+    getDraftDefaults
     (
-        dto: StartDeployment
+        serverPublicId?: string | null
+    ):
+        Observable<DeploymentDraftDefaults>
+    {
+        let params =
+            new HttpParams();
+
+        if (serverPublicId)
+        {
+            params =
+                params.set('server', serverPublicId);
+        }
+
+        return this.http.get<DeploymentDraftDefaults>(
+            `${this.apiUrl}/draft-defaults`,
+            { params }
+        );
+    }
+
+    // new draft
+    create
+    (
+        dto: SaveDeploymentDraft
     ):
         Observable<StartedJob>
     {
         return this.http.post<StartedJob>(
-            `${this.apiUrl}/deploy`,
+            this.apiUrl,
             dto
+        );
+    }
+
+    // edit a draft
+    update
+    (
+        publicId: string,
+        dto: SaveDeploymentDraft
+    ):
+        Observable<void>
+    {
+        return this.http.put<void>(
+            `${this.apiUrl}/${publicId}`,
+            dto
+        );
+    }
+
+    // delete a draft
+    delete
+    (
+        publicId: string
+    ):
+        Observable<void>
+    {
+        return this.http.delete<void>(
+            `${this.apiUrl}/${publicId}`
+        );
+    }
+
+    // run a draft
+    deploy
+    (
+        publicId: string
+    ):
+        Observable<StartedJob>
+    {
+        return this.http.post<StartedJob>(
+            `${this.apiUrl}/${publicId}/deploy`,
+            {}
         );
     }
 

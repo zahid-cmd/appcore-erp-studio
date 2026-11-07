@@ -7,9 +7,9 @@
 //===============================================================
 
 
-// Running / Succeeded / Failed / Rolled back
+// Draft / Running / Succeeded / Failed / Rolled back
 export type DeployStatus =
-    'Running' | 'Succeeded' | 'Failed' | 'Rolled back';
+    'Draft' | 'Running' | 'Succeeded' | 'Failed' | 'Rolled back';
 
 
 export interface DeploymentCenter
@@ -27,6 +27,8 @@ export interface DeploymentCenter
 
     serverName: string;
 
+    serverPublicId?: string | null;
+
     // Deploy / Rollback
     kind: string;
 
@@ -41,6 +43,9 @@ export interface DeploymentCenter
     commitHash: string;
 
     commitMessage: string;
+
+    // what is in the release (one change per line)
+    releaseNotes: string;
 
     backupFile: string;
 
@@ -147,11 +152,48 @@ export interface ServerRelease
 }
 
 
-export interface StartDeployment
+// New deployment : what the next release would contain
+export interface DeploymentDraftDefaults
+{
+    nextRelease: string;
+
+    branch: string;
+
+    commitHash: string;
+
+    commitMessage: string;
+
+    ahead: number;
+
+    behind: number;
+
+    localChanges: number;
+
+    lastRelease: string;
+
+    lastCommit: string;
+
+    releaseNotes: string;
+
+    newCommits: number;
+
+    problems: string[];
+}
+
+
+// Save a draft (New / Edit)
+export interface SaveDeploymentDraft
 {
     serverPublicId: string;
 
+    name: string;
+
+    releaseNotes: string;
+
     remarks: string;
+
+    // Edit : take the latest pushed commit
+    updateCommit: boolean;
 }
 
 

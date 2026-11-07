@@ -1,18 +1,12 @@
 //===============================================================
 // Deployment Center List
 //
-// Deploy   : checks git (committed, pushed, up to date), builds
-//            the API and the UI on this PC, sends the release to
-//            the server; the server's Deploy Agent backs up the
-//            database, installs it and checks the live site
-//            (it switches back by itself if the site fails).
-// Releases : the releases kept on the server; "Roll back"
-//            switches the live site to an older one.
-//
-// A running job is shown in a popup (polled every second). Hide
-// closes the popup only: the job continues (the Deploy button
-// shows its progress and opens the popup again), also when this
-// page is closed.
+// Deployments : New -> a Draft (release notes, commit); Deploy
+//               runs from the record (check git, build here,
+//               send, back up, install). Running / finished
+//               rows open their record (live progress, log).
+// Releases    : the releases kept on the server; "Roll back"
+//               switches the live site to an older one.
 //===============================================================
 
 import
@@ -44,6 +38,7 @@ import
 {
     DeploymentCenter,
     DeploymentProgress,
+    DeploymentPreflight,
     DeploymentServerOption,
     ServerRelease
 }
@@ -293,33 +288,11 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Live job
+    // Running job (the list refreshes while it runs)
     //===========================================================
 
-    live:
-        DeploymentProgress | null =
-        null;
-
-    // the popup is open (Hide = closed while the job runs)
-    liveOpen:
-        boolean =
-        false;
-
-    @ViewChild('logBox')
-    logBox?:
-        ElementRef<HTMLElement>;
-
-    // checking git before a deployment
-    checking:
-        boolean =
-        false;
-
-    private pollTimer?:
+    private refreshTimer?:
         ReturnType<typeof setInterval>;
-
-    private polling:
-        boolean =
-        false;
 
 
     //===========================================================
@@ -354,7 +327,7 @@ implements OnInit, OnDestroy
         { header:'Duration', field:'durationText',    width:'90px',  align:'center' },
         { header:'By',       field:'performedByName', width:'130px', align:'left' },
         { header:'Result',   field:'deployStatus',    type:'status', width:'120px', align:'center' },
-        { header:'Actions',  field:'actions',         type:'actions', width:'80px', align:'center' }
+        { header:'Actions',  field:'actions',         type:'actions', width:'150px', align:'center' }
     ];
 
     readonly deploymentActions:
@@ -364,6 +337,33 @@ implements OnInit, OnDestroy
         edit:false,
         delete:false
     };
+
+    // only a Draft can be deployed, changed or deleted
+    readonly deploymentRowActions:
+        ListTableRowAction[] =
+    [
+        {
+            key:'deploy',
+            icon:'fas fa-rocket',
+            title:'Deploy this draft',
+            tone:'primary',
+            visible:(row:any) => row.deployStatus === 'Draft'
+        },
+        {
+            key:'edit',
+            icon:'fas fa-pen',
+            title:'Edit the draft',
+            tone:'default',
+            visible:(row:any) => row.deployStatus === 'Draft'
+        },
+        {
+            key:'delete',
+            icon:'fas fa-trash',
+            title:'Delete the draft',
+            tone:'danger',
+            visible:(row:any) => row.deployStatus === 'Draft'
+        }
+    ];
 
     readonly releaseColumns:
         ListTableColumn[] =
@@ -413,7 +413,7 @@ implements OnInit, OnDestroy
     ngOnDestroy():
         void
     {
-        this.stopPolling();
+        this.stopRefresh();
     }
 
 
@@ -455,7 +455,12 @@ implements OnInit, OnDestroy
                                 this.servers[0].publicId;
                         }
 
-                        if (this.selectedTab === 'releases')
+                        if
+                        (
+                            this.selectedTab === 'releases'
+                            &&
+                            !this.releasesLoading
+                        )
                         {
                             this.loadReleases();
                         }
@@ -520,11 +525,15 @@ implements OnInit, OnDestroy
     // Deployments
     //===========================================================
 
-    loadDeployments():
+    loadDeployments
+    (
+        silent:
+            boolean = false
+    ):
         void
     {
         this.loading =
-            true;
+            !silent;
 
         this.loadFailed =
             false;
@@ -544,21 +553,14 @@ implements OnInit, OnDestroy
                         this.loading =
                             false;
 
-                        // a job still running (started earlier or by
-                        // another tab) : follow it
-                        const running =
-                            this.deployments.find(
-                                x => x.deployStatus === 'Running'
-                            );
-
-                        if
-                        (
-                            running
-                            &&
-                            !this.pollTimer
-                        )
+                        // a job runs : refresh every 3 seconds
+                        if (this.running)
                         {
-                            this.follow(running.publicId);
+                            this.startRefresh();
+                        }
+                        else
+                        {
+                            this.stopRefresh();
                         }
 
                         this.cdr.detectChanges();
@@ -599,11 +601,13 @@ implements OnInit, OnDestroy
             startedText:
                 x.startedDate
                     ? new Date(x.startedDate).toLocaleString()
-                    : '',
+                    : 'not deployed',
             durationText:
                 x.deployStatus === 'Running'
-                    ? '...'
-                    : this.durationText(x.durationSeconds)
+                    ? `${x.percent}%`
+                    : x.deployStatus === 'Draft'
+                        ? '-'
+                        : this.durationText(x.durationSeconds)
         };
     }
 
@@ -886,148 +890,178 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Deploy
+    // New / Running job
     //===========================================================
 
-    deploy():
-        void
+    // the running job (if any)
+    get running():
+        DeploymentRow | undefined
     {
-        const server =
-            this.server;
-
-        if (!server)
-        {
-            this.toast.warning(
-                'Deploy',
-                'Choose a server first (add one in Server Management).'
-            );
-
-            return;
-        }
-
-        // a job runs : the button opens its popup
-        if
-        (
-            this.live
-            &&
-            !this.live.finished
-        )
-        {
-            this.liveOpen =
-                true;
-
-            return;
-        }
-
-        if (this.checking)
-        {
-            return;
-        }
-
-        this.checking =
-            true;
-
-        this.toast.info(
-            'Deploy',
-            'Checking the repository (committed, pushed, up to date) ...'
+        return this.deployments.find(
+            x => x.deployStatus === 'Running'
         );
-
-        this.service
-            .getPreflight()
-            .subscribe
-            ({
-                next:
-                    check =>
-                    {
-                        this.checking =
-                            false;
-
-                        if (!check.ready)
-                        {
-                            this.toast.error(
-                                'Not ready to deploy',
-                                (check.problems ?? []).join(' ')
-                                ||
-                                'The repository check failed.'
-                            );
-
-                            return;
-                        }
-
-                        this.confirmDialog.open
-                        (
-                            `Deploy ${check.nextRelease} to ${server.name}`,
-                            `Commit ${check.commitHash.substring(0, 7)} "${check.commitMessage}" (${check.branch}). `
-                            + 'This PC builds the API and the UI (a few minutes), then the server backs up its database, '
-                            + 'installs the release and restarts the site (about 1 minute offline). '
-                            + 'If the new site does not start, the server switches back by itself.',
-                            (): void =>
-                            {
-                                this.startDeployment(server);
-                            },
-                            'Deploy',
-                            'Cancel',
-                            'primary'
-                        );
-                    },
-                error:
-                    error =>
-                    {
-                        this.checking =
-                            false;
-
-                        console.error('Preflight Error', error);
-
-                        this.toast.error(
-                            'Deploy',
-                            error?.error?.message
-                            ??
-                            'The repository check could not be run.'
-                        );
-                    }
-            });
     }
 
-    private startDeployment
+    // New : prepare a draft. A job runs : open it.
+    add():
+        void
+    {
+        const running =
+            this.running;
+
+        if (running)
+        {
+            this.view(running);
+
+            return;
+        }
+
+        void this.router.navigate(
+            [ 'add' ],
+            { relativeTo:this.route.parent }
+        );
+    }
+
+    get newText():
+        string
+    {
+        const running =
+            this.running;
+
+        return running
+            ? `${running.code}  ${running.percent}%`
+            : 'New';
+    }
+
+    get newIcon():
+        string
+    {
+        return this.running
+            ? 'fas fa-spinner fa-spin'
+            : 'fas fa-plus';
+    }
+
+    private startRefresh():
+        void
+    {
+        if (!this.refreshTimer)
+        {
+            this.refreshTimer =
+                setInterval(
+                    () => this.loadDeployments(true),
+                    3000
+                );
+        }
+    }
+
+    private stopRefresh():
+        void
+    {
+        if (this.refreshTimer)
+        {
+            clearInterval(this.refreshTimer);
+
+            this.refreshTimer =
+                undefined;
+        }
+    }
+
+    onDeploymentAction
     (
-        server:
-            DeploymentServerOption
+        event:
+        {
+            key:
+                string;
+
+            row:
+                any;
+        }
     ):
         void
     {
-        this.service
-            .deploy
-            ({
-                serverPublicId:server.publicId,
-                remarks:''
-            })
-            .subscribe
-            ({
-                next:
-                    job =>
+        const row =
+            event.row as DeploymentRow;
+
+        switch (event.key)
+        {
+            case 'deploy':
+                // the record starts the check at once
+                void this.router.navigate(
+                    [ 'view', row.publicId ],
                     {
-                        this.toast.info(
-                            `${job.code} started`,
-                            'You can leave this page; the deployment continues.'
-                        );
-
-                        this.follow(job.publicId);
-
-                        this.loadDeployments();
-                    },
-                error:
-                    error =>
-                    {
-                        console.error('Deploy Error', error);
-
-                        this.toast.error(
-                            'Deploy',
-                            error?.error?.message
-                            ??
-                            'The deployment could not be started.'
-                        );
+                        relativeTo:this.route.parent,
+                        queryParams:{ deploy:1 }
                     }
-            });
+                );
+                break;
+
+            case 'edit':
+                void this.router.navigate(
+                    [ 'edit', row.publicId ],
+                    { relativeTo:this.route.parent }
+                );
+                break;
+
+            case 'delete':
+                this.deleteDraft(row);
+                break;
+        }
+    }
+
+    private deleteDraft
+    (
+        row:
+            DeploymentRow
+    ):
+        void
+    {
+        this.confirmDialog.open
+        (
+            'Delete Draft',
+            `Delete the draft ${row.code} ? Nothing was deployed.`,
+            (): void =>
+            {
+                this.service
+                    .delete(
+                        row.publicId
+                    )
+                    .subscribe
+                    ({
+                        next:
+                            () =>
+                            {
+                                this.toast.success(
+                                    'Deleted',
+                                    `${row.code} deleted.`
+                                );
+
+                                this.loadDeployments();
+                            },
+                        error:
+                            error =>
+                            {
+                                this.toast.error(
+                                    'Delete',
+                                    error?.error?.message
+                                    ??
+                                    'The draft could not be deleted.'
+                                );
+                            }
+                    });
+            }
+        );
+    }
+
+    openSite():
+        void
+    {
+        const url =
+            this.server?.appUrl;
+
+        if (url)
+        {
+            window.open(url, '_blank', 'noopener');
+        }
     }
 
 
@@ -1050,16 +1084,14 @@ implements OnInit, OnDestroy
             return;
         }
 
-        if
-        (
-            this.live
-            &&
-            !this.live.finished
-        )
+        const running =
+            this.running;
+
+        if (running)
         {
             this.toast.warning(
                 'Roll back',
-                `${this.live.code} is still running.`
+                `${running.code} is still running.`
             );
 
             return;
@@ -1085,9 +1117,11 @@ implements OnInit, OnDestroy
                         next:
                             job =>
                             {
-                                this.follow(job.publicId);
-
-                                this.loadDeployments();
+                                // the record shows the live progress
+                                void this.router.navigate(
+                                    [ 'view', job.publicId ],
+                                    { relativeTo:this.route.parent }
+                                );
                             },
                         error:
                             error =>
@@ -1107,290 +1141,6 @@ implements OnInit, OnDestroy
             'Cancel',
             'danger'
         );
-    }
-
-
-    //===========================================================
-    // Live panel (poll every second)
-    //===========================================================
-
-    private follow
-    (
-        publicId:
-            string
-    ):
-        void
-    {
-        this.stopPolling();
-
-        this.live =
-            null;
-
-        this.liveOpen =
-            true;
-
-        this.pollOnce(publicId);
-
-        this.pollTimer =
-            setInterval(
-                () => this.pollOnce(publicId),
-                1000
-            );
-    }
-
-    private pollOnce
-    (
-        publicId:
-            string
-    ):
-        void
-    {
-        if (this.polling)
-        {
-            return;
-        }
-
-        this.polling =
-            true;
-
-        this.service
-            .getProgress(
-                publicId,
-                300
-            )
-            .subscribe
-            ({
-                next:
-                    progress =>
-                    {
-                        this.polling =
-                            false;
-
-                        const box =
-                            this.logBox?.nativeElement;
-
-                        // follow the end unless the user scrolled up
-                        const atEnd =
-                            !box
-                            ||
-                            box.scrollHeight - box.scrollTop - box.clientHeight < 40;
-
-                        this.live =
-                            progress;
-
-                        if (progress.finished)
-                        {
-                            this.stopPolling();
-
-                            this.announce(progress);
-
-                            this.loadServers();
-
-                            this.loadDeployments();
-                        }
-
-                        this.cdr.detectChanges();
-
-                        if (atEnd)
-                        {
-                            this.scrollLogToEnd();
-                        }
-                    },
-                error:
-                    () =>
-                    {
-                        // the API may be busy: try again next second
-                        this.polling =
-                            false;
-                    }
-            });
-    }
-
-    private announce
-    (
-        progress:
-            DeploymentProgress
-    ):
-        void
-    {
-        const what =
-            progress.kind === 'Rollback'
-                ? `Roll back to ${progress.code}`
-                : progress.code;
-
-        switch (progress.deployStatus)
-        {
-            case 'Succeeded':
-                this.toast.success(
-                    `${what} succeeded`,
-                    progress.step
-                );
-                break;
-
-            case 'Rolled back':
-                this.toast.warning(
-                    `${what} was rolled back`,
-                    progress.step
-                );
-                break;
-
-            default:
-                this.toast.error(
-                    `${what} failed`,
-                    progress.step
-                );
-                break;
-        }
-    }
-
-    private stopPolling():
-        void
-    {
-        if (this.pollTimer)
-        {
-            clearInterval(this.pollTimer);
-
-            this.pollTimer =
-                undefined;
-        }
-
-        this.polling =
-            false;
-    }
-
-    // finished : close the popup and forget the job
-    closeLive():
-        void
-    {
-        if
-        (
-            this.live
-            &&
-            !this.live.finished
-        )
-        {
-            this.hideLive();
-
-            return;
-        }
-
-        this.liveOpen =
-            false;
-
-        this.live =
-            null;
-    }
-
-    // running : close the popup, the job continues
-    hideLive():
-        void
-    {
-        this.liveOpen =
-            false;
-    }
-
-    private scrollLogToEnd():
-        void
-    {
-        const box =
-            this.logBox?.nativeElement;
-
-        if (box)
-        {
-            box.scrollTop =
-                box.scrollHeight;
-        }
-    }
-
-    // Deploy button : progress of a running (hidden) job
-    get deployText():
-        string
-    {
-        if
-        (
-            this.live
-            &&
-            !this.live.finished
-        )
-        {
-            return `${this.live.code}  ${this.live.percent}%`;
-        }
-
-        return this.checking
-            ? 'Checking...'
-            : 'Deploy';
-    }
-
-    get deployIcon():
-        string
-    {
-        return this.checking
-            ||
-            (
-                this.live
-                &&
-                !this.live.finished
-            )
-            ? 'fas fa-spinner fa-spin'
-            : 'fas fa-rocket';
-    }
-
-    get liveTitle():
-        string
-    {
-        if (!this.live)
-        {
-            return '';
-        }
-
-        return this.live.kind === 'Rollback'
-            ? `Roll back to ${this.live.code}`
-            : `Deploy ${this.live.code}`;
-    }
-
-    openLiveLog():
-        void
-    {
-        if (this.live)
-        {
-            this.liveOpen =
-                false;
-
-            void this.router.navigate(
-                [ 'view', this.live.publicId ],
-                { relativeTo:this.route.parent }
-            );
-        }
-    }
-
-    openSite():
-        void
-    {
-        const url =
-            this.server?.appUrl;
-
-        if (url)
-        {
-            window.open(url, '_blank', 'noopener');
-        }
-    }
-
-    get liveLogText():
-        string
-    {
-        return (this.live?.log ?? []).join('\n');
-    }
-
-    liveTone():
-        string
-    {
-        switch (this.live?.deployStatus)
-        {
-            case 'Succeeded':   return 'ok';
-            case 'Rolled back': return 'warn';
-            case 'Failed':      return 'bad';
-            default:            return 'run';
-        }
     }
 
 

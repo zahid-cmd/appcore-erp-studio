@@ -21,16 +21,21 @@ namespace AppCore.Api.Controllers.InfrastructureControl.CodeManagement;
 //===============================================================
 // Deployment Center
 //
-//   GET  /                             deployments (?server=publicId)
-//   GET  /defaults                     servers to choose from
-//   GET  /preflight                    git check before Deploy
-//   GET  /{publicId}                   one deployment (with log)
-//   GET  /{publicId}/progress          live progress (polled)
-//   POST /deploy                       start   -> { PublicId }
-//   GET  /servers/{publicId}/releases  releases kept on a server
-//   POST /rollback                     start   -> { PublicId }
+//   GET    /                             deployments (?server=publicId)
+//   GET    /defaults                     servers to choose from
+//   GET    /draft-defaults?server=       next release, commit, notes
+//   GET    /preflight                    git check before Deploy
+//   GET    /{publicId}                   one deployment (with log)
+//   GET    /{publicId}/progress          live progress (polled)
+//   POST   /                             new draft      -> { PublicId }
+//   PUT    /{publicId}                   edit a draft
+//   DELETE /{publicId}                   delete a draft
+//   POST   /{publicId}/deploy            run a draft
+//   GET    /servers/{publicId}/releases  releases kept on a server
+//   POST   /rollback                     start          -> { PublicId }
 //
-// The work runs in DeploymentRunner (this PC builds, the
+// A deployment is prepared first (Draft), then run from its
+// record. The work runs in DeploymentRunner (this PC builds, the
 // server's Deploy Agent installs).
 //===============================================================
 
@@ -91,7 +96,19 @@ public class DeploymentCenterController
 
         var rows = await _repository.GetAllAsync(serverId);
 
-        return Ok(rows.Select(x => ToDto(x, withLog: false)).ToList());
+        var servers = (await _servers.GetAllAsync())
+            .ToDictionary(x => x.Id, x => x.PublicId);
+
+        return Ok(rows
+            .Select(x =>
+            {
+                var dto = ToDto(x, withLog: false);
+
+                dto.ServerPublicId = servers.TryGetValue(x.ServerManagementId, out var id) ? id : null;
+
+                return dto;
+            })
+            .ToList());
     }
 
 
@@ -147,6 +164,54 @@ public class DeploymentCenterController
 
 
     //===========================================================
+    // Draft defaults : what the next release would contain
+    //===========================================================
+
+    [HttpGet("draft-defaults")]
+    public async Task<IActionResult> GetDraftDefaults([FromQuery] Guid? server)
+    {
+        var result = new DeploymentDraftDefaultsDto
+        {
+            NextRelease = await _repository.GetNextReleaseAsync()
+        };
+
+        var source = await SourceAsync();
+
+        if (source is null)
+        {
+            result.Problems.Add("No active repository in Source Control. Add one first.");
+            return Ok(result);
+        }
+
+        var check = await DeploymentRunner.PreflightAsync(source.Value.Path, source.Value.Branch, fetch: true);
+
+        result.Branch = check.Branch;
+        result.CommitHash = check.CommitHash;
+        result.CommitMessage = check.CommitMessage;
+        result.Ahead = check.Ahead;
+        result.Behind = check.Behind;
+        result.LocalChanges = check.LocalChanges;
+        result.Problems = check.Problems
+            .Where(p => !p.StartsWith("A deployment or rollback is running"))
+            .ToList();
+
+        long? serverId = server is null ? null : await _servers.GetIdByPublicIdAsync(server.Value);
+
+        var last = serverId is null ? null : await _repository.GetLastSucceededAsync(serverId.Value);
+
+        result.LastRelease = last?.Code ?? string.Empty;
+        result.LastCommit = last?.CommitHash ?? string.Empty;
+
+        var (notes, count) = await DeploymentRunner.ReleaseNotesAsync(source.Value.Path, source.Value.Branch, result.LastCommit);
+
+        result.ReleaseNotes = notes;
+        result.NewCommits = count;
+
+        return Ok(result);
+    }
+
+
+    //===========================================================
     // Get By Public Id (with log)
     //===========================================================
 
@@ -161,6 +226,10 @@ public class DeploymentCenterController
         }
 
         var dto = ToDto(entity, withLog: true);
+
+        var server = await _servers.GetByIdAsync(entity.ServerManagementId);
+
+        dto.ServerPublicId = server?.PublicId;
 
         // a running job: the live log is newer than the saved one
         var live = DeploymentRunner.GetLive(entity.Id, 3000);
@@ -224,15 +293,155 @@ public class DeploymentCenterController
 
 
     //===========================================================
-    // Deploy
+    // New draft
     //===========================================================
 
-    [HttpPost("deploy")]
-    public async Task<IActionResult> Deploy([FromBody] StartDeploymentDto dto)
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] SaveDeploymentDraftDto dto)
+    {
+        var server = await ServerOnlyAsync(dto.ServerPublicId);
+
+        if (server is null)
+        {
+            return BadRequest(new { message = "Choose a server (Server Management)." });
+        }
+
+        var source = await SourceAsync();
+
+        if (source is null)
+        {
+            return BadRequest(new { message = "No active repository in Source Control. Add one first." });
+        }
+
+        var check = await DeploymentRunner.PreflightAsync(source.Value.Path, source.Value.Branch, fetch: false);
+
+        var record = new DeploymentCenter
+        {
+            Code = await _repository.GetNextReleaseAsync(),
+            Kind = "Deploy",
+            DeployStatus = "Draft",
+            Step = "Draft : not deployed yet",
+            ServerManagementId = server.Id,
+            ServerName = server.Name,
+            Branch = source.Value.Branch,
+            CommitHash = check.CommitHash,
+            CommitMessage = check.CommitMessage,
+            ReleaseNotes = (dto.ReleaseNotes ?? string.Empty).Trim(),
+            Remarks = (dto.Remarks ?? string.Empty).Trim(),
+            PerformedByName = UserName()
+        };
+
+        record.Name = string.IsNullOrWhiteSpace(dto.Name)
+            ? $"{record.Code}: {check.CommitMessage}"
+            : dto.Name.Trim();
+
+        await _repository.CreateAsync(record);
+
+        return Ok(new { record.Id, record.PublicId, record.Code });
+    }
+
+
+    //===========================================================
+    // Edit a draft
+    //===========================================================
+
+    [HttpPut("{publicId:guid}")]
+    public async Task<IActionResult> Update(Guid publicId, [FromBody] SaveDeploymentDraftDto dto)
+    {
+        var entity = await FindAsync(publicId);
+
+        if (entity is null)
+        {
+            return NotFound();
+        }
+
+        if (entity.DeployStatus != "Draft")
+        {
+            return BadRequest(new { message = $"{entity.Code} is {entity.DeployStatus}: only a draft can be changed." });
+        }
+
+        var server = await ServerOnlyAsync(dto.ServerPublicId);
+
+        if (server is null)
+        {
+            return BadRequest(new { message = "Choose a server (Server Management)." });
+        }
+
+        entity.ServerManagementId = server.Id;
+        entity.ServerName = server.Name;
+        entity.Name = string.IsNullOrWhiteSpace(dto.Name) ? entity.Name : dto.Name.Trim();
+        entity.ReleaseNotes = (dto.ReleaseNotes ?? string.Empty).Trim();
+        entity.Remarks = (dto.Remarks ?? string.Empty).Trim();
+
+        if (dto.UpdateCommit)
+        {
+            var source = await SourceAsync();
+
+            if (source is not null)
+            {
+                var check = await DeploymentRunner.PreflightAsync(source.Value.Path, source.Value.Branch, fetch: true);
+
+                entity.Branch = source.Value.Branch;
+                entity.CommitHash = check.CommitHash;
+                entity.CommitMessage = check.CommitMessage;
+            }
+        }
+
+        return await _repository.UpdateDraftAsync(entity)
+            ? NoContent()
+            : BadRequest(new { message = "Only a draft can be changed." });
+    }
+
+
+    //===========================================================
+    // Delete a draft
+    //===========================================================
+
+    [HttpDelete("{publicId:guid}")]
+    public async Task<IActionResult> Delete(Guid publicId)
+    {
+        long? id = await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (id is null)
+        {
+            return NotFound();
+        }
+
+        return await _repository.DeleteDraftAsync(id.Value)
+            ? NoContent()
+            : BadRequest(new { message = "Only a draft can be deleted. Deployed records stay as history." });
+    }
+
+
+    //===========================================================
+    // Deploy a draft
+    //===========================================================
+
+    [HttpPost("{publicId:guid}/deploy")]
+    public async Task<IActionResult> Deploy(Guid publicId)
     {
         await DeploymentRunner.CleanUpOnceAsync(_repository);
 
-        var (server, token, problem) = await ServerAsync(dto.ServerPublicId);
+        var entity = await FindAsync(publicId);
+
+        if (entity is null)
+        {
+            return NotFound();
+        }
+
+        if (entity.DeployStatus != "Draft")
+        {
+            return BadRequest(new { message = $"{entity.Code} is {entity.DeployStatus}. Make a new deployment to deploy again." });
+        }
+
+        var server = await _servers.GetByIdAsync(entity.ServerManagementId);
+
+        if (server is null || server.IsDeleted)
+        {
+            return BadRequest(new { message = "The server of this draft no longer exists. Edit the draft and choose a server." });
+        }
+
+        var (checkedServer, token, problem) = await ServerAsync(server.PublicId);
 
         if (problem is not null)
         {
@@ -249,12 +458,12 @@ public class DeploymentCenterController
         var (record, error) = await DeploymentRunner.StartDeploymentAsync(
             _scopes,
             _repository,
-            server!,
+            entity,
+            checkedServer!,
             token!,
             source.Value.Path,
             source.Value.Branch,
-            UserName(),
-            (dto.Remarks ?? string.Empty).Trim());
+            UserName());
 
         return record is null
             ? Conflict(new { message = error })
@@ -353,6 +562,15 @@ public class DeploymentCenterController
             : await _repository.GetByIdAsync(id.Value);
     }
 
+    private async Task<ServerManagement?> ServerOnlyAsync(Guid publicId)
+    {
+        long? id = await _servers.GetIdByPublicIdAsync(publicId);
+
+        var server = id is null ? null : await _servers.GetByIdAsync(id.Value);
+
+        return server is null || server.IsDeleted ? null : server;
+    }
+
     private async Task<(ServerManagement? Server, string? Token, string? Problem)> ServerAsync(Guid publicId)
     {
         long? id = await _servers.GetIdByPublicIdAsync(publicId);
@@ -442,6 +660,7 @@ public class DeploymentCenterController
         Branch = x.Branch,
         CommitHash = x.CommitHash,
         CommitMessage = x.CommitMessage,
+        ReleaseNotes = x.ReleaseNotes,
         BackupFile = x.BackupFile,
         PreviousRelease = x.PreviousRelease,
         PackageMb = x.PackageMb,

@@ -1,5 +1,5 @@
 -- ==============================================================
--- Motor Bike Specifications : REVOO seed (12 models)
+-- Motor Bike Specifications : REVOO seed (13 models; A11 = A11EXD)
 --
 -- Source : revoo-ev.com.bd Parameter pages + owner answers
 -- (2026-11-07 21:05 / 21:07). Project doc :
@@ -83,6 +83,12 @@ BEGIN
         ('B12',    1800, '3.0-10',    '3.0-10',    1990, 785, 1200, 1285, 105),
         ('Y06',    350,  '60/100-10', '60/100-10',    0,   0,    0, 1220,  50);
 
+    -- A11 has the same specification as A11EXD (owner 2026-11-07 21:37)
+    INSERT INTO tmp_specs
+    SELECT 'A11', watts, front, rear, len_mm, wid_mm, hgt_mm, wb_mm, dry_kg
+    FROM   tmp_specs
+    WHERE  model = 'A11EXD';
+
     -- ---------- Technical rows (section, line, label, value) ----------
     CREATE TEMP TABLE tmp_rows
     (
@@ -142,6 +148,18 @@ BEGIN
         ('A11EXD', 'Dimensions & Capacity', 3, 'Pedal Length', '400 MM (L) x 380 MM (W)'),
         ('B12',    'Engine / Motor',        2, 'Motor Type',   'Hub Motor'),
         ('B12',    'Dimensions & Capacity', 3, 'Seat Storage', '33 L');
+
+    -- A11 : the same rows as A11EXD (its Motor Power and Dry Weight
+    -- rows were already made from tmp_specs)
+    INSERT INTO tmp_rows
+    SELECT 'A11', r.section, r.line_no, r.label, r.val
+    FROM   tmp_rows r
+    WHERE  r.model = 'A11EXD'
+    AND    NOT EXISTS
+           (
+               SELECT 1 FROM tmp_rows x
+               WHERE  x.model = 'A11' AND x.section = r.section AND x.label = r.label
+           );
 
     -- ---------- Insert, model by model ----------
     FOR m IN SELECT * FROM tmp_specs ORDER BY model

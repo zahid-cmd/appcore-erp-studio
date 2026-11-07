@@ -30,6 +30,21 @@ public interface IDeploymentCenterRepository
     Task<long>
         CreateAsync(global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity);
 
+    // Draft : edit / delete (false = not a draft)
+    Task<bool>
+        UpdateDraftAsync(global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity);
+
+    Task<bool>
+        DeleteDraftAsync(long id);
+
+    // Draft -> Running (history row)
+    Task
+        StartAsync(global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity);
+
+    // the last successful deployment on a server (null = none)
+    Task<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter?>
+        GetLastSucceededAsync(long serverManagementId);
+
     // progress / result (no history row)
     Task
         SaveProgressAsync(global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity);
