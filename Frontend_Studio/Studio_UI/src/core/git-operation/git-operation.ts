@@ -1091,14 +1091,14 @@ implements OnInit
             'pull';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Pull Latest Changes',
 
             'Preparing to pull the latest repository changes...'
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             25,
 
             'Connecting to the remote repository...'
@@ -1114,14 +1114,14 @@ implements OnInit
                 next:
                     result =>
                     {
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Pull operation completed.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationCompleted(
@@ -1137,7 +1137,7 @@ implements OnInit
                 error:
                     error =>
                     {
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationFailed(
@@ -1237,14 +1237,14 @@ implements OnInit
             'commit';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Commit Changes',
 
             'Preparing repository changes for commit...'
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             25,
 
             'Creating repository commit...'
@@ -1262,14 +1262,14 @@ implements OnInit
                 next:
                     result =>
                     {
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Commit operation completed.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationCompleted(
@@ -1285,7 +1285,7 @@ implements OnInit
                 error:
                     error =>
                     {
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationFailed(
@@ -1341,14 +1341,14 @@ implements OnInit
             'push';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Push Changes',
 
             'Preparing to push repository changes...'
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             25,
 
             'Connecting to the remote repository...'
@@ -1364,14 +1364,14 @@ implements OnInit
                 next:
                     result =>
                     {
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Push operation completed.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationCompleted(
@@ -1387,7 +1387,7 @@ implements OnInit
                 error:
                     error =>
                     {
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationFailed(
@@ -1487,14 +1487,14 @@ implements OnInit
             'sync';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Full Repository Synchronization',
 
             'Preparing full repository synchronization...'
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             25,
 
             'Synchronizing repository changes...'
@@ -1528,14 +1528,14 @@ implements OnInit
                             )
                         )
                         {
-                            this.progressDialog.update(
+                            this.progressUpdate(
                                 100,
 
                                 'Synchronization paused. Merge conflict detected.'
                             );
 
 
-                            this.progressDialog.close();
+                            this.progressClose();
 
 
                             this.isOperating =
@@ -1578,14 +1578,14 @@ implements OnInit
                         }
 
 
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Repository synchronization completed.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationCompleted(
@@ -1601,7 +1601,7 @@ implements OnInit
                 error:
                     error =>
                     {
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         /*
@@ -1888,14 +1888,14 @@ implements OnInit
             'merge-conflicts';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Resolve Merge Conflicts',
 
             'Checking the repository for unresolved merge conflicts...'
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             25,
 
             'Reading repository merge state...'
@@ -1916,14 +1916,14 @@ implements OnInit
                         );
 
 
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Merge conflict check completed.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.isOperating =
@@ -1962,7 +1962,7 @@ implements OnInit
                 error:
                     error =>
                     {
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationFailed(
@@ -2101,7 +2101,7 @@ implements OnInit
                 : 'resolve-remote';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Resolve Merge Conflict',
 
             resolution ===
@@ -2111,7 +2111,7 @@ implements OnInit
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             25,
 
             'Applying the selected conflict resolution...'
@@ -2131,14 +2131,14 @@ implements OnInit
                 next:
                     result =>
                     {
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Merge conflict resolution completed.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         if
@@ -2210,7 +2210,7 @@ implements OnInit
                 error:
                     error =>
                     {
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         if
@@ -2486,14 +2486,14 @@ implements OnInit
             'continue-merge';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Continue Merge',
 
             'Preparing to complete the resolved merge...'
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             25,
 
             'Checking resolved merge files...'
@@ -2509,14 +2509,14 @@ implements OnInit
                 next:
                     result =>
                     {
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Merge completed and synchronization continued.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         /*
@@ -2546,7 +2546,7 @@ implements OnInit
                 error:
                     error =>
                     {
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         if
@@ -2660,14 +2660,14 @@ implements OnInit
             'abort-merge';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Abort Merge',
 
             'Aborting the active repository merge...'
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             50,
 
             'Restoring repository merge state...'
@@ -2683,14 +2683,14 @@ implements OnInit
                 next:
                     result =>
                     {
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Merge has been aborted.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         /*
@@ -2723,7 +2723,7 @@ implements OnInit
                 error:
                     error =>
                     {
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         if
@@ -2822,14 +2822,14 @@ implements OnInit
             'reset-to-remote';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Reset Repository To Remote',
 
             'Preparing to reset the local repository to the remote branch...'
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             25,
 
             'Fetching the latest remote repository state...'
@@ -2845,14 +2845,14 @@ implements OnInit
                 next:
                     result =>
                     {
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Repository reset completed.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationCompleted(
@@ -2868,7 +2868,7 @@ implements OnInit
                 error:
                     error =>
                     {
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationFailed(
@@ -2941,14 +2941,14 @@ implements OnInit
             'refresh';
 
 
-        this.progressDialog.show(
+        this.progressShow(
             'Refresh Repository Status',
 
             'Preparing to refresh repository status...'
         );
 
 
-        this.progressDialog.update(
+        this.progressUpdate(
             25,
 
             'Checking repository working tree...'
@@ -2974,14 +2974,14 @@ implements OnInit
                         this.cdr.detectChanges();
 
 
-                        this.progressDialog.update(
+                        this.progressUpdate(
                             100,
 
                             'Repository status refreshed.'
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.isOperating =
@@ -3013,7 +3013,7 @@ implements OnInit
                         );
 
 
-                        this.progressDialog.close();
+                        this.progressClose();
 
 
                         this.operationFailed(
@@ -3664,6 +3664,193 @@ implements OnInit
             fallback
         );
     }
+
+
+    //===========================================================
+    // Live Progress
+    //
+    // A git command is one request: the server answers only at
+    // the end. While we wait, the bar keeps moving on its own:
+    // it creeps from the last real step towards 95 % (slower and
+    // slower) and the message shows the seconds spent. When the
+    // answer arrives the bar jumps to 100 % and closes a moment
+    // later, so the user sees it finish.
+    //===========================================================
+
+    private progressTimer?: ReturnType<typeof setInterval>;
+
+    private progressCloseTimer?: ReturnType<typeof setTimeout>;
+
+    private progressValue = 0;
+
+    private progressMessage = '';
+
+    private progressStartedAt = 0;
+
+
+    private progressShow
+    (
+        title: string,
+
+        message: string
+    ):
+        void
+    {
+        this.stopProgressTimer();
+
+        if (this.progressCloseTimer)
+        {
+            clearTimeout(
+                this.progressCloseTimer
+            );
+
+            this.progressCloseTimer =
+                undefined;
+        }
+
+        this.progressValue =
+            0;
+
+        this.progressMessage =
+            message;
+
+        this.progressStartedAt =
+            Date.now();
+
+        this.progressDialog.show(
+            title,
+            message
+        );
+    }
+
+
+    private progressUpdate
+    (
+        value: number,
+
+        message: string
+    ):
+        void
+    {
+        this.stopProgressTimer();
+
+        this.progressValue =
+            Math.max(
+                this.progressValue,
+                value
+            );
+
+        this.progressMessage =
+            message;
+
+        this.progressDialog.update(
+            Math.round(
+                this.progressValue
+            ),
+            message
+        );
+
+        if (this.progressValue >= 100)
+        {
+            return;
+        }
+
+        // Keep moving while the server works
+        this.progressTimer =
+            setInterval(
+                () =>
+                {
+                    const cap =
+                        95;
+
+                    const step =
+                        Math.max(
+                            0.15,
+                            (cap - this.progressValue) * 0.025
+                        );
+
+                    this.progressValue =
+                        Math.min(
+                            cap,
+                            this.progressValue + step
+                        );
+
+                    const seconds =
+                        Math.floor(
+                            (Date.now() - this.progressStartedAt) / 1000
+                        );
+
+                    this.progressDialog.update(
+                        Math.round(
+                            this.progressValue
+                        ),
+                        seconds >= 2
+                            ? `${this.progressMessage} (${seconds}s)`
+                            : this.progressMessage
+                    );
+                },
+                200
+            );
+    }
+
+
+    private progressClose():
+        void
+    {
+        this.stopProgressTimer();
+
+        if (this.progressValue >= 100)
+        {
+            // Let the user see 100 % for a moment
+            this.progressCloseTimer =
+                setTimeout(
+                    () =>
+                    {
+                        this.progressCloseTimer =
+                            undefined;
+
+                        this.progressDialog.close();
+                    },
+                    450
+                );
+
+            return;
+        }
+
+        this.progressDialog.close();
+    }
+
+
+    private stopProgressTimer():
+        void
+    {
+        if (this.progressTimer)
+        {
+            clearInterval(
+                this.progressTimer
+            );
+
+            this.progressTimer =
+                undefined;
+        }
+    }
+
+
+    ngOnDestroy():
+        void
+    {
+        this.stopProgressTimer();
+
+        if (this.progressCloseTimer)
+        {
+            clearTimeout(
+                this.progressCloseTimer
+            );
+        }
+
+        this.progressDialog.close();
+    }
+
 
 
     //===========================================================
