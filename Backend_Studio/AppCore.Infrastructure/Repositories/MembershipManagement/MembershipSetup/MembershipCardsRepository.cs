@@ -35,7 +35,7 @@ namespace AppCore.Infrastructure.Configurations.MembershipManagement.MembershipS
 //
 // Saving a card creates, in one transaction :
 //   the card                 MCD-001 (central CodeGenerator)
-//   its Fee Ledger           under SUB-009-001-001
+//   its Fee Ledger           under SUB-009-003-001
 //   its Discount Ledger      under SUB-004-002-002
 //   its Membership Services row (Service Settings), Pending until
 //   a Service Value is set there, with

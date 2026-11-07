@@ -1,0 +1,1084 @@
+<div class="app-list-page rc-page">
+
+    <!-- =====================================================
+         PAGE HEADER (always full width)
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Registration Configuration"
+
+        subtitle="Registration types, fees, costs and stage timings"
+
+        icon="fas fa-sliders">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [value]="searchText"
+
+                [placeholder]="searchPlaceholder"
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Add"
+
+                command1Icon="fas fa-plus"
+
+                command1Permission="add"
+
+                [command1Visible]="!info.editOnly"
+
+                [command1Title]="'Add a ' + info.noun.toLowerCase()"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                command3Permission="restore"
+
+                [command3Visible]="!info.editOnly"
+
+                [command3Title]="'Restore the most recently deleted record of ' + info.tabLabel"
+
+                (command3Click)="restore()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                rightCommandTitle="History"
+
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         BODY : list (toolbar + canvas) | form panel
+    ====================================================== -->
+
+    <div
+
+        class="rc-body"
+
+        [class.rc-open]="panelOpened">
+
+
+        <!-- =================================================
+             LIST
+        ================================================== -->
+
+        <div class="rc-main">
+
+            <app-page-toolbar>
+
+                <app-control-tabs
+
+                    pageToolbarLeft
+
+                    [tabs]="tabs"
+
+                    [selectedTab]="selectedTab"
+
+                    (selectedTabChange)="onTabChange($event)">
+
+                </app-control-tabs>
+
+
+                <div
+
+                    pageToolbarRight
+
+                    class="rc-toolbar-right">
+
+                    @if (showTypeFilter)
+                    {
+                        <div class="rc-filter">
+
+                            <app-dropdown
+
+                                [items]="typeFilterItems"
+
+                                [value]="typeFilter"
+
+                                (valueChange)="onTypeFilterChange($event)">
+
+                            </app-dropdown>
+
+                        </div>
+                    }
+                    @else if (!panelOpened)
+                    {
+                        <span
+
+                            class="rc-hint"
+
+                            [title]="info.hint">
+
+                            <i class="fas fa-circle-info"></i>
+
+                            {{ info.hint }}
+
+                        </span>
+                    }
+
+                    <span class="rc-count">
+
+                        <i [class]="info.icon"></i>
+
+                        {{ tabCount }}
+
+                    </span>
+
+                </div>
+
+            </app-page-toolbar>
+
+
+            <app-page-canvas
+
+                [config]="canvasConfig">
+
+                <div canvasBody>
+
+                    <app-list-table
+
+                        [columns]="columns"
+
+                        [rows]="pagedRows"
+
+                        [serialOffset]="(currentPage - 1) * pageSize"
+
+                        [loading]="loading"
+
+                        [error]="loadFailed"
+
+                        [actions]="tableActions"
+
+                        (view)="view($event)"
+
+                        (edit)="edit($event)"
+
+                        (delete)="delete($event)"
+
+                        (sortChange)="onSort($event)">
+
+                    </app-list-table>
+
+                </div>
+
+
+                <app-pagination
+
+                    canvasFooter
+
+                    [totalRecords]="filteredRows.length"
+
+                    [currentPage]="currentPage"
+
+                    [pageSize]="pageSize"
+
+                    (pageChange)="onPageChange($event)"
+
+                    (pageSizeChange)="onPageSizeChange($event)">
+
+                </app-pagination>
+
+            </app-page-canvas>
+
+
+            <!-- SUMMARY (the open tab) -->
+
+            @if (summaryTotal > 0)
+            {
+                <div class="ics-summary">
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Total</span>
+                        <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">{{ summaryActiveLabel }}</span>
+                        <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">{{ summarySecondLabel }}</span>
+                        <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
+                    </span>
+
+                    <span class="ics-summary-note">
+                        {{ summaryNote }}
+                    </span>
+
+                </div>
+            }
+
+        </div>
+
+
+
+        <!-- =================================================
+             FORM PANEL (Add / Update / View)
+        ================================================== -->
+
+        <aside
+
+            class="rc-panel"
+
+            [attr.aria-hidden]="!panelOpened">
+
+            <div class="rc-panel-card">
+
+                <div class="rc-panel-head">
+
+                    <div class="rc-panel-title">
+
+                        <span class="rc-panel-icon">
+
+                            <i [class]="panelInfo.icon"></i>
+
+                        </span>
+
+                        <div class="rc-panel-text">
+
+                            <span class="rc-panel-name">{{ panelTitle }}</span>
+
+                            <span class="rc-panel-sub" [title]="panelSubtitle">{{ panelSubtitle }}</span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                @if (panelOpened)
+                {
+                    <div class="rc-panel-body appcore-scrollbar">
+
+
+                        <!-- =========================================
+                             REGISTRATION TYPE
+                        ========================================== -->
+
+                        @if (panelTab === 'Types')
+                        {
+                            <app-form-section
+
+                                title="Registration Type"
+
+                                icon="fas fa-id-card">
+
+                                <div class="rc-grid">
+
+                                    <app-textbox
+
+                                        label="Code"
+
+                                        placeholder="Auto generated"
+
+                                        [value]="code"
+
+                                        [readonly]="true"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <app-textbox
+
+                                        label="Display Order"
+
+                                        placeholder="1"
+
+                                        inputMode="numeric"
+
+                                        [value]="displayOrderText"
+
+                                        (valueChange)="onDisplayOrderChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <app-dropdown
+
+                                        label="Registration Plan"
+
+                                        [items]="planItems"
+
+                                        [value]="typeDraft.RegistrationPlan"
+
+                                        (valueChange)="onPlanChange($event)"
+
+                                        [disabled]="panelMode !== 'add' || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <app-textbox
+
+                                        label="Validity"
+
+                                        [value]="validityText"
+
+                                        [readonly]="true">
+
+                                    </app-textbox>
+
+                                    <app-dropdown
+
+                                        label="Mode"
+
+                                        [items]="modeItems"
+
+                                        [value]="typeDraft.RegistrationMode"
+
+                                        (valueChange)="onModeChange($event)"
+
+                                        [disabled]="panelMode !== 'add' || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <app-dropdown
+
+                                        label="Vehicle Power"
+
+                                        [items]="powerItems"
+
+                                        [value]="typeDraft.VehiclePower"
+
+                                        (valueChange)="onPowerChange($event)"
+
+                                        [disabled]="panelMode !== 'add' || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <div class="rc-wide">
+
+                                        <app-textbox
+
+                                            label="Registration Type Name"
+
+                                            placeholder="Filled from the plan and mode"
+
+                                            textCase="none"
+
+                                            [maxLength]="100"
+
+                                            [value]="typeDraft.Name"
+
+                                            (valueChange)="onNameChange($event)"
+
+                                            [disabled]="isView || progress.busy"
+
+                                            [required]="true">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                            </app-form-section>
+
+
+                            <app-form-section
+
+                                title="Status & Control"
+
+                                icon="fas fa-toggle-on">
+
+                                <div class="rc-grid">
+
+                                    <app-dropdown
+
+                                        label="Default"
+
+                                        [items]="defaultItems"
+
+                                        [value]="typeDraft.IsDefault"
+
+                                        (valueChange)="onDefaultChange($event)"
+
+                                        [disabled]="isView || progress.busy">
+
+                                    </app-dropdown>
+
+                                    <app-dropdown
+
+                                        label="Status"
+
+                                        [items]="statusItems"
+
+                                        [value]="typeDraft.IsActive"
+
+                                        (valueChange)="onTypeStatusChange($event)"
+
+                                        [disabled]="isView || typeDraft.IsDefault || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <div class="rc-wide">
+
+                                        <app-textbox
+
+                                            label="Remarks"
+
+                                            placeholder="Enter remarks"
+
+                                            textCase="none"
+
+                                            [maxLength]="500"
+
+                                            [value]="typeDraft.Remarks"
+
+                                            (valueChange)="onTypeRemarksChange($event)"
+
+                                            [disabled]="isView || progress.busy">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                                <p class="rc-note">
+                                    <i class="fas fa-lock"></i>
+                                    The plan sets the validity (Installment 2 years, Full Registration 10 years). Vehicle Power decides which bikes get this type on the Sales Invoice : Electric for electric bikes, Fuel for petrol, octane, hybrid, diesel and CNG. Plan, mode and power are locked after saving.
+                                </p>
+
+                                @if (typeDraft.IsSystem)
+                                {
+                                    <p class="rc-note">
+                                        <i class="fas fa-shield-halved"></i>
+                                        System type : it cannot be deleted. The name, order and status can be changed.
+                                    </p>
+                                }
+
+                                @if (typeDraft.IsDefault)
+                                {
+                                    <p class="rc-note">
+                                        <i class="fas fa-star"></i>
+                                        Default : preselected on a sale. Saving it clears the old default.
+                                    </p>
+                                }
+
+                            </app-form-section>
+                        }
+
+
+                        <!-- =========================================
+                             REGISTRATION FEE / COST : type + date
+                        ========================================== -->
+
+                        @if (panelTab === 'Fees' || panelTab === 'Costs')
+                        {
+                            <app-form-section
+
+                                [title]="panelInfo.noun"
+
+                                [icon]="panelInfo.icon">
+
+                                <div class="rc-grid">
+
+                                    <app-textbox
+
+                                        label="Code"
+
+                                        placeholder="Auto generated"
+
+                                        [value]="code"
+
+                                        [readonly]="true"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <app-datepicker
+
+                                        label="Effective From"
+
+                                        [value]="effectiveDate"
+
+                                        (valueChange)="onDateChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-datepicker>
+
+                                    <div class="rc-wide">
+
+                                        <app-dropdown
+
+                                            label="Registration Type"
+
+                                            [items]="rateTypeItems"
+
+                                            [value]="rateTypeId"
+
+                                            (valueChange)="onRateTypeChange($event)"
+
+                                            [disabled]="panelMode !== 'add' || newRateMode || progress.busy"
+
+                                            [required]="true">
+
+                                        </app-dropdown>
+
+                                    </div>
+
+                                </div>
+
+                            </app-form-section>
+                        }
+
+
+                        <!-- Fee amounts -->
+
+                        @if (panelTab === 'Fees')
+                        {
+                            <app-form-section
+
+                                title="Collection From The Customer"
+
+                                icon="fas fa-coins">
+
+                                <div class="rc-grid">
+
+                                    <app-textbox
+
+                                        label="Minimum Collection"
+
+                                        placeholder="0.00"
+
+                                        inputMode="decimal"
+
+                                        [value]="minText"
+
+                                        (valueChange)="onMinChange($event)"
+
+                                        (blur)="onAmountBlur('minText')"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <app-textbox
+
+                                        label="Maximum Collection"
+
+                                        placeholder="0.00"
+
+                                        inputMode="decimal"
+
+                                        [value]="maxText"
+
+                                        (valueChange)="onMaxChange($event)"
+
+                                        (blur)="onAmountBlur('maxText')"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                </div>
+
+                                <p
+
+                                    class="rc-note"
+
+                                    [class.rc-note-error]="!!feeError">
+
+                                    <i [class]="feeError ? 'fas fa-triangle-exclamation' : 'fas fa-scale-balanced'"></i>
+
+                                    {{ feeError || feeHint }}
+
+                                </p>
+
+                            </app-form-section>
+                        }
+
+
+                        <!-- Cost lines -->
+
+                        @if (panelTab === 'Costs')
+                        {
+                            <app-form-section
+
+                                title="Cost Lines"
+
+                                icon="fas fa-receipt">
+
+                                <div class="rc-grid">
+
+                                    <app-textbox
+
+                                        label="Registration Fees (BRTA)"
+
+                                        placeholder="0.00"
+
+                                        inputMode="decimal"
+
+                                        [value]="brtaText"
+
+                                        (valueChange)="onBrtaChange($event)"
+
+                                        (blur)="onAmountBlur('brtaText')"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <app-textbox
+
+                                        label="Submission Charges"
+
+                                        placeholder="0.00"
+
+                                        inputMode="decimal"
+
+                                        [value]="submissionText"
+
+                                        (valueChange)="onSubmissionChange($event)"
+
+                                        (blur)="onAmountBlur('submissionText')"
+
+                                        [disabled]="isView || progress.busy">
+
+                                    </app-textbox>
+
+                                    <app-textbox
+
+                                        label="BRTA Tips"
+
+                                        placeholder="0.00"
+
+                                        inputMode="decimal"
+
+                                        [value]="tipsText"
+
+                                        (valueChange)="onTipsChange($event)"
+
+                                        (blur)="onAmountBlur('tipsText')"
+
+                                        [disabled]="isView || progress.busy">
+
+                                    </app-textbox>
+
+                                    <app-textbox
+
+                                        label="Registration Commission"
+
+                                        placeholder="0.00"
+
+                                        inputMode="decimal"
+
+                                        [value]="commissionText"
+
+                                        (valueChange)="onCommissionChange($event)"
+
+                                        (blur)="onAmountBlur('commissionText')"
+
+                                        [disabled]="isView || progress.busy">
+
+                                    </app-textbox>
+
+                                    <div class="rc-wide">
+
+                                        <app-textbox
+
+                                            label="Total Cost"
+
+                                            [value]="totalCostText"
+
+                                            [readonly]="true">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                                <p
+
+                                    class="rc-note"
+
+                                    [class.rc-note-error]="!!costError">
+
+                                    <i [class]="costError ? 'fas fa-triangle-exclamation' : 'fas fa-scale-balanced'"></i>
+
+                                    {{ costError || costHint }}
+
+                                </p>
+
+                                <p class="rc-note">
+                                    <i class="fas fa-book"></i>
+                                    Posting : BRTA fee + submission charges to BRTA Fees Payable, tips to BRTA Tips Payable, commission to Registration Commission Account.
+                                </p>
+
+                            </app-form-section>
+                        }
+
+
+                        <!-- Fee / Cost : status & remarks -->
+
+                        @if (panelTab === 'Fees' || panelTab === 'Costs')
+                        {
+                            <app-form-section
+
+                                title="Status & Control"
+
+                                icon="fas fa-toggle-on">
+
+                                <div class="rc-grid">
+
+                                    <app-dropdown
+
+                                        label="Status"
+
+                                        [items]="statusItems"
+
+                                        [value]="rateActive"
+
+                                        (valueChange)="onRateStatusChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <div class="rc-wide">
+
+                                        <app-textbox
+
+                                            label="Remarks"
+
+                                            placeholder="Enter remarks"
+
+                                            textCase="none"
+
+                                            [maxLength]="500"
+
+                                            [value]="rateRemarks"
+
+                                            (valueChange)="onRateRemarksChange($event)"
+
+                                            [disabled]="isView || progress.busy">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                                <p class="rc-note">
+                                    <i class="fas fa-clock-rotate-left"></i>
+                                    To change a rate, add a new row with the new Effective From : the old row stays for files sold before.
+                                </p>
+
+                            </app-form-section>
+                        }
+
+
+                        <!-- =========================================
+                             STAGE TIMING (edit only)
+                        ========================================== -->
+
+                        @if (panelTab === 'Stages' && stageDraft)
+                        {
+                            <app-form-section
+
+                                title="Stage Timing"
+
+                                icon="fas fa-stopwatch">
+
+                                <div class="rc-grid">
+
+                                    <app-textbox
+
+                                        label="Code"
+
+                                        [value]="code"
+
+                                        [readonly]="true">
+
+                                    </app-textbox>
+
+                                    <app-textbox
+
+                                        label="Order"
+
+                                        [value]="stageDraft.StageOrder"
+
+                                        [readonly]="true">
+
+                                    </app-textbox>
+
+                                    <div class="rc-wide">
+
+                                        <app-textbox
+
+                                            label="Stage"
+
+                                            textCase="none"
+
+                                            [value]="stageDraft.StageName"
+
+                                            [readonly]="true">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                    <app-textbox
+
+                                        label="Expected Days"
+
+                                        placeholder="Empty = no limit"
+
+                                        inputMode="numeric"
+
+                                        [value]="daysText"
+
+                                        (valueChange)="onDaysChange($event)"
+
+                                        [disabled]="isView || progress.busy">
+
+                                    </app-textbox>
+
+                                </div>
+
+                                <p
+
+                                    class="rc-note"
+
+                                    [class.rc-note-error]="!!daysError">
+
+                                    <i [class]="daysError ? 'fas fa-triangle-exclamation' : 'fas fa-hourglass-half'"></i>
+
+                                    {{ daysError || 'A file staying longer than this in the stage is shown as overdue.' }}
+
+                                </p>
+
+                            </app-form-section>
+
+
+                            <app-form-section
+
+                                title="Colour"
+
+                                icon="fas fa-palette">
+
+                                <div class="rc-swatches">
+
+                                    @for (color of colorPresets; track color)
+                                    {
+                                        <button
+
+                                            type="button"
+
+                                            class="rc-swatch"
+
+                                            [class.rc-swatch-on]="stageColor === color"
+
+                                            [style.background]="color"
+
+                                            [title]="color"
+
+                                            [disabled]="isView || progress.busy"
+
+                                            (click)="pickColor(color)">
+
+                                            @if (stageColor === color)
+                                            {
+                                                <i class="fas fa-check"></i>
+                                            }
+
+                                        </button>
+                                    }
+
+                                </div>
+
+                                <div class="rc-grid">
+
+                                    <app-textbox
+
+                                        label="Colour Code"
+
+                                        placeholder="#2563EB"
+
+                                        [maxLength]="7"
+
+                                        [value]="stageColor"
+
+                                        (valueChange)="onColorChange($event)"
+
+                                        [disabled]="isView || progress.busy"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <div class="rc-preview-wrap">
+
+                                        <span
+
+                                            class="rc-preview"
+
+                                            [style.color]="stageColorValid ? stageColor : '#64748b'"
+
+                                            [style.border-color]="stageColorValid ? stageColor : '#cbd5e1'">
+
+                                            <span
+
+                                                class="rc-preview-dot"
+
+                                                [style.background]="stageColorValid ? stageColor : '#cbd5e1'">
+
+                                            </span>
+
+                                            {{ stageDraft.StageName }}
+
+                                        </span>
+
+                                    </div>
+
+                                    <div class="rc-wide">
+
+                                        <app-textbox
+
+                                            label="Remarks"
+
+                                            placeholder="Enter remarks"
+
+                                            textCase="none"
+
+                                            [maxLength]="500"
+
+                                            [value]="stageRemarks"
+
+                                            (valueChange)="onStageRemarksChange($event)"
+
+                                            [disabled]="isView || progress.busy">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                            </app-form-section>
+                        }
+
+                    </div>
+                }
+
+
+                <!-- Panel footer : Save / Update · Clear · back -->
+
+                <div class="rc-panel-commands rc-panel-foot">
+
+                    <app-command-center
+
+                        [command1Text]="saveText"
+
+                        [command1Icon]="saveIcon"
+
+                        [command1Visible]="!isView"
+
+                        (command1Click)="save()"
+
+                        [command2Text]="command2Text"
+
+                        [command2Icon]="command2Icon"
+
+                        [command2Visible]="command2Visible"
+
+                        (command2Click)="command2()"
+
+                        [command3Visible]="false"
+
+                        rightCommandIcon="fas fa-arrow-right"
+
+                        rightCommandTitle="Back to the list"
+
+                        (rightCommandClick)="closePanel()">
+
+                    </app-command-center>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+
+    <!-- HISTORY -->
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+
+    <!-- UTILITIES -->
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

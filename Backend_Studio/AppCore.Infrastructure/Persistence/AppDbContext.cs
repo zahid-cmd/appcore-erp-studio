@@ -1892,6 +1892,102 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Registration Configuration : types, fees, costs, stage
+    // timings (MANUAL : hand-written page, no Code Synchronization)
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.RegistrationControl.RegistrationTypes>
+    RegistrationTypeRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.RegistrationControl.RegistrationFees>
+    RegistrationFeeRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.RegistrationControl.RegistrationCosts>
+    RegistrationCostRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.RegistrationControl.RegistrationStageTimings>
+    RegistrationStageTimingRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Customer File Configuration : name transfer rules, file
+    // delivery rules, required documents (MANUAL : hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.CustomerFile.CustomerFileNameTransferRules>
+    CustomerFileNameTransferRuleRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.CustomerFile.CustomerFileDeliveryRules>
+    CustomerFileDeliveryRuleRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.CustomerFile.CustomerFileDocuments>
+    CustomerFileDocumentRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Customer Files : one file per chassis and its name
+    // transfers (MANUAL : hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.CustomerFile.CustomerFiles>
+    CustomerFileRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.CustomerFile.CustomerFileNameTransfers>
+    CustomerFileNameTransferRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Warranty Configuration : warranty parts, policies,
+    // coverages (MANUAL : hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.WarrantyManagement.WarrantyControl.WarrantyParts>
+    WarrantyPartRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.WarrantyManagement.WarrantyControl.WarrantyPolicies>
+    WarrantyPolicyRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.WarrantyManagement.WarrantyControl.WarrantyCoverages>
+    WarrantyCoverageRows
+    {
+    get;
+    set;
+    } = null!;
+
     // Enquiry Setup : the five lists of the Enquiry Setup page
     // (MANUAL : hand-written page, no Code Synchronization)
 

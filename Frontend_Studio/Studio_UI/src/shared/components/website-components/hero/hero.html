@@ -244,8 +244,10 @@
                     aria-label="Choose a slide"
                     (keydown.arrowright)="next(); $event.preventDefault()"
                     (keydown.arrowleft)="prev(); $event.preventDefault()">
-                    @for (b of slides(); track $index; let i = $index)
+                    @for (t of visibleTabs(); track t.i)
                     {
+                        @let b = t.slide;
+                        @let i = t.i;
                         <button
                             type="button"
                             role="tab"

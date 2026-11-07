@@ -198,7 +198,7 @@ public class AutoAccountsRepository : IAutoAccountsRepository
         db => db.Set<SupplierProfilesEntity>().AsNoTracking().Select(x => x.PayableLedgerCode),
 
 
-        // Membership Cards : fee income (SUB-009-001-001) and
+        // Membership Cards : fee income (SUB-009-003-001) and
         // discount (SUB-004-002-002). Their complimentary service
         // ledgers are on the Membership Services rows above.
         db => db.Set<MembershipCardsEntity>().AsNoTracking().Select(x => x.FeeLedgerCode),

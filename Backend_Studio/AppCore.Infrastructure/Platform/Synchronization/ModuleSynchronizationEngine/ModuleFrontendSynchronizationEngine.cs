@@ -745,14 +745,22 @@ public class ModuleFrontendSynchronizationEngine
 
 
         //=======================================================
-        // Register In Children Collection
+        // Register In The Authenticated Application's Children
+        //
+        // The anchor is the '// Authenticated Application'
+        // comment : the first children: after it is the shell
+        // (LayoutComponent + authenticationGuard). The bare
+        // "children:" anchor found the public website's
+        // children first and put new modules there (no layout,
+        // no login). An existing AUTO block is replaced where
+        // it is, wherever it sits.
         //=======================================================
 
         await _fileUpdater.InsertManagedBlockAsync
         (
             synchronization.FrontendApplicationRouteFile,
 
-            "children:",
+            "// Authenticated Application",
 
             registration
         );

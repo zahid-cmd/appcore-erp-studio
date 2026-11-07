@@ -558,6 +558,7 @@ implements OnInit, OnDestroy
     // Table Columns
     //===========================================================
 
+    // widths in % : the columns share the whole width (balanced)
     readonly columns:
         ListTableColumn[] =
     [
@@ -565,56 +566,57 @@ implements OnInit, OnDestroy
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'4%',
             align:'center'
         },
         {
             header:'Account Class',
             field:'AccountClassName',
-            width:'180px',
+            width:'12%',
             align:'left'
         },
         {
             header:'Group Name',
             field:'AccountGroupName',
-            width:'200px',
+            width:'15%',
             align:'left'
         },
         {
             header:'Sub Group Name',
             field:'AccountSubGroupName',
-            width:'200px',
+            width:'15%',
             align:'left'
         },
         {
             header:'Ledger Code',
             field:'LedgerCode',
-            width:'200px',
+            width:'15%',
             align:'left'
         },
         {
             header:'Ledger Name',
             field:'LedgerName',
+            width:'18%',
             align:'left'
         },
         {
             header:'Mode',
             field:'Mode',
-            width:'90px',
+            width:'7%',
             align:'center'
         },
         {
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'150px',
+            width:'7%',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'150px',
+            width:'7%',
             align:'center'
         }
     ];
@@ -633,50 +635,50 @@ implements OnInit, OnDestroy
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'4%',
             align:'center'
         },
         {
             header:'Account Class',
             field:'AccountClassName',
-            width:'180px',
+            width:'12%',
             align:'left'
         },
         {
             header:'Group Name',
             field:'AccountGroupName',
-            width:'200px',
+            width:'16%',
             align:'left'
         },
         {
             header:'Sub Group Name',
             field:'AccountSubGroupName',
-            width:'200px',
+            width:'16%',
             align:'left'
         },
         {
             header:'Ledger Code',
             field:'LedgerCode',
-            width:'180px',
+            width:'15%',
             align:'left'
         },
         {
             header:'Ledger Name',
             field:'LedgerName',
-            width:'240px',
+            width:'23%',
             align:'left'
         },
         {
             header:'Mode',
             field:'Mode',
-            width:'90px',
+            width:'7%',
             align:'center'
         },
         {
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'120px',
+            width:'7%',
             align:'center'
         }
     ];

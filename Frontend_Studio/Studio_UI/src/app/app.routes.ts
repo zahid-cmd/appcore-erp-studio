@@ -166,7 +166,6 @@ export const routes:
                 }
             },
 
-
         ]
     },
 
@@ -591,6 +590,58 @@ export const routes:
             },
 
             // AUTO-END : MOD-014
+
+            // AUTO-BEGIN : MOD-011
+
+            //===========================================================
+            // Registration Management
+            //===========================================================
+
+            {
+                path:'registration-management',
+
+                data:
+                {
+                    breadcrumb:'Registration Management'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/registration-management/routes/registration-management.routes'
+                    )
+                    .then(
+                        m =>
+                            m.registrationManagementRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-011
+
+            // AUTO-BEGIN : MOD-015
+
+            //===========================================================
+            // Warranty Management
+            //===========================================================
+
+            {
+                path:'warranty-management',
+
+                data:
+                {
+                    breadcrumb:'Warranty Management'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/warranty-management/routes/warranty-management.routes'
+                    )
+                    .then(
+                        m =>
+                            m.warrantyManagementRoutes
+                    )
+            },
+
+            // AUTO-END : MOD-015
 
         ]
     },

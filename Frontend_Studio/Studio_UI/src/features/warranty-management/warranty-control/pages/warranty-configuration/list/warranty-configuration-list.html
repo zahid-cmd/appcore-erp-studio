@@ -1,0 +1,1002 @@
+<div class="app-list-page wc-page">
+
+    <!-- =====================================================
+         PAGE HEADER (always full width)
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Warranty Configuration"
+
+        subtitle="Warranty parts, policies and what each policy covers"
+
+        icon="fas fa-shield-halved">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [value]="searchText"
+
+                [placeholder]="searchPlaceholder"
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Add"
+
+                command1Icon="fas fa-plus"
+
+                command1Permission="add"
+
+                [command1Title]="'Add a ' + info.noun.toLowerCase()"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                command3Permission="restore"
+
+                [command3Title]="'Restore the most recently deleted record of ' + info.tabLabel"
+
+                (command3Click)="restore()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                rightCommandTitle="History"
+
+                (rightCommandClick)="openHistory()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         BODY : list (toolbar + canvas) | form panel
+    ====================================================== -->
+
+    <div
+
+        class="wc-body"
+
+        [class.wc-open]="panelOpened">
+
+
+        <!-- =================================================
+             LIST
+        ================================================== -->
+
+        <div class="wc-main">
+
+            <app-page-toolbar>
+
+                <app-control-tabs
+
+                    pageToolbarLeft
+
+                    [tabs]="tabs"
+
+                    [selectedTab]="selectedTab"
+
+                    (selectedTabChange)="onTabChange($event)">
+
+                </app-control-tabs>
+
+
+                <div
+
+                    pageToolbarRight
+
+                    class="wc-toolbar-right">
+
+                    @if (selectedTab === 'Policies')
+                    {
+                        <div class="wc-filter">
+
+                            <app-dropdown
+
+                                [items]="brandFilterItems"
+
+                                [value]="brandFilter"
+
+                                (valueChange)="onBrandFilterChange($event)">
+
+                            </app-dropdown>
+
+                        </div>
+                    }
+                    @else if (selectedTab === 'Coverages')
+                    {
+                        <div class="wc-filter wc-filter-wide">
+
+                            <app-dropdown
+
+                                [items]="policyFilterItems"
+
+                                [value]="policyFilter"
+
+                                (valueChange)="onPolicyFilterChange($event)">
+
+                            </app-dropdown>
+
+                        </div>
+                    }
+                    @else if (!panelOpened)
+                    {
+                        <span
+
+                            class="wc-hint"
+
+                            [title]="info.hint">
+
+                            <i class="fas fa-circle-info"></i>
+
+                            {{ info.hint }}
+
+                        </span>
+                    }
+
+                    <span class="wc-count">
+
+                        <i [class]="info.icon"></i>
+
+                        {{ tabCount }}
+
+                    </span>
+
+                </div>
+
+            </app-page-toolbar>
+
+
+            <app-page-canvas
+
+                [config]="canvasConfig">
+
+                <div canvasBody>
+
+                    <app-list-table
+
+                        [columns]="columns"
+
+                        [rows]="pagedRows"
+
+                        [serialOffset]="(currentPage - 1) * pageSize"
+
+                        [loading]="loading"
+
+                        [error]="loadFailed"
+
+                        [actions]="tableActions"
+
+                        (view)="view($event)"
+
+                        (edit)="edit($event)"
+
+                        (delete)="delete($event)"
+
+                        (sortChange)="onSort($event)">
+
+                    </app-list-table>
+
+                </div>
+
+
+                <app-pagination
+
+                    canvasFooter
+
+                    [totalRecords]="filteredRows.length"
+
+                    [currentPage]="currentPage"
+
+                    [pageSize]="pageSize"
+
+                    (pageChange)="onPageChange($event)"
+
+                    (pageSizeChange)="onPageSizeChange($event)">
+
+                </app-pagination>
+
+            </app-page-canvas>
+
+
+            <!-- SUMMARY (the open tab) -->
+
+            @if (summaryTotal > 0)
+            {
+                <div class="ics-summary">
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Total</span>
+                        <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Active</span>
+                        <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Inactive</span>
+                        <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
+                    </span>
+
+                    <span class="ics-summary-note">
+                        {{ summaryNote }}
+                    </span>
+
+                </div>
+            }
+
+        </div>
+
+
+
+        <!-- =================================================
+             FORM PANEL (Add / Update / View)
+        ================================================== -->
+
+        <aside
+
+            class="wc-panel"
+
+            [attr.aria-hidden]="!panelOpened">
+
+            <div class="wc-panel-card">
+
+                <div class="wc-panel-head">
+
+                    <div class="wc-panel-title">
+
+                        <span class="wc-panel-icon">
+
+                            <i [class]="panelInfo.icon"></i>
+
+                        </span>
+
+                        <div class="wc-panel-text">
+
+                            <span class="wc-panel-name">{{ panelTitle }}</span>
+
+                            <span class="wc-panel-sub" [title]="panelSubtitle">{{ panelSubtitle }}</span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                @if (panelOpened)
+                {
+                    <div class="wc-panel-body appcore-scrollbar">
+
+
+                        <!-- =========================================
+                             WARRANTY PART
+                        ========================================== -->
+
+                        @if (panelTab === 'Parts')
+                        {
+                            <app-form-section
+
+                                title="Warranty Part"
+
+                                icon="fas fa-puzzle-piece">
+
+                                <div class="wc-grid">
+
+                                    <app-textbox
+
+                                        label="Code"
+
+                                        placeholder="Auto generated"
+
+                                        [value]="code"
+
+                                        [readonly]="true"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <app-textbox
+
+                                        label="Display Order"
+
+                                        placeholder="1"
+
+                                        inputMode="numeric"
+
+                                        [value]="displayOrderText"
+
+                                        (valueChange)="onDisplayOrderChange($event)"
+
+                                        [disabled]="controlsOff"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <div class="wc-wide">
+
+                                        <app-textbox
+
+                                            label="Part Name"
+
+                                            placeholder="Battery, Motor, Controller ..."
+
+                                            textCase="none"
+
+                                            [maxLength]="100"
+
+                                            [value]="partDraft.Name"
+
+                                            (valueChange)="onPartNameChange($event)"
+
+                                            [disabled]="controlsOff"
+
+                                            [required]="true">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                            </app-form-section>
+
+
+                            <app-form-section
+
+                                title="Status & Control"
+
+                                icon="fas fa-toggle-on">
+
+                                <div class="wc-grid">
+
+                                    <app-dropdown
+
+                                        label="Status"
+
+                                        [items]="statusItems"
+
+                                        [value]="partDraft.IsActive"
+
+                                        (valueChange)="onPartStatusChange($event)"
+
+                                        [disabled]="controlsOff"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <div class="wc-wide">
+
+                                        <app-textbox
+
+                                            label="Remarks"
+
+                                            placeholder="Enter remarks"
+
+                                            textCase="none"
+
+                                            [maxLength]="500"
+
+                                            [value]="partDraft.Remarks"
+
+                                            (valueChange)="onPartRemarksChange($event)"
+
+                                            [disabled]="controlsOff">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                                <p class="wc-note">
+                                    <i class="fas fa-circle-info"></i>
+                                    An inactive part is not offered on new policies. A part used by a policy cannot be deleted.
+                                </p>
+
+                            </app-form-section>
+                        }
+
+
+                        <!-- =========================================
+                             WARRANTY POLICY
+                        ========================================== -->
+
+                        @if (panelTab === 'Policies')
+                        {
+                            <app-form-section
+
+                                title="Warranty Policy"
+
+                                icon="fas fa-shield-halved">
+
+                                <div class="wc-grid">
+
+                                    <app-textbox
+
+                                        label="Code"
+
+                                        placeholder="Auto generated"
+
+                                        [value]="code"
+
+                                        [readonly]="true"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <app-datepicker
+
+                                        label="Effective From"
+
+                                        [value]="effectiveDate"
+
+                                        (valueChange)="onDateChange($event)"
+
+                                        [disabled]="controlsOff"
+
+                                        [required]="true">
+
+                                    </app-datepicker>
+
+                                    <app-dropdown
+
+                                        label="Ends"
+
+                                        [items]="endsItems"
+
+                                        [value]="endsMode"
+
+                                        (valueChange)="onEndsChange($event)"
+
+                                        [disabled]="controlsOff">
+
+                                    </app-dropdown>
+
+                                    @if (endsMode === 'date')
+                                    {
+                                        <app-datepicker
+
+                                            label="Effective To"
+
+                                            [value]="effectiveToDate"
+
+                                            [minDate]="effectiveDate"
+
+                                            (valueChange)="onToDateChange($event)"
+
+                                            [disabled]="controlsOff"
+
+                                            [required]="true">
+
+                                        </app-datepicker>
+                                    }
+                                    @else
+                                    {
+                                        <app-textbox
+
+                                            label="Effective To"
+
+                                            value="Open-ended"
+
+                                            [readonly]="true">
+
+                                        </app-textbox>
+                                    }
+
+                                    <app-dropdown
+
+                                        label="Brand"
+
+                                        [items]="brandItems"
+
+                                        [value]="brandId"
+
+                                        (valueChange)="onBrandChange($event)"
+
+                                        [disabled]="scopeLocked"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <app-dropdown
+
+                                        label="Model"
+
+                                        [items]="modelItems"
+
+                                        [value]="modelId"
+
+                                        (valueChange)="onModelChange($event)"
+
+                                        [disabled]="scopeLocked || !brandId">
+
+                                    </app-dropdown>
+
+                                    <div class="wc-wide">
+
+                                        <app-textbox
+
+                                            label="Policy Name"
+
+                                            placeholder="Filled from the brand and model"
+
+                                            textCase="none"
+
+                                            [maxLength]="100"
+
+                                            [value]="policyName"
+
+                                            (valueChange)="onPolicyNameChange($event)"
+
+                                            [disabled]="controlsOff"
+
+                                            [required]="true">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                                @if (datesError)
+                                {
+                                    <p class="wc-note wc-note-error">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                        {{ datesError }}
+                                    </p>
+                                }
+                                @else if (policyInForceHint)
+                                {
+                                    <p
+
+                                        class="wc-note"
+
+                                        [class.wc-note-error]="policyInForceError">
+
+                                        <i [class]="policyInForceError ? 'fas fa-triangle-exclamation' : 'fas fa-calendar-check'"></i>
+
+                                        {{ policyInForceHint }}
+
+                                    </p>
+                                }
+
+                                <p class="wc-note">
+                                    <i class="fas fa-lock"></i>
+                                    Brand and model are locked after saving. A model policy wins over the brand policy. Part-level warranty goes on the Warranty Coverages tab.
+                                </p>
+
+                            </app-form-section>
+
+
+                            <app-form-section
+
+                                title="Whole Bike Warranty"
+
+                                icon="fas fa-motorcycle">
+
+                                <ng-container [ngTemplateOutlet]="periodFields"></ng-container>
+
+                            </app-form-section>
+
+
+                            <app-form-section
+
+                                title="Terms & Exclusions"
+
+                                icon="fas fa-file-contract">
+
+                                <div class="wc-stack">
+
+                                    <app-textarea
+
+                                        label="Terms"
+
+                                        placeholder="What is covered, and the conditions (free services done on time, original parts ...)"
+
+                                        [rows]="4"
+
+                                        [maxLength]="4000"
+
+                                        [value]="terms"
+
+                                        (valueChange)="onTermsChange($event)"
+
+                                        [disabled]="controlsOff">
+
+                                    </app-textarea>
+
+                                    <app-textarea
+
+                                        label="Exclusions"
+
+                                        placeholder="What is not covered (accident, water damage, misuse ...)"
+
+                                        [rows]="3"
+
+                                        [maxLength]="4000"
+
+                                        [value]="exclusions"
+
+                                        (valueChange)="onExclusionsChange($event)"
+
+                                        [disabled]="controlsOff">
+
+                                    </app-textarea>
+
+                                </div>
+
+                            </app-form-section>
+
+
+                            <app-form-section
+
+                                title="Status & Control"
+
+                                icon="fas fa-toggle-on">
+
+                                <div class="wc-grid">
+
+                                    <app-dropdown
+
+                                        label="Status"
+
+                                        [items]="statusItems"
+
+                                        [value]="policyActive"
+
+                                        (valueChange)="onPolicyStatusChange($event)"
+
+                                        [disabled]="controlsOff"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <div class="wc-wide">
+
+                                        <app-textbox
+
+                                            label="Remarks"
+
+                                            placeholder="Enter remarks"
+
+                                            textCase="none"
+
+                                            [maxLength]="500"
+
+                                            [value]="policyRemarks"
+
+                                            (valueChange)="onPolicyRemarksChange($event)"
+
+                                            [disabled]="controlsOff">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                                <p class="wc-note">
+                                    <i class="fas fa-clock-rotate-left"></i>
+                                    To change a policy, add a new row with the new Effective From : the old row stays for bikes sold before.
+                                </p>
+
+                            </app-form-section>
+                        }
+
+
+                        <!-- =========================================
+                             WARRANTY COVERAGE
+                        ========================================== -->
+
+                        @if (panelTab === 'Coverages')
+                        {
+                            <app-form-section
+
+                                title="Warranty Coverage"
+
+                                icon="fas fa-clipboard-check">
+
+                                <div class="wc-grid">
+
+                                    <app-textbox
+
+                                        label="Code"
+
+                                        placeholder="Auto generated"
+
+                                        [value]="code"
+
+                                        [readonly]="true"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <app-dropdown
+
+                                        label="Part"
+
+                                        [items]="partItems"
+
+                                        [value]="coveragePartId"
+
+                                        (valueChange)="onPartChange($event)"
+
+                                        [disabled]="scopeLocked"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <div class="wc-wide">
+
+                                        <app-dropdown
+
+                                            label="Warranty Policy"
+
+                                            [items]="coveragePolicyItems"
+
+                                            [value]="coveragePolicyId"
+
+                                            (valueChange)="onCoveragePolicyChange($event)"
+
+                                            [disabled]="scopeLocked"
+
+                                            [required]="true">
+
+                                        </app-dropdown>
+
+                                    </div>
+
+                                </div>
+
+                                <p class="wc-note">
+                                    <i class="fas fa-circle-info"></i>
+                                    {{ coverageHint }}
+                                </p>
+
+                            </app-form-section>
+
+
+                            <app-form-section
+
+                                title="Part Warranty"
+
+                                icon="fas fa-hourglass-half">
+
+                                <ng-container [ngTemplateOutlet]="periodFields"></ng-container>
+
+                            </app-form-section>
+
+
+                            <app-form-section
+
+                                title="Status & Control"
+
+                                icon="fas fa-toggle-on">
+
+                                <div class="wc-grid">
+
+                                    <app-dropdown
+
+                                        label="Status"
+
+                                        [items]="statusItems"
+
+                                        [value]="coverageActive"
+
+                                        (valueChange)="onCoverageStatusChange($event)"
+
+                                        [disabled]="controlsOff"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <div class="wc-wide">
+
+                                        <app-textbox
+
+                                            label="Notes"
+
+                                            placeholder="Anything special about this coverage"
+
+                                            textCase="none"
+
+                                            [maxLength]="200"
+
+                                            [value]="coverageNotes"
+
+                                            (valueChange)="onCoverageNotesChange($event)"
+
+                                            [disabled]="controlsOff">
+
+                                        </app-textbox>
+
+                                    </div>
+
+                                </div>
+
+                                <p class="wc-note">
+                                    <i class="fas fa-lock"></i>
+                                    The policy and the part are locked after saving. The period, km limit, notes and status can be changed.
+                                </p>
+
+                            </app-form-section>
+                        }
+
+                    </div>
+                }
+
+
+                <!-- Panel footer : Save / Update · Clear · back -->
+
+                <div class="wc-panel-commands wc-panel-foot">
+
+                    <app-command-center
+
+                        [command1Text]="saveText"
+
+                        [command1Icon]="saveIcon"
+
+                        [command1Visible]="!isView"
+
+                        (command1Click)="save()"
+
+                        command2Text="Clear"
+
+                        command2Icon="fas fa-broom"
+
+                        [command2Visible]="panelMode === 'add'"
+
+                        (command2Click)="clearForm()"
+
+                        [command3Visible]="false"
+
+                        rightCommandIcon="fas fa-arrow-right"
+
+                        rightCommandTitle="Back to the list"
+
+                        (rightCommandClick)="closePanel()">
+
+                    </app-command-center>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+
+    <!-- =====================================================
+         PERIOD FIELDS : period + unit + km (policy / coverage)
+    ====================================================== -->
+
+    <ng-template #periodFields>
+
+                                <div class="wc-period">
+
+                                    <app-textbox
+
+                                        label="Period"
+
+                                        placeholder="2"
+
+                                        inputMode="numeric"
+
+                                        [value]="periodText"
+
+                                        (valueChange)="onPeriodChange($event)"
+
+                                        [disabled]="controlsOff"
+
+                                        [required]="true">
+
+                                    </app-textbox>
+
+                                    <app-dropdown
+
+                                        label="Unit"
+
+                                        [items]="unitItems"
+
+                                        [value]="periodUnit"
+
+                                        (valueChange)="onUnitChange($event)"
+
+                                        [disabled]="controlsOff"
+
+                                        [required]="true">
+
+                                    </app-dropdown>
+
+                                    <app-textbox
+
+                                        label="Km Limit"
+
+                                        placeholder="No limit"
+
+                                        inputMode="numeric"
+
+                                        [value]="kmText"
+
+                                        (valueChange)="onKmChange($event)"
+
+                                        [disabled]="controlsOff">
+
+                                    </app-textbox>
+
+                                </div>
+
+                                <p
+
+                                    class="wc-note"
+
+                                    [class.wc-note-error]="!!periodError">
+
+                                    <i [class]="periodError ? 'fas fa-triangle-exclamation' : 'fas fa-road'"></i>
+
+                                    {{ periodError || periodHint }}
+
+                                </p>
+
+    </ng-template>
+
+
+    <!-- HISTORY -->
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+
+    <!-- UTILITIES -->
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

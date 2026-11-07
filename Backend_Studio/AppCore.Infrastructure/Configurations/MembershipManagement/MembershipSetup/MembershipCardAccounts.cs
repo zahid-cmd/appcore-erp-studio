@@ -51,7 +51,7 @@ namespace AppCore.Infrastructure.Configurations.MembershipManagement.MembershipS
 // "<Sub Group Name> - <Card Name>" :
 //
 //   On the card                 Sub group (found by CODE only)
-//     Fee Ledger                SUB-009-001-001  Membership Fees
+//     Fee Ledger                SUB-009-003-001  Membership Fees
 //     Discount Ledger           SUB-004-002-002  Membership Discount
 //
 //   On its Membership Services row
@@ -82,7 +82,7 @@ public static class MembershipCardAccounts
     //===========================================================
 
     public const string FeeSubGroupCode =
-        "SUB-009-001-001";
+        "SUB-009-003-001";
 
     public const string DiscountSubGroupCode =
         "SUB-004-002-002";
@@ -346,7 +346,7 @@ public static class MembershipCardAccounts
     // Code Helpers
     //===========================================================
 
-    // "SUB-009-001-001" -> 1
+    // "SUB-009-003-001" -> 1
     private static int LastNumber
     (
         string? code

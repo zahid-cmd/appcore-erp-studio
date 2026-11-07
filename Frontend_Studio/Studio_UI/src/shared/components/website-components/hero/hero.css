@@ -525,8 +525,7 @@
     min-width:0;
     display:flex;
     gap:10px;
-    overflow-x:auto;
-    scrollbar-width:none;
+    overflow:hidden;
 }
 
 
@@ -536,10 +535,11 @@
 }
 
 
+/* 4 tabs share the row (no half tab behind the arrows) */
 .tab
 {
-    flex:0 0 auto;
-    min-width:170px;
+    flex:1 1 0;
+    min-width:0;
     height:62px;
     display:flex;
     align-items:center;
@@ -1017,4 +1017,20 @@
 .cta-call
 {
     border-style:dashed;
+}
+
+
+/* long model names : one line, cut with ... */
+.tab-text
+{
+    min-width:0;
+}
+
+.tab-text b,
+.tab-text span
+{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }

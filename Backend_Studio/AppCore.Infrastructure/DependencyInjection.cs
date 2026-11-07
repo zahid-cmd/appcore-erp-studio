@@ -887,6 +887,58 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Registration Configuration Repository (manual, hand-
+        // written page)
+        //
+        // Registration Management > Registration Control >
+        // Registration Configuration : types, fees, costs, stage
+        // timings (four tables, four tabs).
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.RegistrationManagement.RegistrationControl.IRegistrationConfigurationRepository,
+            AppCore.Infrastructure.Repositories.RegistrationManagement.RegistrationControl.RegistrationConfigurationRepository
+        >();
+
+        //=======================================================
+        // Customer File Configuration Repository (manual, hand-
+        // written page) : Registration Management > Customer File.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.RegistrationManagement.CustomerFile.ICustomerFileConfigurationRepository,
+            AppCore.Infrastructure.Repositories.RegistrationManagement.CustomerFile.CustomerFileConfigurationRepository
+        >();
+
+        //=======================================================
+        // Customer Files Repository (manual, hand-written page) :
+        // Registration Management > Customer File > Customer Files.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.RegistrationManagement.CustomerFile.ICustomerFilesRepository,
+            AppCore.Infrastructure.Repositories.RegistrationManagement.CustomerFile.CustomerFilesRepository
+        >();
+
+        //=======================================================
+        // Warranty Configuration Repository (manual, hand-
+        // written page)
+        //
+        // Warranty Management > Warranty Control > Warranty
+        // Configuration : warranty parts, sales policies, service
+        // policies (three tables, three tabs).
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.WarrantyManagement.WarrantyControl.IWarrantyConfigurationRepository,
+            AppCore.Infrastructure.Repositories.WarrantyManagement.WarrantyControl.WarrantyConfigurationRepository
+        >();
+
+        //=======================================================
         // Data Management (manual, AppCore Admin only)
         //
         // Infrastructure Control › Data Management : Database

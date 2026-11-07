@@ -13,6 +13,10 @@
 //               fill pauses while the mouse or focus is on the
 //               hero; with "reduce motion" there is no autoplay.
 //   Controls  : tabs, arrows, ← / → keys on the tabs, swipe.
+//   Tabs      : 4 at a time (welcome included), equal width. The
+//               row follows the active slide : going past the
+//               last tab brings the next one in (one at a time),
+//               wrapping to the start goes back to the first 4.
 //   Brands    : with 2 or more brands a brand bar sits on top :
 //               "All brands" (default) slides every bike;
 //               a brand slides only that brand's bikes. Which
@@ -94,6 +98,56 @@ export class HeroComponent
 
     readonly index =
         signal(0);
+
+    // Tabs shown at a time, and the first one shown
+    private readonly tabCount =
+        4;
+
+    readonly tabStart =
+        signal(0);
+
+    // The tabs in view, with their slide number
+    readonly visibleTabs =
+        computed(
+            () =>
+            {
+                const start =
+                    this.tabStart();
+
+                return this.slides()
+                    .map((slide, i) => ({ slide, i }))
+                    .slice(start, start + this.tabCount);
+            }
+        );
+
+    // Go to a slide and keep its tab in view
+    private show
+    (
+        i:
+            number
+    ):
+        void
+    {
+        this.index.set(i);
+
+        const start =
+            this.tabStart();
+
+        if
+        (
+            i < start
+        )
+        {
+            this.tabStart.set(i);
+        }
+        else if
+        (
+            i > start + this.tabCount - 1
+        )
+        {
+            this.tabStart.set(i - this.tabCount + 1);
+        }
+    }
 
     // 1 forward, -1 back : sets the sweep direction
     readonly direction =
@@ -335,6 +389,8 @@ export class HeroComponent
 
         this.brand.set(name);
 
+        this.tabStart.set(0);
+
         this.index.set(0);
     }
 
@@ -358,7 +414,7 @@ export class HeroComponent
 
         this.direction.set(i > current ? 1 : -1);
 
-        this.index.set(i);
+        this.show(i);
     }
 
     next():
@@ -377,7 +433,7 @@ export class HeroComponent
 
         this.direction.set(1);
 
-        this.index.set((this.index() + 1) % count);
+        this.show((this.index() + 1) % count);
     }
 
     prev():
@@ -396,7 +452,7 @@ export class HeroComponent
 
         this.direction.set(-1);
 
-        this.index.set((this.index() - 1 + count) % count);
+        this.show((this.index() - 1 + count) % count);
     }
 
     swipeStart

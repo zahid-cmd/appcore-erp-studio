@@ -377,13 +377,13 @@ implements OnInit, OnDestroy
     readonly releaseColumns:
         ListTableColumn[] =
     [
-        { header:'#',           field:'serial',      type:'serial', width:'50px',  align:'center' },
-        { header:'Release',     field:'release',     width:'110px', align:'center' },
-        { header:'Commit',      field:'commitShort', width:'110px', align:'center' },
-        { header:'Deployed By', field:'deployedBy',  align:'left' },
-        { header:'Installed',   field:'createdText', width:'180px', align:'center' },
-        { header:'Live',        field:'liveText',    type:'status', width:'110px', align:'center' },
-        { header:'Actions',     field:'actions',     type:'actions', width:'90px', align:'center' }
+        { header:'#',           field:'serial',      type:'serial',  width:'5%',  align:'center' },
+        { header:'Release',     field:'release',     width:'14%', align:'center' },
+        { header:'Commit',      field:'commitShort', width:'14%', align:'center' },
+        { header:'Deployed By', field:'deployedBy',  width:'20%', align:'center' },
+        { header:'Installed',   field:'createdText', width:'22%', align:'center' },
+        { header:'Live',        field:'liveText',    type:'status',  width:'13%', align:'center' },
+        { header:'Actions',     field:'actions',     type:'actions', width:'12%', align:'center' }
     ];
 
     readonly releaseActions:
@@ -883,7 +883,7 @@ implements OnInit, OnDestroy
                                             ? new Date(x.createdAt).toLocaleString()
                                             : '',
                                     liveText:
-                                        x.isCurrent ? 'Live' : ''
+                                        x.isCurrent ? 'Live' : 'Kept'
                                 })
                             );
 

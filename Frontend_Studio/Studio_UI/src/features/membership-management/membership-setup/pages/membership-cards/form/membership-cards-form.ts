@@ -404,10 +404,10 @@ implements OnInit, OnDestroy
         MembershipCardsDefaults | null =
         null;
 
-    // "SUB-009-001-001 - Membership Fees" etc. (display)
+    // "SUB-009-003-001 - Membership Fees" etc. (display)
     feeSubGroupDisplay:
         string =
-        'SUB-009-001-001';
+        'SUB-009-003-001';
 
     discountSubGroupDisplay:
         string =
@@ -667,7 +667,7 @@ implements OnInit, OnDestroy
 
                     this.feeSubGroupDisplay =
                         display(
-                            response.FeeAccount.SubGroupCode || 'SUB-009-001-001',
+                            response.FeeAccount.SubGroupCode || 'SUB-009-003-001',
                             response.FeeAccount.SubGroupName
                         );
 

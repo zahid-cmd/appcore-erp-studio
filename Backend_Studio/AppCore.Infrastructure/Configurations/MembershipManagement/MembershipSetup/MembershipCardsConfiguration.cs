@@ -94,7 +94,7 @@ public class MembershipCardsConfiguration
 
 
         //===========================================================
-        // Fee Ledger (SUB-009-001-001)
+        // Fee Ledger (SUB-009-003-001)
         //===========================================================
 
         builder.Property(x => x.FeeLedgerCode)
