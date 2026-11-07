@@ -418,7 +418,12 @@ app.MapControllers();
 
 if (File.Exists(Path.Combine(app.Environment.ContentRootPath, "wwwroot", "index.html")))
 {
-    app.MapFallbackToFile("{*path:regex(^(?!api/).*$)}", "index.html");
+    // the login page itself must open without a login
+    // (the API's fallback policy requires a signed-in user).
+    // Addresses with a dot (main.js, styles.css, pictures)
+    // are left to the static files.
+    app.MapFallbackToFile("{*path:regex(^(?!api/)[[^.]]*$)}", "index.html")
+       .AllowAnonymous();
 }
 
 

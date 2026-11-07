@@ -9,8 +9,10 @@
 // Releases : the releases kept on the server; "Roll back"
 //            switches the live site to an older one.
 //
-// A running job is shown in the live panel (polled every
-// second) and continues even if this page is closed.
+// A running job is shown in a popup (polled every second). Hide
+// closes the popup only: the job continues (the Deploy button
+// shows its progress and opens the popup again), also when this
+// page is closed.
 //===============================================================
 
 import
@@ -19,7 +21,9 @@ import
     OnInit,
     OnDestroy,
     inject,
-    ChangeDetectorRef
+    ChangeDetectorRef,
+    ViewChild,
+    ElementRef
 }
 from '@angular/core';
 
@@ -295,6 +299,15 @@ implements OnInit, OnDestroy
     live:
         DeploymentProgress | null =
         null;
+
+    // the popup is open (Hide = closed while the job runs)
+    liveOpen:
+        boolean =
+        false;
+
+    @ViewChild('logBox')
+    logBox?:
+        ElementRef<HTMLElement>;
 
     // checking git before a deployment
     checking:
@@ -892,6 +905,7 @@ implements OnInit, OnDestroy
             return;
         }
 
+        // a job runs : the button opens its popup
         if
         (
             this.live
@@ -899,10 +913,8 @@ implements OnInit, OnDestroy
             !this.live.finished
         )
         {
-            this.toast.warning(
-                'Deploy',
-                `${this.live.code} is still running.`
-            );
+            this.liveOpen =
+                true;
 
             return;
         }
@@ -1114,6 +1126,9 @@ implements OnInit, OnDestroy
         this.live =
             null;
 
+        this.liveOpen =
+            true;
+
         this.pollOnce(publicId);
 
         this.pollTimer =
@@ -1141,7 +1156,7 @@ implements OnInit, OnDestroy
         this.service
             .getProgress(
                 publicId,
-                14
+                300
             )
             .subscribe
             ({
@@ -1150,6 +1165,15 @@ implements OnInit, OnDestroy
                     {
                         this.polling =
                             false;
+
+                        const box =
+                            this.logBox?.nativeElement;
+
+                        // follow the end unless the user scrolled up
+                        const atEnd =
+                            !box
+                            ||
+                            box.scrollHeight - box.scrollTop - box.clientHeight < 40;
 
                         this.live =
                             progress;
@@ -1166,6 +1190,11 @@ implements OnInit, OnDestroy
                         }
 
                         this.cdr.detectChanges();
+
+                        if (atEnd)
+                        {
+                            this.scrollLogToEnd();
+                        }
                     },
                 error:
                     () =>
@@ -1229,6 +1258,7 @@ implements OnInit, OnDestroy
             false;
     }
 
+    // finished : close the popup and forget the job
     closeLive():
         void
     {
@@ -1239,11 +1269,83 @@ implements OnInit, OnDestroy
             !this.live.finished
         )
         {
+            this.hideLive();
+
             return;
         }
 
+        this.liveOpen =
+            false;
+
         this.live =
             null;
+    }
+
+    // running : close the popup, the job continues
+    hideLive():
+        void
+    {
+        this.liveOpen =
+            false;
+    }
+
+    private scrollLogToEnd():
+        void
+    {
+        const box =
+            this.logBox?.nativeElement;
+
+        if (box)
+        {
+            box.scrollTop =
+                box.scrollHeight;
+        }
+    }
+
+    // Deploy button : progress of a running (hidden) job
+    get deployText():
+        string
+    {
+        if
+        (
+            this.live
+            &&
+            !this.live.finished
+        )
+        {
+            return `${this.live.code}  ${this.live.percent}%`;
+        }
+
+        return this.checking
+            ? 'Checking...'
+            : 'Deploy';
+    }
+
+    get deployIcon():
+        string
+    {
+        return this.checking
+            ||
+            (
+                this.live
+                &&
+                !this.live.finished
+            )
+            ? 'fas fa-spinner fa-spin'
+            : 'fas fa-rocket';
+    }
+
+    get liveTitle():
+        string
+    {
+        if (!this.live)
+        {
+            return '';
+        }
+
+        return this.live.kind === 'Rollback'
+            ? `Roll back to ${this.live.code}`
+            : `Deploy ${this.live.code}`;
     }
 
     openLiveLog():
@@ -1251,6 +1353,9 @@ implements OnInit, OnDestroy
     {
         if (this.live)
         {
+            this.liveOpen =
+                false;
+
             void this.router.navigate(
                 [ 'view', this.live.publicId ],
                 { relativeTo:this.route.parent }

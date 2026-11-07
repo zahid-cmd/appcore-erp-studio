@@ -22,9 +22,9 @@
 
         <div pageHeaderRight>
             <app-command-center
-                [command1Text]="checking ? 'Checking...' : 'Deploy'"
-                [command1Icon]="checking ? 'fas fa-spinner fa-spin' : 'fas fa-rocket'"
-                command1Title="Check git, build, send the release to the selected server"
+                [command1Text]="deployText"
+                [command1Icon]="deployIcon"
+                command1Title="Check git, build, send the release to the selected server (while a job runs: show its progress)"
                 (command1Click)="deploy()"
                 command2Text="Refresh"
                 command2Icon="fas fa-rotate-right"
@@ -65,51 +65,6 @@
         </app-dropdown>
 
     </app-page-toolbar>
-
-
-    <!-- =====================================================
-         LIVE PANEL (running / just finished job)
-    ====================================================== -->
-
-    @if (live)
-    {
-        <div class="dc-live" [ngClass]="'dc-' + liveTone()">
-
-            <div class="dc-live-head">
-                <span class="dc-live-title">
-                    @if (!live.finished)
-                    {
-                        <i class="fas fa-spinner fa-spin"></i>
-                    }
-                    {{ live.kind === 'Rollback' ? 'Roll back to ' + live.code : live.code }}
-                    <span class="dc-live-status">{{ live.deployStatus }}</span>
-                </span>
-
-                <span class="dc-live-time">{{ durationText(live.elapsedSeconds) }}</span>
-
-                <button type="button" class="dc-link" (click)="openLiveLog()">
-                    <i class="fas fa-file-lines"></i> Full log
-                </button>
-
-                @if (live.finished)
-                {
-                    <button type="button" class="dc-link" title="Close" (click)="closeLive()">
-                        <i class="fas fa-xmark"></i>
-                    </button>
-                }
-            </div>
-
-            <div class="dc-bar">
-                <div class="dc-bar-fill" [style.width.%]="live.percent"></div>
-                <span class="dc-bar-text">{{ live.percent }}%</span>
-            </div>
-
-            <div class="dc-live-step">{{ live.step }}</div>
-
-            <pre class="dc-live-log">{{ liveLogText }}</pre>
-
-        </div>
-    }
 
 
     <!-- =====================================================
@@ -199,6 +154,85 @@
             Commit and push in Source Control before Deploy
         </span>
     </div>
+
+
+    <!-- =====================================================
+         LIVE POPUP (running / just finished job)
+    ====================================================== -->
+
+    @if (live && liveOpen)
+    {
+        <div class="dc-overlay">
+
+            <div class="dc-modal" [ngClass]="'dc-' + liveTone()">
+
+                <div class="dc-modal-head">
+                    <span class="dc-modal-icon">
+                        <i [class]="live.finished ? 'fas fa-rocket' : 'fas fa-spinner fa-spin'"></i>
+                    </span>
+
+                    <span class="dc-modal-title">
+                        {{ liveTitle }}
+                        <small>{{ server?.name }}</small>
+                    </span>
+
+                    <span class="dc-live-status">{{ live.deployStatus }}</span>
+
+                    <span class="dc-live-time">
+                        <i class="far fa-clock"></i> {{ durationText(live.elapsedSeconds) }}
+                    </span>
+
+                    <button type="button" class="dc-x" [title]="live.finished ? 'Close' : 'Hide (keeps running)'" (click)="closeLive()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="dc-bar">
+                    <div class="dc-bar-fill" [style.width.%]="live.percent"></div>
+                    <span class="dc-bar-text">{{ live.percent }}%</span>
+                </div>
+
+                <div class="dc-live-step">{{ live.step }}</div>
+
+                <pre #logBox class="dc-live-log appcore-scrollbar">{{ liveLogText }}</pre>
+
+                <div class="dc-modal-foot">
+                    @if (!live.finished)
+                    {
+                        <span class="dc-foot-note">
+                            You can hide this window or leave the page: the job continues.
+                        </span>
+                    }
+
+                    <button type="button" class="dc-btn" (click)="openLiveLog()">
+                        <i class="fas fa-file-lines"></i> Full log
+                    </button>
+
+                    @if (live.finished && live.deployStatus === 'Succeeded' && server?.appUrl)
+                    {
+                        <button type="button" class="dc-btn" (click)="openSite()">
+                            <i class="fas fa-up-right-from-square"></i> Open Site
+                        </button>
+                    }
+
+                    @if (live.finished)
+                    {
+                        <button type="button" class="dc-btn dc-btn-primary" (click)="closeLive()">
+                            Close
+                        </button>
+                    }
+                    @else
+                    {
+                        <button type="button" class="dc-btn dc-btn-primary" (click)="hideLive()">
+                            <i class="fas fa-eye-slash"></i> Hide
+                        </button>
+                    }
+                </div>
+
+            </div>
+
+        </div>
+    }
 
 
     <!-- =====================================================

@@ -1402,15 +1402,52 @@ implements OnInit, OnDestroy
             }
         }
 
+        // Laden Weight follows Unladen + 70 kg per seat (BRTA)
+        // until it is typed over
+        const autoBefore =
+            this.autoLaden(this.numbers);
+
+        const followsAuto =
+            !this.numbers.laden || this.numbers.laden === autoBefore;
+
         this.numbers =
         {
             ...this.numbers,
             [field]:text
         };
 
+        if ((field === 'unladen' || field === 'seats') && followsAuto)
+        {
+            this.numbers.laden =
+                this.autoLaden(this.numbers);
+        }
+
         this.applyNumbers();
 
         this.onValueChange();
+    }
+
+
+    // Unladen + 70 kg x seats ('' when unladen is empty)
+    private autoLaden
+    (
+        numbers:
+            NumberTexts
+    ):
+        string
+    {
+        const unladen =
+            toNumber(numbers.unladen);
+
+        const seats =
+            Math.trunc(toNumber(numbers.seats));
+
+        if (!(unladen > 0) || !(seats > 0))
+        {
+            return '';
+        }
+
+        return String(Math.round((unladen + 70 * seats) * 100) / 100);
     }
 
 

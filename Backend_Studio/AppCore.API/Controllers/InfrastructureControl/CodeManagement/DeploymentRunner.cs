@@ -916,7 +916,17 @@ public static class DeploymentRunner
             copy = Copy(job.Record);
         }
 
-        copy.Log = job.FullLog();
+        copy.Log = Ascii(job.FullLog());
+
+        // the database is WIN1252 : build tools print symbols
+        // (check marks, arrows, box lines) it cannot store
+        copy.Name = Ascii(copy.Name);
+        copy.Step = Ascii(copy.Step);
+        copy.CommitMessage = Ascii(copy.CommitMessage);
+        copy.BackupFile = Ascii(copy.BackupFile);
+        copy.Remarks = Ascii(copy.Remarks);
+        copy.ServerName = Ascii(copy.ServerName);
+        copy.PerformedByName = Ascii(copy.PerformedByName);
 
         try
         {
@@ -1036,6 +1046,24 @@ public static class DeploymentRunner
         {
             return string.Empty;
         }
+    }
+
+    // plain text the database can store: other letters -> '?'
+    private static string Ascii(string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        var builder = new StringBuilder(text.Length);
+
+        foreach (var c in text)
+        {
+            builder.Append(c == '\n' || c == '\t' || (c >= ' ' && c <= '~') ? c : '?');
+        }
+
+        return builder.ToString();
     }
 
     private static string Cut(string? text, int max)
