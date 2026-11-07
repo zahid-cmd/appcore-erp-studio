@@ -336,6 +336,19 @@ implements OnInit, OnDestroy
         string =
         '';
 
+    // Accessories category : the Accessory Use dropdown shows
+    get isAccessoryCategory():
+        boolean
+    {
+        return this.categoryType.toLowerCase() === 'accessories';
+    }
+
+    // For Sale / Additional / Promotional (its products take it)
+    readonly accessoryUseItems:
+        any[] =
+        ['For Sale', 'Additional Accessories', 'Promotional Accessories']
+            .map(x => ({ label:x, value:x }));
+
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
@@ -577,6 +590,7 @@ implements OnInit, OnDestroy
             WipSubGroupName:'',
             CogsSubGroupName:'',
             SubCategoryCreationAllowed:true,
+            AccessoryUse:'For Sale',
             Remarks:'',
             IsActive:true
         };
@@ -1207,7 +1221,8 @@ implements OnInit, OnDestroy
             (category?.CategoryType ?? '').trim();
 
         this.isModelCategory =
-            ['motor bikes', 'spare parts', 'accessories']
+            // Accessories : free name, no model (owner, 2026-11-07)
+            ['motor bikes', 'spare parts']
                 .includes(this.categoryType.toLowerCase());
 
         // Every category has a brand : always shown
@@ -1502,6 +1517,13 @@ implements OnInit, OnDestroy
                                 false
                             ),
 
+                        AccessoryUse:
+                            response?.AccessoryUse
+                            ??
+                            response?.accessoryUse
+                            ??
+                            'For Sale',
+
                         Remarks:
                             response?.Remarks
                             ??
@@ -1752,6 +1774,12 @@ implements OnInit, OnDestroy
 
             SubCategoryCreationAllowed:
                 this.entity.SubCategoryCreationAllowed,
+
+            // Accessories only (the server keeps For Sale otherwise)
+            AccessoryUse:
+                this.isAccessoryCategory
+                    ? (this.entity.AccessoryUse || 'For Sale')
+                    : 'For Sale',
 
             Remarks:
                 this.entity.Remarks?.trim()

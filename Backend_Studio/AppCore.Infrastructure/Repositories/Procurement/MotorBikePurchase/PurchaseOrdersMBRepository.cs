@@ -51,7 +51,8 @@ public class PurchaseOrdersMbRepository
             SwitchFreeGoods = null,
             SwitchRoundPayable = null,
             SwitchWholeTakaLines = null,
-            SwitchEditSupplierTerms = "CFG-MOD-007-0040"
+            SwitchEditSupplierTerms = "CFG-MOD-007-0040",
+            SwitchAboveMaxStock = "CFG-MOD-007-0080"
         };
 
 

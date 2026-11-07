@@ -17,6 +17,9 @@ using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
 
+using BusinessLineAccess =
+    AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess;
+
 using static AppCore.Infrastructure.Repositories.Procurement.Shared.PurchaseOrderPricing;
 
 using PostingLedgerCodes =
@@ -649,6 +652,72 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
     // Get Defaults : number preview, period, switches, options
     //===========================================================
 
+    //===========================================================
+    // Business Configuration : the branch must run the page's
+    // business line today (wing core business + the branch's
+    // active extra business). Checked on defaults, save,
+    // approve and post.
+    //===========================================================
+
+    private static string BusinessLineOfPage
+    (
+        string pageType
+    )
+    {
+        return (pageType ?? string.Empty).ToUpperInvariant() switch
+        {
+            "MB" => BusinessLineAccess.MotorBikes,
+            "AC" => BusinessLineAccess.Accessories,
+            _ => BusinessLineAccess.SpareParts
+        };
+    }
+
+    // null = the branch runs the line; otherwise the message
+    private async Task<string?> BranchLineProblemAsync
+    (
+        long branchId
+    )
+    {
+        string line =
+            BusinessLineOfPage(Page.PageType);
+
+        Dictionary<long, HashSet<string>> lines =
+            await BusinessLineAccess.ActiveLinesByBranchAsync(
+                _context,
+                BusinessLineAccess.Today());
+
+        if (lines.TryGetValue(branchId, out HashSet<string>? branchLines) && branchLines.Contains(line))
+        {
+            return null;
+        }
+
+        string branchName =
+            await _context
+                .Set<AppCore.Domain.Entities.Settings.GeneralSettings.Branches>()
+                .AsNoTracking()
+                .Where(x => x.BranchId == branchId)
+                .Select(x => x.BranchName)
+                .FirstOrDefaultAsync()
+            ?? "This branch";
+
+        return $"{branchName} does not run {line} purchases (Business Configuration). Switch to a branch that does.";
+    }
+
+    private async Task RequireBranchLineAsync
+    (
+        long branchId
+    )
+    {
+        string? problem =
+            await BranchLineProblemAsync(branchId);
+
+        if (problem != null)
+        {
+            throw new InvalidOperationException(problem);
+        }
+    }
+
+
     public async Task<PurchaseDefaultsDto>
         GetDefaultsAsync
         (
@@ -694,6 +763,19 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         result.FinancialYearName = period.FinancialYearName;
         result.FinancialYearCode = period.FinancialYearCode;
         result.PeriodMonth = period.PeriodMonth;
+
+        // Business Configuration : blocked like a closed period
+        string? lineProblem =
+            await BranchLineProblemAsync(period.BranchId);
+
+        if (lineProblem != null)
+        {
+            result.Message = lineProblem;
+
+            result.BranchBlocked = true;
+
+            return result;
+        }
 
         string prefix =
             CodeGenerator.GenerateVoucherNoPrefix(
@@ -1937,6 +2019,30 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
     }
 
 
+    //===========================================================
+    // System text, then the text typed on the page after " | "
+    // (either alone when the other is empty)
+    //===========================================================
+
+    private static string WithTyped
+    (
+        string system,
+        string? typed
+    )
+    {
+        string a =
+            (system ?? string.Empty).Trim();
+
+        string b =
+            (typed ?? string.Empty).Trim();
+
+        return a.Length == 0
+            ? b
+            : b.Length == 0
+                ? a
+                : $"{a} | {b}";
+    }
+
     private static string Limit
     (
         string? value,
@@ -2133,6 +2239,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             await _numberService.ResolvePeriodAsync(
                 dto.BranchId,
                 input.PurchaseDate);
+
+        await RequireBranchLineAsync(input.Period.BranchId);
 
         VatApplicabilityDto applicability =
             await _vatApplicability.GetAsync(
@@ -2564,6 +2672,10 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 ? await CompanyStockAsync(page)
                 : new Dictionary<string, decimal>();
 
+        // ON = Max Stock Level is a warning only (page), not a cap
+        bool aboveMaxAllowed =
+            await IsSwitchOnAsync(Page.SwitchAboveMaxStock, false);
+
         long? supplierBrandId =
             supplier.BrandManagementId;
 
@@ -2673,7 +2785,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                         $"{label} : '{product.ProductName}' has {left:0.##} left on {order!.OrderNo}; this line takes {row.Quantity + row.FreeQuantity:0.##}.");
                 }
             }
-            else if (product.MaxStockLevel > 0)
+            else if (product.MaxStockLevel > 0 && !aboveMaxAllowed)
             {
                 decimal held =
                     stockNow.GetValueOrDefault(product.ProductCode)
@@ -3795,6 +3907,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
                 RequireStatus(entity, "approved", StatusDraft);
 
+                await RequireBranchLineAsync(entity.BranchId);
+
                 List<TLine> lines =
                     await LinesOfAsync(id);
 
@@ -4308,6 +4422,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             string verb
         )
     {
+        await RequireBranchLineAsync(entity.BranchId);
+
         //=======================================================
         // Ledgers : supplier payable, item inventory, VAT
         //=======================================================
@@ -4348,11 +4464,16 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 ? entity.SupplierInvoiceNo
                 : entity.MushakNo;
 
+        // Narration : the system text, then the one typed on the
+        // purchase after " | " (no voucher no : it has its own
+        // column on every statement)
         string narration =
             Limit(
-                $"Purchase {entity.PurchaseNo} from {entity.SupplierName}"
-                + (entity.MushakNo.Length > 0 ? $", Mushak 6.3 {entity.MushakNo}" : string.Empty)
-                + (entity.SupplierInvoiceNo.Length > 0 ? $", invoice {entity.SupplierInvoiceNo}" : string.Empty),
+                WithTyped(
+                    $"Purchase from {entity.SupplierName}"
+                    + (entity.MushakNo.Length > 0 ? $", Mushak 6.3 {entity.MushakNo}" : string.Empty)
+                    + (entity.SupplierInvoiceNo.Length > 0 ? $", invoice {entity.SupplierInvoiceNo}" : string.Empty),
+                    entity.Narration),
                 500);
 
         List<VoucherPostingLine> journal =
@@ -4390,7 +4511,13 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                         LedgerCode = inventory,
                         Debit = cost,
                         Credit = 0m,
-                        Narration = Limit($"{line.ProductName} : {line.Quantity + line.FreeQuantity:0.##} {line.Unit}", 500)
+                        // Short note : the quantity (the product is the
+                        // ledger itself), then the line's typed note
+                        Narration = Limit(
+                            WithTyped(
+                                $"{line.Quantity + line.FreeQuantity:0.##} {line.Unit}",
+                                line.ShortNotes),
+                            500)
                     });
             }
 
@@ -4423,7 +4550,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                         LedgerCode = vat.Key,
                         Debit = vat.Value,
                         Credit = 0m,
-                        Narration = Limit($"Input VAT, purchase {entity.PurchaseNo}", 500)
+                        Narration = "Input VAT"
                     });
             }
         }
@@ -4636,6 +4763,21 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 unit.ModifiedBy = userId;
                 unit.ModifiedDate = now;
             }
+        }
+
+        //=======================================================
+        // MB : free accessories due from the supplier (Bike
+        // Accessory Schemes valid on the purchase date)
+        //=======================================================
+
+        if (entity.PageType == "MB")
+        {
+            await AppCore.Infrastructure.Repositories.Procurement.MotorBikePurchase.PurchaseAccessoryDuesEngine.CreateForPurchaseAsync(
+                _context,
+                entity,
+                lines,
+                userId,
+                now);
         }
 
         entity.Status = StatusPosted;
@@ -4894,6 +5036,15 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
                 if (entity.PageType == "MB")
                 {
+                    // Free accessories due : cancelled with it
+                    // (refused when some were received)
+                    await AppCore.Infrastructure.Repositories.Procurement.MotorBikePurchase.PurchaseAccessoryDuesEngine.CancelForPurchaseAsync(
+                        _context,
+                        entity.PurchaseId,
+                        entity.PurchaseNo,
+                        userId,
+                        now);
+
                     List<MotorBikeUnitsEntity> units =
                         await _context
                             .Set<MotorBikeUnitsEntity>()

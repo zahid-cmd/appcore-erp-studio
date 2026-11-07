@@ -49,6 +49,14 @@ public interface IReceivingRepository
         CancelReceivingDto dto,
         long userId);
 
+    // MB : Close Due (the rest of one free-accessory due row is
+    // written off)
+    Task CloseAccessoryDueAsync(
+        long dueId,
+        long branchId,
+        CloseAccessoryDueDto dto,
+        long userId);
+
     // Public Id -> internal id (null = not found)
     Task<long?> GetIdByPublicIdAsync(
         Guid publicId);

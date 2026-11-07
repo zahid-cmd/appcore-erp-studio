@@ -12,9 +12,21 @@
 
     width: 100%;
 
-    height: 660px;
+    /*
+        Fits the screen: 660px on a large screen, smaller on
+        a small or zoomed one, so the summary line under the
+        canvas stays visible on every PC. The reserve is set
+        in layout.css (--page-canvas-reserve).
+    */
+    height: clamp(
+        320px,
+        calc(100dvh - var(--page-canvas-reserve, 300px)),
+        660px
+    );
 
-    min-height: 660px;
+    min-height: 320px;
+
+    flex: 0 0 auto;
 
     overflow: hidden;
 
@@ -198,7 +210,11 @@
 
 .page-canvas.list-mode
 {
+    /* Lists : 660px (owner 2026-11-06). Pages built on the
+       shared list layout give the holder its height (below). */
     height: 660px;
+
+    min-height: 320px;
 }
 
 /* =====================================================
@@ -207,7 +223,7 @@
 
 .page-canvas.form-mode
 {
-    height: 660px;
+    /* same as .page-canvas (fits the screen) */
 }
 
 /* =====================================================
@@ -220,11 +236,23 @@
     {
         height: auto;
 
-        min-height: 660px;
+        min-height: 320px;
     }
 
     .page-canvas-footer
     {
         padding: 0 12px;
     }
-}
+}
+
+
+/* On the shared list layout (.app-list-page) the holder is 660px
+   and shrinks only on a short page area : the canvas fills it */
+:host-context(.app-list-page) .page-canvas.list-mode
+{
+    height: auto;
+
+    align-self: stretch;
+
+    min-height: 0;
+}

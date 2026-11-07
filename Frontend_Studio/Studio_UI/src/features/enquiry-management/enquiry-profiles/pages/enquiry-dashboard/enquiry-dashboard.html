@@ -1,0 +1,439 @@
+<div class="app-list-page ed-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Enquiry Dashboard"
+        subtitle="Sales and service enquiries at a glance : figures, funnel, today's agenda and the executives"
+        icon="fas fa-chart-pie">
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="refresh()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+    <!-- =====================================================
+         TOOLBAR : period | dates (custom), branch, executive
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="periodTabs"
+            [selectedTab]="period"
+            (selectedTabChange)="onPeriodChange($event)">
+
+        </app-control-tabs>
+
+        <div
+            pageToolbarRight
+            class="ed-filters">
+
+            @if (period === 'custom')
+            {
+                <label class="ed-date">
+                    <span>From</span>
+                    <input
+                        type="date"
+                        [value]="customFrom"
+                        [max]="customTo"
+                        (change)="onCustomFrom($any($event.target).value)">
+                </label>
+
+                <label class="ed-date">
+                    <span>To</span>
+                    <input
+                        type="date"
+                        [value]="customTo"
+                        [min]="customFrom"
+                        (change)="onCustomTo($any($event.target).value)">
+                </label>
+            }
+
+            <app-search-dropdown
+                class="ed-filter"
+                placeholder="All Branches"
+                [items]="branchItems"
+                labelField="label"
+                valueField="value"
+                [value]="$any(branchId)"
+                (valueChange)="onBranchChange($event)">
+
+            </app-search-dropdown>
+
+            <app-search-dropdown
+                class="ed-filter"
+                placeholder="All Executives"
+                [items]="executiveItems"
+                labelField="label"
+                valueField="value"
+                [value]="$any(executiveId)"
+                (valueChange)="onExecutiveChange($event)">
+
+            </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+
+    <!-- =====================================================
+         BODY
+    ====================================================== -->
+
+    <div class="ed-body" [class.ed-busy]="loading">
+
+        @if (!data && loading)
+        {
+            <div class="ed-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                Loading the dashboard…
+            </div>
+        }
+        @else if (!data && failed)
+        {
+            <div class="ed-state ed-state-bad">
+                <i class="fas fa-circle-exclamation"></i>
+                The dashboard could not be loaded.
+                <button type="button" class="ed-link" (click)="refresh()">Try again</button>
+            </div>
+        }
+        @else if (data)
+        {
+            <!-- ================= HEADLINE FIGURES ================= -->
+
+            <div class="ed-kpis">
+
+                <button type="button" class="ed-kpi" title="Open Sales Enquiries" (click)="open('sales')">
+                    <span class="ed-kpi-label"><i class="fas fa-motorcycle"></i> Sales Enquiries</span>
+                    <b class="ed-kpi-value">{{ data.SalesTotal }}</b>
+                    <span class="ed-kpi-note">{{ data.SalesOpen }} open · {{ data.SalesWon }} won · {{ data.SalesLost }} lost</span>
+                </button>
+
+                <div class="ed-kpi ed-kpi-static">
+                    <span class="ed-kpi-label"><i class="fas fa-bullseye"></i> Conversion</span>
+                    <b class="ed-kpi-value ed-good">{{ rate(data.ConversionRate) }}</b>
+                    <span class="ed-kpi-note">won ÷ (won + lost)</span>
+                </div>
+
+                <button type="button" class="ed-kpi" title="Open Service Enquiries" (click)="open('service')">
+                    <span class="ed-kpi-label"><i class="fas fa-screwdriver-wrench"></i> Service Enquiries</span>
+                    <b class="ed-kpi-value">{{ data.ServiceTotal }}</b>
+                    <span class="ed-kpi-note">{{ data.ServiceOpen }} open · {{ data.ServiceConverted }} converted · {{ data.ServiceLost }} suspended</span>
+                </button>
+
+                <div class="ed-kpi ed-kpi-static" [class.ed-kpi-alert]="data.FollowUpsOverdue > 0">
+                    <span class="ed-kpi-label"><i class="fas fa-phone"></i> Follow-ups Due</span>
+                    <b class="ed-kpi-value">{{ data.FollowUpsDue }}</b>
+                    <span class="ed-kpi-note" [class.ed-bad]="data.FollowUpsOverdue > 0">{{ data.FollowUpsOverdue }} overdue · now</span>
+                </div>
+
+                <button type="button" class="ed-kpi" title="Open Test Rides" (click)="open('testRides')">
+                    <span class="ed-kpi-label"><i class="fas fa-road"></i> Test Rides Today</span>
+                    <b class="ed-kpi-value">{{ data.TestRidesToday }}</b>
+                    <span class="ed-kpi-note">{{ data.TestRidesTodayConfirmed }} confirmed</span>
+                </button>
+
+                <button type="button" class="ed-kpi" title="Open Service Appointments" (click)="open('appointments')">
+                    <span class="ed-kpi-label"><i class="fas fa-calendar-check"></i> Appointments Today</span>
+                    <b class="ed-kpi-value">{{ data.AppointmentsToday }}</b>
+                    <span class="ed-kpi-note">{{ data.AppointmentsTodayPickup }} pick-up</span>
+                </button>
+
+            </div>
+
+
+            <!-- ================= FUNNEL · SOURCES · INTEREST ================= -->
+
+            <div class="ed-row ed-row-3">
+
+                <section class="ed-panel">
+                    <h3 class="ed-panel-title"><i class="fas fa-filter"></i> Sales Funnel</h3>
+
+                    <div class="ed-funnel">
+                        <div class="ed-funnel-row">
+                            <span>Enquiries</span>
+                            <b>{{ data.SalesTotal }}</b>
+                        </div>
+                        <div class="ed-track"><div class="ed-fill" [style.width.%]="funnelPercent(data.SalesTotal)"></div></div>
+
+                        <div class="ed-funnel-row">
+                            <span>Test ridden</span>
+                            <b>{{ data.FunnelTestRidden }}</b>
+                        </div>
+                        <div class="ed-track"><div class="ed-fill ed-fill-mid" [style.width.%]="funnelPercent(data.FunnelTestRidden)"></div></div>
+
+                        <div class="ed-funnel-row">
+                            <span>Won (sold)</span>
+                            <b>{{ data.SalesWon }}</b>
+                        </div>
+                        <div class="ed-track"><div class="ed-fill ed-fill-good" [style.width.%]="funnelPercent(data.SalesWon)"></div></div>
+                    </div>
+
+                    <p class="ed-foot">
+                        @if (data.AverageDaysToMaturity !== null)
+                        {
+                            Average {{ data.AverageDaysToMaturity }} days from enquiry to sale
+                        }
+                        @else
+                        {
+                            No matured enquiry in this period
+                        }
+                    </p>
+                </section>
+
+                <section class="ed-panel">
+                    <h3 class="ed-panel-title"><i class="fas fa-bullhorn"></i> Source of Sales Enquiries</h3>
+
+                    @for (row of sources; track row.Name)
+                    {
+                        <div class="ed-bar">
+                            <span class="ed-bar-name" [title]="row.Name">{{ row.Name }}</span>
+                            <div class="ed-bar-track"><div class="ed-bar-fill" [style.width.%]="row.Percent" [style.background]="row.Color || null"></div></div>
+                            <b class="ed-bar-count">{{ row.Count }}</b>
+                        </div>
+                    }
+                    @empty
+                    {
+                        <p class="ed-empty">No sales enquiry in this period</p>
+                    }
+                </section>
+
+                <section class="ed-panel">
+                    <h3 class="ed-panel-title"><i class="fas fa-temperature-half"></i> Open Enquiries by Interest</h3>
+
+                    @for (row of interest; track row.Name)
+                    {
+                        <div class="ed-bar">
+                            <span class="ed-bar-name" [title]="row.Name">
+                                <i class="ed-dot" [style.background]="row.Color || '#94a3b8'"></i>
+                                {{ row.Name }}
+                            </span>
+                            <div class="ed-bar-track"><div class="ed-bar-fill" [style.width.%]="row.Percent" [style.background]="row.Color || null"></div></div>
+                            <b class="ed-bar-count">{{ row.Count }}</b>
+                        </div>
+                    }
+                    @empty
+                    {
+                        <p class="ed-empty">No open sales enquiry in this period</p>
+                    }
+
+                    <p class="ed-foot">From the Expected Purchase Date when Auto Interest is on</p>
+                </section>
+
+            </div>
+
+
+            <!-- ================= TREND · MODELS ================= -->
+
+            <div class="ed-row ed-row-trend">
+
+                <section class="ed-panel">
+                    <h3 class="ed-panel-title">
+                        <i class="fas fa-chart-line"></i>
+                        Enquiries per {{ data.TrendUnit === 'Month' ? 'Month' : 'Day' }}
+                        <span class="ed-legend">
+                            <i class="ed-key ed-key-sales"></i> Sales
+                            <i class="ed-key ed-key-service"></i> Service
+                        </span>
+                    </h3>
+
+                    @if (trend.length)
+                    {
+                        <svg
+                            class="ed-chart"
+                            [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
+                            preserveAspectRatio="none"
+                            role="img"
+                            aria-label="Sales and service enquiries over the period">
+
+                            <line class="ed-grid" x1="0" [attr.x2]="chartWidth" y1="10" y2="10"></line>
+                            <line class="ed-grid" x1="0" [attr.x2]="chartWidth" [attr.y1]="chartHeight / 2" [attr.y2]="chartHeight / 2"></line>
+                            <line class="ed-grid ed-grid-base" x1="0" [attr.x2]="chartWidth" [attr.y1]="chartHeight - 10" [attr.y2]="chartHeight - 10"></line>
+
+                            <polyline class="ed-line-service" [attr.points]="trendServicePath"></polyline>
+                            <polyline class="ed-line-sales" [attr.points]="trendSalesPath"></polyline>
+
+                            @for (p of trend; track $index)
+                            {
+                                <circle class="ed-pt-service" [attr.cx]="p.x" [attr.cy]="p.yService" r="2.6">
+                                    <title>{{ p.label }} : {{ p.service }} service</title>
+                                </circle>
+                                <circle class="ed-pt-sales" [attr.cx]="p.x" [attr.cy]="p.ySales" r="2.6">
+                                    <title>{{ p.label }} : {{ p.sales }} sales</title>
+                                </circle>
+                            }
+                        </svg>
+
+                        <div class="ed-axis">
+                            @for (t of trendTicks; track $index)
+                            {
+                                <span>{{ t.label }}</span>
+                            }
+                        </div>
+
+                        <p class="ed-foot">Highest {{ trendMax }} in a {{ data.TrendUnit === 'Month' ? 'month' : 'day' }} · hover a point for the figures</p>
+                    }
+                </section>
+
+                <section class="ed-panel">
+                    <h3 class="ed-panel-title"><i class="fas fa-star"></i> Top Models Asked</h3>
+
+                    @for (row of models; track row.Name)
+                    {
+                        <div class="ed-bar">
+                            <span class="ed-bar-name" [title]="row.Name">{{ row.Name }}</span>
+                            <div class="ed-bar-track"><div class="ed-bar-fill ed-bar-fill-model" [style.width.%]="row.Percent"></div></div>
+                            <b class="ed-bar-count">{{ row.Count }}</b>
+                        </div>
+                    }
+                    @empty
+                    {
+                        <p class="ed-empty">No model asked in this period</p>
+                    }
+                </section>
+
+            </div>
+
+
+            <!-- ================= AGENDA · LOST · EXECUTIVES ================= -->
+
+            <div class="ed-row ed-row-3">
+
+                <section class="ed-panel">
+                    <h3 class="ed-panel-title"><i class="fas fa-list-check"></i> Today's Agenda</h3>
+
+                    <div class="ed-agenda">
+                        @for (line of data.Agenda; track $index)
+                        {
+                            <button
+                                type="button"
+                                class="ed-agenda-line"
+                                [class.ed-agenda-late]="line.OverdueDays > 0"
+                                [title]="'Open ' + line.Title"
+                                (click)="openAgenda(line)">
+
+                                <i class="ed-agenda-icon" [class]="agendaIcon(line)"></i>
+
+                                <span class="ed-agenda-text">
+                                    <b>{{ line.Title }}</b>
+                                    <small>{{ line.Detail }}</small>
+                                </span>
+
+                                <span class="ed-agenda-when">{{ line.WhenText }}</span>
+                            </button>
+                        }
+                        @empty
+                        {
+                            <p class="ed-empty"><i class="fas fa-circle-check"></i> Nothing due today</p>
+                        }
+                    </div>
+
+                    @if (data.AgendaMore > 0)
+                    {
+                        <p class="ed-foot">{{ data.AgendaMore }} more not shown</p>
+                    }
+                </section>
+
+                <section class="ed-panel">
+                    <h3 class="ed-panel-title"><i class="fas fa-circle-xmark"></i> Lost Reasons</h3>
+
+                    @for (row of lostReasons; track row.Name)
+                    {
+                        <div class="ed-bar">
+                            <span class="ed-bar-name" [title]="row.Name">{{ row.Name }}</span>
+                            <div class="ed-bar-track"><div class="ed-bar-fill ed-bar-fill-lost" [style.width.%]="row.Percent"></div></div>
+                            <b class="ed-bar-count">{{ row.Count }}</b>
+                        </div>
+                    }
+                    @empty
+                    {
+                        <p class="ed-empty">No lost sales enquiry in this period</p>
+                    }
+                </section>
+
+                <section class="ed-panel">
+                    <h3 class="ed-panel-title"><i class="fas fa-user-tie"></i> Executives · Sales</h3>
+
+                    @if (data.Executives.length)
+                    {
+                        <table class="ed-table">
+                            <thead>
+                                <tr>
+                                    <th>Executive</th>
+                                    <th>Open</th>
+                                    <th>Won</th>
+                                    <th>Lost</th>
+                                    <th>Conv.</th>
+                                    <th title="Follow-ups past their date now (sales and service)">Late</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of data.Executives; track row.UserId)
+                                {
+                                    <tr>
+                                        <td class="ed-table-name" [title]="row.Name">{{ row.Name }}</td>
+                                        <td>{{ row.Open }}</td>
+                                        <td>{{ row.Won }}</td>
+                                        <td>{{ row.Lost }}</td>
+                                        <td class="ed-good">{{ rate(row.ConversionRate) }}</td>
+                                        <td [class.ed-bad]="row.Overdue > 0">{{ row.Overdue }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    @else
+                    {
+                        <p class="ed-empty">No sales enquiry in this period</p>
+                    }
+                </section>
+
+            </div>
+        }
+
+    </div>
+
+
+    <!-- =====================================================
+         SUMMARY LINE
+    ====================================================== -->
+
+    @if (data)
+    {
+        <div class="ics-summary">
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Period</span>
+                <span class="ics-summary-value">{{ periodText }}</span>
+            </span>
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Branch</span>
+                <span class="ics-summary-value">{{ branchText }}</span>
+            </span>
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Executive</span>
+                <span class="ics-summary-value">{{ executiveText }}</span>
+            </span>
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Enquiries</span>
+                <span class="ics-summary-value">{{ data.SalesTotal + data.ServiceTotal }}</span>
+            </span>
+            <span class="ics-summary-note">Follow-ups, test rides and appointments : as of now · loaded {{ loadedAt }}</span>
+        </div>
+    }
+
+    <app-toast></app-toast>
+
+</div>

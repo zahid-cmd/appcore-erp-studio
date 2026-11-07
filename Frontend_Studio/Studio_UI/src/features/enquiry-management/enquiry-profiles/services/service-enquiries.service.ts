@@ -360,9 +360,9 @@ export class ServiceEnquiriesService
         return this.http.post<number>(this.apiUrl, model);
     }
 
-    update(model: UpdateServiceEnquiry): Observable<void>
+    update(publicId: string, model: UpdateServiceEnquiry): Observable<void>
     {
-        return this.http.put<void>(this.apiUrl, model);
+        return this.http.put<void>(`${this.apiUrl}/${publicId}`, model);
     }
 
     // By the uuid
@@ -381,9 +381,9 @@ export class ServiceEnquiriesService
         return this.http.get<any[]>(`${this.apiUrl}/history`);
     }
 
-    getEntityHistory(id: number): Observable<any[]>
+    getEntityHistory(publicId: string): Observable<any[]>
     {
-        return this.http.get<any[]>(`${this.apiUrl}/${id}/history`);
+        return this.http.get<any[]>(`${this.apiUrl}/${publicId}/history`);
     }
 
 

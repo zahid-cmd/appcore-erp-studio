@@ -2598,6 +2598,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.paymentVoucherService.update(
+                this.voucher?.PublicId || this.routePublicId,
                 model
             )
         )
@@ -2687,8 +2688,8 @@ implements OnInit, OnDestroy
                             this.checkOnly
                                 ? 'Payment voucher approved and posted; its checks are in Check Reconciliation.'
                                 : this.postOnApproval ? 'Payment voucher approved and posted.' : 'Payment voucher approved.',
-                            id =>
-                                this.paymentVoucherService.approve(id),
+                            publicId =>
+                                this.paymentVoucherService.approve(publicId),
                             'list'
                         )
                 ),
@@ -2710,8 +2711,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Returning to Draft',
                             'Payment voucher returned to draft.',
-                            id =>
-                                this.paymentVoucherService.returnToDraft(id),
+                            publicId =>
+                                this.paymentVoucherService.returnToDraft(publicId),
                             'list'
                         )
                 ),
@@ -2738,8 +2739,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Posting Payment Voucher',
                             'Payment voucher posted.',
-                            id =>
-                                this.paymentVoucherService.post(id),
+                            publicId =>
+                                this.paymentVoucherService.post(publicId),
                             'list'
                         )
                 ),
@@ -2864,9 +2865,9 @@ implements OnInit, OnDestroy
         this.runWorkflow(
             'Cancelling Payment Voucher',
             'Payment voucher cancelled.',
-            id =>
+            publicId =>
                 this.paymentVoucherService.cancel(
-                    id,
+                    publicId,
                     model
                 ),
             'list'
@@ -2888,7 +2889,7 @@ implements OnInit, OnDestroy
             string,
 
         call:
-            (id: number) => Observable<void>,
+            (publicId: string) => Observable<void>,
 
         nextMode:
             'edit' | 'view' | 'list'
@@ -2904,15 +2905,16 @@ implements OnInit, OnDestroy
             return;
         }
 
-        const id:
-            number =
-            this.voucher?.PaymentVoucherId
+        // Commands go by uuid (the internal id stays inside)
+        const publicId:
+            string =
+            this.voucher?.PublicId
             ||
-            this.entityId;
+            this.routePublicId;
 
         if
         (
-            !(id > 0)
+            !publicId
         )
         {
             return;
@@ -2924,7 +2926,7 @@ implements OnInit, OnDestroy
         );
 
         this.withMinimumDuration(
-            call(id)
+            call(publicId)
         )
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe

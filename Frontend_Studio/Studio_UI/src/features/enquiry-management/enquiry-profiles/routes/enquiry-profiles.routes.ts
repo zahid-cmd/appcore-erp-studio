@@ -57,6 +57,30 @@ Routes =
                     )
             },
 
+            //===========================================================
+            // Enquiry Dashboard (SUB-010-001-001)
+            // Hand-written, read-only page, NO Code Sync.
+            // Keep this block outside the AUTO markers.
+            //===========================================================
+
+            {
+                path:'enquiry-dashboard',
+
+                data:
+                {
+                    breadcrumb:'Enquiry Dashboard'
+                },
+
+                loadChildren:() =>
+                    import(
+                        './enquiry-dashboard.routes'
+                    )
+                    .then(
+                        m =>
+                            m.EnquiryDashboardRoutes
+                    )
+            },
+
             // AUTO-BEGIN : SUB-010-001-002
 
                 //===========================================================

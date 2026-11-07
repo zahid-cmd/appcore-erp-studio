@@ -2208,6 +2208,7 @@ implements OnInit
 
         this.roleAssignmentService
             .update(
+                this.routePublicId,
                 payload
             )
             .subscribe(

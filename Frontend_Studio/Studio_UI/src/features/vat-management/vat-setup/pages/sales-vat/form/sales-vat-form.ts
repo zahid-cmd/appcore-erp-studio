@@ -1188,6 +1188,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.vatService.extend(
+            this.routePublicId,
             {
                 SalesVatId:
                     this.entity.SalesVatId || this.entityId,
@@ -1843,6 +1844,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.vatService.update(
+                this.routePublicId,
                 model
             )
         )

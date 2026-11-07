@@ -398,15 +398,15 @@ export class ProductPricingService
 
     update
     (
-        id:
-            number,
+        publicId:
+            string,
         dto:
             CreateProductPricing
     ):
         Observable<ProductPricingSaved>
     {
         return this.http
-            .put<any>(`${this.apiUrl}/${id}`, { ...dto, ProductPricingId:id })
+            .put<any>(`${this.apiUrl}/${publicId}`, dto)
             .pipe(map(toSaved));
     }
 
@@ -423,27 +423,27 @@ export class ProductPricingService
 
     post
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<ProductPricingSaved>
     {
         return this.http
-            .put<any>(`${this.apiUrl}/${id}/post`, {})
+            .put<any>(`${this.apiUrl}/${publicId}/post`, {})
             .pipe(map(toSaved));
     }
 
     cancel
     (
-        id:
-            number,
+        publicId:
+            string,
         reason:
             string
     ):
         Observable<void>
     {
         return this.http
-            .put<void>(`${this.apiUrl}/${id}/cancel`, { Reason:reason });
+            .put<void>(`${this.apiUrl}/${publicId}/cancel`, { Reason:reason });
     }
 
     // The most recently deleted draft back (404 = none)
@@ -463,13 +463,13 @@ export class ProductPricingService
 
     getEntityHistory
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<any[]>
     {
         return this.http
-            .get<any[]>(`${this.apiUrl}/${id}/history`);
+            .get<any[]>(`${this.apiUrl}/${publicId}/history`);
     }
 }
 

@@ -237,13 +237,16 @@ export class DesignationService
     //===========================================================
 
     update(
+        publicId:
+            string,
+
         model:
             UpdateDesignation
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );

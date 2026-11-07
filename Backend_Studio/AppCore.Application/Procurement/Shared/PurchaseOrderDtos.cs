@@ -282,6 +282,11 @@ public class ClosePurchaseOrderDto
 
 public class PurchaseOrderDefaultsDto
 {
+    // Business Configuration : the branch does not run the page's
+    // line today. The page is blocked (read-only, no commands);
+    // Message says why.
+    public bool BranchBlocked { get; set; }
+
     public string OrderNo { get; set; } = string.Empty;
 
     public long BranchId { get; set; }

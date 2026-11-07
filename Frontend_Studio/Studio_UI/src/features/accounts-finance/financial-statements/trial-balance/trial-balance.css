@@ -1,0 +1,694 @@
+/* Same look as Ledger Statements (filter | switch bar | canvas,
+   head card, figures, ledger-book table) */
+@import '../../accounting-registers/ledger-registers/ledger-registers.css';
+
+/* =====================================================
+   TRIAL BALANCE
+===================================================== */
+
+/* Filter : how the figures work */
+.tb-rules
+{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    padding:10px 12px;
+    border:1px solid #e3e9f2;
+    border-radius:9px;
+    background:#f8fafc;
+    color:#64748b;
+    font-size:11.5px;
+    line-height:1.4;
+}
+
+.tb-rules b
+{
+    color:#334155;
+    font-size:10.5px;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+}
+
+/* Check strip : Balanced (green) / difference (red) */
+.lr-figs .tb-check.is-ok
+{
+    border-color:#bbf7d0;
+    background:#f0fdf4;
+}
+
+.lr-figs .tb-check.is-ok b
+{
+    color:#15803d;
+}
+
+.lr-figs .tb-check.is-bad
+{
+    border-color:#fecaca;
+    background:#fef2f2;
+}
+
+.lr-figs .tb-check.is-bad b
+{
+    color:#b42318;
+}
+
+.lr-figs .tb-check i
+{
+    margin-right:4px;
+    font-size:11px;
+}
+
+/* Table : account column + amount columns */
+.tb-table col.c-amt
+{
+    width:122px;
+}
+
+.tb-table col.c-bal
+{
+    width:170px;
+}
+
+.tb-table th.c
+{
+    text-align:center !important;
+}
+
+/* Two header rows (six-column) : the second sits under the first */
+.tb-table thead tr.tb-band th
+{
+    height:30px;
+    border-bottom:1px solid #dbe3ef;
+}
+
+.tb-table thead tr.tb-band th.tb-acc-h
+{
+    border-bottom:1px solid #cfd9ea;
+}
+
+.tb-table thead tr.tb-sub th
+{
+    top:30px;
+    height:28px;
+    font-size:10px;
+}
+
+.tb-table th.tb-grp
+{
+    border-left:1px solid #dbe3ef;
+    color:#1e3a8a;
+}
+
+/* No ledger-book rules from Ledger Statements here */
+.tb-table th:nth-last-child(-n+3),
+.tb-table td:nth-last-child(-n+3)
+{
+    border-left:0;
+}
+
+/* Two-column : one rule before Debit */
+.tb-two th.r:nth-child(2),
+.tb-two td.r:nth-child(2)
+{
+    border-left:1px solid #dbe3ef;
+}
+
+/* Rules between Opening | Period | Closing */
+.tb-six th.r:nth-child(odd),
+.tb-six td.r:nth-child(even)
+{
+    border-left:1px solid #dbe3ef;
+}
+
+.tb-acc-h
+{
+    vertical-align:middle;
+}
+
+.tb-acc-h > span:first-child
+{
+    margin-right:14px;
+}
+
+.tb-tools
+{
+    display:inline-flex;
+    gap:10px;
+    text-transform:none;
+    letter-spacing:0;
+}
+
+.tb-tools .lr-link
+{
+    font-size:11px;
+}
+
+/* Tree rows */
+.tb-name
+{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    min-width:0;
+}
+
+.tb-caret
+{
+    flex:0 0 10px;
+    width:10px;
+    color:#64748b;
+    font-size:11px;
+}
+
+.tb-code
+{
+    flex:0 0 auto;
+    font-size:10.5px;
+}
+
+.tb-count
+{
+    flex:0 0 auto;
+    padding:0 6px;
+    border-radius:999px;
+    background:#eef2f7;
+    color:#64748b;
+    font-size:9.5px;
+    font-weight:700;
+}
+
+.tb-re
+{
+    background:#ecfdf5;
+    color:#047857;
+}
+
+.tb-row td
+{
+    height:34px;
+}
+
+/* Class : bold band */
+.lr-table tbody tr.tb-l1 td
+{
+    background:#eef3fc;
+    color:#0b2a5b;
+    font-weight:800;
+    border-top:1px solid #d6e0f2;
+}
+
+/* Group */
+.lr-table tbody tr.tb-l2 td
+{
+    background:#f8fafd;
+    font-weight:700;
+}
+
+.tb-l2 .tb-acc
+{
+    padding-left:26px;
+}
+
+/* Sub group */
+.tb-l3 td
+{
+    font-weight:600;
+}
+
+.tb-l3 .tb-acc
+{
+    padding-left:44px;
+}
+
+/* Ledger */
+.tb-l4 td
+{
+    color:#1e293b;
+    font-weight:400;
+}
+
+.tb-l4 .tb-acc
+{
+    padding-left:62px;
+}
+
+.tb-row:hover td
+{
+    background:#f3f7ff !important;
+}
+
+.tb-row.is-inactive td
+{
+    color:#94a3b8;
+}
+
+/* Total row : left cell spans the account column only */
+.tb-table tfoot td:first-child
+{
+    text-align:right;
+}
+
+
+/* =====================================================
+   DISPLAY SWITCHES : bottom of the filter panel
+===================================================== */
+
+.tb-opts
+{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    margin-top:auto;
+    padding:12px 14px;
+    border:1px solid #e3e9f2;
+    border-radius:10px;
+    background:#f8fafc;
+}
+
+.tb-opts > b
+{
+    color:#334155;
+    font-size:11.5px;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+}
+
+.tb-opts .lr-switch
+{
+    position:relative;
+    font-size:13.5px;
+}
+
+.tb-opts .lr-switch em
+{
+    color:#94a3b8;
+    font-size:12px;
+    font-style:normal;
+}
+
+
+/* =====================================================
+   LARGER TEXT (whole page)
+===================================================== */
+
+.tb-page .lr-filter-head
+{
+    font-size:11.5px;
+}
+
+.tb-page .lr-filter-head b
+{
+    font-size:12.5px;
+}
+
+.tb-page .lr-field > label
+{
+    font-size:11.5px;
+}
+
+.tb-page .lr-hint
+{
+    font-size:12px;
+}
+
+.tb-page .tb-rules
+{
+    font-size:12.5px;
+}
+
+.tb-page .tb-rules b
+{
+    font-size:11.5px;
+}
+
+.tb-page .lr-btn
+{
+    height:36px;
+    font-size:13.5px;
+}
+
+.tb-page .lr-switchbar-title
+{
+    font-size:11.5px;
+}
+
+.tb-page .lr-seg
+{
+    height:32px;
+}
+
+.tb-page .lr-seg button
+{
+    font-size:13.5px;
+}
+
+.tb-page .lr-head-title b
+{
+    font-size:17px;
+}
+
+.tb-page .lr-pill
+{
+    font-size:11.5px;
+}
+
+.tb-page .lr-head-sub,
+.tb-page .lr-head-period span
+{
+    font-size:13px;
+}
+
+.tb-page .lr-head-period b
+{
+    font-size:14.5px;
+}
+
+.tb-page .lr-figs span
+{
+    font-size:10.5px;
+}
+
+.tb-page .lr-figs b
+{
+    font-size:15px;
+}
+
+.tb-page .lr-note
+{
+    font-size:13px;
+}
+
+.tb-page .lr-empty
+{
+    font-size:14px;
+}
+
+.tb-page .lr-empty b
+{
+    font-size:16px;
+}
+
+.tb-page .tb-table
+{
+    font-size:14px;
+}
+
+.tb-page .tb-table th
+{
+    font-size:11.5px;
+}
+
+.tb-page .tb-table thead tr.tb-band th
+{
+    height:34px;
+}
+
+.tb-page .tb-table thead tr.tb-sub th
+{
+    top:34px;
+    height:30px;
+    font-size:11px;
+}
+
+.tb-page .tb-row td
+{
+    height:40px;
+}
+
+.tb-page .tb-code
+{
+    font-size:12px;
+}
+
+.tb-page .tb-count
+{
+    font-size:11px;
+}
+
+.tb-page .tb-caret
+{
+    font-size:13px;
+}
+
+.tb-page .tb-tools .lr-link
+{
+    font-size:12.5px;
+}
+
+.tb-page .tb-foot td
+{
+    height:42px;
+    font-size:14.5px;
+}
+
+.tb-page .tb-table col.c-amt
+{
+    width:136px;
+}
+
+.tb-page .tb-table col.c-bal
+{
+    width:190px;
+}
+
+
+/* =====================================================
+   TABLE CARD : rows scroll, the total stays under them
+   (own one-row table with the same columns; both reserve the
+   scrollbar's width so the columns line up)
+===================================================== */
+
+.tb-tcard
+{
+    display:flex;
+    flex-direction:column;
+    flex:1 1 0;
+    min-height:0;
+    overflow:hidden;
+}
+
+.tb-scroll
+{
+    flex:1 1 0;
+    min-height:0;
+    overflow:auto;
+    scrollbar-gutter:stable;
+}
+
+.tb-foot
+{
+    flex:0 0 auto;
+    overflow:hidden;
+    scrollbar-gutter:stable;
+    border-top:1px solid #1e3a8a;
+    background:#f3f7ff;
+    box-shadow:0 -6px 12px -8px rgba(15, 42, 90, 0.35);
+}
+
+.tb-foot .lr-table td
+{
+    border-top:0;
+    border-bottom:0;
+}
+
+
+/* Orbit loader : centred in the canvas while the report loads */
+.tb-loading
+{
+    /* The shared list style places app-orbit-loader absolutely
+       over the nearest positioned box : this box (the canvas
+       under the view bar), not the whole page */
+    position:relative;
+    display:flex;
+    flex:1 1 auto;
+    align-items:center;
+    justify-content:center;
+    min-height:0;
+}
+
+
+/* =====================================================
+   LIGHTER TREE WEIGHTS (owner : class rows looked too heavy)
+   Class 650 · Group 600 · Sub Group 500 · Ledger 400; codes,
+   counts and closing amounts follow the row, never bolder
+===================================================== */
+
+.lr-table tbody tr.tb-l1 td
+{
+    background:#f5f8fd;
+    color:#1e3a8a;
+    font-weight:650;
+    border-top:1px solid #e3eaf6;
+}
+
+.lr-table tbody tr.tb-l2 td
+{
+    background:#fbfcfe;
+    color:#1e293b;
+    font-weight:600;
+}
+
+.lr-table tbody tr.tb-l3 td
+{
+    color:#1e293b;
+    font-weight:500;
+}
+
+.lr-table tbody tr.tb-l4 td
+{
+    color:#334155;
+    font-weight:400;
+}
+
+.tb-row td.lr-bal
+{
+    font-weight:inherit;
+}
+
+/* Codes : light black on every level */
+.tb-row .tb-code,
+.tb-l1 .tb-code
+{
+    font-weight:500;
+    color:#3f3f46;
+}
+
+.tb-row .tb-count
+{
+    font-weight:600;
+}
+
+.tb-foot td
+{
+    font-weight:700;
+}
+
+
+/* =====================================================
+   PREMIUM HEADER AND TOTAL (owner, 2026-11-07 : light colours)
+   Soft blue-grey bands with a thin gold accent frame the
+   ledger rows; text in navy
+===================================================== */
+
+/* ---------- Header ---------- */
+
+.tb-page .tb-table thead th
+{
+    background:#eef3fb;
+    color:#1e3a8a;
+    border-bottom:1px solid #d5dfef;
+    letter-spacing:.8px;
+}
+
+/* Opening · Period · Closing : navy with a thin gold rule */
+.tb-page .tb-table thead th.tb-grp
+{
+    color:#1e3a8a;
+    font-weight:800;
+    letter-spacing:1.4px;
+    border-left:1px solid #d5dfef;
+    box-shadow:inset 0 -2px 0 #e2c27a;
+}
+
+/* Debit / Credit row : same colour as Opening · Period · Closing */
+.tb-page .tb-table thead tr.tb-sub th
+{
+    background:#eef3fb;
+    color:#5b6b8a;
+    font-weight:700;
+}
+
+.tb-page .tb-six thead th.r:nth-child(odd),
+.tb-page .tb-two thead th.r:nth-child(2)
+{
+    border-left:1px solid #d5dfef;
+}
+
+.tb-page .tb-table thead th.tb-acc-h
+{
+    color:#0f2557;
+    border-bottom:1px solid #d5dfef;
+}
+
+.tb-page .tb-tools .lr-link
+{
+    color:#3b62b8;
+    font-weight:600;
+}
+
+.tb-page .tb-tools .lr-link:hover
+{
+    color:#1e3a8a;
+}
+
+/* ---------- Total bar ---------- */
+
+.tb-page .tb-foot
+{
+    border-top:0;
+    /* Same colour as the column heads */
+    background:#eef3fb;
+    box-shadow:
+        inset 0 2px 0 #e2c27a,
+        0 -8px 16px -12px rgba(15, 42, 90, 0.30);
+}
+
+.tb-page .tb-foot .lr-table tr.lr-close td
+{
+    height:48px;
+    background:transparent;
+    color:#0f2557;
+    border:0;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:.2px;
+}
+
+/* "Total · n ledgers" in muted gold capitals */
+.tb-page .tb-foot .lr-table tr.lr-close td:first-child
+{
+    color:#9a7420;
+    font-size:12.5px;
+    font-weight:800;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+}
+
+.tb-page .tb-foot .tb-six td.r:nth-child(even),
+.tb-page .tb-foot .tb-two td.r:nth-child(2)
+{
+    border-left:1px solid #d5dfef;
+}
+
+
+/* Level tabs : Class · Group · Sub Group · Ledger all one width */
+.tb-levels button
+{
+    justify-content:center;
+    width:96px;
+}
+
+
+/* Tabs (columns and levels) : a thin divider between tabs,
+   hidden beside the chosen tab */
+.tb-page .lr-seg button
+{
+    position:relative;
+}
+
+.tb-page .lr-seg button + button::before
+{
+    content:'';
+    position:absolute;
+    top:6px;
+    bottom:6px;
+    left:0;
+    width:1px;
+    background:#cdd7e6;
+}
+
+.tb-page .lr-seg button.on::before,
+.tb-page .lr-seg button.on + button::before
+{
+    display:none;
+}

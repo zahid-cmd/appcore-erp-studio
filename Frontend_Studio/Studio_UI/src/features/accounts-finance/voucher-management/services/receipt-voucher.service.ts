@@ -594,13 +594,16 @@ export class ReceiptVoucherService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateReceiptVoucher
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -643,54 +646,54 @@ export class ReceiptVoucherService
 
     approve
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${id}/approve`,
+            `${this.apiUrl}/${publicId}/approve`,
             {}
         );
     }
 
     returnToDraft
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${id}/return-to-draft`,
+            `${this.apiUrl}/${publicId}/return-to-draft`,
             {}
         );
     }
 
     post
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${id}/post`,
+            `${this.apiUrl}/${publicId}/post`,
             {}
         );
     }
 
     cancel
     (
-        id:
-            number,
+        publicId:
+            string,
         model:
             CancelReceiptVoucher
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${id}/cancel`,
+            `${this.apiUrl}/${publicId}/cancel`,
             model
         );
     }

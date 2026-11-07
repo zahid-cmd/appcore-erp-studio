@@ -4656,11 +4656,12 @@ export class ProductPricingForm
     private saveDraft():
         Observable<ProductPricingSaved>
     {
-        const id =
-            this.doc?.ProductPricingId ?? 0;
+        // A saved draft is changed by its uuid
+        const publicId =
+            this.doc?.PublicId ?? '';
 
-        return id > 0
-            ? this.service.update(id, this.payload())
+        return publicId
+            ? this.service.update(publicId, this.payload())
             : this.service.create(this.payload());
     }
 
@@ -4771,7 +4772,7 @@ export class ProductPricingForm
                             this.doc = { ProductPricingId:saved.ProductPricingId, PublicId:saved.PublicId } as ProductPricing;
                         }
 
-                        return this.service.post(saved.ProductPricingId);
+                        return this.service.post(saved.PublicId ?? '');
                     }
                 ));
 
@@ -4846,7 +4847,7 @@ export class ProductPricingForm
                 'Posting Price Change',
                 `Please wait while "${doc.PricingNo}" puts the new MRPs on the batches...`,
                 'Price change posted.',
-                this.service.post(doc.ProductPricingId))
+                this.service.post(doc.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -5037,7 +5038,7 @@ export class ProductPricingForm
                 'Cancelling Price Change',
                 `Please wait while "${doc.PricingNo}" is being cancelled...`,
                 'Price change cancelled.',
-                this.service.cancel(doc.ProductPricingId, this.cancelReason.trim()))
+                this.service.cancel(doc.PublicId ?? '', this.cancelReason.trim()))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({

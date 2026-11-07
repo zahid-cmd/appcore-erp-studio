@@ -213,6 +213,13 @@ export class ProductSubCategoryService
                                         false
                                     ),
 
+                                AccessoryUse:
+                                    productSubCategory.AccessoryUse
+                                    ??
+                                    productSubCategory.accessoryUse
+                                    ??
+                                    'For Sale',
+
                                 Remarks:
                                     productSubCategory.Remarks
                                     ??

@@ -754,6 +754,30 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     }
 
 
+    //===========================================================
+    // System text, then the text typed on the page after " | "
+    // (either alone when the other is empty)
+    //===========================================================
+
+    private static string WithTyped
+    (
+        string system,
+        string? typed
+    )
+    {
+        string a =
+            (system ?? string.Empty).Trim();
+
+        string b =
+            (typed ?? string.Empty).Trim();
+
+        return a.Length == 0
+            ? b
+            : b.Length == 0
+                ? a
+                : $"{a} | {b}";
+    }
+
     private static string Limit
     (
         string? value,
@@ -5024,8 +5048,12 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 $"Customer '{entity.CustomerName}' has no receivable ledger (Customer Profiles).");
         }
 
+        // Narration : the system text, then the one typed on the
+        // invoice after " | " (no invoice no : it has its own column)
         string narration =
-            Limit($"Sales invoice {entity.InvoiceNo} to {entity.CustomerName}", 500);
+            Limit(
+                WithTyped($"Sales to {entity.CustomerName}", entity.Narration),
+                500);
 
         List<VoucherPostingLine> journal =
             new();
@@ -5075,7 +5103,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             Debit(
                 PostingLedgerCodes.Get(_context, Page.PurposeCampaignDiscount),
                 priced.CampaignDiscount,
-                $"Campaign discount, sales invoice {entity.InvoiceNo}");
+                $"Campaign discount");
         }
 
         if (priced.MembershipDiscount > 0m)
@@ -5092,7 +5120,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             Debit(
                 ledger,
                 priced.MembershipDiscount,
-                $"Membership discount ({priced.Membership!.CardName}, {priced.Membership.MembershipNo}), sales invoice {entity.InvoiceNo}");
+                $"Membership discount ({priced.Membership!.CardName}, {priced.Membership.MembershipNo})");
         }
 
         if (priced.SpecialDiscount > 0m)
@@ -5100,7 +5128,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             Debit(
                 PostingLedgerCodes.Get(_context, Page.PurposeSpecialDiscount),
                 priced.SpecialDiscount,
-                $"Special discount, sales invoice {entity.InvoiceNo}");
+                $"Special discount");
         }
 
         if (priced.FractionalDiscount > 0m)
@@ -5108,7 +5136,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             Debit(
                 PostingLedgerCodes.Get(_context, Page.PurposeFractionalDiscount),
                 priced.FractionalDiscount,
-                $"Fractional discount, sales invoice {entity.InvoiceNo}");
+                $"Fractional discount");
         }
 
         //=======================================================
@@ -5138,8 +5166,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 sales.Key,
                 sales.Sum(x => x.Gross - x.VatInside),
                 sales.Count() == 1
-                    ? $"{sales.First().Product.ProductName}, sales invoice {entity.InvoiceNo}"
-                    : $"{sales.Count()} lines, sales invoice {entity.InvoiceNo}");
+                    ? $"{sales.First().Product.ProductName}"
+                    : $"{sales.Count()} lines");
         }
 
         decimal increase =
@@ -5159,7 +5187,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             Credit(
                 vatLedger,
                 priced.BaseVat,
-                $"VAT (paid at source), sales invoice {entity.InvoiceNo}");
+                $"VAT (paid at source)");
         }
 
         if (increase > 0m)
@@ -5167,7 +5195,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             Credit(
                 PostingLedgerCodes.Get(_context, PostingPurposes.PriceIncreaseIncome),
                 increase,
-                $"VAT inside the price above the VAT paid at source, sales invoice {entity.InvoiceNo}");
+                $"VAT inside the price above the VAT paid at source");
         }
 
         if (reduction > 0m)
@@ -5175,7 +5203,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             Debit(
                 PostingLedgerCodes.Get(_context, PostingPurposes.PriceReductionExpense),
                 reduction,
-                $"VAT paid at source above the VAT inside the price, sales invoice {entity.InvoiceNo}");
+                $"VAT paid at source above the VAT inside the price");
         }
 
         //=======================================================
@@ -5215,12 +5243,12 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         foreach (KeyValuePair<string, decimal> row in cogs)
         {
-            Debit(row.Key, row.Value, $"Cost of sales, sales invoice {entity.InvoiceNo}");
+            Debit(row.Key, row.Value, $"Cost of sales");
         }
 
         foreach (KeyValuePair<string, decimal> row in inventory)
         {
-            Credit(row.Key, row.Value, $"Cost of sales, sales invoice {entity.InvoiceNo}");
+            Credit(row.Key, row.Value, $"Cost of sales");
         }
 
         //=======================================================

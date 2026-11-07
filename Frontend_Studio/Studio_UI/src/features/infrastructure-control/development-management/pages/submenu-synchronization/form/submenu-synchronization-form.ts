@@ -804,11 +804,23 @@ implements OnInit
     get canAnalyze():
         boolean
     {
+        // Add, and also Sync / Edit : re-reads the paths of a saved
+        // record (e.g. one saved before Analyze, with empty paths)
         return (
-            this.isAddMode
+            !this.isViewMode
             &&
             this.synchronization.submenuId > 0
         );
+    }
+
+
+    // The saved record has no paths for the open tab
+    private get pathsMissing():
+        boolean
+    {
+        return this.selectedTab === 'backend'
+            ? !(this.synchronization.backendSolution ?? '').trim()
+            : !(this.synchronization.frontendSolution ?? '').trim();
     }
 
 
@@ -1019,6 +1031,21 @@ implements OnInit
                         this.setSynchronization(
                             synchronization
                         );
+
+                        // A record saved without Analyze has empty
+                        // paths : analyze it now (the server also
+                        // stores the paths on the record)
+                        if
+                        (
+                            !this.isViewMode
+                            &&
+                            this.pathsMissing
+                            &&
+                            this.synchronization.submenuId > 0
+                        )
+                        {
+                            this.analyze(true);
+                        }
                     },
 
                 error:
@@ -1803,7 +1830,11 @@ implements OnInit
     // Analyze
     //===========================================================
 
-    analyze():
+    analyze
+    (
+        // true : run on load (paths saved by the server; not a user change)
+        automatic:boolean = false
+    ):
         void
     {
         if
@@ -1917,7 +1948,30 @@ implements OnInit
                         this.initializeWorkspace();
 
 
-                        this.checkForChanges();
+                        if
+                        (
+                            automatic
+                        )
+                        {
+                            this.originalSynchronization =
+                                JSON.stringify(
+                                    this.synchronization
+                                );
+
+                            this.hasChanges =
+                                false;
+
+                            this.toast.info
+                            (
+                                'Paths Loaded',
+
+                                'This record had no paths : they were analyzed and saved.'
+                            );
+                        }
+                        else
+                        {
+                            this.checkForChanges();
+                        }
 
 
                         this.cdr.detectChanges();
@@ -3095,4 +3149,4 @@ implements OnInit
                     }
             });
     }
-}
+}

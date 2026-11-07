@@ -236,16 +236,32 @@ public class SpecialAssignmentController
     // Update
     //===========================================================
 
-    [HttpPut("{id:long}")]
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult> Update
     (
-        long id,
+        Guid publicId,
 
         [FromBody]
         UpdateSpecialAssignmentDto dto
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        dto.SpecialAssignmentId =
+            id;
+
         if
         (
             id !=
@@ -487,13 +503,24 @@ public class SpecialAssignmentController
     // Get Entity History
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    [HttpGet("{publicId:guid}/history")]
 
     public async Task<IActionResult> GetEntityHistory
     (
-        long id
+        Guid publicId
     )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         var history =
             await _repository
                 .GetEntityHistoryAsync(

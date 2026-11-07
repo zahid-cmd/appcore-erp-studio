@@ -22,7 +22,10 @@
                     command2Icon="fas fa-broom"
                     [command2Title]="preview.CanRun ? 'Clear the tables of this preview' : (preview.BackupFresh ? 'Fix the blocks first' : 'Take a backup first')"
                     (command2Click)="openRun()"
-                    [command3Visible]="false">
+                    command3Text="Backup"
+                    command3Icon="fas fa-floppy-disk"
+                    command3Title="Back up this database now"
+                    (command3Click)="busy ? null : backupNow()">
                 </app-command-center>
             }
             @else
@@ -39,7 +42,17 @@
                     command3Text="Clear"
                     command3Icon="fas fa-eraser"
                     [command3Visible]="allowed"
-                    (command3Click)="clearSelection()">
+                    (command3Click)="clearSelection()"
+                    command4Text="Preview Reset"
+                    command4Icon="fas fa-magnifying-glass"
+                    command4Title="See what the reset will clear (nothing is changed yet)"
+                    [command4Visible]="allowed && !loading"
+                    (command4Click)="busy ? null : runPreview()"
+                    command5Text="Backup"
+                    command5Icon="fas fa-floppy-disk"
+                    command5Title="Back up this database now"
+                    [command5Visible]="allowed && !loading"
+                    (command5Click)="busy ? null : backupNow()">
                 </app-command-center>
             }
 
@@ -225,27 +238,6 @@
 
         </div>
 
-        @if (catalog && !preview)
-        {
-            <div class="dm-warn" [class.dm-warn-ok]="backupFresh">
-                <i class="fa-solid" [class.fa-shield-halved]="backupFresh" [class.fa-triangle-exclamation]="!backupFresh"></i>
-                @if (backupFresh)
-                {
-                    <span>
-                        Backup ready : {{ catalog.LastBackup?.FileName }} ({{ formatDateTime(catalog.LastBackup?.TakenDate) }}).
-                    </span>
-                }
-                @else
-                {
-                    <span>
-                        A backup of {{ catalog.Database }} from the last {{ catalog.FreshMinutes }} minutes is needed before a reset.
-                    </span>
-                }
-                <button type="button" class="dm-btn dm-warn-action" [disabled]="!!busy" (click)="backupNow()">
-                    <i class="fa-solid fa-floppy-disk"></i> Backup
-                </button>
-            </div>
-        }
 
         <!-- =================================================
              GROUPS
@@ -327,33 +319,6 @@
 
             </app-page-canvas>
 
-            @if (preview.Blocks.length > 0)
-            {
-                <div class="dm-warn">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>{{ preview.Blocks.length }} block(s) stop this reset : see the notifications (bell) on the toolbar.</span>
-                    <button type="button" class="dm-btn dm-warn-action" (click)="blocksOpen = true">
-                        <i class="fa-regular fa-bell"></i> Show
-                    </button>
-                </div>
-            }
-            @else if (!preview.BackupFresh)
-            {
-                <div class="dm-warn">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <span>Take a backup of {{ catalog?.Database }} first (one from the last {{ catalog?.FreshMinutes }} minutes is needed).</span>
-                    <button type="button" class="dm-btn dm-warn-action" [disabled]="!!busy" (click)="backupNow()">
-                        <i class="fa-solid fa-floppy-disk"></i> Backup
-                    </button>
-                </div>
-            }
-            @else
-            {
-                <div class="dm-warn dm-warn-ok">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span>Ready : no blocks, backup {{ catalog?.LastBackup?.FileName }}. Click Run Reset to clear.</span>
-                </div>
-            }
         }
         @else
         {
@@ -542,9 +507,6 @@
                     <i class="fa-solid fa-circle-info"></i>
                     Users, roles, navigation and the locked Settings pages are never cleared.
                 </span>
-                <button type="button" class="dm-btn dm-btn-primary" [disabled]="selectionCount === 0 || !!busy" (click)="runPreview()">
-                    <i class="fa-solid fa-magnifying-glass"></i> Preview Reset
-                </button>
             </div>
 
             </app-page-canvas>

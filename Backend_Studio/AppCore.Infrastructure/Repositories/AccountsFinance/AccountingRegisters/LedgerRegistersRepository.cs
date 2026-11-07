@@ -820,6 +820,11 @@ public class LedgerRegistersRepository
         Dictionary<string, (string Reference, string Status)> references =
             await ReferencesAsync(rows);
 
+        // The narration typed on the source document (purchase,
+        // sales invoice), by voucher no
+        Dictionary<string, string> typedNarrations =
+            await TypedNarrationsAsync(rows);
+
         decimal balance =
             opening;
 
@@ -948,7 +953,10 @@ public class LedgerRegistersRepository
                 }
 
                 string note =
-                    StripNames(narration, names.Append(ledger.Name));
+                    Tidy(
+                        StripNames(narration, names.Append(ledger.Name)),
+                        first.VoucherNo,
+                        ledger.Name);
 
                 if
                 (
@@ -1010,7 +1018,7 @@ public class LedgerRegistersRepository
                         PartyName = party,
                         Reference = reference,
                         Status = status,
-                        Narration = voucherNarration.Length > 0 ? voucherNarration : Clean(entry.Narration),
+                        Narration = Tidy(WithTyped(voucherNarration.Length > 0 ? voucherNarration : Clean(entry.Narration), typedNarrations.GetValueOrDefault(entry.VoucherNo)), entry.VoucherNo, ledger.Name),
                         ShortNote = note,
                         Debit = Money(debit),
                         Credit = Money(credit),
@@ -1275,6 +1283,75 @@ public class LedgerRegistersRepository
     // A name is tried whole and without its leading parts
     // ("INV - …"); what is left is trimmed of separators.
     //===========================================================
+
+    //===========================================================
+    // Text on a statement row without what the row already shows :
+    // the voucher no (its own column) and this ledger's own name
+    // (the statement title), e.g.
+    //   "Purchase PIMB-...-00001 from SWIFTTECH ..., Mushak 6.3 256"
+    //     -> "Purchase, Mushak 6.3 256"   (supplier's statement)
+    //   "Input VAT, purchase PIMB-...-00001" -> "Input VAT"
+    //===========================================================
+
+    private static string Tidy
+    (
+        string text,
+        string voucherNo,
+        string ledgerName
+    )
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
+
+        const System.Text.RegularExpressions.RegexOptions ic =
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase;
+
+        string value =
+            text;
+
+        if (!string.IsNullOrWhiteSpace(voucherNo))
+        {
+            string no =
+                System.Text.RegularExpressions.Regex.Escape(voucherNo.Trim());
+
+            value =
+                System.Text.RegularExpressions.Regex.Replace(value, @",\s*(purchase|sales invoice|invoice|voucher)\s+" + no, string.Empty, ic);
+
+            value =
+                System.Text.RegularExpressions.Regex.Replace(value, no, string.Empty, ic);
+        }
+
+        if (!string.IsNullOrWhiteSpace(ledgerName))
+        {
+            value =
+                System.Text.RegularExpressions.Regex.Replace(
+                    value,
+                    @"\b(from|to)\s+" + System.Text.RegularExpressions.Regex.Escape(ledgerName.Trim()),
+                    string.Empty,
+                    ic);
+
+            value =
+                StripNames(value, new[] { ledgerName });
+        }
+
+        // Tidy the gaps left behind
+        value =
+                System.Text.RegularExpressions.Regex.Replace(value, @"\s{2,}", " ");
+
+        value =
+                System.Text.RegularExpressions.Regex.Replace(value, @"\s+,", ",");
+
+        value =
+                System.Text.RegularExpressions.Regex.Replace(value, @",{2,}", ",");
+
+        // A separator left with nothing on one side goes too
+        value =
+            System.Text.RegularExpressions.Regex.Replace(value, @"^\s*\|\s*|\s*\|\s*$", string.Empty);
+
+        return value.Trim().Trim(',', ';', ':', '-', '|', ' ');
+    }
 
     private static string StripNames
     (
@@ -1616,6 +1693,105 @@ public class LedgerRegistersRepository
     //   Cleared / Dishonoured / the cheque's status; otherwise
     //   the line's ReferenceNo.
     //===========================================================
+
+    //===========================================================
+    // Typed narration of the source documents (Purchases MB / SP /
+    // AC, Sales Invoices SP / AC), by voucher no. Vouchers posted
+    // before the typed text went into the journal show it too.
+    // A table that does not exist yet is skipped.
+    //===========================================================
+
+    public sealed class DocNarration
+    {
+        public string VoucherNo { get; set; } = string.Empty;
+
+        public string Narration { get; set; } = string.Empty;
+    }
+
+    private static readonly (string Table, string NoColumn)[] NarrationSources =
+    {
+        ("PurchasesMb", "PurchaseNo"),
+        ("PurchasesSp", "PurchaseNo"),
+        ("PurchasesAc", "PurchaseNo"),
+        ("SalesInvoicesSp", "InvoiceNo"),
+        ("SalesInvoicesAc", "InvoiceNo")
+    };
+
+    private async Task<Dictionary<string, string>> TypedNarrationsAsync
+    (
+        List<VoucherEntriesEntity> rows
+    )
+    {
+        Dictionary<string, string> result =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        string[] numbers =
+            rows
+                .Select(x => x.VoucherNo)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .ToArray();
+
+        if (numbers.Length == 0)
+        {
+            return result;
+        }
+
+        foreach ((string table, string noColumn) in NarrationSources)
+        {
+            try
+            {
+                List<DocNarration> found =
+                    await _context.Database
+                        .SqlQueryRaw<DocNarration>(
+                            $"SELECT \"{noColumn}\" AS \"VoucherNo\", COALESCE(\"Narration\", '') AS \"Narration\" " +
+                            $"FROM public.\"{table}\" WHERE \"{noColumn}\" = ANY(@nos)",
+                            new Npgsql.NpgsqlParameter("nos", numbers))
+                        .ToListAsync();
+
+                foreach (DocNarration doc in found)
+                {
+                    string text =
+                        Clean(doc.Narration);
+
+                    if (text.Length > 0)
+                    {
+                        result[doc.VoucherNo] = text;
+                    }
+                }
+            }
+            catch
+            {
+                // Table not made yet on this database : nothing typed
+            }
+        }
+
+        return result;
+    }
+
+    // System text, then the typed text after " | " (once : not
+    // when the system text already holds it)
+    private static string WithTyped
+    (
+        string system,
+        string? typed
+    )
+    {
+        string a =
+            (system ?? string.Empty).Trim();
+
+        string b =
+            (typed ?? string.Empty).Trim();
+
+        if (b.Length == 0 || a.Contains(b, StringComparison.OrdinalIgnoreCase))
+        {
+            return a;
+        }
+
+        return a.Length == 0
+            ? b
+            : $"{a} | {b}";
+    }
 
     private static string EntryKey(VoucherEntriesEntity x) =>
         $"{x.VoucherEntryId}";

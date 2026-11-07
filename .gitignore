@@ -46,3 +46,8 @@ Desktop.ini
 # IDE
 # ===========================
 .vscode/settings.json
+
+# ===========================
+# Staging copies of deep folders (for Claude; never committed)
+# ===========================
+_copy/

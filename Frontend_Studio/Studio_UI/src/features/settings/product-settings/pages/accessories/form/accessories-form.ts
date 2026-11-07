@@ -204,7 +204,13 @@ import
 
     AccessoryLocation,
 
-    ACCESSORY_UNITS
+    ACCESSORY_UNITS,
+
+    ACCESSORY_USES,
+
+    ACCESSORY_USE_FOR_SALE,
+
+    normalizeAccessoryUse
 }
 from '../../../models/accessories.model';
 
@@ -658,6 +664,17 @@ implements OnInit, OnDestroy
     // Movement Class (Stock & Storage) : stable items
     //===========================================================
 
+    // Accessory Use : For Sale / Additional / Promotional
+    readonly accessoryUseItems:
+        any[] =
+        ACCESSORY_USES.map(
+            use =>
+            ({
+                label:use,
+                value:use
+            })
+        );
+
     readonly movementClassItems:
         any[] =
         MOVEMENT_CLASS_OPTIONS.map(
@@ -754,6 +771,8 @@ implements OnInit, OnDestroy
         MaxStockLevel:0,
 
         MovementClass:DEFAULT_MOVEMENT_CLASS,
+
+        AccessoryUse:ACCESSORY_USE_FOR_SALE,
 
         Remarks:'',
 
@@ -1026,6 +1045,8 @@ implements OnInit, OnDestroy
             MaxStockLevel:0,
 
             MovementClass:DEFAULT_MOVEMENT_CLASS,
+
+            AccessoryUse:ACCESSORY_USE_FOR_SALE,
 
             Remarks:'',
 
@@ -2878,6 +2899,35 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
+    // Accessory Use (default For Sale)
+    //===========================================================
+
+    onAccessoryUseChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.entity.AccessoryUse =
+            normalizeAccessoryUse(
+                this.unwrapValue(
+                    value
+                )
+            );
+
+        this.onValueChange();
+    }
+
+    // Free with bikes : shown on Motor Bike Stock › Accessories
+    get isBikeAccessory():
+        boolean
+    {
+        return normalizeAccessoryUse(this.entity.AccessoryUse) !== ACCESSORY_USE_FOR_SALE;
+    }
+
+
+    //===========================================================
     // Movement Class (default Slow Moving)
     //===========================================================
 
@@ -3547,6 +3597,11 @@ implements OnInit, OnDestroy
                     this.entity.MovementClass
                 ).value,
 
+            AccessoryUse:
+                normalizeAccessoryUse(
+                    this.entity.AccessoryUse
+                ),
+
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
 
@@ -3695,6 +3750,11 @@ implements OnInit, OnDestroy
                 movementClassInfo(
                     this.entity.MovementClass
                 ).value,
+
+            AccessoryUse:
+                normalizeAccessoryUse(
+                    this.entity.AccessoryUse
+                ),
 
             Remarks:
                 this.entity.Remarks?.trim() ?? '',

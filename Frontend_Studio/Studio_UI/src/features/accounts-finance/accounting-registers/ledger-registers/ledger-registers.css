@@ -1109,3 +1109,45 @@
 {
     min-height:0;
 }
+
+
+/* Statement view : Detail / Summary (segmented) */
+
+.lr-seg
+{
+    display: inline-flex;
+    align-items: stretch;
+    height: 28px;
+    padding: 2px;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #f1f5f9;
+}
+
+.lr-seg button
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #475569;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.lr-seg button:hover
+{
+    color: #1e293b;
+}
+
+.lr-seg button.on
+{
+    background: #1e3a8a;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+}

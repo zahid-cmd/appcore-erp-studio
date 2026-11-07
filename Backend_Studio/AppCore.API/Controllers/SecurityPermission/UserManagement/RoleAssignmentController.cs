@@ -216,7 +216,7 @@ public class RoleAssignmentController
     // Get Entity History
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    [HttpGet("{publicId:guid}/history")]
 
     public async Task
         <
@@ -224,9 +224,20 @@ public class RoleAssignmentController
         >
         GetHistory
         (
-            long id
+            Guid publicId
         )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         List<ActivityHistoryDto> history =
             await _historyRepository.GetHistoryAsync
             (
@@ -358,14 +369,32 @@ public class RoleAssignmentController
     // Update
     //===========================================================
 
-    [HttpPut]
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult>
         Update
         (
+            Guid publicId,
+
             UpdateRoleAssignmentDto dto
         )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        dto.RoleAssignmentId =
+            id;
+
         try
         {
             bool updated =

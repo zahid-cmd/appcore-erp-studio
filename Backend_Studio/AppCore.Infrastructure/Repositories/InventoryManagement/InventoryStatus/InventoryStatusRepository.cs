@@ -13,6 +13,9 @@ using StockBatchesEntity =
 using StockMovementsEntity =
     AppCore.Domain.Platform.Inventory.StockMovements;
 
+using VatRegisterEntity =
+    AppCore.Domain.Platform.Inventory.VatRegister;
+
 using MotorBikeUnitsEntity =
     AppCore.Domain.Entities.Procurement.MotorBikePurchase.MotorBikeUnits;
 
@@ -54,6 +57,30 @@ using WarehousesEntity =
 
 using SupplierProfilesEntity =
     AppCore.Domain.Entities.Settings.ClientSettings.SupplierProfiles;
+
+using SystemConfigurationsEntity =
+    AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations;
+
+using ProductTransferUnitsEntity =
+    AppCore.Domain.Entities.InventoryManagement.StockMovement.ProductTransferUnits;
+
+using BarcodePrintRunLinesEntity =
+    AppCore.Domain.Entities.InventoryManagement.PricingLabels.BarcodePrintRunLines;
+
+using ServiceVehiclesEntity =
+    AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.ServiceVehicles;
+
+using ServiceEnquiriesEntity =
+    AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles.ServiceEnquiries;
+
+using MembershipStatusEntity =
+    AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipStatus;
+
+using ActivityHistoryEntity =
+    AppCore.Domain.Common.ActivityHistory;
+
+using UserProfileEntity =
+    AppCore.Domain.Entities.SecurityPermission.UserManagement.UserProfile;
 
 
 //===============================================================
@@ -114,6 +141,22 @@ public class InventoryStatusRepository
 
     private const string UnitPending = "Pending";
 
+    private const string UnitSold = "Sold";
+
+    private const string UnitReturned = "Returned";
+
+    // Edit Bike Numbers (Inventory Management, critical, OFF)
+    private const string SwitchEditNumbers = "CFG-MOD-012-0090";
+
+    private const string SwitchEditSold = "CFG-MOD-012-0091";
+
+    // Purchases - MB switches for the bike numbers
+    private const string SwitchKeyBattery = "CFG-MOD-007-0048";
+
+    private const string SwitchUniqueKeyNo = "CFG-MOD-007-0049";
+
+    private const string SwitchUniqueBatteryNo = "CFG-MOD-007-0050";
+
     private const string DateFormat = "yyyy-MM-dd";
 
     // Rows of the stock ledger on the stock card (latest kept)
@@ -160,6 +203,8 @@ public class InventoryStatusRepository
         public int MaxStockLevel { get; set; }
 
         public bool IsActive { get; set; }
+
+        public string ImagePath { get; set; } = string.Empty;
     }
 
 
@@ -230,17 +275,24 @@ public class InventoryStatusRepository
             string pageType,
             long branchId,
             long warehouseId,
-            bool canViewCost
+            bool canViewCost,
+            bool canViewCostVat = false
         )
     {
         string page =
             PageOf(pageType);
+
+        // One cost on these pages : always incl. VAT (owner,
+        // 2026-11-06); the separate incl. VAT figures are not used
+        canViewCostVat =
+            false;
 
         InventoryStockListDto result =
             new()
             {
                 PageType = page,
                 CanViewCost = canViewCost,
+                CanViewCostVat = canViewCostVat,
                 BranchId = Math.Max(0, branchId),
                 WarehouseId = Math.Max(0, warehouseId),
                 AsOf = DateText(Today())
@@ -292,6 +344,9 @@ public class InventoryStatusRepository
         Dictionary<long, decimal> costs =
             await BatchCostsAsync(holdings);
 
+        Dictionary<long, decimal> vats =
+            new();
+
         Labels labels =
             await LabelsAsync();
 
@@ -312,12 +367,101 @@ public class InventoryStatusRepository
                             costs,
                             labels,
                             locations,
-                            canViewCost)
+                            canViewCost,
+                            canViewCostVat ? vats : null)
                 )
                 .OrderBy(x => x.ProductCode)
                 .ToList();
 
         return result;
+    }
+
+
+    //===========================================================
+    // Motor Bike Stock › Free Accessories : the Accessories
+    // products used as Additional / Promotional Accessories
+    // (Bike Accessory Schemes), same stock as the Accessories
+    // Stock page
+    //===========================================================
+
+    private const string KindFreeAccessories = "Free Accessories";
+
+    private async Task<HashSet<long>> BikeAccessoryIdsAsync()
+    {
+        List<(long Id, string Use)> uses =
+            (
+                await _context
+                    .Set<AccessoriesEntity>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted)
+                    .Select(x => new { x.AccessoryId, x.AccessoryUse })
+                    .ToListAsync()
+            )
+            .Select(x => (x.AccessoryId, x.AccessoryUse ?? string.Empty))
+            .ToList();
+
+        return uses
+            .Where(x => AppCore.Infrastructure.Repositories.Settings.ProductSettings.AccessoryUses.IsBikeAccessory(x.Use))
+            .Select(x => x.Id)
+            .ToHashSet();
+    }
+
+
+    public async Task<InventoryStockListDto>
+        GetBikeAccessoriesStockAsync
+        (
+            long branchId,
+            long warehouseId,
+            bool canViewCost
+        )
+    {
+        InventoryStockListDto result =
+            await GetStockAsync(
+                PageAccessories,
+                branchId,
+                warehouseId,
+                canViewCost);
+
+        HashSet<long> ids =
+            await BikeAccessoryIdsAsync();
+
+        result.Rows =
+            result.Rows
+                .Where(x => ids.Contains(x.ProductId))
+                .ToList();
+
+        foreach (var row in result.Rows)
+        {
+            row.ProductKind = KindFreeAccessories;
+        }
+
+        return result;
+    }
+
+
+    public async Task<InventoryStockCardDto?>
+        GetBikeAccessoryCardAsync
+        (
+            long productId,
+            long branchId,
+            long warehouseId,
+            bool canViewCost
+        )
+    {
+        HashSet<long> ids =
+            await BikeAccessoryIdsAsync();
+
+        if (!ids.Contains(productId))
+        {
+            return null;
+        }
+
+        return await GetCardAsync(
+            PageAccessories,
+            productId,
+            branchId,
+            warehouseId,
+            canViewCost);
     }
 
 
@@ -451,10 +595,10 @@ public class InventoryStatusRepository
                             SupplierName = suppliers.GetValueOrDefault(batch.SupplierCode, string.Empty),
                             BranchName = labels.Branches.GetValueOrDefault(batch.BranchId, string.Empty),
                             Quantity = batch.Quantity,
-                            UnitCost = canViewCost ? Cost(batch.UnitCost) : 0m,
+                            UnitCost = canViewCost ? Cost(costs.GetValueOrDefault(batch.StockBatchId, batch.UnitCost)) : 0m,
                             InTransit = inTransit,
                             OnHand = onHand,
-                            Value = canViewCost ? Money((inTransit + onHand) * batch.UnitCost) : 0m,
+                            Value = canViewCost ? Money((inTransit + onHand) * costs.GetValueOrDefault(batch.StockBatchId, batch.UnitCost)) : 0m,
                             AgeDays = Math.Max(0, today.DayNumber - batch.SourceDate.DayNumber)
                         };
                     }
@@ -550,9 +694,18 @@ public class InventoryStatusRepository
                 .Where(x => movedBatchIds.Contains(x.StockBatchId))
                 .ToDictionaryAsync(x => x.StockBatchId, x => x.BatchNo);
 
+        // Incl. VAT : the claimed input VAT per unit of each batch
+        Dictionary<long, decimal> moveVats =
+            canViewCost
+                ? await ClaimedVatAsync(movedBatchIds)
+                : new Dictionary<long, decimal>();
+
         foreach (StockMovementsEntity move in rows)
         {
             balance += move.QuantityIn - move.QuantityOut;
+
+            decimal moveVat =
+                moveVats.GetValueOrDefault(move.StockBatchId);
 
             card.Movements.Add(
                 new InventoryStockMovementDto
@@ -572,8 +725,8 @@ public class InventoryStatusRepository
                     QuantityIn = move.QuantityIn,
                     QuantityOut = move.QuantityOut,
                     Balance = balance,
-                    UnitCost = canViewCost ? Cost(move.UnitCost) : 0m,
-                    Value = canViewCost ? Money(move.Value) : 0m,
+                    UnitCost = canViewCost ? Cost(move.UnitCost + moveVat) : 0m,
+                    Value = canViewCost ? Money(move.Value + (move.QuantityIn + move.QuantityOut) * moveVat) : 0m,
                     IsReversal = move.IsReversal,
                     Narration = move.Narration
                 });
@@ -684,6 +837,20 @@ public class InventoryStatusRepository
                 .Take(MaxBikes)
                 .ToListAsync();
 
+        // Colour of each bike's model
+        List<long> bikeProductIds =
+            units
+                .Select(x => x.ProductId)
+                .Distinct()
+                .ToList();
+
+        Dictionary<long, long> bikeColors =
+            await _context
+                .Set<MotorBikesEntity>()
+                .AsNoTracking()
+                .Where(x => bikeProductIds.Contains(x.MotorBikeId))
+                .ToDictionaryAsync(x => x.MotorBikeId, x => x.ColorManagementId);
+
         // The bike's batch says where it is (one batch per
         // purchase line)
         List<long> lineIds =
@@ -698,11 +865,17 @@ public class InventoryStatusRepository
                     .Set<StockBatchesEntity>()
                     .AsNoTracking()
                     .Where(x => x.ProductType == PageMotorBikes && x.SourceType == "Purchase" && lineIds.Contains(x.SourceLineId))
-                    .Select(x => new { x.SourceLineId, x.SourceId, x.QuantityInTransit, x.QuantityOnHand })
+                    .Select(x => new { x.StockBatchId, x.SourceLineId, x.SourceId, x.QuantityInTransit, x.QuantityOnHand })
                     .ToListAsync()
             )
             .GroupBy(x => (x.SourceId, x.SourceLineId))
             .ToDictionary(g => g.Key, g => g.First());
+
+        // Incl. VAT : the claimed input VAT per bike (its batch)
+        Dictionary<long, decimal> bikeVats =
+            canViewCost
+                ? await ClaimedVatAsync(batches.Values.Select(x => x.StockBatchId))
+                : new Dictionary<long, decimal>();
 
         return units
             .Select
@@ -743,7 +916,15 @@ public class InventoryStatusRepository
                         StockInDate = DateText(unit.StockInDate),
                         BranchName = labels.Branches.GetValueOrDefault(unit.BranchId, string.Empty),
                         Status = status,
-                        UnitCost = canViewCost ? Money(unit.UnitCost) : 0m
+                        UnitCost =
+                            canViewCost
+                                ? Money(unit.UnitCost
+                                    + (batches.TryGetValue((unit.PurchaseId, unit.PurchaseLineId), out var own)
+                                        ? bikeVats.GetValueOrDefault(own.StockBatchId)
+                                        : 0m))
+                                : 0m,
+                        IsSold = unit.Status == UnitSold,
+                        ColorName = labels.Colors.GetValueOrDefault(bikeColors.GetValueOrDefault(unit.ProductId), string.Empty)
                     };
                 }
             )
@@ -858,12 +1039,84 @@ public class InventoryStatusRepository
             return new Dictionary<long, decimal>();
         }
 
-        return
+        Dictionary<long, decimal> costs =
             await _context
                 .Set<StockBatchesEntity>()
                 .AsNoTracking()
                 .Where(x => ids.Contains(x.StockBatchId))
                 .ToDictionaryAsync(x => x.StockBatchId, x => x.UnitCost);
+
+        // Cost on the stock pages is always incl. VAT : + the input
+        // VAT claimed at purchase (owner, 2026-11-06)
+        Dictionary<long, decimal> vats =
+            await ClaimedVatAsync(ids);
+
+        return costs.ToDictionary(
+            x => x.Key,
+            x => x.Value + vats.GetValueOrDefault(x.Key));
+    }
+
+
+    //===========================================================
+    // Claimed input VAT per unit of each batch held : the VAT the
+    // purchase took out of the cost (VAT Register, claimable).
+    // A batch whose VAT was not claimed already has it in its
+    // cost, so it adds nothing.
+    //===========================================================
+
+    private async Task<Dictionary<long, decimal>>
+        ClaimedVatAsync
+        (
+            IEnumerable<long> batchIds
+        )
+    {
+        List<long> ids =
+            batchIds
+                .Distinct()
+                .ToList();
+
+        if (ids.Count == 0)
+        {
+            return new Dictionary<long, decimal>();
+        }
+
+        var batches =
+            await _context
+                .Set<StockBatchesEntity>()
+                .AsNoTracking()
+                .Where(x => ids.Contains(x.StockBatchId) && x.SourceVatPerUnit > 0)
+                .Select(x => new { x.StockBatchId, x.SourceNo, x.SourceLineId, x.SourceVatPerUnit })
+                .ToListAsync();
+
+        if (batches.Count == 0)
+        {
+            return new Dictionary<long, decimal>();
+        }
+
+        List<string> numbers =
+            batches.Select(x => x.SourceNo).Distinct().ToList();
+
+        // Claimable share of each source line's VAT
+        var claimed =
+            (await _context
+                .Set<VatRegisterEntity>()
+                .AsNoTracking()
+                .Where(x => numbers.Contains(x.DocumentNo) && !x.IsReversal && x.DocumentLineId.HasValue)
+                .Select(x => new { x.DocumentNo, LineId = x.DocumentLineId!.Value, x.VatAmount, x.VatClaimable })
+                .ToListAsync())
+                .GroupBy(x => (x.DocumentNo, x.LineId))
+                .ToDictionary(
+                    g => g.Key,
+                    g =>
+                    {
+                        decimal vat = g.Sum(x => x.VatAmount);
+
+                        return vat > 0m ? g.Sum(x => x.VatClaimable) / vat : 0m;
+                    });
+
+        return batches.ToDictionary(
+            x => x.StockBatchId,
+            x => x.SourceVatPerUnit * claimed.GetValueOrDefault((x.SourceNo, x.SourceLineId)));
     }
 
 
@@ -879,7 +1132,8 @@ public class InventoryStatusRepository
             Dictionary<long, decimal> costs,
             Labels labels,
             Dictionary<long, string> locations,
-            bool canViewCost
+            bool canViewCost,
+            Dictionary<long, decimal>? vats = null
         )
     {
         List<Holding> list =
@@ -896,6 +1150,12 @@ public class InventoryStatusRepository
 
         decimal value =
             list.Sum(x => x.Quantity * costs.GetValueOrDefault(x.StockBatchId));
+
+        // Incl. VAT : + the claimed input VAT per unit of each batch
+        decimal valueVat =
+            vats == null
+                ? 0m
+                : list.Sum(x => x.Quantity * (costs.GetValueOrDefault(x.StockBatchId) + vats.GetValueOrDefault(x.StockBatchId)));
 
         int batchCount =
             list
@@ -923,6 +1183,7 @@ public class InventoryStatusRepository
         return new InventoryStockRowDto
         {
             ProductId = product.ProductId,
+            ImagePath = product.ImagePath,
             ProductCode = product.ProductCode,
             ProductName =
                 string.IsNullOrWhiteSpace(product.PartNumber)
@@ -948,6 +1209,8 @@ public class InventoryStatusRepository
             Total = total,
             AverageCost = canViewCost && total > 0 ? Cost(value / total) : 0m,
             StockValue = canViewCost ? Money(value) : 0m,
+            AverageCostVat = vats != null && total > 0 ? Cost(valueVat / total) : 0m,
+            StockValueVat = vats != null ? Money(valueVat) : 0m,
             BatchCount = batchCount,
             LastMovementDate = DateText(last),
             Location = locations.GetValueOrDefault(product.ProductId, string.Empty),
@@ -991,7 +1254,8 @@ public class InventoryStatusRepository
                                 ReorderLevel = x.ReorderLevel,
                                 RedLevel = x.RedLevel,
                                 MaxStockLevel = x.MaxStockLevel,
-                                IsActive = x.IsActive
+                                IsActive = x.IsActive,
+                                ImagePath = x.ImagePath ?? string.Empty
                             }
                     )
                     .ToListAsync();
@@ -1025,7 +1289,8 @@ public class InventoryStatusRepository
                                 ReorderLevel = x.ReorderLevel,
                                 RedLevel = x.RedLevel,
                                 MaxStockLevel = x.MaxStockLevel,
-                                IsActive = x.IsActive
+                                IsActive = x.IsActive,
+                                ImagePath = x.ImagePath ?? string.Empty
                             }
                     )
                     .ToListAsync();
@@ -1261,4 +1526,651 @@ public class InventoryStatusRepository
     // into the labels of the stock card
     private Dictionary<(long ProductId, long WarehouseId), string> _placeCache =
         new();
+
+
+    //===========================================================
+    // Edit Bike Numbers (Motor Bike Stock > Technical Records)
+    //
+    //   Edit Bike Numbers (CFG-MOD-012-0090)       bikes not sold
+    //   ... After Sale     (CFG-MOD-012-0091)       sold bikes too
+    //
+    // Same rules as Purchases - MB / Receiving : Chassis and
+    // Engine always required and unique; Key / Battery kept only
+    // with Key & Battery Required, unique only with their switch.
+    // A new number is also written on the bike's copies (product
+    // transfers, barcode labels, service vehicles, memberships,
+    // service enquiries).
+    //===========================================================
+
+    private async Task<bool>
+        IsSwitchOnAsync
+        (
+            string code,
+            bool fallback
+        )
+    {
+        bool? value =
+            await _context
+                .Set<SystemConfigurationsEntity>()
+                .AsNoTracking()
+                .Where(x => x.ConfigurationCode == code && !x.IsDeleted)
+                .Select(x => (bool?)x.IsEnabled)
+                .FirstOrDefaultAsync();
+
+        return value ?? fallback;
+    }
+
+
+    public async Task<InventoryBikeEditRulesDto>
+        GetBikeEditRulesAsync()
+    {
+        bool edit =
+            await IsSwitchOnAsync(SwitchEditNumbers, false);
+
+        return new InventoryBikeEditRulesDto
+        {
+            EditOn = edit,
+            EditSoldOn = edit && await IsSwitchOnAsync(SwitchEditSold, false),
+            KeyBatteryOn = await IsSwitchOnAsync(SwitchKeyBattery, true)
+        };
+    }
+
+
+    // Trimmed, capitals, 50 characters at most
+    private static string BikeNo
+    (
+        string? value
+    )
+    {
+        string text =
+            (value ?? string.Empty).Trim().ToUpperInvariant();
+
+        return text.Length <= 50
+            ? text
+            : text.Substring(0, 50);
+    }
+
+
+    private sealed class BikeNumbers
+    {
+        public string Chassis { get; init; } = string.Empty;
+
+        public string Engine { get; init; } = string.Empty;
+
+        public string Key { get; init; } = string.Empty;
+
+        public string Battery { get; init; } = string.Empty;
+    }
+
+
+    // Key & Battery Required OFF : the bike keeps what it has
+    private static BikeNumbers NumbersOf
+    (
+        InventoryBikeNumbersDto dto,
+        MotorBikeUnitsEntity unit,
+        bool keyBattery
+    )
+    {
+        return new BikeNumbers
+        {
+            Chassis = BikeNo(dto.ChassisNo),
+            Engine = BikeNo(dto.EngineNo),
+            Key = keyBattery ? BikeNo(dto.KeyNo) : unit.KeyNo,
+            Battery = keyBattery ? BikeNo(dto.BatteryNo) : unit.BatteryNo
+        };
+    }
+
+
+    // Numbers other live bikes (or another sold bike's service
+    // record) already carry
+    private async Task<List<InventoryBikeNumberTakenDto>>
+        TakenNumbersAsync
+        (
+            MotorBikeUnitsEntity unit,
+            BikeNumbers numbers,
+            bool keyBattery
+        )
+    {
+        bool uniqueKey =
+            keyBattery && await IsSwitchOnAsync(SwitchUniqueKeyNo, false);
+
+        bool uniqueBattery =
+            keyBattery && await IsSwitchOnAsync(SwitchUniqueBatteryNo, false);
+
+        string chassis = numbers.Chassis;
+
+        string engine = numbers.Engine;
+
+        string key = uniqueKey ? numbers.Key : string.Empty;
+
+        string battery = uniqueBattery ? numbers.Battery : string.Empty;
+
+        long id = unit.MotorBikeUnitId;
+
+        var rows =
+            await _context
+                .Set<MotorBikeUnitsEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.MotorBikeUnitId != id
+                        &&
+                        (
+                            (chassis != "" && x.ChassisNo.ToUpper() == chassis)
+                            ||
+                            (engine != "" && x.EngineNo.ToUpper() == engine)
+                            ||
+                            (key != "" && x.KeyNo.ToUpper() == key)
+                            ||
+                            (battery != "" && x.BatteryNo.ToUpper() == battery)
+                        )
+                )
+                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo })
+                .Take(20)
+                .ToListAsync();
+
+        List<InventoryBikeNumberTakenDto> result =
+            new();
+
+        void Add(string field, string label, string value, string? other, string purchaseNo)
+        {
+            if (value.Length == 0 || !string.Equals((other ?? string.Empty).Trim(), value, StringComparison.OrdinalIgnoreCase) || result.Any(x => x.Field == field))
+            {
+                return;
+            }
+
+            result.Add(
+                new InventoryBikeNumberTakenDto
+                {
+                    Field = field,
+                    Value = value,
+                    Message =
+                        purchaseNo.Length > 0
+                            ? $"{label} {value} is already on purchase {purchaseNo}."
+                            : $"{label} {value} is already on another bike (opening stock)."
+                });
+        }
+
+        foreach (var row in rows)
+        {
+            Add("ChassisNo", "Chassis No", chassis, row.ChassisNo, row.PurchaseNo);
+            Add("EngineNo", "Engine No", engine, row.EngineNo, row.PurchaseNo);
+            Add("KeyNo", "Key No", key, row.KeyNo, row.PurchaseNo);
+            Add("BatteryNo", "Battery No", battery, row.BatteryNo, row.PurchaseNo);
+        }
+
+        // A sold bike's service record keeps its chassis (one live
+        // row per chassis)
+        string oldChassis =
+            BikeNo(unit.ChassisNo);
+
+        if (chassis.Length > 0 && chassis != oldChassis && result.All(x => x.Field != "ChassisNo"))
+        {
+            bool serviced =
+                await _context
+                    .Set<ServiceVehiclesEntity>()
+                    .AsNoTracking()
+                    .AnyAsync(x => !x.IsDeleted && x.ChassisNo.ToUpper() == chassis);
+
+            if (serviced)
+            {
+                result.Add(
+                    new InventoryBikeNumberTakenDto
+                    {
+                        Field = "ChassisNo",
+                        Value = chassis,
+                        Message = $"Chassis No {chassis} is already a service vehicle (a sold bike)."
+                    });
+            }
+        }
+
+        return result;
+    }
+
+
+    public async Task<List<InventoryBikeNumberTakenDto>>
+        CheckBikeNumbersAsync
+        (
+            InventoryBikeNumbersDto dto
+        )
+    {
+        MotorBikeUnitsEntity? unit =
+            await _context
+                .Set<MotorBikeUnitsEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.MotorBikeUnitId == dto.MotorBikeUnitId && !x.IsDeleted);
+
+        if (unit == null)
+        {
+            return new List<InventoryBikeNumberTakenDto>();
+        }
+
+        bool keyBattery =
+            await IsSwitchOnAsync(SwitchKeyBattery, true);
+
+        return await TakenNumbersAsync(
+            unit,
+            NumbersOf(dto, unit, keyBattery),
+            keyBattery);
+    }
+
+
+    public async Task
+        UpdateBikeNumbersAsync
+        (
+            InventoryBikeNumbersDto dto,
+            long userId
+        )
+    {
+        InventoryBikeEditRulesDto rules =
+            await GetBikeEditRulesAsync();
+
+        if (!rules.EditOn)
+        {
+            throw new InvalidOperationException(
+                "Editing bike numbers is switched off (System Configurations : Edit Bike Numbers).");
+        }
+
+        MotorBikeUnitsEntity unit =
+            await _context
+                .Set<MotorBikeUnitsEntity>()
+                .FirstOrDefaultAsync(x => x.MotorBikeUnitId == dto.MotorBikeUnitId && !x.IsDeleted)
+            ?? throw new KeyNotFoundException("Bike not found.");
+
+        if (unit.Status == UnitPending || unit.Status == UnitReturned)
+        {
+            throw new InvalidOperationException(
+                $"A {unit.Status.ToLowerInvariant()} bike's numbers cannot be edited here.");
+        }
+
+        if (unit.Status == UnitSold && !rules.EditSoldOn)
+        {
+            throw new InvalidOperationException(
+                "This bike is sold : switch on \"Edit Bike Numbers After Sale\" to edit it.");
+        }
+
+        BikeNumbers numbers =
+            NumbersOf(dto, unit, rules.KeyBatteryOn);
+
+        if (numbers.Chassis.Length == 0 || numbers.Engine.Length == 0)
+        {
+            throw new InvalidOperationException(
+                "Chassis No and Engine No are required.");
+        }
+
+        string oldChassis = unit.ChassisNo;
+
+        string oldEngine = unit.EngineNo;
+
+        string oldKey = unit.KeyNo;
+
+        string oldBattery = unit.BatteryNo;
+
+        List<BikeNumberChange> changes =
+            new();
+
+        void Change(string label, string before, string after)
+        {
+            if (!string.Equals(before.Trim(), after, StringComparison.Ordinal))
+            {
+                changes.Add(new BikeNumberChange(label, before.Trim(), after));
+            }
+        }
+
+        Change("Chassis No", oldChassis, numbers.Chassis);
+        Change("Engine No", oldEngine, numbers.Engine);
+        Change("Key No", oldKey, numbers.Key);
+        Change("Battery No", oldBattery, numbers.Battery);
+
+        if (changes.Count == 0)
+        {
+            return;
+        }
+
+        List<InventoryBikeNumberTakenDto> taken =
+            await TakenNumbersAsync(unit, numbers, rules.KeyBatteryOn);
+
+        if (taken.Count > 0)
+        {
+            throw new InvalidOperationException(
+                taken[0].Message);
+        }
+
+        DateTime now =
+            DateTime.UtcNow;
+
+        unit.ChassisNo = numbers.Chassis;
+        unit.EngineNo = numbers.Engine;
+        unit.KeyNo = numbers.Key;
+        unit.BatteryNo = numbers.Battery;
+        unit.ModifiedBy = userId;
+        unit.ModifiedDate = now;
+
+        // Copies that point at this bike
+        long id = unit.MotorBikeUnitId;
+
+        List<ProductTransferUnitsEntity> transfers =
+            await _context
+                .Set<ProductTransferUnitsEntity>()
+                .Where(x => x.MotorBikeUnitId == id)
+                .ToListAsync();
+
+        foreach (ProductTransferUnitsEntity row in transfers)
+        {
+            row.ChassisNo = numbers.Chassis;
+            row.EngineNo = numbers.Engine;
+        }
+
+        List<BarcodePrintRunLinesEntity> labelLines =
+            await _context
+                .Set<BarcodePrintRunLinesEntity>()
+                .Where(x => x.MotorBikeUnitId == id)
+                .ToListAsync();
+
+        foreach (BarcodePrintRunLinesEntity row in labelLines)
+        {
+            row.ChassisNo = numbers.Chassis;
+        }
+
+        // Copies found by the old chassis (after the sale)
+        int vehicles = 0;
+
+        int memberships = 0;
+
+        int enquiries = 0;
+
+        string before =
+            BikeNo(oldChassis);
+
+        bool chassisOrEngine =
+            before != numbers.Chassis
+            ||
+            BikeNo(oldEngine) != numbers.Engine;
+
+        if (before.Length > 0 && chassisOrEngine)
+        {
+            List<ServiceVehiclesEntity> vehicleRows =
+                await _context
+                    .Set<ServiceVehiclesEntity>()
+                    .Where(x => x.ChassisNo.ToUpper() == before)
+                    .ToListAsync();
+
+            foreach (ServiceVehiclesEntity row in vehicleRows)
+            {
+                row.ChassisNo = numbers.Chassis;
+                row.EngineNo = numbers.Engine;
+            }
+
+            List<MembershipStatusEntity> membershipRows =
+                await _context
+                    .Set<MembershipStatusEntity>()
+                    .Where(x => x.ChassisNo.ToUpper() == before)
+                    .ToListAsync();
+
+            foreach (MembershipStatusEntity row in membershipRows)
+            {
+                row.ChassisNo = numbers.Chassis;
+                row.EngineNo = numbers.Engine;
+            }
+
+            List<ServiceEnquiriesEntity> enquiryRows =
+                await _context
+                    .Set<ServiceEnquiriesEntity>()
+                    .Where(x => x.ChassisNo.ToUpper() == before)
+                    .ToListAsync();
+
+            foreach (ServiceEnquiriesEntity row in enquiryRows)
+            {
+                row.ChassisNo = numbers.Chassis;
+            }
+
+            vehicles = vehicleRows.Count;
+
+            memberships = membershipRows.Count;
+
+            enquiries = enquiryRows.Count;
+        }
+
+        List<string> copies =
+            new();
+
+        if (transfers.Count > 0) copies.Add($"{transfers.Count} product transfer line(s)");
+        if (labelLines.Count > 0) copies.Add($"{labelLines.Count} barcode label line(s)");
+        if (vehicles > 0) copies.Add($"{vehicles} service vehicle(s)");
+        if (memberships > 0) copies.Add($"{memberships} membership(s)");
+        if (enquiries > 0) copies.Add($"{enquiries} service enquiry(ies)");
+
+        _context.Set<ActivityHistoryEntity>().Add(
+            new ActivityHistoryEntity
+            {
+                Module = "Inventory Management",
+                EntityName = "MotorBikeUnits",
+                EntityId = id,
+                ActivityType = "Update",
+                ActivityTitle = BikeHistoryTitle(changes),
+                ActivityDescription =
+                    BikeHistoryText(
+                        changes,
+                        unit.ProductName,
+                        unit.PurchaseNo.Length > 0 ? unit.PurchaseNo : "opening stock",
+                        unit.Status == UnitSold,
+                        copies.Count > 0 ? string.Join(", ", copies) : string.Empty),
+                PerformedBy = userId,
+                PerformedByName = await UserNameAsync(userId),
+                PerformedDate = now
+            });
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    //===========================================================
+    // Technical Record History : one card per edit
+    //
+    //   Title       : "Engine No Changed" / "Chassis No & Engine
+    //                 No Changed"
+    //   Description : one line per number "Engine No : A -> B",
+    //                 then the bike (model | purchase | sold) and
+    //                 the copies also updated. ASCII only (the
+    //                 page shows -> as an arrow).
+    //===========================================================
+
+    private sealed record BikeNumberChange
+    (
+        string Label,
+        string Before,
+        string After
+    );
+
+
+    private static string BikeHistoryTitle
+    (
+        List<BikeNumberChange> changes
+    )
+    {
+        return changes.Count == 0
+            ? "Bike Numbers Changed"
+            : $"{string.Join(" & ", changes.Select(x => x.Label))} Changed";
+    }
+
+
+    // "Motor Bikes - REVOO - A04 - Black" -> "REVOO - A04 - Black"
+    private static string ModelText
+    (
+        string name
+    )
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
+            name ?? string.Empty,
+            @"^\s*motor\s*bikes?\s*-\s*",
+            string.Empty,
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+
+    private static string BikeHistoryText
+    (
+        List<BikeNumberChange> changes,
+        string productName,
+        string document,
+        bool sold,
+        string copies
+    )
+    {
+        List<string> lines =
+            changes
+                .Select(x => $"{x.Label} : {(x.Before.Length > 0 ? x.Before : "(empty)")} -> {(x.After.Length > 0 ? x.After : "(empty)")}")
+                .ToList();
+
+        lines.Add(
+            string.Join(
+                " | ",
+                new[] { ModelText(productName), document, sold ? "sold" : string.Empty }
+                    .Where(x => !string.IsNullOrWhiteSpace(x))));
+
+        if (copies.Length > 0)
+        {
+            lines.Add($"Also updated : {copies}");
+        }
+
+        return string.Join("\n", lines);
+    }
+
+
+    // Rows written before 07-11 : "<product> (<purchase>[, sold])
+    // : Engine No A -> B; Key No C -> D.[ Also updated : ....]"
+    private static readonly System.Text.RegularExpressions.Regex OldBikeHistory =
+        new(@"^(?<name>.*?) \((?<doc>[^()]*?)(?<sold>, sold)?\) : (?<changes>.*?)\.(?: Also updated : (?<also>.*?)\.)?$");
+
+    private static readonly System.Text.RegularExpressions.Regex OldBikeChange =
+        new(@"^(?<label>Chassis No|Engine No|Key No|Battery No) (?<before>.*?) -> (?<after>.*)$");
+
+
+    private static (string Title, string Text)? ReadOldBikeHistory
+    (
+        string description
+    )
+    {
+        var match =
+            OldBikeHistory.Match(description ?? string.Empty);
+
+        if (!match.Success)
+        {
+            return null;
+        }
+
+        List<BikeNumberChange> changes =
+            new();
+
+        foreach (string part in match.Groups["changes"].Value.Split("; "))
+        {
+            var change =
+                OldBikeChange.Match(part.Trim());
+
+            if (!change.Success)
+            {
+                return null;
+            }
+
+            string before = change.Groups["before"].Value;
+            string after = change.Groups["after"].Value;
+
+            changes.Add(
+                new BikeNumberChange(
+                    change.Groups["label"].Value,
+                    before == "(empty)" ? string.Empty : before,
+                    after == "(empty)" ? string.Empty : after));
+        }
+
+        return (
+            BikeHistoryTitle(changes),
+            BikeHistoryText(
+                changes,
+                match.Groups["name"].Value,
+                match.Groups["doc"].Value,
+                match.Groups["sold"].Success,
+                match.Groups["also"].Success ? match.Groups["also"].Value : string.Empty));
+    }
+
+
+    // The user's name for the history (else "System")
+    private async Task<string> UserNameAsync
+    (
+        long userId
+    )
+    {
+        var user =
+            await _context
+                .Set<UserProfileEntity>()
+                .AsNoTracking()
+                .Where(x => x.UserProfileId == userId)
+                .Select(x => new { x.FullName, x.DisplayName, x.UserName })
+                .FirstOrDefaultAsync();
+
+        return
+            !string.IsNullOrWhiteSpace(user?.FullName) ? user!.FullName
+            : !string.IsNullOrWhiteSpace(user?.DisplayName) ? user!.DisplayName
+            : !string.IsNullOrWhiteSpace(user?.UserName) ? user!.UserName
+            : "System";
+    }
+
+
+    // Bike number edits, newest first (the last 300)
+    public async Task<List<InventoryBikeHistoryDto>>
+        GetBikeHistoryAsync()
+    {
+        var rows =
+            await _context
+                .Set<ActivityHistoryEntity>()
+                .AsNoTracking()
+                .Where(x => x.Module == "Inventory Management" && x.EntityName == "MotorBikeUnits")
+                .OrderByDescending(x => x.PerformedDate)
+                .Take(300)
+                .Select(x => new { x.ActivityType, x.ActivityTitle, x.ActivityDescription, x.PerformedBy, x.PerformedByName, x.PerformedDate })
+                .ToListAsync();
+
+        // Rows written as "System" before names were kept
+        List<long> userIds =
+            rows
+                .Where(x => x.PerformedBy > 0 && (string.IsNullOrWhiteSpace(x.PerformedByName) || x.PerformedByName == "System"))
+                .Select(x => x.PerformedBy)
+                .Distinct()
+                .ToList();
+
+        Dictionary<long, string> names =
+            new();
+
+        foreach (long id in userIds)
+        {
+            names[id] = await UserNameAsync(id);
+        }
+
+        return rows
+            .Select(x =>
+            {
+                // Older rows : the same specific card
+                var old =
+                    x.ActivityTitle == "Bike Numbers Edited"
+                        ? ReadOldBikeHistory(x.ActivityDescription ?? string.Empty)
+                        : null;
+
+                return new { Row = x, Old = old };
+            })
+            .Select(y => new { x = y.Row, y.Old })
+            .Select(z => new InventoryBikeHistoryDto
+            {
+                ActivityType = z.x.ActivityType ?? string.Empty,
+                ActivityTitle = z.Old?.Title ?? z.x.ActivityTitle ?? string.Empty,
+                ActivityDescription = z.Old?.Text ?? z.x.ActivityDescription ?? string.Empty,
+                PerformedByName =
+                    names.TryGetValue(z.x.PerformedBy, out string? name)
+                        ? name
+                        : (string.IsNullOrWhiteSpace(z.x.PerformedByName) ? "System" : z.x.PerformedByName),
+                PerformedDate = z.x.PerformedDate
+            })
+            .ToList();
+    }
 }

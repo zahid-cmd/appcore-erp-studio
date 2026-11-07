@@ -37,6 +37,9 @@ namespace AppCore.Api.Controllers.SalesOperations.Shared;
 //   Create : Add          Update : Update      Delete : Delete
 //   Restore : Restore     Approve : Approve    Return : Return
 //   Post : Post           Cancel : Cancel      Walk-in : Add
+//
+// Point 2 (07-11) : save (PUT) and every action address the
+// invoice by its uuid (PublicId) ; the number stays inside.
 //   Any special discount on Create / Update : Give Special
 //   Discount (the quote reports it as an error instead)
 //===============================================================
@@ -452,10 +455,24 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
     }
 
 
-    [HttpPut]
+    // Saved by the uuid in the address (point 2) : the uuid decides
+    // the invoice, an id in the body is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateSalesInvoiceDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Sales invoice not found.");
+        }
+
+        dto.SalesInvoiceId =
+            foundId.Value;
+
         long userId = UserId;
 
         UseLoginBranch(dto);
@@ -547,10 +564,21 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
     // Workflow
     //===========================================================
 
-    [HttpPut("{id:long}/approve")]
+    [HttpPut("{publicId:guid}/approve")]
     public async Task<IActionResult> Approve(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Sales invoice not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =
@@ -572,10 +600,21 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
     }
 
 
-    [HttpPut("{id:long}/return-to-draft")]
+    [HttpPut("{publicId:guid}/return-to-draft")]
     public async Task<IActionResult> ReturnToDraft(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Sales invoice not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =
@@ -597,10 +636,21 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
     }
 
 
-    [HttpPut("{id:long}/post")]
+    [HttpPut("{publicId:guid}/post")]
     public async Task<IActionResult> Post(
-        long id)
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Sales invoice not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =
@@ -617,11 +667,22 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
     }
 
 
-    [HttpPut("{id:long}/cancel")]
+    [HttpPut("{publicId:guid}/cancel")]
     public async Task<IActionResult> Cancel(
-        long id,
+        Guid publicId,
         CancelSalesInvoiceDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Sales invoice not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         IActionResult? denied =

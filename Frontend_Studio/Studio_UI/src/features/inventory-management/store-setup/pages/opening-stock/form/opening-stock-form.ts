@@ -3497,11 +3497,12 @@ export class OpeningStockForm
     private saveDraft():
         Observable<OpeningStockSaved>
     {
-        const id =
-            this.doc?.OpeningStockId ?? 0;
+        // A saved draft is changed by its uuid
+        const publicId =
+            this.doc?.PublicId ?? '';
 
-        return id > 0
-            ? this.service.update(id, this.payload())
+        return publicId
+            ? this.service.update(publicId, this.payload())
             : this.service.create(this.payload());
     }
 
@@ -3619,7 +3620,7 @@ export class OpeningStockForm
                             this.doc = { OpeningStockId:saved.OpeningStockId, PublicId:saved.PublicId } as OpeningStock;
                         }
 
-                        return this.service.post(saved.OpeningStockId);
+                        return this.service.post(saved.PublicId ?? '');
                     }
                 ));
 
@@ -3696,7 +3697,7 @@ export class OpeningStockForm
                 'Posting Opening Stock',
                 `Please wait while "${doc.OpeningNo}" is put on hand and its journal is made...`,
                 'Opening stock posted.',
-                this.service.post(doc.OpeningStockId))
+                this.service.post(doc.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -3865,7 +3866,7 @@ export class OpeningStockForm
                 'Cancelling Opening Stock',
                 `Please wait while "${doc.OpeningNo}" is being cancelled...`,
                 'Opening stock cancelled.',
-                this.service.cancel(doc.OpeningStockId, this.cancelReason.trim()))
+                this.service.cancel(doc.PublicId ?? '', this.cancelReason.trim()))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({

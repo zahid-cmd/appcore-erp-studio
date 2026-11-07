@@ -68,6 +68,25 @@ public static class BusinessLineAccess
 
     public const string Temporary = "Temporary";
 
+    // Scope of a grant : Full, or (Accessories only) Gifts Only :
+    // the branch may hold and transfer Accessories stock to give
+    // with bikes, but every other page treats it as not running
+    // the line (no counter sale, purchase, receiving, opening)
+    public const string ScopeFull = "Full";
+
+    public const string ScopeGiftsOnly = "Gifts Only";
+
+    // System Configuration master switch (Product Transfer page)
+    public const string GiftStockSwitchName = "Gift Stock at Showrooms";
+
+    public static bool IsGiftsOnly
+    (
+        BusinessConfigurationEntity grant
+    )
+    {
+        return string.Equals(grant.Scope, ScopeGiftsOnly, StringComparison.OrdinalIgnoreCase);
+    }
+
 
     // "spare parts" → "Spare Parts", unknown → null
     public static string? Canonical
@@ -223,7 +242,8 @@ public static class BusinessLineAccess
                 in grants.Where(g => g.BranchId == branch.BranchId)
             )
             {
-                if (IsGrantActive(grant, day))
+                // Gifts Only grants never count as running the line
+                if (IsGrantActive(grant, day) && !IsGiftsOnly(grant))
                 {
                     lines.Add(grant.BusinessLine);
                 }
@@ -318,5 +338,90 @@ public static class BusinessLineAccess
         )
         .Select(x => x.WarehouseId)
         .ToHashSet();
+    }
+
+
+    //===========================================================
+    // Gift stock at showrooms (Accessories)
+    //
+    // Master switch ON :
+    //   Gifts = warehouses of branches with an active Gifts Only
+    //           Accessories grant : any accessory;
+    //   Free  = warehouses of branches running Motor Bikes (not
+    //           above) : free accessories only (Additional /
+    //           Promotional Accessories products).
+    // Switch OFF : both empty (the strict rule only).
+    //===========================================================
+
+    public static async Task<bool> GiftStockOnAsync
+    (
+        AppDbContext context
+    )
+    {
+        return await context
+            .Set<AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.ConfigurationName == GiftStockSwitchName)
+            .Select(x => (bool?)x.IsEnabled)
+            .FirstOrDefaultAsync()
+            ?? false;
+    }
+
+
+    public static async Task<(HashSet<long> Full, HashSet<long> Gifts, HashSet<long> Free)>
+        AccessoryWarehouseRightsAsync
+        (
+            AppDbContext context
+        )
+    {
+        HashSet<long> full =
+            await AllowedWarehouseIdsAsync(
+                context,
+                Accessories);
+
+        HashSet<long> gifts =
+            new();
+
+        HashSet<long> free =
+            new();
+
+        if (!await GiftStockOnAsync(context))
+        {
+            return (full, gifts, free);
+        }
+
+        DateOnly today =
+            Today();
+
+        HashSet<long> giftBranches =
+            (
+                await context
+                    .Set<BusinessConfigurationEntity>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted && x.IsActive && x.BusinessLine == Accessories)
+                    .ToListAsync()
+            )
+            .Where(x => IsGiftsOnly(x) && IsGrantActive(x, today))
+            .Select(x => x.BranchId)
+            .ToHashSet();
+
+        foreach (var w in await WarehousesAsync(context, null))
+        {
+            if (full.Contains(w.WarehouseId))
+            {
+                continue;
+            }
+
+            if (giftBranches.Contains(w.BranchId))
+            {
+                gifts.Add(w.WarehouseId);
+            }
+            else if (w.Lines.Contains(MotorBikes))
+            {
+                free.Add(w.WarehouseId);
+            }
+        }
+
+        return (full, gifts, free);
     }
 }

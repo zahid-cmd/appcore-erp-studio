@@ -82,4 +82,30 @@ export const salesOperationsRoutes:
 
     // AUTO-END : MNU-008-004
 
+    // AUTO-BEGIN : MNU-008-002
+
+    //===========================================================
+    // Motor Bike Sales
+    //===========================================================
+
+    {
+        path:'motor-bike-sales',
+
+        data:
+        {
+            breadcrumb:'Motor Bike Sales'
+        },
+
+        loadChildren:() =>
+            import(
+                '../motor-bike-sales/routes/motor-bike-sales.routes'
+            )
+            .then(
+                m =>
+                    m.mnu008002Routes
+            )
+    },
+
+    // AUTO-END : MNU-008-002
+
 ];

@@ -1,0 +1,722 @@
+@import '../../../../../shared/styles/app-list-page.css';
+
+/* =====================================================
+   ENQUIRY DASHBOARD (read only)
+   Compact deep greys; panels in rows, figures clickable
+===================================================== */
+
+:host
+{
+    display:contents;
+}
+
+
+/* =====================================================
+   TOOLBAR FILTERS
+===================================================== */
+
+.ed-filters
+{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    min-width:0;
+}
+
+.ed-filter
+{
+    --dropdown-width:200px;
+}
+
+.ed-date
+{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    color:#475569;
+    font-size:12px;
+    font-weight:700;
+}
+
+.ed-date input
+{
+    height:34px;
+    padding:0 8px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#ffffff;
+    color:#0f172a;
+    font:inherit;
+    font-size:13px;
+    font-weight:600;
+}
+
+.ed-date input:focus
+{
+    outline:none;
+    border-color:#475569;
+    box-shadow:0 0 0 3px rgba(71, 85, 105, 0.15);
+}
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.ed-body
+{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    flex:0 0 auto;
+    min-width:0;
+    transition:opacity .15s ease;
+}
+
+.ed-busy
+{
+    opacity:0.6;
+    pointer-events:none;
+}
+
+.ed-state
+{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    min-height:240px;
+    border:1px solid #e3e9f2;
+    border-radius:14px;
+    background:#ffffff;
+    color:#475569;
+    font-size:14px;
+}
+
+.ed-state-bad
+{
+    color:#b91c1c;
+}
+
+.ed-link
+{
+    border:0;
+    background:none;
+    color:#1f2937;
+    font:inherit;
+    font-weight:700;
+    text-decoration:underline;
+    cursor:pointer;
+}
+
+
+/* =====================================================
+   HEADLINE FIGURES
+===================================================== */
+
+.ed-kpis
+{
+    display:grid;
+    grid-template-columns:repeat(6, minmax(0, 1fr));
+    gap:10px;
+}
+
+.ed-kpi
+{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:4px;
+    min-width:0;
+    padding:12px 14px 11px;
+    border:1px solid #e3e9f2;
+    border-radius:12px;
+    background:#ffffff;
+    color:inherit;
+    font:inherit;
+    text-align:left;
+    box-shadow:0 1px 2px rgba(15, 23, 42, 0.04);
+    overflow:hidden;
+}
+
+.ed-kpi::before
+{
+    content:'';
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:3px;
+    background:linear-gradient(90deg, #1f2937 0%, #475569 100%);
+}
+
+button.ed-kpi
+{
+    cursor:pointer;
+    transition:box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+}
+
+button.ed-kpi:hover
+{
+    border-color:#cbd5e1;
+    box-shadow:0 8px 20px -12px rgba(15, 42, 90, 0.35);
+    transform:translateY(-1px);
+}
+
+.ed-kpi-alert::before
+{
+    background:linear-gradient(90deg, #b91c1c 0%, #f87171 100%);
+}
+
+.ed-kpi-label
+{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    color:#475569;
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+
+.ed-kpi-label i
+{
+    color:#64748b;
+}
+
+.ed-kpi-value
+{
+    color:#0f172a;
+    font-size:26px;
+    font-weight:800;
+    line-height:1.1;
+    font-variant-numeric:tabular-nums;
+}
+
+.ed-kpi-note
+{
+    max-width:100%;
+    color:#64748b;
+    font-size:12px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.ed-good
+{
+    color:#047857 !important;
+}
+
+.ed-bad
+{
+    color:#be123c !important;
+    font-weight:700;
+}
+
+
+/* =====================================================
+   PANELS
+===================================================== */
+
+.ed-row
+{
+    display:grid;
+    gap:12px;
+    min-width:0;
+}
+
+.ed-row-3
+{
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+}
+
+.ed-row-trend
+{
+    grid-template-columns:minmax(0, 2fr) minmax(0, 1fr);
+}
+
+.ed-panel
+{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-width:0;
+    padding:12px 14px;
+    border:1px solid #e3e9f2;
+    border-radius:12px;
+    background:#ffffff;
+    box-shadow:0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.ed-panel-title
+{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin:0 0 2px;
+    color:#1f2937;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+}
+
+.ed-panel-title i
+{
+    color:#64748b;
+}
+
+.ed-foot
+{
+    margin:auto 0 0;
+    padding-top:4px;
+    color:#64748b;
+    font-size:12px;
+}
+
+.ed-empty
+{
+    margin:6px 0;
+    color:#94a3b8;
+    font-size:13px;
+}
+
+
+/* =====================================================
+   FUNNEL
+===================================================== */
+
+.ed-funnel
+{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+.ed-funnel-row
+{
+    display:flex;
+    justify-content:space-between;
+    color:#334155;
+    font-size:13px;
+}
+
+.ed-funnel-row b
+{
+    color:#0f172a;
+    font-variant-numeric:tabular-nums;
+}
+
+.ed-track
+{
+    height:10px;
+    margin-bottom:6px;
+    border-radius:999px;
+    background:#eef2f7;
+    overflow:hidden;
+}
+
+.ed-fill
+{
+    height:100%;
+    border-radius:999px;
+    background:#334155;
+    transition:width .3s ease;
+}
+
+.ed-fill-mid
+{
+    background:#64748b;
+}
+
+.ed-fill-good
+{
+    background:#059669;
+}
+
+
+/* =====================================================
+   BARS (sources, interest, models, lost reasons)
+===================================================== */
+
+.ed-bar
+{
+    display:grid;
+    grid-template-columns:minmax(0, 40%) minmax(0, 1fr) 36px;
+    align-items:center;
+    gap:10px;
+    min-height:24px;
+}
+
+.ed-bar-name
+{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    min-width:0;
+    color:#334155;
+    font-size:13px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.ed-dot
+{
+    flex:none;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+}
+
+.ed-bar-track
+{
+    height:8px;
+    border-radius:999px;
+    background:#eef2f7;
+    overflow:hidden;
+}
+
+.ed-bar-fill
+{
+    height:100%;
+    border-radius:999px;
+    background:#475569;
+    transition:width .3s ease;
+}
+
+.ed-bar-fill-model
+{
+    background:#1f2937;
+}
+
+.ed-bar-fill-lost
+{
+    background:#e11d48;
+}
+
+.ed-bar-count
+{
+    color:#0f172a;
+    font-size:13px;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+}
+
+
+/* =====================================================
+   TREND
+===================================================== */
+
+.ed-legend
+{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-left:auto;
+    color:#64748b;
+    font-size:11.5px;
+    font-weight:600;
+    text-transform:none;
+    letter-spacing:0;
+}
+
+.ed-key
+{
+    display:inline-block;
+    width:14px;
+    height:3px;
+    margin-left:6px;
+    border-radius:2px;
+}
+
+.ed-key-sales
+{
+    background:#1f2937;
+}
+
+.ed-key-service
+{
+    background:#0d9488;
+}
+
+.ed-chart
+{
+    width:100%;
+    height:170px;
+    overflow:visible;
+}
+
+.ed-grid
+{
+    stroke:#eef2f7;
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+}
+
+.ed-grid-base
+{
+    stroke:#cbd5e1;
+}
+
+.ed-line-sales,
+.ed-line-service
+{
+    fill:none;
+    stroke-width:2.2;
+    stroke-linejoin:round;
+    stroke-linecap:round;
+    vector-effect:non-scaling-stroke;
+}
+
+.ed-line-sales
+{
+    stroke:#1f2937;
+}
+
+.ed-line-service
+{
+    stroke:#0d9488;
+}
+
+.ed-pt-sales
+{
+    fill:#1f2937;
+}
+
+.ed-pt-service
+{
+    fill:#0d9488;
+}
+
+.ed-axis
+{
+    display:flex;
+    justify-content:space-between;
+    color:#64748b;
+    font-size:11.5px;
+}
+
+
+/* =====================================================
+   AGENDA
+===================================================== */
+
+.ed-agenda
+{
+    display:flex;
+    flex-direction:column;
+    max-height:300px;
+    overflow-y:auto;
+}
+
+.ed-agenda-line
+{
+    display:grid;
+    grid-template-columns:22px minmax(0, 1fr) auto;
+    align-items:center;
+    gap:8px;
+    padding:6px 4px;
+    border:0;
+    border-bottom:1px solid #f1f5f9;
+    background:transparent;
+    color:inherit;
+    font:inherit;
+    text-align:left;
+    cursor:pointer;
+}
+
+.ed-agenda-line:hover
+{
+    background:#f8fafc;
+}
+
+.ed-agenda-icon
+{
+    color:#475569;
+    text-align:center;
+}
+
+.ed-agenda-text
+{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+}
+
+.ed-agenda-text b,
+.ed-agenda-text small
+{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.ed-agenda-text b
+{
+    color:#1f2937;
+    font-size:13px;
+    font-weight:600;
+}
+
+.ed-agenda-text small
+{
+    color:#64748b;
+    font-size:11.5px;
+}
+
+.ed-agenda-when
+{
+    color:#334155;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.ed-agenda-late .ed-agenda-icon,
+.ed-agenda-late .ed-agenda-when
+{
+    color:#be123c;
+}
+
+
+/* =====================================================
+   EXECUTIVES
+===================================================== */
+
+.ed-table
+{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    font-size:12.5px;
+}
+
+.ed-table th
+{
+    padding:5px 4px;
+    border-bottom:1px solid #e3e9f2;
+    color:#64748b;
+    font-size:11px;
+    font-weight:700;
+    text-align:right;
+    text-transform:uppercase;
+}
+
+.ed-table th:first-child,
+.ed-table td:first-child
+{
+    width:40%;
+    text-align:left;
+}
+
+.ed-table td
+{
+    padding:5px 4px;
+    border-bottom:1px solid #f1f5f9;
+    color:#334155;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+}
+
+.ed-table-name
+{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:#1f2937 !important;
+    font-weight:600;
+}
+
+
+/* =====================================================
+   SUMMARY LINE (as on the enquiry lists)
+===================================================== */
+
+.ics-summary
+{
+    display:flex;
+    flex:0 0 auto;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px 0;
+    min-height:50px;
+    padding:12px 22px;
+    box-sizing:border-box;
+    border:1px solid #d6e4fb;
+    border-radius:12px;
+    background:linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
+    box-shadow:0 2px 8px rgba(37, 99, 235, 0.05);
+    font-size:14.5px;
+}
+
+.ics-summary-item
+{
+    display:inline-flex;
+    align-items:baseline;
+    gap:8px;
+    padding:0 20px;
+}
+
+.ics-summary-item:first-child
+{
+    padding-left:0;
+}
+
+.ics-summary-item + .ics-summary-item
+{
+    border-left:1px solid #c9daf5;
+}
+
+.ics-summary-label
+{
+    color:#475569;
+    font-weight:500;
+}
+
+.ics-summary-value
+{
+    color:#1e293b;
+    font-size:15.5px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+}
+
+.ics-summary-note
+{
+    margin-left:auto;
+    color:#64748b;
+    font-size:13px;
+}
+
+
+/* =====================================================
+   NARROW SCREENS
+===================================================== */
+
+@media (max-width:1280px)
+{
+    .ed-kpis
+    {
+        grid-template-columns:repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width:980px)
+{
+    .ed-row-3,
+    .ed-row-trend
+    {
+        grid-template-columns:minmax(0, 1fr);
+    }
+
+    .ed-kpis
+    {
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+}

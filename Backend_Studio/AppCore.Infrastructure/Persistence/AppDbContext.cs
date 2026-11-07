@@ -1482,6 +1482,17 @@ public class AppDbContext
 
     // AUTO-END : SalesReturnsAc
 
+    // AUTO-BEGIN : BikeAccessorySchemes
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.BikeAccessorySchemes>
+    BikeAccessorySchemess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : BikeAccessorySchemes
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 
@@ -1512,6 +1523,38 @@ public class AppDbContext
     // Spare Part ↔ other sub categories (models) it also fits
     public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.SparePartFitments>
     SparePartFitmentRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Bike Accessory Schemes : models and items (MANUAL : the head
+    // BikeAccessorySchemes is in the sync's AUTO block)
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.BikeAccessorySchemeModels>
+    BikeAccessorySchemeModelRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.BikeAccessorySchemeItems>
+    BikeAccessorySchemeItemRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // MB Purchases : free accessories due from the supplier and
+    // received on Motor Bike Receiving (MANUAL : no page of its own)
+    public DbSet<AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchaseAccessoryDues>
+    PurchaseAccessoryDueRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchaseAccessoryReceipts>
+    PurchaseAccessoryReceiptRows
     {
     get;
     set;

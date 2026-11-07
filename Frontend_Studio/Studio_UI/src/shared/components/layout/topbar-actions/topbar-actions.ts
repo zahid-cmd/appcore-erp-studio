@@ -9,8 +9,9 @@
 //                  Same width as the dropdown below it.
 // Photo          : UserPhotoData from the user's profile
 //                  (same source as the Welcome widget)
-// Profile menu   : Profile, Change Password, Logout
-//                  (same behaviour as before)
+// Profile menu   : Profile, Change Password, Switch Branch (only
+//                  for a user assigned to two or more active
+//                  branches, setting ON; 2026-11-07), Logout
 //
 // The confirm dialog used by Logout lives in topbar.html
 // (one instance for the whole shell).
@@ -66,6 +67,12 @@ import
 }
 from '../topbar-notifications/topbar-notifications';
 
+import
+{
+    BranchSwitchService
+}
+from '../../../../core/authentication/branch-switch.service';
+
 
 @Component
 ({
@@ -112,6 +119,10 @@ implements
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
+    // Switch Branch : the menu item shows when canSwitch()
+    readonly branchSwitch =
+        inject(BranchSwitchService);
 
 
     //===========================================================
@@ -280,6 +291,8 @@ implements
         void
     {
         this.loadAuthenticatedUser();
+
+        this.branchSwitch.load();
 
         this.clockTimer =
             setInterval(
@@ -516,6 +529,21 @@ implements
         );
 
         this.changePasswordClick.emit();
+    }
+
+
+    //===========================================================
+    // Switch Branch (pop-up in app.html)
+    //===========================================================
+
+    onSwitchBranchClick():
+        void
+    {
+        this.isUserMenuOpen.set(
+            false
+        );
+
+        this.branchSwitch.open();
     }
 
 

@@ -631,17 +631,30 @@
                             ">
 
                             <span
-                                *ngIf="getDotColor(row, column)"
+                                *ngIf="getDotColor(row, column) && !column.dotIcon"
                                 class="list-table-dot"
                                 [style.background]="getDotColor(row, column)">
                             </span>
 
+                            <!-- Icon painted in the row's colour (the value is its tooltip) -->
+                            <span
+                                *ngIf="column.dotIcon"
+                                class="list-table-color-icon"
+                                role="img"
+                                [style.color]="getDotColor(row, column) || '#cbd5e1'"
+                                [attr.title]="getCellValue(row, column)"
+                                [attr.aria-label]="getCellValue(row, column)">
+                                <i [class]="column.dotIcon"></i>
+                            </span>
+
+                            <ng-container *ngIf="!column.dotIcon">
                             {{
                                 getCellValue(
                                     row,
                                     column
                                 )
                             }}
+                            </ng-container>
 
                             <span
                                 *ngIf="hasFlag(row, column)"
@@ -687,6 +700,40 @@
 
     </div>
 
+    <!-- =========================================================
+         FOOTER ROWS (totals) : pinned under the body
+    ========================================================= -->
+
+    <div
+        class="list-table-foot"
+        *ngIf="footerRows.length && !loading && !error && rows.length">
+
+        <table class="list-table-grid">
+
+            <tbody>
+
+                <tr
+                    *ngFor="let foot of footerRows"
+                    class="list-table-foot-row"
+                    [class.grand]="foot?.grand">
+
+                    <td
+                        *ngFor="let column of columns"
+                        [style.width]="column.width"
+                        [class.left]="column.align==='left'"
+                        [class.center]="column.align==='center'"
+                        [class.right]="column.align==='right'">
+                        {{ foot?.[column.field] ?? '' }}
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
 
     <!-- =====================================================
          IMAGE PREVIEW (hover over an 'image' cell)
@@ -713,6 +760,13 @@
         </div>
 
         <div class="list-table-image-preview-body">
+
+            <!-- Big round number (e.g. the stock) -->
+            <span
+                class="list-table-image-preview-badge"
+                *ngIf="previewImageBadge">
+                {{ previewImageBadge }}
+            </span>
 
             <img
                 [src]="previewImageSrc"

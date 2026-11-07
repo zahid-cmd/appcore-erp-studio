@@ -698,6 +698,9 @@
     font-size: 13px;
     line-height: 1.6;
     color: #64748b;
+
+    /* A description may carry one fact per line */
+    white-space: pre-line;
 }
 
 

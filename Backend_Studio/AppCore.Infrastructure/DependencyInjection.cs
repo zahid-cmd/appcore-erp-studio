@@ -810,6 +810,18 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Trial Balance Repository (manual, read-only page)
+        //
+        // Accounts & Finance › Financial Statements › Trial Balance
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.AccountsFinance.FinancialStatements.ITrialBalanceRepository,
+            AppCore.Infrastructure.Repositories.AccountsFinance.FinancialStatements.TrialBalanceRepository
+        >();
+
+        //=======================================================
         // Product Ledgers Repository (manual, read-only pages)
         //
         // Inventory Management › Product Ledgers : Motor Bikes
@@ -869,6 +881,16 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : BikeAccessorySchemes
+
+        services.AddScoped
+        <
+            IBikeAccessorySchemesRepository,
+            BikeAccessorySchemesRepository
+        >();
+
+        // AUTO-END : BikeAccessorySchemes
 
         // AUTO-BEGIN : SalesReturnsAc
 
@@ -979,6 +1001,13 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : SalesEnquiries
+
+        // Enquiry Dashboard (hand-written, read only : NO Code Sync)
+        services.AddScoped
+        <
+            AppCore.Application.EnquiryManagement.EnquiryProfiles.IEnquiryDashboardRepository,
+            AppCore.Infrastructure.Configurations.EnquiryManagement.EnquiryProfiles.EnquiryDashboardRepository
+        >();
 
         // AUTO-BEGIN : MassStoring
 

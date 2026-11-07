@@ -60,7 +60,7 @@ from './receiving.model';
 //   POST   <api>/<path>/unit-check             { Units }
 //   GET    <api>/<path>/{id}
 //   POST   <api>/<path>                        create = post
-//   PUT    <api>/<path>/{id}/cancel            { Reason }
+//   PUT    <api>/<path>/{publicId}/cancel      { Reason }
 //
 // The API answers in camelCase; mapped to PascalCase.
 //===============================================================
@@ -224,6 +224,25 @@ export class ReceivingService
                                 PurchasedQuantity:num(pick(x, 'PurchasedQuantity')),
                                 PendingQuantity:num(pick(x, 'PendingQuantity')),
                                 ReceivingStatus:text(pick(x, 'ReceivingStatus')),
+                                AccessoryPendingQuantity:num(pick(x, 'AccessoryPendingQuantity')),
+                                Accessories:list(pick(x, 'Accessories')).map
+                                (
+                                    a =>
+                                    ({
+                                        PurchaseAccessoryDueId:num(pick(a, 'PurchaseAccessoryDueId')),
+                                        SchemeCode:text(pick(a, 'SchemeCode')),
+                                        SchemeName:text(pick(a, 'SchemeName')),
+                                        SchemeKind:text(pick(a, 'SchemeKind')),
+                                        AccessoryId:num(pick(a, 'AccessoryId')),
+                                        ProductCode:text(pick(a, 'ProductCode')),
+                                        AccessoryName:text(pick(a, 'AccessoryName')),
+                                        Unit:text(pick(a, 'Unit')),
+                                        QuantityDue:num(pick(a, 'QuantityDue')),
+                                        ReceivedBefore:num(pick(a, 'ReceivedBefore')),
+                                        QuantityClosed:num(pick(a, 'QuantityClosed')),
+                                        PendingQuantity:num(pick(a, 'PendingQuantity'))
+                                    })
+                                ),
                                 Lines:list(pick(x, 'Lines')).map
                                 (
                                     l =>
@@ -313,11 +332,15 @@ export class ReceivingService
     }
 
 
-    cancel
+    // MB : Close Due : the rest of one free-accessory due row
+    // is written off
+    closeAccessoryDue
     (
         path:
             string,
-        id:
+        dueId:
+            number,
+        branchId:
             number,
         reason:
             string
@@ -325,7 +348,24 @@ export class ReceivingService
         Observable<void>
     {
         return this.http
-            .put<void>(`${this.api}/${path}/${id}/cancel`, { Reason:reason });
+            .put<void>(`${this.api}/${path}/accessory-dues/${dueId}/close`, { Reason:reason }, { params:{ branchId } });
+    }
+
+
+    // Cancelled by the uuid (point 2)
+    cancel
+    (
+        path:
+            string,
+        publicId:
+            string,
+        reason:
+            string
+    ):
+        Observable<void>
+    {
+        return this.http
+            .put<void>(`${this.api}/${path}/${publicId}/cancel`, { Reason:reason });
     }
 }
 
@@ -469,6 +509,21 @@ function toReceiving
                 EngineNo:text(pick(u, 'EngineNo')),
                 KeyNo:text(pick(u, 'KeyNo')),
                 BatteryNo:text(pick(u, 'BatteryNo'))
+            })
+        ),
+        Accessories:list(pick(x, 'Accessories')).map
+        (
+            a =>
+            ({
+                PurchaseAccessoryDueId:num(pick(a, 'PurchaseAccessoryDueId')),
+                SchemeCode:text(pick(a, 'SchemeCode')),
+                SchemeKind:text(pick(a, 'SchemeKind')),
+                AccessoryId:num(pick(a, 'AccessoryId')),
+                ProductCode:text(pick(a, 'ProductCode')),
+                AccessoryName:text(pick(a, 'AccessoryName')),
+                Unit:text(pick(a, 'Unit')),
+                Quantity:num(pick(a, 'Quantity')),
+                BatchNo:text(pick(a, 'BatchNo'))
             })
         )
     };

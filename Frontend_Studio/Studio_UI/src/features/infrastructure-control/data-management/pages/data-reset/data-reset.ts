@@ -545,6 +545,8 @@ export class DataResetPage
 
                     this.loading = false;
                     this.refreshView();
+
+                    this.toastBackupState(catalog);
                 },
                 error:error =>
                 {
@@ -1011,6 +1013,48 @@ export class DataResetPage
         return !!this.catalog?.BackupFresh;
     }
 
+    // Backup state after the tables load (was an alert bar)
+    private toastBackupState(catalog: any):
+        void
+    {
+        if (catalog?.BackupFresh)
+        {
+            this.toast.info(
+                'Backup ready',
+                `${catalog.LastBackup?.FileName ?? ''} (${this.formatDateTime(catalog.LastBackup?.TakenDate)}).`);
+        }
+        else
+        {
+            this.toast.warning(
+                'Backup needed',
+                `A backup of ${catalog?.Database ?? 'this database'} from the last ${catalog?.FreshMinutes ?? ''} minutes is needed before a reset. Click Backup.`);
+        }
+    }
+
+    // Preview state (was an alert bar under the preview)
+    private toastPreviewState(preview: any):
+        void
+    {
+        if (preview.Blocks.length > 0)
+        {
+            this.toast.warning(
+                'Data Reset',
+                `${preview.Blocks.length} block(s) stop this reset : see the notifications (bell) on the toolbar.`);
+        }
+        else if (!preview.BackupFresh)
+        {
+            this.toast.warning(
+                'Backup needed',
+                `Take a backup of ${this.catalog?.Database ?? 'this database'} first (one from the last ${this.catalog?.FreshMinutes ?? ''} minutes is needed).`);
+        }
+        else
+        {
+            this.toast.success(
+                'Ready',
+                `No blocks, backup ${this.catalog?.LastBackup?.FileName ?? ''}. Click Run Reset to clear.`);
+        }
+    }
+
     backupNow():
         void
     {
@@ -1104,6 +1148,8 @@ export class DataResetPage
 
                         // Blocks : the notification opens by itself
                         this.blocksOpen = preview.Blocks.length > 0;
+
+                        this.toastPreviewState(preview);
 
                         // tables pulled in become part of the selection
                         for (const table of preview.Tables.filter(x => x.AutoAdded))
@@ -1323,7 +1369,8 @@ export class DataResetPage
                                 result.AccountGroupsDeleted + result.AccountSubGroupsDeleted > 0
                                     ? `${formatCount(result.AccountGroupsDeleted)} account groups / ${formatCount(result.AccountSubGroupsDeleted)} sub groups`
                                     : '',
-                                result.Unlinked > 0 ? `${formatCount(result.Unlinked)} links cleared` : ''
+                                result.Unlinked > 0 ? `${formatCount(result.Unlinked)} links cleared` : '',
+                                (result.SequencesReset ?? 0) > 0 ? `${formatCount(result.SequencesReset ?? 0)} number counters reset` : ''
                             ]
                             .filter(x => !!x)
                             .join(', ');

@@ -15,6 +15,9 @@ using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
 
+using BusinessLineAccess =
+    AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess;
+
 using static AppCore.Infrastructure.Repositories.Procurement.Shared.PurchaseOrderPricing;
 
 using PurchasesSpEntity =
@@ -498,6 +501,72 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
 
 
     //===========================================================
+    // Business Configuration : the branch must run the page's
+    // business line today (wing core business + the branch's
+    // active extra business). Checked on defaults, save,
+    // approve and place.
+    //===========================================================
+
+    private static string BusinessLineOfPage
+    (
+        string pageType
+    )
+    {
+        return (pageType ?? string.Empty).ToUpperInvariant() switch
+        {
+            "MB" => BusinessLineAccess.MotorBikes,
+            "AC" => BusinessLineAccess.Accessories,
+            _ => BusinessLineAccess.SpareParts
+        };
+    }
+
+    // null = the branch runs the line; otherwise the message
+    private async Task<string?> BranchLineProblemAsync
+    (
+        long branchId
+    )
+    {
+        string line =
+            BusinessLineOfPage(Page.PageType);
+
+        Dictionary<long, HashSet<string>> lines =
+            await BusinessLineAccess.ActiveLinesByBranchAsync(
+                _context,
+                BusinessLineAccess.Today());
+
+        if (lines.TryGetValue(branchId, out HashSet<string>? branchLines) && branchLines.Contains(line))
+        {
+            return null;
+        }
+
+        string branchName =
+            await _context
+                .Set<AppCore.Domain.Entities.Settings.GeneralSettings.Branches>()
+                .AsNoTracking()
+                .Where(x => x.BranchId == branchId)
+                .Select(x => x.BranchName)
+                .FirstOrDefaultAsync()
+            ?? "This branch";
+
+        return $"{branchName} does not run {line} purchases (Business Configuration). Switch to a branch that does.";
+    }
+
+    private async Task RequireBranchLineAsync
+    (
+        long branchId
+    )
+    {
+        string? problem =
+            await BranchLineProblemAsync(branchId);
+
+        if (problem != null)
+        {
+            throw new InvalidOperationException(problem);
+        }
+    }
+
+
+    //===========================================================
     // Get Defaults : number preview, period, suppliers, products
     //===========================================================
 
@@ -543,6 +612,19 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
         result.FinancialYearName = period.FinancialYearName;
         result.FinancialYearCode = period.FinancialYearCode;
         result.PeriodMonth = period.PeriodMonth;
+
+        // Business Configuration : blocked like a closed period
+        string? lineProblem =
+            await BranchLineProblemAsync(period.BranchId);
+
+        if (lineProblem != null)
+        {
+            result.Message = lineProblem;
+
+            result.BranchBlocked = true;
+
+            return result;
+        }
 
         string prefix =
             CodeGenerator.GenerateVoucherNoPrefix(
@@ -1532,6 +1614,8 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
                 dto.BranchId,
                 input.OrderDate);
 
+        await RequireBranchLineAsync(input.Period.BranchId);
+
         //=======================================================
         // VAT applicability on the order date (VAT Management)
         //   Purchase OFF        : no VAT on this order
@@ -1698,6 +1782,10 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
         bool freeGoodsAllowed =
             await IsSwitchOnAsync(Page.SwitchFreeGoods, false);
 
+        // ON = Max Stock Level is a warning only (page), not a cap
+        bool aboveMaxAllowed =
+            await IsSwitchOnAsync(Page.SwitchAboveMaxStock, false);
+
         // Input credit per product type (Purchase VAT rule on the
         // order date; no rule = allowed)
         Dictionary<string, bool> creditAllowed =
@@ -1768,7 +1856,7 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
                     $"{label} : free quantity must be 0 or more with at most 2 decimals.");
             }
 
-            if (product.MaxStockLevel > 0)
+            if (product.MaxStockLevel > 0 && !aboveMaxAllowed)
             {
                 decimal held =
                     stockNow.GetValueOrDefault(product.ProductCode)
@@ -2514,6 +2602,8 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
                     await LoadAsync(id);
 
                 RequireStatus(entity, "approved", StatusDraft);
+
+                await RequireBranchLineAsync(entity.BranchId);
 
                 DateTime now =
                     DateTime.UtcNow;

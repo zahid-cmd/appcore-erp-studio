@@ -1651,7 +1651,8 @@ public class AuthenticationService : IAuthenticationService
     private string GenerateToken(
         UserProfile userProfile,
         long branchId,
-        bool rememberMe)
+        bool rememberMe,
+        DateTime? expiresUtc = null)
     {
         //===========================================================
         // JWT Settings
@@ -1743,7 +1744,10 @@ public class AuthenticationService : IAuthenticationService
                 claims:
                     claims,
 
+                // Switch Branch keeps the current session's expiry
                 expires:
+                    expiresUtc
+                    ??
                     DateTime.UtcNow.Add(
                         tokenLifetime),
 
@@ -1764,6 +1768,192 @@ public class AuthenticationService : IAuthenticationService
     //===============================================================
     // Create Login Failure Response
     //===============================================================
+
+    //===============================================================
+    // Switch Branch : my branches (user menu, 2026-11-07)
+    //===============================================================
+
+    public async Task<MyBranchesDto> GetMyBranchesAsync(
+        long userProfileId,
+        long currentBranchId)
+    {
+        bool allowed =
+            await _authenticationRepository
+                .IsBranchSwitchAllowedAsync();
+
+        List<LoginBranchDto> branches =
+            (await _authenticationRepository
+                .GetActiveBranchAssignmentsByUserProfileIdAsync(
+                    userProfileId))
+            .GroupBy(x => x.BranchId)
+            .Select(g => g.First())
+            .ToList();
+
+        // Wing + business lines are extra information : a failure
+        // there never hides the branches
+        Dictionary<long, (string WingName, List<string> Lines)> details;
+
+        try
+        {
+            details =
+                await _authenticationRepository
+                    .GetBranchSwitchDetailsAsync(
+                        branches.Select(x => x.BranchId));
+        }
+        catch
+        {
+            details = new();
+        }
+
+        List<SwitchBranchOptionDto> options =
+            branches
+                .Select(
+                    b =>
+                    {
+                        details.TryGetValue(b.BranchId, out (string WingName, List<string> Lines) d);
+
+                        return new SwitchBranchOptionDto
+                        {
+                            BranchId = b.BranchId,
+                            BranchCode = b.BranchCode,
+                            BranchName = b.BranchName,
+                            WingName = d.WingName ?? string.Empty,
+                            BusinessLines = d.Lines ?? new List<string>(),
+                            IsCurrent = b.BranchId == currentBranchId
+                        };
+                    })
+                .OrderByDescending(x => x.IsCurrent)
+                .ThenBy(x => x.BranchName)
+                .ToList();
+
+        string message =
+            !allowed
+                ? "Branch switching is turned off. Log out and log in to the other branch."
+                : options.Count < 2
+                    ? "You are assigned to one branch only."
+                    : string.Empty;
+
+        return new MyBranchesDto
+        {
+            CurrentBranchId = currentBranchId,
+            SwitchAllowed = allowed,
+            CanSwitch = allowed && options.Count >= 2,
+            Message = message,
+            Branches = options
+        };
+    }
+
+
+    //===============================================================
+    // Switch Branch : a new token for another assigned branch
+    //===============================================================
+
+    public async Task<LoginResponseDto> SwitchBranchAsync(
+        long userProfileId,
+        long currentBranchId,
+        SwitchBranchRequestDto request,
+        DateTime? expiresUtc)
+    {
+        if (request == null || request.BranchId <= 0)
+        {
+            return CreateFailureResponse(
+                "Choose the branch to switch to.");
+        }
+
+        // The same checks as login (except the password)
+        UserProfile? userProfile =
+            await _authenticationRepository
+                .GetUserProfileByIdAsync(
+                    userProfileId);
+
+        if (userProfile == null || userProfile.IsDeleted)
+        {
+            return CreateFailureResponse(
+                "Your session is no longer valid. Please log in again.");
+        }
+
+        if (!userProfile.IsActive)
+        {
+            return CreateFailureResponse(
+                "Your Login ID is inactive. Please contact the administrator for activation.");
+        }
+
+        UserCredential? credential =
+            await _authenticationRepository
+                .GetUserCredentialByUserProfileIdAsync(
+                    userProfile.UserProfileId);
+
+        if (credential == null || string.IsNullOrWhiteSpace(credential.PasswordHash))
+        {
+            return CreateFailureResponse(
+                "Login credentials are not configured.");
+        }
+
+        if (!await _authenticationRepository.IsBranchSwitchAllowedAsync())
+        {
+            return CreateFailureResponse(
+                "Branch switching is turned off. Log out and log in to the other branch.");
+        }
+
+        List<LoginBranchDto> branches =
+            (await _authenticationRepository
+                .GetActiveBranchAssignmentsByUserProfileIdAsync(
+                    userProfile.UserProfileId))
+            .GroupBy(x => x.BranchId)
+            .Select(g => g.First())
+            .ToList();
+
+        LoginBranchDto? target =
+            branches.FirstOrDefault(x => x.BranchId == request.BranchId);
+
+        if (target == null)
+        {
+            return CreateFailureResponse(
+                "That branch is not assigned to your Login ID (Branch Assignment), or it is inactive.");
+        }
+
+        if (target.BranchId == currentBranchId)
+        {
+            return CreateFailureResponse(
+                $"You are already working in {target.BranchName}.");
+        }
+
+        // Keep the session's end; an expiry already past (or about
+        // to pass) is never extended : log in again
+        if (expiresUtc.HasValue && expiresUtc.Value <= DateTime.UtcNow.AddMinutes(1))
+        {
+            return CreateFailureResponse(
+                "Your session has ended. Please log in again.");
+        }
+
+        string token =
+            GenerateToken(
+                userProfile,
+                target.BranchId,
+                false,
+                expiresUtc);
+
+        await _authenticationRepository
+            .AddBranchSwitchHistoryAsync(
+                userProfile.UserProfileId,
+                string.IsNullOrWhiteSpace(userProfile.DisplayName) ? userProfile.UserName : userProfile.DisplayName,
+                branches.FirstOrDefault(x => x.BranchId == currentBranchId),
+                target);
+
+        return new LoginResponseDto
+        {
+            Success = true,
+            Message = $"You are now working in {target.BranchName}.",
+            Token = token,
+            UserProfileId = userProfile.UserProfileId,
+            UserName = userProfile.UserName,
+            DisplayName = userProfile.DisplayName,
+            FullName = userProfile.FullName,
+            RequiresBranchSelection = false,
+            Branches = branches
+        };
+    }
+
 
     private static LoginResponseDto CreateFailureResponse(
         string message)
@@ -1843,4 +2033,4 @@ public class AuthenticationService : IAuthenticationService
                 0
         };
     }
-}
+}

@@ -99,6 +99,11 @@ export interface PurchaseSwitchCodes
     VAT_AS_PER_63:
         string;
 
+    // ON = a line may go above the item's Max Stock Level (warning
+    // only); OFF / missing = Max is a hard cap
+    ABOVE_MAX_STOCK:
+        string;
+
     // Pricing (SP / AC); '' on MB
     FREE_GOODS:
         string;
@@ -212,6 +217,7 @@ export const PUR_MB_PAGE:
         GATE_PASS_REQUIRED:'CFG-MOD-007-0067',
         PRICE_ABOVE_PO:'CFG-MOD-007-0068',
         VAT_AS_PER_63:'CFG-MOD-007-0069',
+        ABOVE_MAX_STOCK:'CFG-MOD-007-0083',
         FREE_GOODS:'',
         ROUND_PAYABLE:'',
         WHOLE_TAKA_LINES:'',
@@ -255,6 +261,7 @@ export const PUR_SP_PAGE:
         GATE_PASS_REQUIRED:'CFG-MOD-007-0072',
         PRICE_ABOVE_PO:'CFG-MOD-007-0073',
         VAT_AS_PER_63:'CFG-MOD-007-0074',
+        ABOVE_MAX_STOCK:'CFG-MOD-007-0084',
         FREE_GOODS:'CFG-MOD-007-0028',
         ROUND_PAYABLE:'CFG-MOD-007-0030',
         WHOLE_TAKA_LINES:'CFG-MOD-007-0032',
@@ -298,6 +305,7 @@ export const PUR_AC_PAGE:
         GATE_PASS_REQUIRED:'CFG-MOD-007-0077',
         PRICE_ABOVE_PO:'CFG-MOD-007-0078',
         VAT_AS_PER_63:'CFG-MOD-007-0079',
+        ABOVE_MAX_STOCK:'CFG-MOD-007-0085',
         FREE_GOODS:'CFG-MOD-007-0029',
         ROUND_PAYABLE:'CFG-MOD-007-0031',
         WHOLE_TAKA_LINES:'CFG-MOD-007-0033',

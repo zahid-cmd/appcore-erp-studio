@@ -58,47 +58,62 @@
 
             class="datepicker-selector"
 
-            role="button"
-
-            [attr.id]="id || null"
-
-            [attr.tabindex]="disabled ? -1 : 0"
-
-            [attr.aria-expanded]="calendarVisible"
-
             [class.open]="calendarVisible"
 
-            (click)="openCalendar()"
+            [class.invalid]="typedInvalid">
 
-            (keydown)="onKeyDown($event)">
+            <!-- VALUE : type a date (01-Jul-2025, 1/7/25, 2025-07-01,
+                 010725 ...) or pick it on the calendar -->
 
-            <!-- VALUE -->
+            <input
 
-            <div class="datepicker-value">
+                #dateInput
 
-                <ng-container
+                class="datepicker-input"
 
-                    *ngIf="displayValue; else placeholderTemplate">
+                type="text"
 
-                    {{ displayValue }}
+                autocomplete="off"
 
-                </ng-container>
+                spellcheck="false"
 
-                <ng-template #placeholderTemplate>
+                [attr.id]="id || null"
 
-                    <span class="datepicker-placeholder">
+                [attr.aria-expanded]="calendarVisible"
 
-                        {{ placeholder }}
+                [placeholder]="placeholder"
 
-                    </span>
+                [value]="typing ? draftText : displayValue"
 
-                </ng-template>
+                [disabled]="disabled"
 
-            </div>
+                [readOnly]="readonly"
+
+                [title]="typedInvalid ? 'Not a valid date : type e.g. 01-Jul-2025, 1/7/25 or 2025-07-01' : ''"
+
+                (click)="openCalendar()"
+
+                (focus)="onInputFocus($event)"
+
+                (input)="onInput($event)"
+
+                (blur)="commitTyped()"
+
+                (keydown)="onKeyDown($event)">
 
             <!-- ICON -->
 
-            <div class="datepicker-icon">
+            <div
+
+                class="datepicker-icon"
+
+                role="button"
+
+                aria-label="Open calendar"
+
+                (mousedown)="$event.preventDefault()"
+
+                (click)="toggleCalendar(); dateInput.focus()">
 
                 <i class="far fa-calendar-alt"></i>
 
@@ -130,7 +145,7 @@
 
     <app-calendar
 
-        [value]="value"
+        [value]="draftDate ?? value"
 
         [minDate]="minDate"
 

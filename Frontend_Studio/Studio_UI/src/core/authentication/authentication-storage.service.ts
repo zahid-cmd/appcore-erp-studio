@@ -487,6 +487,128 @@ export class AuthenticationStorageService
     }
 
     /* ========================================================
+       Replace Branch Session (Switch Branch, 2026-11-07)
+       --------------------------------------------------------
+       The server issued a new token for another branch. It
+       replaces the token in the storage that holds the
+       current login (localStorage when "remember me",
+       otherwise sessionStorage) and updates the stored
+       user's branch. The rest of the user stays as it is.
+
+       Returns the new Branch ID (null when the token has
+       none).
+    ======================================================== */
+
+    replaceBranchSession
+    (
+        response:
+            LoginResponse
+    ):
+        number
+        | null
+    {
+        const storage:
+            Storage =
+                sessionStorage.getItem(this.tokenKey)
+                    ? sessionStorage
+                    : localStorage;
+
+        const branchId:
+            number
+            | null =
+                this.getBranchIdFromToken(
+                    response.token
+                );
+
+        const branch =
+            response.branches?.find
+            (
+                x =>
+                    x.branchId ===
+                    branchId
+            )
+            ??
+            null;
+
+        storage.setItem
+        (
+            this.tokenKey,
+
+            response.token
+        );
+
+        let user:
+            any =
+                {};
+
+        try
+        {
+            user =
+                JSON.parse(
+                    storage.getItem(this.userKey)
+                    ??
+                    '{}'
+                )
+                ??
+                {};
+        }
+        catch
+        {
+            user = {};
+        }
+
+        user.branchId =
+            branchId;
+
+        user.branchCode =
+            branch?.branchCode
+            ??
+            '';
+
+        user.branchName =
+            branch?.branchName
+            ??
+            '';
+
+        storage.setItem
+        (
+            this.userKey,
+
+            JSON.stringify(
+                user
+            )
+        );
+
+        const loginId:
+            string =
+                String(
+                    user.userName
+                    ??
+                    response.userName
+                    ??
+                    ''
+                );
+
+        if
+        (
+            loginId.trim()
+            &&
+            branchId !== null
+            &&
+            branchId > 0
+        )
+        {
+            this.setLastLoginBranchId
+            (
+                loginId,
+                branchId
+            );
+        }
+
+        return branchId;
+    }
+
+    /* ========================================================
        Get Token
        --------------------------------------------------------
        Checks sessionStorage first and then localStorage.
@@ -796,4 +918,4 @@ export class AuthenticationStorageService
             this.userKey
         );
     }
-}
+}

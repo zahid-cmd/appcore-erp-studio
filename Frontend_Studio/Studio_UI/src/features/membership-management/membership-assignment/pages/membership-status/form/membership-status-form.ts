@@ -1916,13 +1916,13 @@ implements OnInit, OnDestroy
         const request =
             this.actionKind === 'use'
                 ? this.membershipStatusService.useWindow(
-                    this.entity.MembershipId,
+                    this.routePublicId,
                     window.MembershipServiceWindowId,
                     this.actionDate,
                     this.actionText.trim()
                 )
                 : this.membershipStatusService.approveWindow(
-                    this.entity.MembershipId,
+                    this.routePublicId,
                     window.MembershipServiceWindowId,
                     this.actionText.trim()
                 );
@@ -1953,7 +1953,7 @@ implements OnInit, OnDestroy
             {
                 this.runWindowAction(
                     this.membershipStatusService.undoUseWindow(
-                        this.entity.MembershipId,
+                        this.routePublicId,
                         window.MembershipServiceWindowId
                     ),
                     `Free service ${window.WindowNo} is not taken any more.`
@@ -2376,6 +2376,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.membershipStatusService.update(
+                this.routePublicId,
                 model
             ),
             this.minimumSaveDurationMs

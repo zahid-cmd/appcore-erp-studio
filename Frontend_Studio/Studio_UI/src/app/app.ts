@@ -14,6 +14,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    BranchSwitchDialogComponent
+}
+from '../shared/components/layout/branch-switch/branch-switch-dialog';
+
 
 //===============================================================
 // Component
@@ -27,7 +33,10 @@ from '@angular/router';
 
     imports:
     [
-        RouterOutlet
+        RouterOutlet,
+
+        // Switch Branch pop-up + the other-tab notice (2026-11-07)
+        BranchSwitchDialogComponent
     ],
 
     templateUrl:
@@ -43,4 +52,4 @@ from '@angular/router';
 
 export class App
 {
-}
+}

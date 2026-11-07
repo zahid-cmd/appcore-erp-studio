@@ -63,6 +63,11 @@ export interface ProductSubCategory
     SubCategoryCreationAllowed:
         boolean;
 
+    // Accessories only : For Sale / Additional Accessories /
+    // Promotional Accessories (its products take it)
+    AccessoryUse?:
+        string;
+
     Remarks:
         string;
 
@@ -125,6 +130,11 @@ export interface CreateProductSubCategory
 
     SubCategoryCreationAllowed:
         boolean;
+
+    // Accessories only : For Sale / Additional Accessories /
+    // Promotional Accessories (its products take it)
+    AccessoryUse?:
+        string;
 
     Remarks:
         string;
@@ -191,6 +201,11 @@ export interface UpdateProductSubCategory
 
     SubCategoryCreationAllowed:
         boolean;
+
+    // Accessories only : For Sale / Additional Accessories /
+    // Promotional Accessories (its products take it)
+    AccessoryUse?:
+        string;
 
     Remarks:
         string;

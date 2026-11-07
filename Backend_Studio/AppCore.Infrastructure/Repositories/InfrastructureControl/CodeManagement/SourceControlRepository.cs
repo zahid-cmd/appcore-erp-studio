@@ -5294,7 +5294,43 @@ public class SourceControlRepository
 
     //===========================================================
     // Execute Git Command
+    //
+    // Why this is more than a plain Process.Start:
+    //
+    //  1. One git command at a time per repository. Status,
+    //     commit, pull ... from this API never overlap, so the
+    //     API never fights itself for .git\index.lock.
+    //
+    //  2. Retry. VS Code, Claude Code or another terminal often
+    //     runs "git status" in the background; for a moment it
+    //     holds .git\index.lock (or a file is still being
+    //     written). Git then fails at once. We wait a little and
+    //     try again (3 tries) instead of failing the user.
+    //
+    //  3. Stale lock. A crashed git can leave index.lock behind
+    //     for ever. A lock older than 10 minutes is removed.
+    //
+    //  4. Never hang. Git may not ask questions on the console
+    //     (GIT_TERMINAL_PROMPT=0, stdin closed) and every command
+    //     has a time limit: 5 minutes for network commands
+    //     (fetch, pull, push), 2 minutes for the rest.
     //===========================================================
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim>
+        RepositoryGates =
+            new(StringComparer.OrdinalIgnoreCase);
+
+    private const int GitMaxAttempts = 3;
+
+    private static readonly TimeSpan GitLocalTimeout =
+        TimeSpan.FromMinutes(2);
+
+    private static readonly TimeSpan GitNetworkTimeout =
+        TimeSpan.FromMinutes(5);
+
+    private static readonly TimeSpan GitStaleLockAge =
+        TimeSpan.FromMinutes(10);
+
 
     private static async Task<GitCommandResult>
         ExecuteGitCommandAsync
@@ -5304,39 +5340,151 @@ public class SourceControlRepository
         params string[] arguments
     )
     {
+        if
+        (
+            string.IsNullOrWhiteSpace(
+                repositoryPath
+            )
+        )
+        {
+            return GitCommandResult.Failure(
+                -1,
+
+                "Repository path is not configured."
+            );
+        }
+
+
+        if
+        (
+            !Directory.Exists(
+                repositoryPath
+            )
+        )
+        {
+            return GitCommandResult.Failure(
+                -1,
+
+                $"Repository path was not found: {repositoryPath}"
+            );
+        }
+
+
+        var gate =
+            RepositoryGates.GetOrAdd(
+                Path.GetFullPath(
+                    repositoryPath
+                ).TrimEnd(
+                    '\\',
+                    '/'
+                ),
+
+                _ => new SemaphoreSlim(1, 1)
+            );
+
+
+        await gate.WaitAsync();
+
         try
         {
-            if
-            (
-                string.IsNullOrWhiteSpace(
-                    repositoryPath
+            RemoveStaleIndexLock(
+                repositoryPath
+            );
+
+
+            var timeout =
+                IsNetworkGitCommand(
+                    arguments
                 )
-            )
-            {
-                return GitCommandResult.Failure(
+                    ? GitNetworkTimeout
+                    : GitLocalTimeout;
+
+
+            GitCommandResult result =
+                GitCommandResult.Failure(
                     -1,
 
-                    "Repository path is not configured."
+                    "Git command was not started."
+                );
+
+
+            for
+            (
+                var attempt = 1;
+                attempt <= GitMaxAttempts;
+                attempt++
+            )
+            {
+                result =
+                    await RunGitProcessAsync(
+                        repositoryPath,
+
+                        timeout,
+
+                        arguments
+                    );
+
+
+                if
+                (
+                    result.Success
+                    ||
+                    attempt == GitMaxAttempts
+                    ||
+                    !IsTransientGitFailure(
+                        result,
+
+                        timeout == GitNetworkTimeout
+                    )
+                )
+                {
+                    break;
+                }
+
+
+                Console.WriteLine(
+                    $"[GIT] Busy repository (attempt {attempt} of {GitMaxAttempts}); retrying..."
+                );
+
+
+                await Task.Delay(
+                    700 * attempt
+                );
+
+
+                RemoveStaleIndexLock(
+                    repositoryPath
                 );
             }
 
 
-            if
-            (
-                !Directory.Exists(
-                    repositoryPath
-                )
-            )
-            {
-                return GitCommandResult.Failure(
-                    -1,
-
-                    $"Repository path was not found: {repositoryPath}"
-                );
-            }
+            return result;
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
 
 
-            var process =
+
+    //===========================================================
+    // Run Git Process (one attempt)
+    //===========================================================
+
+    private static async Task<GitCommandResult>
+        RunGitProcessAsync
+    (
+        string repositoryPath,
+
+        TimeSpan timeout,
+
+        string[] arguments
+    )
+    {
+        try
+        {
+            using var process =
                 new Process();
 
 
@@ -5348,6 +5496,9 @@ public class SourceControlRepository
 
                     WorkingDirectory =
                         repositoryPath,
+
+                    RedirectStandardInput =
+                        true,
 
                     RedirectStandardOutput =
                         true,
@@ -5361,6 +5512,12 @@ public class SourceControlRepository
                     CreateNoWindow =
                         true
                 };
+
+
+            // Git must never wait for a console answer
+            process.StartInfo
+                .Environment["GIT_TERMINAL_PROMPT"] =
+                    "0";
 
 
             foreach
@@ -5380,7 +5537,6 @@ public class SourceControlRepository
                 $"[GIT] Repository Path : {repositoryPath}"
             );
 
-
             Console.WriteLine(
                 $"[GIT] Command : git {string.Join(" ", arguments)}"
             );
@@ -5389,11 +5545,14 @@ public class SourceControlRepository
             process.Start();
 
 
+            // Nothing to type in: close stdin at once
+            process.StandardInput.Close();
+
+
             var outputTask =
                 process
                     .StandardOutput
                     .ReadToEndAsync();
-
 
             var errorTask =
                 process
@@ -5401,13 +5560,59 @@ public class SourceControlRepository
                     .ReadToEndAsync();
 
 
-            await process
-                .WaitForExitAsync();
+            using var timeoutSource =
+                new CancellationTokenSource(
+                    timeout
+                );
+
+
+            try
+            {
+                await process
+                    .WaitForExitAsync(
+                        timeoutSource.Token
+                    );
+            }
+            catch
+            (
+                OperationCanceledException
+            )
+            {
+                try
+                {
+                    process.Kill(
+                        true
+                    );
+                }
+                catch
+                {
+                    // already gone
+                }
+
+
+                var message =
+                    $"Git did not finish within {timeout.TotalMinutes:0} minutes and was stopped "
+                    +
+                    $"(git {string.Join(" ", arguments)}). "
+                    +
+                    "Check the network and the saved Git login, then try again.";
+
+
+                Console.WriteLine(
+                    $"[GIT ERROR]\n{message}"
+                );
+
+
+                return GitCommandResult.Failure(
+                    -2,
+
+                    message
+                );
+            }
 
 
             var output =
                 await outputTask;
-
 
             var error =
                 await errorTask;
@@ -5468,6 +5673,169 @@ public class SourceControlRepository
                 -1,
 
                 exception.Message
+            );
+        }
+    }
+
+
+
+    //===========================================================
+    // Network Git Command ?
+    //===========================================================
+
+    private static bool
+        IsNetworkGitCommand
+    (
+        string[] arguments
+    )
+    {
+        return arguments.Any(
+            argument =>
+                argument is "fetch" or "pull" or "push" or "ls-remote" or "clone"
+        );
+    }
+
+
+
+    //===========================================================
+    // Transient Git Failure ?
+    //
+    // Failures that go away on their own a moment later:
+    // another git holds a lock, or a file is still in use.
+    //===========================================================
+
+    private static bool
+        IsTransientGitFailure
+    (
+        GitCommandResult result,
+
+        bool isNetworkCommand
+    )
+    {
+        if
+        (
+            result.ExitCode == -2
+        )
+        {
+            // timed out : do not run it again
+            return false;
+        }
+
+
+        var text =
+            (
+                result.Error
+                +
+                " "
+                +
+                result.Output
+            ).ToLowerInvariant();
+
+
+        var isLockProblem =
+            text.Contains(".lock")
+            ||
+            text.Contains("another git process")
+            ||
+            text.Contains("could not lock")
+            ||
+            text.Contains("unable to unlink");
+
+
+        if
+        (
+            isNetworkCommand
+        )
+        {
+            // fetch / pull / push : a login or network error is
+            // not retried (it would only fail again, slowly)
+            return isLockProblem;
+        }
+
+
+        return
+            isLockProblem
+            ||
+            text.Contains("permission denied")
+            ||
+            text.Contains("used by another process")
+            ||
+            text.Contains("device or resource busy")
+            ||
+            text.Contains("unable to index file")
+            ||
+            text.Contains("failed to insert into database");
+    }
+
+
+
+    //===========================================================
+    // Remove Stale index.lock
+    //
+    // Only a lock older than 10 minutes is removed: a live git
+    // never holds it that long, so it was left by a crash.
+    //===========================================================
+
+    private static void
+        RemoveStaleIndexLock
+    (
+        string repositoryPath
+    )
+    {
+        try
+        {
+            var lockPath =
+                Path.Combine(
+                    repositoryPath,
+                    ".git",
+                    "index.lock"
+                );
+
+
+            if
+            (
+                !File.Exists(
+                    lockPath
+                )
+            )
+            {
+                return;
+            }
+
+
+            var age =
+                DateTime.UtcNow
+                -
+                File.GetLastWriteTimeUtc(
+                    lockPath
+                );
+
+
+            if
+            (
+                age < GitStaleLockAge
+            )
+            {
+                return;
+            }
+
+
+            File.Delete(
+                lockPath
+            );
+
+
+            Console.WriteLine(
+                $"[GIT] Removed stale lock ({age.TotalMinutes:0} min old): {lockPath}"
+            );
+        }
+        catch
+        (
+            Exception exception
+        )
+        {
+            Console.WriteLine(
+                $"[GIT] Could not remove stale lock: {exception.Message}"
             );
         }
     }

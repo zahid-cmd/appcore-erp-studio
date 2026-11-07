@@ -78,6 +78,11 @@ export interface PurchaseOrderSwitchCodes
     // editable; OFF : they are fixed
     EDIT_SUPPLIER_TERMS:
         string;
+
+    // ON = a line may go above the item's Max Stock Level (warning
+    // only); OFF / missing = Max is a hard cap
+    ABOVE_MAX_STOCK:
+        string;
 }
 
 
@@ -177,7 +182,8 @@ export const PO_MB_PAGE:
         FREE_GOODS:'',
         ROUND_PAYABLE:'',
         WHOLE_TAKA_LINES:'',
-        EDIT_SUPPLIER_TERMS:'CFG-MOD-007-0040'
+        EDIT_SUPPLIER_TERMS:'CFG-MOD-007-0040',
+        ABOVE_MAX_STOCK:'CFG-MOD-007-0080'
     }
 };
 
@@ -210,7 +216,8 @@ export const PO_SP_PAGE:
         FREE_GOODS:'CFG-MOD-007-0028',
         ROUND_PAYABLE:'CFG-MOD-007-0030',
         WHOLE_TAKA_LINES:'CFG-MOD-007-0032',
-        EDIT_SUPPLIER_TERMS:'CFG-MOD-007-0038'
+        EDIT_SUPPLIER_TERMS:'CFG-MOD-007-0038',
+        ABOVE_MAX_STOCK:'CFG-MOD-007-0081'
     }
 };
 
@@ -243,7 +250,8 @@ export const PO_AC_PAGE:
         FREE_GOODS:'CFG-MOD-007-0029',
         ROUND_PAYABLE:'CFG-MOD-007-0031',
         WHOLE_TAKA_LINES:'CFG-MOD-007-0033',
-        EDIT_SUPPLIER_TERMS:'CFG-MOD-007-0039'
+        EDIT_SUPPLIER_TERMS:'CFG-MOD-007-0039',
+        ABOVE_MAX_STOCK:'CFG-MOD-007-0082'
     }
 };
 

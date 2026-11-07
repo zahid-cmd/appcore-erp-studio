@@ -77,6 +77,8 @@ export interface Receiving
     CreatedDate:string;
     Lines:ReceivingLine[];
     Units:ReceivingUnit[];
+    // MB : free accessories received on it
+    Accessories:ReceivingAccessoryLine[];
 }
 
 
@@ -173,6 +175,51 @@ export interface ReceivingPurchase
     PendingQuantity:number;
     ReceivingStatus:string;
     Lines:ReceivingPurchaseLine[];
+    // MB : free accessories still due from the supplier
+    AccessoryPendingQuantity:number;
+    Accessories:ReceivingAccessoryDue[];
+}
+
+
+//===============================================================
+// MB : free accessories due from the supplier (Bike Accessory
+// Schemes, Supplier source)
+//===============================================================
+
+export interface ReceivingAccessoryDue
+{
+    PurchaseAccessoryDueId:number;
+    SchemeCode:string;
+    SchemeName:string;
+    // Additional / Promotional
+    SchemeKind:string;
+    AccessoryId:number;
+    ProductCode:string;
+    AccessoryName:string;
+    Unit:string;
+    QuantityDue:number;
+    ReceivedBefore:number;
+    QuantityClosed:number;
+    PendingQuantity:number;
+}
+
+export interface ReceivingAccessoryLine
+{
+    PurchaseAccessoryDueId:number;
+    SchemeCode:string;
+    SchemeKind:string;
+    AccessoryId:number;
+    ProductCode:string;
+    AccessoryName:string;
+    Unit:string;
+    Quantity:number;
+    BatchNo:string;
+}
+
+export interface CreateReceivingAccessory
+{
+    PurchaseAccessoryDueId:number;
+    Quantity:number;
 }
 
 
@@ -201,6 +248,8 @@ export interface CreateReceiving
     Remarks:string;
     Lines:CreateReceivingLine[];
     Units:ReceivingUnit[];
+    // MB : free accessories received now
+    Accessories?:CreateReceivingAccessory[];
 }
 
 export interface ReceivingUnitTaken

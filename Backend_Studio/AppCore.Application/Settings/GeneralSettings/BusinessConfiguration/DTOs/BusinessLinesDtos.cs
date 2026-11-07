@@ -71,6 +71,9 @@ public class BranchLineStatusDto
 
     public string AccessType { get; set; } = string.Empty;
 
+    // Full / Gifts Only
+    public string Scope { get; set; } = string.Empty;
+
     public DateOnly? ValidFrom { get; set; }
 
     public DateOnly? ValidUntil { get; set; }
@@ -94,4 +97,4 @@ public class AllowedWarehouseDto
 
     // Lines in force today for the warehouse's branch
     public List<string> ActiveLines { get; set; } = new();
-}
+}

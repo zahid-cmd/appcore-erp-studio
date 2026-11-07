@@ -169,63 +169,6 @@
                 </app-textbox>
 
 
-                <!-- Fits Models : the home model + the other models it fits -->
-
-                <div class="fit-box">
-
-                    <app-search-dropdown
-
-                        label="Fits Models"
-
-                        placeholder="Add another model it fits"
-
-                        [items]="fitItems"
-
-                        [value]="fitPickValue"
-
-                        (valueChange)="onAddFit($event)"
-
-                        [disabled]="isViewMode || isSaving || !entity.ProductSubCategoryId">
-
-                    </app-search-dropdown>
-
-                    <div class="fit-chips" aria-label="Models this item fits">
-
-                        @for (c of fitChips; track c.id)
-                        {
-                            <span class="fit-chip" [class.is-home]="c.home" [title]="c.title">
-
-                                @if (c.home)
-                                {
-                                    <i class="fas fa-house" aria-hidden="true"></i>
-                                }
-
-                                {{ c.name }}
-
-                                @if (!c.home && !isViewMode)
-                                {
-                                    <button
-                                        type="button"
-                                        class="fit-chip-x"
-                                        [attr.aria-label]="'Remove ' + c.name"
-                                        [disabled]="isSaving"
-                                        (click)="removeFit(c.id)">
-                                        <i class="fas fa-xmark" aria-hidden="true"></i>
-                                    </button>
-                                }
-
-                            </span>
-                        }
-                        @empty
-                        {
-                            <span class="fit-empty">Pick the sub category first</span>
-                        }
-
-                    </div>
-
-                </div>
-
-
                 <!-- Remarks -->
 
                 <app-textarea

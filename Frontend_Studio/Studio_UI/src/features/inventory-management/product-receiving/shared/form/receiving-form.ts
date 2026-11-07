@@ -101,6 +101,7 @@ from '../../../../../core/authentication/authentication-storage.service';
 import
 {
     Receiving,
+    ReceivingAccessoryDue,
     ReceivingDefaults,
     ReceivingLine,
     ReceivingPageConfig,
@@ -158,6 +159,14 @@ interface Option
 {
     label:string;
     value:any;
+}
+
+// MB : one free accessory due, with the quantity received now
+interface AccessoryRow
+{
+    Due:ReceivingAccessoryDue;
+    // Typed "Receive Now" (digits only)
+    NowText:string;
 }
 
 interface Fact
@@ -436,6 +445,17 @@ export class ReceivingForm
     cancelOpen:
         boolean = false;
 
+    // MB : free accessories due on the chosen purchase
+    accessoryRows:
+        AccessoryRow[] = [];
+
+    // Close Due dialog
+    closeRow:
+        AccessoryRow | null = null;
+
+    closeReason:
+        string = '';
+
     cancelReason:
         string = '';
 
@@ -688,7 +708,10 @@ export class ReceivingForm
                             (
                                 x =>
                                 ({
-                                    label:`${x.PurchaseNo} · ${x.SupplierName} · ${formatReceivingQty(x.PendingQuantity)} in transit${x.ReceivingStatus === 'Partly Received' ? ' (partly received)' : ''}`,
+                                    label:
+                                        x.PendingQuantity > 0
+                                            ? `${x.PurchaseNo} · ${x.SupplierName} · ${formatReceivingQty(x.PendingQuantity)} in transit${x.ReceivingStatus === 'Partly Received' ? ' (partly received)' : ''}`
+                                            : `${x.PurchaseNo} · ${x.SupplierName} · free accessories pending (${formatReceivingQty(x.AccessoryPendingQuantity)})`,
                                     value:x.PurchaseId
                                 })
                             );
@@ -861,6 +884,11 @@ export class ReceivingForm
                 );
 
         this.lines.forEach(x => this.placeDefault(x));
+
+        this.accessoryRows =
+            (this.purchase?.Accessories ?? [])
+                .filter(x => x.PendingQuantity > 0)
+                .map(x => ({ Due:x, NowText:'' }));
 
         this.resetPick();
 
@@ -1602,9 +1630,17 @@ export class ReceivingForm
             { label:'In Transit', value:`${formatReceivingQty(p.PendingQuantity)} of ${formatReceivingQty(p.PurchasedQuantity)}` }
         ];
 
+        if
+        (
+            (p.Accessories ?? []).length > 0
+        )
+        {
+            this.facts.push({ label:'Free Accessories Due', value:formatReceivingQty(p.AccessoryPendingQuantity) });
+        }
+
         this.invoiceStatus = p.ReceivingStatus;
 
-        this.invoiceTone = p.ReceivingStatus === 'Partly Received' ? 'amber' : 'blue';
+        this.invoiceTone = p.ReceivingStatus === 'Partly Received' || p.ReceivingStatus === 'Received, Accessories Pending' ? 'amber' : 'blue';
     }
 
     private buildViewFacts():
@@ -2123,12 +2159,27 @@ export class ReceivingForm
         const lines =
             this.addedLines;
 
+        const accessoryProblem =
+            this.accessoryProblem();
+
         if
         (
-            lines.length === 0
+            accessoryProblem
         )
         {
-            return { text:'Add at least one line : pick it on the left and press Add (or All).' };
+            return { text:accessoryProblem };
+        }
+
+        if
+        (
+            lines.length === 0 && this.accessoryNowTotal === 0
+        )
+        {
+            return {
+                text:this.accessoryRows.length > 0
+                    ? 'Add at least one bike line, or enter the free accessories received now.'
+                    : 'Add at least one line : pick it on the left and press Add (or All).'
+            };
         }
 
         if
@@ -2284,7 +2335,12 @@ export class ReceivingForm
                             ShortNotes:x.Notes.trim()
                         })
                     ),
-                    Units:this.isBikes ? this.allUnits() : []
+                    Units:this.isBikes ? this.allUnits() : [],
+                    Accessories:this.isBikes
+                        ? this.accessoryRows
+                            .map(x => ({ PurchaseAccessoryDueId:x.Due.PurchaseAccessoryDueId, Quantity:this.accessoryNow(x) }))
+                            .filter(x => x.Quantity > 0)
+                        : []
                 }
             )
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -2319,6 +2375,8 @@ export class ReceivingForm
         this.purchaseId = 0;
 
         this.lines = [];
+
+        this.accessoryRows = [];
 
         this.remarks = '';
 
@@ -2406,7 +2464,7 @@ export class ReceivingForm
         this.saving = true;
 
         this.service
-            .cancel(this.page.path, receiving.ReceivingId, this.cancelReason.trim())
+            .cancel(this.page.path, receiving.PublicId ?? '', this.cancelReason.trim())
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -2443,6 +2501,192 @@ export class ReceivingForm
         ReceivingUnit[]
     {
         return (this.receiving?.Units ?? []).filter(x => x.PurchaseLineId === purchaseLineId);
+    }
+
+    //===========================================================
+    // MB : free accessories due from the supplier
+    //===========================================================
+
+    accessoryNow
+    (
+        row:
+            AccessoryRow
+    ):
+        number
+    {
+        return Number(row.NowText) || 0;
+    }
+
+    get accessoryNowTotal():
+        number
+    {
+        return this.accessoryRows.reduce((sum, x) => sum + this.accessoryNow(x), 0);
+    }
+
+    get accessoryPendingTotal():
+        number
+    {
+        return this.accessoryRows.reduce((sum, x) => sum + x.Due.PendingQuantity, 0);
+    }
+
+    get viewAccessoryTotal():
+        number
+    {
+        return (this.receiving?.Accessories ?? []).reduce((sum, x) => sum + x.Quantity, 0);
+    }
+
+    // Digits only, never above the pending quantity
+    onAccessoryInput
+    (
+        row:
+            AccessoryRow,
+        event:
+            Event
+    ):
+        void
+    {
+        const input =
+            event.target as HTMLInputElement;
+
+        let digits =
+            input.value.replace(/\D/g, '').slice(0, 6);
+
+        if
+        (
+            digits && Number(digits) > row.Due.PendingQuantity
+        )
+        {
+            digits = String(row.Due.PendingQuantity);
+        }
+
+        input.value = digits;
+
+        row.NowText = digits;
+
+        this.refreshView();
+    }
+
+    // Every pending accessory at its full quantity
+    accessoriesAll():
+        void
+    {
+        this.accessoryRows.forEach(x => x.NowText = String(x.Due.PendingQuantity));
+
+        this.refreshView();
+    }
+
+    accessoriesNone():
+        void
+    {
+        this.accessoryRows.forEach(x => x.NowText = '');
+
+        this.refreshView();
+    }
+
+    private accessoryProblem():
+        string
+    {
+        const over =
+            this.accessoryRows.find(x => this.accessoryNow(x) > x.Due.PendingQuantity);
+
+        return over
+            ? `${over.Due.AccessoryName} : only ${formatReceivingQty(over.Due.PendingQuantity)} ${over.Due.Unit} is still due.`
+            : '';
+    }
+
+    openCloseDue
+    (
+        row:
+            AccessoryRow
+    ):
+        void
+    {
+        if
+        (
+            this.saving
+        )
+        {
+            return;
+        }
+
+        this.closeRow = row;
+
+        this.closeReason = '';
+    }
+
+    confirmCloseDue():
+        void
+    {
+        const row =
+            this.closeRow;
+
+        if
+        (
+            !row || this.saving
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            !this.closeReason.trim()
+        )
+        {
+            this.toast.error('Reason Needed', 'Write why the rest will not come from the supplier.');
+
+            return;
+        }
+
+        this.saving = true;
+
+        this.service
+            .closeAccessoryDue(this.page.path, row.Due.PurchaseAccessoryDueId, this.purchase?.BranchId ?? this.branchId, this.closeReason.trim())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    () =>
+                    {
+                        this.saving = false;
+
+                        this.closeRow = null;
+
+                        this.toast.success('Due Closed', `${formatReceivingQty(row.Due.PendingQuantity)} ${row.Due.Unit} ${row.Due.AccessoryName} will not be received.`);
+
+                        this.accessoryRows =
+                            this.accessoryRows.filter(x => x !== row);
+
+                        const purchase =
+                            this.purchase;
+
+                        if
+                        (
+                            purchase
+                        )
+                        {
+                            purchase.Accessories =
+                                (purchase.Accessories ?? []).filter(x => x.PurchaseAccessoryDueId !== row.Due.PurchaseAccessoryDueId);
+
+                            purchase.AccessoryPendingQuantity =
+                                Math.max(0, (purchase.AccessoryPendingQuantity || 0) - row.Due.PendingQuantity);
+
+                            this.buildPurchaseFacts();
+                        }
+
+                        this.refreshView();
+                    },
+
+                error:
+                    err =>
+                    {
+                        this.saving = false;
+
+                        this.toast.error('Not Closed', errorText(err, 'The due could not be closed.'));
+
+                        this.refreshView();
+                    }
+            });
     }
 
     back():

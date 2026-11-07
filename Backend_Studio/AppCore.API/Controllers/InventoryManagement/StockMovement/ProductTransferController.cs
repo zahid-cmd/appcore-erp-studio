@@ -269,18 +269,39 @@ public class ProductTransferController
 
         return Guarded(
             "Add",
-            async () => Ok(await _repository.CreateAsync(dto ?? new CreateProductTransferDto(), userId)),
+            async () =>
+            {
+                long id =
+                    await _repository.CreateAsync(dto ?? new CreateProductTransferDto(), userId);
+
+                // The uuid comes back too : save-and-post goes on by uuid
+                var saved =
+                    await _repository.GetByIdAsync(id, BranchId);
+
+                return Ok(new { Id = id, PublicId = saved?.PublicId });
+            },
             "Failed to save the product transfer.");
     }
 
-    [HttpPut("{id:long}")]
-    public Task<IActionResult> Update(
-        long id,
+    [HttpPut("{publicId:guid}")]
+    public async Task<IActionResult> Update(
+        Guid publicId,
         [FromBody] UpdateProductTransferDto? dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Product transfer not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Update",
             async () =>
             {
@@ -319,13 +340,24 @@ public class ProductTransferController
             "Failed to delete the product transfer.");
     }
 
-    [HttpPut("{id:long}/restore")]
-    public Task<IActionResult> Restore(
-        long id)
+    [HttpPut("{publicId:guid}/restore")]
+    public async Task<IActionResult> Restore(
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Product transfer not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Restore",
             async () =>
             {
@@ -341,13 +373,24 @@ public class ProductTransferController
     // Post (Send) / Receive / Cancel
     //===========================================================
 
-    [HttpPost("{id:long}/post")]
-    public Task<IActionResult> Post(
-        long id)
+    [HttpPost("{publicId:guid}/post")]
+    public async Task<IActionResult> Post(
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Product transfer not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Post",
             async () =>
             {
@@ -359,16 +402,27 @@ public class ProductTransferController
             "Failed to post the product transfer.");
     }
 
-    [HttpPost("{id:long}/receive")]
-    public Task<IActionResult> Receive(
-        long id,
+    [HttpPost("{publicId:guid}/receive")]
+    public async Task<IActionResult> Receive(
+        Guid publicId,
         [FromBody] ReceiveProductTransferDto? dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Product transfer not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         long branchId = BranchId;
 
-        return Guarded(
+        return await Guarded(
             "Receive",
             async () =>
             {
@@ -379,14 +433,25 @@ public class ProductTransferController
             "Failed to receive the product transfer.");
     }
 
-    [HttpPost("{id:long}/cancel")]
-    public Task<IActionResult> Cancel(
-        long id,
+    [HttpPost("{publicId:guid}/cancel")]
+    public async Task<IActionResult> Cancel(
+        Guid publicId,
         [FromBody] CancelProductTransferDto? dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Product transfer not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Cancel",
             async () =>
             {
@@ -410,11 +475,22 @@ public class ProductTransferController
             "Failed to load the product transfer history.");
     }
 
-    [HttpGet("{id:long}/history")]
-    public Task<IActionResult> GetEntityHistory(
-        long id)
+    [HttpGet("{publicId:guid}/history")]
+    public async Task<IActionResult> GetEntityHistory(
+        Guid publicId)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Product transfer not found.");
+        }
+
+        long id =
+            foundId.Value;
+
+        return await Run(
             async () => Ok(await _repository.GetEntityHistoryAsync(id)),
             "Failed to load the product transfer history.");
     }

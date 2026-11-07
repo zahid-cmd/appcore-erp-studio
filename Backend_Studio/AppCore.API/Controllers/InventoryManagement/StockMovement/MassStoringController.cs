@@ -267,18 +267,39 @@ public class MassStoringController
 
         return Guarded(
             "Add",
-            async () => Ok(await _repository.CreateAsync(dto ?? new CreateMassStoringDto(), userId)),
+            async () =>
+            {
+                long id =
+                    await _repository.CreateAsync(dto ?? new CreateMassStoringDto(), userId);
+
+                // The uuid comes back too : save-and-post goes on by uuid
+                var saved =
+                    await _repository.GetByIdAsync(id);
+
+                return Ok(new { Id = id, PublicId = saved?.PublicId });
+            },
             "Failed to save the mass storing.");
     }
 
-    [HttpPut("{id:long}")]
-    public Task<IActionResult> Update(
-        long id,
+    [HttpPut("{publicId:guid}")]
+    public async Task<IActionResult> Update(
+        Guid publicId,
         [FromBody] UpdateMassStoringDto? dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Mass storing not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Update",
             async () =>
             {
@@ -317,14 +338,25 @@ public class MassStoringController
             "Failed to delete the mass storing.");
     }
 
-    [HttpPut("{id:long}/restore")]
-    [HttpPut("restore/{id:long}")]
-    public Task<IActionResult> Restore(
-        long id)
+    [HttpPut("{publicId:guid}/restore")]
+    [HttpPut("restore/{publicId:guid}")]
+    public async Task<IActionResult> Restore(
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Mass storing not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Restore",
             async () =>
             {
@@ -340,13 +372,24 @@ public class MassStoringController
     // Post / Cancel
     //===========================================================
 
-    [HttpPost("{id:long}/post")]
-    public Task<IActionResult> Post(
-        long id)
+    [HttpPost("{publicId:guid}/post")]
+    public async Task<IActionResult> Post(
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Mass storing not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Post",
             async () =>
             {
@@ -358,14 +401,25 @@ public class MassStoringController
             "Failed to post the mass storing.");
     }
 
-    [HttpPost("{id:long}/cancel")]
-    public Task<IActionResult> Cancel(
-        long id,
+    [HttpPost("{publicId:guid}/cancel")]
+    public async Task<IActionResult> Cancel(
+        Guid publicId,
         [FromBody] CancelMassStoringDto? dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Mass storing not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Cancel",
             async () =>
             {
@@ -389,11 +443,22 @@ public class MassStoringController
             "Failed to load the mass storing history.");
     }
 
-    [HttpGet("{id:long}/history")]
-    public Task<IActionResult> GetEntityHistory(
-        long id)
+    [HttpGet("{publicId:guid}/history")]
+    public async Task<IActionResult> GetEntityHistory(
+        Guid publicId)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Mass storing not found.");
+        }
+
+        long id =
+            foundId.Value;
+
+        return await Run(
             async () => Ok(await _repository.GetEntityHistoryAsync(id)),
             "Failed to load the mass storing history.");
     }

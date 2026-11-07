@@ -291,13 +291,32 @@ public class RackManagementController
             "Rack could not be saved.");
     }
 
-    [HttpPut]
-    public Task<IActionResult> Update(
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
+    public async Task<IActionResult> Update(
+        Guid publicId,
         [FromBody] UpdateRackManagementDto? dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        dto ??= new UpdateRackManagementDto();
+
+        dto.RackManagementId =
+            id;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Update",
             async () =>
             {

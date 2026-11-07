@@ -24,15 +24,15 @@ namespace AppCore.Api.Controllers.AccountsFinance.VoucherManagement;
 //   GET    /                    list
 //   GET    /paged               the list page (one page, server side)
 //   GET    /defaults            next voucher number (preview)
-//   GET    /{id}                header + debits + credits
+//   GET    /{publicId}          header + debits + credits
 //   POST   /                    create Draft (returns id + number)
-//   PUT    /                    update Draft
-//   DELETE /{id}                delete Draft
+//   PUT    /{publicId}          update Draft
+//   DELETE /{publicId}          delete Draft
 //   PUT    /restore             restore last deleted Draft
-//   PUT    /{id}/approve        Draft → Approved
-//   PUT    /{id}/return-to-draft Approved → Draft
-//   PUT    /{id}/post           Approved → Posted
-//   PUT    /{id}/cancel         Posted → Cancelled (reason)
+//   PUT    /{publicId}/approve  Draft → Approved
+//   PUT    /{publicId}/return-to-draft Approved → Draft
+//   PUT    /{publicId}/post     Approved → Posted
+//   PUT    /{publicId}/cancel   Posted → Cancelled (reason)
 //   GET    /history
 //
 // 400 : validation; 404 : not found; 409 : wrong status / blocked
@@ -187,12 +187,28 @@ public class PaymentVoucherController : ControllerBase
             badRequestOnInvalid: true);
     }
 
-    [HttpPut]
+    [HttpPut("{publicId:guid}")]
 
-    public Task<IActionResult> Update(
+    public async Task<IActionResult> Update(
+        Guid publicId,
         UpdatePaymentVoucherDto dto)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        // The server decides which voucher : never the body
+        dto.PaymentVoucherId =
+            id;
+
+        return await Run(
             async () =>
             {
                 await _repository.UpdateAsync(
@@ -255,12 +271,23 @@ public class PaymentVoucherController : ControllerBase
     // Workflow
     //===========================================================
 
-    [HttpPut("{id:long}/approve")]
+    [HttpPut("{publicId:guid}/approve")]
 
-    public Task<IActionResult> Approve(
-        long id)
+    public async Task<IActionResult> Approve(
+        Guid publicId)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        return await Run(
             async () =>
             {
                 await _repository.ApproveAsync(
@@ -272,12 +299,23 @@ public class PaymentVoucherController : ControllerBase
             "Approve Payment Voucher");
     }
 
-    [HttpPut("{id:long}/return-to-draft")]
+    [HttpPut("{publicId:guid}/return-to-draft")]
 
-    public Task<IActionResult> ReturnToDraft(
-        long id)
+    public async Task<IActionResult> ReturnToDraft(
+        Guid publicId)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        return await Run(
             async () =>
             {
                 await _repository.ReturnToDraftAsync(
@@ -289,12 +327,23 @@ public class PaymentVoucherController : ControllerBase
             "Return Payment Voucher To Draft");
     }
 
-    [HttpPut("{id:long}/post")]
+    [HttpPut("{publicId:guid}/post")]
 
-    public Task<IActionResult> Post(
-        long id)
+    public async Task<IActionResult> Post(
+        Guid publicId)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        return await Run(
             async () =>
             {
                 await _repository.PostAsync(
@@ -306,13 +355,24 @@ public class PaymentVoucherController : ControllerBase
             "Post Payment Voucher");
     }
 
-    [HttpPut("{id:long}/cancel")]
+    [HttpPut("{publicId:guid}/cancel")]
 
-    public Task<IActionResult> Cancel(
-        long id,
+    public async Task<IActionResult> Cancel(
+        Guid publicId,
         CancelPaymentVoucherDto dto)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        return await Run(
             async () =>
             {
                 await _repository.CancelAsync(

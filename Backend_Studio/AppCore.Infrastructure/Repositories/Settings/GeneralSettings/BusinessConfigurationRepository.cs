@@ -183,6 +183,8 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
 
             AccessType = x.AccessType,
 
+            Scope = string.IsNullOrWhiteSpace(x.Scope) ? BusinessLineAccess.ScopeFull : x.Scope,
+
             ValidFrom = x.ValidFrom,
 
             ValidUntil = x.ValidUntil,
@@ -230,6 +232,8 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
 
         public string AccessType { get; init; } = string.Empty;
 
+        public string Scope { get; init; } = BusinessLineAccess.ScopeFull;
+
         public DateOnly? ValidFrom { get; init; }
 
         public DateOnly? ValidUntil { get; init; }
@@ -244,7 +248,8 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
             string? accessType,
             DateOnly? validFrom,
             DateOnly? validUntil,
-            long excludeId
+            long excludeId,
+            string? scope = null
         )
     {
         //=======================================================
@@ -384,6 +389,24 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
                 $"{branch.BranchName} already has a {line} grant. Edit that grant instead.");
         }
 
+        //=======================================================
+        // Scope : Gifts Only for Accessories only
+        //=======================================================
+
+        string scopeText =
+            string.Equals(
+                scope?.Trim(),
+                BusinessLineAccess.ScopeGiftsOnly,
+                StringComparison.OrdinalIgnoreCase)
+                ? BusinessLineAccess.ScopeGiftsOnly
+                : BusinessLineAccess.ScopeFull;
+
+        if (scopeText == BusinessLineAccess.ScopeGiftsOnly && line != BusinessLineAccess.Accessories)
+        {
+            throw new InvalidOperationException(
+                "Gifts Only applies to the Accessories line only.");
+        }
+
         return new ValidGrant
         {
             Branch = branch,
@@ -391,6 +414,8 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
             BusinessLine = line,
 
             AccessType = type,
+
+            Scope = scopeText,
 
             ValidFrom = from,
 
@@ -417,7 +442,8 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
                 dto.AccessType,
                 dto.ValidFrom,
                 dto.ValidUntil,
-                0);
+                0,
+                dto.Scope);
 
         BusinessConfigurationEntity entity =
             new()
@@ -436,6 +462,9 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
 
                 AccessType =
                     grant.AccessType,
+
+                Scope =
+                    grant.Scope,
 
                 ValidFrom =
                     grant.ValidFrom,
@@ -532,10 +561,14 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
                 dto.AccessType,
                 dto.ValidFrom,
                 dto.ValidUntil,
-                entity.BusinessConfigurationId);
+                entity.BusinessConfigurationId,
+                dto.Scope);
 
         entity.AccessType =
             grant.AccessType;
+
+        entity.Scope =
+            grant.Scope;
 
         entity.ValidFrom =
             grant.ValidFrom;
@@ -979,8 +1012,13 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
 
                     status.Source =
                         state == "Active"
-                            ? "Granted"
+                            ? (BusinessLineAccess.IsGiftsOnly(grant) ? "Gifts Only" : "Granted")
                             : state;
+
+                    status.Scope =
+                        BusinessLineAccess.IsGiftsOnly(grant)
+                            ? BusinessLineAccess.ScopeGiftsOnly
+                            : BusinessLineAccess.ScopeFull;
 
                     status.IsActiveToday =
                         BusinessLineAccess.IsGrantActive(
@@ -1006,7 +1044,8 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
 
                 row.Lines.Add(status);
 
-                if (status.IsActiveToday)
+                // Gifts Only : not running the line (no counter sale)
+                if (status.IsActiveToday && status.Scope != BusinessLineAccess.ScopeGiftsOnly)
                 {
                     row.ActiveLines.Add(line);
                 }
@@ -1099,9 +1138,14 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
             ??
             "now";
 
-        return x.AccessType == BusinessLineAccess.Fixed
-            ? $"Fixed from {from}"
-            : $"Temporary {from} to {x.ValidUntil:yyyy-MM-dd}";
+        string period =
+            x.AccessType == BusinessLineAccess.Fixed
+                ? $"Fixed from {from}"
+                : $"Temporary {from} to {x.ValidUntil:yyyy-MM-dd}";
+
+        return BusinessLineAccess.IsGiftsOnly(x)
+            ? $"{period}, Gifts Only"
+            : period;
     }
 
 
@@ -1145,4 +1189,4 @@ public class BusinessConfigurationRepository : IBusinessConfigurationRepository
                     DateTime.UtcNow
             });
     }
-}
+}

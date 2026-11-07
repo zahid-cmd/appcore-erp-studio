@@ -255,6 +255,32 @@ public class ProductTransferRepository
             _ => "Accessories"
         };
 
+    // Warehouses that may hold the type today. Accessories : the
+    // Accessories line, plus gift stock at showrooms while the
+    // "Gift Stock at Showrooms" switch is ON (Gifts Only grants :
+    // any accessory; Motor Bikes branches : free accessories)
+    private async Task<HashSet<long>> AllowedForTypeAsync
+    (
+        string type
+    )
+    {
+        if (type != "AC")
+        {
+            return await BusinessLineAccess.AllowedWarehouseIdsAsync(
+                _context,
+                LineOf(type));
+        }
+
+        (HashSet<long> full, HashSet<long> gifts, HashSet<long> free) =
+            await BusinessLineAccess.AccessoryWarehouseRightsAsync(_context);
+
+        full.UnionWith(gifts);
+
+        full.UnionWith(free);
+
+        return full;
+    }
+
     // The business line a warehouse's branch must run to hold
     // the type (Business Configuration)
     private static string LineOf(string type) =>
@@ -1309,11 +1335,18 @@ public class ProductTransferRepository
         }
 
         // The To warehouse's branch must run the type's business
-        // line today (Business Configuration)
+        // line today (Business Configuration). Accessories : also
+        // gift stock at showrooms (Gifts Only grant; Motor Bikes
+        // branches for free accessories) while the switch is ON
         HashSet<long> allowed =
-            await BusinessLineAccess.AllowedWarehouseIdsAsync(
-                _context,
-                LineOf(type));
+            await AllowedForTypeAsync(type);
+
+        // AC : To a showroom with Motor Bikes only : free
+        // accessories only (checked with the lines)
+        bool freeOnlyTo =
+            type == "AC"
+            &&
+            (await BusinessLineAccess.AccessoryWarehouseRightsAsync(_context)).Free.Contains(to.Id);
 
         if (!allowed.Contains(to.Id))
         {
@@ -1381,6 +1414,26 @@ public class ProductTransferRepository
             {
                 throw new InvalidOperationException(
                     $"Product #{productId} was not found ({TitleOf(type)}).");
+            }
+        }
+
+        if (freeOnlyTo)
+        {
+            var sale =
+                (
+                    await _context
+                        .Set<AccessoriesEntity>()
+                        .AsNoTracking()
+                        .Where(x => productIds.Contains(x.AccessoryId))
+                        .Select(x => new { x.AccessoryName, x.AccessoryUse })
+                        .ToListAsync()
+                )
+                .FirstOrDefault(x => !AppCore.Infrastructure.Repositories.Settings.ProductSettings.AccessoryUses.IsBikeAccessory(x.AccessoryUse));
+
+            if (sale != null)
+            {
+                throw new InvalidOperationException(
+                    $"{sale.AccessoryName} is a For Sale accessory : {to.BranchName} may take only free accessories (Additional / Promotional). Give the branch a Gifts Only Accessories grant (Business Configuration) to send sellable items as gifts.");
             }
         }
 
@@ -2306,9 +2359,7 @@ public class ProductTransferRepository
             };
 
         HashSet<long> allowed =
-            await BusinessLineAccess.AllowedWarehouseIdsAsync(
-                _context,
-                LineOf(type));
+            await AllowedForTypeAsync(type);
 
         List<WarehouseInfo> warehouses =
             (await WarehousesAsync(null)).Values

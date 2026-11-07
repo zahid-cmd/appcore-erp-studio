@@ -147,6 +147,11 @@ public class ProductSubCategory
     } = true;
 
 
+    // Accessories categories only : For Sale (default) /
+    // Additional Accessories / Promotional Accessories. Its
+    // products take this use.
+    public string AccessoryUse { get; set; } = "For Sale";
+
     public string Remarks
     {
         get;

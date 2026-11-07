@@ -228,13 +228,16 @@ export class RoleProfileService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateRoleProfile
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );

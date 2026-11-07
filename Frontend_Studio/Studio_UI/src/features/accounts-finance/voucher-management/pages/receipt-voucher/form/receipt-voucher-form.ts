@@ -2582,6 +2582,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.receiptVoucherService.update(
+                this.voucher?.PublicId || this.routePublicId,
                 model
             )
         )
@@ -2671,8 +2672,8 @@ implements OnInit, OnDestroy
                             this.checkOnly
                                 ? 'Receipt voucher approved and posted; its checks are in Check Reconciliation.'
                                 : this.postOnApproval ? 'Receipt voucher approved and posted.' : 'Receipt voucher approved.',
-                            id =>
-                                this.receiptVoucherService.approve(id),
+                            publicId =>
+                                this.receiptVoucherService.approve(publicId),
                             'list'
                         )
                 ),
@@ -2694,8 +2695,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Returning to Draft',
                             'Receipt voucher returned to draft.',
-                            id =>
-                                this.receiptVoucherService.returnToDraft(id),
+                            publicId =>
+                                this.receiptVoucherService.returnToDraft(publicId),
                             'list'
                         )
                 ),
@@ -2722,8 +2723,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Posting Receipt Voucher',
                             'Receipt voucher posted.',
-                            id =>
-                                this.receiptVoucherService.post(id),
+                            publicId =>
+                                this.receiptVoucherService.post(publicId),
                             'list'
                         )
                 ),
@@ -2848,9 +2849,9 @@ implements OnInit, OnDestroy
         this.runWorkflow(
             'Cancelling Receipt Voucher',
             'Receipt voucher cancelled.',
-            id =>
+            publicId =>
                 this.receiptVoucherService.cancel(
-                    id,
+                    publicId,
                     model
                 ),
             'list'
@@ -2872,7 +2873,7 @@ implements OnInit, OnDestroy
             string,
 
         call:
-            (id: number) => Observable<void>,
+            (publicId: string) => Observable<void>,
 
         nextMode:
             'edit' | 'view' | 'list'
@@ -2888,15 +2889,16 @@ implements OnInit, OnDestroy
             return;
         }
 
-        const id:
-            number =
-            this.voucher?.ReceiptVoucherId
+        // Commands go by uuid (the internal id stays inside)
+        const publicId:
+            string =
+            this.voucher?.PublicId
             ||
-            this.entityId;
+            this.routePublicId;
 
         if
         (
-            !(id > 0)
+            !publicId
         )
         {
             return;
@@ -2908,7 +2910,7 @@ implements OnInit, OnDestroy
         );
 
         this.withMinimumDuration(
-            call(id)
+            call(publicId)
         )
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe

@@ -223,14 +223,26 @@ public class OpeningStockController
     }
 
 
-    [HttpPut("{id:long}")]
-    public Task<IActionResult> Update(
-        long id,
+    // Saved by the uuid in the address (point 2)
+    [HttpPut("{publicId:guid}")]
+    public async Task<IActionResult> Update(
+        Guid publicId,
         [FromBody] UpdateOpeningStockDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Opening stock not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Update",
             async () => Ok(await _repository.UpdateAsync(id, dto, userId)),
             "Failed to save the opening stock.");
@@ -270,27 +282,49 @@ public class OpeningStockController
     // Post / Cancel
     //===========================================================
 
-    [HttpPut("{id:long}/post")]
-    public Task<IActionResult> Post(
-        long id)
+    [HttpPut("{publicId:guid}/post")]
+    public async Task<IActionResult> Post(
+        Guid publicId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Opening stock not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Post",
             async () => Ok(await _repository.PostAsync(id, userId)),
             "Failed to post the opening stock.");
     }
 
 
-    [HttpPut("{id:long}/cancel")]
-    public Task<IActionResult> Cancel(
-        long id,
+    [HttpPut("{publicId:guid}/cancel")]
+    public async Task<IActionResult> Cancel(
+        Guid publicId,
         [FromBody] CancelOpeningStockDto? dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Opening stock not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Cancel",
             async () =>
             {
@@ -330,11 +364,22 @@ public class OpeningStockController
     }
 
 
-    [HttpGet("{id:long}/history")]
-    public Task<IActionResult> GetEntityHistory(
-        long id)
+    [HttpGet("{publicId:guid}/history")]
+    public async Task<IActionResult> GetEntityHistory(
+        Guid publicId)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Opening stock not found.");
+        }
+
+        long id =
+            foundId.Value;
+
+        return await Run(
             async () => Ok(await _repository.GetEntityHistoryAsync(id)),
             "Failed to load the opening stock history.");
     }

@@ -317,6 +317,32 @@ Routes =
                         )
                 },
 
+            // AUTO-BEGIN : SUB-003-003-012
+
+                //===========================================================
+                // Bike Accessory Schemes
+                //===========================================================
+
+                {
+                    path:'bike-accessory-schemes',
+
+                    data:
+                    {
+                        breadcrumb:'Bike Accessory Schemes'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './bike-accessory-schemes.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BikeAccessorySchemesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-003-012
+
         ]
 
     }

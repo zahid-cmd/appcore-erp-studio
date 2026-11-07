@@ -91,10 +91,17 @@ export interface ListTableColumn
   // row[dotField] (a CSS colour; no dot when empty). Thin style
   // for classes such as the Movement Class (no filled chips).
   dotField?: string;
+  // Text cells : show only this icon (e.g. 'fas fa-motorcycle')
+  // painted in row[dotField]; the value moves to the icon's
+  // tooltip. Sorting stays on field.
+  dotIcon?: string;
   // Image cells : the hover preview's tiny header (title =
   // row[previewTitleField]) and footer ("label value" chips)
   previewTitleField?: string;
   previewDetails?: { label: string; field: string }[];
+  // Image cells : a big round number at the top left of the
+  // hover preview (e.g. the stock), value = row[previewBadgeField]
+  previewBadgeField?: string;
 }
 
 
@@ -240,6 +247,12 @@ private readonly navigationContextSubscription =
 
   @Input()
   rows: any[] = [];
+
+  // Total rows pinned under the body, above the pager (e.g. Page
+  // Total / Grand Total). Each row : { field : text } per column
+  // (missing = empty cell); grand : true = the stronger style.
+  @Input()
+  footerRows: any[] = [];
 
   @Input()
   serialOffset = 0;
@@ -800,6 +813,8 @@ private readonly navigationContextSubscription =
 
   previewImageDetails: { label: string; value: string }[] = [];
 
+  previewImageBadge = '';
+
   previewImageX = 0;
 
   previewImageY = 0;
@@ -824,6 +839,11 @@ private readonly navigationContextSubscription =
     this.previewImageTitle =
       column?.previewTitleField
         ? String(row?.[column.previewTitleField] ?? '')
+        : '';
+
+    this.previewImageBadge =
+      column?.previewBadgeField
+        ? String(row?.[column.previewBadgeField] ?? '')
         : '';
 
     this.previewImageDetails =

@@ -299,6 +299,15 @@ export interface LedgerPrintRequest
     showCodes?:boolean;
     showNarration?:boolean;
 
+    // Summary : ledgers with a zero closing balance / with no
+    // debit or credit in the period (missing = shown)
+    showZeroBalance?:boolean;
+    showNoTransactions?:boolean;
+
+    // Statement : 'summary' = one row per voucher (missing =
+    // detail, one row per voucher line)
+    statementMode?:'detail' | 'summary';
+
     // Page search (optional)
     search?:string;
 }
@@ -456,6 +465,193 @@ export function statementRowMatches
 }
 
 // Summary row : ledger name, code, group, sub group
+// Notes of a merged voucher : said once. Notes that share a
+// "Kind - " start ("Purchase - 1 Pcs", "Purchase - Input VAT")
+// become "Purchase - 1 Pcs, Input VAT".
+function joinNotes
+(
+    notes:
+        string[]
+):
+    string
+{
+    if (notes.length === 0)
+    {
+        return '';
+    }
+
+    const parts =
+        notes.map(x => x.match(/^(.+?) - (.+)$/));
+
+    const kind =
+        parts[0]?.[1];
+
+    if (kind && parts.every(x => x && x[1] === kind))
+    {
+        const bodies =
+            parts.map(x => x![2].trim());
+
+        // Quantity notes ("2 Pcs", "1 Pcs | typed note") become
+        // one total : "5 products · 8 Pcs"; the rest stays as it is
+        const qty =
+            /^(\d+(?:\.\d+)?)\s+([A-Za-z.]+)\s*(?:\|\s*(.*))?$/;
+
+        const totals =
+            new Map<string, number>();
+
+        const others:
+            string[] = [];
+
+        let products = 0;
+
+        for (const body of bodies)
+        {
+            const m =
+                body.match(qty);
+
+            if (m)
+            {
+                products++;
+
+                totals.set(m[2], (totals.get(m[2]) ?? 0) + Number(m[1]));
+
+                if (m[3] && m[3].trim())
+                {
+                    others.push(m[3].trim());
+                }
+            }
+            else
+            {
+                others.push(body);
+            }
+        }
+
+        if (products > 1)
+        {
+            const amount =
+                [...totals.entries()]
+                    .map(([unit, n]) => `${Math.round(n * 100) / 100} ${unit}`)
+                    .join(' + ');
+
+            return `${kind} - ${products} products · ${amount}`
+                + (others.length > 0 ? `, ${[...new Set(others)].join(', ')}` : '');
+        }
+
+        return `${kind} - ${[...new Set(bodies)].join(', ')}`;
+    }
+
+    return [...new Set(notes)].join(' · ');
+}
+
+// Statement summary : one row per voucher. Consecutive lines of
+// the same voucher are merged : debit and credit added, the
+// balance after the voucher's last line, the other ledgers as
+// "first + N more", their notes joined once each.
+export function mergeVoucherRows
+(
+    rows:
+        LedgerStatementRow[]
+):
+    LedgerStatementRow[]
+{
+    const key =
+        (x: LedgerStatementRow) => `${x.VoucherType}|${x.VoucherNo}|${x.IsReversal}`;
+
+    const result:
+        LedgerStatementRow[] = [];
+
+    let start = 0;
+
+    for (let i = 1; i <= rows.length; i++)
+    {
+        if (i < rows.length && key(rows[i]) === key(rows[start]))
+        {
+            continue;
+        }
+
+        const group =
+            rows.slice(start, i);
+
+        start = i;
+
+        if (group.length === 1)
+        {
+            result.push(group[0]);
+
+            continue;
+        }
+
+        const first =
+            group[0];
+
+        const unique =
+            (values: string[]) => [...new Set(values.map(x => (x ?? '').trim()).filter(x => !!x))];
+
+        const names =
+            unique(group.map(x => x.Particulars));
+
+        // Every line's note (not made unique : quantities are added)
+        const notes =
+            group.map(x => (x.ShortNote ?? '').trim()).filter(x => !!x);
+
+        const round =
+            (x: number) => Math.round(x * 100) / 100;
+
+        result.push(
+            {
+                ...first,
+                Particulars:
+                    names.length <= 1
+                        ? (names[0] ?? '')
+                        : `${names[0]} + ${names.length - 1} more`,
+                ContraCodes:
+                    names.length <= 1 ? first.ContraCodes : '',
+                ShortNote:
+                    joinNotes(notes),
+                Debit:
+                    round(group.reduce((t, x) => t + (x.Debit || 0), 0)),
+                Credit:
+                    round(group.reduce((t, x) => t + (x.Credit || 0), 0)),
+                Balance:
+                    group[group.length - 1].Balance,
+                Narration:
+                    group[group.length - 1].Narration || first.Narration
+            });
+    }
+
+    return result;
+}
+
+// Summary view switches : a ledger with a zero closing balance
+// and / or with no debit or credit in the period is shown only
+// when its switch is ON
+export function summaryRowShown
+(
+    row:
+        LedgerSummaryRow,
+    showZeroBalance:
+        boolean,
+    showNoTransactions:
+        boolean
+):
+    boolean
+{
+    const zero =
+        (x:number) => Math.abs(x || 0) < 0.005;
+
+    if (!showZeroBalance && zero(row.Closing))
+    {
+        return false;
+    }
+
+    if (!showNoTransactions && zero(row.Debit) && zero(row.Credit))
+    {
+        return false;
+    }
+
+    return true;
+}
+
 export function summaryRowMatches
 (
     row:

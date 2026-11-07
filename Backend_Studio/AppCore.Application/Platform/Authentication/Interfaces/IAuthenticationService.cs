@@ -77,4 +77,28 @@ public interface IAuthenticationService
 
     Task<ChangePasswordResponseDto> ChangePasswordAsync(
         ChangePasswordRequestDto request);
+
+
+    //===========================================================
+    // Switch Branch (user menu, 2026-11-07)
+    //===========================================================
+    //
+    // My branches : the active branches of the user's Branch
+    // Assignment (the login rule) with wing and business lines,
+    // the current one marked, and whether switching is allowed.
+    //
+    // Switch : re-checks the user, the login, the setting and the
+    // assignment, then issues a new token for the branch with the
+    // given expiry (the current session's; null = a fresh 8 hours).
+    //===========================================================
+
+    Task<MyBranchesDto> GetMyBranchesAsync(
+        long userProfileId,
+        long currentBranchId);
+
+    Task<LoginResponseDto> SwitchBranchAsync(
+        long userProfileId,
+        long currentBranchId,
+        SwitchBranchRequestDto request,
+        DateTime? expiresUtc);
 }

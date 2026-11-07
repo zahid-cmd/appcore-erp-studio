@@ -1,0 +1,502 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-gift"
+
+        [title]="pageTitle"
+
+        subtitle="Accessories given with motor bikes">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="selectedTab">
+
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <app-form-grid
+
+            canvasBody
+
+            [columns]="4">
+
+
+            <!-- =============================================
+                 SCHEME INFORMATION
+            ============================================== -->
+
+            <app-form-section
+
+                title="Scheme Information"
+
+                icon="fas fa-gift">
+
+
+                <app-textbox
+
+                    label="Scheme Code"
+
+                    placeholder="Auto generated"
+
+                    [(value)]="entity.SchemeCode"
+
+                    [readonly]="true"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-textbox
+
+                    label="Scheme Name"
+
+                    placeholder="e.g. Helmet with every bike"
+
+                    [(value)]="entity.SchemeName"
+
+                    [maxLength]="150"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
+                <app-dropdown
+
+                    label="Accessory Type"
+
+                    [items]="kindItems"
+
+                    [(value)]="entity.SchemeKind"
+
+                    (valueChange)="onKindChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <app-dropdown
+
+                    label="Source"
+
+                    [items]="sourceItems"
+
+                    [(value)]="entity.SchemeSource"
+
+                    (valueChange)="onSourceChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <div class="bas-hint">
+
+                    <i class="fas fa-circle-info"></i>
+
+                    <span>{{ sourceHint }}</span>
+
+                </div>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 BIKES : brand + models
+            ============================================== -->
+
+            <app-form-section
+
+                title="Bikes"
+
+                icon="fas fa-motorcycle">
+
+
+                <app-dropdown
+
+                    label="Brand"
+
+                    placeholder="Select brand"
+
+                    [items]="brandItems"
+
+                    [(value)]="entity.BrandManagementId"
+
+                    (valueChange)="onBrandChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                @if (!isViewMode)
+                {
+                    <div class="bas-picker">
+
+                        @for (key of modelPickerKeys; track key)
+                        {
+                            <app-search-dropdown
+
+                                label="Bike Models"
+
+                                [required]="true"
+
+                                [placeholder]="modelPlaceholder"
+
+                                [items]="modelPickItems"
+
+                                [value]="null"
+
+                                [disabled]="modelPickItems.length === 0"
+
+                                (valueChange)="onAddModel($event)">
+
+                            </app-search-dropdown>
+                        }
+
+                        <button
+
+                            type="button"
+
+                            class="bas-link"
+
+                            [disabled]="modelPickItems.length === 0"
+
+                            (click)="addAllModels()">
+
+                            Add all
+
+                        </button>
+
+                    </div>
+                }
+                @else
+                {
+                    <div class="bas-label">Bike Models</div>
+                }
+
+
+                <div class="bas-chips">
+
+                    @for (model of entity.Models; track model.BikeModelId)
+                    {
+                        <span class="bas-chip">
+
+                            {{ model.ModelName }}
+
+                            @if (!isViewMode)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    title="Remove"
+
+                                    (click)="removeModel(model)">
+
+                                    <i class="fas fa-xmark"></i>
+
+                                </button>
+                            }
+
+                        </span>
+                    }
+                    @empty
+                    {
+                        <span class="bas-empty">No bike models yet</span>
+                    }
+
+                </div>
+
+                <div class="bas-count">
+                    {{ entity.Models.length }} model{{ entity.Models.length === 1 ? '' : 's' }}
+                </div>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 ACCESSORIES PER BIKE
+            ============================================== -->
+
+            <app-form-section
+
+                title="Accessories per Bike"
+
+                icon="fas fa-helmet-safety">
+
+
+                @if (!isViewMode)
+                {
+                    @for (key of accessoryPickerKeys; track key)
+                    {
+                        <app-search-dropdown
+
+                            label="Accessories"
+
+                            [required]="true"
+
+                            [placeholder]="accessoryPlaceholder"
+
+                            [items]="accessoryPickItems"
+
+                            [value]="null"
+
+                            [disabled]="accessoryPickItems.length === 0"
+
+                            (valueChange)="onAddAccessory($event)">
+
+                        </app-search-dropdown>
+                    }
+                }
+                @else
+                {
+                    <div class="bas-label">Accessories</div>
+                }
+
+
+                <div class="bas-items">
+
+                    @for (item of entity.Items; track item.AccessoryId)
+                    {
+                        <div class="bas-item">
+
+                            <div class="bas-item-text">
+
+                                <span class="bas-item-name">{{ item.AccessoryName }}</span>
+
+                                <span class="bas-item-code">{{ item.ProductCode }} · {{ item.AccessoryUse }}</span>
+
+                            </div>
+
+                            <input
+
+                                class="bas-qty"
+
+                                inputmode="numeric"
+
+                                title="Quantity per bike"
+
+                                [value]="item.QuantityPerBike"
+
+                                [disabled]="isViewMode"
+
+                                (input)="onQuantityInput(item, $event)"
+
+                                (blur)="onQuantityBlur(item, $event)">
+
+                            @if (!isViewMode)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    class="bas-remove"
+
+                                    title="Remove"
+
+                                    (click)="removeItem(item)">
+
+                                    <i class="fas fa-trash-can"></i>
+
+                                </button>
+                            }
+
+                        </div>
+                    }
+                    @empty
+                    {
+                        <span class="bas-empty">No accessories yet</span>
+                    }
+
+                </div>
+
+                <div class="bas-count">
+                    {{ entity.Items.length }} item{{ entity.Items.length === 1 ? '' : 's' }},
+                    {{ totalPieces }} piece{{ totalPieces === 1 ? '' : 's' }} per bike
+                </div>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 VALIDITY & STATUS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Validity & Status"
+
+                icon="fas fa-calendar-days">
+
+
+                <app-datepicker
+
+                    label="Valid From"
+
+                    [required]="true"
+
+                    [value]="validFromDate"
+
+                    (valueChange)="onValidFromChange($event)"
+
+                    [disabled]="isViewMode">
+
+                </app-datepicker>
+
+
+                @if (isPromotional)
+                {
+                    <app-datepicker
+
+                        label="Valid To"
+
+                        [required]="true"
+
+                        [value]="validToDate"
+
+                        [minDate]="validFromDate"
+
+                        (valueChange)="onValidToChange($event)"
+
+                        [disabled]="isViewMode">
+
+                    </app-datepicker>
+                }
+                @else
+                {
+                    <app-textbox
+
+                        label="Valid To"
+
+                        [value]="'All year (no end date)'"
+
+                        [readonly]="true">
+
+                    </app-textbox>
+                }
+
+
+                <app-dropdown
+
+                    label="Status"
+
+                    [items]="statusItems"
+
+                    [(value)]="entity.Status"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+
+                <app-textarea
+
+                    label="Remarks"
+
+                    placeholder="Enter remarks"
+
+                    [rows]="4"
+
+                    [(value)]="entity.Remarks"
+
+                    [maxLength]="1000"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode">
+
+                </app-textarea>
+
+            </app-form-section>
+
+        </app-form-grid>
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

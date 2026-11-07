@@ -41,7 +41,9 @@ import
 
     AccessoriesDefaults,
 
-    AccessoriesPageQuery
+    AccessoriesPageQuery,
+
+    normalizeAccessoryUse
 }
 from '../models/accessories.model';
 
@@ -197,6 +199,12 @@ export class AccessoriesService
 
             MovementClassAuto:
                 Boolean(item?.MovementClassAuto ?? item?.movementClassAuto ?? false),
+
+            // For Sale / Additional / Promotional Accessories
+            AccessoryUse:
+                normalizeAccessoryUse(
+                    item?.AccessoryUse ?? item?.accessoryUse
+                ),
 
             Remarks:
                 item?.Remarks ?? item?.remarks ?? '',

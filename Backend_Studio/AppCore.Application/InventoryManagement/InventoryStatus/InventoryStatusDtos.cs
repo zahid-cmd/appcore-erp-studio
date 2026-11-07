@@ -24,6 +24,9 @@ namespace AppCore.Application.InventoryManagement.InventoryStatus;
 
 public class InventoryStockListDto
 {
+    // "View Cost incl. VAT" : the incl. VAT figures are sent
+    public bool CanViewCostVat { get; set; }
+
     // MB / SP / AC
     public string PageType { get; set; } = string.Empty;
 
@@ -48,6 +51,16 @@ public class InventoryStockListDto
 public class InventoryStockRowDto
 {
     public long ProductId { get; set; }
+
+    // Product image (Motor Bikes, Spare Parts; '' = none)
+    public string ImagePath { get; set; } = string.Empty;
+
+    // Cost incl. VAT : the batch cost plus the input VAT that was
+    // claimed (taken out of the cost) at purchase; 0 without
+    // "View Cost incl. VAT"
+    public decimal AverageCostVat { get; set; }
+
+    public decimal StockValueVat { get; set; }
 
     public string ProductCode { get; set; } = string.Empty;
 
@@ -252,6 +265,18 @@ public class InventoryBikeListDto
 {
     public bool CanViewCost { get; set; }
 
+    // Edit Bike Numbers (switch CFG-MOD-012-0090 + "Update" on the
+    // page) : the pencil on unsold bikes
+    public bool CanEditNumbers { get; set; }
+
+    // Edit Bike Numbers After Sale (CFG-MOD-012-0091) : sold bikes
+    // too
+    public bool CanEditSold { get; set; }
+
+    // Key & Battery Required (CFG-MOD-007-0048) : Key / Battery No
+    // asked in the editor
+    public bool KeyBatteryOn { get; set; }
+
     public List<InventoryBikeUnitDto> Rows { get; set; } = new();
 }
 
@@ -284,4 +309,65 @@ public class InventoryBikeUnitDto
     public string Status { get; set; } = string.Empty;
 
     public decimal UnitCost { get; set; }
+
+    // Unit status Sold
+    public bool IsSold { get; set; }
+
+    // The motor bike's colour (Product Settings > Motor Bikes)
+    public string ColorName { get; set; } = string.Empty;
+}
+
+
+//===============================================================
+// Edit Bike Numbers (Motor Bike Stock > Technical Records)
+//===============================================================
+
+// Switches read once per list
+public class InventoryBikeEditRulesDto
+{
+    public bool EditOn { get; set; }
+
+    public bool EditSoldOn { get; set; }
+
+    public bool KeyBatteryOn { get; set; }
+}
+
+// The four numbers of one bike (live check and save)
+public class InventoryBikeNumbersDto
+{
+    public long MotorBikeUnitId { get; set; }
+
+    public string? ChassisNo { get; set; }
+
+    public string? EngineNo { get; set; }
+
+    public string? KeyNo { get; set; }
+
+    public string? BatteryNo { get; set; }
+}
+
+// A number another bike already carries
+public class InventoryBikeNumberTakenDto
+{
+    // ChassisNo / EngineNo / KeyNo / BatteryNo
+    public string Field { get; set; } = string.Empty;
+
+    public string Value { get; set; } = string.Empty;
+
+    public string Message { get; set; } = string.Empty;
+}
+
+
+// One history line of the bike numbers (Motor Bike Stock History)
+public class InventoryBikeHistoryDto
+{
+    public string ActivityType { get; set; } = string.Empty;
+
+    public string ActivityTitle { get; set; } = string.Empty;
+
+    public string ActivityDescription { get; set; } = string.Empty;
+
+    public string PerformedByName { get; set; } = string.Empty;
+
+    public DateTime PerformedDate { get; set; }
 }

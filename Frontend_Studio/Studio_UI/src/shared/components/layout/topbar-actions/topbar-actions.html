@@ -180,6 +180,28 @@
                 </button>
 
 
+                <!-- Switch Branch : two or more assigned branches -->
+
+                @if (branchSwitch.showMenuItem())
+                {
+                    <button
+                        class="user-dropdown-item"
+                        type="button"
+                        role="menuitem"
+                        (click)="onSwitchBranchClick()">
+
+                        <span class="dropdown-icon">
+                            <i class="fas fa-code-branch"></i>
+                        </span>
+
+                        <span class="dropdown-label">
+                            Switch Branch
+                        </span>
+
+                    </button>
+                }
+
+
                 <div class="dropdown-divider"></div>
 
 

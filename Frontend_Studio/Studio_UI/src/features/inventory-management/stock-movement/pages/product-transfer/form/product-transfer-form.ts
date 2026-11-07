@@ -40,7 +40,8 @@ import
     catchError,
     forkJoin,
     of,
-    switchMap
+    switchMap,
+    map
 }
 from 'rxjs';
 
@@ -3348,15 +3349,43 @@ export class ProductTransferForm
         return this.doc?.Id || this.savedId;
     }
 
+    // Uuid of the saved draft (point 2 : save and actions by uuid)
+    private savedPublicId:
+        string =
+        '';
+
+    private get draftPublicId():
+        string
+    {
+        return this.doc?.PublicId || this.savedPublicId;
+    }
+
     private saveDraft():
         Observable<number>
     {
         const id =
             this.draftId;
 
-        return id > 0
-            ? this.service.update(id, this.payload())
-            : this.service.create(this.payload());
+        const publicId =
+            this.draftPublicId;
+
+        return publicId
+            ? this.service
+                .update(publicId, this.payload())
+                .pipe(map(x => x || id))
+            : this.service
+                .create(this.payload())
+                .pipe(
+                    map
+                    (
+                        saved =>
+                        {
+                            this.savedPublicId =
+                                saved.PublicId;
+
+                            return saved.Id;
+                        }
+                    ));
     }
 
     save():
@@ -3474,7 +3503,7 @@ export class ProductTransferForm
                                 this.savedId = id;
                             }
 
-                            return this.service.post(id);
+                            return this.service.post(this.draftPublicId);
                         }
                     ));
 
@@ -3538,7 +3567,7 @@ export class ProductTransferForm
                 sending ? 'Sending Product Transfer' : 'Posting Product Transfer',
                 `Please wait while "${doc.TransferNo}" is being ${sending ? 'sent' : 'posted'}...`,
                 sending ? 'Product transfer sent.' : 'Product transfer posted.',
-                this.service.post(doc.Id))
+                this.service.post(doc.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -3677,7 +3706,7 @@ export class ProductTransferForm
                 'Receiving Product Transfer',
                 `Please wait while "${doc.TransferNo}" goes on hand in ${doc.ToWarehouseName || 'the To warehouse'}...`,
                 'Product transfer received.',
-                this.service.receive(doc.Id, toTransferIso(this.receiveDate)))
+                this.service.receive(doc.PublicId ?? '', toTransferIso(this.receiveDate)))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -3919,7 +3948,7 @@ export class ProductTransferForm
                 'Cancelling Product Transfer',
                 `Please wait while "${doc.TransferNo}" is being cancelled...`,
                 'Product transfer cancelled.',
-                this.service.cancel(doc.Id, this.cancelReason.trim()))
+                this.service.cancel(doc.PublicId ?? '', this.cancelReason.trim()))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({

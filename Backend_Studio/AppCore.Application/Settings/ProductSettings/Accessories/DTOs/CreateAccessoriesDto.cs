@@ -37,6 +37,10 @@ public class CreateAccessoriesDto
     // Slow ('' or unknown = Slow)
     public string MovementClass { get; set; } = "Slow";
 
+    // For Sale (default) / Additional Accessories / Promotional
+    // Accessories
+    public string AccessoryUse { get; set; } = "For Sale";
+
     public string Remarks { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;

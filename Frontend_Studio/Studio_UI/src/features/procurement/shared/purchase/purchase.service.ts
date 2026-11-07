@@ -342,6 +342,7 @@ export abstract class PurchaseService
             FinancialYearCode:this.text(item, 'FinancialYearCode'),
             PeriodMonth:this.num(item, 'PeriodMonth'),
             Message:this.text(item, 'Message'),
+            BranchBlocked:!!(item?.BranchBlocked ?? item?.branchBlocked),
             Today:this.text(item, 'Today').substring(0, 10),
             Suppliers:
                 ((this.pick(item, 'Suppliers') ?? []) as any[]).map

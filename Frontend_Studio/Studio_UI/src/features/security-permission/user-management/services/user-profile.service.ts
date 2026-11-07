@@ -668,13 +668,16 @@ export class UserProfileService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateUserProfile
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }

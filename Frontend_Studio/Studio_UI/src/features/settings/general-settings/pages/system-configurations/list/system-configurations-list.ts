@@ -302,18 +302,26 @@ interface ReviewRow
 
 //===============================================================
 // Card style : the remembered choice (Classic by default)
+//   classic : floating cards ; credit : credit-card faces ;
+//   list : one compact row per configuration
 //===============================================================
 
 const CARD_STYLE_KEY =
     'appcore.systemConfigurations.cardStyle';
 
+type CardStyle =
+    'classic' | 'credit' | 'list';
+
 function readCardStyle():
-    'classic' | 'credit'
+    CardStyle
 {
     try
     {
-        return localStorage.getItem(CARD_STYLE_KEY) === 'credit'
-            ? 'credit'
+        const saved =
+            localStorage.getItem(CARD_STYLE_KEY);
+
+        return saved === 'credit' || saved === 'list'
+            ? saved
             : 'classic';
     }
     catch
@@ -985,17 +993,18 @@ implements OnInit
     }
 
     //===========================================================
-    // Card style : Classic / Credit Card (remembered per browser)
+    // Card style : Classic / Credit Card / List (remembered per
+    // browser)
     //===========================================================
 
     cardStyle:
-        'classic' | 'credit' =
+        CardStyle =
         readCardStyle();
 
     setCardStyle
     (
         style:
-            'classic' | 'credit'
+            CardStyle
     ):
         void
     {

@@ -151,4 +151,39 @@
     {
         display:none;
     }
-}
+}
+
+
+/* Branch chip as a button (Switch Branch, 2026-11-07) */
+
+.context-chip-switch
+{
+    font:inherit;
+
+    font-size:12px;
+
+    cursor:pointer;
+
+    transition:background .15s, border-color .15s;
+}
+
+.context-chip-switch:hover
+{
+    border-color:rgba(255,255,255,.28);
+
+    background:rgba(255,255,255,.14);
+}
+
+.context-chip-switch:focus-visible
+{
+    outline:2px solid #93c5fd;
+
+    outline-offset:2px;
+}
+
+.context-switch-caret
+{
+    font-size:9px;
+
+    opacity:.7;
+}

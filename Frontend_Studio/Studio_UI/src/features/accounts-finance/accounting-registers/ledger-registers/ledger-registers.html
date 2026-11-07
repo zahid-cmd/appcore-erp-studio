@@ -195,7 +195,7 @@
                     type="button"
                     class="lr-btn lr-btn-primary"
                     [disabled]="chartLoading || loading"
-                    (click)="load()">
+                    (click)="submit()">
                     Submit
                 </button>
 
@@ -211,6 +211,28 @@
             <div class="lr-switchbar">
 
                 <span class="lr-switchbar-title"><i class="fas fa-sliders"></i> View</span>
+
+                @if (showStatementMode)
+                {
+                    <!-- Statement : Detail = every voucher line,
+                         Summary = one row per voucher -->
+                    <span class="lr-seg" role="group" aria-label="Statement view">
+                        <button
+                            type="button"
+                            [class.on]="statementMode === 'detail'"
+                            title="One row per voucher line"
+                            (click)="setStatementMode('detail')">
+                            <i class="fas fa-list"></i> Detail
+                        </button>
+                        <button
+                            type="button"
+                            [class.on]="statementMode === 'summary'"
+                            title="One row per voucher (its lines added up)"
+                            (click)="setStatementMode('summary')">
+                            <i class="fas fa-layer-group"></i> Summary
+                        </button>
+                    </span>
+                }
 
                 <label class="lr-switch">
                     <input
@@ -236,6 +258,35 @@
                     <span class="lr-switch-track"><i></i></span>
                     <span>Show narration</span>
                 </label>
+                <label class="lr-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="showZeroBalance"
+                        (change)="onZeroBalanceChange($event)">
+                    <span class="lr-switch-track"><i></i></span>
+                    <span>Show zero balance {{ page.itemWord }}s</span>
+                </label>
+                <label class="lr-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="showNoTransactions"
+                        (change)="onNoTransactionsChange($event)">
+                    <span class="lr-switch-track"><i></i></span>
+                    <span>Show {{ page.itemWord }}s with no transactions</span>
+                </label>
+
+                @if (canGoBack)
+                {
+                    <button
+                        type="button"
+                        class="lr-btn"
+                        style="margin-left:auto"
+                        [disabled]="loading"
+                        [title]="'Back to ' + backLabel"
+                        (click)="goBack()">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                }
 
             </div>
 

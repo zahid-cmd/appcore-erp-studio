@@ -1337,6 +1337,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.membershipCardsService.update(
+                this.routePublicId,
                 model
             ),
             this.minimumSaveDurationMs

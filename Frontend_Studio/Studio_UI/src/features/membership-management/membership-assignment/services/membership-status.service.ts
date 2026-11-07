@@ -570,13 +570,16 @@ export class MembershipStatusService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateMembership
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -611,8 +614,8 @@ export class MembershipStatusService
 
     useWindow
     (
-        membershipId:
-            number,
+        publicId:
+            string,
         windowId:
             number,
         usedDate:
@@ -623,7 +626,7 @@ export class MembershipStatusService
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${membershipId}/windows/${windowId}/use`,
+            `${this.apiUrl}/${publicId}/windows/${windowId}/use`,
             {
                 UsedDate:
                     usedDate,
@@ -637,15 +640,15 @@ export class MembershipStatusService
 
     undoUseWindow
     (
-        membershipId:
-            number,
+        publicId:
+            string,
         windowId:
             number
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${membershipId}/windows/${windowId}/undo-use`,
+            `${this.apiUrl}/${publicId}/windows/${windowId}/undo-use`,
             {}
         );
     }
@@ -653,8 +656,8 @@ export class MembershipStatusService
 
     approveWindow
     (
-        membershipId:
-            number,
+        publicId:
+            string,
         windowId:
             number,
         reason:
@@ -663,7 +666,7 @@ export class MembershipStatusService
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${membershipId}/windows/${windowId}/approve`,
+            `${this.apiUrl}/${publicId}/windows/${windowId}/approve`,
             {
                 Reason:
                     reason

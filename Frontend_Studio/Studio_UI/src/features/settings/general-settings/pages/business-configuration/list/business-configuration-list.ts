@@ -207,6 +207,9 @@ interface GrantDraft
 
     AccessType: string;
 
+    // Full / Gifts Only (Accessories only)
+    Scope: string;
+
     ValidFrom: string;
 
     ValidUntil: string;
@@ -673,6 +676,21 @@ implements OnInit
         );
 
 
+    // Accessories grants : Full, or Gifts Only (hold and transfer
+    // to give with bikes; no counter sale)
+    readonly scopeItems:
+        any[] =
+    [
+        { label:'Full', value:'Full' },
+        { label:'Gifts Only', value:'Gifts Only' }
+    ];
+
+    get isAccessoriesDraft():
+        boolean
+    {
+        return this.draft.BusinessLine === 'Accessories';
+    }
+
     readonly statusItems:
         any[] =
     [
@@ -899,7 +917,9 @@ implements OnInit
             ...grant,
 
             AccessText:
-                grant.AccessType,
+                grant.Scope === 'Gifts Only'
+                    ? `${grant.AccessType} · Gifts Only`
+                    : grant.AccessType,
 
             ValidFromText:
                 this.formatDate(grant.ValidFrom) || '—',
@@ -1218,6 +1238,8 @@ implements OnInit
 
             AccessType:'Fixed',
 
+            Scope:'Full',
+
             ValidFrom:this.todayText(),
 
             ValidUntil:'',
@@ -1289,6 +1311,9 @@ implements OnInit
 
             AccessType:
                 row.AccessType || 'Fixed',
+
+            Scope:
+                (row as any).Scope || 'Full',
 
             ValidFrom:
                 row.ValidFrom ?? '',
@@ -1433,6 +1458,20 @@ implements OnInit
     }
 
 
+    onDraftScopeChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.draft.Scope =
+            String(this.unwrapValue(value) ?? 'Full');
+
+        this.cdr.detectChanges();
+    }
+
+
     onDraftAccessTypeChange
     (
         value:
@@ -1517,6 +1556,11 @@ implements OnInit
 
             AccessType:
                 this.draft.AccessType,
+
+            Scope:
+                this.isAccessoriesDraft
+                    ? this.draft.Scope || 'Full'
+                    : 'Full',
 
             ValidFrom:
                 this.draft.ValidFrom || null,
@@ -2123,4 +2167,4 @@ implements OnInit
             ??
             fallback;
     }
-}
+}

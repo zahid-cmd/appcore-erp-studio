@@ -106,6 +106,8 @@ import
     ledgerRegisterConfig,
     statementRowMatches,
     summaryRowMatches,
+    summaryRowShown,
+    mergeVoucherRows,
     toIsoDate
 }
 from '../models/ledger-registers.model';
@@ -209,7 +211,7 @@ export class LedgerRegisters
 
     toDate:
         Date =
-        monthEnd();
+        today();
 
     branchId:
         number = 0;
@@ -235,6 +237,46 @@ export class LedgerRegisters
 
     showNarration:
         boolean = true;
+
+    // Summary : zero-balance ledgers / ledgers with no debit or
+    // credit in the period (default OFF : hidden)
+    showZeroBalance:
+        boolean = false;
+
+    showNoTransactions:
+        boolean = false;
+
+    // Statement : Detail (one row per voucher line) or Summary
+    // (one row per voucher). Ledger Statements page only for now.
+    statementMode:
+        'detail' | 'summary' = 'detail';
+
+    get showStatementMode():
+        boolean
+    {
+        return !this.isRegister;
+    }
+
+    setStatementMode
+    (
+        mode:
+            'detail' | 'summary'
+    ):
+        void
+    {
+        if (this.statementMode === mode)
+        {
+            return;
+        }
+
+        this.statementMode = mode;
+
+        this.closeVoucher();
+
+        this.applySearch();
+
+        this.refreshView();
+    }
 
     // Per statement row : last row of its voucher / voucher
     // has more than one row on this statement
@@ -310,7 +352,34 @@ export class LedgerRegisters
         {
             console.error('[Ledger Registers] view update failed', error);
         }
+
+        // Zoneless : a result that arrives outside an event (HTTP
+        // reply) is painted once more on the next turn, so the
+        // view never stays on "Loading..." until the next click
+        if (!this.repaintQueued)
+        {
+            this.repaintQueued = true;
+
+            setTimeout(() =>
+            {
+                this.repaintQueued = false;
+
+                this.cdr.markForCheck();
+
+                try
+                {
+                    this.cdr.detectChanges();
+                }
+                catch (error)
+                {
+                    console.error('[Ledger Registers] view update failed (repaint)', error);
+                }
+            });
+        }
     }
+
+    private repaintQueued =
+        false;
 
     //===========================================================
     // Start
@@ -319,7 +388,91 @@ export class LedgerRegisters
     ngOnInit():
         void
     {
+        // Opened from another page (Trial Balance) :
+        // ?ledger=&from=&to=&branchId=&showCancelled= loads that
+        // ledger's statement once the chart is in
+        const query =
+            this.route.snapshot.queryParamMap;
+
+        const ledger =
+            (query.get('ledger') ?? '').trim();
+
+        if (ledger)
+        {
+            this.pendingLink =
+            {
+                ledger,
+                from:query.get('from') ?? '',
+                to:query.get('to') ?? '',
+                branchId:Number(query.get('branchId')) || 0,
+                showCancelled:query.get('showCancelled') === '1' || query.get('showCancelled') === 'true'
+            };
+        }
+
         this.loadChart();
+    }
+
+    private pendingLink:
+        {
+            ledger:string;
+            from:string;
+            to:string;
+            branchId:number;
+            showCancelled:boolean;
+        } | null = null;
+
+    // Applies the link once (after the chart is loaded)
+    private applyLink():
+        void
+    {
+        const link =
+            this.pendingLink;
+
+        if (!link)
+        {
+            return;
+        }
+
+        this.pendingLink = null;
+
+        const from =
+            parseIsoDate(link.from);
+
+        const to =
+            parseIsoDate(link.to);
+
+        if (from)
+        {
+            this.fromDate = from;
+        }
+
+        if (to)
+        {
+            this.toDate = to;
+        }
+
+        this.branchId =
+            (this.chart?.Branches ?? []).some(x => x.Id === link.branchId)
+                ? link.branchId
+                : 0;
+
+        this.showCancelled = link.showCancelled;
+
+        if (!(this.chart?.Ledgers ?? []).some(x => x.Code === link.ledger))
+        {
+            this.toast.error(
+                'Ledger Not Found',
+                `${link.ledger} is not a ${this.page.itemWord} of this page.`
+            );
+
+            this.rebuildItems();
+
+            return;
+        }
+
+        this.onLedgerChange(link.ledger);
+
+        this.submit();
     }
 
     private loadChart():
@@ -346,6 +499,8 @@ export class LedgerRegisters
                                 this.rebuildItems();
 
                                 this.chartLoading = false;
+
+                                this.applyLink();
 
                                 this.refreshView();
                             },
@@ -705,6 +860,34 @@ export class LedgerRegisters
         this.showNarration = !!(event.target as HTMLInputElement | null)?.checked;
     }
 
+    onZeroBalanceChange
+    (
+        event:
+            Event
+    ):
+        void
+    {
+        this.showZeroBalance = !!(event.target as HTMLInputElement | null)?.checked;
+
+        this.applySearch();
+
+        this.refreshView();
+    }
+
+    onNoTransactionsChange
+    (
+        event:
+            Event
+    ):
+        void
+    {
+        this.showNoTransactions = !!(event.target as HTMLInputElement | null)?.checked;
+
+        this.applySearch();
+
+        this.refreshView();
+    }
+
     // Groups the statement rows by voucher (consecutive rows of
     // the same voucher and side)
     //===========================================================
@@ -748,11 +931,19 @@ export class LedgerRegisters
         this.rows =
             (this.statement?.Rows ?? []).filter(x => statementRowMatches(x, this.searchText));
 
-        this.summaryRows =
-            (this.summary?.Rows ?? []).filter(x => summaryRowMatches(x, this.searchText));
+        if (this.showStatementMode && this.statementMode === 'summary')
+        {
+            this.rows = mergeVoucherRows(this.rows);
+        }
 
+        this.summaryRows =
+            (this.summary?.Rows ?? []).filter(x =>
+                summaryRowShown(x, this.showZeroBalance, this.showNoTransactions)
+                && summaryRowMatches(x, this.searchText));
+
+        // Totals of the rows shown when some are hidden
         this.sumTotals =
-            this.searchText.trim()
+            this.searchText.trim() || this.summaryRows.length !== (this.summary?.Rows ?? []).length
                 ? {
                     Opening:this.summaryRows.reduce((t, x) => t + x.Opening, 0),
                     Debit:this.summaryRows.reduce((t, x) => t + x.Debit, 0),
@@ -947,6 +1138,137 @@ export class LedgerRegisters
                 );
     }
 
+    //===========================================================
+    // Navigation history
+    // Submit starts a new history (the primary view). Opening a
+    // ledger from a summary, or the summary from a statement,
+    // remembers the view left; Back returns to it exactly as it
+    // was (filters and loaded rows, no reload).
+    //===========================================================
+
+    private history:
+        Array<
+        {
+            view:'none' | 'statement' | 'summary';
+            summary:LedgerSummary | null;
+            statement:any;
+            classCode:string;
+            groupCode:string;
+            subGroupCode:string;
+            ledgerCode:string;
+            fromDate:Date;
+            toDate:Date;
+            branchId:number;
+            showCancelled:boolean;
+        }> = [];
+
+    get canGoBack():
+        boolean
+    {
+        return this.history.length > 0;
+    }
+
+    // What Back returns to (button label)
+    get backLabel():
+        string
+    {
+        const last =
+            this.history[this.history.length - 1];
+
+        if (!last)
+        {
+            return '';
+        }
+
+        return last.view === 'statement'
+            ? (last.statement?.LedgerName ?? 'Statement')
+            : (last.summary?.ScopePath ?? 'Summary');
+    }
+
+    private pushHistory():
+        void
+    {
+        if
+        (
+            this.view === 'none'
+            ||
+            (!this.summary && !this.statement)
+        )
+        {
+            return;
+        }
+
+        this.history.push(
+            {
+                view:this.view,
+                summary:this.summary,
+                statement:this.statement,
+                classCode:this.classCode,
+                groupCode:this.groupCode,
+                subGroupCode:this.subGroupCode,
+                ledgerCode:this.ledgerCode,
+                fromDate:this.fromDate,
+                toDate:this.toDate,
+                branchId:this.branchId,
+                showCancelled:this.showCancelled
+            });
+
+        // Keep the trail short
+        if (this.history.length > 20)
+        {
+            this.history.shift();
+        }
+    }
+
+    // Submit : a new primary view
+    submit():
+        void
+    {
+        this.history = [];
+
+        this.load();
+    }
+
+    // Back : the view left last, as it was
+    goBack():
+        void
+    {
+        const last =
+            this.history.pop();
+
+        if (!last)
+        {
+            return;
+        }
+
+        this.loadRequest?.unsubscribe();
+
+        this.closeVoucher();
+
+        this.loading = false;
+
+        this.loadError = '';
+
+        this.classCode = last.classCode;
+        this.groupCode = last.groupCode;
+        this.subGroupCode = last.subGroupCode;
+        this.ledgerCode = last.ledgerCode;
+        this.fromDate = last.fromDate;
+        this.toDate = last.toDate;
+        this.branchId = last.branchId;
+        this.showCancelled = last.showCancelled;
+
+        this.rebuildItems();
+
+        this.view = last.view;
+        this.summary = last.summary;
+        this.statement = last.statement;
+
+        this.applySearch();
+
+        this.refreshView();
+    }
+
     // Summary row → that ledger's statement
     openLedger
     (
@@ -955,15 +1277,32 @@ export class LedgerRegisters
     ):
         void
     {
+        this.pushHistory();
+
         this.onLedgerChange(code);
 
         this.load();
     }
 
-    // Statement → back to the summary of its sub group
+    // Statement → the summary of its sub group (Back returns to
+    // the view this statement came from, when there is one)
     backToSummary():
         void
     {
+        if
+        (
+            this.history.length > 0
+            &&
+            this.history[this.history.length - 1].view === 'summary'
+        )
+        {
+            this.goBack();
+
+            return;
+        }
+
+        this.pushHistory();
+
         this.ledgerCode = '';
 
         this.load();
@@ -976,13 +1315,15 @@ export class LedgerRegisters
     refresh():
         void
     {
+        this.history = [];
+
         this.loadRequest?.unsubscribe();
 
         this.closeVoucher();
 
         this.fromDate = monthStart();
 
-        this.toDate = monthEnd();
+        this.toDate = today();
 
         this.branchId = 0;
 
@@ -999,6 +1340,10 @@ export class LedgerRegisters
         this.showCodes = true;
 
         this.showNarration = true;
+
+        this.showZeroBalance = false;
+
+        this.showNoTransactions = false;
 
         this.searchText = '';
 
@@ -1293,6 +1638,9 @@ export class LedgerRegisters
                     showCancelled:(this.statement ?? this.summary)?.ShowCancelled ?? this.showCancelled,
                     showCodes:this.showCodes,
                     showNarration:this.showNarration,
+                    showZeroBalance:this.showZeroBalance,
+                    showNoTransactions:this.showNoTransactions,
+                    statementMode:this.showStatementMode ? this.statementMode : 'detail',
                     search:this.searchText
                 }
             );
@@ -1336,6 +1684,28 @@ export class LedgerRegisters
 const REQUEST_TIMEOUT =
     90000;
 
+// yyyy-MM-dd → Date (local); anything else → null
+function parseIsoDate
+(
+    text:
+        string
+):
+    Date | null
+{
+    const match =
+        /^(\d{4})-(\d{2})-(\d{2})$/.exec((text ?? '').trim());
+
+    if (!match)
+    {
+        return null;
+    }
+
+    const date =
+        new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+
+    return isNaN(date.getTime()) ? null : date;
+}
+
 function monthStart():
     Date
 {
@@ -1345,13 +1715,14 @@ function monthStart():
     return new Date(today.getFullYear(), today.getMonth(), 1);
 }
 
-function monthEnd():
+// Default To : today (the statement up to now)
+function today():
     Date
 {
-    const today =
+    const now =
         new Date();
 
-    return new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
 function errorText

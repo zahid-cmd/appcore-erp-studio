@@ -361,13 +361,16 @@ export class MembershipCardsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateMembershipCard
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }

@@ -1820,6 +1820,7 @@ implements OnInit
 
         this.userprofileservice
             .update(
+                this.routePublicId,
                 model
             )
             .subscribe

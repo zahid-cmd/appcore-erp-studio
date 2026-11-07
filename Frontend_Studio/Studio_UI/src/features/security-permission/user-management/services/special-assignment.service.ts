@@ -164,13 +164,13 @@ export class SpecialAssignmentService
 
     getEntityHistory
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<any[]>
     {
         return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
+            `${this.apiUrl}/${publicId}/history`
         );
     }
 
@@ -237,6 +237,9 @@ export class SpecialAssignmentService
 
     update
     (
+        publicId:
+            string,
+
         specialAssignment:
             SpecialAssignmentSavePayload
     ):
@@ -259,7 +262,7 @@ export class SpecialAssignmentService
 
 
         return this.http.put<void>(
-            `${this.apiUrl}/${specialAssignment.specialAssignmentId}`,
+            `${this.apiUrl}/${publicId}`,
 
             specialAssignment
         )

@@ -50,6 +50,11 @@ public class BusinessConfiguration
     // Fixed / Temporary
     public string AccessType { get; set; } = string.Empty;
 
+    // Full / Gifts Only (Accessories grants only : a showroom may
+    // hold and transfer Accessories stock to give with bikes,
+    // never sell it over the counter)
+    public string Scope { get; set; } = "Full";
+
     public DateOnly? ValidFrom { get; set; }
 
     public DateOnly? ValidUntil { get; set; }
@@ -86,4 +91,4 @@ public class BusinessConfiguration
     public long? ModifiedBy { get; set; }
 
     public DateTime? ModifiedDate { get; set; }
-}
+}

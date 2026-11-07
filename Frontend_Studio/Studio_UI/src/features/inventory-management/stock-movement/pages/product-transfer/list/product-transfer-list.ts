@@ -1003,7 +1003,7 @@ export class ProductTransferList
                 'Restoring Product Transfer',
                 `Please wait while "${row.TransferNo}" is being restored...`,
                 'Product transfer restored.',
-                this.service.restore(row.Id))
+                this.service.restore(row.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -1089,7 +1089,7 @@ export class ProductTransferList
         void
     {
         this.service
-            .getEntityHistory(row.Id)
+            .getEntityHistory(row.PublicId ?? '')
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({

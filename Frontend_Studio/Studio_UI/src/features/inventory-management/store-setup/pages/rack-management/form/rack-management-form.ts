@@ -2785,6 +2785,7 @@ implements OnInit, OnDestroy
                     payload
                 )
                 : this.rackManagementService.update(
+                    this.routePublicId,
                     {
                         RackManagementId:this.entity.RackManagementId,
                         ...payload

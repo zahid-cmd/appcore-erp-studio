@@ -258,6 +258,36 @@ implements OnChanges
 
 
     //=============================================================
+    // Left Command 5 (optional; hidden while it has no text / icon)
+    //=============================================================
+
+    @Input() command5Text = '';
+
+    @Input() command5Icon = '';
+
+    @Input() command5Visible = true;
+    // Tooltip; empty = the button text
+    @Input() command5Title = '';
+
+    @Input()
+    command5Permission:
+        'add'
+        |
+        'update'
+        |
+        'restore'
+        |
+        '' =
+        '';
+
+    // Page / common activity the button needs ('Print' …)
+    @Input() command5Activity = '';
+
+    @Output() command5Click =
+        new EventEmitter<void>();
+
+
+    //=============================================================
     // Right Command
     //=============================================================
 
@@ -634,6 +664,31 @@ implements OnChanges
 
 
     //=============================================================
+    // Command 5 Visibility
+    //=============================================================
+
+    isCommand5Visible():
+        boolean
+    {
+        return (
+            this.command5Visible
+            &&
+            !!(
+                this.command5Text
+                ||
+                this.command5Icon
+            )
+            &&
+            this.hasCommandPermission(
+                this.command5Text,
+                this.command5Permission,
+                this.command5Activity
+            )
+        );
+    }
+
+
+    //=============================================================
     // Right Command Visibility
     //=============================================================
 
@@ -663,6 +718,8 @@ implements OnChanges
             this.isCommand3Visible()
             ||
             this.isCommand4Visible()
+            ||
+            this.isCommand5Visible()
         );
     }
 
@@ -740,6 +797,25 @@ implements OnChanges
         }
 
         this.command4Click.emit();
+    }
+
+
+    //=============================================================
+    // Left Command 5 Click
+    //=============================================================
+
+    onCommand5Click():
+        void
+    {
+        if
+        (
+            !this.isCommand5Visible()
+        )
+        {
+            return;
+        }
+
+        this.command5Click.emit();
     }
 
 

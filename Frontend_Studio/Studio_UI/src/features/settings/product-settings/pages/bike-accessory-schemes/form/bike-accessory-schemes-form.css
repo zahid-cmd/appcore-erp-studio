@@ -1,0 +1,236 @@
+/* =====================================================
+   Bike Accessory Schemes Form
+===================================================== */
+
+/* Dropdowns fill the section (default is a fixed 360px) */
+app-search-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+    flex: none;
+}
+
+/* Kind / source note */
+.bas-hint
+{
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.bas-hint i
+{
+    margin-top: 2px;
+    color: #64748b;
+}
+
+/* Model picker + "Add all" */
+.bas-picker
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bas-link
+{
+    align-self: flex-end;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #334155;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.bas-link:disabled
+{
+    color: #94a3b8;
+    text-decoration: none;
+    cursor: default;
+}
+
+.bas-label
+{
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Model chips (scroll inside, never the page) */
+.bas-chips
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 6px;
+    min-height: 40px;
+    max-height: 190px;
+    padding: 8px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fbfcfd;
+    box-sizing: border-box;
+}
+
+.bas-chip
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 6px 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 13px;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.bas-chip button
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #64748b;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.bas-chip button:hover
+{
+    background: #e2e8f0;
+    color: #be123c;
+}
+
+/* Accessory rows (scroll inside, never the page) */
+.bas-items
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 40px;
+    max-height: 250px;
+    padding: 6px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fbfcfd;
+    box-sizing: border-box;
+}
+
+.bas-item
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+}
+
+.bas-item-text
+{
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.bas-item-name
+{
+    overflow: hidden;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.bas-item-code
+{
+    overflow: hidden;
+    color: #64748b;
+    font-size: 11.5px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.bas-qty
+{
+    flex: 0 0 46px;
+    width: 46px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.bas-qty:focus
+{
+    border-color: #475569;
+    outline: none;
+}
+
+.bas-qty:disabled
+{
+    background: #f8fafc;
+    color: #334155;
+}
+
+.bas-remove
+{
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.bas-remove:hover
+{
+    background: #fff1f2;
+    color: #be123c;
+}
+
+.bas-empty
+{
+    padding: 4px 2px;
+    color: #94a3b8;
+    font-size: 12.5px;
+}
+
+.bas-count
+{
+    color: #64748b;
+    font-size: 12px;
+    text-align: right;
+}

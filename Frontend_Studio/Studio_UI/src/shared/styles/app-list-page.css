@@ -1,6 +1,30 @@
 /* =====================================================
    APP LIST PAGE
+   -----------------------------------------------------
+   One layout for every list page (pure CSS, no measuring):
+     header, toolbar  : their own height
+     canvas           : 660px, gives up height only when
+                        the page area is shorter (min 320)
+     summary line     : its own height, always visible
+   Never a page scroll.
 ===================================================== */
+
+/* The component that holds the list fills the page area
+   (also when it sits inside a thin page wrapper) */
+:host
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+}
 
 .app-list-page
 {
@@ -16,11 +40,10 @@
 
     min-height:0;
 
-    /* The canvas is a fixed height (page-canvas.css) : a short
-       screen scrolls the page instead of cutting the canvas */
-    overflow-x:hidden;
+    height:100%;
 
-    overflow-y:auto;
+    /* Never a page scroll */
+    overflow:hidden;
 
     gap:12px;
 }
@@ -53,19 +76,29 @@
 
     display:flex;
 
-    /* Exactly the canvas height (page-canvas.css), on every list
-       page; no stretching to the free space */
-    flex:0 0 auto;
+    /* 660px; shrinks only when the page area is shorter */
+    flex:0 1 660px;
 
     width:100%;
 
     min-width:0;
 
-    min-height:0;
+    min-height:320px;
 
     height:auto;
 
     overflow:hidden;
+}
+
+/* Dialogs, toasts and the history drawer placed inside the
+   page take no room and no gap (their panels are fixed) */
+.app-list-page > app-toast,
+.app-list-page > app-confirm-dialog,
+.app-list-page > app-progress-dialog,
+.app-list-page > app-history-drawer,
+.app-list-page > app-form-modal
+{
+    display:contents;
 }
 
 /* =====================================================

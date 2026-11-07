@@ -2237,6 +2237,7 @@ implements OnInit
 
         this.branchAssignmentService
             .update(
+                this.routePublicId,
                 payload
             )
             .subscribe(

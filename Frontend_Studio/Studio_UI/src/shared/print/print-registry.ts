@@ -165,6 +165,13 @@ export const PRINT_SOURCES:
             import('../../features/accounts-finance/accounting-registers/print/ledger-registers.print')
                 .then(module => module.LEDGER_REGISTERS_PRINT),
 
+    // Accounts & Finance : Trial Balance (the id is the page's
+    // token)
+    'trial-balance':
+        () =>
+            import('../../features/accounts-finance/financial-statements/print/trial-balance.print')
+                .then(module => module.TRIAL_BALANCE_PRINT),
+
     // Inventory Management : Product Ledgers (Ledger / Summary of
     // Motor Bikes / Spare Parts & Lubricants / Accessories; the
     // id is the page's token)

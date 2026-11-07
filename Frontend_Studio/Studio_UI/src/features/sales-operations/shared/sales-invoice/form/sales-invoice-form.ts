@@ -6124,6 +6124,7 @@ implements OnInit, OnDestroy
             Observable<SalesInvoiceSaved> =
             this.isEditMode && this.invoice
                 ? this.salesInvoiceService.update(
+                    this.invoice.PublicId || this.routePublicId,
                     {
                         ...payload,
                         SalesInvoiceId:this.invoice.SalesInvoiceId
@@ -6264,7 +6265,7 @@ implements OnInit, OnDestroy
                         this.runAction(
                             'Approving Sales Invoice',
                             'Sales invoice approved.',
-                            this.salesInvoiceService.approve(invoice.SalesInvoiceId),
+                            this.salesInvoiceService.approve(invoice.PublicId ?? ''),
                             `${invoice.InvoiceNo} approved.`
                         )
                 );
@@ -6301,7 +6302,7 @@ implements OnInit, OnDestroy
                         this.runAction(
                             'Returning Sales Invoice',
                             'Sales invoice returned to draft.',
-                            this.salesInvoiceService.returnToDraft(invoice.SalesInvoiceId),
+                            this.salesInvoiceService.returnToDraft(invoice.PublicId ?? ''),
                             `${invoice.InvoiceNo} returned to Draft.`
                         )
                 );
@@ -6361,7 +6362,7 @@ implements OnInit, OnDestroy
                 'Posting Sales Invoice',
                 'Moving the stock and posting the ledgers and the receipt...',
                 'Sales invoice posted.',
-                this.salesInvoiceService.post(invoice.SalesInvoiceId)
+                this.salesInvoiceService.post(invoice.PublicId ?? '')
             )
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
@@ -6545,7 +6546,7 @@ implements OnInit, OnDestroy
                         this.runAction(
                             'Cancelling Sales Invoice',
                             'Sales invoice cancelled.',
-                            this.salesInvoiceService.cancel(invoice.SalesInvoiceId, reason),
+                            this.salesInvoiceService.cancel(invoice.PublicId ?? '', reason),
                             `${invoice.InvoiceNo} cancelled.`
                         )
                 );

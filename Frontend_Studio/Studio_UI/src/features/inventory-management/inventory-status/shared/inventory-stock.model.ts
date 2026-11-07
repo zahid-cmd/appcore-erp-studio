@@ -87,6 +87,17 @@ export interface InventoryStockRow
 
     StockStatus:
         InventoryStockStatus;
+
+    // Product image path ('' = none; Accessories have none)
+    ImagePath?:
+        string;
+
+    // Cost incl. VAT (with "View Cost incl. VAT")
+    AverageCostVat?:
+        number;
+
+    StockValueVat?:
+        number;
 }
 
 export interface InventoryStockOption
@@ -122,6 +133,10 @@ export interface InventoryStockList
         string;
 
     CanViewCost:
+        boolean;
+
+    // "View Cost incl. VAT" on the page
+    CanViewCostVat?:
         boolean;
 
     BranchId:
@@ -300,11 +315,31 @@ export interface InventoryBikeUnit
 
     UnitCost:
         number;
+
+    // Unit status Sold
+    IsSold:
+        boolean;
+
+    // The model's colour
+    ColorName:
+        string;
 }
 
 export interface InventoryBikeList
 {
     CanViewCost:
+        boolean;
+
+    // Edit Bike Numbers switch + Update on the page
+    CanEditNumbers:
+        boolean;
+
+    // ... After Sale : sold bikes too
+    CanEditSold:
+        boolean;
+
+    // Key & Battery Required : Key / Battery No in the editor
+    KeyBatteryOn:
         boolean;
 
     Rows:
@@ -513,4 +548,43 @@ export function formatStockDate
         ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     return `${match[3]}-${months[Number(match[2]) - 1] ?? match[2]}-${match[1]}`;
+}
+
+
+//===============================================================
+// Edit Bike Numbers (Technical Records)
+//===============================================================
+
+export type InventoryBikeNumberField =
+    'ChassisNo' | 'EngineNo' | 'KeyNo' | 'BatteryNo';
+
+export interface InventoryBikeNumbers
+{
+    MotorBikeUnitId:
+        number;
+
+    ChassisNo:
+        string;
+
+    EngineNo:
+        string;
+
+    KeyNo:
+        string;
+
+    BatteryNo:
+        string;
+}
+
+// A number another bike already carries
+export interface InventoryBikeNumberTaken
+{
+    Field:
+        string;
+
+    Value:
+        string;
+
+    Message:
+        string;
 }

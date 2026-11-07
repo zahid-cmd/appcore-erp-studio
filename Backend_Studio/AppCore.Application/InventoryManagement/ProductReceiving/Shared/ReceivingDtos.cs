@@ -74,6 +74,9 @@ public class ReceivingDto
     public List<ReceivingLineDto> Lines { get; set; } = new();
 
     public List<ReceivingUnitDto> Units { get; set; } = new();
+
+    // MB : free accessories received on it
+    public List<ReceivingAccessoryLineDto> Accessories { get; set; } = new();
 }
 
 
@@ -258,6 +261,11 @@ public class ReceivingPurchaseOptionDto
     public string ReceivingStatus { get; set; } = string.Empty;
 
     public List<ReceivingPurchaseLineDto> Lines { get; set; } = new();
+
+    // MB : free accessories still due from the supplier
+    public decimal AccessoryPendingQuantity { get; set; }
+
+    public List<ReceivingAccessoryDueDto> Accessories { get; set; } = new();
 }
 
 
@@ -328,6 +336,9 @@ public class CreateReceivingDto
     public List<CreateReceivingLineDto> Lines { get; set; } = new();
 
     public List<ReceivingUnitDto> Units { get; set; } = new();
+
+    // MB : free accessories received now
+    public List<CreateReceivingAccessoryDto> Accessories { get; set; } = new();
 }
 
 

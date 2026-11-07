@@ -861,6 +861,7 @@
 }
 
 .sc-card:hover .sc-tools,
+.sc-row:hover .sc-tools,
 .sc-tools:focus-within
 {
     opacity: 1;
@@ -1802,7 +1803,7 @@
 .sc-style
 {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     flex: none;
     margin: -6px 0 2px;
     gap: 3px;
@@ -1814,11 +1815,12 @@
 .sc-style-btn
 {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
     justify-content: center;
-    height: 30px;
-    padding: 0 6px;
+    height: 42px;
+    padding: 0 4px;
     border: 0;
     border-radius: 8px;
     background: transparent;
@@ -1930,4 +1932,162 @@
 {
     background: rgba(239, 68, 68, 0.15);
     color: #b91c1c;
-}
+}
+
+
+/* =====================================================
+   LIST STYLE : one compact row per configuration
+===================================================== */
+
+.sc-grid.sc-grid-list
+{
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+}
+
+.sc-row
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 54px;
+    padding: 8px 14px;
+    background: var(--sc-surface);
+    border: 1px solid rgba(220, 225, 240, 0.7);
+    border-left: 3px solid #d3d8e6;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(20, 30, 80, 0.06);
+    transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.sc-row:hover
+{
+    box-shadow: var(--sc-shadow);
+}
+
+.sc-row-on
+{
+    border-left-color: var(--sc-on);
+    background: linear-gradient(90deg, #f1faf4 0%, #ffffff 160px);
+}
+
+.sc-row-staged
+{
+    box-shadow: 0 0 0 2px var(--sc-brand-2), 0 6px 16px rgba(58, 75, 196, 0.18);
+}
+
+.sc-row-pending
+{
+    border-style: dashed;
+    border-color: #6d8fe0;
+}
+
+.sc-row-blocked
+{
+    opacity: 0.7;
+}
+
+.sc-row .sc-tile
+{
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    font-size: 10.5px;
+}
+
+.sc-row-main
+{
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.sc-row-head
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.sc-row-name
+{
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13.5px;
+}
+
+.sc-row-head .sc-code,
+.sc-row-head .sc-tag,
+.sc-row-head .sc-changed
+{
+    flex: none;
+}
+
+.sc-row-desc
+{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--sc-text);
+}
+
+.sc-row-desc b
+{
+    flex: none;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    color: var(--sc-muted);
+}
+
+.sc-row-desc-text
+{
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #5b6280;
+}
+
+.sc-row-desc .sc-card-note
+{
+    flex: none;
+}
+
+.sc-row-side
+{
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sc-row-side .sc-text-value
+{
+    width: 180px;
+}
+
+@media (max-width: 900px)
+{
+    .sc-row
+    {
+        flex-wrap: wrap;
+    }
+
+    .sc-row-main
+    {
+        flex-basis: calc(100% - 50px);
+    }
+
+    .sc-row-side
+    {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

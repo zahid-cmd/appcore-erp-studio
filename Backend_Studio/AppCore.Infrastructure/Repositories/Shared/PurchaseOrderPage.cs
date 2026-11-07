@@ -72,4 +72,8 @@ public sealed class PurchaseOrderPage
     // OFF = a supplier's terms (Supplier Profile) are fixed on the
     // order (missing = ON : editable)
     public string? SwitchEditSupplierTerms { get; init; }
+
+    // ON = a line may take stock above the item's Max Stock Level
+    // (a warning is shown); OFF / missing = Max is a hard cap
+    public string? SwitchAboveMaxStock { get; init; }
 }

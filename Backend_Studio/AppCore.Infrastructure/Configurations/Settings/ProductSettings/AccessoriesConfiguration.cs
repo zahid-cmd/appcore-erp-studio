@@ -175,6 +175,11 @@ public class AccessoriesConfiguration
                .HasMaxLength(20)
                .HasDefaultValue("Slow");
 
+        builder.Property(x => x.AccessoryUse)
+               .IsRequired()
+               .HasMaxLength(30)
+               .HasDefaultValue("For Sale");
+
         builder.Property(x => x.MovementClassAuto)
                .IsRequired()
                .HasDefaultValue(false);

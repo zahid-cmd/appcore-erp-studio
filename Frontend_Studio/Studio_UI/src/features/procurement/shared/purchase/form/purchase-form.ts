@@ -908,6 +908,15 @@ implements OnInit, OnDestroy
         string =
         '';
 
+    // Business Configuration : the login branch does not run this
+    // page's business line. The whole page is read-only (inert)
+    // and shows no commands; the server refuses it too.
+    get branchBlocked():
+        boolean
+    {
+        return !!this.defaults?.BranchBlocked;
+    }
+
     periodChecking:
         boolean =
         false;
@@ -1261,6 +1270,17 @@ implements OnInit, OnDestroy
         return value > 0
             ? Math.min(value, 100)
             : 0;
+    }
+
+    // Above Max Stock Level allowed : Max is a warning, not a cap
+    get aboveMaxAllowed():
+        boolean
+    {
+        return switchOn(
+            this.switches,
+            this.page.switches.ABOVE_MAX_STOCK,
+            false
+        );
     }
 
     // VAT as per 6.3 : the line VAT % can be typed
@@ -1796,6 +1816,8 @@ implements OnInit, OnDestroy
         if
         (
             this.isSaving
+            ||
+            this.branchBlocked
         )
         {
             return;
@@ -5605,9 +5627,11 @@ implements OnInit, OnDestroy
     lineStock
     (
         code:
-            string
+            string,
+        ordered:
+            number = 0
     ):
-        { text:string; tone:string } | null
+        { text:string; tone:string; over:number } | null
     {
         const pos =
             this.stockPosition(code);
@@ -5620,9 +5644,16 @@ implements OnInit, OnDestroy
             return null;
         }
 
+        // Above Max Stock Level (only possible with the switch ON)
+        const over =
+            pos.room !== null && ordered > pos.room
+                ? Math.round((ordered - pos.room) * 100) / 100
+                : 0;
+
         return {
-            text:`Stock ${pos.stock ?? '—'} · On order ${pos.onOrder}${pos.reorder > 0 ? ' · Re-order ' + pos.reorder : ''}`,
-            tone:pos.status
+            text:`Stock ${pos.stock ?? '—'} · On order ${pos.onOrder}${pos.reorder > 0 ? ' · Re-order ' + pos.reorder : ''}${over > 0 ? ' · Over Max by ' + over : ''}`,
+            tone:over > 0 ? 'amber' : pos.status,
+            over
         };
     }
 
@@ -5942,7 +5973,7 @@ implements OnInit, OnDestroy
                         onOrderQty:pos ? pos.onOrder : undefined,
                         reorderLevel:pos ? pos.reorder : undefined,
                         stockTone:pos?.status ?? '',
-                        room:pos?.room ?? null,
+                        room:this.aboveMaxAllowed ? null : (pos?.room ?? null),
                         inOrderQty:line?.Quantity ?? 0,
                         start:
                             line
@@ -6325,10 +6356,21 @@ implements OnInit, OnDestroy
             quantity + freeQuantity > position.room
         )
         {
-            this.lineError =
-                `At most ${position.room} : Max Stock Level ${position.max}, stock and orders already hold ${position.available}.`;
+            if
+            (
+                !this.aboveMaxAllowed
+            )
+            {
+                this.lineError =
+                    `At most ${position.room} : Max Stock Level ${position.max}, stock and orders already hold ${position.available}.`;
 
-            return;
+                return;
+            }
+
+            // Switch ON : allowed, with a warning
+            this.toast.warning(
+                'Above Max Stock Level',
+                `${product.ProductName} goes ${Math.round((quantity + freeQuantity - position.room) * 100) / 100} above its Max Stock Level (${position.max}).`);
         }
 
         // MB / DP invoice : no MRP

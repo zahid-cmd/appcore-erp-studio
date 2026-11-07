@@ -545,6 +545,11 @@ export interface PurchaseOrderDefaults
     Message:
         string;
 
+    // Business Configuration : the branch does not run the line;
+    // the whole page is blocked
+    BranchBlocked?:
+        boolean;
+
     // yyyy-MM-dd
     Today:
         string;

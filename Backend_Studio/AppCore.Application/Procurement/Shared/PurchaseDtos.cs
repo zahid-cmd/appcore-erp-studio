@@ -327,6 +327,11 @@ public class PurchaseVatRateDto
 
 public class PurchaseDefaultsDto
 {
+    // Business Configuration : the branch does not run the page's
+    // line today. The page is blocked (read-only, no commands);
+    // Message says why.
+    public bool BranchBlocked { get; set; }
+
     public string PurchaseNo { get; set; } = string.Empty;
     public long BranchId { get; set; }
     public string BranchName { get; set; } = string.Empty;

@@ -1,7 +1,8 @@
 //===============================================================
 // Topbar Context
 // --------------------------------------------------------------
-// Branch chip : from the stored login (branch chosen at login)
+// Branch chip : from the stored login (branch chosen at login);
+//               opens Switch Branch when the user may switch
 // FY chip     : GET api/platform/shell/context
 // (The company logo moved to the topbar header.)
 //===============================================================
@@ -27,6 +28,12 @@ import
     ShellService
 }
 from '../../../../core/shell/shell.service';
+
+import
+{
+    BranchSwitchService
+}
+from '../../../../core/authentication/branch-switch.service';
 
 
 
@@ -64,6 +71,9 @@ implements
 
     private readonly shellService =
         inject(ShellService);
+
+    readonly branchSwitch =
+        inject(BranchSwitchService);
 
 
     //===========================================================
@@ -150,4 +160,18 @@ implements
         this.shellService.loadContext();
     }
 
+
+
+    //===========================================================
+    // Branch chip click : Switch Branch
+    //===========================================================
+
+    onBranchClick():
+        void
+    {
+        if (this.branchSwitch.canSwitch())
+        {
+            this.branchSwitch.open();
+        }
+    }
 }

@@ -60,10 +60,10 @@ from '../models/opening-stock.model';
 //   POST   <api>                       save draft
 //   PUT    <api>/{id}                  change draft
 //   DELETE <api>/{id}                  delete draft
-//   PUT    <api>/{id}/post             post
-//   PUT    <api>/{id}/cancel           { Reason }
+//   PUT    <api>/{publicId}/post       post (save and actions by uuid)
+//   PUT    <api>/{publicId}/cancel     { Reason }
 //   PUT    <api>/restore                last deleted draft
-//   GET    <api>/history · <api>/{id}/history
+//   GET    <api>/history · <api>/{publicId}/history
 //
 // The API answers in camelCase; mapped to PascalCase.
 //===============================================================
@@ -290,17 +290,18 @@ export class OpeningStockService
     }
 
 
+    // Saved by the uuid (the server ignores any id in the body)
     update
     (
-        id:
-            number,
+        publicId:
+            string,
         dto:
             CreateOpeningStock
     ):
         Observable<OpeningStockSaved>
     {
         return this.http
-            .put<any>(`${this.apiUrl}/${id}`, { ...dto, OpeningStockId:id })
+            .put<any>(`${this.apiUrl}/${publicId}`, dto)
             .pipe(map(toSaved));
     }
 
@@ -319,28 +320,28 @@ export class OpeningStockService
 
     post
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<OpeningStockSaved>
     {
         return this.http
-            .put<any>(`${this.apiUrl}/${id}/post`, {})
+            .put<any>(`${this.apiUrl}/${publicId}/post`, {})
             .pipe(map(toSaved));
     }
 
 
     cancel
     (
-        id:
-            number,
+        publicId:
+            string,
         reason:
             string
     ):
         Observable<void>
     {
         return this.http
-            .put<void>(`${this.apiUrl}/${id}/cancel`, { Reason:reason });
+            .put<void>(`${this.apiUrl}/${publicId}/cancel`, { Reason:reason });
     }
 
 
@@ -363,13 +364,13 @@ export class OpeningStockService
 
     getEntityHistory
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<any[]>
     {
         return this.http
-            .get<any[]>(`${this.apiUrl}/${id}/history`);
+            .get<any[]>(`${this.apiUrl}/${publicId}/history`);
     }
 }
 

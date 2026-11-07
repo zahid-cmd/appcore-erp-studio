@@ -30,6 +30,7 @@ namespace AppCore.Api.Controllers.InventoryManagement.ProductReceiving;
 //   GET {id}
 //   POST                      create = post        (Add)
 //   PUT {id}/cancel           { Reason }           (Cancel)
+//   PUT accessory-dues/{dueId}/close?branchId=  { Reason }  (MB, Add)
 //
 // 400 : input or rule broken ; 403 : no permission ;
 // 404 : not found
@@ -250,11 +251,52 @@ public abstract class ReceivingControllerBase : ControllerBase
     }
 
 
-    [HttpPut("{id:long}/cancel")]
+    // MB : Close Due : the rest of a free-accessory due row is
+    // written off (needs the Add permission, like receiving)
+    [HttpPut("accessory-dues/{dueId:long}/close")]
+    public async Task<IActionResult> CloseAccessoryDue(
+        long dueId,
+        [FromQuery] long branchId,
+        [FromBody] CloseAccessoryDueDto? dto)
+    {
+        long userId = UserId;
+
+        IActionResult? denied =
+            await DenyAsync("Add");
+
+        if (denied != null)
+        {
+            return denied;
+        }
+
+        return await Run(
+            async () =>
+            {
+                await _repository.CloseAccessoryDueAsync(dueId, branchId, dto ?? new CloseAccessoryDueDto(), userId);
+
+                return NoContent();
+            },
+            "Failed to close the accessory due.");
+    }
+
+
+    // Cancelled by the uuid in the address (point 2)
+    [HttpPut("{publicId:guid}/cancel")]
     public async Task<IActionResult> Cancel(
-        long id,
+        Guid publicId,
         [FromBody] CancelReceivingDto? dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Receiving not found.");
+        }
+
+        long id =
+            foundId.Value;
+
         long userId = UserId;
 
         ReceivingDto? item =

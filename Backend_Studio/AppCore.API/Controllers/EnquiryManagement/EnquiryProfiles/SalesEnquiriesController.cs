@@ -279,11 +279,22 @@ public class SalesEnquiriesController
     }
 
 
-    [HttpGet("{id:long}/history")]
-    public Task<IActionResult> GetEntityHistory(
-        long id)
+    [HttpGet("{publicId:guid}/history")]
+    public async Task<IActionResult> GetEntityHistory(
+        Guid publicId)
     {
-        return Run(
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        return await Run(
             async () => Ok(await _activityHistoryRepository.GetHistoryAsync("Enquiry Management", "SalesEnquiries", id)),
             "Sales enquiry history could not be loaded.");
     }
@@ -307,13 +318,32 @@ public class SalesEnquiriesController
     }
 
 
-    [HttpPut]
-    public Task<IActionResult> Update(
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
+    public async Task<IActionResult> Update(
+        Guid publicId,
         [FromBody] UpdateSalesEnquiriesDto? dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        dto ??= new UpdateSalesEnquiriesDto();
+
+        dto.SalesEnquiryId =
+            id;
+
         long userId = UserId;
 
-        return Guarded(
+        return await Guarded(
             "Update",
             async () =>
             {

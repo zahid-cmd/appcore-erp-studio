@@ -1503,7 +1503,7 @@ implements OnInit, AfterViewInit, OnDestroy
         const call$ =
             isAdd
                 ? this.service.create(body)
-                : this.service.update({ ServiceEnquiryId:e.ServiceEnquiryId, ...body } as UpdateServiceEnquiry);
+                : this.service.update(this.routePublicId, { ServiceEnquiryId:e.ServiceEnquiryId, ...body } as UpdateServiceEnquiry);
 
         this.progress
             .run<unknown>(

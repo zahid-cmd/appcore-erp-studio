@@ -213,6 +213,8 @@ export interface DataResetResult
     AccountGroupsDeleted: number;
     AccountSubGroupsDeleted: number;
     Unlinked: number;
+    // Number counters (VoucherSequences) rewound or removed
+    SequencesReset?: number;
     BackupFileName: string;
 }
 

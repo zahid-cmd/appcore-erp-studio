@@ -144,8 +144,11 @@
                 </app-textbox>
 
 
-                <!-- Model (Motor Bikes / Spare Parts / Accessories) -->
+                <!-- Model (Motor Bikes / Spare Parts only; hidden for
+                     Accessories and Lubricants) -->
 
+                @if (isModelCategory || !entity.ProductCategoryId)
+                {
                 <app-dropdown
 
                     label="Model"
@@ -163,6 +166,7 @@
                     [required]="isModelCategory">
 
                 </app-dropdown>
+                }
 
 
                 <!-- Sub Category Name (model categories : built from the model) -->
@@ -380,6 +384,29 @@
                     [required]="true">
 
                 </app-dropdown>
+
+
+                <!-- Accessory Use (Accessories categories only) :
+                     its products take it -->
+
+                @if (isAccessoryCategory)
+                {
+                <app-dropdown
+
+                    label="Accessory Use"
+
+                    [items]="accessoryUseItems"
+
+                    [(value)]="entity.AccessoryUse"
+
+                    (valueChange)="onValueChange()"
+
+                    [disabled]="isViewMode || isSaving"
+
+                    [required]="true">
+
+                </app-dropdown>
+                }
 
 
                 <!-- Remarks -->

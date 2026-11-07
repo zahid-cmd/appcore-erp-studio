@@ -2699,6 +2699,7 @@ implements OnInit
                 );
                 this.activityAssignmentService
                     .update(
+                        this.routePublicId,
                         payload
                     )
                     .subscribe(

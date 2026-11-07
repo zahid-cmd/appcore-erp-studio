@@ -251,25 +251,26 @@ export class MassStoringService
         dto:
             CreateMassStoring
     ):
-        Observable<number>
+        Observable<{ Id:number; PublicId:string }>
     {
+        // The id and the uuid (save-and-post goes on by uuid)
         return this.http
             .post<any>(this.apiUrl, dto)
-            .pipe(map(toId));
+            .pipe(map(x => ({ Id:toId(x), PublicId:text(pick(x, 'PublicId')) })));
     }
 
     update
     (
-        id:
-            number,
+        publicId:
+            string,
         dto:
             UpdateMassStoring
     ):
         Observable<number>
     {
         return this.http
-            .put<any>(`${this.apiUrl}/${id}`, { ...dto, Id:id })
-            .pipe(map(x => toId(x) || id));
+            .put<any>(`${this.apiUrl}/${publicId}`, dto)
+            .pipe(map(x => toId(x)));
     }
 
     delete
@@ -285,37 +286,37 @@ export class MassStoringService
 
     restore
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
         return this.http
-            .put<void>(`${this.apiUrl}/${id}/restore`, {});
+            .put<void>(`${this.apiUrl}/${publicId}/restore`, {});
     }
 
     post
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
         return this.http
-            .post<void>(`${this.apiUrl}/${id}/post`, {});
+            .post<void>(`${this.apiUrl}/${publicId}/post`, {});
     }
 
     cancel
     (
-        id:
-            number,
+        publicId:
+            string,
         reason:
             string
     ):
         Observable<void>
     {
         return this.http
-            .post<void>(`${this.apiUrl}/${id}/cancel`, { Reason:reason });
+            .post<void>(`${this.apiUrl}/${publicId}/cancel`, { Reason:reason });
     }
 
     getHistory():
@@ -327,13 +328,13 @@ export class MassStoringService
 
     getEntityHistory
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<any[]>
     {
         return this.http
-            .get<any[]>(`${this.apiUrl}/${id}/history`);
+            .get<any[]>(`${this.apiUrl}/${publicId}/history`);
     }
 }
 

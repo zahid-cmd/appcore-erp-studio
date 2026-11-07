@@ -142,13 +142,13 @@ export class ActivityAssignmentService
 
     getEntityHistory
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<any[]>
     {
         return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
+            `${this.apiUrl}/${publicId}/history`
         );
     }
 
@@ -213,13 +213,16 @@ export class ActivityAssignmentService
 
     update
     (
+        publicId:
+            string,
+
         activityAssignment:
             ActivityAssignment
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             activityAssignment
         )

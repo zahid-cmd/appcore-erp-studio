@@ -344,6 +344,11 @@ export interface PurchaseDefaults
     // Why there is no number ('' = fine)
     Message:
         string;
+
+    // Business Configuration : the branch does not run the line;
+    // the whole page is blocked
+    BranchBlocked?:
+        boolean;
     // yyyy-MM-dd
     Today:
         string;

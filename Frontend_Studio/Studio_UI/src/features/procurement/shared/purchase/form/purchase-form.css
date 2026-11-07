@@ -3122,3 +3122,33 @@
     max-width: 360px;
     font-size: 12.5px;
 }
+
+
+/* =====================================================
+   BLOCKED PAGE : the login branch does not run this
+   business line (Business Configuration). Everything is
+   greyed and cannot be clicked, typed or tabbed into.
+===================================================== */
+
+.pof-banner-blocked
+{
+    flex: 0 0 auto;
+    margin: 0 0 12px;
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: #9f1239;
+    font-weight: 600;
+}
+
+.pof-banner-blocked i
+{
+    color: #be123c;
+}
+
+.pof-body.pof-blocked
+{
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.55;
+    filter: grayscale(0.35);
+}

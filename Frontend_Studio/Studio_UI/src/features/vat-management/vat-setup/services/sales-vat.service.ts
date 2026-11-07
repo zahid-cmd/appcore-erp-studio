@@ -323,13 +323,16 @@ export class SalesVatService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateSalesVat
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -341,13 +344,16 @@ export class SalesVatService
 
     extend
     (
+        publicId:
+            string,
+
         model:
             ExtendSalesVat
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/extend`,
+            `${this.apiUrl}/${publicId}/extend`,
             model
         );
     }

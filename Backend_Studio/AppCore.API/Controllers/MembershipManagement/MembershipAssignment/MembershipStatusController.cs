@@ -173,11 +173,28 @@ public class MembershipStatusController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateMembershipStatusDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        dto.MembershipId =
+            id;
+
         if (!await _repository.ExistsAsync(
                 dto.MembershipId))
         {
@@ -309,34 +326,67 @@ public class MembershipStatusController : ControllerBase
     // Free Service Windows (manual until job cards exist)
     //===========================================================
 
-    [HttpPut("{id:long}/windows/{windowId:long}/use")]
+    [HttpPut("{publicId:guid}/windows/{windowId:long}/use")]
 
     public async Task<IActionResult> UseWindow(
-        long id,
+        Guid publicId,
         long windowId,
         UseMembershipServiceDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         return await Run(() => _repository.UseWindowAsync(id, windowId, dto, 1));
     }
 
 
-    [HttpPut("{id:long}/windows/{windowId:long}/undo-use")]
+    [HttpPut("{publicId:guid}/windows/{windowId:long}/undo-use")]
 
     public async Task<IActionResult> UndoUseWindow(
-        long id,
+        Guid publicId,
         long windowId)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         return await Run(() => _repository.UndoUseWindowAsync(id, windowId, 1));
     }
 
 
-    [HttpPut("{id:long}/windows/{windowId:long}/approve")]
+    [HttpPut("{publicId:guid}/windows/{windowId:long}/approve")]
 
     public async Task<IActionResult> ApproveWindow(
-        long id,
+        Guid publicId,
         long windowId,
         ApproveMembershipServiceDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         return await Run(() => _repository.ApproveWindowAsync(id, windowId, dto, 1));
     }
 

@@ -421,6 +421,10 @@ public class DataResetResultDto
 
     public long Unlinked { get; set; }
 
+    // Document / voucher number counters (VoucherSequences)
+    // rewound or removed, so numbering restarts after a reset
+    public long SequencesReset { get; set; }
+
     public string BackupFileName { get; set; } = string.Empty;
 }
 

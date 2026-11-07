@@ -1952,6 +1952,7 @@ implements OnInit, AfterViewInit, OnDestroy
             isAdd
                 ? this.service.create(body)
                 : this.service.update(
+                    this.routePublicId,
                     {
                         SalesEnquiryId:e.SalesEnquiryId,
                         ...body

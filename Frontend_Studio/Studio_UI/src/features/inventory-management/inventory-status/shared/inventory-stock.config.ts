@@ -22,7 +22,7 @@ from './inventory-stock.model';
 
 //===============================================================
 // One page's tab (SP : Spare Parts / Lubricants; MB : Models /
-// Bike Units)
+// Technical Records)
 //===============================================================
 
 export interface InventoryStockTab
@@ -37,6 +37,11 @@ export interface InventoryStockTab
     // lists the bikes instead
     kind:
         string;
+
+    // MB : the free accessories (Additional / Promotional
+    // Accessories products, from <apiPath>/bike-accessories)
+    accessories?:
+        boolean;
 }
 
 export interface InventoryStockPageConfig
@@ -100,8 +105,9 @@ export const STOCK_MB_PAGE:
     productHeader:'Model',
     tabs:
     [
-        { id:'models', label:'Models', kind:'' },
-        { id:'bikes', label:'Bike Units', kind:'' }
+        { id:'models', label:'Models', kind:'Motor Bikes' },
+        { id:'accessories', label:'Free Accessories', kind:'Free Accessories', accessories:true },
+        { id:'bikes', label:'Technical Records', kind:'' }
     ],
     showLocation:false,
     showPartNumber:false

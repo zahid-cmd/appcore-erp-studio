@@ -1,0 +1,230 @@
+@if (open() && switchingTo())
+{
+    <!-- Switching : the orbit loader replaces the card until the
+         app reloads (an error brings the card back) -->
+
+    <div class="bsw-backdrop bsw-backdrop-loading">
+
+        <div
+            class="bsw-loading"
+            role="status"
+            aria-live="polite">
+
+            <app-orbit-loader
+                [title]="done() ? 'Opening the Dashboard' : 'Switching to ' + switchingTo()"
+                [message]="done() || 'Starting your session in this branch. Please wait...'"
+                size="medium"
+                [showMessage]="true"
+                [overlay]="false">
+            </app-orbit-loader>
+
+        </div>
+
+    </div>
+}
+@else if (open())
+{
+    <div
+        class="bsw-backdrop"
+        (click)="close()">
+
+        <div
+            class="bsw-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bsw-title"
+            (click)="$event.stopPropagation()">
+
+            <!-- Header -->
+
+            <div class="bsw-head">
+
+                <span class="bsw-head-icon">
+                    <i class="fas fa-code-branch"></i>
+                </span>
+
+                <span class="bsw-head-text">
+                    <b id="bsw-title">Switch Branch</b>
+                    <small>
+                        Working in
+                        <strong>{{ current()?.branchName || '...' }}</strong>
+                    </small>
+                </span>
+
+                <button
+                    type="button"
+                    class="bsw-close"
+                    title="Close"
+                    [disabled]="busy()"
+                    (click)="close()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+
+            </div>
+
+
+            <!-- Branches -->
+
+            <div class="bsw-body">
+
+                @if (!data() && service.loadError())
+                {
+                    <div class="bsw-error">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {{ service.loadError() }}
+                    </div>
+                }
+                @else if (!data())
+                {
+                    <div class="bsw-empty">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        Loading your branches...
+                    </div>
+                }
+                @else
+                {
+                    @if (data()!.message)
+                    {
+                        <div class="bsw-message">
+                            <i class="fas fa-circle-info"></i>
+                            {{ data()!.message }}
+                        </div>
+                    }
+
+                    <div
+                        class="bsw-list"
+                        role="radiogroup"
+                        aria-label="Branches">
+
+                        @for (branch of branches(); track branch.branchId)
+                        {
+                            <button
+                                type="button"
+                                class="bsw-branch"
+                                role="radio"
+                                [attr.aria-checked]="selectedId() === branch.branchId"
+                                [class.bsw-current]="branch.isCurrent"
+                                [class.bsw-picked]="selectedId() === branch.branchId"
+                                [disabled]="busy() || branch.isCurrent || !data()!.canSwitch"
+                                (click)="pick(branch)">
+
+                                <span class="bsw-radio">
+                                    <span></span>
+                                </span>
+
+                                <span class="bsw-branch-text">
+
+                                    <span class="bsw-branch-name">
+                                        {{ branch.branchName }}
+
+                                        @if (branch.isCurrent)
+                                        {
+                                            <em class="bsw-tag">Current</em>
+                                        }
+                                    </span>
+
+                                    <span class="bsw-branch-meta">
+                                        {{ branch.branchCode }}{{ branch.wingName ? ' · ' + branch.wingName : '' }}
+                                    </span>
+
+                                    <span class="bsw-lines">
+                                        @for (line of branch.businessLines; track line)
+                                        {
+                                            <span
+                                                class="bsw-line"
+                                                [style.--line]="lineColor(line)">
+                                                {{ line }}
+                                            </span>
+                                        }
+                                        @empty
+                                        {
+                                            <span class="bsw-line bsw-line-none">No business line today</span>
+                                        }
+                                    </span>
+
+                                </span>
+
+                            </button>
+                        }
+
+                    </div>
+                }
+
+                @if (error())
+                {
+                    <div class="bsw-error">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {{ error() }}
+                    </div>
+                }
+
+            </div>
+
+
+            <!-- Footer -->
+
+            <div class="bsw-foot">
+
+                <span class="bsw-note">
+                    <i class="fas fa-rotate"></i>
+                    The app reopens on the Dashboard. Unsaved changes on open pages are lost.
+                </span>
+
+                <button
+                    type="button"
+                    class="bsw-btn"
+                    [disabled]="busy()"
+                    (click)="close()">
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    class="bsw-btn bsw-btn-primary"
+                    [disabled]="!canConfirm()"
+                    (click)="confirm()">
+
+                    @if (busy())
+                    {
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        Switching...
+                    }
+                    @else
+                    {
+                        <i class="fas fa-right-left"></i>
+                        Switch
+                    }
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+
+<!-- Another tab switched the shared login -->
+
+@if (notice())
+{
+    <div class="bsw-backdrop bsw-backdrop-notice bsw-backdrop-loading">
+
+        <div
+            class="bsw-loading"
+            role="alertdialog"
+            aria-live="assertive">
+
+            <app-orbit-loader
+                [title]="notice()"
+                message="This tab is reloading to work in the same branch..."
+                size="medium"
+                [showMessage]="true"
+                [overlay]="false">
+            </app-orbit-loader>
+
+        </div>
+
+    </div>
+}

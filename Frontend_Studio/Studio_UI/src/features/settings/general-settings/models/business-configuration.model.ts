@@ -66,6 +66,9 @@ export interface BusinessConfiguration
 
     AccessType: string;
 
+    // Full / Gifts Only (Accessories only)
+    Scope?: string;
+
     // 'yyyy-MM-dd' or null
     ValidFrom: string | null;
 
@@ -89,6 +92,9 @@ export interface CreateBusinessConfiguration
     BusinessLine: string;
 
     AccessType: string;
+
+    // Full / Gifts Only (Accessories only)
+    Scope?: string;
 
     ValidFrom: string | null;
 
@@ -140,6 +146,9 @@ export interface BranchLineStatus
 
     AccessType: string;
 
+    // Full / Gifts Only (Accessories only)
+    Scope?: string;
+
     ValidFrom: string | null;
 
     ValidUntil: string | null;
@@ -183,4 +192,4 @@ export interface AllowedWarehouse
     WingId: number;
 
     ActiveLines: string[];
-}
+}

@@ -80,17 +80,17 @@
             pageHeaderRight
             [command1Text]="command1.text"
             [command1Icon]="command1.icon"
-            [command1Visible]="!!command1.command"
+            [command1Visible]="!!command1.command && !branchBlocked"
             [command1Activity]="command1.activity"
             (command1Click)="onCommand(0)"
             [command2Text]="command2.text"
             [command2Icon]="command2.icon"
-            [command2Visible]="!!command2.command"
+            [command2Visible]="!!command2.command && !branchBlocked"
             [command2Activity]="command2.activity"
             (command2Click)="onCommand(1)"
             [command3Text]="command3.text"
             [command3Icon]="command3.icon"
-            [command3Visible]="!!command3.command"
+            [command3Visible]="!!command3.command && !branchBlocked"
             [command3Activity]="command3.activity"
             (command3Click)="onCommand(2)"
             rightCommandIcon="fas fa-arrow-left"
@@ -104,7 +104,20 @@
          SECTION 02 : BODY
     ====================================================== -->
 
-    <div class="pof-body">
+    <!-- Business Configuration : the whole page is blocked -->
+    @if (branchBlocked)
+    {
+        <div class="pof-banner pof-banner-blocked">
+            <i class="fas fa-lock"></i>
+            <span>{{ periodError }} The page is read-only here.</span>
+        </div>
+    }
+
+    <div
+        class="pof-body"
+        [class.pof-blocked]="branchBlocked"
+        [attr.inert]="branchBlocked ? '' : null"
+        [attr.aria-disabled]="branchBlocked ? 'true' : null">
 
         @if (loading)
         {
@@ -124,7 +137,7 @@
         @else
         {
             <!-- Period problem (Add / Edit) -->
-            @if (periodError && isEditable)
+            @if (periodError && isEditable && !branchBlocked)
             {
                 <div class="pof-banner pof-banner-warn">
                     <i class="fas fa-triangle-exclamation"></i>
@@ -1195,7 +1208,7 @@
                                                 {
                                                     <span class="pof-billed pur-returned">Returned {{ line.ReturnedQuantity }}</span>
                                                 }
-                                                @if (lineStock(line.ProductCode); as st)
+                                                @if (lineStock(line.ProductCode, poRequired ? 0 : line.Quantity + line.FreeQuantity); as st)
                                                 {
                                                     <span
                                                         class="pof-line-stock"

@@ -31,7 +31,11 @@ using BikeModelsEntity =
 using BrandManagementEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.BrandManagement;
 
+using AccessoriesEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.Accessories;
+
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Repositories.Settings.ProductSettings;
 using AppCore.Infrastructure.Persistence.Paging;
 using AppCore.Application.Common.Paging;
 using AppCore.Domain.Common;
@@ -183,6 +187,9 @@ public class ProductSubCategoryRepository :
 
                         SubCategoryCreationAllowed =
                             x.SubCategoryCreationAllowed,
+
+                        AccessoryUse =
+                            x.AccessoryUse,
 
                         Remarks =
                             x.Remarks,
@@ -896,22 +903,39 @@ public class ProductSubCategoryRepository :
     //===========================================================
     // Name + Bike Model
     //
-        // Motor Bikes / Spare Parts / Accessories :
+    // Motor Bikes / Spare Parts :
     //     a Bike Model of the category's brand is required; the
     //     name is built by the server as
     //     "<Category Type> - <Brand> - <Model>".
     //     A model is used once per category (A04 can have one
-    //     Motor Bikes, one Spare Parts and one Accessories sub
-    //     category).
-    // Lubricants : no model; the name is typed.
+    //     Motor Bikes and one Spare Parts sub category).
+    // Accessories, Lubricants : no model; the name is typed freely
+    //     (owner, 2026-11-07). Saving an older Accessories sub
+    //     category clears its model link.
     //===========================================================
+
+    // Accessory use : only Accessories categories carry one;
+    // every other type is For Sale
+    private static string UseOf
+    (
+        ProductCategoryEntity category,
+        string? use
+    )
+    {
+        return string.Equals(
+                (category.CategoryType ?? string.Empty).Trim(),
+                "Accessories",
+                StringComparison.OrdinalIgnoreCase)
+            ? AccessoryUses.Normalize(use)
+            : AccessoryUses.ForSale;
+    }
+
 
     private static readonly HashSet<string> ModelCategoryTypes =
         new(StringComparer.OrdinalIgnoreCase)
         {
             "Motor Bikes",
-            "Spare Parts",
-            "Accessories"
+            "Spare Parts"
         };
 
 
@@ -1696,6 +1720,11 @@ public class ProductSubCategoryRepository :
                 SubCategoryCreationAllowed =
                     dto.SubCategoryCreationAllowed,
 
+                AccessoryUse =
+                    UseOf(
+                        parent.Category,
+                        dto.AccessoryUse),
+
                 Remarks =
                     dto.Remarks?.Trim()
                     ??
@@ -1854,6 +1883,15 @@ public class ProductSubCategoryRepository :
         entity.SubCategoryCreationAllowed =
             dto.SubCategoryCreationAllowed;
 
+        // Accessory use : its products follow (below)
+        string oldUse =
+            entity.AccessoryUse;
+
+        entity.AccessoryUse =
+            UseOf(
+                parent.Category,
+                dto.AccessoryUse);
+
         entity.Remarks =
             dto.Remarks?.Trim()
             ??
@@ -1889,6 +1927,21 @@ public class ProductSubCategoryRepository :
         await ProductSalesAccounts.SyncSubCategoryAsync(_context, entity, userId);
 
         await _context.SaveChangesAsync();
+
+        // Use changed : every accessory of this sub category takes it
+        if (!string.Equals(oldUse, entity.AccessoryUse, StringComparison.Ordinal))
+        {
+            string newUse =
+                entity.AccessoryUse;
+
+            long subCategoryId =
+                entity.ProductSubCategoryId;
+
+            await _context
+                .Set<AccessoriesEntity>()
+                .Where(x => x.ProductSubCategoryId == subCategoryId)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.AccessoryUse, newUse));
+        }
 
         AddHistory(
             entity,

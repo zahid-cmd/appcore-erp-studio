@@ -1,7 +1,8 @@
 <!-- =====================================================
      TOPBAR CONTEXT
      -----------------------------------------------------
-     Branch  : the branch chosen at login
+     Branch  : the branch chosen at login (a button that
+               opens Switch Branch when the user may switch)
      FY      : the financial year covering today
                (no "FY" label: the value already reads
                "FY 2026-2027")
@@ -18,19 +19,43 @@
 
     @if (branchName())
     {
-        <span
-            class="context-chip"
-            [title]="'Login branch: ' + branchName()">
+        @if (branchSwitch.canSwitch())
+        {
+            <!-- Two or more assigned branches : opens Switch Branch -->
+            <button
+                type="button"
+                class="context-chip context-chip-switch"
+                [title]="'Working in ' + branchName() + ' · click to switch branch'"
+                (click)="onBranchClick()">
 
-            <i class="fa-solid fa-building"></i>
+                <i class="fa-solid fa-building"></i>
 
-            <span class="context-label">Branch</span>
+                <span class="context-label">Branch</span>
 
-            <b class="context-value">
-                {{ branchName() }}
-            </b>
+                <b class="context-value">
+                    {{ branchName() }}
+                </b>
 
-        </span>
+                <i class="fa-solid fa-chevron-down context-switch-caret"></i>
+
+            </button>
+        }
+        @else
+        {
+            <span
+                class="context-chip"
+                [title]="'Login branch: ' + branchName()">
+
+                <i class="fa-solid fa-building"></i>
+
+                <span class="context-label">Branch</span>
+
+                <b class="context-value">
+                    {{ branchName() }}
+                </b>
+
+            </span>
+        }
     }
 
 

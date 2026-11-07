@@ -38,7 +38,8 @@ import
 {
     Observable,
     of,
-    switchMap
+    switchMap,
+    map
 }
 from 'rxjs';
 
@@ -2453,15 +2454,43 @@ export class PriceAdjustmentForm
         return this.doc?.Id || this.savedId;
     }
 
+    // Uuid of the saved draft (point 2 : save and actions by uuid)
+    private savedPublicId:
+        string =
+        '';
+
+    private get draftPublicId():
+        string
+    {
+        return this.doc?.PublicId || this.savedPublicId;
+    }
+
     private saveDraft():
         Observable<number>
     {
         const id =
             this.draftId;
 
-        return id > 0
-            ? this.service.update(id, this.payload())
-            : this.service.create(this.payload());
+        const publicId =
+            this.draftPublicId;
+
+        return publicId
+            ? this.service
+                .update(publicId, this.payload())
+                .pipe(map(x => x || id))
+            : this.service
+                .create(this.payload())
+                .pipe(
+                    map
+                    (
+                        saved =>
+                        {
+                            this.savedPublicId =
+                                saved.PublicId;
+
+                            return saved.Id;
+                        }
+                    ));
     }
 
     save():
@@ -2576,7 +2605,7 @@ export class PriceAdjustmentForm
                                 this.savedId = id;
                             }
 
-                            return this.service.post(id);
+                            return this.service.post(this.draftPublicId);
                         }
                     ));
 
@@ -2634,7 +2663,7 @@ export class PriceAdjustmentForm
                 'Posting Price Adjustment',
                 `Please wait while "${doc.AdjustmentNo}" is being posted...`,
                 'Price adjustment posted.',
-                this.service.post(doc.Id))
+                this.service.post(doc.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -2893,7 +2922,7 @@ export class PriceAdjustmentForm
                 'Cancelling Price Adjustment',
                 `Please wait while "${doc.AdjustmentNo}" is being cancelled...`,
                 'Price adjustment cancelled.',
-                this.service.cancel(doc.Id, this.cancelReason.trim()))
+                this.service.cancel(doc.PublicId ?? '', this.cancelReason.trim()))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({

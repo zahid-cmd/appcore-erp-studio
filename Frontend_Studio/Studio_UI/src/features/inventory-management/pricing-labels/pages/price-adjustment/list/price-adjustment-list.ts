@@ -997,7 +997,7 @@ export class PriceAdjustmentList
                 'Restoring Price Adjustment',
                 `Please wait while "${row.AdjustmentNo}" is being restored...`,
                 'Price adjustment restored.',
-                this.service.restore(row.Id))
+                this.service.restore(row.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -1083,7 +1083,7 @@ export class PriceAdjustmentList
         void
     {
         this.service
-            .getEntityHistory(row.Id)
+            .getEntityHistory(row.PublicId ?? '')
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({

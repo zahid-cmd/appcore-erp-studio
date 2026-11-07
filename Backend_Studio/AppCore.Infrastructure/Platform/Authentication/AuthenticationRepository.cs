@@ -768,4 +768,121 @@ public class AuthenticationRepository
         return CodeGenerator.GenerateUserProfileCode(
             nextSequenceNo);
     }
+
+
+    //===========================================================
+    // Switch Branch (user menu, 2026-11-07)
+    //===========================================================
+
+    // Setting : Security & Permission › Branch Assignment
+    private const string BranchSwitchSetting = "CFG-MOD-006-0101";
+
+    private const string HistoryModule = "Security & Permission";
+
+    private const string HistoryEntity = "BranchSwitch";
+
+
+    public async Task<UserProfile?>
+        GetUserProfileByIdAsync(
+            long userProfileId)
+    {
+        if (userProfileId <= 0)
+        {
+            return null;
+        }
+
+        return await _context
+            .Set<UserProfile>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.UserProfileId == userProfileId);
+    }
+
+
+    public async Task<Dictionary<long, (string WingName, List<string> Lines)>>
+        GetBranchSwitchDetailsAsync(
+            IEnumerable<long> branchIds)
+    {
+        List<long> ids =
+            branchIds.Distinct().ToList();
+
+        var rows =
+            await
+                (
+                    from branch in _context.Set<Branches>().AsNoTracking()
+                    join wing in _context.Set<Wings>().AsNoTracking()
+                        on branch.WingId equals wing.WingId into wings
+                    from wing in wings.DefaultIfEmpty()
+                    where ids.Contains(branch.BranchId)
+                    select new
+                    {
+                        branch.BranchId,
+                        WingName = wing == null ? string.Empty : wing.WingName
+                    }
+                )
+                .ToListAsync();
+
+        Dictionary<long, HashSet<string>> lines =
+            await AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess
+                .ActiveLinesByBranchAsync(
+                    _context,
+                    AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess.Today());
+
+        return rows.ToDictionary(
+            x => x.BranchId,
+            x =>
+            (
+                x.WingName ?? string.Empty,
+                lines.TryGetValue(x.BranchId, out HashSet<string>? set)
+                    ? AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess.Lines
+                        .Where(set.Contains)
+                        .ToList()
+                    : new List<string>()
+            ));
+    }
+
+
+    public async Task<bool>
+        IsBranchSwitchAllowedAsync()
+    {
+        SystemConfigurations? row =
+            await _context
+                .Set<SystemConfigurations>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.ConfigurationCode == BranchSwitchSetting
+                        && !x.IsDeleted);
+
+        return row?.IsEnabled ?? true;
+    }
+
+
+    public async Task
+        AddBranchSwitchHistoryAsync(
+            long userProfileId,
+            string userName,
+            LoginBranchDto? fromBranch,
+            LoginBranchDto toBranch)
+    {
+        string from =
+            fromBranch == null
+                ? "(unknown branch)"
+                : fromBranch.BranchName;
+
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module = HistoryModule,
+                EntityName = HistoryEntity,
+                EntityId = userProfileId,
+                ActivityType = "Switch",
+                ActivityTitle = "Branch Switched",
+                ActivityDescription = $"{from} to {toBranch.BranchName} ({toBranch.BranchCode}).",
+                PerformedBy = userProfileId,
+                PerformedByName = string.IsNullOrWhiteSpace(userName) ? "System" : userName,
+                PerformedDate = DateTime.UtcNow
+            });
+
+        await _context.SaveChangesAsync();
+    }
 }

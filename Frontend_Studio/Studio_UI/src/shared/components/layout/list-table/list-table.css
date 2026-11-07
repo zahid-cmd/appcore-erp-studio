@@ -172,7 +172,8 @@
 
     max-height: 40px;
 
-    padding: 0 16px;
+    /* A page may tighten its table : --list-cell-pad */
+    padding: 0 var(--list-cell-pad, 16px);
 
     background:
         linear-gradient(
@@ -292,11 +293,12 @@
 
 .list-table-row
 {
-    height: 40px;
+    /* Set by the page canvas so 10 rows fit the screen */
+    height: var(--list-row-height, 40px);
 
-    min-height: 40px;
+    min-height: var(--list-row-height, 40px);
 
-    max-height: 40px;
+    max-height: var(--list-row-height, 40px);
 
     transition:
         background-color .18s ease;
@@ -321,23 +323,25 @@
 
 .list-table-grid tbody td
 {
-    height: 40px;
+    height: var(--list-row-height, 40px);
 
-    min-height: 40px;
+    min-height: var(--list-row-height, 40px);
 
-    max-height: 40px;
+    max-height: var(--list-row-height, 40px);
 
-    padding: 0 16px;
+    /* A page may tighten its table : --list-cell-pad,
+       --list-cell-font */
+    padding: 0 var(--list-cell-pad, 16px);
 
     border-bottom: 1px solid #edf2f7;
 
     color: #4b5d73;
 
-    font-size: 15px;
+    font-size: var(--list-cell-font, 15px);
 
     font-weight: 500;
 
-    line-height: 40px;
+    line-height: var(--list-row-height, 40px);
 
     white-space: nowrap;
 
@@ -552,7 +556,7 @@
 
     gap: 6px;
 
-    height: 40px;
+    height: var(--list-row-height, 40px);
 }
 
 
@@ -1117,6 +1121,33 @@ td.right .action-buttons
 
 
 /* =====================================================
+   COLOUR ICON (text cells with dotIcon) : the icon itself
+   takes the colour; a thin outline keeps white / silver
+   visible on the white row
+===================================================== */
+
+.list-table-color-icon
+{
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 18px;
+
+    line-height: 1;
+
+    vertical-align: middle;
+
+    filter: drop-shadow(0 0 0.6px rgba(15, 23, 42, 0.7));
+
+    cursor: default;
+}
+
+
+
+/* =====================================================
    IMAGE PREVIEW (hover over an 'image' cell)
 ===================================================== */
 
@@ -1175,6 +1206,8 @@ td.right .action-buttons
 
 .list-table-image-preview-body
 {
+    position: relative;
+
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1194,4 +1227,60 @@ td.right .action-buttons
 {
     from { opacity: 0; transform: scale(0.96); }
     to   { opacity: 1; transform: scale(1); }
+}
+
+
+/* Big round number at the top left of the preview (stock) */
+.list-table-image-preview-badge
+{
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 46px;
+    height: 46px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.35);
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* =====================================================
+   FOOTER ROWS (Page Total / Grand Total) : pinned under
+   the body, above the pager
+===================================================== */
+
+.list-table-foot
+{
+    flex: 0 0 auto;
+    border-top: 2px solid #c9d6ea;
+    background: #f5f8fd;
+}
+
+.list-table-foot .list-table-grid tbody td
+{
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    line-height: 36px;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 700;
+    border-bottom: 1px solid #e3eaf5;
+}
+
+.list-table-foot-row.grand td
+{
+    background: #eaf1fc;
+    color: #1e3a8a !important;
 }

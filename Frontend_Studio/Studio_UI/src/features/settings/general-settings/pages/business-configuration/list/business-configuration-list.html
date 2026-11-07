@@ -206,6 +206,10 @@
                                                     {
                                                         <span class="bc-chip bc-chip-granted"><i class="fas fa-check"></i> Granted</span>
                                                     }
+                                                    @case ('Gifts Only')
+                                                    {
+                                                        <span class="bc-chip bc-chip-scheduled" title="May hold and transfer accessories to give with bikes; no counter sale"><i class="fas fa-gift"></i> Gifts Only</span>
+                                                    }
                                                     @case ('Scheduled')
                                                     {
                                                         <span class="bc-chip bc-chip-scheduled"><i class="fas fa-hourglass-start"></i> Scheduled</span>
@@ -546,6 +550,34 @@
         </div>
 
 
+        <!-- Scope (Accessories) -->
+
+        @if (isAccessoriesDraft)
+        {
+            <div class="bc-modal-row">
+
+                <app-dropdown
+
+                    label="Scope"
+
+                    [items]="scopeItems"
+
+                    [value]="draft.Scope"
+
+                    (valueChange)="onDraftScopeChange($event)"
+
+                    [required]="true">
+
+                </app-dropdown>
+
+                <div class="bc-hint">
+                    {{ draft.Scope === 'Gifts Only' ? 'Holds and transfers accessories to give with bikes only : no counter sale, purchase or receiving.' : 'Full Accessories business : counter sale, purchase, receiving, transfer.' }}
+                </div>
+
+            </div>
+        }
+
+
         <!-- Validity -->
 
         <div class="bc-validity" [class.bc-validity-temporary]="isTemporary">
@@ -653,4 +685,4 @@
 
     <app-confirm-dialog></app-confirm-dialog>
 
-</div>
+</div>

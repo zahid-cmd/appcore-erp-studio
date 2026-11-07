@@ -14,6 +14,12 @@ from '@angular/core';
 
 import
 {
+    environment
+}
+from '../../../../../environments/environment';
+
+import
+{
     takeUntilDestroyed
 }
 from '@angular/core/rxjs-interop';
@@ -32,7 +38,12 @@ from '@angular/router';
 
 import
 {
-    Subscription
+    Subject,
+    Subscription,
+    catchError,
+    debounceTime,
+    of,
+    switchMap
 }
 from 'rxjs';
 
@@ -82,7 +93,9 @@ import
 {
     ListTableComponent,
     ListTableColumn,
-    ListTableCellClickEvent
+    ListTableCellClickEvent,
+    ListTableRowAction,
+    ListTableRowActionEvent
 }
 from '../../../../../shared/components/layout/list-table/list-table';
 
@@ -112,6 +125,12 @@ from '../../../../../shared/components/utilities/toast/toast';
 
 import
 {
+    HistoryDrawerComponent
+}
+from '../../../../../shared/components/utilities/history-drawer/history-drawer';
+
+import
+{
     formatMoney
 }
 from '../../../../../shared/components/accounting/accounting.models';
@@ -129,12 +148,16 @@ from '../../../../../core/authentication/authentication-storage.service';
 import
 {
     INVENTORY_STOCK_PAGE,
-    InventoryStockPageConfig
+    InventoryStockPageConfig,
+    STOCK_AC_PAGE
 }
 from '../inventory-stock.config';
 
 import
 {
+    InventoryBikeNumberField,
+    InventoryBikeNumbers,
+    InventoryBikeNumberTaken,
     InventoryBikeUnit,
     InventoryStockFilter,
     InventoryStockPlace,
@@ -185,7 +208,12 @@ type StockRow =
         ReorderText:string;
         AverageCostText:string;
         StockValueText:string;
+        AverageCostVatText:string;
+        StockValueVatText:string;
         BrandCategoryText:string;
+        ImageUrl:string;
+        // Colour icon (Motor Bikes) : CSS colour from the name
+        ColorHex:string;
     };
 
 type BikeRow =
@@ -194,6 +222,8 @@ type BikeRow =
     {
         StockInDateText:string;
         UnitCostText:string;
+        // Colour icon : CSS colour from the name
+        ColorHex:string;
     };
 
 // One summary card
@@ -249,6 +279,7 @@ interface PlacesView
         PaginationComponent,
         SearchDropdownComponent,
         ToastComponent,
+        HistoryDrawerComponent,
         InventoryStockCardComponent
     ],
 
@@ -310,6 +341,43 @@ implements OnInit
         return this.selectedTab === 'bikes';
     }
 
+    // MB : Free Accessories tab (Additional / Promotional
+    // Accessories products)
+    get isAccessoriesTab():
+        boolean
+    {
+        return !!this.page.tabs.find(x => x.id === this.selectedTab)?.accessories;
+    }
+
+    private get hasAccessoriesTab():
+        boolean
+    {
+        return this.page.tabs.some(x => !!x.accessories);
+    }
+
+    private get accessoriesApiPath():
+        string
+    {
+        return `${this.page.apiPath}/bike-accessories`;
+    }
+
+    // The card of a free accessory reads the Accessories stock
+    // through the Motor Bike Stock page
+    cardIsAccessory:
+        boolean =
+        false;
+
+    get cardPage():
+        InventoryStockPageConfig
+    {
+        return this.cardIsAccessory
+            ? { ...STOCK_AC_PAGE, apiPath:this.accessoriesApiPath }
+            : this.page;
+    }
+
+    private accessoryRequest?:
+        Subscription;
+
     private get tabKind():
         string
     {
@@ -345,6 +413,11 @@ implements OnInit
         [];
 
     canViewCost:
+        boolean =
+        false;
+
+    // Second page action : cost incl. VAT columns
+    canViewCostVat:
         boolean =
         false;
 
@@ -471,7 +544,7 @@ implements OnInit
     get placesShowRack():
         boolean
     {
-        return this.page.pageType !== 'MB';
+        return this.page.pageType !== 'MB' || this.isAccessoriesTab;
     }
 
     onFigureClick
@@ -517,7 +590,7 @@ implements OnInit
         this.placesRequest =
             this.stockService
                 .getCard(
-                    this.page.apiPath,
+                    this.isAccessoriesTab ? this.accessoriesApiPath : this.page.apiPath,
                     id,
                     this.branchId,
                     this.warehouseId
@@ -626,12 +699,18 @@ implements OnInit
         ListTableColumn[] =
         [];
 
+    accessoryColumns:
+        ListTableColumn[] =
+        [];
+
     get columns():
         ListTableColumn[]
     {
         return this.isBikesTab
             ? this.bikeColumns
-            : this.stockColumns;
+            : this.isAccessoriesTab
+                ? this.accessoryColumns
+                : this.stockColumns;
     }
 
     get tableRows():
@@ -640,6 +719,50 @@ implements OnInit
         return this.isBikesTab
             ? this.pagedBikes
             : this.pagedRows;
+    }
+
+    // Page Total / Grand Total rows (Models tab) : pinned under
+    // the table, above the pager. Grand = every row matching the
+    // filters and search.
+    footerRows:
+        any[] =
+        [];
+
+    private buildFooter():
+        void
+    {
+        if (this.isBikesTab || this.filteredRows.length === 0)
+        {
+            this.footerRows = [];
+
+            return;
+        }
+
+        const word =
+            this.page.pageType === 'MB' && !this.isAccessoriesTab ? 'model' : 'item';
+
+        const totals =
+            (rows: StockRow[], label: string, grand: boolean) =>
+            {
+                const sum =
+                    (pick: (x: StockRow) => number) =>
+                        rows.reduce((a, x) => a + (pick(x) || 0), 0);
+
+                return {
+                    grand,
+                    ItemName:`${label} · ${rows.length} ${word}${rows.length === 1 ? '' : 's'}`,
+                    InTransitText:formatQuantity(sum(x => x.InTransit)),
+                    OnHandText:formatQuantity(sum(x => x.OnHand)),
+                    TotalText:formatQuantity(sum(x => x.Total)),
+                    StockValueText:this.canViewCost ? formatMoney(sum(x => x.StockValue)) : ''
+                };
+            };
+
+        this.footerRows =
+        [
+            totals(this.pagedRows, 'Page Total', false),
+            totals(this.filteredRows, 'Grand Total', true)
+        ];
     }
 
     get totalRecords():
@@ -719,6 +842,9 @@ implements OnInit
                             this.canViewCost =
                                 result.CanViewCost;
 
+                            this.canViewCostVat =
+                                !!result.CanViewCostVat;
+
                             this.buildOptions(
                                 result.Branches,
                                 result.Warehouses
@@ -761,6 +887,10 @@ implements OnInit
                             this.buildColumns();
 
                             this.applyFilters();
+
+                            // MB : the free accessories join the rows
+                            // (their own tab)
+                            this.loadAccessories();
                         },
 
                     error:
@@ -823,12 +953,36 @@ implements OnInit
                             this.canViewCost =
                                 result.CanViewCost;
 
+                            // Edit Bike Numbers : pencil per row
+                            this.canEditNumbers =
+                                result.CanEditNumbers;
+
+                            this.canEditSold =
+                                result.CanEditSold;
+
+                            this.keyBatteryOn =
+                                result.KeyBatteryOn;
+
+                            this.bikeRowActions =
+                                this.canEditNumbers
+                                    ? [{
+                                        key:'edit-numbers',
+                                        icon:'fas fa-pen',
+                                        title:'Edit bike numbers',
+                                        tone:'primary',
+                                        visible:(row:any) => !row?.IsSold || this.canEditSold
+                                    }]
+                                    : [];
+
                             this.bikes =
                                 result.Rows.map
                                 (
                                     x =>
                                     ({
                                         ...x,
+                                        // "Motor Bikes - " left out of the model
+                                        ProductName:modelName(x.ProductName),
+                                        ColorHex:colorHex(x.ColorName),
                                         StockInDateText:formatStockDate(x.StockInDate),
                                         UnitCostText:this.canViewCost ? formatMoney(x.UnitCost) : ''
                                     })
@@ -854,6 +1008,448 @@ implements OnInit
                             this.applyFilters();
                         }
                 });
+    }
+
+    //===========================================================
+    // Edit Bike Numbers (Technical Records)
+    //
+    // Switch Edit Bike Numbers (+ After Sale for sold bikes) and
+    // Update on the page : a pencil per row opens the four
+    // numbers. Live check as on Purchases / Receiving (other
+    // bikes' numbers); the server checks everything again.
+    //===========================================================
+
+    canEditNumbers:
+        boolean =
+        false;
+
+    canEditSold:
+        boolean =
+        false;
+
+    // Key & Battery Required : Key / Battery No asked
+    keyBatteryOn:
+        boolean =
+        true;
+
+    bikeRowActions:
+        ListTableRowAction[] =
+        [];
+
+    editBike:
+        BikeRow | null =
+        null;
+
+    // Values typed (capitals) and the values the inputs open with
+    editForm:
+        Record<InventoryBikeNumberField, string> =
+        { ChassisNo:'', EngineNo:'', KeyNo:'', BatteryNo:'' };
+
+    editInitial:
+        Record<InventoryBikeNumberField, string> =
+        { ChassisNo:'', EngineNo:'', KeyNo:'', BatteryNo:'' };
+
+    // Field → "already on purchase ..." (server)
+    editTaken:
+        Record<string, string> =
+        {};
+
+    editChecking:
+        boolean =
+        false;
+
+    editSaving:
+        boolean =
+        false;
+
+    private readonly editCheck$ =
+        new Subject<void>();
+
+    readonly editCheckSub =
+        this.editCheck$
+            .pipe(
+                debounceTime(350),
+                switchMap
+                (
+                    () =>
+                    {
+                        const dto =
+                            this.editDto();
+
+                        if
+                        (
+                            !dto
+                            ||
+                            !dto.ChassisNo
+                            ||
+                            !dto.EngineNo
+                        )
+                        {
+                            return of([] as InventoryBikeNumberTaken[]);
+                        }
+
+                        return this.stockService
+                            .checkBikeNumbers(this.page.apiPath, dto)
+                            .pipe(catchError(() => of(null)));
+                    }
+                ),
+                takeUntilDestroyed(this.destroyRef)
+            )
+            .subscribe
+            (
+                list =>
+                {
+                    this.editChecking =
+                        false;
+
+                    if
+                    (
+                        list
+                    )
+                    {
+                        const taken:
+                            Record<string, string> =
+                            {};
+
+                        list.forEach(x => taken[x.Field] = x.Message);
+
+                        this.editTaken =
+                            taken;
+                    }
+
+                    this.cdr.detectChanges();
+                }
+            );
+
+    get editFields():
+        { key:InventoryBikeNumberField; label:string; required:boolean }[]
+    {
+        return [
+            { key:'ChassisNo', label:'Chassis No', required:true },
+            { key:'EngineNo', label:'Engine No', required:true },
+            ...(this.keyBatteryOn
+                ? [
+                    { key:'KeyNo' as InventoryBikeNumberField, label:'Key No', required:false },
+                    { key:'BatteryNo' as InventoryBikeNumberField, label:'Battery No', required:false }
+                ]
+                : [])
+        ];
+    }
+
+    onRowAction
+    (
+        event:
+            ListTableRowActionEvent
+    ):
+        void
+    {
+        if
+        (
+            event.key === 'edit-numbers'
+        )
+        {
+            this.openEditor(event.row as BikeRow);
+        }
+    }
+
+    openEditor
+    (
+        bike:
+            BikeRow
+    ):
+        void
+    {
+        const values:
+            Record<InventoryBikeNumberField, string> =
+        {
+            ChassisNo:(bike.ChassisNo ?? '').trim().toUpperCase(),
+            EngineNo:(bike.EngineNo ?? '').trim().toUpperCase(),
+            KeyNo:(bike.KeyNo ?? '').trim().toUpperCase(),
+            BatteryNo:(bike.BatteryNo ?? '').trim().toUpperCase()
+        };
+
+        this.editBike =
+            bike;
+
+        this.editForm =
+            { ...values };
+
+        this.editInitial =
+            { ...values };
+
+        this.editTaken =
+            {};
+
+        this.editChecking =
+            false;
+
+        this.editSaving =
+            false;
+
+        this.cdr.detectChanges();
+    }
+
+    closeEditor():
+        void
+    {
+        if
+        (
+            this.editSaving
+        )
+        {
+            return;
+        }
+
+        this.editBike =
+            null;
+
+        this.cdr.detectChanges();
+    }
+
+    onEditInput
+    (
+        field:
+            InventoryBikeNumberField,
+        value:
+            string
+    ):
+        void
+    {
+        this.editForm =
+        {
+            ...this.editForm,
+            [field]:(value ?? '').trim().toUpperCase()
+        };
+
+        // An old answer no longer applies to this field
+        const taken =
+            { ...this.editTaken };
+
+        delete taken[field];
+
+        this.editTaken =
+            taken;
+
+        this.editChecking =
+            true;
+
+        this.editCheck$.next();
+    }
+
+    // Required (here) or taken (server)
+    editError
+    (
+        field:
+            InventoryBikeNumberField
+    ):
+        string
+    {
+        const required =
+            this.editFields.find(x => x.key === field)?.required;
+
+        if
+        (
+            required
+            &&
+            !this.editForm[field]
+        )
+        {
+            return `${field === 'ChassisNo' ? 'Chassis No' : 'Engine No'} is required.`;
+        }
+
+        return this.editTaken[field] ?? '';
+    }
+
+    get editHasErrors():
+        boolean
+    {
+        return this.editFields.some(x => !!this.editError(x.key));
+    }
+
+    get editChanged():
+        boolean
+    {
+        return this.editFields.some(x => this.editForm[x.key] !== this.editInitial[x.key]);
+    }
+
+    get canSaveEditor():
+        boolean
+    {
+        return !!this.editBike
+            && !this.editSaving
+            && !this.editChecking
+            && this.editChanged
+            && !this.editHasErrors;
+    }
+
+    private editDto():
+        InventoryBikeNumbers | null
+    {
+        if
+        (
+            !this.editBike
+        )
+        {
+            return null;
+        }
+
+        return {
+            MotorBikeUnitId:this.editBike.MotorBikeUnitId,
+            ChassisNo:this.editForm.ChassisNo,
+            EngineNo:this.editForm.EngineNo,
+            KeyNo:this.keyBatteryOn ? this.editForm.KeyNo : this.editInitial.KeyNo,
+            BatteryNo:this.keyBatteryOn ? this.editForm.BatteryNo : this.editInitial.BatteryNo
+        };
+    }
+
+    saveEditor():
+        void
+    {
+        const dto =
+            this.editDto();
+
+        if
+        (
+            !dto
+            ||
+            !this.canSaveEditor
+        )
+        {
+            return;
+        }
+
+        this.editSaving =
+            true;
+
+        this.cdr.detectChanges();
+
+        this.stockService
+            .updateBikeNumbers(this.page.apiPath, dto)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    () =>
+                    {
+                        this.editSaving =
+                            false;
+
+                        this.toast.success(
+                            'Bike Numbers Saved',
+                            `${dto.ChassisNo} · ${this.editBike?.ProductName ?? ''}`
+                        );
+
+                        this.editBike =
+                            null;
+
+                        this.loadBikes();
+                    },
+
+                error:
+                    (error:any) =>
+                    {
+                        this.editSaving =
+                            false;
+
+                        const body =
+                            error?.error;
+
+                        const message =
+                            typeof body === 'string' && body.trim()
+                                ? body
+                                : typeof body?.text === 'string' && body.text.trim()
+                                    ? body.text
+                                    : body?.message || body?.title || 'The bike numbers could not be saved.';
+
+                        this.toast.error(
+                            'Not Saved',
+                            message
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+            });
+    }
+
+    //===========================================================
+    // History (Motor Bike Stock : the bike number edits)
+    //===========================================================
+
+    historyOpened:
+        boolean =
+        false;
+
+    historyItems:
+        any[] =
+        [];
+
+    get hasHistory():
+        boolean
+    {
+        return this.page.pageType === 'MB';
+    }
+
+    openHistory():
+        void
+    {
+        if
+        (
+            !this.hasHistory
+        )
+        {
+            return;
+        }
+
+        this.stockService
+            .getBikeHistory(this.page.apiPath)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    rows =>
+                    {
+                        const read =
+                            (x: any, key: string) =>
+                                x?.[key] ?? x?.[key.charAt(0).toLowerCase() + key.slice(1)];
+
+                        this.historyItems =
+                            rows.map
+                            (
+                                x =>
+                                ({
+                                    title:read(x, 'ActivityTitle'),
+                                    // "A -> B" shown as an arrow
+                                    description:String(read(x, 'ActivityDescription') ?? '').split(' -> ').join(' → '),
+                                    user:read(x, 'PerformedByName') || 'System',
+                                    dateTime:new Date(read(x, 'PerformedDate')).toLocaleString(),
+                                    badge:read(x, 'ActivityType')
+                                })
+                            );
+
+                        this.historyOpened =
+                            true;
+
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    () =>
+                    {
+                        this.toast.error(
+                            'History',
+                            'Failed to load the bike history.'
+                        );
+                    }
+            });
+    }
+
+    closeHistory():
+        void
+    {
+        this.historyOpened =
+            false;
+
+        this.cdr.detectChanges();
     }
 
     refresh():
@@ -937,7 +1533,15 @@ implements OnInit
             ReorderText:row.ReorderLevel > 0 ? formatQuantity(row.ReorderLevel) : '–',
             AverageCostText:row.Total > 0 ? formatMoney(row.AverageCost) : '–',
             StockValueText:row.Total > 0 ? formatMoney(row.StockValue) : '–',
-            BrandCategoryText:[row.BrandName, row.CategoryName].filter(x => !!x).join(' · ')
+            AverageCostVatText:row.Total > 0 ? formatMoney(row.AverageCostVat ?? 0) : '–',
+            StockValueVatText:row.Total > 0 ? formatMoney(row.StockValueVat ?? 0) : '–',
+            BrandCategoryText:[row.BrandName, row.CategoryName].filter(x => !!x).join(' · '),
+            ImageUrl:imageUrl(row.ImagePath),
+            ColorHex:colorHex(row.ColorName),
+            // Motor Bikes : "Motor Bikes - " left out of the model
+            ...(this.page.pageType === 'MB'
+                ? { ItemName:modelName(row.ItemName), ProductName:modelName(row.ProductName) }
+                : {})
         };
     }
 
@@ -955,6 +1559,8 @@ implements OnInit
             ListTableColumn[] =
             this.canViewCost
                 ? [
+                    // Cost is always incl. VAT (the input VAT claimed at
+                    // purchase is added back; owner 2026-11-06)
                     { header:'Avg. Cost', field:'AverageCostText', width:'115px', align:'right', sortable:true },
                     { header:'Stock Value', field:'StockValueText', width:'125px', align:'right', sortable:true, link:true, linkTitle:PLACES_TITLE }
                 ]
@@ -974,9 +1580,9 @@ implements OnInit
             page.pageType === 'MB'
                 ? [
                     { header:'Code', field:'ProductCode', width:'145px', align:'center', sortable:true },
-                    { header:'Model', field:'ItemName', width:'200px', align:'left', sortable:true },
-                    { header:'Colour', field:'ColorName', width:'90px', align:'left', sortable:true },
-                    { header:'Brand · Category', field:'BrandCategoryText', width:'210px', align:'left', sortable:true }
+                    { header:'Model', field:'ItemName', width:'320px', align:'left', sortable:true },
+                    // A motorcycle painted in the bike's colour (the name on hover)
+                    { header:'Colour', field:'ColorName', width:'80px', align:'center', sortable:true, dotField:'ColorHex', dotIcon:'fas fa-motorcycle' }
                 ]
                 : [
                     { header:'Code', field:'ProductCode', width:'150px', align:'center', sortable:true },
@@ -992,25 +1598,69 @@ implements OnInit
             ...product,
             ...quantities,
             ...cost,
+            // Image with the hover preview : name + stock (bold);
+            // Accessories have no image
+            ...(page.pageType === 'AC'
+                ? []
+                : [{
+                    header:'Image',
+                    field:'ImageUrl',
+                    type:'image',
+                    width:'80px',
+                    align:'center',
+                    sortable:false,
+                    previewTitleField:'ProductName',
+                    // Big round stock number at the top left : Motor
+                    // Bikes show On Hand only (owner 06-11) ; the others
+                    // the total
+                    previewBadgeField:page.pageType === 'MB' ? 'OnHandText' : 'TotalText',
+                    previewDetails:
+                    [
+                        { label:'In Transit', field:'InTransitText' },
+                        { label:'On Hand', field:'OnHandText' },
+                        { label:'Total', field:'TotalText' }
+                    ]
+                } as ListTableColumn]),
+            { header:'Status', field:'StockStatus', type:'status', width:'135px', align:'center', sortable:true },
+            { header:'Card', field:'actions', type:'actions', width:'70px', align:'center' }
+        ];
+
+        // MB › Free Accessories : laid out like the Accessories
+        // Stock page (no image)
+        this.accessoryColumns =
+        [
+            { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
+            { header:'Code', field:'ProductCode', width:'150px', align:'center', sortable:true },
+            { header:'Part No', field:'PartNumber', width:'120px', align:'left', sortable:true },
+            { header:'Accessory', field:'ItemName', width:'230px', align:'left', sortable:true },
+            { header:'Sub Category', field:'SubCategoryName', width:'170px', align:'left', sortable:true },
+            { header:'Location', field:'Location', width:'110px', align:'left', sortable:true },
+            ...quantities,
+            ...cost,
             { header:'Status', field:'StockStatus', type:'status', width:'135px', align:'center', sortable:true },
             { header:'Card', field:'actions', type:'actions', width:'70px', align:'center' }
         ];
 
         this.bikeColumns =
         [
-            { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-            { header:'Chassis No', field:'ChassisNo', width:'180px', align:'left', sortable:true },
-            { header:'Engine No', field:'EngineNo', width:'160px', align:'left', sortable:true },
-            { header:'Key No', field:'KeyNo', width:'90px', align:'left', sortable:true },
-            { header:'Battery No', field:'BatteryNo', width:'110px', align:'left', sortable:true },
-            { header:'Model', field:'ProductName', width:'190px', align:'left', sortable:true },
-            { header:'Purchase No', field:'PurchaseNo', width:'180px', align:'center', sortable:true },
-            { header:'Stock In', field:'StockInDateText', width:'100px', align:'center', sortable:true },
+            // Widths sized to the longest values (purchase no, engine
+            // no) with the denser cells of this tab (.is-dense)
+            { header:'#', field:'serial', type:'serial', width:'36px', align:'center' },
+            // Which bike first (model, purchase, date), then its numbers
+            { header:'Model', field:'ProductName', width:'170px', align:'left', sortable:true },
+            // A motorcycle painted in the bike's colour (the name on hover)
+            { header:'Colour', field:'ColorName', width:'70px', align:'center', sortable:true, dotField:'ColorHex', dotIcon:'fas fa-motorcycle' },
+            { header:'Purchase No', field:'PurchaseNo', width:'205px', align:'left', sortable:true },
+            { header:'Stock In', field:'StockInDateText', width:'105px', align:'center', sortable:true },
+            { header:'Chassis No', field:'ChassisNo', width:'150px', align:'left', sortable:true },
+            { header:'Engine No', field:'EngineNo', width:'170px', align:'left', sortable:true },
+            { header:'Key No', field:'KeyNo', width:'85px', align:'left', sortable:true },
+            { header:'Battery No', field:'BatteryNo', width:'105px', align:'left', sortable:true },
             ...(this.canViewCost
-                ? [{ header:'Unit Cost', field:'UnitCostText', width:'120px', align:'right', sortable:true } as ListTableColumn]
+                ? [{ header:'Unit Cost', field:'UnitCostText', width:'100px', align:'right', sortable:true } as ListTableColumn]
                 : []),
-            { header:'Status', field:'Status', type:'status', width:'145px', align:'center', sortable:true },
-            { header:'Card', field:'actions', type:'actions', width:'70px', align:'center' }
+            { header:'Status', field:'Status', type:'status', width:'135px', align:'center', sortable:true },
+            { header:'Card', field:'actions', type:'actions', width:'75px', align:'center' }
         ];
     }
 
@@ -1188,6 +1838,8 @@ implements OnInit
 
         this.pagedRows =
             this.filteredRows.slice(start, start + this.pageSize);
+
+        this.buildFooter();
 
         // The opened row left the page : close it
         if
@@ -1377,6 +2029,8 @@ implements OnInit
             ReorderText:'ReorderLevel',
             AverageCostText:'AverageCost',
             StockValueText:'StockValue',
+            AverageCostVatText:'AverageCostVat',
+            StockValueVatText:'StockValueVat',
             StockInDateText:'StockInDate',
             UnitCostText:'UnitCost'
         };
@@ -1442,11 +2096,79 @@ implements OnInit
             id > 0
         )
         {
+            this.cardIsAccessory =
+                this.isAccessoriesTab;
+
             this.cardProductId =
                 id;
 
             this.cdr.detectChanges();
         }
+    }
+
+
+    //===========================================================
+    // MB : free accessories (Additional / Promotional
+    // Accessories products), loaded after the models with the
+    // same branch / warehouse
+    //===========================================================
+
+    private loadAccessories():
+        void
+    {
+        if
+        (
+            !this.hasAccessoriesTab
+        )
+        {
+            return;
+        }
+
+        this.accessoryRequest?.unsubscribe();
+
+        this.accessoryRequest =
+            this.stockService
+                .getStock(
+                    this.accessoriesApiPath,
+                    this.branchId,
+                    this.warehouseId
+                )
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe
+                ({
+                    next:
+                        result =>
+                        {
+                            const kind =
+                                this.page.tabs.find(x => !!x.accessories)?.kind ?? 'Free Accessories';
+
+                            this.rows =
+                            [
+                                ...this.rows.filter(x => x.ProductKind !== kind),
+                                ...result.Rows
+                                    .map(x => this.toStockRow({ ...x, ProductKind:kind }))
+                            ];
+
+                            this.categoryItems =
+                            [
+                                { label:'All Categories', value:'' },
+                                ...Array.from(new Set(this.rows.map(x => x.CategoryName).filter(x => !!x)))
+                                    .sort()
+                                    .map(x => ({ label:x, value:x }))
+                            ];
+
+                            this.applyFilters(true);
+                        },
+
+                    error:
+                        () =>
+                        {
+                            this.toast.error(
+                                'Load Failed',
+                                'The free accessories could not be loaded.'
+                            );
+                        }
+                });
     }
 
     closeCard():
@@ -1513,4 +2235,101 @@ implements OnInit
             );
         }
     }
+}
+
+
+//===============================================================
+// Image path → URL served by the API ('' = no image)
+//===============================================================
+
+function imageUrl
+(
+    path:
+        string | null | undefined
+):
+    string
+{
+    const value =
+        (path ?? '').trim();
+
+    if
+    (
+        !value
+        ||
+        /^(https?:|blob:|data:)/i.test(value)
+    )
+    {
+        return value;
+    }
+
+    const root =
+        environment.apiUrl
+            .replace(/\/+$/, '')
+            .replace(/\/api$/i, '');
+
+    return `${root}/${value.replace(/^\/+/, '')}`;
+}
+
+
+//===============================================================
+// Colour name → CSS colour for the colour icon. Colours keep only
+// a name, so the first known word in it decides ("Matte Black",
+// "Racing Red"); '' = unknown (a neutral grey).
+//===============================================================
+
+const COLOR_WORDS:
+    [string, string][] =
+[
+    ['navy', '#1e3a8a'],
+    ['maroon', '#7f1d1d'],
+    ['black', '#1f2937'],
+    ['white', '#f8fafc'],
+    ['silver', '#c0c6cf'],
+    ['grey', '#9ca3af'],
+    ['gray', '#9ca3af'],
+    ['red', '#dc2626'],
+    ['pink', '#ec4899'],
+    ['green', '#16a34a'],
+    ['blue', '#2563eb'],
+    ['cyan', '#06b6d4'],
+    ['yellow', '#facc15'],
+    ['gold', '#d4a017'],
+    ['orange', '#f97316'],
+    ['brown', '#92400e'],
+    ['purple', '#7c3aed'],
+    ['violet', '#7c3aed']
+];
+
+function colorHex
+(
+    name:
+        string | null | undefined
+):
+    string
+{
+    const words =
+        (name ?? '').toLowerCase().split(/[^a-z]+/);
+
+    const found =
+        COLOR_WORDS.find(([word]) => words.includes(word));
+
+    return found
+        ? found[1]
+        : '';
+}
+
+
+//===============================================================
+// Motor bike model without its product type : "Motor Bikes -
+// REVOO - A04 - Black" -> "REVOO - A04 - Black"
+//===============================================================
+
+function modelName
+(
+    name:
+        string | null | undefined
+):
+    string
+{
+    return (name ?? '').replace(/^\s*motor\s*bikes?\s*-\s*/i, '');
 }

@@ -237,13 +237,16 @@ export class DepartmentService
     //===========================================================
 
     update(
+        publicId:
+            string,
+
         model:
             UpdateDepartment
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );

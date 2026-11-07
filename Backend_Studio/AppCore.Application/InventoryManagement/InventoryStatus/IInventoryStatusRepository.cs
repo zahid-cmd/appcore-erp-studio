@@ -17,8 +17,26 @@ namespace AppCore.Application.InventoryManagement.InventoryStatus;
 
 public interface IInventoryStatusRepository
 {
+    // canViewCostVat : also the cost incl. VAT ("View Cost incl.
+    // VAT"; only with canViewCost)
     Task<InventoryStockListDto> GetStockAsync(
         string pageType,
+        long branchId,
+        long warehouseId,
+        bool canViewCost,
+        bool canViewCostVat = false);
+
+    // Motor Bike Stock › Free Accessories : Accessories products
+    // used as Additional / Promotional Accessories (ProductKind
+    // "Free Accessories")
+    Task<InventoryStockListDto> GetBikeAccessoriesStockAsync(
+        long branchId,
+        long warehouseId,
+        bool canViewCost);
+
+    // Stock card of one of them (null when it is not one)
+    Task<InventoryStockCardDto?> GetBikeAccessoryCardAsync(
+        long productId,
         long branchId,
         long warehouseId,
         bool canViewCost);
@@ -37,4 +55,27 @@ public interface IInventoryStatusRepository
         long branchId,
         string? search,
         bool canViewCost);
+
+
+    //===========================================================
+    // Edit Bike Numbers (MB)
+    //===========================================================
+
+    // The three switches
+    Task<InventoryBikeEditRulesDto> GetBikeEditRulesAsync();
+
+    // Live check : numbers other live bikes already carry (same
+    // rule as Purchases / Receiving)
+    Task<List<InventoryBikeNumberTakenDto>> CheckBikeNumbersAsync(
+        InventoryBikeNumbersDto dto);
+
+    // Save : switches, sold rule and uniqueness checked again;
+    // copies on transfers, labels, service vehicles, memberships
+    // and service enquiries follow; one history row
+    Task UpdateBikeNumbersAsync(
+        InventoryBikeNumbersDto dto,
+        long userId);
+
+    // History of the bike number edits (newest first)
+    Task<List<InventoryBikeHistoryDto>> GetBikeHistoryAsync();
 }

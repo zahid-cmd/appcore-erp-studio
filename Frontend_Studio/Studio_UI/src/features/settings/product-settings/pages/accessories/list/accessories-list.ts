@@ -87,6 +87,10 @@ extends Accessories
     MovementText:
         string;
 
+    // For Sale / Additional / Promotional (short)
+    AccessoryUseText:
+        string;
+
     MovementColor:
         string;
 
@@ -543,6 +547,7 @@ implements OnInit, OnDestroy
     // Page Tabs
     //===========================================================
 
+    // By Accessory Use (server filter)
     tabs:
         ControlTab[] =
     [
@@ -550,8 +555,39 @@ implements OnInit, OnDestroy
             id:'all',
 
             label:'All Accessories'
+        },
+
+        {
+            id:'For Sale',
+
+            label:'For Sale'
+        },
+
+        {
+            id:'Additional Accessories',
+
+            label:'Additional Accessories'
+        },
+
+        {
+            id:'Promotional Accessories',
+
+            label:'Promotional Accessories'
         }
     ];
+
+    onTabChange
+    (
+        tab:
+            string
+    ):
+        void
+    {
+        this.selectedTab =
+            tab || 'all';
+
+        this.reload();
+    }
 
 
     selectedTab:
@@ -808,6 +844,18 @@ implements OnInit, OnDestroy
             flagText:'shared',
 
             flagTitleField:'SharedTitle',
+
+            align:'left'
+        },
+
+        {
+            header:'Use',
+
+            field:'AccessoryUseText',
+
+            width:'120px',
+
+            sortable:false,
 
             align:'left'
         },
@@ -1201,6 +1249,9 @@ implements OnInit, OnDestroy
             MovementText:
                 movementClassInfo(accessory.MovementClass).short,
 
+            AccessoryUseText:
+                (accessory.AccessoryUse || 'For Sale').replace(' Accessories', ''),
+
             MovementColor:
                 movementClassInfo(accessory.MovementClass).color,
 
@@ -1262,7 +1313,12 @@ implements OnInit, OnDestroy
                 this.selectedCategoryId,
 
             productSubCategoryId:
-                this.selectedSubCategoryId
+                this.selectedSubCategoryId,
+
+            accessoryUse:
+                this.selectedTab === 'all'
+                    ? ''
+                    : this.selectedTab
         };
 
 

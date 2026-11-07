@@ -1,0 +1,90 @@
+/* ============================================================
+   Bike Accessory Schemes
+============================================================ */
+
+export interface BikeAccessorySchemes
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Bike Accessory Schemes
+============================================================ */
+
+export interface CreateBikeAccessorySchemes
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Bike Accessory Schemes
+============================================================ */
+
+export interface UpdateBikeAccessorySchemes
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Bike Accessory Schemes Defaults
+============================================================ */
+
+export interface BikeAccessorySchemesDefaults
+{
+    code:
+        string;
+}

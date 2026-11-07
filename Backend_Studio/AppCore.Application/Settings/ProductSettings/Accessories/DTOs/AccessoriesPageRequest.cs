@@ -39,4 +39,8 @@ public class AccessoriesPageRequest
     public long? ProductCategoryId { get; set; }
 
     public long? ProductSubCategoryId { get; set; }
+
+    // For Sale / Additional Accessories / Promotional Accessories
+    // (empty = all)
+    public string? AccessoryUse { get; set; }
 }

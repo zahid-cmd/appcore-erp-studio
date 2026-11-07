@@ -52,6 +52,8 @@ import
     ledgerRegisterConfig,
     statementRowMatches,
     summaryRowMatches,
+    summaryRowShown,
+    mergeVoucherRows,
     toIsoDate
 }
 from '../models/ledger-registers.model';
@@ -274,6 +276,13 @@ export const LEDGER_REGISTERS_PRINT:
             statement.Rows =
                 statement.Rows.filter(x => statementRowMatches(x, request.search ?? ''));
 
+            // Summary view : one row per voucher
+            if (request.statementMode === 'summary')
+            {
+                statement.Rows =
+                    mergeVoucherRows(statement.Rows);
+            }
+
             return {
                 page,
                 request,
@@ -298,9 +307,19 @@ export const LEDGER_REGISTERS_PRINT:
                 )
             );
 
+        const allRows =
+            summary.Rows.length;
+
+        // The page's view switches (zero balance / no transactions)
+        summary.Rows =
+            summary.Rows.filter(x =>
+                summaryRowShown(x, request.showZeroBalance ?? true, request.showNoTransactions ?? true));
+
         if
         (
             (request.search ?? '').trim()
+            ||
+            summary.Rows.length !== allRows
         )
         {
             summary.Rows =

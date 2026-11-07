@@ -85,4 +85,8 @@ public sealed class PurchasePage
     public string? SwitchPriceAbovePo { get; init; }
 
     public string? SwitchVatAsPer63 { get; init; }
+
+    // ON = a line may take stock above the item's Max Stock Level
+    // (a warning is shown); OFF / missing = Max is a hard cap
+    public string? SwitchAboveMaxStock { get; init; }
 }

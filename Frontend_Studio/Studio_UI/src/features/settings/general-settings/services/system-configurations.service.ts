@@ -551,8 +551,8 @@ export class SystemConfigurationsService
 
     setEnabled
     (
-        id:
-            number,
+        publicId:
+            string,
         isEnabled:
             boolean,
         reason:
@@ -561,7 +561,7 @@ export class SystemConfigurationsService
         Observable<void>
     {
         return this.http.put<void>(
-            `${this.apiUrl}/${id}/enabled`,
+            `${this.apiUrl}/${publicId}/enabled`,
             {
                 IsEnabled:
                     isEnabled,
@@ -649,13 +649,16 @@ export class SystemConfigurationsService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateSystemConfiguration
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }

@@ -230,7 +230,7 @@ public class ActivityAssignmentController
     // Get Entity History
     //===========================================================
 
-    [HttpGet("{id:long}/history")]
+    [HttpGet("{publicId:guid}/history")]
 
     public async Task
         <
@@ -238,9 +238,20 @@ public class ActivityAssignmentController
         >
         GetHistory
         (
-            long id
+            Guid publicId
         )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
         List<ActivityHistoryDto> history =
             await _historyRepository.GetHistoryAsync
             (
@@ -374,14 +385,32 @@ public class ActivityAssignmentController
     // Update
     //===========================================================
 
-    [HttpPut]
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult>
         Update
         (
+            Guid publicId,
+
             UpdateActivityAssignmentDto dto
         )
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        dto.ActivityAssignmentId =
+            id;
+
         try
         {
             bool updated =

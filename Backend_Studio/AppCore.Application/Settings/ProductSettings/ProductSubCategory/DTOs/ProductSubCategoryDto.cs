@@ -157,6 +157,10 @@ public class ProductSubCategoryDto
     }
 
 
+    // Accessories only : For Sale / Additional Accessories /
+    // Promotional Accessories
+    public string AccessoryUse { get; set; } = "For Sale";
+
     public string Remarks
     {
         get;

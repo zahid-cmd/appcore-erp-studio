@@ -985,6 +985,7 @@ implements OnInit
 
         this.departmentservice
             .update(
+                this.routePublicId,
                 model
             )
             .subscribe

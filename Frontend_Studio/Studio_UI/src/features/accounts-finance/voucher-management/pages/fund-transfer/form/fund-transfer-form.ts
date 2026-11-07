@@ -2081,6 +2081,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.fundTransferService.update(
+                this.voucher?.PublicId || this.routePublicId,
                 model
             )
         )
@@ -2166,8 +2167,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             this.postOnApproval ? 'Approving and Posting' : 'Approving Fund Transfer',
                             this.postOnApproval ? 'Fund transfer approved and posted.' : 'Fund transfer approved.',
-                            id =>
-                                this.fundTransferService.approve(id),
+                            publicId =>
+                                this.fundTransferService.approve(publicId),
                             'list'
                         )
                 ),
@@ -2189,8 +2190,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Returning to Draft',
                             'Fund transfer returned to draft.',
-                            id =>
-                                this.fundTransferService.returnToDraft(id),
+                            publicId =>
+                                this.fundTransferService.returnToDraft(publicId),
                             'list'
                         )
                 ),
@@ -2215,8 +2216,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Posting Fund Transfer',
                             'Fund transfer posted.',
-                            id =>
-                                this.fundTransferService.post(id),
+                            publicId =>
+                                this.fundTransferService.post(publicId),
                             'list'
                         )
                 ),
@@ -2341,9 +2342,9 @@ implements OnInit, OnDestroy
         this.runWorkflow(
             'Cancelling Fund Transfer',
             'Fund transfer cancelled.',
-            id =>
+            publicId =>
                 this.fundTransferService.cancel(
-                    id,
+                    publicId,
                     model
                 ),
             'list'
@@ -2365,7 +2366,7 @@ implements OnInit, OnDestroy
             string,
 
         call:
-            (id: number) => Observable<void>,
+            (publicId: string) => Observable<void>,
 
         nextMode:
             'edit' | 'view' | 'list'
@@ -2381,15 +2382,16 @@ implements OnInit, OnDestroy
             return;
         }
 
-        const id:
-            number =
-            this.voucher?.FundTransferId
+        // Commands go by uuid (the internal id stays inside)
+        const publicId:
+            string =
+            this.voucher?.PublicId
             ||
-            this.entityId;
+            this.routePublicId;
 
         if
         (
-            !(id > 0)
+            !publicId
         )
         {
             return;
@@ -2401,7 +2403,7 @@ implements OnInit, OnDestroy
         );
 
         this.withMinimumDuration(
-            call(id)
+            call(publicId)
         )
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe

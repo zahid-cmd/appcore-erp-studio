@@ -1,0 +1,6 @@
+-- ============================================================
+-- SUPERSEDED (2026-11-06) : do not run.
+-- The stock pages have one "View Cost" action and always show
+-- the cost incl. VAT. If this script was run before, run
+-- InventoryStatus_CostVat_Remove.sql.
+-- ============================================================

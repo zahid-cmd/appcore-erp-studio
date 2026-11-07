@@ -192,10 +192,27 @@ public class PurchaseVatController : ControllerBase
     // Update
     //===========================================================
 
-    [HttpPut]
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdatePurchaseVatDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        dto.PurchaseVatId =
+            id;
+
         long userId = 1;
 
         try
@@ -229,10 +246,27 @@ public class PurchaseVatController : ControllerBase
     // Extend : same rate, later Valid To
     //===========================================================
 
-    [HttpPut("extend")]
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}/extend")]
     public async Task<IActionResult> Extend(
+        Guid publicId,
         ExtendPurchaseVatDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        dto.PurchaseVatId =
+            id;
+
         long userId = 1;
 
         try

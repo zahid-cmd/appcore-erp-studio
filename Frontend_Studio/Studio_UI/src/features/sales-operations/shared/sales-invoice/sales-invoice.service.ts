@@ -1047,15 +1047,18 @@ export abstract class SalesInvoiceService
     }
 
 
+    // Saved by the uuid (the server ignores the id in the body)
     update
     (
+        publicId:
+            string,
         model:
             UpdateSalesInvoice
     ):
         Observable<SalesInvoiceSaved>
     {
         return this.http
-            .put<any>(this.apiUrl, model)
+            .put<any>(`${this.apiUrl}/${publicId}`, model)
             .pipe(
                 map(item => this.normalizeSaved(item))
             );
@@ -1086,51 +1089,51 @@ export abstract class SalesInvoiceService
 
     approve
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
-        return this.http.put<void>(`${this.apiUrl}/${id}/approve`, {});
+        return this.http.put<void>(`${this.apiUrl}/${publicId}/approve`, {});
     }
 
 
     returnToDraft
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
-        return this.http.put<void>(`${this.apiUrl}/${id}/return-to-draft`, {});
+        return this.http.put<void>(`${this.apiUrl}/${publicId}/return-to-draft`, {});
     }
 
 
     post
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<SalesInvoiceSaved>
     {
         return this.http
-            .put<any>(`${this.apiUrl}/${id}/post`, {})
+            .put<any>(`${this.apiUrl}/${publicId}/post`, {})
             .pipe(
-                map(item => this.normalizeSaved(item ?? { SalesInvoiceId:id, Status:'Posted' }))
+                map(item => this.normalizeSaved(item ?? { Status:'Posted' }))
             );
     }
 
 
     cancel
     (
-        id:
-            number,
+        publicId:
+            string,
         reason:
             string
     ):
         Observable<void>
     {
-        return this.http.put<void>(`${this.apiUrl}/${id}/cancel`, { Reason:reason });
+        return this.http.put<void>(`${this.apiUrl}/${publicId}/cancel`, { Reason:reason });
     }
 
 

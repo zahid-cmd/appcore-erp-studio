@@ -988,7 +988,7 @@ export class MassStoringList
                 'Restoring Mass Storing',
                 `Please wait while "${row.StoringNo}" is being restored...`,
                 'Mass storing restored.',
-                this.service.restore(row.Id))
+                this.service.restore(row.PublicId ?? ''))
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -1074,7 +1074,7 @@ export class MassStoringList
         void
     {
         this.service
-            .getEntityHistory(row.Id)
+            .getEntityHistory(row.PublicId ?? '')
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({

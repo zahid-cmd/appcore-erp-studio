@@ -146,13 +146,13 @@ export class BranchAssignmentService
 
     getEntityHistory
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<any[]>
     {
         return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
+            `${this.apiUrl}/${publicId}/history`
         );
     }
 
@@ -217,13 +217,16 @@ export class BranchAssignmentService
 
     update
     (
+        publicId:
+            string,
+
         branchAssignment:
             BranchAssignment
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             branchAssignment
         )

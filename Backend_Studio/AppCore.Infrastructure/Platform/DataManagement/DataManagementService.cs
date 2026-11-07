@@ -969,6 +969,14 @@ public class DataManagementService
                     await DeleteWalkInAsync(db, transaction, plan.HasGeneralLedgers);
             }
 
+            // 8. Document / voucher numbering : every counter in
+            //    VoucherSequences goes back to the highest number
+            //    still used in the database (or is removed when
+            //    none is left), so cleared documents start again
+            //    at 00001
+            result.SequencesReset =
+                await RewindSequencesAsync(db, transaction);
+
             await transaction.CommitAsync();
 
             NpgsqlConnection.ClearAllPools();
@@ -991,6 +999,7 @@ public class DataManagementService
                     + (result.SettingsLedgersDeleted > 0 ? $", {result.SettingsLedgersDeleted:N0} settings ledgers" : string.Empty)
                     + (result.AccountGroupsDeleted + result.AccountSubGroupsDeleted > 0 ? $", {result.AccountGroupsDeleted:N0} account groups / {result.AccountSubGroupsDeleted:N0} sub groups" : string.Empty)
                     + (result.Unlinked > 0 ? $", {result.Unlinked:N0} links cleared" : string.Empty)
+                    + (result.SequencesReset > 0 ? $", {result.SequencesReset:N0} number counters reset" : string.Empty)
                     + $". Backup used : {result.BackupFileName}",
                 By = userName
             });
@@ -2796,6 +2805,167 @@ public class DataManagementService
             new NpgsqlCommand(sql, db, transaction);
 
         return Convert.ToInt64(await command.ExecuteScalarAsync());
+    }
+
+    //===========================================================
+    // Rewind Sequences
+    // Numbers look like PREFIX-<branch digits>-<fy>-<mm>-nnnnn
+    // (CodeGenerator.GenerateVoucherNo). The highest number still
+    // used is read from every text column named ...No / ...Number
+    // / ...Ref / ...Reference, then each VoucherSequences row is
+    // set to it, or removed when that period has no number left.
+    // A counter never goes below a number that still exists.
+    //===========================================================
+
+    private static async Task<long> RewindSequencesAsync
+    (
+        NpgsqlConnection db,
+        NpgsqlTransaction transaction
+    )
+    {
+        const string pattern =
+            "^[A-Z]{1,5}-[0-9]+-[0-9]{4}-[0-9]{2}-[0-9]{5}$";
+
+        bool exists;
+
+        await using (var check =
+            new NpgsqlCommand(
+                "SELECT to_regclass('public.\"VoucherSequences\"') IS NOT NULL",
+                db,
+                transaction))
+        {
+            exists = (bool)(await check.ExecuteScalarAsync() ?? false);
+        }
+
+        if (!exists)
+        {
+            return 0;
+        }
+
+        // Candidate columns, grouped by table
+        var columns =
+            new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+        await using (var list =
+            new NpgsqlCommand(
+                "SELECT c.table_name, c.column_name " +
+                "FROM information_schema.columns c " +
+                "JOIN information_schema.tables t " +
+                "  ON t.table_schema = c.table_schema AND t.table_name = c.table_name " +
+                "WHERE c.table_schema = 'public' " +
+                "  AND t.table_type = 'BASE TABLE' " +
+                "  AND c.table_name <> 'VoucherSequences' " +
+                "  AND c.data_type IN ('character varying', 'text', 'character') " +
+                "  AND lower(c.column_name) ~ '(no|number|ref|reference)$'",
+                db,
+                transaction))
+        await using (var reader = await list.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                string table = reader.GetString(0);
+
+                if (!columns.TryGetValue(table, out List<string>? names))
+                {
+                    names = new List<string>();
+                    columns[table] = names;
+                }
+
+                names.Add(reader.GetString(1));
+            }
+        }
+
+        // Highest number still used, per PREFIX-branch-fy-mm
+        var used =
+            new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var (table, names) in columns)
+        {
+            string union =
+                string.Join(
+                    " UNION ALL ",
+                    names.Select(x => $"SELECT {Q(x)}::text AS v FROM public.{Q(table)}"));
+
+            string sql =
+                "SELECT left(v, length(v) - 6), max(right(v, 5)::int) " +
+                $"FROM ({union}) s " +
+                $"WHERE v ~ '{pattern}' " +
+                "GROUP BY 1";
+
+            await using var command =
+                new NpgsqlCommand(sql, db, transaction)
+                {
+                    CommandTimeout = 600
+                };
+
+            await using var reader =
+                await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                string key = reader.GetString(0);
+
+                int number = reader.GetInt32(1);
+
+                if (!used.TryGetValue(key, out int current) || number > current)
+                {
+                    used[key] = number;
+                }
+            }
+        }
+
+        // Counters
+        var rows =
+            new List<(long Id, string Key, long Last)>();
+
+        await using (var read =
+            new NpgsqlCommand(
+                "SELECT \"VoucherSequenceId\", " +
+                "upper(trim(\"Prefix\")) || '-' || trim(\"BranchDigits\") || '-' || " +
+                "trim(\"FinancialYearCode\") || '-' || lpad(\"PeriodMonth\"::text, 2, '0'), " +
+                "\"LastNumber\"::bigint " +
+                "FROM public.\"VoucherSequences\"",
+                db,
+                transaction))
+        await using (var reader = await read.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                rows.Add((Convert.ToInt64(reader.GetValue(0)), reader.GetString(1), reader.GetInt64(2)));
+            }
+        }
+
+        long changed = 0;
+
+        foreach (var row in rows)
+        {
+            int highest =
+                used.TryGetValue(row.Key, out int value) ? value : 0;
+
+            if (highest >= row.Last)
+            {
+                continue;
+            }
+
+            string sql =
+                highest == 0
+                    ? "DELETE FROM public.\"VoucherSequences\" WHERE \"VoucherSequenceId\" = @id"
+                    : "UPDATE public.\"VoucherSequences\" SET \"LastNumber\" = @last, \"ModifiedDate\" = now() WHERE \"VoucherSequenceId\" = @id";
+
+            await using var command =
+                new NpgsqlCommand(sql, db, transaction);
+
+            command.Parameters.AddWithValue("id", row.Id);
+
+            if (highest > 0)
+            {
+                command.Parameters.AddWithValue("last", highest);
+            }
+
+            changed += await command.ExecuteNonQueryAsync();
+        }
+
+        return changed;
     }
 
     private static async Task ExecuteAsync

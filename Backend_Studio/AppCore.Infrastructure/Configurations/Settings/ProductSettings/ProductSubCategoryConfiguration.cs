@@ -216,6 +216,11 @@ public class ProductSubCategoryConfiguration
                .IsRequired();
 
 
+        builder.Property(x => x.AccessoryUse)
+               .IsRequired()
+               .HasMaxLength(30)
+               .HasDefaultValue("For Sale");
+
         builder.Property(x => x.Remarks)
                .IsRequired()
                .HasMaxLength(1000);

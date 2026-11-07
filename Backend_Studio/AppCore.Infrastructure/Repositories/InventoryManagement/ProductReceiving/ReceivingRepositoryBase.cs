@@ -57,6 +57,9 @@ using RackMapBinDto =
 using StockMovementsEntity =
     AppCore.Domain.Platform.Inventory.StockMovements;
 
+using PurchaseAccessoryDuesEngine =
+    AppCore.Infrastructure.Repositories.Procurement.MotorBikePurchase.PurchaseAccessoryDuesEngine;
+
 
 //===============================================================
 // Namespace
@@ -136,6 +139,9 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
     private const string NotReceived = "Not Received";
 
     private const string PartlyReceived = "Partly Received";
+
+    // MB : every bike received, free accessories still due
+    private const string AccessoriesPending = "Received, Accessories Pending";
 
     private const int MaxLines = 500;
 
@@ -615,6 +621,10 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                             }
                     )
                     .ToListAsync();
+
+            // Free accessories received on it
+            dto.Accessories =
+                await PurchaseAccessoryDuesEngine.ReceiptsOfAsync(_context, id);
         }
 
         return dto;
@@ -899,6 +909,16 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
         List<long> purchaseIds =
             batches.Select(x => x.SourceId).ToList();
 
+        // MB : also purchases with free accessories still due
+        if (Page.PageType == "MB")
+        {
+            purchaseIds =
+                purchaseIds
+                    .Union(await PurchaseAccessoryDuesEngine.PurchasesWithPendingAsync(_context, branchId))
+                    .Distinct()
+                    .ToList();
+        }
+
         if (purchaseIds.Count == 0)
         {
             return new List<ReceivingPurchaseOptionDto>();
@@ -929,7 +949,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
             ReceivingPurchaseOptionDto option =
                 await PurchaseOptionAsync(purchase);
 
-            if (option.PendingQuantity > 0)
+            if (option.PendingQuantity > 0 || option.AccessoryPendingQuantity > 0)
             {
                 result.Add(option);
             }
@@ -1063,10 +1083,22 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                 });
         }
 
+        // MB : free accessories due from the supplier
+        if (Page.PageType == "MB")
+        {
+            option.Accessories =
+                await PurchaseAccessoryDuesEngine.DuesOfPurchaseAsync(_context, purchase.PurchaseId, true);
+
+            option.AccessoryPendingQuantity =
+                option.Accessories.Sum(x => x.PendingQuantity);
+        }
+
         option.ReceivingStatus =
-            option.PendingQuantity >= option.PurchasedQuantity
-                ? NotReceived
-                : PartlyReceived;
+            option.PendingQuantity <= 0 && option.AccessoryPendingQuantity > 0
+                ? AccessoriesPending
+                : option.PendingQuantity >= option.PurchasedQuantity
+                    ? NotReceived
+                    : PartlyReceived;
 
         return option;
     }
@@ -1361,10 +1393,20 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                 .Where(x => x.Quantity > 0)
                 .ToList();
 
-        if (inputs.Count == 0)
+        // MB : free accessories received now
+        List<CreateReceivingAccessoryDto> accessoryInputs =
+            Page.PageType == "MB"
+                ? (dto.Accessories ?? new List<CreateReceivingAccessoryDto>())
+                    .Where(x => x.Quantity > 0)
+                    .ToList()
+                : new List<CreateReceivingAccessoryDto>();
+
+        if (inputs.Count == 0 && accessoryInputs.Count == 0)
         {
             throw new InvalidOperationException(
-                "Enter the quantity received on at least one line.");
+                Page.PageType == "MB"
+                    ? "Enter the quantity received on at least one bike line or accessory."
+                    : "Enter the quantity received on at least one line.");
         }
 
         if (inputs.Count > MaxLines)
@@ -1877,6 +1919,28 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
 
                 await _context.SaveChangesAsync();
 
+                //===================================================
+                // MB : free accessories, zero cost, on hand
+                //===================================================
+
+                if (accessoryInputs.Count > 0)
+                {
+                    await PurchaseAccessoryDuesEngine.ReceiveAsync(
+                        _context,
+                        purchase.PurchaseId,
+                        purchase.BranchId,
+                        purchase.SupplierCode,
+                        entity.ReceivingId,
+                        entity.ReceivingNo,
+                        entity.ReceivingDate,
+                        warehouse.WarehouseId,
+                        warehouse.WarehouseName,
+                        Page.Prefix,
+                        accessoryInputs,
+                        userId,
+                        now);
+                }
+
                 await MarkStockedInAsync(purchase.PurchaseId, userId, now);
 
                 AddHistory(entity, "Create", "Posted", userId, now);
@@ -2176,6 +2240,24 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                     }
                 }
 
+                // MB : free accessories back off (refused when some
+                // of them has left the warehouse)
+                if (Page.PageType == "MB")
+                {
+                    await PurchaseAccessoryDuesEngine.CancelReceivingAsync(
+                        _context,
+                        entity.ReceivingId,
+                        entity.ReceivingNo,
+                        entity.ReceivingDate,
+                        entity.BranchId,
+                        entity.WarehouseId,
+                        entity.WarehouseName,
+                        Page.Prefix,
+                        reason,
+                        userId,
+                        now);
+                }
+
                 string narration =
                     Limit($"Receiving {entity.ReceivingNo} cancelled : {reason}", 300);
 
@@ -2245,6 +2327,35 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
 
                 await _context.SaveChangesAsync();
             });
+    }
+
+
+    //===========================================================
+    // MB : Close Due : the rest of one accessory due row is
+    // written off (the supplier will not send it)
+    //===========================================================
+
+    public async Task
+        CloseAccessoryDueAsync
+        (
+            long dueId,
+            long branchId,
+            CloseAccessoryDueDto dto,
+            long userId
+        )
+    {
+        if (Page.PageType != "MB")
+        {
+            throw new InvalidOperationException(
+                "Free accessories are due on Motor Bike Receiving only.");
+        }
+
+        await PurchaseAccessoryDuesEngine.CloseAsync(
+            _context,
+            dueId,
+            branchId,
+            dto?.Reason,
+            userId);
     }
 
 

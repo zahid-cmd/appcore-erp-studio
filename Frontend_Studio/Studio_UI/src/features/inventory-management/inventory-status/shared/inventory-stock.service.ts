@@ -31,6 +31,8 @@ from '../../../../environments/environment';
 import
 {
     InventoryBikeList,
+    InventoryBikeNumbers,
+    InventoryBikeNumberTaken,
     InventoryBikeUnit,
     InventoryStockBatch,
     InventoryStockCard,
@@ -49,6 +51,9 @@ from './inventory-stock.model';
 //   GET <apiPath>?branchId=&warehouseId=
 //   GET <apiPath>/<productId>/card?branchId=&warehouseId=
 //   GET <apiPath>/bikes?branchId=&search=          (MB)
+//   POST <apiPath>/bikes/number-check              (MB editor)
+//   PUT  <apiPath>/bikes/numbers                   (MB editor)
+//   GET  <apiPath>/bikes/history                   (MB History)
 //
 // The API answers in camelCase; responses are mapped to
 // PascalCase.
@@ -215,10 +220,79 @@ export class InventoryStockService
                     x =>
                     ({
                         CanViewCost:!!pick(x, 'CanViewCost'),
+                        CanEditNumbers:!!pick(x, 'CanEditNumbers'),
+                        CanEditSold:!!pick(x, 'CanEditSold'),
+                        KeyBatteryOn:pick(x, 'KeyBatteryOn') !== false,
                         Rows:list(pick(x, 'Rows')).map(toBike)
                     })
                 )
             );
+    }
+
+
+    //===========================================================
+    // Edit Bike Numbers (MB page) : live check and save
+    //===========================================================
+
+    checkBikeNumbers
+    (
+        apiPath:
+            string,
+        dto:
+            InventoryBikeNumbers
+    ):
+        Observable<InventoryBikeNumberTaken[]>
+    {
+        return this.http
+            .post<any>(
+                `${this.url(apiPath)}/bikes/number-check`,
+                dto
+            )
+            .pipe(
+                map
+                (
+                    x =>
+                        list(x).map
+                        (
+                            y =>
+                            ({
+                                Field:text(pick(y, 'Field')),
+                                Value:text(pick(y, 'Value')),
+                                Message:text(pick(y, 'Message'))
+                            })
+                        )
+                )
+            );
+    }
+
+
+    updateBikeNumbers
+    (
+        apiPath:
+            string,
+        dto:
+            InventoryBikeNumbers
+    ):
+        Observable<void>
+    {
+        return this.http.put<void>(
+            `${this.url(apiPath)}/bikes/numbers`,
+            dto
+        );
+    }
+
+
+    // Bike number edits, newest first (raw history rows)
+    getBikeHistory
+    (
+        apiPath:
+            string
+    ):
+        Observable<any[]>
+    {
+        return this.http
+            .get<any>(`${this.url(apiPath)}/bikes/history`)
+            .pipe(map(x => list(x)));
     }
 }
 
@@ -315,7 +389,8 @@ function toRow
         BatchCount:num(pick(x, 'BatchCount')),
         LastMovementDate:text(pick(x, 'LastMovementDate')),
         Location:text(pick(x, 'Location')),
-        StockStatus:text(pick(x, 'StockStatus'))
+        StockStatus:text(pick(x, 'StockStatus')),
+        ImagePath:text(pick(x, 'ImagePath'))
     };
 }
 
@@ -408,6 +483,8 @@ function toBike
         StockInDate:text(pick(x, 'StockInDate')),
         BranchName:text(pick(x, 'BranchName')),
         Status:text(pick(x, 'Status')),
-        UnitCost:num(pick(x, 'UnitCost'))
+        UnitCost:num(pick(x, 'UnitCost')),
+        IsSold:!!pick(x, 'IsSold'),
+        ColorName:text(pick(x, 'ColorName'))
     };
 }

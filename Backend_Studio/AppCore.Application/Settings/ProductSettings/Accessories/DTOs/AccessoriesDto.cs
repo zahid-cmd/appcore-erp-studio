@@ -84,6 +84,9 @@ public class AccessoriesDto
     // Reserved (automatic class from sales; not used yet)
     public bool MovementClassAuto { get; set; }
 
+    // For Sale / Additional Accessories / Promotional Accessories
+    public string AccessoryUse { get; set; } = "For Sale";
+
 
     //===========================================================
     // Storage Locations (one per warehouse)

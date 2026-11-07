@@ -569,13 +569,16 @@ export class RackManagementService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateRackManagement
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
 
             model
         );

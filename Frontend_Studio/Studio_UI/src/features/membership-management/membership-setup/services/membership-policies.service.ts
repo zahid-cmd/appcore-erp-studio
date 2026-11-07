@@ -339,13 +339,16 @@ export class MembershipPoliciesService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateMembershipPolicy
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }

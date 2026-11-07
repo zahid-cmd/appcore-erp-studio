@@ -3602,6 +3602,7 @@ implements OnInit
                 this.specialAssignmentService
 
                     .update(
+                        this.routePublicId,
                         payload
                     )
 

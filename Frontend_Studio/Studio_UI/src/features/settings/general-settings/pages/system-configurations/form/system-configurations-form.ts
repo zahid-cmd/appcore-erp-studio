@@ -2203,6 +2203,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.systemConfigurationsService.update(
+                this.entityId,
                 model
             )
         )

@@ -248,6 +248,9 @@ public class AccessoriesRepository : IAccessoriesRepository
                 MovementClassAuto =
                     x.MovementClassAuto,
 
+                AccessoryUse =
+                    x.AccessoryUse,
+
                 Remarks =
                     x.Remarks,
 
@@ -478,6 +481,14 @@ public class AccessoriesRepository : IAccessoriesRepository
                 ProductFitments.AccessoriesFitting(_context, subCategoryId);
 
             query = query.Where(x => x.ProductSubCategoryId == subCategoryId || fitting.Contains(x.AccessoryId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.AccessoryUse))
+        {
+            string use =
+                AccessoryUses.Normalize(request.AccessoryUse);
+
+            query = query.Where(x => x.AccessoryUse == use);
         }
 
         //-------------------------------------------------------
@@ -2182,6 +2193,12 @@ public class AccessoriesRepository : IAccessoriesRepository
                 MovementClassAuto =
                     false,
 
+                // From its sub category (owner : set there, not on
+                // the product)
+                AccessoryUse =
+                    AccessoryUses.Normalize(
+                        parent.SubCategory.AccessoryUse),
+
                 Remarks =
                     dto.Remarks?.Trim()
                     ??
@@ -2381,6 +2398,20 @@ public class AccessoriesRepository : IAccessoriesRepository
             string.Equals(oldMovement, entity.MovementClass, StringComparison.Ordinal)
                 ? string.Empty
                 : $" Movement class: {RackLabels.MovementLabel(oldMovement)} -> {RackLabels.MovementLabel(entity.MovementClass)}.";
+
+        // Use : For Sale / Additional / Promotional (kept in history)
+        string oldUse =
+            entity.AccessoryUse;
+
+        entity.AccessoryUse =
+            AccessoryUses.Normalize(
+                parent.SubCategory.AccessoryUse);
+
+        if (!string.Equals(oldUse, entity.AccessoryUse, StringComparison.Ordinal))
+        {
+            movementChange +=
+                $" Use: {oldUse} -> {entity.AccessoryUse}.";
+        }
 
         entity.Remarks =
             dto.Remarks?.Trim()

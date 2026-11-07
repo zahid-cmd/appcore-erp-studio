@@ -536,13 +536,16 @@ export class SalesEnquiriesService
 
     update
     (
+        publicId:
+            string,
+
         model:
             UpdateSalesEnquiry
     ):
         Observable<void>
     {
         return this.http.put<void>(
-            this.apiUrl,
+            `${this.apiUrl}/${publicId}`,
             model
         );
     }
@@ -587,13 +590,13 @@ export class SalesEnquiriesService
 
     getEntityHistory
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<any[]>
     {
         return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
+            `${this.apiUrl}/${publicId}/history`
         );
     }
 }

@@ -2081,6 +2081,7 @@ implements OnInit, OnDestroy
 
         this.withMinimumDuration(
             this.journalVoucherService.update(
+                this.voucher?.PublicId || this.routePublicId,
                 model
             )
         )
@@ -2166,8 +2167,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             this.postOnApproval ? 'Approving and Posting' : 'Approving Journal Voucher',
                             this.postOnApproval ? 'Journal voucher approved and posted.' : 'Journal voucher approved.',
-                            id =>
-                                this.journalVoucherService.approve(id),
+                            publicId =>
+                                this.journalVoucherService.approve(publicId),
                             'list'
                         )
                 ),
@@ -2189,8 +2190,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Returning to Draft',
                             'Journal voucher returned to draft.',
-                            id =>
-                                this.journalVoucherService.returnToDraft(id),
+                            publicId =>
+                                this.journalVoucherService.returnToDraft(publicId),
                             'list'
                         )
                 ),
@@ -2215,8 +2216,8 @@ implements OnInit, OnDestroy
                         this.runWorkflow(
                             'Posting Journal Voucher',
                             'Journal voucher posted.',
-                            id =>
-                                this.journalVoucherService.post(id),
+                            publicId =>
+                                this.journalVoucherService.post(publicId),
                             'list'
                         )
                 ),
@@ -2341,9 +2342,9 @@ implements OnInit, OnDestroy
         this.runWorkflow(
             'Cancelling Journal Voucher',
             'Journal voucher cancelled.',
-            id =>
+            publicId =>
                 this.journalVoucherService.cancel(
-                    id,
+                    publicId,
                     model
                 ),
             'list'
@@ -2365,7 +2366,7 @@ implements OnInit, OnDestroy
             string,
 
         call:
-            (id: number) => Observable<void>,
+            (publicId: string) => Observable<void>,
 
         nextMode:
             'edit' | 'view' | 'list'
@@ -2381,15 +2382,16 @@ implements OnInit, OnDestroy
             return;
         }
 
-        const id:
-            number =
-            this.voucher?.JournalVoucherId
+        // Commands go by uuid (the internal id stays inside)
+        const publicId:
+            string =
+            this.voucher?.PublicId
             ||
-            this.entityId;
+            this.routePublicId;
 
         if
         (
-            !(id > 0)
+            !publicId
         )
         {
             return;
@@ -2401,7 +2403,7 @@ implements OnInit, OnDestroy
         );
 
         this.withMinimumDuration(
-            call(id)
+            call(publicId)
         )
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe

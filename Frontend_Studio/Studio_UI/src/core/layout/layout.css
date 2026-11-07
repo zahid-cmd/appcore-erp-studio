@@ -17,6 +17,16 @@
      --topbar-height            top bar
      --topnav-height            modules bar (Top layout)
      --footer-height            footer
+     --page-canvas-reserve      screen height kept free
+                                for everything that is not
+                                the page canvas (top bar,
+                                breadcrumb, page title,
+                                toolbar, summary line,
+                                footer). The canvas takes
+                                the rest of the screen, up
+                                to 660px, so the summary
+                                line under it is always
+                                visible on smaller screens.
 
    Set by the layout itself (do not change):
 
@@ -46,6 +56,8 @@
     --topnav-height:48px;
 
     --footer-height:44px;
+
+    --page-canvas-reserve:300px;
 }
 
 
@@ -67,11 +79,14 @@
 
 
 /* Top layout: no sidebar, so the logo block and the footer
-   version block just fit their content. */
+   version block just fit their content. The modules bar
+   takes extra height, so the canvas keeps that free too. */
 
 .layout.layout-top
 {
     --sidebar-current-width:auto;
+
+    --page-canvas-reserve:calc(300px + var(--topnav-height));
 }
 
 
@@ -233,6 +248,8 @@ app-sidebar.sidebar-collapsed
 
     min-height:0;
 
+    /* Never a page scroll : the page canvas fits the
+       screen (page-canvas.ts) */
     overflow:hidden;
 
     padding:16px;

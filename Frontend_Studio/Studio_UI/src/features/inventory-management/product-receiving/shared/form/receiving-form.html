@@ -312,6 +312,44 @@
                         </div>
 
                     </div>
+
+                    @if (isBikes && (receiving?.Accessories ?? []).length > 0)
+                    {
+                        <div class="pof-card rc-acc-card">
+
+                            <div class="pof-card-header">
+                                <i class="fas fa-gift"></i>
+                                <span>Free Accessories Received</span>
+                                <span class="pof-count">{{ qty(viewAccessoryTotal) }} pcs</span>
+                            </div>
+
+                            <div class="rc-acc-scroll appcore-scrollbar">
+                                <table class="pof-table rc-acc-table rc-acc-view">
+                                    <thead>
+                                        <tr>
+                                            <th>Accessory</th>
+                                            <th>Scheme</th>
+                                            <th class="pof-num">Received</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (a of receiving?.Accessories ?? []; track a.PurchaseAccessoryDueId)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="pof-ledger">{{ a.AccessoryName }}</div>
+                                                    <div class="pof-sub">{{ a.ProductCode }} · Batch {{ a.BatchNo }}</div>
+                                                </td>
+                                                <td class="rc-dim">{{ a.SchemeCode }} · {{ a.SchemeKind }}</td>
+                                                <td class="pof-num rc-strong">{{ qty(a.Quantity) }} <span class="pof-unit">{{ a.Unit }}</span></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    }
                 }
                 @else
                 {
@@ -497,6 +535,83 @@
                         }
 
                     </div>
+
+                    @if (isBikes && accessoryRows.length > 0)
+                    {
+                        <div class="pof-card rc-acc-card">
+
+                            <div class="pof-card-header">
+                                <i class="fas fa-gift"></i>
+                                <span>Free Accessories Due</span>
+                                <span class="pof-count">{{ qty(accessoryNowTotal) }} of {{ qty(accessoryPendingTotal) }} now</span>
+
+                                <button
+                                    type="button"
+                                    class="pof-shelf rc-acc-all"
+                                    title="Receive every accessory still due, full quantity"
+                                    [disabled]="saving"
+                                    (click)="accessoryNowTotal === accessoryPendingTotal ? accessoriesNone() : accessoriesAll()">
+                                    <i class="fas fa-layer-group"></i>
+                                    {{ accessoryNowTotal === accessoryPendingTotal ? 'None' : 'All' }}
+                                </button>
+                            </div>
+
+                            <div class="rc-acc-scroll appcore-scrollbar">
+                                <table class="pof-table rc-acc-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Accessory</th>
+                                            <th class="pof-num">Due</th>
+                                            <th class="pof-num">Before</th>
+                                            <th class="pof-num">Pending</th>
+                                            <th class="pof-num">Receive Now</th>
+                                            <th class="pof-action">Close</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (row of accessoryRows; track row.Due.PurchaseAccessoryDueId)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="pof-ledger">{{ row.Due.AccessoryName }}</div>
+                                                    <div class="pof-sub">{{ row.Due.ProductCode }} · {{ row.Due.SchemeCode }} {{ row.Due.SchemeKind }}</div>
+                                                </td>
+                                                <td class="pof-num">{{ qty(row.Due.QuantityDue) }}</td>
+                                                <td class="pof-num rc-dim">{{ qty(row.Due.ReceivedBefore + row.Due.QuantityClosed) }}</td>
+                                                <td class="pof-num rc-strong">{{ qty(row.Due.PendingQuantity) }}</td>
+                                                <td class="pof-num">
+                                                    <input
+                                                        class="rc-acc-qty"
+                                                        inputmode="numeric"
+                                                        placeholder="0"
+                                                        [title]="'Up to ' + qty(row.Due.PendingQuantity)"
+                                                        [value]="row.NowText"
+                                                        [disabled]="saving"
+                                                        (input)="onAccessoryInput(row, $event)">
+                                                </td>
+                                                <td class="pof-action">
+                                                    <button
+                                                        type="button"
+                                                        class="pof-remove"
+                                                        title="Close Due : the supplier will not send the rest"
+                                                        [disabled]="saving"
+                                                        (click)="openCloseDue(row)">
+                                                        <i class="fas fa-ban"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="pof-hint rc-hint">
+                                <i class="fas fa-circle-info"></i>
+                                <span>Supplier's free items : into {{ warehouseText || 'the warehouse' }} at zero cost. Leave 0 to receive later.</span>
+                            </div>
+
+                        </div>
+                    }
                 }
 
               </div>
@@ -816,6 +931,118 @@
                         (click)="confirmCancel()">
                         <i class="fas fa-ban"></i>
                         Cancel Receiving
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         CLOSE DUE MODAL (MB, free accessories)
+    ====================================================== -->
+
+    @if (closeRow; as c)
+    {
+        <div class="pof-overlay">
+
+            <div
+                class="pof-cx"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="rc-cd-title">
+
+                <div class="pof-cx-head">
+
+                    <span class="pof-cx-icon">
+                        <i class="fas fa-ban"></i>
+                    </span>
+
+                    <div class="pof-cx-title">
+                        <strong id="rc-cd-title">Close Due</strong>
+                        <span>{{ c.Due.AccessoryName }}</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeRow = null">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+                <div class="pof-cx-body">
+
+                    <div class="pof-cx-summary">
+
+                        <div>
+                            <span>Purchase</span>
+                            <strong>{{ purchase?.PurchaseNo }}</strong>
+                        </div>
+
+                        <div>
+                            <span>Scheme</span>
+                            <strong>{{ c.Due.SchemeCode }}</strong>
+                        </div>
+
+                        <div class="pof-cx-amount">
+                            <span>Written Off</span>
+                            <strong>{{ qty(c.Due.PendingQuantity) }} {{ c.Due.Unit }}</strong>
+                        </div>
+
+                    </div>
+
+                    <div class="pof-cx-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>
+                            The supplier will not send the rest : it stops showing as pending on this purchase.
+                            This cannot be undone.
+                        </span>
+                    </div>
+
+                    <div class="pof-cx-fields">
+                        <app-textarea
+                            class="pof-cx-reason"
+                            label="Reason"
+                            placeholder="Why will the supplier not send it?"
+                            [required]="true"
+                            [rows]="4"
+                            [maxLength]="500"
+                            [value]="closeReason"
+                            (valueChange)="closeReason = $event">
+                        </app-textarea>
+                    </div>
+
+                </div>
+
+                <div class="pof-modal-foot">
+
+                    <span class="pof-modal-note">
+                        <i class="fas fa-circle-info"></i>
+                        Reason is required.
+                    </span>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="closeRow = null">
+                        <i class="fas fa-arrow-left"></i>
+                        Keep Due
+                    </button>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-danger"
+                        [disabled]="saving"
+                        (click)="confirmCloseDue()">
+                        <i class="fas fa-ban"></i>
+                        Close Due
                     </button>
 
                 </div>

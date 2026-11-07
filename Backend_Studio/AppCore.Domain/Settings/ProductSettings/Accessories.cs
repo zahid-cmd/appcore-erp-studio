@@ -103,6 +103,11 @@ public class Accessories
 
     public string MovementClass { get; set; } = "Slow";
 
+    // For Sale (default) / Additional Accessories (free with every
+    // bike, all year) / Promotional Accessories (free with bikes
+    // during a promotion). Ledgers are kept for every use.
+    public string AccessoryUse { get; set; } = "For Sale";
+
     public bool MovementClassAuto { get; set; }
 
 

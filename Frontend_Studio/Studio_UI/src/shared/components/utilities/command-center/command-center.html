@@ -61,6 +61,20 @@
 
         </button>
 
+
+        <button
+            *ngIf="isCommand5Visible()"
+            type="button"
+            class="command-button"
+            [appTooltip]="command5Title || command5Text"
+            (click)="onCommand5Click()">
+
+            <i [class]="command5Icon"></i>
+
+            <span>{{ command5Text }}</span>
+
+        </button>
+
     </div>
 
 

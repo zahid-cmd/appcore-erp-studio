@@ -29,7 +29,11 @@
                 command2Text="Print"
                 command2Icon="fas fa-print"
                 command2Activity="Print"
-                (command2Click)="print()">
+                (command2Click)="print()"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="Technical Record History"
+                [rightCommandVisible]="hasHistory"
+                (rightCommandClick)="openHistory()">
 
             </app-command-center>
 
@@ -178,7 +182,7 @@
 
             <div class="is-cell is-info is-wide">
 
-                <span class="is-cell-label">Bike Units</span>
+                <span class="is-cell-label">Technical Records</span>
 
                 <span class="is-cell-note is-plain">
                     Bikes of posted purchases. Search finds a chassis, engine, key or battery number.
@@ -199,12 +203,16 @@
         <div canvasBody>
 
             <app-list-table
+                [class.is-dense]="isBikesTab"
                 [columns]="columns"
                 [rows]="tableRows"
+                [footerRows]="isBikesTab ? [] : footerRows"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
                 [actions]="{ view:true, edit:false, delete:false }"
+                [rowActions]="isBikesTab ? bikeRowActions : []"
+                (rowAction)="onRowAction($event)"
                 (view)="openCard($event)"
                 (sortChange)="onSort($event)"
                 detailKey="ProductId"
@@ -326,7 +334,7 @@
     @if (cardProductId)
     {
         <inventory-stock-card
-            [page]="page"
+            [page]="cardPage"
             [productId]="cardProductId"
             [branchId]="branchId"
             [warehouseId]="isBikesTab ? 0 : warehouseId"
@@ -334,6 +342,142 @@
 
         </inventory-stock-card>
     }
+
+    <!-- =====================================================
+         EDIT BIKE NUMBERS (Technical Records)
+    ====================================================== -->
+
+    @if (editBike)
+    {
+        <div class="is-edit-backdrop" (click)="closeEditor()"></div>
+
+        <div
+            class="is-edit"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="is-edit-name"
+            (keydown.escape)="closeEditor()">
+
+            <div class="is-edit-head">
+                <div class="is-edit-title">
+                    <span class="is-edit-eyebrow">Technical Records · Edit bike numbers</span>
+                    <b id="is-edit-name">{{ editBike.ProductName }}</b>
+                    <span class="is-edit-facts">
+                        {{ editBike.PurchaseNo || 'Opening stock' }}
+                        · Stock in {{ editBike.StockInDateText || '–' }}
+                        @if (editBike.IsSold)
+                        {
+                            · <span class="is-edit-sold">Sold</span>
+                        }
+                    </span>
+                </div>
+
+                <button
+                    type="button"
+                    class="is-edit-x"
+                    title="Close"
+                    aria-label="Close"
+                    [disabled]="editSaving"
+                    (click)="closeEditor()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            @if (editBike.IsSold)
+            {
+                <div class="is-edit-note">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    This bike is sold. A new Chassis or Engine No is also written on its service vehicle, memberships and service enquiries.
+                </div>
+            }
+
+            <div class="is-edit-body">
+                @for (f of editFields; track f.key)
+                {
+                    <label class="is-edit-field" [class.is-edit-bad]="!!editError(f.key)">
+                        <span class="is-edit-label">
+                            {{ f.label }}
+                            @if (f.required)
+                            {
+                                <i class="is-edit-req">*</i>
+                            }
+                        </span>
+
+                        <input
+                            type="text"
+                            maxlength="50"
+                            autocomplete="off"
+                            spellcheck="false"
+                            [value]="editInitial[f.key]"
+                            [disabled]="editSaving"
+                            (input)="onEditInput(f.key, $any($event.target).value)"
+                            (keydown.enter)="saveEditor()">
+
+                        @if (editError(f.key))
+                        {
+                            <small class="is-edit-msg">
+                                <i class="fas fa-circle-exclamation"></i>
+                                {{ editError(f.key) }}
+                            </small>
+                        }
+                        @else if (editForm[f.key] !== editInitial[f.key])
+                        {
+                            <small class="is-edit-was">Was {{ editInitial[f.key] || '(empty)' }}</small>
+                        }
+                    </label>
+                }
+            </div>
+
+            <div class="is-edit-foot">
+                <span class="is-edit-state">
+                    @if (editChecking)
+                    {
+                        <i class="fas fa-spinner fa-spin"></i> Checking the numbers…
+                    }
+                    @else if (editHasErrors)
+                    {
+                        <i class="fas fa-circle-exclamation is-edit-state-bad"></i> Fix the marked numbers
+                    }
+                    @else if (!editChanged)
+                    {
+                        No changes yet
+                    }
+                    @else
+                    {
+                        <i class="fas fa-circle-check is-edit-state-ok"></i> Numbers are free
+                    }
+                </span>
+
+                <button
+                    type="button"
+                    class="is-edit-btn"
+                    [disabled]="editSaving"
+                    (click)="closeEditor()">
+                    Cancel
+                </button>
+
+                <button
+                    type="button"
+                    class="is-edit-btn is-edit-save"
+                    [disabled]="!canSaveEditor"
+                    (click)="saveEditor()">
+                    @if (editSaving)
+                    {
+                        <i class="fas fa-spinner fa-spin"></i>
+                    }
+                    Save
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- Technical Record History : bike number edits (Motor Bike Stock) -->
+    <app-history-drawer
+        [opened]="historyOpened"
+        title="Technical Record History"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
 
     <app-toast></app-toast>
 

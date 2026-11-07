@@ -18,6 +18,46 @@ export const ACCESSORY_UNITS:
 
 
 //===============================================================
+// Accessory Uses
+//
+//   For Sale                 : sold in the accessories shop
+//   Additional Accessories   : free with every bike, all year
+//   Promotional Accessories  : free with bikes during a promotion
+//
+// Additional / Promotional items also show on Motor Bike Stock ›
+// Accessories. Every use keeps its ledgers (leftover free stock
+// may be sold later with a price from Product Pricing).
+//===============================================================
+
+export const ACCESSORY_USE_FOR_SALE =
+    'For Sale';
+
+export const ACCESSORY_USES:
+    readonly string[] =
+[
+    'For Sale',
+    'Additional Accessories',
+    'Promotional Accessories'
+];
+
+// Unknown / empty → For Sale
+export function normalizeAccessoryUse
+(
+    value:
+        any
+):
+    string
+{
+    const text =
+        String(value ?? '').trim().toLowerCase();
+
+    return ACCESSORY_USES.find(x => x.toLowerCase() === text)
+        ?? ACCESSORY_USES.find(x => !!text && x.toLowerCase().startsWith(text))
+        ?? ACCESSORY_USE_FOR_SALE;
+}
+
+
+//===============================================================
 // Accessory Location
 //
 // One per warehouse : Warehouse → Rack → Shelf → Bin. The bin is
@@ -129,6 +169,10 @@ export interface Accessories
     // labels and colours : shared/inventory/storage-labels
     MovementClass: string;
 
+    // For Sale (default) / Additional Accessories / Promotional
+    // Accessories (see ACCESSORY_USES)
+    AccessoryUse?: string;
+
     Remarks: string;
 
     IsActive: boolean;
@@ -221,6 +265,10 @@ export interface CreateAccessories
     // labels and colours : shared/inventory/storage-labels
     MovementClass: string;
 
+    // For Sale (default) / Additional Accessories / Promotional
+    // Accessories (see ACCESSORY_USES)
+    AccessoryUse?: string;
+
     Remarks: string;
 
     IsActive: boolean;
@@ -286,4 +334,8 @@ export interface AccessoriesPageQuery
     productCategoryId?:number | null;
 
     productSubCategoryId?:number | null;
+
+    // For Sale / Additional Accessories / Promotional Accessories
+    // ('' = all)
+    accessoryUse?:string;
 }

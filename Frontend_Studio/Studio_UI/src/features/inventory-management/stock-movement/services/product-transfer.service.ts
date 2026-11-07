@@ -212,25 +212,26 @@ export class ProductTransferService
         dto:
             CreateProductTransfer
     ):
-        Observable<number>
+        Observable<{ Id:number; PublicId:string }>
     {
+        // The id and the uuid (save-and-post goes on by uuid)
         return this.http
             .post<any>(this.apiUrl, dto)
-            .pipe(map(toId));
+            .pipe(map(x => ({ Id:toId(x), PublicId:text(pick(x, 'PublicId')) })));
     }
 
     update
     (
-        id:
-            number,
+        publicId:
+            string,
         dto:
             UpdateProductTransfer
     ):
         Observable<number>
     {
         return this.http
-            .put<any>(`${this.apiUrl}/${id}`, { ...dto, ProductTransferId:id })
-            .pipe(map(x => toId(x) || id));
+            .put<any>(`${this.apiUrl}/${publicId}`, dto)
+            .pipe(map(x => toId(x)));
     }
 
     delete
@@ -246,51 +247,51 @@ export class ProductTransferService
 
     restore
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
         return this.http
-            .put<void>(`${this.apiUrl}/${id}/restore`, {});
+            .put<void>(`${this.apiUrl}/${publicId}/restore`, {});
     }
 
     // Same branch : Completed ; inter-branch : In Transit
     post
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<void>
     {
         return this.http
-            .post<void>(`${this.apiUrl}/${id}/post`, {});
+            .post<void>(`${this.apiUrl}/${publicId}/post`, {});
     }
 
     receive
     (
-        id:
-            number,
+        publicId:
+            string,
         receiveDate:
             string
     ):
         Observable<void>
     {
         return this.http
-            .post<void>(`${this.apiUrl}/${id}/receive`, { ReceiveDate:receiveDate });
+            .post<void>(`${this.apiUrl}/${publicId}/receive`, { ReceiveDate:receiveDate });
     }
 
     cancel
     (
-        id:
-            number,
+        publicId:
+            string,
         reason:
             string
     ):
         Observable<void>
     {
         return this.http
-            .post<void>(`${this.apiUrl}/${id}/cancel`, { Reason:reason });
+            .post<void>(`${this.apiUrl}/${publicId}/cancel`, { Reason:reason });
     }
 
     getHistory():
@@ -302,13 +303,13 @@ export class ProductTransferService
 
     getEntityHistory
     (
-        id:
-            number
+        publicId:
+            string
     ):
         Observable<any[]>
     {
         return this.http
-            .get<any[]>(`${this.apiUrl}/${id}/history`);
+            .get<any[]>(`${this.apiUrl}/${publicId}/history`);
     }
 }
 

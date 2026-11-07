@@ -56,7 +56,8 @@ public class PurchasesSpRepository
             SwitchDoRequired = "CFG-MOD-007-0071",
             SwitchGatePassRequired = "CFG-MOD-007-0072",
             SwitchPriceAbovePo = "CFG-MOD-007-0073",
-            SwitchVatAsPer63 = "CFG-MOD-007-0074"
+            SwitchVatAsPer63 = "CFG-MOD-007-0074",
+            SwitchAboveMaxStock = "CFG-MOD-007-0084"
         };
 
 

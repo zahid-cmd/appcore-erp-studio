@@ -103,6 +103,9 @@ export class BusinessConfigurationService
             AccessType:
                 item?.AccessType ?? item?.accessType ?? 'Fixed',
 
+            Scope:
+                item?.Scope ?? item?.scope ?? 'Full',
+
             ValidFrom:
                 item?.ValidFrom ?? item?.validFrom ?? null,
 
@@ -172,6 +175,9 @@ export class BusinessConfigurationService
 
                             AccessType:
                                 line?.AccessType ?? line?.accessType ?? '',
+
+                            Scope:
+                                line?.Scope ?? line?.scope ?? '',
 
                             ValidFrom:
                                 line?.ValidFrom ?? line?.validFrom ?? null,
@@ -416,4 +422,4 @@ export class BusinessConfigurationService
             `${this.apiUrl}/history`
         );
     }
-}
+}

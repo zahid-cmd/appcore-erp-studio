@@ -106,4 +106,27 @@ export const accountsFinanceRoutes:
 
     // AUTO-END : MNU-004-003
 
+    //===========================================================
+    // Financial Statements (MANUAL : hand-written read-only
+    // pages, never Menu / Submenu / Code Sync)
+    //===========================================================
+
+    {
+        path:'financial-statements',
+
+        data:
+        {
+            breadcrumb:'Financial Statements'
+        },
+
+        loadChildren:() =>
+            import(
+                '../financial-statements/routes/financial-statements.routes'
+            )
+            .then(
+                m =>
+                    m.financialStatementsRoutes
+            )
+    },
+
 ];

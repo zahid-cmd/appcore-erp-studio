@@ -148,11 +148,28 @@ public class DepartmentController : ControllerBase
     // Update
     //===============================================================
 
-    [HttpPut]
+    // The row comes from the link's Public Id; an id in the body
+    // is ignored
+    [HttpPut("{publicId:guid}")]
 
     public async Task<IActionResult> Update(
+        Guid publicId,
         UpdateDepartmentDto dto)
     {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound();
+        }
+
+        long id =
+            foundId.Value;
+
+        dto.DepartmentId =
+            id;
+
         if (!await _repository.ExistsAsync(
                 dto.DepartmentId))
         {

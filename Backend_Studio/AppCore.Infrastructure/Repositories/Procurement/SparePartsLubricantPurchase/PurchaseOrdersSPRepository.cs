@@ -51,7 +51,8 @@ public class PurchaseOrdersSpRepository
             SwitchFreeGoods = "CFG-MOD-007-0028",
             SwitchRoundPayable = "CFG-MOD-007-0030",
             SwitchWholeTakaLines = "CFG-MOD-007-0032",
-            SwitchEditSupplierTerms = "CFG-MOD-007-0038"
+            SwitchEditSupplierTerms = "CFG-MOD-007-0038",
+            SwitchAboveMaxStock = "CFG-MOD-007-0081"
         };
 
 
