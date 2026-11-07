@@ -343,3 +343,32 @@ public class GitOperationResultDto
         set;
     }
 }
+
+
+
+//===============================================================
+// Git Progress DTO
+//
+// Live progress of the git command that is running right now
+// (push / fetch / pull). The page asks for it every second while
+// a command runs. Active = false when nothing is running.
+//===============================================================
+
+public class GitProgressDto
+{
+    public bool Active { get; set; }
+
+    // e.g. "Writing objects"
+    public string Stage { get; set; } = string.Empty;
+
+    // percent of the current stage (0-100)
+    public int StagePercent { get; set; }
+
+    // whole command (0-100), stages weighted
+    public int OverallPercent { get; set; }
+
+    // e.g. "(284/678), 2.50 MiB | 167.00 KiB/s"
+    public string Detail { get; set; } = string.Empty;
+
+    public int ElapsedSeconds { get; set; }
+}

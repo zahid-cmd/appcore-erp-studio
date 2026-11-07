@@ -239,4 +239,12 @@ public interface ISourceControlRepository
 
     Task<long?> GetIdByPublicIdAsync(
         Guid publicId);
+
+
+    //===========================================================
+    // Live progress of the running git command
+    //===========================================================
+
+    Task<GitProgressDto> GetOperationProgressAsync(
+        long sourceControlId);
 }

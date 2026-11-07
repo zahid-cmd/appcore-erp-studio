@@ -3670,11 +3670,14 @@ implements OnInit
     // Live Progress
     //
     // A git command is one request: the server answers only at
-    // the end. While we wait, the bar keeps moving on its own:
-    // it creeps from the last real step towards 95 % (slower and
-    // slower) and the message shows the seconds spent. When the
-    // answer arrives the bar jumps to 100 % and closes a moment
-    // later, so the user sees it finish.
+    // the end. While we wait:
+    //  - every second the page asks the server for git's own
+    //    progress (push / pull / sync: "Writing objects 41% ...")
+    //    and the bar follows it;
+    //  - for commands without progress (commit, status ...) the
+    //    bar creeps towards 95 % on its own, slower and slower.
+    // The message shows the seconds spent. When the answer
+    // arrives the bar jumps to 100 % and closes a moment later.
     //===========================================================
 
     private progressTimer?: ReturnType<typeof setInterval>;
@@ -3686,6 +3689,16 @@ implements OnInit
     private progressMessage = '';
 
     private progressStartedAt = 0;
+
+    // value when the waiting started (live progress maps 0-100
+    // of git onto progressBase .. 95)
+    private progressBase = 0;
+
+    private progressTicks = 0;
+
+    private progressPolling = false;
+
+    private progressLive = false;
 
 
     private progressShow
@@ -3755,11 +3768,34 @@ implements OnInit
             return;
         }
 
+        this.progressBase =
+            this.progressValue;
+
+        this.progressTicks =
+            0;
+
+        this.progressLive =
+            false;
+
         // Keep moving while the server works
         this.progressTimer =
             setInterval(
                 () =>
                 {
+                    this.progressTicks++;
+
+                    // ask the server every second
+                    if (this.progressTicks % 5 === 1)
+                    {
+                        this.pollLiveProgress();
+                    }
+
+                    if (this.progressLive)
+                    {
+                        // the server's numbers drive the bar
+                        return;
+                    }
+
                     const cap =
                         95;
 
@@ -3818,6 +3854,97 @@ implements OnInit
         }
 
         this.progressDialog.close();
+    }
+
+
+    //===========================================================
+    // Poll Live Progress
+    //===========================================================
+
+    private pollLiveProgress():
+        void
+    {
+        if
+        (
+            this.progressPolling
+            ||
+            this.sourceControlId <= 0
+        )
+        {
+            return;
+        }
+
+        this.progressPolling =
+            true;
+
+        this.sourcecontrolservice
+            .getProgress(
+                this.sourceControlId
+            )
+            .subscribe(
+            {
+                next:
+                    live =>
+                    {
+                        this.progressPolling =
+                            false;
+
+                        // the dialog may have been finished meanwhile
+                        if
+                        (
+                            !this.progressTimer
+                            ||
+                            !live?.active
+                            ||
+                            !live.stage
+                            ||
+                            live.stage === 'Connecting'
+                        )
+                        {
+                            return;
+                        }
+
+                        this.progressLive =
+                            true;
+
+                        const target =
+                            this.progressBase
+                            +
+                            (95 - this.progressBase)
+                            *
+                            Math.min(100, Math.max(0, live.overallPercent)) / 100;
+
+                        this.progressValue =
+                            Math.max(
+                                this.progressValue,
+                                Math.min(95, target)
+                            );
+
+                        const seconds =
+                            Math.floor(
+                                (Date.now() - this.progressStartedAt) / 1000
+                            );
+
+                        const detail =
+                            live.detail
+                                ? ` ${live.detail}`
+                                : '';
+
+                        this.progressDialog.update(
+                            Math.round(
+                                this.progressValue
+                            ),
+                            `${live.stage} ${live.stagePercent}%${detail} (${seconds}s)`
+                        );
+                    },
+                error:
+                    () =>
+                    {
+                        // progress is only a nicety: keep creeping
+                        this.progressPolling =
+                            false;
+                    }
+            });
     }
 
 

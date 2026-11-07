@@ -71,6 +71,22 @@ export interface GitStatusDto
 // Git Commit
 //===============================================================
 
+// Live progress of the running git command (push / pull / sync)
+export interface GitProgressDto
+{
+    active: boolean;
+
+    stage: string;
+
+    stagePercent: number;
+
+    overallPercent: number;
+
+    detail: string;
+
+    elapsedSeconds: number;
+}
+
 export interface GitCommitDto
 {
     message:
@@ -326,6 +342,24 @@ export class SourceControlService
     {
         return this.http.get<GitStatusDto>(
             `${this.apiUrl}/${sourceControlId}/status`
+        );
+    }
+
+
+
+    //===========================================================
+    // Get Live Progress
+    //===========================================================
+
+    getProgress
+    (
+        sourceControlId:
+            number
+    ):
+        Observable<GitProgressDto>
+    {
+        return this.http.get<GitProgressDto>(
+            `${this.apiUrl}/${sourceControlId}/progress`
         );
     }
 

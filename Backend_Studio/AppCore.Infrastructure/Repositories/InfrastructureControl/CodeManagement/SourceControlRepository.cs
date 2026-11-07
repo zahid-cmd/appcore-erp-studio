@@ -5297,6 +5297,11 @@ public class SourceControlRepository
     //
     // Why this is more than a plain Process.Start:
     //
+    //  0. Live progress. fetch / pull / push run with --progress;
+    //     git's progress lines ("Writing objects: 41% ...") are
+    //     read as they come and kept per repository, so the page
+    //     can show the real percentage (GET {id}/progress).
+    //
     //  1. One git command at a time per repository. Status,
     //     commit, pull ... from this API never overlap, so the
     //     API never fights itself for .git\index.lock.
@@ -5312,8 +5317,9 @@ public class SourceControlRepository
     //
     //  4. Never hang. Git may not ask questions on the console
     //     (GIT_TERMINAL_PROMPT=0, stdin closed) and every command
-    //     has a time limit: 5 minutes for network commands
-    //     (fetch, pull, push), 2 minutes for the rest.
+    //     has a time limit: 20 minutes for network commands
+    //     (fetch, pull, push; stopped sooner when git reports
+    //     nothing for 3 minutes), 5 minutes for the rest.
     //===========================================================
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim>
@@ -5322,11 +5328,18 @@ public class SourceControlRepository
 
     private const int GitMaxAttempts = 3;
 
+    // Local commands (add, commit, status ...)
     private static readonly TimeSpan GitLocalTimeout =
-        TimeSpan.FromMinutes(2);
-
-    private static readonly TimeSpan GitNetworkTimeout =
         TimeSpan.FromMinutes(5);
+
+    // fetch / pull / push : a big push on a slow line can take long
+    private static readonly TimeSpan GitNetworkTimeout =
+        TimeSpan.FromMinutes(20);
+
+    // ... but if git reports nothing for this long, it is stuck
+    // (usually waiting for a GitHub sign-in or a dead network)
+    private static readonly TimeSpan GitStallTimeout =
+        TimeSpan.FromMinutes(3);
 
     private static readonly TimeSpan GitStaleLockAge =
         TimeSpan.FromMinutes(10);
@@ -5469,6 +5482,216 @@ public class SourceControlRepository
 
 
     //===========================================================
+    // Live Progress Store (per repository path)
+    //===========================================================
+
+    private sealed class GitProgressState
+    {
+        public bool Active;
+
+        public string Command = string.Empty;
+
+        public string Stage = string.Empty;
+
+        public int StagePercent;
+
+        public int OverallPercent;
+
+        public string Detail = string.Empty;
+
+        public DateTime StartedAt = DateTime.UtcNow;
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, GitProgressState>
+        ProgressStore =
+            new(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly System.Text.RegularExpressions.Regex
+        ProgressLine =
+            new(
+                @"^(?:remote:\s*)?(?<stage>[A-Za-z][A-Za-z ]+?):\s+(?<pct>\d{1,3})%\s*(?<detail>.*)$",
+                System.Text.RegularExpressions.RegexOptions.Compiled
+            );
+
+
+    private static string
+        RepositoryKey
+    (
+        string repositoryPath
+    )
+    {
+        return Path.GetFullPath(
+                repositoryPath
+            ).TrimEnd(
+                '\\',
+                '/'
+            );
+    }
+
+
+    //===========================================================
+    // Stage weight -> overall percent
+    //
+    // push  : Counting 0-5, Compressing 5-20, Writing 20-95,
+    //         remote Resolving deltas 95-100
+    // fetch : remote Counting/Compressing 0-15, Receiving 15-90,
+    //         Resolving deltas 90-100
+    //===========================================================
+
+    private static int
+        OverallFor
+    (
+        string stage,
+
+        int percent
+    )
+    {
+        (int Low, int High) range =
+            stage.ToLowerInvariant() switch
+            {
+                "enumerating objects" => (0, 2),
+                "counting objects"    => (2, 6),
+                "compressing objects" => (6, 20),
+                "writing objects"     => (20, 95),
+                "receiving objects"   => (20, 90),
+                "resolving deltas"    => (90, 100),
+                "updating files"      => (90, 100),
+                "checking out files"  => (90, 100),
+                _                     => (0, 100)
+            };
+
+
+        return range.Low
+            + (range.High - range.Low) * Math.Clamp(percent, 0, 100) / 100;
+    }
+
+
+    //===========================================================
+    // Add --progress to fetch / pull / push
+    //
+    // Git only prints progress to a terminal; --progress makes it
+    // print it to stderr for us too.
+    //===========================================================
+
+    private static string[]
+        WithProgressFlag
+    (
+        string[] arguments
+    )
+    {
+        var list =
+            arguments.ToList();
+
+
+        for
+        (
+            var i = 0;
+            i < list.Count;
+            i++
+        )
+        {
+            if (list[i] == "-c")
+            {
+                // skip "-c name=value"
+                i++;
+
+                continue;
+            }
+
+
+            if
+            (
+                list[i] is "fetch" or "pull" or "push"
+            )
+            {
+                if (!list.Contains("--progress"))
+                {
+                    list.Insert(
+                        i + 1,
+                        "--progress"
+                    );
+                }
+
+                break;
+            }
+
+
+            // first real sub-command is not a network one
+            if (!list[i].StartsWith('-'))
+            {
+                break;
+            }
+        }
+
+
+        return list.ToArray();
+    }
+
+
+    //===========================================================
+    // Get Operation Progress
+    //===========================================================
+
+    public async Task<GitProgressDto>
+        GetOperationProgressAsync
+    (
+        long sourceControlId
+    )
+    {
+        var sourceControl =
+            await GetSourceControlForGitAsync(
+                sourceControlId
+            );
+
+
+        if
+        (
+            sourceControl is null
+            ||
+            string.IsNullOrWhiteSpace(
+                sourceControl.RepositoryPath
+            )
+            ||
+            !ProgressStore.TryGetValue(
+                RepositoryKey(
+                    sourceControl.RepositoryPath
+                ),
+                out var state
+            )
+        )
+        {
+            return new GitProgressDto();
+        }
+
+
+        lock (state)
+        {
+            return new GitProgressDto
+            {
+                Active =
+                    state.Active,
+
+                Stage =
+                    state.Stage,
+
+                StagePercent =
+                    state.StagePercent,
+
+                OverallPercent =
+                    state.OverallPercent,
+
+                Detail =
+                    state.Detail,
+
+                ElapsedSeconds =
+                    (int)(DateTime.UtcNow - state.StartedAt).TotalSeconds
+            };
+        }
+    }
+
+
+
+    //===========================================================
     // Run Git Process (one attempt)
     //===========================================================
 
@@ -5482,6 +5705,48 @@ public class SourceControlRepository
         string[] arguments
     )
     {
+        var isNetwork =
+            IsNetworkGitCommand(
+                arguments
+            );
+
+
+        if (isNetwork)
+        {
+            arguments =
+                WithProgressFlag(
+                    arguments
+                );
+        }
+
+
+        var progress =
+            ProgressStore.AddOrUpdate(
+                RepositoryKey(
+                    repositoryPath
+                ),
+
+                _ => new GitProgressState(),
+
+                (_, old) => old
+            );
+
+
+        if (isNetwork)
+        {
+            lock (progress)
+            {
+                progress.Active = true;
+                progress.Command = string.Join(" ", arguments);
+                progress.Stage = "Connecting";
+                progress.StagePercent = 0;
+                progress.OverallPercent = 0;
+                progress.Detail = string.Empty;
+                progress.StartedAt = DateTime.UtcNow;
+            }
+        }
+
+
         try
         {
             using var process =
@@ -5549,35 +5814,194 @@ public class SourceControlRepository
             process.StandardInput.Close();
 
 
+            var lastActivity =
+                DateTime.UtcNow;
+
+
             var outputTask =
                 process
                     .StandardOutput
                     .ReadToEndAsync();
 
+
+            // stderr is read piece by piece: progress lines end
+            // with \r and are overwritten in a terminal
+            var errorBuilder =
+                new System.Text.StringBuilder();
+
             var errorTask =
-                process
-                    .StandardError
-                    .ReadToEndAsync();
+                Task.Run(
+                    async () =>
+                    {
+                        var buffer =
+                            new char[1024];
+
+                        var line =
+                            new System.Text.StringBuilder();
+
+                        int read;
 
 
-            using var timeoutSource =
-                new CancellationTokenSource(
-                    timeout
+                        while
+                        (
+                            (
+                                read =
+                                    await process
+                                        .StandardError
+                                        .ReadAsync(
+                                            buffer,
+                                            0,
+                                            buffer.Length
+                                        )
+                            ) > 0
+                        )
+                        {
+                            lastActivity =
+                                DateTime.UtcNow;
+
+
+                            for
+                            (
+                                var i = 0;
+                                i < read;
+                                i++
+                            )
+                            {
+                                var ch =
+                                    buffer[i];
+
+
+                                if (ch is '\r' or '\n')
+                                {
+                                    var text =
+                                        line.ToString().Trim();
+
+                                    line.Clear();
+
+
+                                    if (text.Length == 0)
+                                    {
+                                        continue;
+                                    }
+
+
+                                    var match =
+                                        ProgressLine.Match(
+                                            text
+                                        );
+
+
+                                    if (match.Success)
+                                    {
+                                        var stage =
+                                            match.Groups["stage"].Value.Trim();
+
+                                        var percent =
+                                            int.Parse(
+                                                match.Groups["pct"].Value
+                                            );
+
+
+                                        lock (progress)
+                                        {
+                                            progress.Stage = stage;
+                                            progress.StagePercent = percent;
+                                            progress.OverallPercent =
+                                                Math.Max(
+                                                    progress.OverallPercent,
+                                                    OverallFor(
+                                                        stage,
+                                                        percent
+                                                    )
+                                                );
+                                            progress.Detail =
+                                                match.Groups["detail"].Value
+                                                    .Replace(", done.", string.Empty)
+                                                    .Trim();
+                                        }
+
+
+                                        // keep only the final line of each stage
+                                        if (!text.Contains("done"))
+                                        {
+                                            continue;
+                                        }
+                                    }
+
+
+                                    errorBuilder.AppendLine(
+                                        text
+                                    );
+                                }
+                                else
+                                {
+                                    line.Append(
+                                        ch
+                                    );
+                                }
+                            }
+                        }
+
+
+                        if (line.Length > 0)
+                        {
+                            errorBuilder.AppendLine(
+                                line.ToString().Trim()
+                            );
+                        }
+                    }
                 );
 
 
-            try
+            string? stopReason =
+                null;
+
+
+            while (!process.HasExited)
             {
-                await process
-                    .WaitForExitAsync(
-                        timeoutSource.Token
-                    );
-            }
-            catch
-            (
-                OperationCanceledException
-            )
-            {
+                var exited =
+                    process.WaitForExitAsync();
+
+
+                await Task.WhenAny(
+                    exited,
+                    Task.Delay(1000)
+                );
+
+
+                if (process.HasExited)
+                {
+                    break;
+                }
+
+
+                var now =
+                    DateTime.UtcNow;
+
+
+                if (now - process.StartTime.ToUniversalTime() > timeout)
+                {
+                    stopReason =
+                        $"Git did not finish within {timeout.TotalMinutes:0} minutes and was stopped";
+                }
+                else if
+                (
+                    isNetwork
+                    &&
+                    now - lastActivity > GitStallTimeout
+                )
+                {
+                    stopReason =
+                        $"Git reported no progress for {GitStallTimeout.TotalMinutes:0} minutes and was stopped";
+                }
+
+
+                if (stopReason is null)
+                {
+                    continue;
+                }
+
+
                 try
                 {
                     process.Kill(
@@ -5591,11 +6015,11 @@ public class SourceControlRepository
 
 
                 var message =
-                    $"Git did not finish within {timeout.TotalMinutes:0} minutes and was stopped "
+                    $"{stopReason} (git {string.Join(" ", arguments)}). "
                     +
-                    $"(git {string.Join(" ", arguments)}). "
+                    "Check the network and the saved GitHub sign-in "
                     +
-                    "Check the network and the saved Git login, then try again.";
+                    "(run the same git command in cmd to see if it asks for a login), then try again.";
 
 
                 Console.WriteLine(
@@ -5611,11 +6035,16 @@ public class SourceControlRepository
             }
 
 
+            await process.WaitForExitAsync();
+
+
             var output =
                 await outputTask;
 
+            await errorTask;
+
             var error =
-                await errorTask;
+                errorBuilder.ToString();
 
 
             Console.WriteLine(
@@ -5674,6 +6103,16 @@ public class SourceControlRepository
 
                 exception.Message
             );
+        }
+        finally
+        {
+            if (isNetwork)
+            {
+                lock (progress)
+                {
+                    progress.Active = false;
+                }
+            }
         }
     }
 

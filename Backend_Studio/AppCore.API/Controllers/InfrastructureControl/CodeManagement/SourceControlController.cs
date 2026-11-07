@@ -665,6 +665,34 @@ public class SourceControlController
 
 
     //===========================================================
+    // Get Live Progress
+    //
+    // Polled by the Command Center while push / pull / sync run.
+    //===========================================================
+
+    [HttpGet("{id:long}/progress")]
+
+    public async Task<IActionResult>
+        GetProgress
+    (
+        long id
+    )
+    {
+        var progress =
+            await _repository
+                .GetOperationProgressAsync(
+                    id
+                );
+
+
+        return Ok(
+            progress
+        );
+    }
+
+
+
+    //===========================================================
     // Get Git Status
     //===========================================================
 
