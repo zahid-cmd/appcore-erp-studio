@@ -317,16 +317,16 @@ implements OnInit, OnDestroy
     readonly deploymentColumns:
         ListTableColumn[] =
     [
-        { header:'#',        field:'serial',          type:'serial', width:'50px',  align:'center' },
-        { header:'Release',  field:'code',            width:'90px',  align:'center' },
-        { header:'Kind',     field:'kind',            width:'90px',  align:'center' },
-        { header:'Title',    field:'name',            align:'left' },
-        { header:'Server',   field:'serverName',      width:'140px', align:'left' },
-        { header:'Commit',   field:'commitShort',     width:'90px',  align:'center' },
-        { header:'Started',  field:'startedText',     width:'160px', align:'center' },
-        { header:'Duration', field:'durationText',    width:'90px',  align:'center' },
-        { header:'By',       field:'performedByName', width:'130px', align:'left' },
-        { header:'Result',   field:'deployStatus',    type:'status', width:'120px', align:'center' },
+        { header:'#',        field:'serial',          type:'serial', width:'56px',  align:'center' },
+        { header:'Release',  field:'code',            width:'110px', align:'center' },
+        { header:'Kind',     field:'kind',            width:'100px', align:'center' },
+        { header:'Title',    field:'name',            width:'26%',   align:'left' },
+        { header:'Server',   field:'serverName',      width:'150px', align:'center' },
+        { header:'Commit',   field:'commitShort',     width:'110px', align:'center' },
+        { header:'Started',  field:'startedText',     width:'200px', align:'center' },
+        { header:'Duration', field:'durationText',    width:'110px', align:'center' },
+        { header:'By',       field:'performedByName', width:'130px', align:'center' },
+        { header:'Result',   field:'deployStatus',    type:'status', width:'140px', align:'center' },
         { header:'Actions',  field:'actions',         type:'actions', width:'150px', align:'center' }
     ];
 

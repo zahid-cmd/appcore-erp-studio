@@ -1046,6 +1046,8 @@ implements OnInit, OnDestroy
             false;
     }
 
+    // finished : back to the list (the record behind shows the
+    // same result; it stays one click away there)
     closeLive():
         void
     {
@@ -1066,13 +1068,21 @@ implements OnInit, OnDestroy
 
         this.popupMode =
             'job';
+
+        this.onBackToList();
     }
 
+    // running : back to the list; the job continues there (the
+    // New button shows its progress and opens it again)
     hideLive():
         void
     {
         this.liveOpen =
             false;
+
+        this.stopPolling();
+
+        this.onBackToList();
     }
 
     onLogScroll():
