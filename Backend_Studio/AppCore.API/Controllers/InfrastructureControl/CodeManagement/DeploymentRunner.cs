@@ -47,6 +47,9 @@ public static class DeploymentRunner
 
     private static int _cleanupDone;
 
+    private static readonly System.Text.RegularExpressions.Regex Colours =
+        new(@"\x1B\[[0-9;?]*[A-Za-z]", System.Text.RegularExpressions.RegexOptions.Compiled);
+
 
     //===========================================================
     // Live job (in memory)
@@ -68,6 +71,9 @@ public static class DeploymentRunner
 
         public void Log(string line)
         {
+            // build tools colour their output (ESC[33m ...) : drop it
+            line = Colours.Replace(line, string.Empty);
+
             var text = $"{DateTime.Now:HH:mm:ss}  {line}";
 
             lock (Sync)
@@ -506,7 +512,7 @@ public static class DeploymentRunner
                 "cmd.exe",
                 new[] { "/c", "npx", "ng", "build", "--configuration", "production", "--output-path", uiFolder },
                 uiProject,
-                new Dictionary<string, string> { ["NG_CLI_ANALYTICS"] = "false", ["CI"] = "true" });
+                new Dictionary<string, string> { ["NG_CLI_ANALYTICS"] = "false", ["CI"] = "true", ["NO_COLOR"] = "1", ["FORCE_COLOR"] = "0" });
 
             var uiBrowser =
                 Directory.Exists(Path.Combine(uiFolder, "browser"))

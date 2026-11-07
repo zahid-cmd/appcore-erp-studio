@@ -342,6 +342,59 @@ app.UseCors(
 // A picture not on this PC yet is fetched from StoredFiles first
 app.UseMiddleware<UploadsFallbackMiddleware>();
 
+//===============================================================
+// Angular UI (deployed releases)
+//===============================================================
+//
+// A release built by the Deployment Center carries the UI in
+// wwwroot. A page address (/, /login, /sales/... : not /api and
+// not a file) is answered with index.html by the static files,
+// before any login check, so the login page can open. Angular
+// then shows the right page. Development (no index.html):
+// nothing changes.
+//
+//===============================================================
+
+bool hasUi =
+    File.Exists(
+        Path.Combine(
+            app.Environment.WebRootPath
+            ??
+            Path.Combine(app.Environment.ContentRootPath, "wwwroot"),
+            "index.html"
+        )
+    );
+
+if (hasUi)
+{
+    app.Use(
+        async (context, next) =>
+        {
+            string path =
+                context.Request.Path.Value ?? "/";
+
+            if
+            (
+                (HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))
+                &&
+                !path.StartsWith("/api", StringComparison.OrdinalIgnoreCase)
+                &&
+                !path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
+                &&
+                !Path.HasExtension(path)
+            )
+            {
+                context.Request.Path = "/index.html";
+
+                // no API endpoint for this address
+                context.SetEndpoint(null);
+            }
+
+            await next();
+        }
+    );
+}
+
 app.UseStaticFiles();
 
 
@@ -405,26 +458,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 
-//===============================================================
-// Angular UI (deployed releases)
-//===============================================================
-//
-// A release built by the Deployment Center carries the UI in
-// wwwroot. Every non-API address that is not a file goes to
-// index.html (Angular routes). Development (no index.html):
-// nothing changes.
-//
-//===============================================================
-
-if (File.Exists(Path.Combine(app.Environment.ContentRootPath, "wwwroot", "index.html")))
-{
-    // the login page itself must open without a login
-    // (the API's fallback policy requires a signed-in user).
-    // Addresses with a dot (main.js, styles.css, pictures)
-    // are left to the static files.
-    app.MapFallbackToFile("{*path:regex(^(?!api/)[[^.]]*$)}", "index.html")
-       .AllowAnonymous();
-}
 
 
 //===============================================================
