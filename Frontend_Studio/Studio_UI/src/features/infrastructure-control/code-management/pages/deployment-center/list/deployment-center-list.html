@@ -25,6 +25,7 @@
                 [command1Text]="newText"
                 [command1Icon]="newIcon"
                 command1Title="Prepare a new deployment (draft). While a job runs : open it."
+                [command1Visible]="canDeploy || !!running"
                 (command1Click)="add()"
                 command2Text="Refresh"
                 command2Icon="fas fa-rotate-right"
@@ -65,6 +66,19 @@
         </app-dropdown>
 
     </app-page-toolbar>
+
+
+    <!-- =====================================================
+         READ-ONLY (live server)
+    ====================================================== -->
+
+    @if (!canDeploy && readOnlyReason)
+    {
+        <div class="dc-readonly">
+            <i class="fas fa-lock"></i>
+            <span><b>Read-only here.</b> {{ readOnlyReason }}</span>
+        </div>
+    }
 
 
     <!-- =====================================================

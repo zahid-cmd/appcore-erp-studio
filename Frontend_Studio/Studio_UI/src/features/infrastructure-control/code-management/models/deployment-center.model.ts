@@ -215,3 +215,14 @@ export interface StartedJob
 
     code: string;
 }
+
+
+// Can this copy of the app deploy? (only the development PC)
+export interface DeploymentCapabilities
+{
+    canDeploy: boolean;
+
+    reason: string;
+
+    machine: string;
+}

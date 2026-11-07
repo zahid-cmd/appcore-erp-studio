@@ -294,6 +294,15 @@ implements OnInit, OnDestroy
     private refreshTimer?:
         ReturnType<typeof setInterval>;
 
+    // only the development PC deploys; a live server : read-only
+    canDeploy:
+        boolean =
+        false;
+
+    readOnlyReason:
+        string =
+        '';
+
 
     //===========================================================
     // Canvas / Columns
@@ -347,21 +356,21 @@ implements OnInit, OnDestroy
             icon:'fas fa-rocket',
             title:'Deploy this draft',
             tone:'primary',
-            visible:(row:any) => row.deployStatus === 'Draft'
+            visible:(row:any) => this.canDeploy && row.deployStatus === 'Draft'
         },
         {
             key:'edit',
             icon:'fas fa-pen',
             title:'Edit the draft',
             tone:'default',
-            visible:(row:any) => row.deployStatus === 'Draft'
+            visible:(row:any) => this.canDeploy && row.deployStatus === 'Draft'
         },
         {
             key:'delete',
             icon:'fas fa-trash',
             title:'Delete the draft',
             tone:'danger',
-            visible:(row:any) => row.deployStatus === 'Draft'
+            visible:(row:any) => this.canDeploy && row.deployStatus === 'Draft'
         }
     ];
 
@@ -393,7 +402,7 @@ implements OnInit, OnDestroy
             icon:'fas fa-clock-rotate-left',
             title:'Roll back to this release',
             tone:'danger',
-            visible:(row:any) => !row.isCurrent
+            visible:(row:any) => this.canDeploy && !row.isCurrent
         }
     ];
 
@@ -405,6 +414,8 @@ implements OnInit, OnDestroy
     ngOnInit():
         void
     {
+        this.loadCapabilities();
+
         this.loadServers();
 
         this.loadDeployments();
@@ -420,6 +431,45 @@ implements OnInit, OnDestroy
     //===========================================================
     // Servers
     //===========================================================
+
+    private loadCapabilities():
+        void
+    {
+        this.service
+            .getCapabilities()
+            .subscribe
+            ({
+                next:
+                    result =>
+                    {
+                        this.canDeploy =
+                            result.canDeploy;
+
+                        this.readOnlyReason =
+                            result.reason;
+
+                        // row buttons depend on it : redraw the rows
+                        this.deployments =
+                            [...this.deployments];
+
+                        this.applyFilters();
+
+                        this.releases =
+                            [...this.releases];
+
+                        this.cdr.detectChanges();
+                    },
+                error:
+                    () =>
+                    {
+                        this.canDeploy =
+                            false;
+
+                        this.readOnlyReason =
+                            'Unable to check whether this copy can deploy.';
+                    }
+            });
+    }
 
     private loadServers():
         void
@@ -912,6 +962,16 @@ implements OnInit, OnDestroy
         if (running)
         {
             this.view(running);
+
+            return;
+        }
+
+        if (!this.canDeploy)
+        {
+            this.toast.warning(
+                'Read-only',
+                this.readOnlyReason
+            );
 
             return;
         }

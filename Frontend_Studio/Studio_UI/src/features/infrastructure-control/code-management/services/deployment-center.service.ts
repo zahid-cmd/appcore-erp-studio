@@ -38,6 +38,7 @@ import
     DeploymentDraftDefaults,
     SaveDeploymentDraft,
     StartRollback,
+    DeploymentCapabilities,
     StartedJob
 }
 from '../models/deployment-center.model';
@@ -122,6 +123,15 @@ export class DeploymentCenterService
         return this.http.get<DeploymentProgress>(
             `${this.apiUrl}/${publicId}/progress`,
             { params:new HttpParams().set('lines', lines) }
+        );
+    }
+
+    // can this copy deploy? (live server : read-only)
+    getCapabilities():
+        Observable<DeploymentCapabilities>
+    {
+        return this.http.get<DeploymentCapabilities>(
+            `${this.apiUrl}/capabilities`
         );
     }
 

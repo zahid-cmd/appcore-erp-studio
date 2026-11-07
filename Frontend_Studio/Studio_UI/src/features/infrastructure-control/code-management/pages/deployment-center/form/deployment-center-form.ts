@@ -223,6 +223,44 @@ implements OnInit, OnDestroy
         boolean =
         false;
 
+    // only the development PC deploys; a live server : read-only
+    canDeploy:
+        boolean =
+        false;
+
+    readOnlyReason:
+        string =
+        '';
+
+    // view/:id?deploy=1 : start once the record and the
+    // capabilities are both loaded
+    private capsLoaded:
+        boolean =
+        false;
+
+    private pendingDeploy:
+        boolean =
+        false;
+
+    private tryPendingDeploy():
+        void
+    {
+        if
+        (
+            this.pendingDeploy
+            &&
+            this.capsLoaded
+            &&
+            this.item?.deployStatus === 'Draft'
+        )
+        {
+            this.pendingDeploy =
+                false;
+
+            this.deploy();
+        }
+    }
+
     // view : follow the end of the saved log
     followSavedLog:
         boolean =
@@ -306,6 +344,44 @@ implements OnInit, OnDestroy
                     : 'view';
 
         this.loadServers();
+
+        this.service
+            .getCapabilities()
+            .subscribe
+            ({
+                next:
+                    result =>
+                    {
+                        this.canDeploy =
+                            result.canDeploy;
+
+                        this.readOnlyReason =
+                            result.reason;
+
+                        this.capsLoaded =
+                            true;
+
+                        this.tryPendingDeploy();
+
+                        // New / Edit cannot be used here
+                        if
+                        (
+                            !result.canDeploy
+                            &&
+                            this.mode !== 'view'
+                        )
+                        {
+                            this.toast.warning(
+                                'Read-only',
+                                result.reason
+                            );
+
+                            this.onBackToList();
+                        }
+
+                        this.cdr.detectChanges();
+                    }
+            });
 
         if (this.mode === 'add')
         {
@@ -456,7 +532,10 @@ implements OnInit, OnDestroy
                             item.deployStatus === 'Draft'
                         )
                         {
-                            this.runPreflight();
+                            this.pendingDeploy =
+                                true;
+
+                            this.tryPendingDeploy();
                         }
 
                         this.cdr.detectChanges();
@@ -751,6 +830,16 @@ implements OnInit, OnDestroy
             this.checking
         )
         {
+            return;
+        }
+
+        if (!this.canDeploy)
+        {
+            this.toast.warning(
+                'Read-only',
+                this.readOnlyReason
+            );
+
             return;
         }
 

@@ -23,6 +23,7 @@ namespace AppCore.Api.Controllers.InfrastructureControl.CodeManagement;
 //
 //   GET    /                             deployments (?server=publicId)
 //   GET    /defaults                     servers to choose from
+//   GET    /capabilities                 can this copy deploy?
 //   GET    /draft-defaults?server=       next release, commit, notes
 //   GET    /preflight                    git check before Deploy
 //   GET    /{publicId}                   one deployment (with log)
@@ -35,7 +36,9 @@ namespace AppCore.Api.Controllers.InfrastructureControl.CodeManagement;
 //   POST   /rollback                     start          -> { PublicId }
 //
 // A deployment is prepared first (Draft), then run from its
-// record. The work runs in DeploymentRunner (this PC builds, the
+// record. Only a copy of the API next to the source code (the
+// development PC) can deploy; on a live server the Deployment
+// Center is read-only (list, records, logs). The work runs in DeploymentRunner (this PC builds, the
 // server's Deploy Agent installs).
 //===============================================================
 
@@ -160,6 +163,44 @@ public class DeploymentCenterController
         result.NextRelease = await _repository.GetNextReleaseAsync();
 
         return Ok(result);
+    }
+
+
+    //===========================================================
+    // Capabilities : can this copy of the API deploy?
+    //===========================================================
+
+    [HttpGet("capabilities")]
+    public async Task<IActionResult> GetCapabilities()
+    {
+        var reason = await NotHereAsync();
+
+        return Ok(new
+        {
+            CanDeploy = reason is null,
+            Reason = reason ?? string.Empty,
+            Machine = Environment.MachineName
+        });
+    }
+
+    // null = this copy can build and deploy; else why not
+    private async Task<string?> NotHereAsync()
+    {
+        var source = await SourceAsync();
+
+        if (source is null)
+        {
+            return "No active repository in Source Control.";
+        }
+
+        var api = Path.Combine(source.Value.Path, "Backend_Studio", "AppCore.API", "AppCore.API.csproj");
+
+        if (!Directory.Exists(source.Value.Path) || !System.IO.File.Exists(api))
+        {
+            return $"Deployments are made from the development PC (the source code is not on {Environment.MachineName}). This page is read-only here.";
+        }
+
+        return null;
     }
 
 
@@ -299,6 +340,13 @@ public class DeploymentCenterController
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] SaveDeploymentDraftDto dto)
     {
+        var notHere = await NotHereAsync();
+
+        if (notHere is not null)
+        {
+            return BadRequest(new { message = notHere });
+        }
+
         var server = await ServerOnlyAsync(dto.ServerPublicId);
 
         if (server is null)
@@ -348,6 +396,13 @@ public class DeploymentCenterController
     [HttpPut("{publicId:guid}")]
     public async Task<IActionResult> Update(Guid publicId, [FromBody] SaveDeploymentDraftDto dto)
     {
+        var notHere = await NotHereAsync();
+
+        if (notHere is not null)
+        {
+            return BadRequest(new { message = notHere });
+        }
+
         var entity = await FindAsync(publicId);
 
         if (entity is null)
@@ -400,6 +455,13 @@ public class DeploymentCenterController
     [HttpDelete("{publicId:guid}")]
     public async Task<IActionResult> Delete(Guid publicId)
     {
+        var notHere = await NotHereAsync();
+
+        if (notHere is not null)
+        {
+            return BadRequest(new { message = notHere });
+        }
+
         long? id = await _repository.GetIdByPublicIdAsync(publicId);
 
         if (id is null)
@@ -420,6 +482,13 @@ public class DeploymentCenterController
     [HttpPost("{publicId:guid}/deploy")]
     public async Task<IActionResult> Deploy(Guid publicId)
     {
+        var notHere = await NotHereAsync();
+
+        if (notHere is not null)
+        {
+            return BadRequest(new { message = notHere });
+        }
+
         await DeploymentRunner.CleanUpOnceAsync(_repository);
 
         var entity = await FindAsync(publicId);
@@ -518,6 +587,13 @@ public class DeploymentCenterController
     [HttpPost("rollback")]
     public async Task<IActionResult> Rollback([FromBody] StartRollbackDto dto)
     {
+        var notHere = await NotHereAsync();
+
+        if (notHere is not null)
+        {
+            return BadRequest(new { message = notHere });
+        }
+
         await DeploymentRunner.CleanUpOnceAsync(_repository);
 
         var release = (dto.Release ?? string.Empty).Trim();

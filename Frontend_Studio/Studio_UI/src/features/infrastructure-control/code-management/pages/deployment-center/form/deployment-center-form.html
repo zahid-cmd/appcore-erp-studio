@@ -32,15 +32,15 @@
                 [command1Text]="item?.deployStatus === 'Running' ? 'Progress' : 'Deploy'"
                 [command1Icon]="item?.deployStatus === 'Running' ? 'fas fa-spinner fa-spin' : 'fas fa-rocket'"
                 command1Title="Check git, build, send this release to its server"
-                [command1Visible]="item?.deployStatus === 'Draft' || item?.deployStatus === 'Running'"
+                [command1Visible]="(canDeploy && item?.deployStatus === 'Draft') || item?.deployStatus === 'Running'"
                 (command1Click)="deploy()"
                 command2Text="Edit"
                 command2Icon="fas fa-pen"
-                [command2Visible]="item?.deployStatus === 'Draft'"
+                [command2Visible]="canDeploy && item?.deployStatus === 'Draft'"
                 (command2Click)="edit()"
                 command3Text="Delete"
                 command3Icon="fas fa-trash"
-                [command3Visible]="item?.deployStatus === 'Draft'"
+                [command3Visible]="canDeploy && item?.deployStatus === 'Draft'"
                 (command3Click)="deleteDraft()"
                 command4Text="Open Site"
                 command4Icon="fas fa-up-right-from-square"
@@ -244,11 +244,11 @@
                         <div class="dc-result-text">
                             <b>{{ item.deployStatus }}</b>
                             <span>
-                                {{ item.deployStatus === 'Draft' ? 'Not deployed yet. Review it, then press Deploy.' : item.step }}
+                                {{ item.deployStatus === 'Draft' ? (canDeploy ? 'Not deployed yet. Review it, then press Deploy.' : 'Not deployed yet. ' + readOnlyReason) : item.step }}
                             </span>
                         </div>
 
-                        @if (item.deployStatus === 'Draft')
+                        @if (item.deployStatus === 'Draft' && canDeploy)
                         {
                             <button type="button" class="dc-btn dc-btn-primary" (click)="deploy()">
                                 <i class="fas fa-rocket"></i> Deploy {{ item.code }}
