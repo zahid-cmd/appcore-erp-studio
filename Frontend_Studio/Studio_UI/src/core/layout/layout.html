@@ -113,5 +113,19 @@
     <app-toast>
     </app-toast>
 
+    <!-- =====================================================
+         SCREEN BADGE (development builds only): the CSS
+         viewport and its tier, for checking page layouts
+    ====================================================== -->
 
-</div>
+    @if (showScreenBadge)
+    {
+        <div
+            class="screen-badge"
+            aria-hidden="true">
+            {{ screen.label() }}
+        </div>
+    }
+
+
+</div>

@@ -1,5 +1,11 @@
+import { Observable } from 'rxjs';
 //===============================================================
-// Imports
+// Server Management Form
+//
+// Add / edit / view a live server. "Test Connection" asks the
+// server's Deploy Agent (saved values; save first after a
+// change). The agent token is never shown again after saving :
+// leave it empty to keep the saved one.
 //===============================================================
 
 import
@@ -29,11 +35,6 @@ import
     FormsModule
 }
 from '@angular/forms';
-
-
-//===============================================================
-// Shared Components
-//===============================================================
 
 import
 {
@@ -78,11 +79,6 @@ import
 }
 from '../../../../../../shared/components/layout/form-section/form-section';
 
-
-//===============================================================
-// Form Controls
-//===============================================================
-
 import
 {
     TextboxComponent
@@ -97,20 +93,9 @@ from '../../../../../../shared/components/controls/textarea/textarea';
 
 import
 {
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
     DropdownComponent
 }
 from '../../../../../../shared/components/controls/dropdown/dropdown';
-
-
-//===============================================================
-// Utilities
-//===============================================================
 
 import
 {
@@ -136,16 +121,13 @@ import
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 
-
-//===============================================================
-// Models & Services
-//===============================================================
-
 import
 {
     ServerManagement,
     CreateServerManagement,
-    UpdateServerManagement
+    UpdateServerManagement,
+    ServerConnectionTest,
+    SERVER_ENVIRONMENTS
 }
 from '../../../models/server-management.model';
 
@@ -156,233 +138,111 @@ import
 from '../../../services/server-management.service';
 
 
-//===============================================================
-// Component
-//===============================================================
-
 @Component(
 {
     selector:'serverManagement-form',
-
     standalone:true,
-
     imports:
     [
         CommonModule,
-
         FormsModule,
-
-
-        //=======================================================
-        // Layout
-        //=======================================================
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         CommandCenterComponent,
-
         ControlTabsComponent,
-
         PageCanvasComponent,
-
         FormGridComponent,
-
         FormSectionComponent,
-
-
-        //=======================================================
-        // Form Controls
-        //=======================================================
-
         TextboxComponent,
-
         TextareaComponent,
-
-        SearchDropdownComponent,
-
         DropdownComponent,
-
-
-        //=======================================================
-        // Utilities
-        //=======================================================
-
         ToastComponent,
-
         ConfirmDialogComponent
     ],
-
-
     templateUrl:'./server-management-form.html',
-
-
     styleUrls:
     [
         './server-management-form.css'
     ]
 })
-
-
 export class ServerManagementForm
 implements OnInit
 {
-
-    //===========================================================
-    // Dependency Injection
-    //===========================================================
-
     private readonly route =
         inject(ActivatedRoute);
-
 
     private readonly router =
         inject(Router);
 
-
     private readonly servermanagementservice =
         inject(ServerManagementService);
-
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
-
     private readonly toast =
         inject(ToastService);
-
 
     private readonly cdr =
         inject(ChangeDetectorRef);
 
 
-
     //===========================================================
-    // Mode
+    // Mode / Tabs
     //===========================================================
 
     mode:
         'add' | 'edit' | 'view' =
         'add';
 
-
+    // Public Id from the link (uuid v7)
     entityId:
         string =
         '';
-
-
-
-    //===========================================================
-    // Page Header
-    //===========================================================
 
     pageTitle:
         string =
         'Server Management';
 
-
-    entityName:
-        string =
-        'Server Management';
-
-
-
-    //===========================================================
-    // Selected Tab
-    //===========================================================
-
     selectedTab:
         string =
         'general';
 
-
-
-    //===========================================================
-    // Tabs
-    //===========================================================
-
     get tabs():
         ControlTab[]
     {
+        const label =
+            this.mode === 'add'
+                ? 'Add Server'
+                : this.mode === 'edit'
+                    ? 'Update Server'
+                    : 'View Server';
+
         return [
             {
                 id:'general',
-
-                label:this.tabTitle
+                label
             }
         ];
     }
 
 
-
     //===========================================================
-    // Tab Title
-    //===========================================================
-
-    get tabTitle():
-        string
-    {
-        switch
-        (
-            this.mode
-        )
-        {
-            case 'add':
-
-                return `Add ${this.entityName}`;
-
-
-            case 'edit':
-
-                return `Update ${this.entityName}`;
-
-
-            case 'view':
-
-                return `View ${this.entityName}`;
-
-
-            default:
-
-                return this.entityName;
-        }
-    }
-
-
-
-    //===========================================================
-    // Sample Search Dropdown Items
+    // Lists
     //===========================================================
 
-    items:
-        any[]
-    =
-        [];
+    readonly environmentItems:
+        any[] =
+        SERVER_ENVIRONMENTS.map(
+            value => ({ text:value, value })
+        );
 
-
-
-    //===========================================================
-    // Status Items
-    //===========================================================
-
-    statusItems:
-        any[]
-    =
-        [
-            {
-                text:'Active',
-
-                value:'Active'
-            },
-
-            {
-                text:'Inactive',
-
-                value:'Inactive'
-            }
-        ];
-
+    readonly statusItems:
+        any[] =
+    [
+        { text:'Active',   value:true },
+        { text:'Inactive', value:false }
+    ];
 
 
     //===========================================================
@@ -390,176 +250,134 @@ implements OnInit
     //===========================================================
 
     entity:
-        ServerManagement
-    =
-    {
-        id:0,
+        ServerManagement =
+        this.emptyEntity();
 
-        code:'',
+    // port as text for the textbox
+    agentPortText:
+        string =
+        '5099';
 
-        name:'',
-
-        sampleSearchDropdownId:0,
-
-        sampleField:'',
-
-        status:'Active',
-
-        remarks:''
-    };
-
-
-
-    //===========================================================
-    // Form State
-    //===========================================================
+    // new token typed in the form ('' = keep the saved one)
+    agentToken:
+        string =
+        '';
 
     private originalEntity:
         string =
         '';
-
 
     hasChanges:
         boolean =
         false;
 
 
+    //===========================================================
+    // Test Connection
+    //===========================================================
+
+    testing:
+        boolean =
+        false;
+
+    lastTest:
+        ServerConnectionTest | null =
+        null;
+
 
     //===========================================================
-    // Initialize
+    // Init
     //===========================================================
 
     ngOnInit():
         void
     {
-        this.initializeMode();
-    }
-
-
-
-    //===========================================================
-    // Initialize Mode
-    //===========================================================
-
-    private initializeMode():
-        void
-    {
         const id =
             (this.route.snapshot.paramMap.get('id') ?? '').trim();
-
 
         const url =
             this.router.url.toLowerCase();
 
-
-        //=======================================================
-        // View Mode
-        //=======================================================
-
-        if
-        (
+        this.mode =
             url.includes('/view/')
-        )
-        {
-            this.mode =
-                'view';
-        }
+                ? 'view'
+                : url.includes('/edit/')
+                    ? 'edit'
+                    : 'add';
 
-
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
-        else if
-        (
-            url.includes('/edit/')
-        )
-        {
-            this.mode =
-                'edit';
-        }
-
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
-        else
-        {
-            this.mode =
-                'add';
-        }
-
-
-        //=======================================================
-        // Existing Entity
-        //=======================================================
-
-        if
-        (
-            !!id
-        )
+        if (id)
         {
             this.entityId =
                 id;
 
-
             this.loadEntity();
-
 
             return;
         }
 
-
-        //=======================================================
-        // New Entity
-        //=======================================================
-
         this.initializeEntity();
     }
 
-
-
-    //===========================================================
-    // Initialize Entity
-    //===========================================================
+    private emptyEntity():
+        ServerManagement
+    {
+        return {
+            id:0,
+            code:'',
+            name:'',
+            hostAddress:'',
+            agentPort:5099,
+            hasAgentToken:false,
+            appUrl:'',
+            environment:'Production',
+            lastCheckedDate:null,
+            lastCheckStatus:'',
+            lastCheckMessage:'',
+            agentVersion:'',
+            currentRelease:'',
+            status:true,
+            remarks:''
+        };
+    }
 
     private initializeEntity():
         void
     {
         this.entity =
-        {
-            id:0,
+            this.emptyEntity();
 
-            code:'',
+        this.agentPortText =
+            '5099';
 
-            name:'',
+        this.agentToken =
+            '';
 
-            sampleSearchDropdownId:0,
+        this.lastTest =
+            null;
 
-            sampleField:'',
+        this.servermanagementservice
+            .getDefaults()
+            .subscribe(
+            {
+                next:
+                    defaults =>
+                    {
+                        this.entity.code =
+                            defaults.code;
 
-            status:'Active',
+                        this.agentPortText =
+                            String(defaults.agentPort || 5099);
 
-            remarks:''
-        };
+                        this.markClean();
 
+                        this.cdr.detectChanges();
+                    },
+                error:
+                    () => this.markClean()
+            });
 
-        this.originalEntity =
-            JSON.stringify(
-                this.entity
-            );
-
-
-        this.hasChanges =
-            false;
+        this.markClean();
     }
-
-
-
-    //===========================================================
-    // Load Entity
-    //===========================================================
 
     private loadEntity():
         void
@@ -570,402 +388,101 @@ implements OnInit
             )
             .subscribe(
             {
-                next:(response) =>
-                {
-                    this.entity =
-                        response;
+                next:
+                    response =>
+                    {
+                        this.entity =
+                            response;
 
+                        this.agentPortText =
+                            String(response.agentPort);
 
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
+                        this.agentToken =
+                            '';
+
+                        this.markClean();
+
+                        this.cdr.detectChanges();
+                    },
+                error:
+                    error =>
+                    {
+                        console.error('Load Server Error', error);
+
+                        this.toast.error(
+                            'Error',
+                            'Failed to load the server.'
                         );
 
-
-                    this.hasChanges =
-                        false;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:(error) =>
-                {
-                    console.error(
-                        'Load Server Management Error',
-                        error
-                    );
-
-
-                    this.toast.error(
-                        'Error',
-
-                        'Failed to load Server Management.'
-                    );
-
-
-                    this.onBackToList();
-                }
+                        this.goToList();
+                    }
             });
     }
 
 
-
     //===========================================================
-    // Sample Search Dropdown Changed
+    // Changes
     //===========================================================
 
-    onSampleSearchDropdownChange():
-        void
+    private snapshot():
+        string
     {
-        this.checkForChanges();
+        return JSON.stringify(
+            {
+                e:this.entity,
+                p:this.agentPortText,
+                t:this.agentToken
+            }
+        );
     }
 
+    private markClean():
+        void
+    {
+        this.originalEntity =
+            this.snapshot();
 
+        this.hasChanges =
+            false;
+    }
 
-    //===========================================================
-    // Track Changes
-    //===========================================================
-
-    checkForChanges():
+    onValueChange():
         void
     {
         this.hasChanges =
-            JSON.stringify(
-                this.entity
-            )
-            !==
-            this.originalEntity;
-    }
-
-
-
-    //===========================================================
-    // Tab Change
-    //===========================================================
-
-    onTabChange
-    (
-        tabId:
-            string
-    ):
-        void
-    {
-        this.selectedTab =
-            tabId;
-    }
-
-
-
-    //===========================================================
-    // Save
-    //===========================================================
-
-    onSave():
-        void
-    {
-        //=======================================================
-        // View Mode
-        //=======================================================
-
-        if
-        (
-            this.isViewMode
-        )
-        {
-            return;
-        }
-
-
-        //=======================================================
-        // Validation
-        //=======================================================
-
-        if
-        (
-            !this.entity.name?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-
-                'Name is required.'
-            );
-
-            return;
-        }
-
-
-        //=======================================================
-        // Create
-        //=======================================================
-
-        if
-        (
-            this.mode === 'add'
-        )
-        {
-            const model:
-                CreateServerManagement =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
-
-
-            this.servermanagementservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
-                    {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-
-                        this.hasChanges =
-                            false;
-
-
-                        this.toast.success(
-                            'Success',
-
-                            'Server Management created successfully.'
-                        );
-
-
-                        this.onBackToList();
-                    },
-
-
-                    error:(error) =>
-                    {
-                        console.error(
-                            'Create Server Management Error',
-                            error
-                        );
-
-
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
-
-
-                        this.toast.error(
-                            'Validation',
-
-                            message
-                        );
-                    }
-                });
-
-
-            return;
-        }
-
-
-        //=======================================================
-        // Update
-        //=======================================================
-
-        const model:
-            UpdateServerManagement =
-        {
-            id:
-                this.entity.id,
-
-            name:
-                this.entity.name,
-
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
-
-            sampleField:
-                this.entity.sampleField,
-
-            status:
-                this.entity.status,
-
-            remarks:
-                this.entity.remarks
-        };
-
-
-        this.servermanagementservice
-            .update(
-                this.entityId,
-
-model
-            )
-            .subscribe(
-            {
-                next:() =>
-                {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
-
-
-                    this.toast.success(
-                        'Success',
-
-                        'Server Management updated successfully.'
-                    );
-
-
-                    this.onBackToList();
-                },
-
-
-                error:(error) =>
-                {
-                    console.error(
-                        'Update Server Management Error',
-                        error
-                    );
-
-
-                    const message =
-                        error?.error
-                        ??
-                        'Failed to update {{ENTITY_NAME}.';
-
-
-                    this.toast.error(
-                        'Validation',
-
-                        message
-                    );
-                }
-            });
-    }
-
-
-
-    //===========================================================
-    // Clear
-    //===========================================================
-
-    onClear():
-        void
-    {
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
-        if
-        (
-            this.mode === 'edit'
-        )
-        {
-            this.loadEntity();
-
-
-            this.checkForChanges();
-
-
-            return;
-        }
-
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
-        this.initializeEntity();
-
+            this.snapshot() !== this.originalEntity;
 
         this.cdr.detectChanges();
     }
 
 
-
     //===========================================================
-    // Back To List
+    // Labels
     //===========================================================
 
-    onBackToList():
-        void
+    get tokenPlaceholder():
+        string
     {
-        if
-        (
-            !this.hasChanges
-        )
-        {
-            void this.router.navigate(
-            [
-                '..',
-
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
-
-
-            return;
-        }
-
-
-        this.confirmDialog.open(
-
-            'Cancel Changes',
-
-            'Any unsaved changes will be lost. Do you want to leave this page?',
-
-
-            () =>
-            {
-                void this.router.navigate(
-                [
-                    '..',
-
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
-            },
-
-
-            'Leave',
-
-            'Stay',
-
-            'primary'
-        );
+        return this.entity.hasAgentToken
+            ? 'Saved - leave empty to keep it'
+            : 'Agent:Token from the server (C:\\AppCore\\agent\\appsettings.json)';
     }
 
+    get lastCheckedText():
+        string
+    {
+        return this.entity.lastCheckedDate
+            ? new Date(this.entity.lastCheckedDate).toLocaleString()
+            : 'Never';
+    }
 
-
-    //===========================================================
-    // Save Button Text
-    //===========================================================
+    get diskText():
+        string
+    {
+        return this.lastTest?.diskFreeGb == null
+            ? ''
+            : `${this.lastTest.diskFreeGb} GB free`;
+    }
 
     get saveButtonText():
         string
@@ -975,35 +492,11 @@ model
             : 'Save';
     }
 
-
-
-    //===========================================================
-    // View Mode
-    //===========================================================
-
     get isViewMode():
         boolean
     {
         return this.mode === 'view';
     }
-
-
-
-    //===========================================================
-    // Edit Mode
-    //===========================================================
-
-    get isEditMode():
-        boolean
-    {
-        return this.mode === 'edit';
-    }
-
-
-
-    //===========================================================
-    // Add Mode
-    //===========================================================
 
     get isAddMode():
         boolean
@@ -1012,58 +505,285 @@ model
     }
 
 
-
     //===========================================================
-    // Close
+    // Validate (the server checks again)
     //===========================================================
 
-    close():
-        void
+    private validate():
+        string
     {
-        this.onBackToList();
+        const host =
+            this.entity.hostAddress.trim();
+
+        const port =
+            Number(this.agentPortText);
+
+        if (!this.entity.name.trim())
+        {
+            return 'Name is required.';
+        }
+
+        if (!host)
+        {
+            return 'Host address is required (the server\'s Tailscale address, e.g. 100.117.11.97).';
+        }
+
+        if (/[\s/]|:\/\//.test(host))
+        {
+            return 'Host address is only the address or machine name, without http:// or a port.';
+        }
+
+        if (!Number.isInteger(port) || port < 1 || port > 65535)
+        {
+            return 'Agent port must be a number between 1 and 65535.';
+        }
+
+        if (this.isAddMode && !this.agentToken.trim())
+        {
+            return 'Agent token is required (the same value as Agent:Token on the server).';
+        }
+
+        const url =
+            this.entity.appUrl.trim();
+
+        if (url && !/^https?:\/\/\S+$/i.test(url))
+        {
+            return 'App URL must be a full address, e.g. http://100.117.11.97:8080';
+        }
+
+        return '';
     }
 
 
+    //===========================================================
+    // Save
+    //===========================================================
+
+    onSave():
+        void
+    {
+        if (this.isViewMode)
+        {
+            return;
+        }
+
+        const problem =
+            this.validate();
+
+        if (problem)
+        {
+            this.toast.error(
+                'Validation',
+                problem
+            );
+
+            return;
+        }
+
+        const model:
+            CreateServerManagement =
+        {
+            name:this.entity.name.trim(),
+            hostAddress:this.entity.hostAddress.trim(),
+            agentPort:Number(this.agentPortText),
+            agentToken:this.agentToken.trim(),
+            appUrl:this.entity.appUrl.trim(),
+            environment:this.entity.environment,
+            status:this.entity.status,
+            remarks:(this.entity.remarks ?? '').trim()
+        };
+
+        const request: Observable<unknown> =
+            this.isAddMode
+                ? this.servermanagementservice.create(model)
+                : this.servermanagementservice.update(
+                    this.entityId,
+                    {
+                        ...model,
+                        id:this.entity.id
+                    } as UpdateServerManagement
+                );
+
+        request.subscribe(
+        {
+            next:
+                () =>
+                {
+                    this.markClean();
+
+                    this.toast.success(
+                        'Success',
+                        this.isAddMode
+                            ? `Server ${model.name} added. Open it and use Test Connection.`
+                            : `Server ${model.name} updated.`
+                    );
+
+                    this.goToList();
+                },
+            error:
+                (error: any) =>
+                {
+                    console.error('Save Server Error', error);
+
+                    this.toast.error(
+                        'Validation',
+                        error?.error?.message
+                        ??
+                        (typeof error?.error === 'string' ? error.error : 'Failed to save the server.')
+                    );
+                }
+        });
+    }
+
 
     //===========================================================
-    // Refresh
+    // Test Connection (saved values)
     //===========================================================
 
-    refresh():
+    onTestConnection():
         void
     {
         if
         (
-            this.mode === 'edit'
+            this.testing
             ||
-            this.mode === 'view'
+            this.isAddMode
+            ||
+            !this.entityId
         )
+        {
+            return;
+        }
+
+        if (this.hasChanges)
+        {
+            this.toast.warning(
+                'Test Connection',
+                'Save your changes first : the test uses the saved address and token.'
+            );
+
+            return;
+        }
+
+        this.testing =
+            true;
+
+        this.servermanagementservice
+            .testConnection(
+                this.entityId
+            )
+            .subscribe(
+            {
+                next:
+                    result =>
+                    {
+                        this.testing =
+                            false;
+
+                        this.lastTest =
+                            result;
+
+                        // reflect the saved check on the page
+                        this.entity.lastCheckStatus =
+                            result.status;
+
+                        this.entity.lastCheckMessage =
+                            result.message;
+
+                        this.entity.lastCheckedDate =
+                            result.checkedDate;
+
+                        if (result.success)
+                        {
+                            this.entity.agentVersion =
+                                result.agentVersion;
+
+                            this.entity.currentRelease =
+                                result.currentRelease;
+
+                            this.toast.success(
+                                'Online',
+                                result.message
+                            );
+                        }
+                        else
+                        {
+                            this.toast.error(
+                                result.status,
+                                result.message
+                            );
+                        }
+
+                        this.markClean();
+
+                        this.cdr.detectChanges();
+                    },
+                error:
+                    error =>
+                    {
+                        this.testing =
+                            false;
+
+                        console.error('Test Connection Error', error);
+
+                        this.toast.error(
+                            'Test Connection',
+                            error?.error?.message
+                            ??
+                            'The test could not be run.'
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+            });
+    }
+
+
+    //===========================================================
+    // Clear / Back
+    //===========================================================
+
+    onClear():
+        void
+    {
+        if (this.mode === 'edit')
         {
             this.loadEntity();
 
             return;
         }
 
-
         this.initializeEntity();
 
-
         this.cdr.detectChanges();
     }
 
-
-
-    //===========================================================
-    // Value Changed
-    //===========================================================
-
-    onValueChange():
+    onBackToList():
         void
     {
-        this.checkForChanges();
+        if (!this.hasChanges)
+        {
+            this.goToList();
 
+            return;
+        }
 
-        this.cdr.detectChanges();
+        this.confirmDialog.open(
+            'Cancel Changes',
+            'Any unsaved changes will be lost. Do you want to leave this page?',
+            () => this.goToList(),
+            'Leave',
+            'Stay',
+            'primary'
+        );
     }
 
+    private goToList():
+        void
+    {
+        void this.router.navigate(
+            [ '..', 'list' ],
+            { relativeTo:this.route }
+        );
+    }
 }

@@ -11,7 +11,8 @@ from '@angular/core';
 
 import
 {
-    HttpClient
+    HttpClient,
+    HttpParams
 }
 from '@angular/common/http';
 
@@ -30,10 +31,13 @@ from '../../../../environments/environment';
 import
 {
     DeploymentCenter,
-
-    CreateDeploymentCenter,
-
-    UpdateDeploymentCenter
+    DeploymentProgress,
+    DeploymentPreflight,
+    DeploymentServerOption,
+    ServerRelease,
+    StartDeployment,
+    StartRollback,
+    StartedJob
 }
 from '../models/deployment-center.model';
 
@@ -46,166 +50,112 @@ from '../models/deployment-center.model';
 {
     providedIn:'root'
 })
-
-
 export class DeploymentCenterService
 {
-
-    //===========================================================
-    // Injection
-    //===========================================================
-
     private readonly http =
         inject(HttpClient);
-
-
-
-    //===========================================================
-    // API
-    //===========================================================
 
     private readonly apiUrl =
         `${environment.apiUrl}/infrastructure-control/code-management/deployment-center`;
 
 
-
-    //===========================================================
-    // Get All
-    //===========================================================
-
-    getAll():
+    // deployments, newest first (serverPublicId = one server)
+    getAll
+    (
+        serverPublicId?: string | null
+    ):
         Observable<DeploymentCenter[]>
     {
+        let params =
+            new HttpParams();
+
+        if (serverPublicId)
+        {
+            params =
+                params.set('server', serverPublicId);
+        }
+
         return this.http.get<DeploymentCenter[]>(
-            this.apiUrl
+            this.apiUrl,
+            { params }
         );
     }
 
+    // servers to deploy to
+    getServers():
+        Observable<DeploymentServerOption[]>
+    {
+        return this.http.get<DeploymentServerOption[]>(
+            `${this.apiUrl}/defaults`
+        );
+    }
 
+    // git check (committed / pushed / up to date)
+    getPreflight():
+        Observable<DeploymentPreflight>
+    {
+        return this.http.get<DeploymentPreflight>(
+            `${this.apiUrl}/preflight`
+        );
+    }
 
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
+    // one deployment with its log
     getById
     (
-        id:
-            string
+        publicId: string
     ):
         Observable<DeploymentCenter>
     {
         return this.http.get<DeploymentCenter>(
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${publicId}`
         );
     }
 
-
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    create
+    getProgress
     (
-        model:
-            CreateDeploymentCenter
+        publicId: string,
+        lines: number = 200
     ):
-        Observable<number>
+        Observable<DeploymentProgress>
     {
-        return this.http.post<number>(
-            this.apiUrl,
-
-            model
+        return this.http.get<DeploymentProgress>(
+            `${this.apiUrl}/${publicId}/progress`,
+            { params:new HttpParams().set('lines', lines) }
         );
     }
 
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    update
+    deploy
     (
-        publicId:
-            string,
-
-        model:
-            UpdateDeploymentCenter
+        dto: StartDeployment
     ):
-        Observable<void>
+        Observable<StartedJob>
     {
-        return this.http.put<void>(
-            `${this.apiUrl}/${publicId}`,
-
-            model
+        return this.http.post<StartedJob>(
+            `${this.apiUrl}/deploy`,
+            dto
         );
     }
 
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    delete
+    getReleases
     (
-        id:
-            string
+        serverPublicId: string
     ):
-        Observable<void>
+        Observable<ServerRelease[]>
     {
-        return this.http.delete<void>(
-            `${this.apiUrl}/${id}`
+        return this.http.get<ServerRelease[]>(
+            `${this.apiUrl}/servers/${serverPublicId}/releases`
         );
     }
 
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    restore():
-        Observable<void>
-    {
-        return this.http.put<void>(
-            `${this.apiUrl}/restore`,
-
-            {}
-        );
-    }
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    getHistory():
-        Observable<any[]>
-    {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/history`
-        );
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    getEntityHistory
+    rollback
     (
-        id:
-            string
+        dto: StartRollback
     ):
-        Observable<any[]>
+        Observable<StartedJob>
     {
-        return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
+        return this.http.post<StartedJob>(
+            `${this.apiUrl}/rollback`,
+            dto
         );
     }
-
 }

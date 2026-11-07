@@ -30,10 +30,10 @@ from '../../../../environments/environment';
 import
 {
     ServerManagement,
-
     CreateServerManagement,
-
-    UpdateServerManagement
+    UpdateServerManagement,
+    ServerManagementDefaults,
+    ServerConnectionTest
 }
 from '../models/server-management.model';
 
@@ -46,32 +46,14 @@ from '../models/server-management.model';
 {
     providedIn:'root'
 })
-
-
 export class ServerManagementService
 {
-
-    //===========================================================
-    // Injection
-    //===========================================================
-
     private readonly http =
         inject(HttpClient);
-
-
-
-    //===========================================================
-    // API
-    //===========================================================
 
     private readonly apiUrl =
         `${environment.apiUrl}/infrastructure-control/code-management/server-management`;
 
-
-
-    //===========================================================
-    // Get All
-    //===========================================================
 
     getAll():
         Observable<ServerManagement[]>
@@ -82,48 +64,41 @@ export class ServerManagementService
     }
 
 
+    getDefaults():
+        Observable<ServerManagementDefaults>
+    {
+        return this.http.get<ServerManagementDefaults>(
+            `${this.apiUrl}/defaults`
+        );
+    }
 
-    //===========================================================
-    // Get By Id
-    //===========================================================
 
     getById
     (
-        id:
+        publicId:
             string
     ):
         Observable<ServerManagement>
     {
         return this.http.get<ServerManagement>(
-            `${this.apiUrl}/${id}`
+            `${this.apiUrl}/${publicId}`
         );
     }
 
-
-
-    //===========================================================
-    // Create
-    //===========================================================
 
     create
     (
         model:
             CreateServerManagement
     ):
-        Observable<number>
+        Observable<{ id: number; publicId: string }>
     {
-        return this.http.post<number>(
+        return this.http.post<{ id: number; publicId: string }>(
             this.apiUrl,
-
             model
         );
     }
 
-
-
-    //===========================================================
-    // Update
-    //===========================================================
 
     update
     (
@@ -137,50 +112,49 @@ export class ServerManagementService
     {
         return this.http.put<void>(
             `${this.apiUrl}/${publicId}`,
-
             model
         );
     }
 
 
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    delete
+    // Asks the server's Deploy Agent (agent health)
+    testConnection
     (
-        id:
+        publicId:
             string
     ):
-        Observable<void>
+        Observable<ServerConnectionTest>
     {
-        return this.http.delete<void>(
-            `${this.apiUrl}/${id}`
-        );
-    }
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    restore():
-        Observable<void>
-    {
-        return this.http.put<void>(
-            `${this.apiUrl}/restore`,
-
+        return this.http.post<ServerConnectionTest>(
+            `${this.apiUrl}/${publicId}/test`,
             {}
         );
     }
 
 
+    delete
+    (
+        publicId:
+            string
+    ):
+        Observable<void>
+    {
+        return this.http.delete<void>(
+            `${this.apiUrl}/${publicId}`
+        );
+    }
 
-    //===========================================================
-    // Get History
-    //===========================================================
+
+    // the most recently deleted server
+    restore():
+        Observable<void>
+    {
+        return this.http.put<void>(
+            `${this.apiUrl}/restore`,
+            {}
+        );
+    }
+
 
     getHistory():
         Observable<any[]>
@@ -191,21 +165,15 @@ export class ServerManagementService
     }
 
 
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
     getEntityHistory
     (
-        id:
+        publicId:
             string
     ):
         Observable<any[]>
     {
         return this.http.get<any[]>(
-            `${this.apiUrl}/${id}/history`
+            `${this.apiUrl}/${publicId}/history`
         );
     }
-
 }

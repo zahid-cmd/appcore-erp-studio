@@ -9,7 +9,8 @@ import
     OnDestroy,
     ChangeDetectorRef,
     computed,
-    inject
+    inject,
+    isDevMode
 }
 from '@angular/core';
 
@@ -106,6 +107,12 @@ import
 }
 from '../shell/shell.service';
 
+import
+{
+    ScreenService
+}
+from './screen.service';
+
 
 //===============================================================
 // Component
@@ -183,6 +190,14 @@ implements
 
     private readonly shellService =
         inject(ShellService);
+
+    // Screen tier (page canvas across monitors); the badge shows
+    // it in development builds only
+    readonly screen =
+        inject(ScreenService);
+
+    readonly showScreenBadge =
+        isDevMode();
 
 
     //===========================================================
@@ -404,4 +419,4 @@ implements
         this.subscriptions.unsubscribe();
     }
 
-}
+}

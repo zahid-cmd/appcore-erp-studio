@@ -1493,6 +1493,61 @@ public class AppDbContext
 
     // AUTO-END : BikeAccessorySchemes
 
+    // AUTO-BEGIN : BikeDeliveries
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.MotorBikeSales.BikeDeliveries>
+    BikeDeliveriess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : BikeDeliveries
+
+    // AUTO-BEGIN : SalesInvoicesMb
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.MotorBikeSales.SalesInvoicesMb>
+    SalesInvoicesMbs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesInvoicesMb
+
+    // AUTO-BEGIN : SalesQuotationsMb
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.MotorBikeSales.SalesQuotationsMb>
+    SalesQuotationsMbs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesQuotationsMb
+
+    // AUTO-BEGIN : SalesReturnsMb
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.MotorBikeSales.SalesReturnsMb>
+    SalesReturnsMbs
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : SalesReturnsMb
+
+    // AUTO-BEGIN : MotorBikeSpecifications
+
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.MotorBikeSpecifications>
+    MotorBikeSpecificationss
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : MotorBikeSpecifications
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 
@@ -1539,6 +1594,15 @@ public class AppDbContext
 
     public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.BikeAccessorySchemeItems>
     BikeAccessorySchemeItemRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Motor Bike Specifications : technical rows (MANUAL : the head
+    // MotorBikeSpecifications is in the sync's AUTO block)
+    public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.MotorBikeSpecificationItems>
+    MotorBikeSpecificationItemRows
     {
     get;
     set;

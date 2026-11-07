@@ -1,73 +1,13 @@
 //===============================================================
-// Namespace
+// Start a deployment
 //===============================================================
 
 namespace AppCore.Application.InfrastructureControl.CodeManagement;
 
-
-//===============================================================
-// CreateDeploymentCenterDto
-//===============================================================
-
-public class CreateDeploymentCenterDto
+public class StartDeploymentDto
 {
-    //===========================================================
-    // Name
-    //===========================================================
+    // Server Management public id
+    public Guid ServerPublicId { get; set; }
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
 }

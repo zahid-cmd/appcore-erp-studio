@@ -1725,11 +1725,9 @@ implements OnInit, OnDestroy
 
         this.selectedAccountSubGroupId =
             null;
-
-        this.loadAccountGroups();
-
-        this.loadAccountSubGroups();
-
+        // groups / sub groups are already loaded (all of them);
+        // buildFilterItems narrows them : only the list is asked
+        this.buildFilterItems();
         this.applyFilters();
     }
 
@@ -1751,9 +1749,7 @@ implements OnInit, OnDestroy
 
         this.selectedAccountSubGroupId =
             null;
-
-        this.loadAccountSubGroups();
-
+        this.buildFilterItems();
         this.applyFilters();
     }
 

@@ -1,13 +1,19 @@
 //===============================================================
-// Imports
+// Deployment Center : one deployment / rollback
+//
+// view/:id shows the details and the full log; while the job
+// runs the page follows it (every 2 seconds). Deployments are
+// started from the list (Deploy button), so add / edit go back
+// to the list.
 //===============================================================
 
 import
 {
     Component,
     OnInit,
-    ChangeDetectorRef,
-    inject
+    OnDestroy,
+    inject,
+    ChangeDetectorRef
 }
 from '@angular/core';
 
@@ -26,39 +32,9 @@ from '@angular/router';
 
 import
 {
-    FormsModule
-}
-from '@angular/forms';
-
-
-//===============================================================
-// Shared Components
-//===============================================================
-
-import
-{
     PageHeaderComponent
 }
 from '../../../../../../shared/components/layout/page-header/page-header';
-
-import
-{
-    PageToolbarComponent
-}
-from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
-
-import
-{
-    CommandCenterComponent
-}
-from '../../../../../../shared/components/utilities/command-center/command-center';
-
-import
-{
-    ControlTabsComponent,
-    ControlTab
-}
-from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
@@ -68,55 +44,9 @@ from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 
 import
 {
-    FormGridComponent
+    CommandCenterComponent
 }
-from '../../../../../../shared/components/layout/form-grid/form-grid';
-
-import
-{
-    FormSectionComponent
-}
-from '../../../../../../shared/components/layout/form-section/form-section';
-
-
-//===============================================================
-// Form Controls
-//===============================================================
-
-import
-{
-    TextboxComponent
-}
-from '../../../../../../shared/components/controls/textbox/textbox';
-
-import
-{
-    TextareaComponent
-}
-from '../../../../../../shared/components/controls/textarea/textarea';
-
-import
-{
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
-
-import
-{
-    DropdownComponent
-}
-from '../../../../../../shared/components/controls/dropdown/dropdown';
-
-
-//===============================================================
-// Utilities
-//===============================================================
-
-import
-{
-    ToastComponent
-}
-from '../../../../../../shared/components/utilities/toast/toast';
+from '../../../../../../shared/components/utilities/command-center/command-center';
 
 import
 {
@@ -126,26 +56,13 @@ from '../../../../../../shared/components/utilities/toast/toast.service';
 
 import
 {
-    ConfirmDialogService
+    ToastComponent
 }
-from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
+from '../../../../../../shared/components/utilities/toast/toast';
 
 import
 {
-    ConfirmDialogComponent
-}
-from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
-
-
-//===============================================================
-// Models & Services
-//===============================================================
-
-import
-{
-    DeploymentCenter,
-    CreateDeploymentCenter,
-    UpdateDeploymentCenter
+    DeploymentCenter
 }
 from '../../../models/deployment-center.model';
 
@@ -156,914 +73,298 @@ import
 from '../../../services/deployment-center.service';
 
 
-//===============================================================
-// Component
-//===============================================================
-
 @Component(
 {
     selector:'deploymentCenter-form',
-
     standalone:true,
-
     imports:
     [
         CommonModule,
-
-        FormsModule,
-
-
-        //=======================================================
-        // Layout
-        //=======================================================
-
         PageHeaderComponent,
-
-        PageToolbarComponent,
-
-        CommandCenterComponent,
-
-        ControlTabsComponent,
-
         PageCanvasComponent,
-
-        FormGridComponent,
-
-        FormSectionComponent,
-
-
-        //=======================================================
-        // Form Controls
-        //=======================================================
-
-        TextboxComponent,
-
-        TextareaComponent,
-
-        SearchDropdownComponent,
-
-        DropdownComponent,
-
-
-        //=======================================================
-        // Utilities
-        //=======================================================
-
-        ToastComponent,
-
-        ConfirmDialogComponent
+        CommandCenterComponent,
+        ToastComponent
     ],
-
-
     templateUrl:'./deployment-center-form.html',
-
-
-    styleUrls:
-    [
-        './deployment-center-form.css'
-    ]
+    styleUrl:'./deployment-center-form.css'
 })
-
-
 export class DeploymentCenterForm
-implements OnInit
+implements OnInit, OnDestroy
 {
-
-    //===========================================================
-    // Dependency Injection
-    //===========================================================
-
-    private readonly route =
-        inject(ActivatedRoute);
-
-
-    private readonly router =
-        inject(Router);
-
-
-    private readonly deploymentcenterservice =
+    private readonly service =
         inject(DeploymentCenterService);
-
-
-    private readonly confirmDialog =
-        inject(ConfirmDialogService);
-
 
     private readonly toast =
         inject(ToastService);
 
+    private readonly router =
+        inject(Router);
+
+    private readonly route =
+        inject(ActivatedRoute);
 
     private readonly cdr =
         inject(ChangeDetectorRef);
 
+    item:
+        DeploymentCenter | null =
+        null;
 
+    loading:
+        boolean =
+        true;
 
-    //===========================================================
-    // Mode
-    //===========================================================
+    loadFailed:
+        boolean =
+        false;
 
-    mode:
-        'add' | 'edit' | 'view' =
-        'add';
+    // follow the end of the log
+    followLog:
+        boolean =
+        true;
 
-
-    entityId:
+    private publicId:
         string =
         '';
 
+    private timer?:
+        ReturnType<typeof setInterval>;
 
-
-    //===========================================================
-    // Page Header
-    //===========================================================
-
-    pageTitle:
-        string =
-        'Deployment Center';
-
-
-    entityName:
-        string =
-        'Deployment Center';
-
-
-
-    //===========================================================
-    // Selected Tab
-    //===========================================================
-
-    selectedTab:
-        string =
-        'general';
-
-
-
-    //===========================================================
-    // Tabs
-    //===========================================================
-
-    get tabs():
-        ControlTab[]
-    {
-        return [
-            {
-                id:'general',
-
-                label:this.tabTitle
-            }
-        ];
-    }
-
-
-
-    //===========================================================
-    // Tab Title
-    //===========================================================
-
-    get tabTitle():
-        string
-    {
-        switch
-        (
-            this.mode
-        )
-        {
-            case 'add':
-
-                return `Add ${this.entityName}`;
-
-
-            case 'edit':
-
-                return `Update ${this.entityName}`;
-
-
-            case 'view':
-
-                return `View ${this.entityName}`;
-
-
-            default:
-
-                return this.entityName;
-        }
-    }
-
-
-
-    //===========================================================
-    // Sample Search Dropdown Items
-    //===========================================================
-
-    items:
-        any[]
-    =
-        [];
-
-
-
-    //===========================================================
-    // Status Items
-    //===========================================================
-
-    statusItems:
-        any[]
-    =
-        [
-            {
-                text:'Active',
-
-                value:'Active'
-            },
-
-            {
-                text:'Inactive',
-
-                value:'Inactive'
-            }
-        ];
-
-
-
-    //===========================================================
-    // Entity
-    //===========================================================
-
-    entity:
-        DeploymentCenter
-    =
-    {
-        id:0,
-
-        code:'',
-
-        name:'',
-
-        sampleSearchDropdownId:0,
-
-        sampleField:'',
-
-        status:'Active',
-
-        remarks:''
-    };
-
-
-
-    //===========================================================
-    // Form State
-    //===========================================================
-
-    private originalEntity:
-        string =
-        '';
-
-
-    hasChanges:
+    private busy:
         boolean =
         false;
 
 
-
     //===========================================================
-    // Initialize
+    // Init / Destroy
     //===========================================================
 
     ngOnInit():
         void
     {
-        this.initializeMode();
-    }
-
-
-
-    //===========================================================
-    // Initialize Mode
-    //===========================================================
-
-    private initializeMode():
-        void
-    {
-        const id =
+        this.publicId =
             (this.route.snapshot.paramMap.get('id') ?? '').trim();
 
-
-        const url =
-            this.router.url.toLowerCase();
-
-
-        //=======================================================
-        // View Mode
-        //=======================================================
-
+        // add / edit : deployments start from the list
         if
         (
-            url.includes('/view/')
+            !this.publicId
+            ||
+            this.router.url.includes('/edit/')
         )
         {
-            this.mode =
-                'view';
-        }
-
-
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
-        else if
-        (
-            url.includes('/edit/')
-        )
-        {
-            this.mode =
-                'edit';
-        }
-
-
-        //=======================================================
-        // Add Mode
-        //=======================================================
-
-        else
-        {
-            this.mode =
-                'add';
-        }
-
-
-        //=======================================================
-        // Existing Entity
-        //=======================================================
-
-        if
-        (
-            !!id
-        )
-        {
-            this.entityId =
-                id;
-
-
-            this.loadEntity();
-
+            this.onBackToList();
 
             return;
         }
 
+        this.load();
+    }
 
-        //=======================================================
-        // New Entity
-        //=======================================================
-
-        this.initializeEntity();
+    ngOnDestroy():
+        void
+    {
+        this.stop();
     }
 
 
-
     //===========================================================
-    // Initialize Entity
+    // Load
     //===========================================================
 
-    private initializeEntity():
+    load():
         void
     {
-        this.entity =
+        if (this.busy)
         {
-            id:0,
+            return;
+        }
 
-            code:'',
+        this.busy =
+            true;
 
-            name:'',
-
-            sampleSearchDropdownId:0,
-
-            sampleField:'',
-
-            status:'Active',
-
-            remarks:''
-        };
-
-
-        this.originalEntity =
-            JSON.stringify(
-                this.entity
-            );
-
-
-        this.hasChanges =
-            false;
-    }
-
-
-
-    //===========================================================
-    // Load Entity
-    //===========================================================
-
-    private loadEntity():
-        void
-    {
-        this.deploymentcenterservice
+        this.service
             .getById(
-                this.entityId
+                this.publicId
             )
-            .subscribe(
-            {
-                next:(response) =>
-                {
-                    this.entity =
-                        response;
-
-
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
-                error:(error) =>
-                {
-                    console.error(
-                        'Load Deployment Center Error',
-                        error
-                    );
-
-
-                    this.toast.error(
-                        'Error',
-
-                        'Failed to load Deployment Center.'
-                    );
-
-
-                    this.onBackToList();
-                }
-            });
-    }
-
-
-
-    //===========================================================
-    // Sample Search Dropdown Changed
-    //===========================================================
-
-    onSampleSearchDropdownChange():
-        void
-    {
-        this.checkForChanges();
-    }
-
-
-
-    //===========================================================
-    // Track Changes
-    //===========================================================
-
-    checkForChanges():
-        void
-    {
-        this.hasChanges =
-            JSON.stringify(
-                this.entity
-            )
-            !==
-            this.originalEntity;
-    }
-
-
-
-    //===========================================================
-    // Tab Change
-    //===========================================================
-
-    onTabChange
-    (
-        tabId:
-            string
-    ):
-        void
-    {
-        this.selectedTab =
-            tabId;
-    }
-
-
-
-    //===========================================================
-    // Save
-    //===========================================================
-
-    onSave():
-        void
-    {
-        //=======================================================
-        // View Mode
-        //=======================================================
-
-        if
-        (
-            this.isViewMode
-        )
-        {
-            return;
-        }
-
-
-        //=======================================================
-        // Validation
-        //=======================================================
-
-        if
-        (
-            !this.entity.name?.trim()
-        )
-        {
-            this.toast.error(
-                'Validation',
-
-                'Name is required.'
-            );
-
-            return;
-        }
-
-
-        //=======================================================
-        // Create
-        //=======================================================
-
-        if
-        (
-            this.mode === 'add'
-        )
-        {
-            const model:
-                CreateDeploymentCenter =
-            {
-                name:
-                    this.entity.name,
-
-                sampleSearchDropdownId:
-                    this.entity.sampleSearchDropdownId,
-
-                sampleField:
-                    this.entity.sampleField,
-
-                status:
-                    this.entity.status,
-
-                remarks:
-                    this.entity.remarks
-            };
-
-
-            this.deploymentcenterservice
-                .create(
-                    model
-                )
-                .subscribe(
-                {
-                    next:() =>
+            .subscribe
+            ({
+                next:
+                    item =>
                     {
-                        this.originalEntity =
-                            JSON.stringify(
-                                this.entity
-                            );
-
-
-                        this.hasChanges =
+                        this.busy =
                             false;
 
+                        this.item =
+                            item;
 
-                        this.toast.success(
-                            'Success',
+                        this.loading =
+                            false;
 
-                            'Deployment Center created successfully.'
-                        );
+                        if (item.deployStatus === 'Running')
+                        {
+                            this.start();
+                        }
+                        else
+                        {
+                            this.stop();
+                        }
 
+                        this.cdr.detectChanges();
 
-                        this.onBackToList();
+                        if (this.followLog)
+                        {
+                            setTimeout(() => this.scrollLogToEnd(), 0);
+                        }
                     },
-
-
-                    error:(error) =>
+                error:
+                    error =>
                     {
-                        console.error(
-                            'Create Deployment Center Error',
-                            error
-                        );
+                        this.busy =
+                            false;
 
+                        this.loading =
+                            false;
 
-                        const message =
-                            error?.error
-                            ??
-                            'Failed to create {{ENTITY_NAME}.';
+                        if (!this.item)
+                        {
+                            this.loadFailed =
+                                true;
 
+                            console.error('Load Deployment Error', error);
 
-                        this.toast.error(
-                            'Validation',
+                            this.toast.error(
+                                'Deployment',
+                                'Unable to load this deployment.'
+                            );
+                        }
 
-                            message
-                        );
+                        this.cdr.detectChanges();
                     }
-                });
-
-
-            return;
-        }
-
-
-        //=======================================================
-        // Update
-        //=======================================================
-
-        const model:
-            UpdateDeploymentCenter =
-        {
-            id:
-                this.entity.id,
-
-            name:
-                this.entity.name,
-
-            sampleSearchDropdownId:
-                this.entity.sampleSearchDropdownId,
-
-            sampleField:
-                this.entity.sampleField,
-
-            status:
-                this.entity.status,
-
-            remarks:
-                this.entity.remarks
-        };
-
-
-        this.deploymentcenterservice
-            .update(
-                this.entityId,
-
-model
-            )
-            .subscribe(
-            {
-                next:() =>
-                {
-                    this.originalEntity =
-                        JSON.stringify(
-                            this.entity
-                        );
-
-
-                    this.hasChanges =
-                        false;
-
-
-                    this.toast.success(
-                        'Success',
-
-                        'Deployment Center updated successfully.'
-                    );
-
-
-                    this.onBackToList();
-                },
-
-
-                error:(error) =>
-                {
-                    console.error(
-                        'Update Deployment Center Error',
-                        error
-                    );
-
-
-                    const message =
-                        error?.error
-                        ??
-                        'Failed to update {{ENTITY_NAME}.';
-
-
-                    this.toast.error(
-                        'Validation',
-
-                        message
-                    );
-                }
             });
     }
 
-
-
-    //===========================================================
-    // Clear
-    //===========================================================
-
-    onClear():
+    private start():
         void
     {
-        //=======================================================
-        // Edit Mode
-        //=======================================================
-
-        if
-        (
-            this.mode === 'edit'
-        )
+        if (!this.timer)
         {
-            this.loadEntity();
-
-
-            this.checkForChanges();
-
-
-            return;
+            this.timer =
+                setInterval(
+                    () => this.load(),
+                    2000
+                );
         }
+    }
 
+    private stop():
+        void
+    {
+        if (this.timer)
+        {
+            clearInterval(this.timer);
 
-        //=======================================================
-        // Add Mode
-        //=======================================================
+            this.timer =
+                undefined;
+        }
+    }
 
-        this.initializeEntity();
+    private scrollLogToEnd():
+        void
+    {
+        const log =
+            document.querySelector('.dc-log');
 
-
-        this.cdr.detectChanges();
+        if (log)
+        {
+            log.scrollTop =
+                log.scrollHeight;
+        }
     }
 
 
+    //===========================================================
+    // Display
+    //===========================================================
 
-    //===========================================================
-    // Back To List
-    //===========================================================
+    get title():
+        string
+    {
+        if (!this.item)
+        {
+            return 'Deployment';
+        }
+
+        return this.item.kind === 'Rollback'
+            ? `Roll back to ${this.item.code}`
+            : `Deployment ${this.item.code}`;
+    }
+
+    get tone():
+        string
+    {
+        switch (this.item?.deployStatus)
+        {
+            case 'Succeeded':   return 'ok';
+            case 'Rolled back': return 'warn';
+            case 'Failed':      return 'bad';
+            default:            return 'run';
+        }
+    }
+
+    dateText
+    (
+        value?:
+            string | null
+    ):
+        string
+    {
+        return value
+            ? new Date(value).toLocaleString()
+            : '-';
+    }
+
+    durationText
+    (
+        seconds:
+            number
+    ):
+        string
+    {
+        const s =
+            Math.max(0, Math.round(seconds ?? 0));
+
+        return s >= 60
+            ? `${Math.floor(s / 60)}m ${s % 60}s`
+            : `${s}s`;
+    }
+
+    copyLog():
+        void
+    {
+        const text =
+            this.item?.log ?? '';
+
+        if (!text)
+        {
+            return;
+        }
+
+        navigator.clipboard
+            ?.writeText(text)
+            .then
+            (
+                () => this.toast.success('Log', 'The log is copied.'),
+                () => this.toast.error('Log', 'The log could not be copied.')
+            );
+    }
 
     onBackToList():
         void
     {
-        if
-        (
-            !this.hasChanges
-        )
-        {
-            void this.router.navigate(
-            [
-                '..',
-
-                'list'
-            ],
-            {
-                relativeTo:
-                    this.route
-            });
-
-
-            return;
-        }
-
-
-        this.confirmDialog.open(
-
-            'Cancel Changes',
-
-            'Any unsaved changes will be lost. Do you want to leave this page?',
-
-
-            () =>
-            {
-                void this.router.navigate(
-                [
-                    '..',
-
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route
-                });
-            },
-
-
-            'Leave',
-
-            'Stay',
-
-            'primary'
+        void this.router.navigate(
+            [ 'list' ],
+            { relativeTo:this.route.parent }
         );
     }
-
-
-
-    //===========================================================
-    // Save Button Text
-    //===========================================================
-
-    get saveButtonText():
-        string
-    {
-        return this.mode === 'edit'
-            ? 'Update'
-            : 'Save';
-    }
-
-
-
-    //===========================================================
-    // View Mode
-    //===========================================================
-
-    get isViewMode():
-        boolean
-    {
-        return this.mode === 'view';
-    }
-
-
-
-    //===========================================================
-    // Edit Mode
-    //===========================================================
-
-    get isEditMode():
-        boolean
-    {
-        return this.mode === 'edit';
-    }
-
-
-
-    //===========================================================
-    // Add Mode
-    //===========================================================
-
-    get isAddMode():
-        boolean
-    {
-        return this.mode === 'add';
-    }
-
-
-
-    //===========================================================
-    // Close
-    //===========================================================
-
-    close():
-        void
-    {
-        this.onBackToList();
-    }
-
-
-
-    //===========================================================
-    // Refresh
-    //===========================================================
-
-    refresh():
-        void
-    {
-        if
-        (
-            this.mode === 'edit'
-            ||
-            this.mode === 'view'
-        )
-        {
-            this.loadEntity();
-
-            return;
-        }
-
-
-        this.initializeEntity();
-
-
-        this.cdr.detectChanges();
-    }
-
-
-
-    //===========================================================
-    // Value Changed
-    //===========================================================
-
-    onValueChange():
-        void
-    {
-        this.checkForChanges();
-
-
-        this.cdr.detectChanges();
-    }
-
 }

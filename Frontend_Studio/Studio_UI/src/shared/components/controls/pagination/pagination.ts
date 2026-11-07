@@ -45,6 +45,16 @@ export class PaginationComponent
     @Input()
     pageSize = 10;
 
+    // Auto page size (page canvas across monitors) : the rows
+    // that fit the canvas. 0 = no Auto choice in the list.
+    // The page passes the list table's (fitRowsChange) value.
+    @Input()
+    autoRows = 0;
+
+    // Auto is the current choice (the select shows "Auto (n)")
+    @Input()
+    autoActive = false;
+
     @Input()
     pageSizeOptions: number[] =
     [
@@ -217,8 +227,11 @@ export class PaginationComponent
         const target =
             event.target as HTMLSelectElement;
 
+        // "auto" → 0 : the page switches to the Auto page size
         this.pageSizeChange.emit(
-            Number(target.value)
+            target.value === 'auto'
+                ? 0
+                : Number(target.value)
         );
     }
-}
+}

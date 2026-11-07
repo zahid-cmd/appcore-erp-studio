@@ -126,6 +126,30 @@
                 </app-textbox>
 
 
+                <!-- Maker's Name (required) : BRTA Form-17 "Maker's
+                     name" for this brand's bikes -->
+
+                <app-textbox
+
+                    label="Maker's Name"
+
+                    placeholder="Manufacturer, e.g. Yadea Technology Group Co., Ltd."
+
+                    textCase="none"
+
+                    [value]="entity.MakerName ?? ''"
+
+                    [maxLength]="150"
+
+                    (valueChange)="entity.MakerName = '' + $event; onValueChange()"
+
+                    [disabled]="isViewMode"
+
+                    [required]="true">
+
+                </app-textbox>
+
+
                 <!-- Motor Bikes Supplier (optional; Supply Type Motor
                      Bikes) : EMI reimbursement claims go to it -->
 

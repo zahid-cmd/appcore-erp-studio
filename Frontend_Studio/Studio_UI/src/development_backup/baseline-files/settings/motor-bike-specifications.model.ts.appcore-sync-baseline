@@ -1,0 +1,90 @@
+/* ============================================================
+   Motor Bike Specifications
+============================================================ */
+
+export interface MotorBikeSpecifications
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Motor Bike Specifications
+============================================================ */
+
+export interface CreateMotorBikeSpecifications
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Motor Bike Specifications
+============================================================ */
+
+export interface UpdateMotorBikeSpecifications
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Motor Bike Specifications Defaults
+============================================================ */
+
+export interface MotorBikeSpecificationsDefaults
+{
+    code:
+        string;
+}

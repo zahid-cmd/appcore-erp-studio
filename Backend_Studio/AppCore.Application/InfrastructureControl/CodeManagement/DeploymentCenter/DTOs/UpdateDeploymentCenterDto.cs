@@ -1,84 +1,16 @@
 //===============================================================
-// Namespace
+// Start a rollback (switch the server back to a kept release)
 //===============================================================
 
 namespace AppCore.Application.InfrastructureControl.CodeManagement;
 
-
-//===============================================================
-// UpdateDeploymentCenterDto
-//===============================================================
-
-public class UpdateDeploymentCenterDto
+public class StartRollbackDto
 {
-    //===========================================================
-    // Primary Key
-    //===========================================================
+    // Server Management public id
+    public Guid ServerPublicId { get; set; }
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    // R-0003
+    public string Release { get; set; } = string.Empty;
 
-
-    //===========================================================
-    // Name
-    //===========================================================
-
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
-
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Sample Field
-    //===========================================================
-
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
 }

@@ -1,166 +1,75 @@
 //===============================================================
-// Namespace
+// Server Management
+//
+// A live server the Deployment Center deploys to. The server
+// runs the AppCore Deploy Agent (Deploy_Agent folder); the API
+// talks to it at http://{HostAddress}:{AgentPort} with the
+// AgentToken (stored encrypted, never sent to the browser).
 //===============================================================
 
 namespace AppCore.Domain.Entities.InfrastructureControl.CodeManagement;
 
-
-//===============================================================
-// ServerManagement
-//===============================================================
-
 public class ServerManagement
 {
-    //===========================================================
-    // Primary Key
-    //===========================================================
+    public long Id { get; set; }
 
-    public long Id
-    {
-        get;
-        set;
-    }
-
-    // The id used in links and API calls (uuid v7)
     public Guid PublicId { get; set; } = Guid.CreateVersion7();
 
+    // SRV-0001 (given by the server)
+    public string Code { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
 
     //===========================================================
-    // Code
+    // Connection
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    // Tailscale address or machine name, e.g. 100.117.11.97
+    public string HostAddress { get; set; } = string.Empty;
 
+    public int AgentPort { get; set; } = 5099;
 
-    //===========================================================
-    // Name
-    //===========================================================
+    // encrypted by the API ("v1:..."); '' = not set
+    public string AgentToken { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    // the address users open, e.g. http://100.117.11.97:8080
+    public string AppUrl { get; set; } = string.Empty;
 
+    // Production / Staging
+    public string Environment { get; set; } = "Production";
 
     //===========================================================
-    // Sample Search Dropdown
+    // Last "Test Connection"
     //===========================================================
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public DateTime? LastCheckedDate { get; set; }
 
+    // Online / Offline / Token rejected / Not configured
+    public string LastCheckStatus { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
+    public string LastCheckMessage { get; set; } = string.Empty;
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string AgentVersion { get; set; } = string.Empty;
 
+    public string CurrentRelease { get; set; } = string.Empty;
 
     //===========================================================
-    // Status
+    // Status / Audit
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public bool Status { get; set; } = true;
 
+    public string Remarks { get; set; } = string.Empty;
 
-    //===========================================================
-    // Remarks
-    //===========================================================
+    public bool IsActive { get; set; } = true;
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public bool IsDeleted { get; set; }
 
+    public long CreatedBy { get; set; }
 
-    //===========================================================
-    // Active
-    //===========================================================
+    public DateTime CreatedDate { get; set; }
 
-    public bool IsActive
-    {
-        get;
-        set;
-    }
+    public long? ModifiedBy { get; set; }
 
-
-    //===========================================================
-    // Deleted
-    //===========================================================
-
-    public bool IsDeleted
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Created By
-    //===========================================================
-
-    public long CreatedBy
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Created Date
-    //===========================================================
-
-    public DateTime CreatedDate
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified By
-    //===========================================================
-
-    public long? ModifiedBy
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
-
-    public DateTime? ModifiedDate
-    {
-        get;
-        set;
-    }
+    public DateTime? ModifiedDate { get; set; }
 }

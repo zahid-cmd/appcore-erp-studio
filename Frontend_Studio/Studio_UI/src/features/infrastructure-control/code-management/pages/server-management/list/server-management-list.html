@@ -5,60 +5,35 @@
     ====================================================== -->
 
     <app-page-header
-
         title="Server Management"
-
-        subtitle="Manage servermanagements"
-
-        icon="fas fa-list">
+        subtitle="Live servers for the Deployment Center (Deploy Agent over Tailscale)"
+        icon="fas fa-server">
 
         <div pageHeaderCenter>
-
             <app-search-box
-
                 [(value)]="searchText"
-
-                placeholder="Search servermanagements..."
-
+                placeholder="Search servers..."
                 (valueChange)="onSearch($event)">
-
             </app-search-box>
-
         </div>
 
-
         <div pageHeaderRight>
-
             <app-command-center
-
                 command1Text="Add"
-
                 command1Icon="fas fa-plus"
-
                 (command1Click)="add()"
-
                 command2Text="Refresh"
-
                 command2Icon="fas fa-rotate-right"
-
                 (command2Click)="refresh()"
-
                 command3Text="Restore"
-
                 command3Icon="fas fa-trash-arrow-up"
-
                 (command3Click)="restore()"
-
                 rightCommandIcon="fas fa-clock-rotate-left"
-
                 (rightCommandClick)="openHistory()">
-
             </app-command-center>
-
         </div>
 
     </app-page-header>
-
 
 
     <!-- =====================================================
@@ -68,40 +43,22 @@
     <app-page-toolbar>
 
         <app-control-tabs
-
             pageToolbarLeft
-
             [tabs]="tabs"
-
             [(selectedTab)]="selectedTab">
-
         </app-control-tabs>
 
-
-        <!-- =================================================
-             STATUS FILTER
-        ================================================== -->
-
         <app-dropdown
-
             pageToolbarRight
-
             placeholder="All Status"
-
             [items]="statusItems"
-
             labelField="text"
-
             valueField="value"
-
             [(value)]="selectedStatus"
-
             (valueChange)="onStatusFilterChange($event)">
-
         </app-dropdown>
 
     </app-page-toolbar>
-
 
 
     <!-- =====================================================
@@ -109,63 +66,35 @@
     ====================================================== -->
 
     <app-page-canvas
-
         [config]="canvasConfig">
 
-
-        <!-- =================================================
-             LIST TABLE
-        ================================================== -->
-
         <div canvasBody>
-
             <app-list-table
-
                 [columns]="columns"
-
-                [rows]="pagedServerManagements"
-
+                [rows]="pagedServers"
                 [serialOffset]="(currentPage - 1) * pageSize"
-
                 [loading]="loading"
-
                 [error]="loadFailed"
-
+                [rowActions]="rowActions"
+                (rowAction)="onRowAction($event)"
                 (view)="view($event)"
-
                 (edit)="edit($event)"
-
                 (delete)="delete($event)"
-
                 (sortChange)="onSort($event)">
-
             </app-list-table>
-
         </div>
 
-
-
-        <!-- =================================================
-             PAGINATION
-        ================================================== -->
-
         <app-pagination
-
             canvasFooter
-
-            [totalRecords]="filteredServerManagements.length"
-
+            [totalRecords]="filteredServers.length"
             [currentPage]="currentPage"
-
             [pageSize]="pageSize"
-
             (pageChange)="onPageChange($event)"
-
             (pageSizeChange)="onPageSizeChange($event)">
-
         </app-pagination>
 
     </app-page-canvas>
+
 
     <!-- =====================================================
          SUMMARY (all records)
@@ -174,31 +103,23 @@
     @if (summaryTotal > 0)
     {
         <div class="ics-summary">
-
             <span class="ics-summary-item">
                 <span class="ics-summary-label">Total</span>
                 <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
             </span>
-
             <span class="ics-summary-item">
                 <span class="ics-summary-label">Active</span>
                 <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
             </span>
-
             <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
+                <span class="ics-summary-label">Online (last check)</span>
+                <b class="ics-summary-value ics-ok">{{ summaryText(summaryOnline) }}</b>
             </span>
-
             <span class="ics-summary-note">
-                All records
+                Plug button = Test Connection
             </span>
-
         </div>
     }
-
-
-
 
 
     <!-- =====================================================
@@ -206,17 +127,11 @@
     ====================================================== -->
 
     <app-history-drawer
-
         [opened]="historyOpened"
-
         [title]="historyTitle"
-
         [items]="historyItems"
-
         (closed)="closeHistory()">
-
     </app-history-drawer>
-
 
 
     <!-- =====================================================

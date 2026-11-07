@@ -58,6 +58,57 @@
     --footer-height:44px;
 
     --page-canvas-reserve:300px;
+
+    /* Page canvas across monitors (2026-11-07). --page-pad
+       and --page-gap set the page area's padding and gaps for
+       every page; the others are used only by pages marked
+       data-canvas="fit" (unmarked pages keep the 660px canvas
+       and the reserve above).
+         --page-pad     padding round the page area
+         --page-gap     gap between header, toolbar, canvas
+         --row-height   list row height
+         --canvas-min   the canvas never gets shorter; below
+                        it the page scrolls
+         --field-min    narrowest form-grid column        */
+    --page-pad:16px;
+    --page-gap:12px;
+    --row-height:40px;
+    --canvas-min:360px;
+    --field-min:320px;
+}
+
+
+/* =====================================================
+   SCREEN TIERS (CSS viewport height)
+   -----------------------------------------------------
+   Short   < 720   1366 x 768 laptops, 1080p at 150%
+   Regular 720-999 1080p at 100%
+   Tall    >= 1000 1440p and 4K
+   The limits match ScreenService (screen.service.ts).
+   The shell bars, page padding and gaps follow the tier
+   on every page; the row height and canvas minimum apply
+   to data-canvas="fit" pages only.
+===================================================== */
+
+@media (max-height:719.98px)
+{
+    :host
+    {
+        --topbar-height:56px;
+        --footer-height:36px;
+        --page-pad:12px;
+        --page-gap:8px;
+        --row-height:32px;
+        --canvas-min:280px;
+    }
+}
+
+@media (min-height:1000px)
+{
+    :host
+    {
+        --page-pad:20px;
+    }
 }
 
 
@@ -252,9 +303,11 @@ app-sidebar.sidebar-collapsed
        screen (page-canvas.ts) */
     overflow:hidden;
 
-    padding:16px;
+    /* 16 / 12 on Regular screens, 12 / 8 on Short, 20 / 12
+       on Tall (screen tiers above) */
+    padding:var(--page-pad);
 
-    gap:12px;
+    gap:var(--page-gap);
 
     background:#f1f5f9;
 
@@ -390,6 +443,34 @@ app-footer
 
 
 /* =====================================================
+   SCREEN BADGE (development builds only)
+===================================================== */
+
+.screen-badge
+{
+    position:fixed;
+
+    right:10px;
+
+    bottom:calc(var(--footer-height) + 8px);
+
+    z-index:60;
+
+    padding:3px 8px;
+
+    border-radius:6px;
+
+    background:rgba(10, 22, 49, 0.78);
+
+    color:#e2e8f1;
+
+    font:500 11px/1.4 "Segoe UI", Tahoma, sans-serif;
+
+    pointer-events:none;
+}
+
+
+/* =====================================================
    GLOBAL TOAST
 ===================================================== */
 
@@ -412,4 +493,4 @@ app-toast
     pointer-events:none;
 
     z-index:99999;
-}
+}

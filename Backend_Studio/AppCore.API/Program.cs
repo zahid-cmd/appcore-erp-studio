@@ -28,6 +28,19 @@ var builder =
 
 
 //===============================================================
+// Windows Service
+//===============================================================
+//
+// On a server the API runs as the Windows service "AppCoreERP"
+// (installed by the Deploy Agent). Harmless when started by
+// dotnet run / Visual Studio.
+//
+//===============================================================
+
+builder.Services.AddWindowsService();
+
+
+//===============================================================
 // Add Controllers
 //===============================================================
 
@@ -390,6 +403,23 @@ app.UseAuthorization();
 //===============================================================
 
 app.MapControllers();
+
+
+//===============================================================
+// Angular UI (deployed releases)
+//===============================================================
+//
+// A release built by the Deployment Center carries the UI in
+// wwwroot. Every non-API address that is not a file goes to
+// index.html (Angular routes). Development (no index.html):
+// nothing changes.
+//
+//===============================================================
+
+if (File.Exists(Path.Combine(app.Environment.ContentRootPath, "wwwroot", "index.html")))
+{
+    app.MapFallbackToFile("{*path:regex(^(?!api/).*$)}", "index.html");
+}
 
 
 //===============================================================

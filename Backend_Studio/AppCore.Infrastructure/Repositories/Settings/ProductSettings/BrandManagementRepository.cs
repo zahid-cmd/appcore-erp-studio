@@ -160,6 +160,9 @@ public class BrandManagementRepository : IBrandManagementRepository
                         Remarks =
                             x.Remarks,
 
+                        MakerName =
+                            x.MakerName,
+
                         Status =
                             x.Status,
 
@@ -718,6 +721,37 @@ public class BrandManagementRepository : IBrandManagementRepository
 
 
     //===========================================================
+    // Maker's Name : required, spaces squeezed, up to 150 characters
+    //===========================================================
+
+    private static string CleanMakerName
+    (
+        string? value
+    )
+    {
+        string name =
+            string.Join(
+                " ",
+                (value ?? string.Empty)
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+        if (name.Length == 0)
+        {
+            throw new InvalidOperationException(
+                "Maker's Name is required.");
+        }
+
+        if (name.Length > 150)
+        {
+            throw new InvalidOperationException(
+                "Maker's Name cannot be longer than 150 characters.");
+        }
+
+        return name;
+    }
+
+
+    //===========================================================
     // Create (code always generated here)
     //===========================================================
 
@@ -736,6 +770,10 @@ public class BrandManagementRepository : IBrandManagementRepository
             await CheckMotorBikesSupplierAsync(
                 dto.MotorBikesSupplierCode,
                 null);
+
+        string makerName =
+            CleanMakerName(
+                dto.MakerName);
 
         string brandCode =
             await GetNextCodeAsync();
@@ -764,6 +802,9 @@ public class BrandManagementRepository : IBrandManagementRepository
                     dto.Remarks?.Trim()
                     ??
                     string.Empty,
+
+                MakerName =
+                    makerName,
 
                 Status =
                     dto.Status,
@@ -849,6 +890,10 @@ public class BrandManagementRepository : IBrandManagementRepository
                 dto.MotorBikesSupplierCode,
                 entity.MotorBikesSupplierCode);
 
+        string makerName =
+            CleanMakerName(
+                dto.MakerName);
+
         await EnsureUniqueAsync(
             entity.BrandCode,
             brandName,
@@ -867,6 +912,9 @@ public class BrandManagementRepository : IBrandManagementRepository
             dto.Remarks?.Trim()
             ??
             string.Empty;
+
+        entity.MakerName =
+            makerName;
 
         entity.Status =
             dto.Status;

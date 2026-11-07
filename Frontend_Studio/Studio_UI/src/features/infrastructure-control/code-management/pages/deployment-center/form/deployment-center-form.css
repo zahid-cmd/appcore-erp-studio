@@ -1,1 +1,146 @@
 @import '../../../../../../shared/styles/app-form-page.css';
+
+
+/* Deployment detail : result, fields, log */
+
+.dc-page
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    min-height: 0;
+}
+
+.dc-empty
+{
+    padding: 30px;
+    color: #64748b;
+    text-align: center;
+}
+
+.dc-result
+{
+    padding: 12px 16px;
+    border: 1px solid #c7d7f5;
+    border-left: 5px solid #2563eb;
+    border-radius: 12px;
+    background: #f8fbff;
+}
+
+.dc-result.dc-ok   { border-left-color: #059669; background: #f3fcf8; }
+.dc-result.dc-warn { border-left-color: #d97706; background: #fffaf0; }
+.dc-result.dc-bad  { border-left-color: #e11d48; background: #fff6f8; }
+
+.dc-result-head
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #1e293b;
+    font-size: 14.5px;
+}
+
+.dc-result-step
+{
+    color: #334155;
+}
+
+.dc-result-percent
+{
+    margin-left: auto;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+}
+
+.dc-bar
+{
+    height: 10px;
+    margin-top: 8px;
+    border-radius: 5px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.dc-bar-fill
+{
+    height: 100%;
+    background: #2563eb;
+    transition: width 0.6s ease;
+}
+
+.dc-ok .dc-bar-fill   { background: #059669; }
+.dc-warn .dc-bar-fill { background: #d97706; }
+.dc-bad .dc-bar-fill  { background: #e11d48; }
+
+.dc-grid
+{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px 18px;
+}
+
+.dc-field
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.dc-field span
+{
+    color: #64748b;
+    font-size: 12px;
+}
+
+.dc-field b
+{
+    overflow: hidden;
+    color: #1e293b;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dc-wide { grid-column: span 2; }
+
+.dc-full { grid-column: 1 / -1; }
+
+.dc-log-head
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.dc-follow
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.dc-log
+{
+    flex: 1 1 auto;
+    min-height: 260px;
+    max-height: 52vh;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #cbd5e1;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-y: auto;
+}

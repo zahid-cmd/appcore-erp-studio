@@ -105,6 +105,15 @@ public class BrandManagementConfiguration
 
 
         //===========================================================
+        // Maker's Name (BRTA Form-17; '' = not given)
+        //===========================================================
+
+        builder.Property(x => x.MakerName)
+               .IsRequired()
+               .HasMaxLength(150);
+
+
+        //===========================================================
         // Motor Bikes Supplier (by supplier code; '' = none)
         //===========================================================
 

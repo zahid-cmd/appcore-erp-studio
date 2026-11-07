@@ -86,3 +86,51 @@
             1fr !important;
     }
 }
+
+/* =====================================================
+   FIT PAGES (data-canvas="fit", page canvas across
+   monitors) : as many columns as the grid's OWN width
+   holds, never more than [columns], each at least
+   --field-min (320px). The sidebar, Top layout and the
+   screen all change the grid width, so no screen media
+   query is needed (and the ones above do not apply).
+===================================================== */
+
+:host-context([data-canvas="fit"]) .form-grid
+{
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(
+                max(
+                    var(--field-min, 320px),
+                    (100% - (var(--cols, 4) - 1) * var(--grid-gap, 20px)) / var(--cols, 4)
+                ),
+                1fr
+            )
+        ) !important;
+}
+
+/* Ultra screens (2400px and wider) : a column stops at
+   480px, so inputs never stretch across the screen; the
+   spare room stays at the right */
+@media (min-width:2400px)
+{
+    :host-context([data-canvas="fit"]) .form-grid
+    {
+        grid-template-columns:
+            repeat(
+                auto-fit,
+                minmax(
+                    min(
+                        480px,
+                        max(
+                            var(--field-min, 320px),
+                            (100% - (var(--cols, 4) - 1) * var(--grid-gap, 20px)) / var(--cols, 4)
+                        )
+                    ),
+                    480px
+                )
+            ) !important;
+    }
+}

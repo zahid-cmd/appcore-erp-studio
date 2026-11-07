@@ -14,6 +14,8 @@
 
                     <th
                         *ngFor="let column of columns"
+                        [class.lt-p2]="column.priority===2"
+                        [class.lt-p3]="column.priority===3"
                         [style.width]="column.width"
                         [class.left]="column.align==='left'"
                         [class.center]="column.align==='center'"
@@ -121,6 +123,8 @@
 
                     <td
                         *ngFor="let column of columns"
+                        [class.lt-p2]="column.priority===2"
+                        [class.lt-p3]="column.priority===3"
                         [style.width]="column.width"
                         [class.status-cell]="column.type==='status'"
                         [attr.title]="getCellTitle(row, column)"
@@ -719,6 +723,8 @@
 
                     <td
                         *ngFor="let column of columns"
+                        [class.lt-p2]="column.priority===2"
+                        [class.lt-p3]="column.priority===3"
                         [style.width]="column.width"
                         [class.left]="column.align==='left'"
                         [class.center]="column.align==='center'"

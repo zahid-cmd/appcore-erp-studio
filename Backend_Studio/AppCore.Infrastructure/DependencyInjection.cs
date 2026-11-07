@@ -165,6 +165,13 @@ using AppCore.Infrastructure.Platform.Synchronization.DatabaseEngine.DatabaseEng
 
 // AUTO-BEGIN : AUTO REGISTER NAMESPACES
 
+// AUTO-BEGIN : BikeDeliveries
+
+using AppCore.Application.SalesOperations.MotorBikeSales;
+using AppCore.Infrastructure.Configurations.SalesOperations.MotorBikeSales;
+
+// AUTO-END : BikeDeliveries
+
 // AUTO-BEGIN : SalesInvoicesAc
 
 using AppCore.Application.SalesOperations.AccessoriesSales;
@@ -577,16 +584,46 @@ public static class DependencyInjection
         // Database Context
         //=======================================================
 
+        //-------------------------------------------------------
+        // Connection health (added on top of appsettings, values
+        // set there win):
+        //  - Keepalive 30 s : a dropped connection is noticed and
+        //    replaced, instead of a request hanging on it until
+        //    Windows gives up ("Exception while reading from
+        //    stream" / pages stuck on Loading).
+        //  - Idle connections closed after 60 s (default 300 s)
+        //    so stale ones are not reused.
+        //-------------------------------------------------------
+        var connectionBuilder =
+            new Npgsql.NpgsqlConnectionStringBuilder
+            (
+                configuration.GetConnectionString
+                (
+                    "DefaultConnection"
+                )
+            );
+
+        if (connectionBuilder.KeepAlive == 0)
+        {
+            connectionBuilder.KeepAlive = 30;
+        }
+
+        if (connectionBuilder.ConnectionIdleLifetime == 300)
+        {
+            connectionBuilder.ConnectionIdleLifetime = 60;
+        }
+
+        string connectionString =
+            connectionBuilder.ConnectionString;
+
+
         services.AddDbContext<AppDbContext>
         (
             (serviceProvider, options) =>
                 options
                     .UseNpgsql
                     (
-                        configuration.GetConnectionString
-                        (
-                            "DefaultConnection"
-                        )
+                        connectionString
                     )
                     .AddInterceptors
                     (
@@ -881,6 +918,56 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : MotorBikeSpecifications
+
+        services.AddScoped
+        <
+            IMotorBikeSpecificationsRepository,
+            MotorBikeSpecificationsRepository
+        >();
+
+        // AUTO-END : MotorBikeSpecifications
+
+        // AUTO-BEGIN : SalesReturnsMb
+
+        services.AddScoped
+        <
+            ISalesReturnsMbRepository,
+            SalesReturnsMbRepository
+        >();
+
+        // AUTO-END : SalesReturnsMb
+
+        // AUTO-BEGIN : SalesQuotationsMb
+
+        services.AddScoped
+        <
+            ISalesQuotationsMbRepository,
+            SalesQuotationsMbRepository
+        >();
+
+        // AUTO-END : SalesQuotationsMb
+
+        // AUTO-BEGIN : SalesInvoicesMb
+
+        services.AddScoped
+        <
+            ISalesInvoicesMbRepository,
+            SalesInvoicesMbRepository
+        >();
+
+        // AUTO-END : SalesInvoicesMb
+
+        // AUTO-BEGIN : BikeDeliveries
+
+        services.AddScoped
+        <
+            IBikeDeliveriesRepository,
+            BikeDeliveriesRepository
+        >();
+
+        // AUTO-END : BikeDeliveries
 
         // AUTO-BEGIN : BikeAccessorySchemes
 

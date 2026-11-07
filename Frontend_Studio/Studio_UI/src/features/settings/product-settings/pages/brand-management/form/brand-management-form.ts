@@ -440,6 +440,8 @@ implements OnInit, OnDestroy
 
         Remarks:'',
 
+        MakerName:'',
+
         Status:true,
 
         BrandImagePath:'',
@@ -752,6 +754,8 @@ implements OnInit, OnDestroy
 
             Remarks:'',
 
+            MakerName:'',
+
             Status:true,
 
             BrandImagePath:'',
@@ -890,6 +894,9 @@ implements OnInit, OnDestroy
 
                         Remarks:
                             response?.Remarks ?? response?.remarks ?? '',
+
+                        MakerName:
+                            response?.MakerName ?? response?.makerName ?? '',
 
                         Status:
                             Boolean(response?.Status ?? response?.status ?? true),
@@ -1540,6 +1547,21 @@ implements OnInit, OnDestroy
         }
 
 
+        if
+        (
+            !this.entity.MakerName?.trim()
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Maker\'s Name is required.'
+            );
+
+            return;
+        }
+
+
         // Remarks is optional (no check)
 
 
@@ -1587,6 +1609,9 @@ implements OnInit, OnDestroy
 
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
+
+            MakerName:
+                this.entity.MakerName?.trim() ?? '',
 
             Status:
                 this.entity.Status,
@@ -1708,6 +1733,9 @@ implements OnInit, OnDestroy
 
             Remarks:
                 this.entity.Remarks?.trim() ?? '',
+
+            MakerName:
+                this.entity.MakerName?.trim() ?? '',
 
             Status:
                 this.entity.Status,

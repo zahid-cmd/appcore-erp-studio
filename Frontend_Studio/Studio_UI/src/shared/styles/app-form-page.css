@@ -961,4 +961,29 @@ select:disabled
     {
         width:100%;
     }
-}
+}
+
+/* =====================================================
+   FIT PAGES (data-canvas="fit")
+   -----------------------------------------------------
+   Page canvas across monitors (2026-11-07). A form page
+   marked data-canvas="fit" has no 660px cap: the canvas
+   fills what the header and toolbar leave, never less
+   than --canvas-min (below that the page scrolls). The
+   form body scrolls inside the canvas; the canvas footer
+   (the action bar) stays in view.
+===================================================== */
+
+.app-form-page[data-canvas="fit"]
+{
+    gap:var(--page-gap, 12px);
+}
+
+.app-form-page[data-canvas="fit"] > app-page-canvas
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    min-height:var(--canvas-min, 360px);
+}

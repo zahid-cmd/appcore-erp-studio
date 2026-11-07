@@ -294,18 +294,19 @@ public class GeneralLedgersRepository : IGeneralLedgersRepository
         )
     {
         //-------------------------------------------------------
-        // Auto ledger codes (upper case)
+        // Auto ledger codes : SQL subqueries (the database checks
+        // them; thousands of product / customer codes are no
+        // longer read into memory and sent back on every query)
         //-------------------------------------------------------
 
-        AutoAccountCodesDto codes =
-            await new AutoAccountsRepository(_context)
-                .GetCodesAsync();
+        AutoAccountsRepository auto =
+            new AutoAccountsRepository(_context);
 
-        List<string> inventoryCodes =
-            codes.InventoryLedgerCodes;
+        IQueryable<string> inventoryCodes =
+            auto.InventoryLedgerCodesQuery();
 
-        List<string> financialCodes =
-            codes.FinancialLedgerCodes;
+        IQueryable<string> financialCodes =
+            auto.FinancialLedgerCodesQuery();
 
         //-------------------------------------------------------
         // Tab (origin)
@@ -332,8 +333,14 @@ public class GeneralLedgersRepository : IGeneralLedgersRepository
             origin == "financial"
         )
         {
+            // Financial = financial codes that are not inventory
             query =
-                query.Where(x => financialCodes.Contains(x.LedgerCode.ToUpper()));
+                query.Where
+                (
+                    x =>
+                        financialCodes.Contains(x.LedgerCode.ToUpper()) &&
+                        !inventoryCodes.Contains(x.LedgerCode.ToUpper())
+                );
         }
         else
         {
@@ -442,11 +449,18 @@ public class GeneralLedgersRepository : IGeneralLedgersRepository
         // Summary counts (status not applied)
         //-------------------------------------------------------
 
+        // One query for both numbers
+        var counts =
+            await query
+                .GroupBy(x => x.IsActive)
+                .Select(g => new { Active = g.Key, Count = g.Count() })
+                .ToListAsync();
+
         int countAll =
-            await query.CountAsync();
+            counts.Sum(x => x.Count);
 
         int countActive =
-            await query.CountAsync(x => x.IsActive);
+            counts.Where(x => x.Active).Sum(x => x.Count);
 
         //-------------------------------------------------------
         // Status
@@ -1931,4 +1945,4 @@ public class GeneralLedgersRepository : IGeneralLedgersRepository
                     !x.IsDeleted
             );
     }
-}
+}

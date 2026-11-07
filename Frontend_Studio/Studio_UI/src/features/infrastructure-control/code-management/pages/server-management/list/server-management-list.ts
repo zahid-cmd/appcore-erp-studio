@@ -1,5 +1,9 @@
 //===============================================================
-// Imports
+// Server Management List
+//
+// Live servers for the Deployment Center. Each row can be
+// checked at once with the plug button (Test Connection : asks
+// the server's Deploy Agent).
 //===============================================================
 
 import
@@ -24,21 +28,11 @@ import
 }
 from '@angular/router';
 
-
-//===============================================================
-// Models
-//===============================================================
-
 import
 {
     ServerManagement
 }
 from '../../../models/server-management.model';
-
-
-//===============================================================
-// Shared Components
-//===============================================================
 
 import
 {
@@ -87,7 +81,8 @@ from '../../../../../../shared/components/utilities/command-center/command-cente
 import
 {
     ListTableComponent,
-    ListTableColumn
+    ListTableColumn,
+    ListTableRowAction
 }
 from '../../../../../../shared/components/layout/list-table/list-table';
 
@@ -127,11 +122,6 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
-
-//===============================================================
-// Service
-//===============================================================
-
 import
 {
     ServerManagementService
@@ -139,90 +129,65 @@ import
 from '../../../services/server-management.service';
 
 
-//===============================================================
-// Component
-//===============================================================
+// A row with the display fields the table shows
+interface ServerRow
+    extends ServerManagement
+{
+    endpoint: string;
+
+    checkText: string;
+
+    lastCheckedText: string;
+}
+
 
 @Component(
 {
     selector:'serverManagement-list',
-
     standalone:true,
-
     imports:
     [
         CommonModule,
-
         PageHeaderComponent,
-
         PageToolbarComponent,
-
         ControlTabsComponent,
-
         SearchBoxComponent,
-
         DropdownComponent,
-
         CommandCenterComponent,
-
         PageCanvasComponent,
-
         ListTableComponent,
-
         PaginationComponent,
-
         HistoryDrawerComponent,
-
         ConfirmDialogComponent,
-
         ToastComponent
     ],
-
     templateUrl:'./server-management-list.html',
-
     styleUrl:'./server-management-list.css'
 })
-
-
-//===============================================================
-// Server Management List Component
-//===============================================================
-
 export class ServerManagementList
 implements OnInit
 {
-
-    //===========================================================
-    // Dependency Injection
-    //===========================================================
-
     private readonly servermanagementservice =
         inject(ServerManagementService);
-
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
 
-
     private readonly toast =
         inject(ToastService);
-
 
     private readonly router =
         inject(Router);
 
-
     private readonly route =
         inject(ActivatedRoute);
-
 
     private readonly cdr =
         inject(ChangeDetectorRef);
 
 
-
     //===========================================================
-    // Page Tabs
+    // Tabs / Filters
     //===========================================================
 
     tabs:
@@ -230,104 +195,67 @@ implements OnInit
     [
         {
             id:'all',
-
-            label:'All ServerManagements'
+            label:'All Servers'
         }
     ];
-
 
     selectedTab:
         string =
         'all';
 
-
-
-    //===========================================================
-    // Status Filter
-    //===========================================================
-
     statusItems:
         any[] =
     [
-        {
-            value:null,
-
-            text:'All Status'
-        },
-
-        {
-            value:'Active',
-
-            text:'Active'
-        },
-
-        {
-            value:'Inactive',
-
-            text:'Inactive'
-        }
+        { value:null,  text:'All Status' },
+        { value:true,  text:'Active' },
+        { value:false, text:'Inactive' }
     ];
 
-
     selectedStatus:
-        string | null =
+        boolean | null =
         null;
 
 
-
     //===========================================================
-    // Data Source
+    // Data
     //===========================================================
 
-    servermanagements:
-        ServerManagement[] =
+    servers:
+        ServerRow[] =
     [];
 
-
-    filteredServerManagements:
-        ServerManagement[] =
+    filteredServers:
+        ServerRow[] =
     [];
 
-
-    pagedServerManagements:
-        ServerManagement[] =
+    pagedServers:
+        ServerRow[] =
     [];
-
-
-
-    //===========================================================
-    // Search & Loading
-    //===========================================================
 
     searchText:
         string =
         '';
 
-
     loading:
         boolean =
         false;
-
 
     loadFailed:
         boolean =
         false;
 
-
-
-    //===========================================================
-    // Pagination
-    //===========================================================
-
     currentPage:
         number =
         1;
-
 
     pageSize:
         number =
         10;
 
+    // the server being tested (one at a time)
+    testingId:
+        number =
+        0;
 
 
     //===========================================================
@@ -338,114 +266,64 @@ implements OnInit
         boolean =
         false;
 
-
     historyTitle:
         string =
         'Server Management History';
-
 
     historyItems:
         any[] =
     [];
 
 
-
     //===========================================================
-    // Page Canvas Configuration
+    // Canvas / Columns
     //===========================================================
 
     readonly canvasConfig:
         PageCanvasConfig =
     {
         mode:'list',
-
         showHeader:false,
-
         showFooter:true,
-
         reserveFooterSpace:true,
-
         bodyScrollable:true,
-
         fixedHeight:true,
-
         visibleRows:10,
-
         rowHeight:32,
-
         headerHeight:36,
-
         footerHeight:56
     };
-
-
-
-    //===========================================================
-    // Table Columns
-    //===========================================================
 
     readonly columns:
         ListTableColumn[] =
     [
+        { header:'#',            field:'serial',          type:'serial', width:'50px',  align:'center' },
+        { header:'Code',         field:'code',            width:'100px', align:'center' },
+        { header:'Name',         field:'name',            align:'left' },
+        { header:'Agent',        field:'endpoint',        width:'190px', align:'left' },
+        { header:'App URL',      field:'appUrl',          width:'230px', align:'left' },
+        { header:'Environment',  field:'environment',     width:'110px', align:'center' },
+        { header:'Live Release', field:'currentRelease',  width:'110px', align:'center' },
+        { header:'Last Check',   field:'checkText',       type:'status', width:'130px', align:'center' },
+        { header:'Checked',      field:'lastCheckedText', width:'150px', align:'center' },
+        { header:'Status',       field:'status',          type:'status', width:'90px',  align:'center' },
+        { header:'Actions',      field:'actions',         type:'actions', width:'170px', align:'center' }
+    ];
+
+    readonly rowActions:
+        ListTableRowAction[] =
+    [
         {
-            header:'#',
-
-            field:'serial',
-
-            type:'serial',
-
-            width:'60px',
-
-            align:'center'
-        },
-
-        {
-            header:'Code',
-
-            field:'code',
-
-            width:'180px',
-
-            align:'center'
-        },
-
-        {
-            header:'Name',
-
-            field:'name',
-
-            align:'left'
-        },
-
-        {
-            header:'Status',
-
-            field:'status',
-
-            type:'status',
-
-            width:'120px',
-
-            align:'center'
-        },
-
-        {
-            header:'Actions',
-
-            field:'actions',
-
-            type:'actions',
-
-            width:'180px',
-
-            align:'center'
+            key:'test',
+            icon:'fas fa-plug',
+            title:'Test Connection',
+            tone:'primary'
         }
     ];
 
 
-
     //===========================================================
-    // Initialization
+    // Init / Load
     //===========================================================
 
     ngOnInit():
@@ -454,22 +332,14 @@ implements OnInit
         this.loadItems();
     }
 
-
-
-    //===========================================================
-    // Load ServerManagements
-    //===========================================================
-
     loadItems():
         void
     {
         this.loading =
             true;
 
-
         this.loadFailed =
             false;
-
 
         this.servermanagementservice
             .getAll()
@@ -481,99 +351,82 @@ implements OnInit
                         ServerManagement[]
                 ): void =>
                 {
-                    this.servermanagements =
-                    [
-                        ...response
-                    ];
-
+                    this.servers =
+                        (response ?? []).map(x => this.toRow(x));
 
                     this.applyFilters();
-
 
                     this.loading =
                         false;
 
-
-                    this.loadFailed =
-                        false;
-
-
                     this.cdr.detectChanges();
                 },
-
-
                 error:
                 (
                     error:
                         unknown
                 ): void =>
                 {
-                    console.error
-                    (
-                        'Load ServerManagements Error',
+                    console.error('Load Servers Error', error);
 
-                        error
-                    );
+                    this.servers = [];
+                    this.filteredServers = [];
+                    this.pagedServers = [];
 
+                    this.loading = false;
+                    this.loadFailed = true;
 
-                    this.servermanagements =
-                    [];
-
-
-                    this.filteredServerManagements =
-                    [];
-
-
-                    this.pagedServerManagements =
-                    [];
-
-
-                    this.loading =
-                        false;
-
-
-                    this.loadFailed =
-                        true;
-
-
-                    this.toast.error
-                    (
+                    this.toast.error(
                         'Load Failed',
-
-                        'Unable to load servermanagements.'
+                        'Unable to load servers.'
                     );
-
 
                     this.cdr.detectChanges();
                 }
             });
     }
 
+    private toRow
+    (
+        x:
+            ServerManagement
+    ):
+        ServerRow
+    {
+        return {
+            ...x,
+            endpoint:
+                x.hostAddress
+                    ? `${x.hostAddress}:${x.agentPort}`
+                    : '',
+            // Online (green) / Offline, Token rejected (red);
+            // blank = never checked
+            checkText:
+                x.lastCheckStatus ?? '',
+            lastCheckedText:
+                x.lastCheckedDate
+                    ? new Date(x.lastCheckedDate).toLocaleString()
+                    : 'Never'
+        };
+    }
 
 
     //===========================================================
-    // Status Filter Changed
+    // Filters / Search / Sort
     //===========================================================
 
     onStatusFilterChange
     (
         value:
-            string | null
+            boolean | null
     ):
         void
     {
         this.selectedStatus =
             value;
 
-
         this.applyFilters();
     }
-
-
-
-    //===========================================================
-    // Apply Filters
-    //===========================================================
 
     applyFilters():
         void
@@ -583,63 +436,38 @@ implements OnInit
                 .trim()
                 .toLowerCase();
 
-
-        this.filteredServerManagements =
-            this.servermanagements
-                .filter
-                (
+        this.filteredServers =
+            this.servers.filter
+            (
+                x =>
                     (
-                        x:
-                            ServerManagement
-                    ):
-                        boolean =>
-                    {
-                        const statusMatch =
-                            this.selectedStatus === null
-                            ||
-                            x.status ===
-                            this.selectedStatus;
-
-
-                        const searchMatch =
-                            !keyword
-                            ||
-                            x.code
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.name
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
-                            x.sampleField
-                                ?.toLowerCase()
-                                .includes(keyword)
-                            ||
+                        this.selectedStatus === null
+                        ||
+                        x.status === this.selectedStatus
+                    )
+                    &&
+                    (
+                        !keyword
+                        ||
+                        [
+                            x.code,
+                            x.name,
+                            x.hostAddress,
+                            x.appUrl,
+                            x.environment,
+                            x.currentRelease,
+                            x.lastCheckStatus,
                             x.remarks
-                                ?.toLowerCase()
-                                .includes(keyword);
-
-
-                        return statusMatch
-                            &&
-                            searchMatch;
-                    }
-                );
-
+                        ]
+                        .some(value => (value ?? '').toLowerCase().includes(keyword))
+                    )
+            );
 
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
-
-
-    //===========================================================
-    // Search
-    //===========================================================
 
     onSearch
     (
@@ -651,15 +479,8 @@ implements OnInit
         this.searchText =
             value;
 
-
         this.applyFilters();
     }
-
-
-
-    //===========================================================
-    // Sort
-    //===========================================================
 
     onSort
     (
@@ -674,124 +495,28 @@ implements OnInit
     ):
         void
     {
-        this.filteredServerManagements =
-        [
-            ...this.filteredServerManagements
-        ];
+        const sign =
+            event.direction === 'asc' ? 1 : -1;
 
-
-        this.filteredServerManagements.sort
-        (
+        this.filteredServers =
+            [...this.filteredServers].sort
             (
-                a:
-                    ServerManagement,
-
-                b:
-                    ServerManagement
-            ):
-                number =>
-            {
-                const valueA:
-                    any =
-                    a[
-                        event.field as keyof ServerManagement
-                    ];
-
-
-                const valueB:
-                    any =
-                    b[
-                        event.field as keyof ServerManagement
-                    ];
-
-
-                if
-                (
-                    valueA == null
-                    &&
-                    valueB == null
-                )
-                {
-                    return 0;
-                }
-
-
-                if
-                (
-                    valueA == null
-                )
-                {
-                    return -1;
-                }
-
-
-                if
-                (
-                    valueB == null
-                )
-                {
-                    return 1;
-                }
-
-
-                if
-                (
-                    typeof valueA === 'string'
-                    &&
-                    typeof valueB === 'string'
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        valueA.localeCompare(valueB)
-                        :
-                        valueB.localeCompare(valueA);
-                }
-
-
-                if
-                (
-                    valueA < valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        -1
-                        :
-                        1;
-                }
-
-
-                if
-                (
-                    valueA > valueB
-                )
-                {
-                    return event.direction === 'asc'
-                        ?
-                        1
-                        :
-                        -1;
-                }
-
-
-                return 0;
-            }
-        );
-
+                (a, b) =>
+                    sign
+                    *
+                    String((a as any)[event.field] ?? '')
+                        .localeCompare(
+                            String((b as any)[event.field] ?? ''),
+                            undefined,
+                            { numeric:true }
+                        )
+            );
 
         this.currentPage =
             1;
 
-
         this.updatePagination();
     }
-
-
-
-    //===========================================================
-    // Refresh
-    //===========================================================
 
     refresh():
         void
@@ -799,49 +524,29 @@ implements OnInit
         this.searchText =
             '';
 
-
         this.selectedStatus =
             null;
-
 
         this.loadItems();
     }
 
 
-
     //===========================================================
-    // Update Pagination
+    // Pagination
     //===========================================================
 
     updatePagination():
         void
     {
-        const start:
-            number =
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize;
+        const start =
+            (this.currentPage - 1) * this.pageSize;
 
-
-        this.pagedServerManagements =
-        [
-            ...this.filteredServerManagements
-                .slice
-                (
-                    start,
-
-                    start + this.pageSize
-                )
-        ];
+        this.pagedServers =
+            this.filteredServers.slice(
+                start,
+                start + this.pageSize
+            );
     }
-
-
-
-    //===========================================================
-    // Page Change
-    //===========================================================
 
     onPageChange
     (
@@ -853,15 +558,8 @@ implements OnInit
         this.currentPage =
             page;
 
-
         this.updatePagination();
     }
-
-
-
-    //===========================================================
-    // Page Size Change
-    //===========================================================
 
     onPageSizeChange
     (
@@ -873,41 +571,123 @@ implements OnInit
         this.pageSize =
             size;
 
-
         this.currentPage =
             1;
-
 
         this.updatePagination();
     }
 
 
+    //===========================================================
+    // Row actions
+    //===========================================================
+
+    onRowAction
+    (
+        event:
+        {
+            key:
+                string;
+
+            row:
+                any;
+        }
+    ):
+        void
+    {
+        if (event.key === 'test')
+        {
+            this.testConnection(
+                event.row as ServerRow
+            );
+        }
+    }
+
+    private testConnection
+    (
+        row:
+            ServerRow
+    ):
+        void
+    {
+        if
+        (
+            this.testingId
+            ||
+            !row.publicId
+        )
+        {
+            return;
+        }
+
+        this.testingId =
+            row.id;
+
+        this.toast.info(
+            'Test Connection',
+            `Asking ${row.hostAddress}:${row.agentPort} ...`
+        );
+
+        this.servermanagementservice
+            .testConnection(
+                row.publicId
+            )
+            .subscribe
+            ({
+                next:
+                    result =>
+                    {
+                        this.testingId =
+                            0;
+
+                        if (result.success)
+                        {
+                            this.toast.success(
+                                `${row.name} is online`,
+                                result.message
+                            );
+                        }
+                        else
+                        {
+                            this.toast.error(
+                                `${row.name} : ${result.status}`,
+                                result.message
+                            );
+                        }
+
+                        this.loadItems();
+                    },
+                error:
+                    error =>
+                    {
+                        this.testingId =
+                            0;
+
+                        console.error('Test Connection Error', error);
+
+                        this.toast.error(
+                            'Test Connection',
+                            error?.error?.message
+                            ??
+                            'The test could not be run.'
+                        );
+                    }
+            });
+    }
+
 
     //===========================================================
-    // Add
+    // Navigation
     //===========================================================
 
     add():
         void
     {
-        void this.router.navigate
-        (
-            [
-                'add'
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        void this.router.navigate(
+            [ 'add' ],
+            { relativeTo:this.route.parent }
         );
     }
-
-
-
-    //===========================================================
-    // View
-    //===========================================================
 
     view
     (
@@ -916,26 +696,11 @@ implements OnInit
     ):
         void
     {
-        void this.router.navigate
-        (
-            [
-                'view',
-
-                item.publicId
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        void this.router.navigate(
+            [ 'view', item.publicId ],
+            { relativeTo:this.route.parent }
         );
     }
-
-
-
-    //===========================================================
-    // Edit
-    //===========================================================
 
     edit
     (
@@ -944,25 +709,15 @@ implements OnInit
     ):
         void
     {
-        void this.router.navigate
-        (
-            [
-                'edit',
-
-                item.publicId
-            ],
-
-            {
-                relativeTo:
-                    this.route.parent
-            }
+        void this.router.navigate(
+            [ 'edit', item.publicId ],
+            { relativeTo:this.route.parent }
         );
     }
 
 
-
     //===========================================================
-    // Delete
+    // Delete / Restore
     //===========================================================
 
     delete
@@ -974,144 +729,85 @@ implements OnInit
     {
         this.confirmDialog.open
         (
-            'Delete Server Management',
-
-            `Are you sure you want to delete "${item.name}" ?`,
-
+            'Delete Server',
+            `Are you sure you want to delete "${item.code} - ${item.name}" ? Deployments to it will no longer be possible.`,
             (): void =>
             {
                 this.servermanagementservice
-                    .delete
-                    (
+                    .delete(
                         item.publicId ?? ''
                     )
                     .subscribe
                     ({
                         next:
-                        (): void =>
-                        {
-                            this.toast.success
-                            (
-                                'Delete Successful',
+                            () =>
+                            {
+                                this.toast.success(
+                                    'Delete Successful',
+                                    `${item.name} deleted.`
+                                );
 
-                                `${item.name} deleted successfully.`
-                            );
-
-
-                            this.loadItems();
-                        },
-
-
+                                this.loadItems();
+                            },
                         error:
-                        (
-                            error:
-                                unknown
-                        ): void =>
-                        {
-                            console.error
-                            (
-                                'Delete Server Management Error',
+                            error =>
+                            {
+                                console.error('Delete Server Error', error);
 
-                                error
-                            );
-
-
-                            this.toast.error
-                            (
-                                'Delete Failed',
-
-                                'Failed to delete serverManagement.'
-                            );
-                        }
+                                this.toast.error(
+                                    'Delete Failed',
+                                    'Failed to delete the server.'
+                                );
+                            }
                     });
             }
         );
     }
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
 
     restore():
         void
     {
         this.confirmDialog.open
         (
-            'Restore Server Management',
-
-            'Are you sure you want to restore the most recently deleted serverManagement?',
-
+            'Restore Server',
+            'Are you sure you want to restore the most recently deleted server?',
             (): void =>
             {
-                this.restoreItem();
+                this.servermanagementservice
+                    .restore()
+                    .subscribe
+                    ({
+                        next:
+                            () =>
+                            {
+                                this.toast.success(
+                                    'Restore Successful',
+                                    'The most recently deleted server has been restored.'
+                                );
+
+                                this.loadItems();
+                            },
+                        error:
+                            error =>
+                            {
+                                this.toast.error(
+                                    'Restore',
+                                    error?.error?.message
+                                    ??
+                                    'Failed to restore the server.'
+                                );
+                            }
+                    });
             },
-
             'Restore',
-
             'Cancel',
-
             'primary'
         );
     }
 
 
-
     //===========================================================
-    // Restore Item
-    //===========================================================
-
-    private restoreItem():
-        void
-    {
-        this.servermanagementservice
-            .restore()
-            .subscribe
-            ({
-                next:
-                (): void =>
-                {
-                    this.toast.success
-                    (
-                        'Restore Successful',
-
-                        'The most recently deleted serverManagement has been restored.'
-                    );
-
-
-                    this.loadItems();
-                },
-
-
-                error:
-                (
-                    error:
-                        unknown
-                ): void =>
-                {
-                    console.error
-                    (
-                        'Restore Server Management Error',
-
-                        error
-                    );
-
-
-                    this.toast.error
-                    (
-                        'Restore Failed',
-
-                        'Failed to restore serverManagement.'
-                    );
-                }
-            });
-    }
-
-
-
-    //===========================================================
-    // Open History
+    // History
     //===========================================================
 
     openHistory():
@@ -1122,85 +818,46 @@ implements OnInit
             .subscribe
             ({
                 next:
-                (
-                    response:
-                        any[]
-                ): void =>
-                {
-                    this.historyItems =
-                        response.map
-                        (
-                            history =>
-                            ({
-                                title:
-                                    history.activityTitle,
+                    response =>
+                    {
+                        this.historyItems =
+                            response.map
+                            (
+                                history =>
+                                ({
+                                    title:
+                                        history.activityTitle,
+                                    description:
+                                        history.activityDescription,
+                                    user:
+                                        history.performedByName ?? 'System',
+                                    dateTime:
+                                        new Date(history.performedDate).toLocaleString(),
+                                    badge:
+                                        history.activityType
+                                })
+                            );
 
+                        this.historyTitle =
+                            'Server Management History';
 
-                                description:
-                                    history.activityDescription,
+                        this.historyOpened =
+                            true;
 
-
-                                user:
-                                    history.performedByName
-                                    ??
-                                    'System',
-
-
-                                dateTime:
-                                    new Date
-                                    (
-                                        history.performedDate
-                                    )
-                                    .toLocaleString(),
-
-
-                                badge:
-                                    history.activityType
-                            })
-                        );
-
-
-                    this.historyTitle =
-                        'Server Management Management History';
-
-
-                    this.historyOpened =
-                        true;
-
-
-                    this.cdr.detectChanges();
-                },
-
-
+                        this.cdr.detectChanges();
+                    },
                 error:
-                (
-                    error:
-                        unknown
-                ): void =>
-                {
-                    console.error
-                    (
-                        'History Load Failed',
+                    error =>
+                    {
+                        console.error('History Load Failed', error);
 
-                        error
-                    );
-
-
-                    this.toast.error
-                    (
-                        'History',
-
-                        'Failed to load serverManagement history.'
-                    );
-                }
+                        this.toast.error(
+                            'History',
+                            'Failed to load the server history.'
+                        );
+                    }
             });
     }
-
-
-
-    //===========================================================
-    // Close History
-    //===========================================================
 
     closeHistory():
         void
@@ -1211,39 +868,35 @@ implements OnInit
 
 
     //===========================================================
-    // Summary Line (below the canvas) : Total / Active / Inactive
-    // of all records
+    // Summary
     //===========================================================
 
     get summaryTotal():
         number
     {
-        return (this.servermanagements ?? []).length;
+        return this.servers.length;
     }
 
     get summaryActive():
         number
     {
-        return (this.servermanagements ?? [])
-            .filter(x => this.isSummaryActive(x))
+        return this.servers
+            .filter(x => x.status)
             .length;
     }
 
-    private isSummaryActive(
-        item: any
-    ):
-        boolean
+    get summaryOnline():
+        number
     {
-        return !!(
-            item?.isActive
-            ?? item?.IsActive
-            ?? item?.status
-            ?? item?.Status
-        );
+        return this.servers
+            .filter(x => x.lastCheckStatus === 'Online')
+            .length;
     }
 
-    summaryText(
-        value: number
+    summaryText
+    (
+        value:
+            number
     ):
         string
     {

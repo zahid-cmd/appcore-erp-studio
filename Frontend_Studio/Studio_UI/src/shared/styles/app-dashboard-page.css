@@ -1,0 +1,100 @@
+/* =====================================================
+   APP DASHBOARD PAGE (page canvas across monitors,
+   2026-11-07)
+   -----------------------------------------------------
+   The one page type that scrolls by design. KPI tiles and
+   chart panels reflow by the page's own width (sidebar,
+   Top layout and screen all count), with no screen media
+   query of their own:
+
+     <div class="app-dashboard-page" data-canvas="fit">
+       <app-page-header …>
+       <app-page-toolbar …>            (filters, optional)
+       <div class="dash-kpis">  tiles  </div>
+       <div class="dash-panels"> panels </div>
+       <div class="dash-panels dash-panels--wide"> … </div>
+     </div>
+
+   Tiles : at least 240px each, as many per row as fit.
+   Panels : at least 520px each (one per row on a
+   laptop, two on 1080p, three or four on 1440p / 4K).
+   --wide : at least 760px (trend charts, long tables).
+===================================================== */
+
+:host
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+}
+
+.app-dashboard-page
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    gap:var(--page-gap, 12px);
+
+    overflow-x:hidden;
+
+    overflow-y:auto;
+}
+
+.app-dashboard-page > *
+{
+    flex:0 0 auto;
+
+    min-width:0;
+}
+
+/* Dialogs, toasts and drawers take no room */
+.app-dashboard-page > app-toast,
+.app-dashboard-page > app-confirm-dialog,
+.app-dashboard-page > app-progress-dialog,
+.app-dashboard-page > app-history-drawer,
+.app-dashboard-page > app-form-modal
+{
+    display:contents;
+}
+
+.dash-kpis
+{
+    display:grid;
+
+    grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+
+    gap:var(--page-gap, 12px);
+}
+
+.dash-panels
+{
+    display:grid;
+
+    grid-template-columns:repeat(auto-fill, minmax(min(100%, 520px), 1fr));
+
+    gap:var(--page-gap, 12px);
+}
+
+.dash-panels--wide
+{
+    grid-template-columns:repeat(auto-fill, minmax(min(100%, 760px), 1fr));
+}

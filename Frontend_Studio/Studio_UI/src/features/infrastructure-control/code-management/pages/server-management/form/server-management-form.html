@@ -5,43 +5,30 @@
     ====================================================== -->
 
     <app-page-header
-
-        icon="fas fa-list"
-
+        icon="fas fa-server"
         [title]="pageTitle"
-
-        subtitle="Manage servermanagements">
+        subtitle="A live server with the AppCore Deploy Agent">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
-            [command3Visible]="false"
-
+            [command3Text]="testing ? 'Testing...' : 'Test Connection'"
+            [command3Icon]="testing ? 'fas fa-spinner fa-spin' : 'fas fa-plug'"
+            command3Title="Ask the server's Deploy Agent (saved values)"
+            (command3Click)="onTestConnection()"
+            [command3Visible]="!isAddMode"
             rightCommandIcon="fas fa-arrow-left"
-
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
-
 
 
     <!-- =====================================================
@@ -51,17 +38,12 @@
     <app-page-toolbar>
 
         <app-control-tabs
-
             pageToolbarLeft
-
             [tabs]="tabs"
-
             [(selectedTab)]="selectedTab">
-
         </app-control-tabs>
 
     </app-page-toolbar>
-
 
 
     <!-- =====================================================
@@ -71,197 +53,232 @@
     <app-page-canvas>
 
         <app-form-grid
-
             canvasBody
-
             [columns]="4">
 
 
             <!-- =============================================
-                 SECTION 1
-                 GENERAL INFORMATION
+                 GENERAL
             ============================================== -->
 
             <app-form-section
-
                 title="General Information"
-
                 icon="fas fa-circle-info">
 
-
-                <!-- Code -->
-
                 <app-textbox
-
                     label="Code"
-
                     placeholder="Auto generated"
-
                     [(value)]="entity.code"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
+                    [readonly]="true">
                 </app-textbox>
 
-
-
-                <!-- Name -->
-
                 <app-textbox
-
                     label="Name"
-
-                    placeholder="Enter name"
-
+                    placeholder="e.g. skyhost (Live)"
                     [(value)]="entity.name"
-
                     (valueChange)="onValueChange()"
-
                     [disabled]="isViewMode"
-
                     [required]="true">
-
                 </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 2
-                 SAMPLE INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Sample Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- Sample Search Dropdown -->
-
-                <app-search-dropdown
-
-                    label="Sample Search Dropdown"
-
-                    [items]="items"
-
-                    labelField="text"
-
-                    valueField="value"
-
-                    [(value)]="entity.sampleSearchDropdownId"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-search-dropdown>
-
-
-
-                <!-- Sample Field -->
-
-                <app-textbox
-
-                    label="Sample Field"
-
-                    placeholder="Enter sample value"
-
-                    [(value)]="entity.sampleField"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 3
-                 STATUS INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status Information"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Status -->
 
                 <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
+                    label="Environment"
+                    [items]="environmentItems"
                     labelField="text"
-
                     valueField="value"
-
-                    [(value)]="entity.status"
-
+                    [(value)]="entity.environment"
                     (valueChange)="onValueChange()"
-
                     [disabled]="isViewMode"
-
                     [required]="true">
-
                 </app-dropdown>
 
+                <app-dropdown
+                    label="Status"
+                    [items]="statusItems"
+                    labelField="text"
+                    valueField="value"
+                    [(value)]="entity.status"
+                    (valueChange)="onValueChange()"
+                    [disabled]="isViewMode"
+                    [required]="true">
+                </app-dropdown>
 
             </app-form-section>
-
 
 
             <!-- =============================================
-                 SECTION 4
-                 ADDITIONAL INFORMATION
+                 AGENT CONNECTION
             ============================================== -->
 
             <app-form-section
+                title="Agent Connection"
+                icon="fas fa-network-wired">
 
-                title="Additional Information"
-
-                icon="fas fa-clipboard">
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [(value)]="entity.remarks"
-
+                <app-textbox
+                    label="Host Address"
+                    placeholder="Tailscale address, e.g. 100.117.11.97"
+                    [(value)]="entity.hostAddress"
+                    textCase="lower"
                     (valueChange)="onValueChange()"
+                    [disabled]="isViewMode"
+                    [required]="true">
+                </app-textbox>
 
+                <app-textbox
+                    label="Agent Port"
+                    placeholder="5099"
+                    type="number"
+                    inputMode="numeric"
+                    [(value)]="agentPortText"
+                    (valueChange)="onValueChange()"
+                    [disabled]="isViewMode"
+                    [required]="true">
+                </app-textbox>
+
+                @if (!isViewMode)
+                {
+                    <app-textbox
+                        label="Agent Token"
+                        type="password"
+                        autocomplete="new-password"
+                        [placeholder]="tokenPlaceholder"
+                        [(value)]="agentToken"
+                        (valueChange)="onValueChange()"
+                        [required]="isAddMode">
+                    </app-textbox>
+                }
+                @else
+                {
+                    <app-textbox
+                        label="Agent Token"
+                        [value]="entity.hasAgentToken ? 'Saved (hidden)' : 'Not set'"
+                        [readonly]="true">
+                    </app-textbox>
+                }
+
+                <app-textbox
+                    label="App URL (users open)"
+                    placeholder="http://100.117.11.97:8080"
+                    [(value)]="entity.appUrl"
+                    textCase="lower"
+                    (valueChange)="onValueChange()"
                     [disabled]="isViewMode">
-
-                </app-textarea>
-
+                </app-textbox>
 
             </app-form-section>
 
+
+            <!-- =============================================
+                 LAST CHECK
+            ============================================== -->
+
+            <app-form-section
+                title="Last Check"
+                icon="fas fa-heart-pulse">
+
+                <app-textbox
+                    label="Result"
+                    [value]="entity.lastCheckStatus || 'Not checked yet'"
+                    [readonly]="true">
+                </app-textbox>
+
+                <app-textbox
+                    label="Checked At"
+                    [value]="lastCheckedText"
+                    [readonly]="true">
+                </app-textbox>
+
+                <app-textbox
+                    label="Agent Version"
+                    [value]="entity.agentVersion || '-'"
+                    [readonly]="true">
+                </app-textbox>
+
+                <app-textbox
+                    label="Live Release"
+                    [value]="entity.currentRelease || '-'"
+                    [readonly]="true">
+                </app-textbox>
+
+                <app-textarea
+                    label="Message"
+                    [value]="entity.lastCheckMessage || (isAddMode ? 'Save the server, then open it and use Test Connection.' : 'Use Test Connection (top right).')"
+                    [readonly]="true">
+                </app-textarea>
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 SERVER DETAILS (from the last test)
+            ============================================== -->
+
+            <app-form-section
+                title="Server Details"
+                icon="fas fa-hard-drive">
+
+                @if (lastTest?.success)
+                {
+                    <app-textbox
+                        label="Machine"
+                        [value]="lastTest!.machine"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Live Site Service"
+                        [value]="lastTest!.serviceName + ' : ' + (lastTest!.serviceStatus || '-')"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Site Listens On"
+                        [value]="lastTest!.appUrls"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Releases Folder / Disk"
+                        [value]="lastTest!.baseFolder + ' - ' + diskText"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Backup Before Deploy"
+                        [value]="lastTest!.backupBeforeDeploy ? (lastTest!.pgDumpFound ? 'Yes (pg_dump found)' : 'Yes - pg_dump NOT found') : 'Off'"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Releases Kept"
+                        [value]="lastTest!.keepReleases + (lastTest!.busy ? ' - a deployment is running now' : '')"
+                        [readonly]="true">
+                    </app-textbox>
+                }
+                @else
+                {
+                    <app-textarea
+                        label="Details"
+                        value="Shown after a successful Test Connection : machine, live site service, disk space, backup readiness."
+                        [readonly]="true">
+                    </app-textarea>
+                }
+
+                <app-textarea
+                    label="Remarks"
+                    placeholder="Enter remarks"
+                    [(value)]="entity.remarks"
+                    (valueChange)="onValueChange()"
+                    [disabled]="isViewMode">
+                </app-textarea>
+
+            </app-form-section>
 
         </app-form-grid>
 
     </app-page-canvas>
 
 </div>
-
 
 
 <!-- =====================================================

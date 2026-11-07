@@ -270,3 +270,42 @@
         max-width: 100%;
     }
 }
+
+/* =====================================================
+   SHORT SCREENS (page canvas across monitors)
+   -----------------------------------------------------
+   On a page marked data-canvas="fit", a screen under
+   720px high gets a compact header : title only, smaller
+   icon, less padding, so the canvas keeps the room.
+===================================================== */
+
+@media (max-height: 719.98px)
+{
+    :host-context([data-canvas="fit"]) .page-header
+    {
+        min-height: 56px;
+
+        padding: 8px 16px;
+    }
+
+    :host-context([data-canvas="fit"]) .page-header-icon
+    {
+        width: 40px;
+
+        height: 40px;
+
+        border-radius: 12px;
+
+        font-size: 18px;
+    }
+
+    :host-context([data-canvas="fit"]) .page-header-title
+    {
+        font-size: 20px;
+    }
+
+    :host-context([data-canvas="fit"]) .page-header-subtitle
+    {
+        display: none;
+    }
+}

@@ -320,4 +320,33 @@ app-orbit-loader
 
         flex:1 1 100%;
     }
-}
+}
+
+/* =====================================================
+   FIT PAGES (data-canvas="fit")
+   -----------------------------------------------------
+   Page canvas across monitors (2026-11-07). A list page
+   marked data-canvas="fit" has no 660px cap: the canvas
+   takes everything between the toolbar and the summary
+   line, never less than --canvas-min (below that the page
+   scrolls). Gaps and the row height follow the screen
+   tier (layout.css).
+===================================================== */
+
+.app-list-page[data-canvas="fit"]
+{
+    gap:var(--page-gap, 12px);
+
+    overflow-x:hidden;
+
+    overflow-y:auto;
+
+    --list-row-height:var(--row-height, 40px);
+}
+
+.app-list-page[data-canvas="fit"] > app-page-canvas
+{
+    flex:1 1 auto;
+
+    min-height:var(--canvas-min, 360px);
+}

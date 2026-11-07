@@ -1,166 +1,92 @@
 //===============================================================
-// Namespace
+// Deployment Center
+//
+// One deployment (or rollback) to a server of Server Management.
+// Code = the release number (R-0001), the same folder name the
+// Deploy Agent uses on the server.
 //===============================================================
 
 namespace AppCore.Domain.Entities.InfrastructureControl.CodeManagement;
 
-
-//===============================================================
-// DeploymentCenter
-//===============================================================
-
 public class DeploymentCenter
 {
-    //===========================================================
-    // Primary Key
-    //===========================================================
+    public long Id { get; set; }
 
-    public long Id
-    {
-        get;
-        set;
-    }
-
-    // The id used in links and API calls (uuid v7)
     public Guid PublicId { get; set; } = Guid.CreateVersion7();
 
+    // R-0001
+    public string Code { get; set; } = string.Empty;
+
+    // short title : commit message / "Rollback to R-0003"
+    public string Name { get; set; } = string.Empty;
 
     //===========================================================
-    // Code
+    // Target
     //===========================================================
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public long ServerManagementId { get; set; }
 
+    public string ServerName { get; set; } = string.Empty;
+
+    // Deploy / Rollback
+    public string Kind { get; set; } = "Deploy";
 
     //===========================================================
-    // Name
+    // Progress / Result
     //===========================================================
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    // Running / Succeeded / Failed / Rolled back
+    public string DeployStatus { get; set; } = "Running";
 
+    public string Step { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    public int Percent { get; set; }
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public string AgentJobId { get; set; } = string.Empty;
 
+    public string BackupFile { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
+    public string PreviousRelease { get; set; } = string.Empty;
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public decimal PackageMb { get; set; }
 
+    public DateTime? StartedDate { get; set; }
+
+    public DateTime? FinishedDate { get; set; }
+
+    public int DurationSeconds { get; set; }
+
+    public string Log { get; set; } = string.Empty;
 
     //===========================================================
-    // Status
+    // Source (git)
     //===========================================================
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public string Branch { get; set; } = string.Empty;
 
+    public string CommitHash { get; set; } = string.Empty;
 
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
+    public string CommitMessage { get; set; } = string.Empty;
 
     //===========================================================
-    // Active
+    // Audit
     //===========================================================
 
-    public bool IsActive
-    {
-        get;
-        set;
-    }
+    public string PerformedByName { get; set; } = string.Empty;
 
+    public bool Status { get; set; } = true;
 
-    //===========================================================
-    // Deleted
-    //===========================================================
+    public string Remarks { get; set; } = string.Empty;
 
-    public bool IsDeleted
-    {
-        get;
-        set;
-    }
+    public bool IsActive { get; set; } = true;
 
+    public bool IsDeleted { get; set; }
 
-    //===========================================================
-    // Created By
-    //===========================================================
+    public long CreatedBy { get; set; }
 
-    public long CreatedBy
-    {
-        get;
-        set;
-    }
+    public DateTime CreatedDate { get; set; }
 
+    public long? ModifiedBy { get; set; }
 
-    //===========================================================
-    // Created Date
-    //===========================================================
-
-    public DateTime CreatedDate
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified By
-    //===========================================================
-
-    public long? ModifiedBy
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
-
-    public DateTime? ModifiedDate
-    {
-        get;
-        set;
-    }
+    public DateTime? ModifiedDate { get; set; }
 }

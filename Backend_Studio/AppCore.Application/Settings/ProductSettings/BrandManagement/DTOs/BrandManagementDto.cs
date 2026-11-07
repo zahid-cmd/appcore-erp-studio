@@ -25,6 +25,9 @@ public class BrandManagementDto
 
     public string Remarks { get; set; } = string.Empty;
 
+    // Manufacturer (BRTA Form-17 "Maker's name")
+    public string MakerName { get; set; } = string.Empty;
+
     public bool Status { get; set; }
 
 

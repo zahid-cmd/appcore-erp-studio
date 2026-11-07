@@ -4,13 +4,13 @@
 
 using Microsoft.EntityFrameworkCore;
 
-using AppCore.Application.Common.ActivityHistory.DTOs;
-
 using AppCore.Domain.Common;
 
 using AppCore.Infrastructure.Persistence;
 
 using global::AppCore.Application.InfrastructureControl.CodeManagement;
+
+using DeploymentEntity = global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter;
 
 
 //===============================================================
@@ -22,619 +22,262 @@ namespace AppCore.Infrastructure.Configurations.InfrastructureControl.CodeManage
 
 //===============================================================
 // DeploymentCenterRepository
+//
+// Deployment / rollback records. A history row is written when a
+// job starts and when it ends; progress in between only updates
+// the record.
 //===============================================================
 
 public class DeploymentCenterRepository
     : IDeploymentCenterRepository
 {
+    private const string ModuleName = "InfrastructureControl";
 
-    //===========================================================
-    // DbContext
-    //===========================================================
+    private const string EntityName = "DeploymentCenter";
 
-    private readonly AppDbContext
-        _context;
+    private readonly AppDbContext _context;
 
-
-
-    //===========================================================
-    // Constructor
-    //===========================================================
-
-    public DeploymentCenterRepository
-    (
-        AppDbContext context
-    )
+    public DeploymentCenterRepository(AppDbContext context)
     {
-        _context =
-            context;
+        _context = context;
     }
 
 
-
     //===========================================================
-    // Get All
+    // Get All (newest first; Log not loaded)
     //===========================================================
 
-    public async Task<IReadOnlyList<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>>
-        GetAllAsync()
+    public async Task<IReadOnlyList<DeploymentEntity>>
+        GetAllAsync(long? serverManagementId)
     {
         return await _context
-            .Set<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>()
+            .Set<DeploymentEntity>()
             .AsNoTracking()
-            .Where(
-                x =>
-                    !x.IsDeleted
-            )
-            .OrderBy(
-                x =>
-                    x.Name
-            )
+            .Where(x => !x.IsDeleted
+                     && (serverManagementId == null || x.ServerManagementId == serverManagementId))
+            .OrderByDescending(x => x.StartedDate ?? x.CreatedDate)
+            .Select(x => new DeploymentEntity
+            {
+                Id = x.Id,
+                PublicId = x.PublicId,
+                Code = x.Code,
+                Name = x.Name,
+                ServerManagementId = x.ServerManagementId,
+                ServerName = x.ServerName,
+                Kind = x.Kind,
+                DeployStatus = x.DeployStatus,
+                Step = x.Step,
+                Percent = x.Percent,
+                AgentJobId = x.AgentJobId,
+                BackupFile = x.BackupFile,
+                PreviousRelease = x.PreviousRelease,
+                PackageMb = x.PackageMb,
+                StartedDate = x.StartedDate,
+                FinishedDate = x.FinishedDate,
+                DurationSeconds = x.DurationSeconds,
+                Branch = x.Branch,
+                CommitHash = x.CommitHash,
+                CommitMessage = x.CommitMessage,
+                PerformedByName = x.PerformedByName,
+                Remarks = x.Remarks,
+                CreatedDate = x.CreatedDate
+            })
             .ToListAsync();
     }
 
 
-
     //===========================================================
-    // Get By Id
+    // Get By Id (with Log)
     //===========================================================
 
-    public async Task<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter?>
-        GetByIdAsync
-    (
-        long id
-    )
+    public async Task<DeploymentEntity?>
+        GetByIdAsync(long id)
     {
         return await _context
-            .Set<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>()
+            .Set<DeploymentEntity>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(
-                x =>
-                    x.Id == id
-                    &&
-                    !x.IsDeleted
-            );
+            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
     }
-
-
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    public async Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity
-    )
-    {
-        const long userId =
-            1;
-
-
-        entity.IsActive =
-            true;
-
-
-        entity.IsDeleted =
-            false;
-
-
-        entity.CreatedBy =
-            userId;
-
-
-        entity.CreatedDate =
-            DateTime.UtcNow;
-
-
-        entity.ModifiedBy =
-            null;
-
-
-        entity.ModifiedDate =
-            null;
-
-
-        await _context
-            .Set<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>()
-            .AddAsync(
-                entity
-            );
-
-
-        await _context.SaveChangesAsync();
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "InfrastructureControl",
-
-                EntityName =
-                    "DeploymentCenter",
-
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Create",
-
-                ActivityTitle =
-                    "DeploymentCenter Created",
-
-                ActivityDescription =
-                    $"DeploymentCenter '{entity.Name}' was created.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
-
-
-        return entity.Id;
-    }
-
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    public async Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity
-    )
-    {
-        const long userId =
-            1;
-
-
-        var existing =
-            await _context
-                .Set<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>()
-                .FirstOrDefaultAsync(
-                    x =>
-                        x.Id == entity.Id
-                        &&
-                        !x.IsDeleted
-                );
-
-
-        if
-        (
-            existing is null
-        )
-        {
-            throw new InvalidOperationException(
-                "DeploymentCenter record was not found."
-            );
-        }
-
-
-        existing.Code =
-            entity.Code;
-
-
-        existing.Name =
-            entity.Name;
-
-
-        existing.SampleSearchDropdownId =
-            entity.SampleSearchDropdownId;
-
-
-        existing.SampleField =
-            entity.SampleField;
-
-
-        existing.Status =
-            entity.Status;
-
-
-        existing.Remarks =
-            entity.Remarks;
-
-
-        existing.ModifiedBy =
-            userId;
-
-
-        existing.ModifiedDate =
-            DateTime.UtcNow;
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "InfrastructureControl",
-
-                EntityName =
-                    "DeploymentCenter",
-
-                EntityId =
-                    existing.Id,
-
-                ActivityType =
-                    "Update",
-
-                ActivityTitle =
-                    "DeploymentCenter Updated",
-
-                ActivityDescription =
-                    $"DeploymentCenter '{existing.Name}' was updated.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
-    }
-
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    public async Task
-        DeleteAsync
-    (
-        long id
-    )
-    {
-        const long userId =
-            1;
-
-
-        var entity =
-            await _context
-                .Set<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>()
-                .FirstOrDefaultAsync(
-                    x =>
-                        x.Id == id
-                        &&
-                        !x.IsDeleted
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return;
-        }
-
-
-        entity.IsDeleted =
-            true;
-
-
-        entity.IsActive =
-            false;
-
-
-        entity.ModifiedBy =
-            userId;
-
-
-        entity.ModifiedDate =
-            DateTime.UtcNow;
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "InfrastructureControl",
-
-                EntityName =
-                    "DeploymentCenter",
-
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Delete",
-
-                ActivityTitle =
-                    "DeploymentCenter Deleted",
-
-                ActivityDescription =
-                    $"DeploymentCenter '{entity.Name}' was deleted.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
-    }
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    public async Task
-        RestoreAsync
-    (
-        long id
-    )
-    {
-        const long userId =
-            1;
-
-
-        var entity =
-            await _context
-                .Set<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>()
-                .FirstOrDefaultAsync(
-                    x =>
-                        x.Id == id
-                        &&
-                        x.IsDeleted
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return;
-        }
-
-
-        entity.IsDeleted =
-            false;
-
-
-        entity.IsActive =
-            true;
-
-
-        entity.ModifiedBy =
-            userId;
-
-
-        entity.ModifiedDate =
-            DateTime.UtcNow;
-
-
-        _context.ActivityHistories.Add(
-            new ActivityHistory
-            {
-                Module =
-                    "InfrastructureControl",
-
-                EntityName =
-                    "DeploymentCenter",
-
-                EntityId =
-                    entity.Id,
-
-                ActivityType =
-                    "Restore",
-
-                ActivityTitle =
-                    "DeploymentCenter Restored",
-
-                ActivityDescription =
-                    $"DeploymentCenter '{entity.Name}' was restored.",
-
-                PerformedBy =
-                    userId,
-
-                PerformedByName =
-                    "System",
-
-                PerformedDate =
-                    DateTime.UtcNow
-            }
-        );
-
-
-        await _context.SaveChangesAsync();
-    }
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync()
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "InfrastructureControl"
-
-                    &&
-
-                    x.EntityName ==
-                    "DeploymentCenter"
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    public async Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    )
-    {
-        return await _context.ActivityHistories
-
-            .AsNoTracking()
-
-            .Where(
-                x =>
-                    x.Module ==
-                    "InfrastructureControl"
-
-                    &&
-
-                    x.EntityName ==
-                    "DeploymentCenter"
-
-                    &&
-
-                    x.EntityId ==
-                    id
-            )
-
-            .OrderByDescending(
-                x =>
-                    x.PerformedDate
-            )
-
-            .Select(
-                x =>
-                    new ActivityHistoryDto
-                    {
-                        Id =
-                            x.Id,
-
-                        Module =
-                            x.Module,
-
-                        EntityName =
-                            x.EntityName,
-
-                        EntityId =
-                            x.EntityId,
-
-                        ActivityType =
-                            x.ActivityType,
-
-                        ActivityTitle =
-                            x.ActivityTitle,
-
-                        ActivityDescription =
-                            x.ActivityDescription,
-
-                        PerformedBy =
-                            x.PerformedBy,
-
-                        PerformedByName =
-                            x.PerformedByName,
-
-                        PerformedDate =
-                            x.PerformedDate
-                    }
-            )
-
-            .ToListAsync();
-    }
-
-
-    //===========================================================
-    // Public Id -> internal id (live rows only)
-    //===========================================================
 
     public async Task<long?>
-        GetIdByPublicIdAsync
-        (
-            Guid publicId
-        )
+        GetIdByPublicIdAsync(Guid publicId)
     {
-        if
-        (
-            publicId == Guid.Empty
-        )
+        if (publicId == Guid.Empty)
         {
             return null;
         }
 
         return await _context
-            .Set<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>()
+            .Set<DeploymentEntity>()
             .AsNoTracking()
             .Where(x => !x.IsDeleted && x.PublicId == publicId)
             .Select(x => (long?)x.Id)
             .FirstOrDefaultAsync();
+    }
+
+
+    //===========================================================
+    // Next Release (R-0001), every row counted
+    //===========================================================
+
+    public async Task<string>
+        GetNextReleaseAsync()
+    {
+        var codes = await _context
+            .Set<DeploymentEntity>()
+            .AsNoTracking()
+            .Where(x => x.Kind == "Deploy" && x.Code.StartsWith("R-"))
+            .Select(x => x.Code)
+            .ToListAsync();
+
+        var last = codes
+            .Select(code => int.TryParse(code.Substring(2), out var n) ? n : 0)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return $"R-{last + 1:0000}";
+    }
+
+
+    //===========================================================
+    // Create (job started)
+    //===========================================================
+
+    public async Task<long>
+        CreateAsync(DeploymentEntity entity)
+    {
+        const long userId = 1;
+
+        entity.IsActive = true;
+        entity.IsDeleted = false;
+        entity.Status = true;
+        entity.CreatedBy = userId;
+        entity.CreatedDate = DateTime.UtcNow;
+        entity.StartedDate ??= DateTime.UtcNow;
+
+        await _context.Set<DeploymentEntity>().AddAsync(entity);
+
+        await _context.SaveChangesAsync();
+
+        AddHistory(
+            entity.Id,
+            entity.Kind,
+            entity.Kind == "Rollback" ? "Rollback Started" : "Deployment Started",
+            entity.Kind == "Rollback"
+                ? $"Rollback of {entity.ServerName} to {entity.Code} started."
+                : $"{entity.Code} to {entity.ServerName} started.\nCommit: {Short(entity.CommitHash)} {entity.CommitMessage}");
+
+        await _context.SaveChangesAsync();
+
+        return entity.Id;
+    }
+
+
+    //===========================================================
+    // Save Progress / Result
+    //===========================================================
+
+    public async Task
+        SaveProgressAsync(DeploymentEntity entity)
+    {
+        var existing = await _context
+            .Set<DeploymentEntity>()
+            .FirstOrDefaultAsync(x => x.Id == entity.Id);
+
+        if (existing is null)
+        {
+            return;
+        }
+
+        var wasRunning = existing.DeployStatus == "Running";
+
+        existing.Name = Cut(entity.Name, 200);
+        existing.CommitHash = Cut(entity.CommitHash, 64);
+        existing.CommitMessage = Cut(entity.CommitMessage, 500);
+        existing.DeployStatus = Cut(entity.DeployStatus, 30);
+        existing.Step = Cut(entity.Step, 300);
+        existing.Percent = Math.Clamp(entity.Percent, 0, 100);
+        existing.AgentJobId = Cut(entity.AgentJobId, 64);
+        existing.BackupFile = Cut(entity.BackupFile, 400);
+        existing.PreviousRelease = Cut(entity.PreviousRelease, 30);
+        existing.PackageMb = entity.PackageMb;
+        existing.FinishedDate = entity.FinishedDate;
+        existing.DurationSeconds = entity.DurationSeconds;
+        existing.Log = entity.Log ?? string.Empty;
+        existing.ModifiedBy = 1;
+        existing.ModifiedDate = DateTime.UtcNow;
+
+        if (wasRunning && existing.DeployStatus != "Running")
+        {
+            AddHistory(
+                existing.Id,
+                existing.Kind,
+                $"{(existing.Kind == "Rollback" ? "Rollback" : "Deployment")} {existing.DeployStatus}",
+                $"{existing.Code} on {existing.ServerName}: {existing.DeployStatus} after {existing.DurationSeconds} s.\n{existing.Step}"
+                + (string.IsNullOrEmpty(existing.BackupFile) ? string.Empty : $"\nBackup: {existing.BackupFile}"));
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    //===========================================================
+    // Close jobs interrupted by an API restart
+    //===========================================================
+
+    public async Task<int>
+        CloseInterruptedAsync()
+    {
+        var stuck = await _context
+            .Set<DeploymentEntity>()
+            .Where(x => !x.IsDeleted && x.DeployStatus == "Running")
+            .ToListAsync();
+
+        foreach (var row in stuck)
+        {
+            row.DeployStatus = "Failed";
+            row.Step = "Stopped: the API was restarted while this job ran. Check the server (Test Connection / Releases).";
+            row.FinishedDate = DateTime.UtcNow;
+            row.ModifiedDate = DateTime.UtcNow;
+        }
+
+        if (stuck.Count > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return stuck.Count;
+    }
+
+
+    //===========================================================
+    // Helpers
+    //===========================================================
+
+    private void AddHistory(long entityId, string type, string title, string description)
+    {
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module = ModuleName,
+                EntityName = EntityName,
+                EntityId = entityId,
+                ActivityType = type,
+                ActivityTitle = title,
+                ActivityDescription = description,
+                PerformedBy = 1,
+                PerformedByName = "System",
+                PerformedDate = DateTime.UtcNow
+            });
+    }
+
+    private static string Short(string hash) =>
+        string.IsNullOrEmpty(hash) ? string.Empty : hash.Length > 7 ? hash.Substring(0, 7) : hash;
+
+    private static string Cut(string? text, int max)
+    {
+        text ??= string.Empty;
+
+        return text.Length <= max ? text : text.Substring(0, max);
     }
 }

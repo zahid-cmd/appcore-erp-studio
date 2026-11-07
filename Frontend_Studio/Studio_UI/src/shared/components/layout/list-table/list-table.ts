@@ -14,7 +14,9 @@ import {
   OnChanges,
   SimpleChanges,
   ContentChild,
-  TemplateRef
+  TemplateRef,
+  ElementRef,
+  afterNextRender
 } from '@angular/core';
 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -102,6 +104,10 @@ export interface ListTableColumn
   // Image cells : a big round number at the top left of the
   // hover preview (e.g. the stock), value = row[previewBadgeField]
   previewBadgeField?: string;
+  // Page canvas across monitors : which columns give way when
+  // the table is narrow. 1 (or none) = always shown, 2 = hidden
+  // under 900px of table width, 3 = hidden under 1200px.
+  priority?: 1 | 2 | 3;
 }
 
 
@@ -203,6 +209,125 @@ implements OnChanges
 
   private readonly destroyRef =
     inject(DestroyRef);
+
+  private readonly hostRef =
+    inject(ElementRef<HTMLElement>);
+
+
+  /* =====================================================
+     FIT TO THE CANVAS (page canvas across monitors)
+     -----------------------------------------------------
+     Watches the table's own size :
+       - width  : host classes lt-hide-p3 (< 1200px) and
+                  lt-hide-p2 (< 900px) hide the columns with
+                  priority 3 / 2 (header and rows together);
+       - height : (fitRowsChange) emits how many rows fit in
+                  the body at the current row height, for an
+                  Auto page size. Emitted only when it changes.
+  ====================================================== */
+
+  static readonly HIDE_P3_BELOW = 1200;
+
+  static readonly HIDE_P2_BELOW = 900;
+
+  private fitFrame = 0;
+
+  private lastFitRows = -1;
+
+  private readonly fitSetup =
+    afterNextRender(
+      () =>
+      {
+        if (typeof ResizeObserver === 'undefined')
+        {
+          return;
+        }
+
+        const host =
+          this.hostRef.nativeElement as HTMLElement;
+
+        const observer =
+          new ResizeObserver(() => this.scheduleFit());
+
+        observer.observe(host);
+
+        const body =
+          host.querySelector('.list-table-body');
+
+        if (body)
+        {
+          observer.observe(body);
+        }
+
+        this.scheduleFit();
+
+        this.destroyRef.onDestroy(
+          () =>
+          {
+            observer.disconnect();
+
+            if (this.fitFrame)
+            {
+              cancelAnimationFrame(this.fitFrame);
+            }
+          });
+      });
+
+
+  private scheduleFit(): void
+  {
+    if (this.fitFrame)
+    {
+      return;
+    }
+
+    this.fitFrame =
+      requestAnimationFrame(
+        () =>
+        {
+          this.fitFrame = 0;
+
+          this.fitToCanvas();
+        });
+  }
+
+
+  private fitToCanvas(): void
+  {
+    const host =
+      this.hostRef.nativeElement as HTMLElement;
+
+    const width =
+      host.clientWidth;
+
+    if (width > 0)
+    {
+      host.classList.toggle('lt-hide-p3', width < ListTableComponent.HIDE_P3_BELOW);
+
+      host.classList.toggle('lt-hide-p2', width < ListTableComponent.HIDE_P2_BELOW);
+    }
+
+    const body =
+      host.querySelector('.list-table-body') as HTMLElement | null;
+
+    if (!body || !this.fitRowsChange.observed)
+    {
+      return;
+    }
+
+    const rowHeight =
+      parseFloat(getComputedStyle(body).getPropertyValue('--list-row-height')) || 40;
+
+    const rows =
+      Math.max(1, Math.floor(body.clientHeight / rowHeight));
+
+    if (body.clientHeight > 0 && rows !== this.lastFitRows)
+    {
+      this.lastFitRows = rows;
+
+      this.fitRowsChange.emit(rows);
+    }
+  }
 
 //===============================================================
 // Permission / Navigation Refresh
@@ -336,6 +461,12 @@ private readonly navigationContextSubscription =
   /* =====================================================
      OUTPUTS
   ====================================================== */
+
+  // Rows that fit in the body (page canvas across monitors;
+  // see FIT TO THE CANVAS)
+  @Output()
+  fitRowsChange =
+    new EventEmitter<number>();
 
   @Output()
   view =
@@ -515,77 +646,12 @@ private readonly navigationContextSubscription =
   ====================================================== */
 
   ngOnChanges(
-    changes: SimpleChanges
+    _changes: SimpleChanges
   ):
     void
   {
-    if (
-      changes['loading']
-    )
-    {
-      console.log(
-        '=============================='
-      );
-
-      console.log(
-        'LIST TABLE LOADING'
-      );
-
-      console.log(
-        this.loading
-      );
-
-      console.log(
-        '=============================='
-      );
-    }
-
-    if (
-      changes['error']
-    )
-    {
-      console.log(
-        '=============================='
-      );
-
-      console.log(
-        'LIST TABLE ERROR'
-      );
-
-      console.log(
-        this.error
-      );
-
-      console.log(
-        '=============================='
-      );
-    }
-
-    if (
-      changes['rows']
-    )
-    {
-      console.log(
-        '=============================='
-      );
-
-      console.log(
-        'LIST TABLE RECEIVED ROWS'
-      );
-
-      console.log(
-        this.rows
-      );
-
-      console.log(
-        'Rows Length:',
-        this.rows.length
-      );
-
-      console.log(
-        '=============================='
-      );
-    }
+    // (debug logging of loading / error / rows removed : it ran
+    // on every load and slowed big lists down)
   }
 
 
@@ -950,10 +1016,16 @@ private readonly navigationContextSubscription =
       case 'completed':
       case 'success':
       case 'posted':
+      // Servers : last Test Connection
+      case 'online':
+      // Deployment Center
+      case 'succeeded':
+      case 'live':
         return 'active';
 
       case 'pending':
       case 'running':
+      case 'rolled back':
       case 'processing':
         return 'pending';
 
@@ -961,6 +1033,9 @@ private readonly navigationContextSubscription =
       case 'failed':
       case 'error':
       case 'cancelled':
+      case 'offline':
+      case 'token rejected':
+      case 'not configured':
         return 'inactive';
 
       // Vouchers : Draft → Approved → Posted / Cancelled

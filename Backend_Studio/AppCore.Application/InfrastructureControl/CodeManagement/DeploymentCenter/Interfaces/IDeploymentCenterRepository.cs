@@ -1,11 +1,4 @@
 //===============================================================
-// Namespaces
-//===============================================================
-
-using AppCore.Application.Common.ActivityHistory.DTOs;
-
-
-//===============================================================
 // Namespace
 //===============================================================
 
@@ -14,104 +7,34 @@ namespace AppCore.Application.InfrastructureControl.CodeManagement;
 
 //===============================================================
 // IDeploymentCenterRepository
+//
+// Deployment / rollback records. The work itself is done by the
+// API (DeploymentRunner) and the server's Deploy Agent.
 //===============================================================
 
 public interface IDeploymentCenterRepository
 {
-
-    //===========================================================
-    // Get All
-    //===========================================================
-
     Task<IReadOnlyList<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>>
-        GetAllAsync();
-
-
-
-    //===========================================================
-    // Get By Id
-    //===========================================================
+        GetAllAsync(long? serverManagementId);
 
     Task<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter?>
-        GetByIdAsync
-    (
-        long id
-    );
+        GetByIdAsync(long id);
 
+    Task<long?>
+        GetIdByPublicIdAsync(Guid publicId);
 
-
-    //===========================================================
-    // Create
-    //===========================================================
+    // R-0001, R-0002 ... (one sequence for all servers)
+    Task<string>
+        GetNextReleaseAsync();
 
     Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity
-    );
+        CreateAsync(global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity);
 
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
+    // progress / result (no history row)
     Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity
-    );
+        SaveProgressAsync(global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter entity);
 
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
-
-
-    //===========================================================
-    // Public Id -> internal id (live rows only; null = not found)
-    //===========================================================
-
-    Task<long?> GetIdByPublicIdAsync(
-        Guid publicId);
+    // jobs left "Running" when the API stopped -> Failed
+    Task<int>
+        CloseInterruptedAsync();
 }

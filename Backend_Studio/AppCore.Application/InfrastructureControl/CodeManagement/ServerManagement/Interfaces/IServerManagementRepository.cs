@@ -18,100 +18,46 @@ namespace AppCore.Application.InfrastructureControl.CodeManagement;
 
 public interface IServerManagementRepository
 {
-
-    //===========================================================
-    // Get All
-    //===========================================================
-
     Task<IReadOnlyList<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.ServerManagement>>
         GetAllAsync();
 
-
-
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
     Task<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.ServerManagement?>
-        GetByIdAsync
-    (
-        long id
-    );
+        GetByIdAsync(long id);
 
+    // SRV-0001, SRV-0002 ...
+    Task<string>
+        GetNextCodeAsync();
 
-
-    //===========================================================
-    // Create
-    //===========================================================
+    // another live server with the same host + port (null = none)
+    Task<string?>
+        FindDuplicateHostAsync(string hostAddress, int agentPort, long exceptId);
 
     Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.ServerManagement entity
-    );
-
-
-
-    //===========================================================
-    // Update
-    //===========================================================
+        CreateAsync(global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.ServerManagement entity);
 
     Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.ServerManagement entity
-    );
+        UpdateAsync(global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.ServerManagement entity);
 
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
+    // result of "Test Connection" (no history row)
+    Task
+        SaveCheckResultAsync(long id, ServerConnectionTestDto result);
 
     Task
-        DeleteAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
+        DeleteAsync(long id);
 
     Task
-        RestoreAsync
-    (
-        long id
-    );
+        RestoreAsync(long id);
 
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
+    // the most recently deleted server (false = none)
+    Task<bool>
+        RestoreLastDeletedAsync();
 
     Task<IReadOnlyList<ActivityHistoryDto>>
         GetHistoryAsync();
 
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
     Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
+        GetEntityHistoryAsync(long id);
 
-
-    //===========================================================
-    // Public Id -> internal id (live rows only; null = not found)
-    //===========================================================
-
-    Task<long?> GetIdByPublicIdAsync(
-        Guid publicId);
+    Task<long?>
+        GetIdByPublicIdAsync(Guid publicId);
 }

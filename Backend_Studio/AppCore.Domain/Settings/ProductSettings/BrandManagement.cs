@@ -52,6 +52,14 @@ public class BrandManagement
 
 
     //===========================================================
+    // Maker's Name (optional) : the manufacturer, printed as
+    // "Maker's name" on BRTA Form-17 for this brand's bikes
+    //===========================================================
+
+    public string MakerName { get; set; } = string.Empty;
+
+
+    //===========================================================
     // Motor Bikes Supplier (optional) : Supplier Profiles →
     // SupplierCode of a supplier with Supply Type Motor Bikes.
     // EMI reimbursement claims of this brand go to it.

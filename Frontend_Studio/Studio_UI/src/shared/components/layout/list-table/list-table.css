@@ -1284,3 +1284,19 @@ td.right .action-buttons
     background: #eaf1fc;
     color: #1e3a8a !important;
 }
+
+
+/* =====================================================
+   COLUMN PRIORITY (page canvas across monitors)
+   -----------------------------------------------------
+   list-table.ts sets lt-hide-p3 / lt-hide-p2 on the host
+   from the table's own width; columns with priority 3 / 2
+   give way, in the header and the rows together.
+===================================================== */
+
+:host(.lt-hide-p3) .lt-p3,
+:host(.lt-hide-p2) .lt-p2,
+:host(.lt-hide-p2) .lt-p3
+{
+    display: none;
+}

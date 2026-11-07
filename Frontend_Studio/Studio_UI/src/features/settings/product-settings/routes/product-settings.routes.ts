@@ -343,6 +343,32 @@ Routes =
 
                 // AUTO-END : SUB-003-003-012
 
+            // AUTO-BEGIN : SUB-003-003-013
+
+                //===========================================================
+                // Motor Bike Specifications
+                //===========================================================
+
+                {
+                    path:'motor-bike-specifications',
+
+                    data:
+                    {
+                        breadcrumb:'Motor Bike Specifications'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './motor-bike-specifications.routes'
+                        )
+                        .then(
+                            m =>
+                                m.MotorBikeSpecificationsRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-003-013
+
         ]
 
     }

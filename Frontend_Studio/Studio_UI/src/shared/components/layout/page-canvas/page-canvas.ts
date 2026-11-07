@@ -254,6 +254,16 @@ export class PageCanvasComponent
 
         if (!canvas) return;
 
+        // Pages marked data-canvas="fit" (page canvas across
+        // monitors) : pure CSS, the canvas fills what is left.
+        // Nothing is measured; any height set earlier goes.
+        if (hostEl.closest('[data-canvas="fit"]'))
+        {
+            canvas.style.removeProperty('--list-row-height');
+            if (canvas.style.height) canvas.style.height = '';
+            return;
+        }
+
         // Canvases outside the page area (dialogs) and small
         // screens keep the stylesheet height.
         // Lists : 660px (owner 2026-11-06), rows 40px. Only when the
@@ -423,4 +433,4 @@ export class PageCanvasComponent
             + (this.config.headerHeight ?? 36)
             + (this.config.footerHeight ?? 56);
     }
-}
+}

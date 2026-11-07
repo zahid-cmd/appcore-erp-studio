@@ -26,6 +26,7 @@
 --   0017 Sell at Batch MRP                    critical  (added 2026-11-03)
 --   0018 Round Down to Whole Taka                       (added 2026-11-03)
 --   0019 Print Payment Details on Customer Copy         (added 2026-11-04)
+--   0020 Specifications Required for Sale     critical  (added 2026-11-07)
 -- Sales Invoices - SP  (0021 .. 0040) and - AC (0041 .. 0060)
 --   +0 Post on Approval , +1 Allow Credit Sale , +2 Enforce
 --   Credit Limit (child) , +3 Allow Price Edit , +4 Allow Discount
@@ -45,6 +46,8 @@
 -- special discounts.
 -- Added 2026-11-03 : Sell at Batch MRP (0017 / 0032 / 0052) and
 -- Round Down to Whole Taka (0018 / 0033 / 0053).
+-- Added 2026-11-07 : Specifications Required for Sale (MB 0020,
+-- critical, default ON).
 -- Added 2026-11-04 : Print Payment Details on Customer Copy
 -- (0019 / 0034 / 0054, default OFF). Run the script
 -- again : only the missing switches are added, and the wording of
@@ -260,7 +263,12 @@ BEGIN
     ('sales-invoices-mb', 'CFG-MOD-008-0016', 'Oldest Chassis First',
      'Picking a newer chassis while an older one of the same model and colour is in stock shows a warning.',
      'Any chassis may be picked without a warning.',
-     false, '', 'None', '', NULL, NULL, '', NULL, false, 16, '');
+     false, '', 'None', '', NULL, NULL, '', NULL, false, 16, ''),
+
+    ('sales-invoices-mb', 'CFG-MOD-008-0020', 'Specifications Required for Sale',
+     'A bike can be sold only when its model has an active Motor Bike Specification (Engine CC / motor power for registration).',
+     'A bike can be sold without a specification.',
+     true, '', 'None', '', NULL, NULL, '', NULL, true, 20, 'Critical. Specifications : Settings > Product Settings > Motor Bike Specifications.');
 
     -- Sales returns (three pages)
     INSERT INTO tmp_sales_switches

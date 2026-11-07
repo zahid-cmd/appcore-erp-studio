@@ -312,4 +312,37 @@ public class AutoAccountsRepository : IAutoAccountsRepository
 
         return dto;
     }
+
+
+    //===========================================================
+    // Ledger codes as SQL subqueries (no list sent from memory).
+    // For the paged list : the database checks the codes itself
+    // with IN (SELECT ... UNION ALL ...), one round trip.
+    // Upper-cased like GetCodesAsync. Soft-deleted source rows
+    // included (codes are never reused).
+    //===========================================================
+
+    private IQueryable<string> UnionOf
+    (
+        CodeSource[] sources
+    )
+    {
+        IQueryable<string?> all =
+            sources[0](_context);
+
+        for (int i = 1; i < sources.Length; i++)
+        {
+            all = all.Concat(sources[i](_context));
+        }
+
+        return all
+            .Where(x => x != null && x != "")
+            .Select(x => x!.Trim().ToUpper());
+    }
+
+    public IQueryable<string> InventoryLedgerCodesQuery() =>
+        UnionOf(InventoryLedgerSources);
+
+    public IQueryable<string> FinancialLedgerCodesQuery() =>
+        UnionOf(FinancialLedgerSources);
 }

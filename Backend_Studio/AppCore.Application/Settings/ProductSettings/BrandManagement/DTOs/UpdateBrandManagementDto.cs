@@ -22,6 +22,9 @@ public class UpdateBrandManagementDto
 
     public string Remarks { get; set; } = string.Empty;
 
+    // Manufacturer (BRTA Form-17 "Maker's name"; optional)
+    public string MakerName { get; set; } = string.Empty;
+
     public bool Status { get; set; }
 
     // Optional : SupplierCode of a Motor Bikes supplier ('' = none)

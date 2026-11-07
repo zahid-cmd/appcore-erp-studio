@@ -15,6 +15,9 @@ export interface BrandManagement
 
     Remarks: string;
 
+    // Manufacturer (BRTA Form-17 "Maker's name"; '' = not given)
+    MakerName?: string;
+
     Status: boolean;
 
     // Saved image path from the server ('' when none).
@@ -50,6 +53,8 @@ export interface CreateBrandManagement
 
     Remarks: string;
 
+    MakerName: string;
+
     Status: boolean;
 
     MotorBikesSupplierCode: string;
@@ -69,6 +74,8 @@ export interface UpdateBrandManagement
     BrandName: string;
 
     Remarks: string;
+
+    MakerName: string;
 
     Status: boolean;
 

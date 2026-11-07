@@ -1,0 +1,1051 @@
+<div class="app-form-page">
+
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        icon="fas fa-clipboard-list"
+
+        [title]="pageTitle"
+
+        subtitle="Registration data and technical specifications per bike model">
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="saveButtonText"
+
+            command1Icon="fas fa-floppy-disk"
+
+            (command1Click)="onSave()"
+
+            [command1Visible]="!isViewMode"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         SECTION 02 : PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [selectedTab]="selectedTab"
+
+            (selectedTabChange)="onTabChange($event)">
+
+        </app-control-tabs>
+
+
+        <!-- Specification : two pages of 4 sections -->
+
+        @if (showPager)
+        {
+            <div class="mbs-pager" pageToolbarRight>
+
+                <span class="mbs-pager-step">Page {{ formPage }} of 2 · {{ formPage === 1 ? 'Registration Data' : 'Size & Tyres' }}</span>
+
+                @if (formPage === 1)
+                {
+                    <button
+
+                        type="button"
+
+                        class="mbs-pager-btn"
+
+                        (click)="nextPage()">
+
+                        Next
+
+                        <i class="fas fa-arrow-right"></i>
+
+                    </button>
+                }
+                @else
+                {
+                    <button
+
+                        type="button"
+
+                        class="mbs-pager-btn mbs-pager-btn-back"
+
+                        (click)="previousPage()">
+
+                        <i class="fas fa-arrow-left"></i>
+
+                        Back
+
+                    </button>
+                }
+
+            </div>
+        }
+
+    </app-page-toolbar>
+
+
+
+    <!-- =====================================================
+         SECTION 03 : PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        @if (selectedTab === 'general' && formPage === 1)
+        {
+            <app-form-grid
+
+                canvasBody
+
+                [columns]="4">
+
+
+                <!-- =========================================
+                     BIKE MODEL
+                ========================================== -->
+
+                <app-form-section
+
+                    title="Bike Model"
+
+                    icon="fas fa-motorcycle">
+
+
+                    <app-textbox
+
+                        label="Specification Code"
+
+                        placeholder="Auto generated"
+
+                        [(value)]="entity.SpecificationCode"
+
+                        [readonly]="true"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    @if (!isViewMode)
+                    {
+                        <app-dropdown
+
+                            label="Brand"
+
+                            placeholder="All brands"
+
+                            [items]="brandItems"
+
+                            [value]="brandFilterId"
+
+                            (valueChange)="onBrandFilterChange($event)">
+
+                        </app-dropdown>
+
+
+                        @for (key of modelPickerKeys; track key)
+                        {
+                            <app-search-dropdown
+
+                                label="Bike Model"
+
+                                [required]="true"
+
+                                [placeholder]="modelPlaceholder"
+
+                                [items]="modelItems"
+
+                                [value]="entity.BikeModelId"
+
+                                [disabled]="modelItems.length === 0"
+
+                                (valueChange)="onModelChange($event)">
+
+                            </app-search-dropdown>
+                        }
+
+
+                        @for (key of copyPickerKeys; track key)
+                        {
+                            <app-search-dropdown
+
+                                label="Copy from Model"
+
+                                [placeholder]="copyPlaceholder"
+
+                                [items]="copyItems"
+
+                                [value]="null"
+
+                                [disabled]="copyItems.length === 0"
+
+                                (valueChange)="onCopyFrom($event)">
+
+                            </app-search-dropdown>
+                        }
+                    }
+                    @else
+                    {
+                        <app-textbox
+
+                            label="Brand"
+
+                            [value]="entity.BrandName ?? ''"
+
+                            [readonly]="true">
+
+                        </app-textbox>
+
+
+                        <app-textbox
+
+                            label="Bike Model"
+
+                            [value]="modelText"
+
+                            [readonly]="true">
+
+                        </app-textbox>
+                    }
+
+
+                    <app-dropdown
+
+                        label="Status"
+
+                        [items]="statusItems"
+
+                        [(value)]="entity.Status"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+                </app-form-section>
+
+
+                <!-- =========================================
+                     ENGINE / MOTOR (Form-17 items 25, 29 - 32)
+                ========================================== -->
+
+                <app-form-section
+
+                    title="Engine / Motor"
+
+                    icon="fas fa-gears">
+
+
+                    <app-dropdown
+
+                        label="Fuel Type"
+
+                        [items]="fuelItems"
+
+                        [(value)]="entity.FuelType"
+
+                        (valueChange)="onFuelChange()"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+
+                    @if (isElectric)
+                    {
+                        <app-textbox
+
+                            label="Motor Power (W)"
+
+                            placeholder="e.g. 350 or 2000"
+
+                            inputMode="numeric"
+
+                            [value]="numbers.watts"
+
+                            (valueChange)="onNumber('watts', $event)"
+
+                            [maxLength]="6"
+
+                            [disabled]="isViewMode"
+
+                            [required]="true">
+
+                        </app-textbox>
+                    }
+                    @else
+                    {
+                        <app-textbox
+
+                            label="Engine CC"
+
+                            placeholder="e.g. 149.5"
+
+                            inputMode="decimal"
+
+                            [value]="numbers.cc"
+
+                            (valueChange)="onNumber('cc', $event)"
+
+                            [maxLength]="7"
+
+                            [disabled]="isViewMode"
+
+                            [required]="true">
+
+                        </app-textbox>
+                    }
+
+
+                    <app-textbox
+
+                        [label]="isElectric ? 'No. of Motors' : 'Cylinders'"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.cylinders"
+
+                        (valueChange)="onNumber('cylinders', $event)"
+
+                        [maxLength]="2"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        [label]="horsePowerLabel"
+
+                        [placeholder]="horsePowerPlaceholder"
+
+                        textCase="upper"
+
+                        [(value)]="entity.HorsePower"
+
+                        [maxLength]="60"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="RPM"
+
+                        [placeholder]="isElectric ? 'Optional for electric' : 'e.g. 8500'"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.rpm"
+
+                        (valueChange)="onNumber('rpm', $event)"
+
+                        [maxLength]="5"
+
+                        [disabled]="isViewMode">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+                <!-- =========================================
+                     BODY & MAKER (Form-17 items 20 - 23, 33)
+                ========================================== -->
+
+                <app-form-section
+
+                    title="Body & Maker"
+
+                    icon="fas fa-industry">
+
+
+                    <app-dropdown
+
+                        label="Vehicle Class"
+
+                        [items]="vehicleClassItems"
+
+                        [(value)]="entity.VehicleClass"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+
+                    <app-dropdown
+
+                        label="Body Type"
+
+                        placeholder="Select body type"
+
+                        [items]="bodyTypeItems"
+
+                        [(value)]="entity.BodyType"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+
+                    <app-textbox
+
+                        label="Seating Capacity"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.seats"
+
+                        (valueChange)="onNumber('seats', $event)"
+
+                        [maxLength]="1"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Maker's Name"
+
+                        [placeholder]="makerPlaceholder"
+
+                        textCase="upper"
+
+                        [value]="entity.Maker"
+
+                        [readonly]="true"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Country of Origin"
+
+                        textCase="upper"
+
+                        placeholder="e.g. China"
+
+                        [(value)]="entity.CountryOfOrigin"
+
+                        [maxLength]="80"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+                <!-- =========================================
+                     WEBSITE & REMARKS
+                ========================================== -->
+
+                <app-form-section
+
+                    title="Website & Remarks"
+
+                    icon="fas fa-globe">
+
+
+                    <app-dropdown
+
+                        label="Show on Website"
+
+                        [items]="websiteItems"
+
+                        [(value)]="entity.ShowOnWebsite"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
+
+                    <div class="mbs-hint">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        <span>
+                            {{ filledRows }} technical row{{ filledRows === 1 ? '' : 's' }} filled.
+                            Open <b>Technical Specifications</b> to fill them.
+                        </span>
+
+                    </div>
+
+
+                    <app-textarea
+
+                        label="Remarks"
+
+                        placeholder="Enter remarks"
+
+                        [rows]="4"
+
+                        [(value)]="entity.Remarks"
+
+                        [maxLength]="1000"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode">
+
+                    </app-textarea>
+
+                </app-form-section>
+
+            </app-form-grid>
+        }
+        @else if (selectedTab === 'general')
+        {
+            <app-form-grid
+
+                canvasBody
+
+                [columns]="4">
+
+
+                <!-- =========================================
+                     WEIGHTS (Form-17 items 35 - 36)
+                ========================================== -->
+
+                <app-form-section
+
+                    title="Weights"
+
+                    icon="fas fa-weight-hanging">
+
+
+                    <app-textbox
+
+                        label="Unladen Weight (kg)"
+
+                        placeholder="Without load"
+
+                        inputMode="decimal"
+
+                        [value]="numbers.unladen"
+
+                        (valueChange)="onNumber('unladen', $event)"
+
+                        [maxLength]="7"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Laden Weight (kg)"
+
+                        placeholder="Maximum, with load"
+
+                        inputMode="decimal"
+
+                        [value]="numbers.laden"
+
+                        (valueChange)="onNumber('laden', $event)"
+
+                        [maxLength]="7"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+                <!-- =========================================
+                     DIMENSIONS (Form-17 items 34, 41)
+                ========================================== -->
+
+                <app-form-section
+
+                    title="Dimensions (mm)"
+
+                    icon="fas fa-ruler-combined">
+
+
+                    <app-textbox
+
+                        label="Wheel Base"
+
+                        placeholder="e.g. 1010"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.wheelbase"
+
+                        (valueChange)="onNumber('wheelbase', $event)"
+
+                        [maxLength]="5"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Overall Length"
+
+                        placeholder="e.g. 1430"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.length"
+
+                        (valueChange)="onNumber('length', $event)"
+
+                        [maxLength]="5"
+
+                        [disabled]="isViewMode">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Overall Width"
+
+                        placeholder="e.g. 665"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.width"
+
+                        (valueChange)="onNumber('width', $event)"
+
+                        [maxLength]="5"
+
+                        [disabled]="isViewMode">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Overall Height"
+
+                        placeholder="e.g. 1065"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.height"
+
+                        (valueChange)="onNumber('height', $event)"
+
+                        [maxLength]="5"
+
+                        [disabled]="isViewMode">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+                <!-- =========================================
+                     TYRES & AXLES (Form-17 items 37 - 39)
+                ========================================== -->
+
+                <app-form-section
+
+                    title="Tyres & Axles"
+
+                    icon="fas fa-circle-notch">
+
+
+                    <app-textbox
+
+                        label="No. of Tyres"
+
+                        placeholder="2"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.tyres"
+
+                        (valueChange)="onNumber('tyres', $event)"
+
+                        [maxLength]="2"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Front Tyre Size"
+
+                        placeholder="e.g. 14*2.5 / 80/100-17"
+
+                        textCase="upper"
+
+                        [(value)]="entity.FrontTyreSize"
+
+                        [maxLength]="40"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Rear Tyre Size"
+
+                        placeholder="e.g. 14*2.5 / 100/90-17"
+
+                        textCase="upper"
+
+                        [(value)]="entity.RearTyreSize"
+
+                        [maxLength]="40"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="No. of Axles"
+
+                        placeholder="1"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.axles"
+
+                        (valueChange)="onNumber('axles', $event)"
+
+                        [maxLength]="1"
+
+                        [disabled]="isViewMode"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                </app-form-section>
+
+
+                <!-- =========================================
+                     FORM-17 NOTE
+                ========================================== -->
+
+                <app-form-section
+
+                    title="BRTA Form-17"
+
+                    icon="fas fa-file-signature">
+
+
+                    <div class="mbs-hint">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        <span>
+                            These values print on the registration application
+                            (items 34 - 41) for every bike of this model.
+                            Chassis, engine / motor no, colour and year of
+                            manufacture come from the bike sold.
+                        </span>
+
+                    </div>
+
+                </app-form-section>
+
+            </app-form-grid>
+        }
+        @else
+        {
+            <!-- =============================================
+                 TECHNICAL SPECIFICATIONS
+            ============================================== -->
+
+            <div
+
+                canvasBody
+
+                class="mbs-tech">
+
+
+                <!-- Sections -->
+
+                <div class="mbs-sections">
+
+                    @for (section of sections; track section)
+                    {
+                        <button
+
+                            type="button"
+
+                            class="mbs-section"
+
+                            [class.active]="section === selectedSection"
+
+                            (click)="selectSection(section)">
+
+                            <span class="mbs-section-name">{{ section }}</span>
+
+                            <span class="mbs-section-count">{{ sectionCount(section) }}</span>
+
+                        </button>
+                    }
+
+                    <div class="mbs-sections-note">
+                        Rows with an empty label or value are not saved.
+                    </div>
+
+                </div>
+
+
+                <!-- Rows of the selected section -->
+
+                <div
+
+                    class="mbs-panel"
+
+                    [class.view]="isViewMode">
+
+                    <div class="mbs-panel-head">
+
+                        <span class="mbs-panel-title">{{ selectedSection }}</span>
+
+                        @if (!isViewMode)
+                        {
+                            <button
+
+                                type="button"
+
+                                class="mbs-add"
+
+                                (click)="addRow()">
+
+                                <i class="fas fa-plus"></i>
+
+                                Add Row
+
+                            </button>
+                        }
+
+                    </div>
+
+
+                    <div class="mbs-grid-head">
+
+                        <span class="mbs-col-no">#</span>
+
+                        <span class="mbs-col-label">Label</span>
+
+                        <span class="mbs-col-value">Value</span>
+
+                        @if (!isViewMode)
+                        {
+                            <span class="mbs-col-actions"></span>
+                        }
+
+                    </div>
+
+
+                    <div class="mbs-rows">
+
+                        @for (row of sectionRows; track row; let i = $index; let last = $last)
+                        {
+                            <div
+
+                                class="mbs-row"
+
+                                [class.empty]="!row.Value.trim()">
+
+                                <span class="mbs-col-no">{{ i + 1 }}</span>
+
+                                <input
+
+                                    class="mbs-input mbs-col-label"
+
+                                    placeholder="Label"
+
+                                    maxlength="80"
+
+                                    [value]="row.Label"
+
+                                    [disabled]="isViewMode"
+
+                                    (input)="onRowInput(row, 'Label', $event)">
+
+                                <input
+
+                                    class="mbs-input mbs-col-value"
+
+                                    placeholder="Value"
+
+                                    maxlength="250"
+
+                                    [value]="row.Value"
+
+                                    [disabled]="isViewMode"
+
+                                    (input)="onRowInput(row, 'Value', $event)">
+
+                                @if (!isViewMode)
+                                {
+                                    <span class="mbs-col-actions">
+
+                                        <button
+
+                                            type="button"
+
+                                            title="Move up"
+
+                                            [disabled]="i === 0"
+
+                                            (click)="moveRow(row, -1)">
+
+                                            <i class="fas fa-arrow-up"></i>
+
+                                        </button>
+
+                                        <button
+
+                                            type="button"
+
+                                            title="Move down"
+
+                                            [disabled]="last"
+
+                                            (click)="moveRow(row, 1)">
+
+                                            <i class="fas fa-arrow-down"></i>
+
+                                        </button>
+
+                                        <button
+
+                                            type="button"
+
+                                            class="mbs-remove"
+
+                                            title="Remove"
+
+                                            (click)="removeRow(row)">
+
+                                            <i class="fas fa-trash-can"></i>
+
+                                        </button>
+
+                                    </span>
+                                }
+
+                            </div>
+                        }
+                        @empty
+                        {
+                            <div class="mbs-empty">
+
+                                No rows in {{ selectedSection }}{{ isViewMode ? '' : ' yet. Use Add Row.' }}
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </app-page-canvas>
+
+</div>
+
+
+
+<!-- =====================================================
+     SECTION 04 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

@@ -256,3 +256,24 @@
 
     min-height: 0;
 }
+
+
+/* =====================================================
+   FIT PAGES (data-canvas="fit", page canvas across
+   monitors) : no 660px cap, no clamp on the screen
+   height. The host fills what the page leaves (set in
+   app-list-page.css / app-form-page.css) and the canvas
+   fills its host.
+===================================================== */
+
+:host-context([data-canvas="fit"]) .page-canvas,
+:host-context([data-canvas="fit"]) .page-canvas.list-mode
+{
+    height: auto;
+
+    min-height: 0;
+
+    flex: 1 1 auto;
+
+    align-self: stretch;
+}

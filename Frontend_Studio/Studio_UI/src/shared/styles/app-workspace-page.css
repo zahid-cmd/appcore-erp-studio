@@ -1,0 +1,264 @@
+/* =====================================================
+   APP WORKSPACE PAGE (page canvas across monitors,
+   2026-11-07)
+   -----------------------------------------------------
+   Split-view pages : a list pane and a detail pane, or
+   three panes (waiting list · board · detail). Examples:
+   Parts / Model Onboarding, Enquiry Setup, the Service
+   Appointments and Test Rides day boards.
+
+   Markup :
+
+     <div class="app-workspace-page" data-canvas="fit">
+       <app-page-header …>
+       <app-page-toolbar …>            (optional)
+       <div class="ws-toggle">         (Compact only)
+         <button class="ws-toggle-btn is-active">List</button>
+         <button class="ws-toggle-btn">Detail</button>
+       </div>
+       <div class="ws-panes">
+         <section class="ws-pane ws-pane--list is-active">
+           <div class="ws-pane-head">…</div>
+           <div class="ws-pane-body">…</div>
+         </section>
+         <section class="ws-pane ws-pane--main">…</section>
+         <section class="ws-pane ws-pane--side">…</section>
+       </div>
+     </div>
+
+   Each pane scrolls on its own; the page itself never
+   scrolls unless the panes would drop under
+   --canvas-min. Under 1440px wide only the pane marked
+   is-active shows, and the .ws-toggle buttons (the page
+   keeps which pane is active) switch between them.
+===================================================== */
+
+:host
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    min-width:0;
+
+    min-height:0;
+}
+
+.app-workspace-page
+{
+    display:flex;
+
+    flex-direction:column;
+
+    flex:1 1 auto;
+
+    width:100%;
+
+    height:100%;
+
+    min-width:0;
+
+    min-height:0;
+
+    gap:var(--page-gap, 12px);
+
+    overflow-x:hidden;
+
+    overflow-y:auto;
+}
+
+.app-workspace-page > app-page-header,
+.app-workspace-page > app-page-toolbar
+{
+    flex:0 0 auto;
+}
+
+/* Dialogs, toasts and drawers take no room */
+.app-workspace-page > app-toast,
+.app-workspace-page > app-confirm-dialog,
+.app-workspace-page > app-progress-dialog,
+.app-workspace-page > app-history-drawer,
+.app-workspace-page > app-form-modal
+{
+    display:contents;
+}
+
+
+/* =====================================================
+   PANES
+===================================================== */
+
+.ws-panes
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    gap:var(--page-gap, 12px);
+
+    min-width:0;
+
+    min-height:var(--canvas-min, 360px);
+}
+
+.ws-pane
+{
+    display:flex;
+
+    flex-direction:column;
+
+    min-width:0;
+
+    min-height:0;
+
+    overflow:hidden;
+
+    box-sizing:border-box;
+
+    background:#ffffff;
+
+    border:1px solid #e7edf5;
+
+    border-radius:16px;
+
+    box-shadow:0 2px 8px rgba(15, 23, 42, .04);
+}
+
+/* List pane : 360-480px, up to 560px on Ultra */
+.ws-pane--list
+{
+    flex:0 0 clamp(360px, 26%, 480px);
+}
+
+/* Main pane : the rest */
+.ws-pane--main
+{
+    flex:1 1 auto;
+}
+
+/* Side pane (detail beside a board) : 320-420px */
+.ws-pane--side
+{
+    flex:0 0 clamp(320px, 22%, 420px);
+}
+
+.ws-pane-head
+{
+    flex:0 0 auto;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    min-height:44px;
+
+    padding:0 14px;
+
+    border-bottom:1px solid #e7edf5;
+
+    background:#f8fafc;
+}
+
+.ws-pane-body
+{
+    flex:1 1 auto;
+
+    min-height:0;
+
+    overflow:auto;
+}
+
+.ws-pane-foot
+{
+    flex:0 0 auto;
+
+    border-top:1px solid #e7edf5;
+}
+
+
+/* =====================================================
+   COMPACT : one pane at a time
+===================================================== */
+
+.ws-toggle
+{
+    display:none;
+}
+
+@media (max-width:1439.98px)
+{
+    .ws-toggle
+    {
+        display:flex;
+
+        flex:0 0 auto;
+
+        gap:4px;
+
+        padding:4px;
+
+        border-radius:10px;
+
+        background:#eef2f7;
+
+        align-self:flex-start;
+    }
+
+    .ws-toggle-btn
+    {
+        height:32px;
+
+        padding:0 14px;
+
+        border:0;
+
+        border-radius:8px;
+
+        background:transparent;
+
+        color:#334155;
+
+        font-family:inherit;
+
+        font-size:13px;
+
+        font-weight:600;
+
+        cursor:pointer;
+    }
+
+    .ws-toggle-btn.is-active
+    {
+        background:#ffffff;
+
+        color:#1d4ed8;
+
+        box-shadow:0 1px 3px rgba(15, 23, 42, .12);
+    }
+
+    .ws-pane
+    {
+        display:none;
+    }
+
+    .ws-pane.is-active
+    {
+        display:flex;
+
+        flex:1 1 auto;
+    }
+}
+
+@media (min-width:2400px)
+{
+    .ws-pane--list
+    {
+        flex-basis:clamp(360px, 22%, 560px);
+    }
+}

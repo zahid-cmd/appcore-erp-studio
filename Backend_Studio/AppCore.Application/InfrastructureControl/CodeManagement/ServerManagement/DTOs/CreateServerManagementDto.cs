@@ -1,73 +1,25 @@
 //===============================================================
-// Namespace
+// Create Server Management
 //===============================================================
 
 namespace AppCore.Application.InfrastructureControl.CodeManagement;
 
-
-//===============================================================
-// CreateServerManagementDto
-//===============================================================
-
 public class CreateServerManagementDto
 {
-    //===========================================================
-    // Name
-    //===========================================================
+    public string Name { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string HostAddress { get; set; } = string.Empty;
 
+    public int AgentPort { get; set; } = 5099;
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    // plain text from the form; the API encrypts it
+    public string? AgentToken { get; set; }
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public string AppUrl { get; set; } = string.Empty;
 
+    public string Environment { get; set; } = "Production";
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
+    public bool Status { get; set; } = true;
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
-
-
-    //===========================================================
-    // Status
-    //===========================================================
-
-    public bool Status
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Remarks
-    //===========================================================
-
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string Remarks { get; set; } = string.Empty;
 }

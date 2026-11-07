@@ -1,93 +1,175 @@
-/* ============================================================
-   Deployment Center
-============================================================ */
+//===============================================================
+// Deployment Center Models
+//
+// A deployment (or rollback) to a server of Server Management.
+// The API builds on this PC; the server's Deploy Agent backs up
+// the database, installs the release and checks the live site.
+//===============================================================
+
+
+// Running / Succeeded / Failed / Rolled back
+export type DeployStatus =
+    'Running' | 'Succeeded' | 'Failed' | 'Rolled back';
+
 
 export interface DeploymentCenter
 {
-    id:
-        number;
+    id: number;
 
-    // The id used in links and API calls (uuid v7)
-    publicId?: string;
+    publicId: string;
 
-    code:
-        string;
+    // R-0001
+    code: string;
 
-    name:
-        string;
+    name: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    serverManagementId: number;
 
-    sampleField:
-        string;
+    serverName: string;
 
-    status:
-        string;
+    // Deploy / Rollback
+    kind: string;
 
-    remarks:
-        string;
+    deployStatus: string;
+
+    step: string;
+
+    percent: number;
+
+    branch: string;
+
+    commitHash: string;
+
+    commitMessage: string;
+
+    backupFile: string;
+
+    previousRelease: string;
+
+    packageMb: number;
+
+    startedDate?: string | null;
+
+    finishedDate?: string | null;
+
+    durationSeconds: number;
+
+    performedByName: string;
+
+    remarks: string;
+
+    // detail only
+    log?: string | null;
 }
 
 
-
-/* ============================================================
-   Create Deployment Center
-============================================================ */
-
-export interface CreateDeploymentCenter
+// Live progress (polled every second while a job runs)
+export interface DeploymentProgress
 {
-    name:
-        string;
+    publicId: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    code: string;
 
-    sampleField:
-        string;
+    kind: string;
 
-    status:
-        string;
+    deployStatus: string;
 
-    remarks:
-        string;
+    step: string;
+
+    percent: number;
+
+    finished: boolean;
+
+    elapsedSeconds: number;
+
+    log: string[];
 }
 
 
-
-/* ============================================================
-   Update Deployment Center
-============================================================ */
-
-export interface UpdateDeploymentCenter
+// Git check before Deploy
+export interface DeploymentPreflight
 {
-    id:
-        number;
+    ready: boolean;
 
-    name:
-        string;
+    repositoryPath: string;
 
-    sampleSearchDropdownId:
-        number | null;
+    branch: string;
 
-    sampleField:
-        string;
+    commitHash: string;
 
-    status:
-        string;
+    commitMessage: string;
 
-    remarks:
-        string;
+    ahead: number;
+
+    behind: number;
+
+    localChanges: number;
+
+    nextRelease: string;
+
+    runningPublicId?: string | null;
+
+    problems: string[];
 }
 
 
-
-/* ============================================================
-   Deployment Center Defaults
-============================================================ */
-
-export interface DeploymentCenterDefaults
+// A server to deploy to
+export interface DeploymentServerOption
 {
-    code:
-        string;
+    publicId: string;
+
+    code: string;
+
+    name: string;
+
+    environment: string;
+
+    appUrl: string;
+
+    lastCheckStatus: string;
+
+    currentRelease: string;
+}
+
+
+// A release kept on a server
+export interface ServerRelease
+{
+    release: string;
+
+    commit: string;
+
+    deployedBy: string;
+
+    createdAt: string;
+
+    isCurrent: boolean;
+}
+
+
+export interface StartDeployment
+{
+    serverPublicId: string;
+
+    remarks: string;
+}
+
+
+export interface StartRollback
+{
+    serverPublicId: string;
+
+    release: string;
+
+    remarks: string;
+}
+
+
+export interface StartedJob
+{
+    id: number;
+
+    publicId: string;
+
+    code: string;
 }

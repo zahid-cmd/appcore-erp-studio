@@ -127,6 +127,9 @@ export class BrandManagementService
                                 Remarks:
                                     brandManagement.Remarks ?? brandManagement.remarks ?? '',
 
+                                MakerName:
+                                    brandManagement.MakerName ?? brandManagement.makerName ?? '',
+
                                 Status:
                                     Boolean(brandManagement.Status ?? brandManagement.status ?? true),
 

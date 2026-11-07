@@ -219,9 +219,22 @@
 
             <select
 
-                [value]="pageSize"
+                [value]="autoActive && autoRows > 0 ? 'auto' : pageSize"
 
                 (change)="changePageSize($event)">
+
+                @if (autoRows > 0)
+                {
+
+                    <option
+                        value="auto"
+                        [selected]="autoActive">
+
+                        Auto ({{ autoRows }})
+
+                    </option>
+
+                }
 
                 @for (size of pageSizeOptions; track size)
                 {
@@ -244,4 +257,4 @@
     </div>
 
 
-</div>
+</div>
