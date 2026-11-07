@@ -982,13 +982,14 @@ implements OnInit, OnDestroy
                         {
                             this.stopPolling();
 
+                            // popup closed : tell, and show the record
+                            // (open : Close goes back to the list)
                             if (!this.liveOpen)
                             {
                                 this.announce(progress);
-                            }
 
-                            // the record : result + full log
-                            this.load();
+                                this.load();
+                            }
                         }
 
                         this.cdr.detectChanges();
