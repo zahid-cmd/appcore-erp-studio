@@ -38,7 +38,13 @@ import
     NameTransferQuote,
     SaveOpeningFile,
     SetCustomerFileStatus,
-    SaveNameTransfer
+    SaveNameTransfer,
+    CustomerFileFeeStatus,
+    CustomerFileStatusResult,
+    CustodyQuote,
+    NameTransferSaved,
+    CollectCustomerFileFees,
+    CollectCustomerFileFeesResult
 }
 from '../models/customer-files.model';
 
@@ -137,7 +143,8 @@ export class CustomerFilesService
                                     FileReadyDate:text(r, 'FileReadyDate').slice(0, 10),
                                     CollectedDate:text(r, 'CollectedDate').slice(0, 10),
                                     Status:(text(r, 'Status') || 'Open') as CustomerFileStatus,
-                                    Remarks:text(r, 'Remarks')
+                                    Remarks:text(r, 'Remarks'),
+                                    PendingTransferNo:text(r, 'PendingTransferNo')
                                 })),
                         Transfers:
                             list(x, 'Transfers').map(
@@ -158,9 +165,40 @@ export class CustomerFilesService
                                     FeeAmount:num(r, 'FeeAmount'),
                                     DocumentCodes:text(r, 'DocumentCodes'),
                                     Remarks:text(r, 'Remarks'),
+                                    Status:text(r, 'Status') || 'Completed',
+                                    FeeNo:text(r, 'FeeNo'),
+                                    FeeStatus:text(r, 'FeeStatus'),
                                     IsLatest:flag(r, 'IsLatest', false)
                                 })),
-                        Today:text(x, 'Today').slice(0, 10)
+                        Fees:
+                            list(x, 'Fees').map(
+                                r =>
+                                ({
+                                    CustomerFileFeeId:num(r, 'CustomerFileFeeId'),
+                                    PublicId:text(r, 'PublicId'),
+                                    FeeNo:text(r, 'FeeNo'),
+                                    CustomerFileId:num(r, 'CustomerFileId'),
+                                    CustomerFilePublicId:text(r, 'CustomerFilePublicId'),
+                                    CustomerFileNo:text(r, 'CustomerFileNo'),
+                                    ChassisNo:text(r, 'ChassisNo'),
+                                    FeeType:text(r, 'FeeType'),
+                                    TransferNo:text(r, 'TransferNo'),
+                                    FeeDate:text(r, 'FeeDate').slice(0, 10),
+                                    CustomerId:num(r, 'CustomerId'),
+                                    CustomerName:text(r, 'CustomerName'),
+                                    Amount:num(r, 'Amount'),
+                                    CustodyUpTo:text(r, 'CustodyUpTo').slice(0, 10),
+                                    Status:(text(r, 'Status') || 'Pending') as CustomerFileFeeStatus,
+                                    BranchId:num(r, 'BranchId'),
+                                    DueVoucherNo:text(r, 'DueVoucherNo'),
+                                    ReceiptVoucherNo:text(r, 'ReceiptVoucherNo'),
+                                    PaidDate:text(r, 'PaidDate').slice(0, 10),
+                                    Remarks:text(r, 'Remarks')
+                                })),
+                        Today:text(x, 'Today').slice(0, 10),
+                        BranchId:num(x, 'BranchId'),
+                        BranchName:text(x, 'BranchName'),
+                        AllowWithoutPayment:flag(x, 'AllowWithoutPayment', false)
                     })
                 )
             );
@@ -215,6 +253,34 @@ export class CustomerFilesService
     }
 
 
+    getCustodyQuote
+    (
+        filePublicId:string,
+        date:string
+    ):
+        Observable<CustodyQuote>
+    {
+        const params =
+            new HttpParams().set('date', date);
+
+        return this.http
+            .get<any>(`${this.apiUrl}/${filePublicId}/custody-quote`, { params })
+            .pipe(
+                map(
+                    x =>
+                    ({
+                        Charge:num(x, 'Charge'),
+                        Covered:num(x, 'Covered'),
+                        Pending:num(x, 'Pending'),
+                        Remaining:num(x, 'Remaining'),
+                        PolicyCode:text(x, 'PolicyCode'),
+                        Message:text(x, 'Message')
+                    })
+                )
+            );
+    }
+
+
     getHistory():
         Observable<any[]>
     {
@@ -244,16 +310,67 @@ export class CustomerFilesService
 
 
     setStatus(publicId: string, body: SetCustomerFileStatus):
-        Observable<void>
+        Observable<CustomerFileStatusResult>
     {
-        return this.http.put<void>(`${this.apiUrl}/${publicId}/status`, body);
+        return this.http
+            .put<any>(`${this.apiUrl}/${publicId}/status`, body)
+            .pipe(
+                map(
+                    x =>
+                    ({
+                        Done:flag(x, 'Done', true),
+                        Message:text(x, 'Message'),
+                        FeeNo:text(x, 'FeeNo')
+                    })
+                )
+            );
     }
 
 
     createNameTransfer(body: SaveNameTransfer):
-        Observable<string>
+        Observable<NameTransferSaved>
     {
-        return this.http.post<string>(`${this.apiUrl}/name-transfers`, body);
+        return this.http
+            .post<any>(`${this.apiUrl}/name-transfers`, body)
+            .pipe(
+                map(
+                    x =>
+                    ({
+                        PublicId:text(x, 'PublicId'),
+                        TransferNo:text(x, 'TransferNo'),
+                        Status:text(x, 'Status'),
+                        FeeNo:text(x, 'FeeNo'),
+                        FeeAmount:num(x, 'FeeAmount'),
+                        DueVoucherNo:text(x, 'DueVoucherNo')
+                    })
+                )
+            );
+    }
+
+
+    collectFees(body: CollectCustomerFileFees):
+        Observable<CollectCustomerFileFeesResult>
+    {
+        return this.http
+            .post<any>(`${this.apiUrl}/fees/collect`, body)
+            .pipe(
+                map(
+                    x =>
+                    ({
+                        ReceiptVoucherPublicId:text(x, 'ReceiptVoucherPublicId'),
+                        ReceiptVoucherNo:text(x, 'ReceiptVoucherNo'),
+                        Amount:num(x, 'Amount'),
+                        CompletedTransfers:list(x, 'CompletedTransfers').map(v => String(v))
+                    })
+                )
+            );
+    }
+
+
+    cancelFee(publicId: string):
+        Observable<void>
+    {
+        return this.http.delete<void>(`${this.apiUrl}/fees/${publicId}`);
     }
 
 

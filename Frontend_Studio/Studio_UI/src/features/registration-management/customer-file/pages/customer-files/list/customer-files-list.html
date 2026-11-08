@@ -129,7 +129,24 @@
                         </div>
                     }
 
-                    @if (!isFees && branchFilterItems.length > 2)
+                    @if (isFees)
+                    {
+                        <div class="cf-filter">
+
+                            <app-dropdown
+
+                                [items]="feeStatusFilterItems"
+
+                                [value]="feeStatusFilter"
+
+                                (valueChange)="onFeeStatusFilter($event)">
+
+                            </app-dropdown>
+
+                        </div>
+                    }
+
+                    @if (branchFilterItems.length > 2)
                     {
                         <div class="cf-filter">
 
@@ -148,7 +165,7 @@
 
                     <span class="cf-count">
 
-                        <i [class]="isTransfer ? 'fas fa-people-arrows' : 'fas fa-folder-open'"></i>
+                        <i [class]="isTransfer ? 'fas fa-people-arrows' : isFees ? 'fas fa-receipt' : 'fas fa-folder-open'"></i>
 
                         {{ viewCount }}
 
@@ -165,26 +182,7 @@
 
                 <div canvasBody>
 
-                    @if (isFees)
-                    {
-                        <div class="cf-placeholder">
-
-                            <i class="fas fa-cash-register"></i>
-
-                            <b>Fees Collection</b>
-
-                            <span>
-                                Name transfer fees and custody charges will be collected here through the Payment Desk,
-                                the same way as the Receipt Voucher, posting to Customer File Income (GLR-009-002-001-00002).
-                            </span>
-
-                            <span class="cf-placeholder-note">Coming in the next stage.</span>
-
-                        </div>
-                    }
-                    @else
-                    {
-                        <app-list-table
+                    <app-list-table
 
                             [columns]="columns"
 
@@ -209,7 +207,6 @@
                             (sortChange)="onSort($event)">
 
                         </app-list-table>
-                    }
 
                 </div>
 
@@ -255,6 +252,32 @@
                     <span class="ics-summary-item">
                         <span class="ics-summary-label">Cancelled</span>
                         <b class="ics-summary-value ics-bad">{{ summaryText(countOf('Cancelled')) }}</b>
+                    </span>
+
+                    <span class="ics-summary-note">
+                        Showing {{ summaryText(filteredRows.length) }}
+                    </span>
+
+                </div>
+            }
+
+            @if (isFees)
+            {
+                <div class="ics-summary">
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Pending</span>
+                        <b class="ics-summary-value">{{ money(feeTotal('Pending')) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Due</span>
+                        <b class="ics-summary-value ics-bad">{{ money(feeTotal('Due')) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Collected</span>
+                        <b class="ics-summary-value ics-ok">{{ money(feeTotal('Paid')) }}</b>
                     </span>
 
                     <span class="ics-summary-note">
@@ -333,7 +356,99 @@
                              FILE : the file at a glance (view / status)
                         ============================================ -->
 
-                        @if (panelFile && (isView || panelKind === 'status') && panelKind !== 'transfer')
+                        <!-- ===========================================
+                             FEE : view
+                        ============================================ -->
+
+                        @if (panelKind === 'fee' && panelFee)
+                        {
+                            <app-form-section
+
+                                [title]="panelTitle"
+
+                                icon="fas fa-receipt">
+
+                                <dl class="cf-facts">
+
+                                    <dt>Fee No</dt>
+                                    <dd>{{ panelFee.FeeNo }}</dd>
+
+                                    <dt>Status</dt>
+                                    <dd>
+                                        <span class="cf-dot" [style.background]="panelFee.StatusDot"></span>
+                                        {{ panelFee.StatusText }}
+                                    </dd>
+
+                                    <dt>Date</dt>
+                                    <dd>{{ panelFee.DateText }}</dd>
+
+                                    <dt>Fee</dt>
+                                    <dd>{{ panelFee.TypeText }}</dd>
+
+                                    <dt>Amount</dt>
+                                    <dd>{{ panelFee.AmountText }}</dd>
+
+                                    <dt>Customer</dt>
+                                    <dd>{{ panelFee.CustomerName }}</dd>
+
+                                    <dt>File</dt>
+                                    <dd>{{ panelFee.CustomerFileNo }} · {{ panelFee.ChassisNo }}</dd>
+
+                                    @if (panelFee.CustodyUpTo)
+                                    {
+                                        <dt>Collected On</dt>
+                                        <dd>{{ dateLabel(panelFee.CustodyUpTo) }}</dd>
+                                    }
+
+                                    @if (panelFee.DueVoucherNo)
+                                    {
+                                        <dt>Booked as Due</dt>
+                                        <dd>{{ panelFee.DueVoucherNo }}</dd>
+                                    }
+
+                                    @if (panelFee.ReceiptVoucherNo)
+                                    {
+                                        <dt>Collected By</dt>
+                                        <dd>{{ panelFee.ReceiptVoucherNo }} · {{ dateLabel(panelFee.PaidDate) }}</dd>
+                                    }
+
+                                    @if (panelFee.Remarks)
+                                    {
+                                        <dt>Remarks</dt>
+                                        <dd>{{ panelFee.Remarks }}</dd>
+                                    }
+
+                                </dl>
+
+                                <p class="cf-note">
+                                    <i class="fas fa-circle-info"></i>
+                                    @if (panelFee.Status === 'Pending')
+                                    {
+                                        Collect it through the Payment Desk : Dr cash / bank / MFS / POS, Cr Customer File Income.
+                                        @if (panelFee.FeeType === 'NameTransfer')
+                                        {
+                                            The name transfer takes effect when it is collected.
+                                        }
+                                    }
+                                    @else if (panelFee.Status === 'Due')
+                                    {
+                                        Booked as the customer's due : collecting it credits the customer's ledger.
+                                    }
+                                    @else if (panelFee.Status === 'Paid')
+                                    {
+                                        Collected.
+                                    }
+                                    @else
+                                    {
+                                        Cancelled before collection.
+                                    }
+                                </p>
+
+                            </app-form-section>
+                        }
+
+
+                        @if (panelFile && (isView || panelKind === 'status') && panelKind !== 'transfer' && panelKind !== 'fee')
                         {
                             <app-form-section
 
@@ -484,6 +599,51 @@
                                     </app-datepicker>
 
                                 </div>
+
+                                @if (targetStatus === 'Delivered' && (custodyQuote || custodyLoading))
+                                {
+                                    <p
+
+                                        class="cf-note"
+
+                                        [class.cf-note-error]="deliverNeedsCharge">
+
+                                        <i [class]="custodyLoading ? 'fas fa-spinner fa-spin' : deliverNeedsCharge ? 'fas fa-triangle-exclamation' : 'fas fa-circle-check'"></i>
+
+                                        {{ custodyLoading ? 'Working out the custody charge...' : custodyQuote?.Message }}
+
+                                    </p>
+                                }
+
+                                @if (deliverNeedsCharge)
+                                {
+                                    @if (allowWithoutPayment)
+                                    {
+                                        <div class="cf-doc cf-without">
+
+                                            <app-checkbox
+
+                                                label="Deliver without payment (book the charge as the customer's due)"
+
+                                                [value]="withoutPayment"
+
+                                                (valueChange)="onWithoutPaymentChange($event)"
+
+                                                [disabled]="progress.busy">
+
+                                            </app-checkbox>
+
+                                        </div>
+                                    }
+
+                                    @if (!withoutPayment)
+                                    {
+                                        <p class="cf-note">
+                                            <i class="fas fa-cash-register"></i>
+                                            Pressing Delivered raises the charge on Fees Collection; deliver again after it is collected.
+                                        </p>
+                                    }
+                                }
 
                                 <p class="cf-note">
                                     <i class="fas fa-circle-info"></i>
@@ -898,6 +1058,45 @@
 
                                 </div>
 
+                                @if (!isView && transferHasFee)
+                                {
+                                    @if (allowWithoutPayment)
+                                    {
+                                        <div class="cf-doc cf-without">
+
+                                            <app-checkbox
+
+                                                label="Transfer without payment (book the fee as the new owner's due)"
+
+                                                [value]="withoutPayment"
+
+                                                (valueChange)="onWithoutPaymentChange($event)"
+
+                                                [disabled]="progress.busy">
+
+                                            </app-checkbox>
+
+                                        </div>
+                                    }
+
+                                    @if (!withoutPayment)
+                                    {
+                                        <p class="cf-note">
+                                            <i class="fas fa-cash-register"></i>
+                                            Saved as Fee Pending : the new owner takes the file when the fee is collected on Fees Collection.
+                                        </p>
+                                    }
+                                }
+
+                                @if (isView && panelTransfer)
+                                {
+                                    <p class="cf-note">
+                                        <i class="fas fa-circle-info"></i>
+                                        {{ panelTransfer.StatusText }}
+                                        @if (panelTransfer.FeeNo) { · fee {{ panelTransfer.FeeNo }} ({{ panelTransfer.FeeStatus }}) }
+                                    </p>
+                                }
+
                                 <p class="cf-note">
                                     <i class="fas fa-circle-info"></i>
                                     The new owner gets the file; documents printed in the old owner's name can no longer be printed. Add a new customer in Customer Profiles first.
@@ -1003,7 +1202,7 @@
 
                         [command1Icon]="saveIcon"
 
-                        [command1Visible]="!isView"
+                        [command1Visible]="saveVisible"
 
                         (command1Click)="save()"
 
@@ -1032,6 +1231,439 @@
         </aside>
 
     </div>
+
+
+    <!-- =====================================================
+         COLLECT : PAYMENT DESK MODAL (as the Sales Invoice
+         checkout). Header : fee, amount, verified progress, X.
+         Body : receipt rows + app-payment-desk (Check / MFS / POS
+         details). Footer : note, Close, Collect.
+    ====================================================== -->
+
+    @if (collectOpen && collectFee)
+    {
+        <div class="cfm-backdrop">
+
+            <div
+
+                class="cfm-modal"
+
+                role="dialog"
+
+                aria-modal="true"
+
+                aria-labelledby="cfm-title">
+
+
+                <!-- Header -->
+
+                <div class="cfm-head">
+
+                    <span class="cfm-icon">
+
+                        <i class="fas fa-cash-register"></i>
+
+                    </span>
+
+                    <div class="cfm-title">
+
+                        <strong id="cfm-title">Collect {{ collectFee.FeeNo }}</strong>
+
+                        <span>
+
+                            {{ collectFee.TypeText }} · {{ collectFee.CustomerFileNo }} · {{ collectFee.CustomerName }}
+
+                        </span>
+
+                        <span>
+
+                            Fee <b>{{ money(collectAmount) }}</b>
+
+                            · Received <b class="cfm-emerald">{{ money(deskTotal) }}</b>
+
+                            · Balance <b [class.cfm-rose]="deskRemaining > 0">{{ money(deskRemaining) }}</b>
+
+                            @if (collectFee.Status === 'Due') { · credited to the customer's ledger }
+
+                        </span>
+
+                    </div>
+
+                    @if (deskRowCount > 0)
+                    {
+                        <div
+
+                            class="cfm-progress"
+
+                            [class.cfm-progress-done]="deskAllVerified">
+
+                            <span class="cfm-progress-text">
+
+                                <i [class]="deskAllVerified ? 'fa-regular fa-circle-check' : 'fas fa-list-check'"></i>
+
+                                {{ deskVerifiedCount }} / {{ deskRowCount }} verified
+
+                            </span>
+
+                            <span class="cfm-track">
+
+                                <span
+
+                                    class="cfm-bar"
+
+                                    [style.width.%]="deskProgress">
+
+                                </span>
+
+                            </span>
+
+                        </div>
+                    }
+
+                    <button
+
+                        type="button"
+
+                        class="cfm-x"
+
+                        title="Close"
+
+                        aria-label="Close"
+
+                        (click)="onDeskClose()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Body -->
+
+                <div class="cfm-body">
+
+                    <div class="cfm-entry">
+
+                        <app-dropdown
+
+                            label="Receipt Mode"
+
+                            placeholder="Select mode"
+
+                            [items]="deskModeItems"
+
+                            [value]="deskMode"
+
+                            (valueChange)="onDeskModeChange($event)">
+
+                        </app-dropdown>
+
+                        <app-search-dropdown
+
+                            label="Account"
+
+                            [placeholder]="deskLedgerPlaceholder"
+
+                            [items]="deskLedgerItems"
+
+                            [value]="deskLedgerCode || null"
+
+                            [disabled]="!deskMode || deskLedgerItems.length === 0"
+
+                            (valueChange)="onDeskLedgerChange($event)">
+
+                        </app-search-dropdown>
+
+                        <app-textbox
+
+                            label="Amount"
+
+                            placeholder="0.00"
+
+                            inputMode="decimal"
+
+                            textCase="none"
+
+                            [value]="deskAmountText"
+
+                            (valueChange)="onDeskAmountChange($event)"
+
+                            (enterPressed)="addDeskRow()">
+
+                        </app-textbox>
+
+                        <button
+
+                            type="button"
+
+                            class="cfm-add"
+
+                            [disabled]="deskRemaining <= 0 || progress.busy"
+
+                            (click)="addDeskRow()">
+
+                            <i class="fas fa-plus"></i>
+
+                            Add
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- Receipt rows : three rows, scrolls inside -->
+
+                    <div class="cfm-scroll appcore-scrollbar">
+
+                        <table class="cfm-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th class="cfm-c cfm-col-sl">SL</th>
+
+                                    <th class="cfm-col-mode">Mode</th>
+
+                                    <th>Account</th>
+
+                                    <th class="cfm-r cfm-col-money">Amount</th>
+
+                                    <th class="cfm-r cfm-col-money">Charge</th>
+
+                                    <th class="cfm-col-state">State</th>
+
+                                    <th class="cfm-c cfm-col-action"></th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                @for (row of deskRows; track $index; let i = $index)
+                                {
+                                    <tr>
+
+                                        <td class="cfm-c cfm-sl">{{ i + 1 }}</td>
+
+                                        <td>{{ row.Mode }}</td>
+
+                                        <td>
+
+                                            <div class="cfm-part">{{ row.LedgerName }}</div>
+
+                                            <div class="cfm-sub">{{ row.LedgerCode }}</div>
+
+                                        </td>
+
+                                        <td class="cfm-r">{{ money(row.Amount) }}</td>
+
+                                        <td class="cfm-r">
+
+                                            @if (row.ChargeAmount > 0)
+                                            {
+                                                {{ money(row.ChargeAmount) }}
+
+                                                <div class="cfm-sub">{{ row.ChargeBorneBy === 'Customer' ? 'customer, on top' : 'company' }}</div>
+                                            }
+                                            @else
+                                            {
+                                                <span class="cfm-muted">-</span>
+                                            }
+
+                                        </td>
+
+                                        <td>
+
+                                            <span
+
+                                                [class.cfm-emerald]="deskRowReady(row)"
+
+                                                [class.cfm-amber]="!deskRowReady(row)">
+
+                                                <i [class]="deskRowReady(row) ? 'fa-regular fa-circle-check' : 'fas fa-pen'"></i>
+
+                                                {{ deskRowState(row) }}
+
+                                            </span>
+
+                                        </td>
+
+                                        <td class="cfm-c">
+
+                                            <button
+
+                                                type="button"
+
+                                                class="cfm-remove"
+
+                                                title="Remove payment"
+
+                                                aria-label="Remove payment"
+
+                                                [disabled]="progress.busy"
+
+                                                (click)="removeDeskRow(i)">
+
+                                                <i class="fa-regular fa-trash-can"></i>
+
+                                            </button>
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                                @if (deskRows.length === 0)
+                                {
+                                    <tr>
+
+                                        <td
+
+                                            class="cfm-empty"
+
+                                            colspan="7">
+
+                                            No payment yet.
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    @if (deskNeedsDetails)
+                    {
+                        <div class="cfm-details appcore-scrollbar">
+
+                            <app-payment-desk
+
+                                kind="receipt"
+
+                                [readonly]="progress.busy"
+
+                                [lines]="deskInput"
+
+                                (linesChange)="onDeskChange($event)"
+
+                                (validChange)="onDeskValidChange($event)">
+
+                            </app-payment-desk>
+
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- Footer -->
+
+                <div
+
+                    class="cfm-foot"
+
+                    [class.cfm-foot-confirm]="deskConfirmClose">
+
+                    @if (deskConfirmClose)
+                    {
+                        <span class="cfm-note cfm-amber">
+
+                            <i class="fas fa-triangle-exclamation"></i>
+
+                            Discard the payment entered?
+
+                        </span>
+
+                        <button
+
+                            type="button"
+
+                            class="cfm-btn cfm-btn-light"
+
+                            (click)="onDeskKeepEditing()">
+
+                            <i class="fas fa-pen"></i>
+
+                            Keep Editing
+
+                        </button>
+
+                        <button
+
+                            type="button"
+
+                            class="cfm-btn cfm-btn-danger"
+
+                            (click)="onDeskDiscard()">
+
+                            <i class="fa-regular fa-trash-can"></i>
+
+                            Discard
+
+                        </button>
+                    }
+                    @else
+                    {
+                        <span
+
+                            class="cfm-note"
+
+                            [class.cfm-rose]="!!deskError"
+
+                            [class.cfm-emerald]="!deskError && canCollect">
+
+                            <i [class]="deskError ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                            {{ deskError || deskFooterNote }}
+
+                        </span>
+
+                        <button
+
+                            type="button"
+
+                            class="cfm-btn cfm-btn-light"
+
+                            [disabled]="progress.busy"
+
+                            (click)="onDeskClose()">
+
+                            <i class="fas fa-xmark"></i>
+
+                            Close
+
+                        </button>
+
+                        <button
+
+                            type="button"
+
+                            class="cfm-btn cfm-btn-primary"
+
+                            [disabled]="!canCollect"
+
+                            (click)="collect()">
+
+                            <i class="fas fa-cash-register"></i>
+
+                            Collect
+
+                        </button>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    }
 
 
     <app-history-drawer

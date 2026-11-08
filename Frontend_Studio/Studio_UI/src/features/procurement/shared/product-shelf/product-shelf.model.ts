@@ -56,6 +56,11 @@ export interface ShelfProduct
     imageUrl:
         string;
 
+    // Colour of the item (motor bikes); left out = read from the
+    // last part of the name ("... - A09 - Black")
+    colorName?:
+        string;
+
     // "Last DP 333.33 · POSP-…-00002" / "No order from this supplier yet"
     lastText:
         string;

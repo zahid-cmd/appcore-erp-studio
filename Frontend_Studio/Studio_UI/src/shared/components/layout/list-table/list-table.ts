@@ -104,6 +104,12 @@ export interface ListTableColumn
   // Image cells : a big round number at the top left of the
   // hover preview (e.g. the stock), value = row[previewBadgeField]
   previewBadgeField?: string;
+  // Image cells : a colour tag at the top right of the hover
+  // preview (swatch + name) and a colour bar under the picture;
+  // name = row[previewColorField], swatch = a CSS colour in
+  // row[previewColorSwatchField] (empty = grey dot)
+  previewColorField?: string;
+  previewColorSwatchField?: string;
   // Page canvas across monitors : which columns give way when
   // the table is narrow. 1 (or none) = always shown, 2 = hidden
   // under 900px of table width, 3 = hidden under 1200px.
@@ -881,6 +887,11 @@ private readonly navigationContextSubscription =
 
   previewImageBadge = '';
 
+  // Colour tag of the preview (name + CSS colour)
+  previewImageColor = '';
+
+  previewImageSwatch = '';
+
   previewImageX = 0;
 
   previewImageY = 0;
@@ -911,6 +922,21 @@ private readonly navigationContextSubscription =
       column?.previewBadgeField
         ? String(row?.[column.previewBadgeField] ?? '')
         : '';
+
+    this.previewImageColor =
+      column?.previewColorField
+        ? String(row?.[column.previewColorField] ?? '').trim()
+        : '';
+
+    this.previewImageSwatch =
+      column?.previewColorSwatchField
+        ? String(row?.[column.previewColorSwatchField] ?? '').trim()
+        : '';
+
+    if (this.previewImageColor === '—' || this.previewImageColor === '-')
+    {
+      this.previewImageColor = '';
+    }
 
     this.previewImageDetails =
       (column?.previewDetails ?? [])

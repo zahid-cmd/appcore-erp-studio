@@ -1964,6 +1964,13 @@ public class AppDbContext
     set;
     } = null!;
 
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.CustomerFile.CustomerFileFees>
+    CustomerFileFeeRows
+    {
+    get;
+    set;
+    } = null!;
+
     // Warranty Configuration : warranty parts, policies,
     // coverages (MANUAL : hand-written page)
 

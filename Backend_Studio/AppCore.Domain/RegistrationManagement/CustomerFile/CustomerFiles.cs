@@ -112,6 +112,77 @@ public class CustomerFileNameTransfers
     // "NTD-001,NTD-003"
     public string DocumentCodes { get; set; } = string.Empty;
 
+    // FeePending (waits for its fee; the file is not changed yet) /
+    // Completed (the new owner holds the file)
+    public string Status { get; set; } = "Completed";
+
+    public string Remarks { get; set; } = string.Empty;
+
+    public bool IsDeleted { get; set; }
+
+    public long? DeletedBy { get; set; }
+
+    public DateTime? DeletedDate { get; set; }
+
+    public long CreatedBy { get; set; }
+
+    public DateTime CreatedDate { get; set; }
+
+    public long? ModifiedBy { get; set; }
+
+    public DateTime? ModifiedDate { get; set; }
+}
+
+
+//===============================================================
+// Fees of a file : a name transfer fee or a custody charge,
+// collected on the Fees Collection tab (Receipt Voucher through
+// the Payment Desk). Table made by CustomerFileFees_Tables.sql.
+//===============================================================
+
+public class CustomerFileFees
+{
+    public long CustomerFileFeeId { get; set; }
+
+    public Guid PublicId { get; set; }
+
+    // CFF-000001
+    public string FeeNo { get; set; } = string.Empty;
+
+    public long CustomerFileId { get; set; }
+
+    // NameTransfer / Custody
+    public string FeeType { get; set; } = string.Empty;
+
+    public long? NameTransferId { get; set; }
+
+    public DateOnly FeeDate { get; set; }
+
+    // The customer who pays (Customer Profiles)
+    public long CustomerId { get; set; }
+
+    public decimal Amount { get; set; }
+
+    // Custody : the collected date the charge was worked out for
+    public DateOnly? CustodyUpTo { get; set; }
+
+    // Pending / Due / Paid / Cancelled
+    public string Status { get; set; } = string.Empty;
+
+    public long BranchId { get; set; }
+
+    // Due : the Journal Voucher that booked it
+    public long? DueVoucherId { get; set; }
+
+    public string DueVoucherNo { get; set; } = string.Empty;
+
+    // Paid : the Receipt Voucher that collected it
+    public long? ReceiptVoucherId { get; set; }
+
+    public string ReceiptVoucherNo { get; set; } = string.Empty;
+
+    public DateOnly? PaidDate { get; set; }
+
     public string Remarks { get; set; } = string.Empty;
 
     public bool IsDeleted { get; set; }

@@ -774,9 +774,26 @@
                 {{ previewImageBadge }}
             </span>
 
+            <!-- Colour tag (swatch + name) -->
+            <span
+                class="list-table-image-preview-color"
+                *ngIf="previewImageColor">
+                <i
+                    class="list-table-image-preview-color-dot"
+                    [style.background]="previewImageSwatch || '#94a3b8'"></i>
+                {{ previewImageColor }}
+            </span>
+
             <img
                 [src]="previewImageSrc"
                 alt="Preview">
+
+            <!-- Colour bar under the picture -->
+            <span
+                class="list-table-image-preview-color-bar"
+                *ngIf="previewImageColor"
+                [style.background]="previewImageSwatch || '#94a3b8'">
+            </span>
 
         </div>
 

@@ -1178,6 +1178,16 @@ public class JournalVoucherRepository : IJournalVoucherRepository
         Func<Task> work
     )
     {
+        // Inside the caller's transaction (another document posts
+        // its journal with it : Customer Files fee dues) : the
+        // caller commits or rolls back
+        if (_context.Database.CurrentTransaction != null)
+        {
+            await work();
+
+            return;
+        }
+
         await using IDbContextTransaction transaction =
             await _context.Database.BeginTransactionAsync();
 
@@ -1247,6 +1257,95 @@ public class JournalVoucherRepository : IJournalVoucherRepository
                     input);
 
                 AddHistory(entity, "Create", "Created", userId, entity.CreatedDate);
+
+                await _context.SaveChangesAsync();
+            });
+
+        return new JournalVoucherSavedDto
+        {
+            JournalVoucherId = entity.JournalVoucherId,
+            PublicId = entity.PublicId,
+            VoucherNo = entity.VoucherNo
+        };
+    }
+
+
+    //===========================================================
+    // Create a journal of another document and post it at once
+    // (Draft -> Approved -> Posted in one go, same checks and
+    // posting as the JV page; the JV page's date window is not
+    // applied). referenceNo = the document number (history).
+    // Runs in the caller's transaction when there is one.
+    // Used by Customer Files (a fee booked as the customer's due).
+    //===========================================================
+
+    public async Task<JournalVoucherSavedDto>
+        CreatePostedAsync
+        (
+            CreateJournalVoucherDto dto,
+            string referenceNo,
+            long userId
+        )
+    {
+        JvInput input =
+            await NormalizeAsync(dto);
+
+        DateTime now =
+            DateTime.UtcNow;
+
+        JournalVoucher entity =
+            new()
+            {
+                Status = VoucherStatuses.Draft,
+                CancelReason = string.Empty,
+                IsDeleted = false,
+                CreatedBy = userId,
+                CreatedDate = now
+            };
+
+        ApplyHeader(entity, input);
+
+        await InTransactionAsync(
+            async () =>
+            {
+                VoucherNumberDto number =
+                    await _numberService.NextAsync(
+                        VoucherTypes.Journal,
+                        input.Period.BranchId,
+                        input.VoucherDate);
+
+                entity.VoucherNo =
+                    number.VoucherNo;
+
+                _context.Set<JournalVoucher>().Add(entity);
+
+                await _context.SaveChangesAsync();
+
+                await ReplaceDetailsAsync(
+                    entity.JournalVoucherId,
+                    input);
+
+                string reference =
+                    (referenceNo ?? string.Empty).Trim();
+
+                if (reference.Length > 100)
+                {
+                    reference = reference.Substring(0, 100);
+                }
+
+                AddHistory(entity, "Create", "Created", userId, now, $"Reference : {reference}.");
+
+                await _context.SaveChangesAsync();
+
+                entity.Status = VoucherStatuses.Approved;
+
+                entity.ApprovedBy = userId;
+
+                entity.ApprovedDate = now;
+
+                AddHistory(entity, "Approve", "Approved", userId, now);
+
+                await PostCoreAsync(entity, userId);
 
                 await _context.SaveChangesAsync();
             });

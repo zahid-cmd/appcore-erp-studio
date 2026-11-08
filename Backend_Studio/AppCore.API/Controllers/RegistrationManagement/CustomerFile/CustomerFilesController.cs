@@ -26,10 +26,13 @@ namespace AppCore.Api.Controllers.RegistrationManagement.CustomerFile;
 //   GET    history                            page history
 //   GET    history/{customerFileId}           one file's history
 //   GET    {publicId}/transfer-quote?date=    policy in force
+//   GET    {publicId}/custody-quote?date=     custody charge
 //
 //   POST   opening-files                      PUT opening-files/{publicId}
-//   PUT    {publicId}/status                  { Status, Date }
+//   PUT    {publicId}/status                  { Status, Date, WithoutPayment }
 //   POST   name-transfers                     DELETE name-transfers/{publicId}
+//   POST   fees/collect                       Receipt Voucher (Payment Desk)
+//   DELETE fees/{publicId}                    cancel a pending fee
 //
 // Errors : { message } with 400 (input or rule broken), 403 (no
 // permission), 404 (not found), 409 (cancel refused), 500 (with
@@ -164,7 +167,7 @@ public class CustomerFilesController
     public Task<IActionResult> GetAll()
     {
         return Run(
-            async () => Ok(await _repository.GetAllAsync()),
+            async () => Ok(await _repository.GetAllAsync(BranchId)),
             "Customer files could not be loaded.");
     }
 
@@ -193,6 +196,15 @@ public class CustomerFilesController
         return Run(
             async () => Ok(await _activityHistoryRepository.GetHistoryAsync("Registration Management", "CustomerFile", customerFileId)),
             "Customer file history could not be loaded.");
+    }
+
+
+    [HttpGet("{publicId:guid}/custody-quote")]
+    public Task<IActionResult> GetCustodyQuote(Guid publicId, [FromQuery] string? date)
+    {
+        return Run(
+            async () => Ok(await _repository.GetCustodyQuoteAsync(publicId, date)),
+            "The custody charge could not be worked out.");
     }
 
 
@@ -246,14 +258,11 @@ public class CustomerFilesController
     {
         long userId = UserId;
 
+        long branchId = BranchId;
+
         return Guarded(
             "Update",
-            async () =>
-            {
-                await _repository.SetStatusAsync(publicId, dto ?? new SetCustomerFileStatusDto(), userId);
-
-                return NoContent();
-            },
+            async () => Ok(await _repository.SetStatusAsync(publicId, dto ?? new SetCustomerFileStatusDto(), branchId, userId)),
             "The status could not be changed.");
     }
 
@@ -268,9 +277,11 @@ public class CustomerFilesController
     {
         long userId = UserId;
 
+        long branchId = BranchId;
+
         return Guarded(
             "Add",
-            async () => Ok(await _repository.CreateNameTransferAsync(dto ?? new SaveNameTransferDto(), userId)),
+            async () => Ok(await _repository.CreateNameTransferAsync(dto ?? new SaveNameTransferDto(), branchId, userId)),
             "The name transfer could not be saved.");
     }
 
@@ -289,6 +300,43 @@ public class CustomerFilesController
                 return NoContent();
             },
             "The name transfer could not be cancelled.",
+            StatusCodes.Status409Conflict);
+    }
+
+
+
+    //===========================================================
+    // Fees Collection
+    //===========================================================
+
+    [HttpPost("fees/collect")]
+    public Task<IActionResult> CollectFees([FromBody] CollectCustomerFileFeesDto? dto)
+    {
+        long userId = UserId;
+
+        long branchId = BranchId;
+
+        return Guarded(
+            "Add",
+            async () => Ok(await _repository.CollectFeesAsync(dto ?? new CollectCustomerFileFeesDto(), branchId, userId)),
+            "The fee could not be collected.");
+    }
+
+
+    [HttpDelete("fees/{publicId:guid}")]
+    public Task<IActionResult> CancelFee(Guid publicId)
+    {
+        long userId = UserId;
+
+        return Guarded(
+            "Delete",
+            async () =>
+            {
+                await _repository.CancelFeeAsync(publicId, userId);
+
+                return NoContent();
+            },
+            "The fee could not be cancelled.",
             StatusCodes.Status409Conflict);
     }
 }

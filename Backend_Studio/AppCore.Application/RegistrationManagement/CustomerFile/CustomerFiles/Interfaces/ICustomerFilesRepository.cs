@@ -14,7 +14,7 @@ namespace AppCore.Application.RegistrationManagement.CustomerFile;
 
 public interface ICustomerFilesRepository
 {
-    Task<CustomerFilesPageDto> GetAllAsync();
+    Task<CustomerFilesPageDto> GetAllAsync(long branchId);
 
     Task<CustomerFilesDefaultsDto> GetDefaultsAsync();
 
@@ -27,13 +27,26 @@ public interface ICustomerFilesRepository
 
     Task UpdateOpeningFileAsync(Guid publicId, SaveOpeningFileDto dto, long userId);
 
-    // Open / ReadyForDelivery / Delivered / Cancelled
-    Task SetStatusAsync(Guid publicId, SetCustomerFileStatusDto dto, long userId);
+    // Open / ReadyForDelivery / Delivered / Cancelled. Delivered
+    // with an unpaid custody charge raises the charge (Pending)
+    // and returns Done = false, unless WithoutPayment.
+    Task<CustomerFileStatusResultDto> SetStatusAsync(Guid publicId, SetCustomerFileStatusDto dto, long branchId, long userId);
+
+    // Custody charge if the file is collected on this date
+    Task<CustodyQuoteDto> GetCustodyQuoteAsync(Guid filePublicId, string? date);
 
 
-    // Name transfers
-    Task<Guid> CreateNameTransferAsync(SaveNameTransferDto dto, long userId);
+    // Name transfers (FeePending until the fee is collected)
+    Task<NameTransferSavedDto> CreateNameTransferAsync(SaveNameTransferDto dto, long branchId, long userId);
 
-    // Only the latest transfer of an Open file
+    // The latest transfer of an Open file (a pending one with its
+    // fee; a completed one only when its fee is not paid / due)
     Task CancelNameTransferAsync(Guid publicId, long userId);
+
+
+    // Fees Collection
+    Task<CollectCustomerFileFeesResultDto> CollectFeesAsync(CollectCustomerFileFeesDto dto, long branchId, long userId);
+
+    // A Pending fee (a name transfer fee cancels its transfer)
+    Task CancelFeeAsync(Guid publicId, long userId);
 }

@@ -175,6 +175,26 @@
                                         <i [class]="'fas ' + options.icon"></i>
                                     }
 
+                                    <!-- Top left : the colour (swatch + name),
+                                         and a colour bar under the picture -->
+                                    @if (colorOf(item); as color)
+                                    {
+                                        <span
+                                            class="ps-color"
+                                            [title]="'Colour : ' + color.name">
+                                            <i
+                                                class="ps-color-dot"
+                                                [class.ps-color-dot-light]="color.light"
+                                                [style.background]="color.hex"></i>
+                                            {{ color.name }}
+                                        </span>
+
+                                        <span
+                                            class="ps-color-bar"
+                                            [style.background]="color.hex">
+                                        </span>
+                                    }
+
                                     <!-- Top right : on the record already (green,
                                          with its quantity) / picked now (blue) -->
                                     @if (item.inOrderQty > 0)

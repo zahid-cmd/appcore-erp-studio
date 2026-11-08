@@ -117,6 +117,60 @@ public class CustomerFileNameTransfersConfiguration
 
         builder.Property(x => x.DocumentCodes).IsRequired().HasMaxLength(500);
 
+        builder.Property(x => x.Status).IsRequired().HasMaxLength(20);
+
+        builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
+
+        builder.Property(x => x.IsDeleted).IsRequired();
+
+        builder.Property(x => x.CreatedBy).IsRequired();
+
+        builder.Property(x => x.CreatedDate).IsRequired();
+    }
+}
+
+
+public class CustomerFileFeesConfiguration
+    : IEntityTypeConfiguration<CustomerFileFees>
+{
+    public void Configure(EntityTypeBuilder<CustomerFileFees> builder)
+    {
+        builder.ToTable("CustomerFileFees");
+
+        builder.HasKey(x => x.CustomerFileFeeId);
+
+        builder.Property(x => x.CustomerFileFeeId).ValueGeneratedOnAdd();
+
+        builder.Property(x => x.PublicId).HasDefaultValueSql("uuidv7()").ValueGeneratedOnAdd();
+
+        builder.HasIndex(x => x.PublicId).IsUnique().HasDatabaseName("UX_CustomerFileFees_PublicId");
+
+        builder.Property(x => x.FeeNo).IsRequired().HasMaxLength(20);
+
+        builder.HasIndex(x => x.FeeNo).IsUnique().HasDatabaseName("UX_CustomerFileFees_No");
+
+        builder.Property(x => x.CustomerFileId).IsRequired();
+
+        builder.Property(x => x.FeeType).IsRequired().HasMaxLength(20);
+
+        builder.Property(x => x.FeeDate).IsRequired().HasColumnType("date");
+
+        builder.Property(x => x.CustomerId).IsRequired();
+
+        builder.Property(x => x.Amount).IsRequired().HasPrecision(18, 2);
+
+        builder.Property(x => x.CustodyUpTo).HasColumnType("date");
+
+        builder.Property(x => x.Status).IsRequired().HasMaxLength(20);
+
+        builder.Property(x => x.BranchId).IsRequired();
+
+        builder.Property(x => x.DueVoucherNo).IsRequired().HasMaxLength(40);
+
+        builder.Property(x => x.ReceiptVoucherNo).IsRequired().HasMaxLength(40);
+
+        builder.Property(x => x.PaidDate).HasColumnType("date");
+
         builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
 
         builder.Property(x => x.IsDeleted).IsRequired();

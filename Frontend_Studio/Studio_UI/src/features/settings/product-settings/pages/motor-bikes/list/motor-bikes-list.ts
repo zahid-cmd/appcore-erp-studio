@@ -69,6 +69,13 @@ extends MotorBikes
 {
     ImageUrl:
         string;
+
+    // Colour column : name + swatch (CSS colour, '' = no dot)
+    ColorText:
+        string;
+
+    ColorSwatch:
+        string;
 }
 
 
@@ -626,6 +633,21 @@ implements OnInit, OnDestroy
         },
 
         {
+            header:'Colour',
+
+            field:'ColorText',
+
+            // Swatch dot before the name
+            dotField:'ColorSwatch',
+
+            sortable:false,
+
+            width:'140px',
+
+            align:'left'
+        },
+
+        {
             header:'Re-order',
 
             field:'ReorderLevel',
@@ -662,6 +684,11 @@ implements OnInit, OnDestroy
 
             // Hover preview header : name + the three stock levels
             previewTitleField:'ProductName',
+
+            // Colour tag on the picture (as the Product Shelf)
+            previewColorField:'ColorText',
+
+            previewColorSwatchField:'ColorSwatch',
 
             previewDetails:
             [
@@ -1252,6 +1279,14 @@ implements OnInit, OnDestroy
             ImageUrl:
                 this.motorBikesService.getImageUrl(
                     motorBike.ImagePath
+                ),
+
+            ColorText:
+                motorBike.ColorName || '—',
+
+            ColorSwatch:
+                this.cssColor(
+                    motorBike.ColorName ?? ''
                 )
         };
     }

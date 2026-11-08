@@ -80,14 +80,25 @@ public interface IJournalVoucherRepository
 
 
     //===========================================================
+    // Journal of another document (Customer Files : a fee booked
+    // as the customer's due) : saves, approves and posts at once;
+    // runs in the caller's transaction when there is one
+    //===========================================================
+
+    Task<JournalVoucherSavedDto> CreatePostedAsync(
+        CreateJournalVoucherDto dto,
+        string referenceNo,
+        long userId);
+
+
+    //===========================================================
     // Exists
     //===========================================================
 
     Task<bool> ExistsAsync(
         long id);
 
-
     // Public Id -> internal id (live rows only; null = not found)
     Task<long?> GetIdByPublicIdAsync(
         Guid publicId);
-}
+}

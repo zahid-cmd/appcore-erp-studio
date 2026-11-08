@@ -7,7 +7,9 @@
                      CF-OPEN-0001; invoice files come from
                      Sales Invoice - MB : <invoice no>/<line>)
      Name Transfer   transfers before registration
-     Fees Collection fees through the Payment Desk (next stage)
+     Fees Collection name transfer fees and custody charges,
+                     collected through the Payment Desk (one
+                     Receipt Voucher per collection)
 ============================================================ */
 
 export type CustomerFilesTab =
@@ -77,6 +79,8 @@ export interface CustomerFile
     CollectedDate:string;
     Status:CustomerFileStatus;
     Remarks:string;
+    // A transfer waiting for its fee
+    PendingTransferNo:string;
 }
 
 
@@ -98,7 +102,54 @@ export interface CustomerFileTransfer
     // 'NTD-001,NTD-003'
     DocumentCodes:string;
     Remarks:string;
+    // FeePending / Completed
+    Status:string;
+    FeeNo:string;
+    FeeStatus:string;
     IsLatest:boolean;
+}
+
+
+export type CustomerFileFeeStatus =
+    | 'Pending'
+    | 'Due'
+    | 'Paid'
+    | 'Cancelled';
+
+
+export const CUSTOMER_FILE_FEE_DOTS:
+    Record<CustomerFileFeeStatus, string> =
+{
+    Pending:'#d97706',
+    Due:'#be123c',
+    Paid:'#16a34a',
+    Cancelled:'#94a3b8'
+};
+
+
+export interface CustomerFileFee
+{
+    CustomerFileFeeId:number;
+    PublicId:string;
+    FeeNo:string;
+    CustomerFileId:number;
+    CustomerFilePublicId:string;
+    CustomerFileNo:string;
+    ChassisNo:string;
+    // NameTransfer / Custody
+    FeeType:string;
+    TransferNo:string;
+    FeeDate:string;
+    CustomerId:number;
+    CustomerName:string;
+    Amount:number;
+    CustodyUpTo:string;
+    Status:CustomerFileFeeStatus;
+    BranchId:number;
+    DueVoucherNo:string;
+    ReceiptVoucherNo:string;
+    PaidDate:string;
+    Remarks:string;
 }
 
 
@@ -106,7 +157,12 @@ export interface CustomerFilesPage
 {
     Files:CustomerFile[];
     Transfers:CustomerFileTransfer[];
+    Fees:CustomerFileFee[];
     Today:string;
+    BranchId:number;
+    BranchName:string;
+    // Switch CFG-MOD-011-0101 : transfer / deliver before payment
+    AllowWithoutPayment:boolean;
 }
 
 
@@ -162,6 +218,56 @@ export interface SetCustomerFileStatus
     Status:CustomerFileStatus;
     // yyyy-MM-dd (ready / collected date)
     Date:string;
+    WithoutPayment:boolean;
+}
+
+
+export interface CustomerFileStatusResult
+{
+    Done:boolean;
+    Message:string;
+    FeeNo:string;
+}
+
+
+export interface CustodyQuote
+{
+    Charge:number;
+    Covered:number;
+    Pending:number;
+    Remaining:number;
+    PolicyCode:string;
+    Message:string;
+}
+
+
+export interface NameTransferSaved
+{
+    PublicId:string;
+    TransferNo:string;
+    Status:string;
+    FeeNo:string;
+    FeeAmount:number;
+    DueVoucherNo:string;
+}
+
+
+export interface CollectCustomerFileFees
+{
+    FeePublicIds:string[];
+    Date:string;
+    Narration:string;
+    // Payment Desk rows (Receipt Voucher debits)
+    Debits:any[];
+}
+
+
+export interface CollectCustomerFileFeesResult
+{
+    ReceiptVoucherPublicId:string;
+    ReceiptVoucherNo:string;
+    Amount:number;
+    CompletedTransfers:string[];
 }
 
 
@@ -172,4 +278,5 @@ export interface SaveNameTransfer
     ToCustomerId:number;
     DocumentCodes:string[];
     Remarks:string;
+    WithoutPayment:boolean;
 }

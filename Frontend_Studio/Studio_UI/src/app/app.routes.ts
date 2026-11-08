@@ -649,6 +649,9 @@ export const routes:
 
     //===========================================================
     // Unknown Route
+    //   Under an ERP module (/dashboard, /registration-management,
+    //   /settings, ...) : the dashboard (it asks for login when
+    //   needed). Anything else : the website home.
     //===========================================================
 
     {
@@ -656,6 +659,38 @@ export const routes:
             '**',
 
         redirectTo:
-            ''
+            ({ url }) =>
+                erpModulePaths().has(url[0]?.path ?? '')
+                    ? '/dashboard'
+                    : '/'
     }
 ];
+
+
+//===============================================================
+// The first segments of the ERP pages : the paths of the
+// authenticated layout's children (read from the routes above,
+// so a module added by Module Sync is covered at once).
+//===============================================================
+
+let erpPaths:
+    Set<string> | null =
+    null;
+
+function erpModulePaths():
+    Set<string>
+{
+    if (!erpPaths)
+    {
+        const layout =
+            routes.find(r => r.component === LayoutComponent);
+
+        erpPaths =
+            new Set(
+                (layout?.children ?? [])
+                    .map(r => (r.path ?? '').split('/')[0])
+                    .filter(p => p.length > 0 && p !== '**'));
+    }
+
+    return erpPaths;
+}

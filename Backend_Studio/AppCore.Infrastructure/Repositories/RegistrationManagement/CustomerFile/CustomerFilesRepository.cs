@@ -4,6 +4,8 @@
 
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using AppCore.Application.AccountsFinance.VoucherManagement;
 using AppCore.Application.RegistrationManagement.CustomerFile;
 using AppCore.Application.RegistrationManagement.RegistrationControl;
 using AppCore.Domain.Common;
@@ -45,7 +47,22 @@ namespace AppCore.Infrastructure.Repositories.RegistrationManagement.CustomerFil
 //   customer; documents in the old owner's name are no longer
 //   printable. Only the latest transfer can be cancelled.
 //
-// Codes : CF-OPEN-nnnn / NTF-nnnnnn, deleted rows count.
+// Fees (owner 2026-11-08) : a name transfer fee (policy in force)
+//   and a custody charge (delivery policy in force on the ready
+//   date, collected late) are collected on Fees Collection by a
+//   Receipt Voucher (Payment Desk) : Dr cash / bank / MFS / POS,
+//   Cr GLR-009-002-001-00002 Customer File Income.
+//   Pay first : a transfer with a fee is saved FeePending and
+//   takes effect when its fee is collected; a file with an unpaid
+//   custody charge is not delivered (the charge is raised as a
+//   Pending fee). Switch CFG-MOD-011-0101 ON : the user may tick
+//   "without payment" : the action goes ahead and the fee is
+//   booked as the customer's due by a Journal Voucher (Dr the
+//   customer's receivable / Cr Customer File Income); collecting
+//   it later credits the customer's receivable.
+//
+// Codes : CF-OPEN-nnnn / NTF-nnnnnn / CFF-nnnnnn, deleted rows
+// count.
 //===============================================================
 
 public class CustomerFilesRepository
@@ -63,14 +80,36 @@ public class CustomerFilesRepository
 
     private const string TransferPrefix = "NTF";
 
+    private const string FeePrefix = "CFF";
+
+    // Other Income > Registration Management > Customer File Income
+    private const string IncomeLedgerCode = "GLR-009-002-001-00002";
+
+    // Customer Files : Allow Without Fee Payment (critical, OFF)
+    private const string WithoutPaymentSwitch = "CFG-MOD-011-0101";
+
+    private const string LedgerTypeCustomer = "Customer";
+
+    private const string LedgerTypeGeneral = "General Ledger";
+
 
     private readonly AppDbContext _context;
 
+    private readonly IReceiptVoucherRepository _receiptVouchers;
+
+    private readonly IJournalVoucherRepository _journalVouchers;
+
 
     public CustomerFilesRepository(
-        AppDbContext context)
+        AppDbContext context,
+        IReceiptVoucherRepository receiptVouchers,
+        IJournalVoucherRepository journalVouchers)
     {
         _context = context;
+
+        _receiptVouchers = receiptVouchers;
+
+        _journalVouchers = journalVouchers;
     }
 
 
@@ -80,9 +119,35 @@ public class CustomerFilesRepository
     private DbSet<CustomerFileNameTransfers> Transfers =>
         _context.Set<CustomerFileNameTransfers>();
 
+    private DbSet<CustomerFileFees> Fees =>
+        _context.Set<CustomerFileFees>();
 
+
+    // Business date : Bangladesh time, whatever the server clock
     private static DateOnly Today =>
-        DateOnly.FromDateTime(DateTime.Now);
+        DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BusinessZone));
+
+    private static readonly TimeZoneInfo BusinessZone =
+        FindBusinessZone();
+
+    private static TimeZoneInfo FindBusinessZone()
+    {
+        foreach (string id in new[] { "Asia/Dhaka", "Bangladesh Standard Time" })
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(id);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return TimeZoneInfo.CreateCustomTimeZone("BD", TimeSpan.FromHours(6), "Bangladesh", "Bangladesh");
+    }
 
 
 
@@ -104,6 +169,16 @@ public class CustomerFilesRepository
 
     private static string StatusLabel(string status) =>
         status == CustomerFileStatuses.ReadyForDelivery ? "Ready for Delivery" : status;
+
+    private static string FeeTypeLabel(string type) =>
+        type == CustomerFileFeeTypes.Custody ? "Custody Charge" : "Name Transfer Fee";
+
+    private static string Limit(string? text, int max)
+    {
+        string value = (text ?? string.Empty).Trim();
+
+        return value.Length > max ? value.Substring(0, max) : value;
+    }
 
 
     private static string Clean
@@ -213,6 +288,112 @@ public class CustomerFilesRepository
             TransferPrefix,
             6,
             await Transfers.AsNoTracking().Select(x => x.TransferNo).ToListAsync());
+
+
+    private async Task<string> NextFeeNoAsync() =>
+        NextCode(
+            FeePrefix,
+            6,
+            await Fees.AsNoTracking().Select(x => x.FeeNo).ToListAsync());
+
+
+    // System Configuration switch (by code; missing = OFF)
+    private async Task<bool> IsWithoutPaymentAllowedAsync()
+    {
+        bool? value =
+            await _context
+                .Set<AppCore.Domain.Entities.Settings.GeneralSettings.SystemConfigurations>()
+                .AsNoTracking()
+                .Where(x => x.ConfigurationCode == WithoutPaymentSwitch && !x.IsDeleted)
+                .Select(x => (bool?)x.IsEnabled)
+                .FirstOrDefaultAsync();
+
+        return value ?? false;
+    }
+
+
+    // All or nothing (the fee, its voucher and the file change)
+    private async Task InTransactionAsync
+    (
+        Func<Task> work
+    )
+    {
+        if (_context.Database.CurrentTransaction != null)
+        {
+            await work();
+
+            return;
+        }
+
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            await work();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
+    }
+
+
+    // A fee booked as the customer's due : Journal Voucher
+    // Dr the customer's receivable / Cr Customer File Income
+    private async Task<JournalVoucherSavedDto> BookDueAsync
+    (
+        CustomerProfiles customer,
+        decimal amount,
+        DateOnly date,
+        long branchId,
+        string narration,
+        string reference,
+        long userId
+    )
+    {
+        if (string.IsNullOrWhiteSpace(customer.ReceivableLedgerCode))
+        {
+            throw new InvalidOperationException(
+                $"{customer.CustomerName} ({customer.CustomerCode}) has no receivable ledger : the fee cannot be booked as a due.");
+        }
+
+        return await _journalVouchers.CreatePostedAsync(
+            new CreateJournalVoucherDto
+            {
+                VoucherDate = DateText(date),
+                BranchId = branchId,
+                Narration = Limit(narration, 500),
+                Lines =
+                    new List<JournalVoucherLineDto>
+                    {
+                        new JournalVoucherLineDto
+                        {
+                            Side = "Debit",
+                            GroupNo = 1,
+                            LedgerType = LedgerTypeCustomer,
+                            LedgerCode = customer.ReceivableLedgerCode.Trim(),
+                            Amount = amount,
+                            ShortNotes = Limit(reference, 250)
+                        },
+                        new JournalVoucherLineDto
+                        {
+                            Side = "Credit",
+                            GroupNo = 1,
+                            LedgerType = LedgerTypeGeneral,
+                            LedgerCode = IncomeLedgerCode,
+                            Amount = amount,
+                            ShortNotes = Limit(reference, 250)
+                        }
+                    }
+            },
+            reference,
+            userId);
+    }
 
 
     private void AddHistory
@@ -341,11 +522,25 @@ public class CustomerFilesRepository
     }
 
 
+    private async Task<string> PendingTransferNoAsync
+    (
+        long customerFileId
+    )
+    {
+        return await Transfers.AsNoTracking()
+            .Where(x => x.CustomerFileId == customerFileId && !x.IsDeleted && x.Status == CustomerFileTransferStatuses.FeePending)
+            .Select(x => x.TransferNo)
+            .FirstOrDefaultAsync()
+            ?? string.Empty;
+    }
+
+
     private static NameTransferQuoteDto Quote
     (
         CustomerFiles file,
         CustomerFileNameTransferRules? policy,
-        DateOnly date
+        DateOnly date,
+        string pendingTransferNo
     )
     {
         NameTransferQuoteDto quote =
@@ -361,6 +556,14 @@ public class CustomerFilesRepository
         {
             quote.Message =
                 $"File {file.CustomerFileNo} is {StatusLabel(file.Status)} : a name transfer is only allowed while the file is Open (before registration).";
+
+            return quote;
+        }
+
+        if (pendingTransferNo.Length > 0)
+        {
+            quote.Message =
+                $"Transfer {pendingTransferNo} of file {file.CustomerFileNo} is waiting for its fee : collect it on Fees Collection (or cancel it) first.";
 
             return quote;
         }
@@ -386,7 +589,9 @@ public class CustomerFilesRepository
         quote.Allowed = true;
 
         quote.Message =
-            $"Transfer {file.TransferCount + 1} of {policy.TransfersAllowed} ({policy.Code}), fee {Money(policy.FeePerTransfer)}.";
+            policy.FeePerTransfer > 0
+                ? $"Transfer {file.TransferCount + 1} of {policy.TransfersAllowed} ({policy.Code}), fee {Money(policy.FeePerTransfer)} : the transfer takes effect when the fee is collected."
+                : $"Transfer {file.TransferCount + 1} of {policy.TransfersAllowed} ({policy.Code}), no fee.";
 
         return quote;
     }
@@ -398,7 +603,10 @@ public class CustomerFilesRepository
     //===========================================================
 
     public async Task<CustomerFilesPageDto>
-        GetAllAsync()
+        GetAllAsync
+        (
+            long branchId
+        )
     {
         List<CustomerFiles> files =
             await Files.AsNoTracking()
@@ -414,9 +622,17 @@ public class CustomerFilesRepository
                 .ThenByDescending(x => x.NameTransferId)
                 .ToListAsync();
 
+        List<CustomerFileFees> fees =
+            await Fees.AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .OrderByDescending(x => x.FeeDate)
+                .ThenByDescending(x => x.CustomerFileFeeId)
+                .ToListAsync();
+
         HashSet<long> customerIds =
             files.SelectMany(x => new[] { x.OriginalCustomerId, x.CurrentCustomerId })
                 .Concat(transfers.SelectMany(x => new[] { x.FromCustomerId, x.ToCustomerId }))
+                .Concat(fees.Select(x => x.CustomerId))
                 .ToHashSet();
 
         Dictionary<long, CustomerProfiles> customers =
@@ -433,7 +649,7 @@ public class CustomerFilesRepository
                 .ToDictionaryAsync(x => x.MotorBikeId, x => x.ProductName);
 
         HashSet<long> branchIds =
-            files.Select(x => x.BranchId).ToHashSet();
+            files.Select(x => x.BranchId).Append(branchId).ToHashSet();
 
         Dictionary<long, string> branches =
             await _context.Set<Branches>().AsNoTracking()
@@ -443,11 +659,26 @@ public class CustomerFilesRepository
         Dictionary<long, CustomerFiles> fileById =
             files.ToDictionary(x => x.CustomerFileId);
 
+        Dictionary<long, CustomerFileNameTransfers> transferById =
+            transfers.ToDictionary(x => x.NameTransferId);
+
         // Latest transfer of each file
         HashSet<long> latestIds =
             transfers.GroupBy(x => x.CustomerFileId)
                 .Select(g => g.OrderByDescending(x => x.NameTransferId).First().NameTransferId)
                 .ToHashSet();
+
+        // Pending transfer of each file
+        Dictionary<long, string> pendingByFile =
+            transfers.Where(x => x.Status == CustomerFileTransferStatuses.FeePending)
+                .GroupBy(x => x.CustomerFileId)
+                .ToDictionary(g => g.Key, g => g.First().TransferNo);
+
+        // Fee of each transfer (the live one)
+        Dictionary<long, CustomerFileFees> feeByTransfer =
+            fees.Where(x => x.NameTransferId.HasValue && x.Status != CustomerFileFeeStatuses.Cancelled)
+                .GroupBy(x => x.NameTransferId!.Value)
+                .ToDictionary(g => g.Key, g => g.First());
 
         string NameOf(long id) =>
             customers.TryGetValue(id, out CustomerProfiles? c)
@@ -457,6 +688,12 @@ public class CustomerFilesRepository
         return new CustomerFilesPageDto
         {
             Today = DateText(Today),
+
+            BranchId = branchId,
+
+            BranchName = branches.GetValueOrDefault(branchId, string.Empty),
+
+            AllowWithoutPayment = await IsWithoutPaymentAllowedAsync(),
 
             Files =
                 files.Select(
@@ -493,7 +730,8 @@ public class CustomerFilesRepository
                             FileReadyDate = DateText(x.FileReadyDate),
                             CollectedDate = DateText(x.CollectedDate),
                             Status = x.Status,
-                            Remarks = x.Remarks
+                            Remarks = x.Remarks,
+                            PendingTransferNo = pendingByFile.GetValueOrDefault(x.CustomerFileId, string.Empty)
                         };
                     }).ToList(),
 
@@ -501,24 +739,63 @@ public class CustomerFilesRepository
                 transfers
                     .Where(x => fileById.ContainsKey(x.CustomerFileId))
                     .Select(
-                        x => new CustomerFileTransferDto
+                        x =>
                         {
-                            NameTransferId = x.NameTransferId,
+                            feeByTransfer.TryGetValue(x.NameTransferId, out CustomerFileFees? fee);
+
+                            return new CustomerFileTransferDto
+                            {
+                                NameTransferId = x.NameTransferId,
+                                PublicId = x.PublicId,
+                                TransferNo = x.TransferNo,
+                                CustomerFileId = x.CustomerFileId,
+                                CustomerFilePublicId = fileById[x.CustomerFileId].PublicId,
+                                CustomerFileNo = fileById[x.CustomerFileId].CustomerFileNo,
+                                ChassisNo = fileById[x.CustomerFileId].ChassisNo,
+                                TransferDate = DateText(x.TransferDate),
+                                FromCustomerId = x.FromCustomerId,
+                                FromCustomerName = NameOf(x.FromCustomerId),
+                                ToCustomerId = x.ToCustomerId,
+                                ToCustomerName = NameOf(x.ToCustomerId),
+                                FeeAmount = x.FeeAmount,
+                                DocumentCodes = x.DocumentCodes,
+                                Remarks = x.Remarks,
+                                Status = x.Status,
+                                FeeNo = fee?.FeeNo ?? string.Empty,
+                                FeeStatus = fee?.Status ?? string.Empty,
+                                IsLatest = latestIds.Contains(x.NameTransferId)
+                            };
+                        }).ToList(),
+
+            Fees =
+                fees
+                    .Where(x => fileById.ContainsKey(x.CustomerFileId))
+                    .Select(
+                        x => new CustomerFileFeeDto
+                        {
+                            CustomerFileFeeId = x.CustomerFileFeeId,
                             PublicId = x.PublicId,
-                            TransferNo = x.TransferNo,
+                            FeeNo = x.FeeNo,
                             CustomerFileId = x.CustomerFileId,
                             CustomerFilePublicId = fileById[x.CustomerFileId].PublicId,
                             CustomerFileNo = fileById[x.CustomerFileId].CustomerFileNo,
                             ChassisNo = fileById[x.CustomerFileId].ChassisNo,
-                            TransferDate = DateText(x.TransferDate),
-                            FromCustomerId = x.FromCustomerId,
-                            FromCustomerName = NameOf(x.FromCustomerId),
-                            ToCustomerId = x.ToCustomerId,
-                            ToCustomerName = NameOf(x.ToCustomerId),
-                            FeeAmount = x.FeeAmount,
-                            DocumentCodes = x.DocumentCodes,
-                            Remarks = x.Remarks,
-                            IsLatest = latestIds.Contains(x.NameTransferId)
+                            FeeType = x.FeeType,
+                            TransferNo =
+                                x.NameTransferId.HasValue && transferById.TryGetValue(x.NameTransferId.Value, out CustomerFileNameTransfers? t)
+                                    ? t.TransferNo
+                                    : string.Empty,
+                            FeeDate = DateText(x.FeeDate),
+                            CustomerId = x.CustomerId,
+                            CustomerName = NameOf(x.CustomerId),
+                            Amount = x.Amount,
+                            CustodyUpTo = DateText(x.CustodyUpTo),
+                            Status = x.Status,
+                            BranchId = x.BranchId,
+                            DueVoucherNo = x.DueVoucherNo,
+                            ReceiptVoucherNo = x.ReceiptVoucherNo,
+                            PaidDate = DateText(x.PaidDate),
+                            Remarks = x.Remarks
                         }).ToList()
         };
     }
@@ -620,7 +897,7 @@ public class CustomerFilesRepository
         DateOnly on =
             string.IsNullOrWhiteSpace(date) ? Today : ParseDate(date, "Transfer Date");
 
-        return Quote(file, await PolicyOnAsync(on), on);
+        return Quote(file, await PolicyOnAsync(on), on, await PendingTransferNoAsync(file.CustomerFileId));
     }
 
 
@@ -790,14 +1067,142 @@ public class CustomerFilesRepository
 
 
     //===========================================================
+    // CUSTODY CHARGE
+    //===========================================================
+
+    // The charge if the file is collected on this date : the File
+    // Delivery Policy in force on the ready date (none = 0)
+    private async Task<(decimal Charge, CustomerFileDeliveryRules? Rule)> CustodyChargeAsync
+    (
+        CustomerFiles file,
+        DateOnly collected
+    )
+    {
+        if (!file.FileReadyDate.HasValue)
+        {
+            return (0m, null);
+        }
+
+        DateOnly ready = file.FileReadyDate.Value;
+
+        CustomerFileDeliveryRules? rule =
+            await _context.Set<CustomerFileDeliveryRules>().AsNoTracking()
+                .Where(x => !x.IsDeleted && x.IsActive && x.EffectiveFrom <= ready)
+                .OrderByDescending(x => x.EffectiveFrom)
+                .FirstOrDefaultAsync();
+
+        if (rule == null)
+        {
+            return (0m, null);
+        }
+
+        decimal charge =
+            CustodyCharge.Calculate(
+                ready,
+                collected,
+                rule.FreeDays,
+                rule.FirstYearAmount,
+                rule.SecondYearAmount,
+                rule.PerYearAmount);
+
+        return (Math.Round(charge, 2), rule);
+    }
+
+
+    // Custody charges paid or booked as due
+    private async Task<decimal> CustodyCoveredAsync
+    (
+        long customerFileId
+    )
+    {
+        return await Fees.AsNoTracking()
+            .Where(
+                x => x.CustomerFileId == customerFileId
+                     && !x.IsDeleted
+                     && x.FeeType == CustomerFileFeeTypes.Custody
+                     && (x.Status == CustomerFileFeeStatuses.Paid || x.Status == CustomerFileFeeStatuses.Due))
+            .SumAsync(x => (decimal?)x.Amount) ?? 0m;
+    }
+
+
+    private async Task<List<CustomerFileFees>> PendingCustodyAsync
+    (
+        long customerFileId
+    )
+    {
+        return await Fees
+            .Where(
+                x => x.CustomerFileId == customerFileId
+                     && !x.IsDeleted
+                     && x.FeeType == CustomerFileFeeTypes.Custody
+                     && x.Status == CustomerFileFeeStatuses.Pending)
+            .ToListAsync();
+    }
+
+
+    public async Task<CustodyQuoteDto>
+        GetCustodyQuoteAsync
+        (
+            Guid filePublicId,
+            string? date
+        )
+    {
+        CustomerFiles file =
+            await Files.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == filePublicId && !x.IsDeleted)
+            ?? throw new KeyNotFoundException("The customer file was not found.");
+
+        DateOnly collected =
+            string.IsNullOrWhiteSpace(date) ? Today : ParseDate(date, "Collected Date");
+
+        (decimal charge, CustomerFileDeliveryRules? rule) = await CustodyChargeAsync(file, collected);
+
+        decimal covered = await CustodyCoveredAsync(file.CustomerFileId);
+
+        decimal pending =
+            await Fees.AsNoTracking()
+                .Where(
+                    x => x.CustomerFileId == file.CustomerFileId
+                         && !x.IsDeleted
+                         && x.FeeType == CustomerFileFeeTypes.Custody
+                         && x.Status == CustomerFileFeeStatuses.Pending)
+                .SumAsync(x => (decimal?)x.Amount) ?? 0m;
+
+        decimal remaining = Math.Max(0m, charge - covered);
+
+        string message =
+            !file.FileReadyDate.HasValue
+                ? "The file has no ready date."
+                : rule == null
+                    ? "No file delivery policy was in force on the ready date : no custody charge."
+                    : charge == 0m
+                        ? $"Within the free days of {rule.Code} : no custody charge."
+                        : remaining == 0m
+                            ? $"Custody charge {Money(charge)} ({rule.Code}) is paid / booked."
+                            : $"Custody charge {Money(charge)} ({rule.Code}); {Money(remaining)} to collect before delivery.";
+
+        return new CustodyQuoteDto
+        {
+            Charge = charge,
+            Covered = covered,
+            Pending = pending,
+            Remaining = remaining,
+            PolicyCode = rule?.Code ?? string.Empty,
+            Message = message
+        };
+    }
+
+
+
+    //===========================================================
     // STATUS
     //===========================================================
 
-    public async Task
+    public async Task<CustomerFileStatusResultDto>
         SetStatusAsync
         (
             Guid publicId,
             SetCustomerFileStatusDto dto,
+            long branchId,
             long userId
         )
     {
@@ -815,12 +1220,23 @@ public class CustomerFilesRepository
             throw new InvalidOperationException($"{entity.CustomerFileNo} is already {StatusLabel(to)}.");
         }
 
+        if (to == CustomerFileStatuses.Delivered && from == CustomerFileStatuses.ReadyForDelivery)
+        {
+            return await DeliverAsync(entity, dto, branchId, userId);
+        }
+
         string detail;
 
         switch (to)
         {
             case CustomerFileStatuses.ReadyForDelivery when from == CustomerFileStatuses.Open:
             {
+                if (await PendingTransferNoAsync(entity.CustomerFileId) is { Length: > 0 } pendingNo)
+                {
+                    throw new InvalidOperationException(
+                        $"Transfer {pendingNo} is waiting for its fee : collect or cancel it first.");
+                }
+
                 DateOnly ready = ParseDate(dto.Date, "Ready Date");
 
                 if (ready < entity.FileDate)
@@ -841,28 +1257,6 @@ public class CustomerFilesRepository
                 break;
             }
 
-            case CustomerFileStatuses.Delivered when from == CustomerFileStatuses.ReadyForDelivery:
-            {
-                DateOnly collected = ParseDate(dto.Date, "Collected Date");
-
-                if (entity.FileReadyDate.HasValue && collected < entity.FileReadyDate.Value)
-                {
-                    throw new InvalidOperationException(
-                        $"Collected Date cannot be before the Ready Date ({DisplayDate(entity.FileReadyDate.Value)}).");
-                }
-
-                if (collected > Today)
-                {
-                    throw new InvalidOperationException("Collected Date cannot be in the future.");
-                }
-
-                entity.CollectedDate = collected;
-
-                detail = $"collected on {DisplayDate(collected)}";
-
-                break;
-            }
-
             // One step back
             case CustomerFileStatuses.ReadyForDelivery when from == CustomerFileStatuses.Delivered:
             {
@@ -875,6 +1269,21 @@ public class CustomerFilesRepository
 
             case CustomerFileStatuses.Open when from == CustomerFileStatuses.ReadyForDelivery:
             {
+                if (await CustodyCoveredAsync(entity.CustomerFileId) > 0m)
+                {
+                    throw new InvalidOperationException(
+                        $"{entity.CustomerFileNo} has a custody charge paid / booked from its ready date : the ready date can no longer be taken back.");
+                }
+
+                // A custody charge raised but not collected goes with
+                // the ready date
+                foreach (CustomerFileFees fee in await PendingCustodyAsync(entity.CustomerFileId))
+                {
+                    fee.Status = CustomerFileFeeStatuses.Cancelled;
+                    fee.ModifiedBy = userId;
+                    fee.ModifiedDate = DateTime.UtcNow;
+                }
+
                 detail = $"ready date taken back (was {DateText(entity.FileReadyDate)})";
 
                 entity.FileReadyDate = null;
@@ -890,7 +1299,7 @@ public class CustomerFilesRepository
                         $"{entity.CustomerFileNo} comes from its sales invoice : it is cancelled with the invoice.");
                 }
 
-                if (entity.TransferCount > 0)
+                if (entity.TransferCount > 0 || await PendingTransferNoAsync(entity.CustomerFileId) is { Length: > 0 })
                 {
                     throw new InvalidOperationException(
                         $"{entity.CustomerFileNo} has name transfers : cancel them first.");
@@ -925,6 +1334,203 @@ public class CustomerFilesRepository
             userId);
 
         await _context.SaveChangesAsync();
+
+        return new CustomerFileStatusResultDto
+        {
+            Done = true,
+            Message = $"{entity.CustomerFileNo} is now {StatusLabel(to)}."
+        };
+    }
+
+
+    // Ready for Delivery -> Delivered. An unpaid custody charge :
+    //   without payment (switch ON, ticked) : booked as the owner's
+    //     due, then delivered;
+    //   otherwise : raised as a Pending fee (or the pending one is
+    //     brought up to date) and the file stays Ready.
+    private async Task<CustomerFileStatusResultDto> DeliverAsync
+    (
+        CustomerFiles entity,
+        SetCustomerFileStatusDto dto,
+        long branchId,
+        long userId
+    )
+    {
+        DateOnly collected = ParseDate(dto.Date, "Collected Date");
+
+        if (entity.FileReadyDate.HasValue && collected < entity.FileReadyDate.Value)
+        {
+            throw new InvalidOperationException(
+                $"Collected Date cannot be before the Ready Date ({DisplayDate(entity.FileReadyDate.Value)}).");
+        }
+
+        if (collected > Today)
+        {
+            throw new InvalidOperationException("Collected Date cannot be in the future.");
+        }
+
+        (decimal charge, CustomerFileDeliveryRules? rule) = await CustodyChargeAsync(entity, collected);
+
+        decimal covered = await CustodyCoveredAsync(entity.CustomerFileId);
+
+        decimal remaining = Math.Max(0m, charge - covered);
+
+        List<CustomerFileFees> pending = await PendingCustodyAsync(entity.CustomerFileId);
+
+        DateTime now = DateTime.UtcNow;
+
+        // Not paid, pay first : raise / refresh the pending charge
+        if (remaining > 0m && !dto.WithoutPayment)
+        {
+            CustomerFileFees fee;
+
+            if (pending.Count > 0)
+            {
+                fee = pending[0];
+
+                foreach (CustomerFileFees extra in pending.Skip(1))
+                {
+                    extra.Status = CustomerFileFeeStatuses.Cancelled;
+                    extra.ModifiedBy = userId;
+                    extra.ModifiedDate = now;
+                }
+
+                fee.Amount = remaining;
+                fee.CustodyUpTo = collected;
+                fee.CustomerId = entity.CurrentCustomerId;
+                fee.ModifiedBy = userId;
+                fee.ModifiedDate = now;
+            }
+            else
+            {
+                fee =
+                    new CustomerFileFees
+                    {
+                        FeeNo = await NextFeeNoAsync(),
+                        CustomerFileId = entity.CustomerFileId,
+                        FeeType = CustomerFileFeeTypes.Custody,
+                        NameTransferId = null,
+                        FeeDate = Today,
+                        CustomerId = entity.CurrentCustomerId,
+                        Amount = remaining,
+                        CustodyUpTo = collected,
+                        Status = CustomerFileFeeStatuses.Pending,
+                        BranchId = branchId,
+                        DueVoucherNo = string.Empty,
+                        ReceiptVoucherNo = string.Empty,
+                        Remarks = string.Empty,
+                        IsDeleted = false,
+                        CreatedBy = userId,
+                        CreatedDate = now
+                    };
+
+                Fees.Add(fee);
+            }
+
+            AddHistory(entity.CustomerFileId, "Update", "Custody Charge Raised",
+                $"{entity.CustomerFileNo} : custody charge {Money(remaining)} ({rule?.Code}) for collection on {DisplayDate(collected)}, fee {fee.FeeNo}; the file is delivered after it is collected.",
+                userId);
+
+            await _context.SaveChangesAsync();
+
+            return new CustomerFileStatusResultDto
+            {
+                Done = false,
+                FeeNo = fee.FeeNo,
+                Message = $"Custody charge {Money(remaining)} ({rule?.Code}) must be collected first : fee {fee.FeeNo} is on Fees Collection. Deliver again after it is collected."
+            };
+        }
+
+        if (remaining > 0m && !await IsWithoutPaymentAllowedAsync())
+        {
+            throw new InvalidOperationException(
+                "Delivery without payment is not allowed (System Configuration : Customer Files : Allow Without Fee Payment is OFF).");
+        }
+
+        string feeNo = string.Empty;
+
+        string dueNo = string.Empty;
+
+        await InTransactionAsync(
+            async () =>
+            {
+                // The pending charge is no longer needed : either
+                // covered already, or replaced by the due below
+                foreach (CustomerFileFees fee in pending)
+                {
+                    fee.Status = CustomerFileFeeStatuses.Cancelled;
+                    fee.ModifiedBy = userId;
+                    fee.ModifiedDate = now;
+                }
+
+                if (remaining > 0m)
+                {
+                    CustomerProfiles owner = await FindCustomerAsync(entity.CurrentCustomerId);
+
+                    CustomerFileFees due =
+                        new()
+                        {
+                            FeeNo = await NextFeeNoAsync(),
+                            CustomerFileId = entity.CustomerFileId,
+                            FeeType = CustomerFileFeeTypes.Custody,
+                            NameTransferId = null,
+                            FeeDate = collected,
+                            CustomerId = owner.CustomerId,
+                            Amount = remaining,
+                            CustodyUpTo = collected,
+                            Status = CustomerFileFeeStatuses.Due,
+                            BranchId = branchId,
+                            DueVoucherNo = string.Empty,
+                            ReceiptVoucherNo = string.Empty,
+                            Remarks = "Delivered without payment",
+                            IsDeleted = false,
+                            CreatedBy = userId,
+                            CreatedDate = now
+                        };
+
+                    JournalVoucherSavedDto jv =
+                        await BookDueAsync(
+                            owner,
+                            remaining,
+                            collected,
+                            branchId,
+                            $"Custody charge of customer file {entity.CustomerFileNo} (chassis {entity.ChassisNo}), {due.FeeNo}, delivered without payment",
+                            $"{entity.CustomerFileNo} {due.FeeNo}",
+                            userId);
+
+                    due.DueVoucherId = jv.JournalVoucherId;
+                    due.DueVoucherNo = jv.VoucherNo;
+
+                    Fees.Add(due);
+
+                    feeNo = due.FeeNo;
+                    dueNo = jv.VoucherNo;
+                }
+
+                entity.CollectedDate = collected;
+                entity.Status = CustomerFileStatuses.Delivered;
+                entity.ModifiedBy = userId;
+                entity.ModifiedDate = now;
+
+                AddHistory(entity.CustomerFileId, "Update", "Status : Delivered",
+                    $"{entity.CustomerFileNo} : Ready for Delivery -> Delivered, collected on {DisplayDate(collected)}"
+                    + (charge > 0m ? $", custody charge {Money(charge)} ({rule?.Code})" : string.Empty)
+                    + (feeNo.Length > 0 ? $", {Money(remaining)} without payment : due {feeNo} ({dueNo})" : string.Empty)
+                    + ".",
+                    userId);
+
+                await _context.SaveChangesAsync();
+            });
+
+        return new CustomerFileStatusResultDto
+        {
+            Done = true,
+            FeeNo = feeNo,
+            Message =
+                feeNo.Length > 0
+                    ? $"{entity.CustomerFileNo} delivered; custody charge {Money(remaining)} booked as the customer's due ({feeNo}, {dueNo})."
+                    : $"{entity.CustomerFileNo} delivered."
+        };
     }
 
 
@@ -933,10 +1539,11 @@ public class CustomerFilesRepository
     // NAME TRANSFERS
     //===========================================================
 
-    public async Task<Guid>
+    public async Task<NameTransferSavedDto>
         CreateNameTransferAsync
         (
             SaveNameTransferDto dto,
+            long branchId,
             long userId
         )
     {
@@ -969,7 +1576,7 @@ public class CustomerFilesRepository
 
         CustomerFileNameTransferRules? policy = await PolicyOnAsync(date);
 
-        NameTransferQuoteDto quote = Quote(file, policy, date);
+        NameTransferQuoteDto quote = Quote(file, policy, date, await PendingTransferNoAsync(file.CustomerFileId));
 
         if (!quote.Allowed || policy == null)
         {
@@ -1018,6 +1625,27 @@ public class CustomerFilesRepository
         string codes =
             string.Join(",", documents.Where(d => ticked.Contains(d.Code)).Select(d => d.Code));
 
+        decimal feeAmount = policy.FeePerTransfer;
+
+        bool withoutPayment = dto.WithoutPayment && feeAmount > 0m;
+
+        if (withoutPayment && !await IsWithoutPaymentAllowedAsync())
+        {
+            throw new InvalidOperationException(
+                "Transfer without payment is not allowed (System Configuration : Customer Files : Allow Without Fee Payment is OFF).");
+        }
+
+        if (withoutPayment && string.IsNullOrWhiteSpace(to.ReceivableLedgerCode))
+        {
+            throw new InvalidOperationException(
+                $"{to.CustomerName} ({to.CustomerCode}) has no receivable ledger : the fee cannot be booked as a due.");
+        }
+
+        // Pay first : the transfer waits for its fee
+        bool waits = feeAmount > 0m && !withoutPayment;
+
+        DateTime now = DateTime.UtcNow;
+
         CustomerFileNameTransfers entity =
             new()
             {
@@ -1027,30 +1655,102 @@ public class CustomerFilesRepository
                 FromCustomerId = from.CustomerId,
                 ToCustomerId = to.CustomerId,
                 NameTransferRuleId = policy.NameTransferRuleId,
-                FeeAmount = policy.FeePerTransfer,
+                FeeAmount = feeAmount,
                 DocumentCodes = codes,
                 Remarks = Clean(dto.Remarks, "Remarks", RemarksMaxLength),
+                Status = waits ? CustomerFileTransferStatuses.FeePending : CustomerFileTransferStatuses.Completed,
                 IsDeleted = false,
                 CreatedBy = userId,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = now
             };
 
-        Transfers.Add(entity);
+        CustomerFileFees? fee = null;
 
-        file.CurrentCustomerId = to.CustomerId;
-        file.TransferCount += 1;
-        file.ModifiedBy = userId;
-        file.ModifiedDate = DateTime.UtcNow;
+        string dueNo = string.Empty;
 
-        await _context.SaveChangesAsync();
+        await InTransactionAsync(
+            async () =>
+            {
+                Transfers.Add(entity);
 
-        AddHistory(file.CustomerFileId, "Update", "Name Transferred",
-            $"{entity.TransferNo} on {DisplayDate(date)} : {from.CustomerName} ({from.CustomerCode}) -> {to.CustomerName} ({to.CustomerCode}), transfer {file.TransferCount} of {policy.TransfersAllowed} ({policy.Code}), fee {Money(entity.FeeAmount)}, documents {(codes.Length == 0 ? "none" : codes)}.",
-            userId);
+                if (!waits)
+                {
+                    file.CurrentCustomerId = to.CustomerId;
+                    file.TransferCount += 1;
+                    file.ModifiedBy = userId;
+                    file.ModifiedDate = now;
+                }
 
-        await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
 
-        return entity.PublicId;
+                if (feeAmount > 0m)
+                {
+                    fee =
+                        new CustomerFileFees
+                        {
+                            FeeNo = await NextFeeNoAsync(),
+                            CustomerFileId = file.CustomerFileId,
+                            FeeType = CustomerFileFeeTypes.NameTransfer,
+                            NameTransferId = entity.NameTransferId,
+                            FeeDate = date,
+                            // The new owner pays
+                            CustomerId = to.CustomerId,
+                            Amount = feeAmount,
+                            CustodyUpTo = null,
+                            Status = waits ? CustomerFileFeeStatuses.Pending : CustomerFileFeeStatuses.Due,
+                            BranchId = branchId,
+                            DueVoucherNo = string.Empty,
+                            ReceiptVoucherNo = string.Empty,
+                            Remarks = withoutPayment ? "Transferred without payment" : string.Empty,
+                            IsDeleted = false,
+                            CreatedBy = userId,
+                            CreatedDate = now
+                        };
+
+                    if (withoutPayment)
+                    {
+                        JournalVoucherSavedDto jv =
+                            await BookDueAsync(
+                                to,
+                                feeAmount,
+                                date,
+                                branchId,
+                                $"Name transfer fee of customer file {file.CustomerFileNo} (chassis {file.ChassisNo}), {entity.TransferNo} / {fee.FeeNo}, transferred without payment",
+                                $"{file.CustomerFileNo} {entity.TransferNo} {fee.FeeNo}",
+                                userId);
+
+                        fee.DueVoucherId = jv.JournalVoucherId;
+                        fee.DueVoucherNo = jv.VoucherNo;
+
+                        dueNo = jv.VoucherNo;
+                    }
+
+                    Fees.Add(fee);
+                }
+
+                string feeText =
+                    fee == null
+                        ? "no fee"
+                        : waits
+                            ? $"fee {Money(feeAmount)} ({fee.FeeNo}) to collect : the transfer takes effect after it is collected"
+                            : $"fee {Money(feeAmount)} without payment : due {fee.FeeNo} ({dueNo})";
+
+                AddHistory(file.CustomerFileId, waits ? "Create" : "Update", waits ? "Name Transfer Waiting for Fee" : "Name Transferred",
+                    $"{entity.TransferNo} on {DisplayDate(date)} : {from.CustomerName} ({from.CustomerCode}) -> {to.CustomerName} ({to.CustomerCode}), policy {policy.Code}, {feeText}, documents {(codes.Length == 0 ? "none" : codes)}.",
+                    userId);
+
+                await _context.SaveChangesAsync();
+            });
+
+        return new NameTransferSavedDto
+        {
+            PublicId = entity.PublicId,
+            TransferNo = entity.TransferNo,
+            Status = entity.Status,
+            FeeNo = fee?.FeeNo ?? string.Empty,
+            FeeAmount = feeAmount,
+            DueVoucherNo = dueNo
+        };
     }
 
 
@@ -1065,6 +1765,19 @@ public class CustomerFilesRepository
             await Transfers.FirstOrDefaultAsync(x => x.PublicId == publicId && !x.IsDeleted)
             ?? throw new KeyNotFoundException("The name transfer was not found.");
 
+        await CancelTransferCoreAsync(entity, userId);
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    // The caller saves
+    private async Task CancelTransferCoreAsync
+    (
+        CustomerFileNameTransfers entity,
+        long userId
+    )
+    {
         CustomerFiles file =
             await Files.FirstOrDefaultAsync(x => x.CustomerFileId == entity.CustomerFileId && !x.IsDeleted)
             ?? throw new KeyNotFoundException("The customer file was not found.");
@@ -1086,6 +1799,47 @@ public class CustomerFilesRepository
                 $"Only the latest transfer of {file.CustomerFileNo} can be cancelled.");
         }
 
+        CustomerFileFees? fee =
+            await Fees.FirstOrDefaultAsync(
+                x => x.NameTransferId == entity.NameTransferId
+                     && !x.IsDeleted
+                     && x.Status != CustomerFileFeeStatuses.Cancelled);
+
+        DateTime now = DateTime.UtcNow;
+
+        if (entity.Status == CustomerFileTransferStatuses.FeePending)
+        {
+            // Never took effect : the file is unchanged
+            if (fee != null && fee.Status != CustomerFileFeeStatuses.Pending)
+            {
+                throw new InvalidOperationException(
+                    $"The fee {fee.FeeNo} of {entity.TransferNo} is {fee.Status}.");
+            }
+
+            if (fee != null)
+            {
+                fee.Status = CustomerFileFeeStatuses.Cancelled;
+                fee.ModifiedBy = userId;
+                fee.ModifiedDate = now;
+            }
+
+            entity.IsDeleted = true;
+            entity.DeletedBy = userId;
+            entity.DeletedDate = now;
+
+            AddHistory(file.CustomerFileId, "Delete", "Name Transfer Cancelled",
+                $"{entity.TransferNo} of {DisplayDate(entity.TransferDate)} cancelled before its fee was collected" + (fee != null ? $" (fee {fee.FeeNo} cancelled)" : string.Empty) + ".",
+                userId);
+
+            return;
+        }
+
+        if (fee != null)
+        {
+            throw new InvalidOperationException(
+                $"The fee {fee.FeeNo} of {entity.TransferNo} is {(fee.Status == CustomerFileFeeStatuses.Paid ? $"collected ({fee.ReceiptVoucherNo})" : $"booked as a due ({fee.DueVoucherNo})")} : the transfer can no longer be cancelled.");
+        }
+
         if (file.CurrentCustomerId != entity.ToCustomerId)
         {
             throw new InvalidOperationException(
@@ -1094,12 +1848,12 @@ public class CustomerFilesRepository
 
         entity.IsDeleted = true;
         entity.DeletedBy = userId;
-        entity.DeletedDate = DateTime.UtcNow;
+        entity.DeletedDate = now;
 
         file.CurrentCustomerId = entity.FromCustomerId;
         file.TransferCount = Math.Max(0, file.TransferCount - 1);
         file.ModifiedBy = userId;
-        file.ModifiedDate = DateTime.UtcNow;
+        file.ModifiedDate = now;
 
         string fromName =
             await _context.Set<CustomerProfiles>().AsNoTracking()
@@ -1109,8 +1863,267 @@ public class CustomerFilesRepository
             ?? $"customer #{entity.FromCustomerId}";
 
         AddHistory(file.CustomerFileId, "Delete", "Name Transfer Cancelled",
-            $"{entity.TransferNo} of {DisplayDate(entity.TransferDate)} cancelled : the owner is back to {fromName}, fee {Money(entity.FeeAmount)}.",
+            $"{entity.TransferNo} of {DisplayDate(entity.TransferDate)} cancelled : the owner is back to {fromName}.",
             userId);
+    }
+
+
+
+    //===========================================================
+    // FEES COLLECTION
+    //===========================================================
+
+    public async Task<CollectCustomerFileFeesResultDto>
+        CollectFeesAsync
+        (
+            CollectCustomerFileFeesDto dto,
+            long branchId,
+            long userId
+        )
+    {
+        List<Guid> ids =
+            (dto.FeePublicIds ?? new List<Guid>()).Distinct().ToList();
+
+        if (ids.Count == 0)
+        {
+            throw new InvalidOperationException("Choose the fee(s) to collect.");
+        }
+
+        List<CustomerFileFees> fees =
+            await Fees
+                .Where(x => ids.Contains(x.PublicId) && !x.IsDeleted)
+                .OrderBy(x => x.CustomerFileFeeId)
+                .ToListAsync();
+
+        if (fees.Count != ids.Count)
+        {
+            throw new KeyNotFoundException("A fee was not found (refresh the page).");
+        }
+
+        CustomerFileFees? closed =
+            fees.FirstOrDefault(x => x.Status != CustomerFileFeeStatuses.Pending && x.Status != CustomerFileFeeStatuses.Due);
+
+        if (closed != null)
+        {
+            throw new InvalidOperationException($"Fee {closed.FeeNo} is {closed.Status}.");
+        }
+
+        bool due = fees[0].Status == CustomerFileFeeStatuses.Due;
+
+        if (fees.Any(x => (x.Status == CustomerFileFeeStatuses.Due) != due))
+        {
+            throw new InvalidOperationException(
+                "Collect pending fees and dues separately (a due is credited to the customer's ledger).");
+        }
+
+        if (due && fees.Select(x => x.CustomerId).Distinct().Count() > 1)
+        {
+            throw new InvalidOperationException("Dues of different customers are collected separately.");
+        }
+
+        decimal total = fees.Sum(x => x.Amount);
+
+        List<ReceiptVoucherDebitDto> debits =
+            dto.Debits ?? new List<ReceiptVoucherDebitDto>();
+
+        if (debits.Count == 0)
+        {
+            throw new InvalidOperationException("Add the payment (Payment Desk).");
+        }
+
+        decimal paid = Math.Round(debits.Sum(x => x.Amount), 2);
+
+        if (paid != Math.Round(total, 2))
+        {
+            throw new InvalidOperationException(
+                $"The payment ({Money(paid)}) must equal the fee total ({Money(total)}).");
+        }
+
+        DateOnly date =
+            string.IsNullOrWhiteSpace(dto.Date) ? Today : ParseDate(dto.Date, "Receipt Date");
+
+        if (date > Today)
+        {
+            throw new InvalidOperationException("Receipt Date cannot be in the future.");
+        }
+
+        CustomerProfiles payer = await FindCustomerAsync(fees[0].CustomerId);
+
+        List<long> fileIds =
+            fees.Select(x => x.CustomerFileId).Distinct().ToList();
+
+        Dictionary<long, CustomerFiles> files =
+            await Files
+                .Where(x => fileIds.Contains(x.CustomerFileId))
+                .ToDictionaryAsync(x => x.CustomerFileId);
+
+        string nos = string.Join(", ", fees.Select(x => x.FeeNo));
+
+        string fileNos =
+            string.Join(", ", fees.Select(x => files.TryGetValue(x.CustomerFileId, out CustomerFiles? f) ? f.CustomerFileNo : string.Empty).Where(x => x.Length > 0).Distinct());
+
+        ReceiptVoucherCreditDto credit;
+
+        if (due)
+        {
+            if (string.IsNullOrWhiteSpace(payer.ReceivableLedgerCode))
+            {
+                throw new InvalidOperationException(
+                    $"{payer.CustomerName} ({payer.CustomerCode}) has no receivable ledger.");
+            }
+
+            credit =
+                new ReceiptVoucherCreditDto
+                {
+                    LedgerType = LedgerTypeCustomer,
+                    LedgerCode = payer.ReceivableLedgerCode.Trim(),
+                    Amount = total,
+                    ShortNotes = Limit($"Customer file dues {nos}", 250)
+                };
+        }
+        else
+        {
+            credit =
+                new ReceiptVoucherCreditDto
+                {
+                    LedgerType = LedgerTypeGeneral,
+                    LedgerCode = IncomeLedgerCode,
+                    Amount = total,
+                    ShortNotes = Limit($"Customer file fees {nos}", 250)
+                };
+        }
+
+        string narration =
+            string.IsNullOrWhiteSpace(dto.Narration)
+                ? $"Customer file {(due ? "dues" : "fees")} {nos} ({fileNos}) from {payer.CustomerName} ({payer.CustomerCode})"
+                : dto.Narration.Trim();
+
+        CollectCustomerFileFeesResultDto result = new() { Amount = total };
+
+        await InTransactionAsync(
+            async () =>
+            {
+                ReceiptVoucherSavedDto receipt =
+                    await _receiptVouchers.CreatePostedAsync(
+                        new CreateReceiptVoucherDto
+                        {
+                            VoucherDate = DateText(date),
+                            BranchId = branchId,
+                            Narration = Limit(narration, 500),
+                            Debits = debits,
+                            Credits = new List<ReceiptVoucherCreditDto> { credit }
+                        },
+                        Limit($"{fileNos} {nos}", 100),
+                        userId);
+
+                result.ReceiptVoucherPublicId = receipt.PublicId;
+                result.ReceiptVoucherNo = receipt.VoucherNo;
+
+                DateTime now = DateTime.UtcNow;
+
+                foreach (CustomerFileFees fee in fees)
+                {
+                    bool wasPending = fee.Status == CustomerFileFeeStatuses.Pending;
+
+                    fee.Status = CustomerFileFeeStatuses.Paid;
+                    fee.ReceiptVoucherId = receipt.ReceiptVoucherId;
+                    fee.ReceiptVoucherNo = receipt.VoucherNo;
+                    fee.PaidDate = date;
+                    fee.ModifiedBy = userId;
+                    fee.ModifiedDate = now;
+
+                    CustomerFiles? file = files.GetValueOrDefault(fee.CustomerFileId);
+
+                    // A transfer waiting for this fee takes effect now
+                    if (wasPending && fee.FeeType == CustomerFileFeeTypes.NameTransfer && fee.NameTransferId.HasValue && file != null)
+                    {
+                        CustomerFileNameTransfers transfer =
+                            await Transfers.FirstOrDefaultAsync(x => x.NameTransferId == fee.NameTransferId.Value && !x.IsDeleted)
+                            ?? throw new InvalidOperationException($"The transfer of fee {fee.FeeNo} was cancelled.");
+
+                        if (transfer.Status != CustomerFileTransferStatuses.FeePending)
+                        {
+                            throw new InvalidOperationException($"Transfer {transfer.TransferNo} is already {transfer.Status}.");
+                        }
+
+                        if (file.Status != CustomerFileStatuses.Open)
+                        {
+                            throw new InvalidOperationException(
+                                $"{file.CustomerFileNo} is {StatusLabel(file.Status)} : transfer {transfer.TransferNo} can no longer take effect. Cancel the fee instead.");
+                        }
+
+                        if (file.CurrentCustomerId != transfer.FromCustomerId)
+                        {
+                            throw new InvalidOperationException(
+                                $"The owner of {file.CustomerFileNo} has changed since {transfer.TransferNo} : cancel the fee instead.");
+                        }
+
+                        transfer.Status = CustomerFileTransferStatuses.Completed;
+                        transfer.ModifiedBy = userId;
+                        transfer.ModifiedDate = now;
+
+                        file.CurrentCustomerId = transfer.ToCustomerId;
+                        file.TransferCount += 1;
+                        file.ModifiedBy = userId;
+                        file.ModifiedDate = now;
+
+                        result.CompletedTransfers.Add(transfer.TransferNo);
+
+                        AddHistory(file.CustomerFileId, "Update", "Name Transferred",
+                            $"{transfer.TransferNo} took effect : fee {fee.FeeNo} {Money(fee.Amount)} collected by {receipt.VoucherNo}; the file now belongs to {payer.CustomerName} ({payer.CustomerCode}).",
+                            userId);
+                    }
+                    else
+                    {
+                        AddHistory(fee.CustomerFileId, "Update", $"{FeeTypeLabel(fee.FeeType)} Collected",
+                            $"{fee.FeeNo} {Money(fee.Amount)} {(wasPending ? "collected" : "due collected")} by {receipt.VoucherNo} on {DisplayDate(date)}.",
+                            userId);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            });
+
+        return result;
+    }
+
+
+    public async Task
+        CancelFeeAsync
+        (
+            Guid publicId,
+            long userId
+        )
+    {
+        CustomerFileFees fee =
+            await Fees.FirstOrDefaultAsync(x => x.PublicId == publicId && !x.IsDeleted)
+            ?? throw new KeyNotFoundException("The fee was not found.");
+
+        if (fee.Status != CustomerFileFeeStatuses.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Fee {fee.FeeNo} is {fee.Status} : only a pending fee can be cancelled.");
+        }
+
+        if (fee.FeeType == CustomerFileFeeTypes.NameTransfer && fee.NameTransferId.HasValue)
+        {
+            CustomerFileNameTransfers transfer =
+                await Transfers.FirstOrDefaultAsync(x => x.NameTransferId == fee.NameTransferId.Value && !x.IsDeleted)
+                ?? throw new InvalidOperationException($"The transfer of fee {fee.FeeNo} was not found.");
+
+            // Cancels the waiting transfer and its fee
+            await CancelTransferCoreAsync(transfer, userId);
+        }
+        else
+        {
+            fee.Status = CustomerFileFeeStatuses.Cancelled;
+            fee.ModifiedBy = userId;
+            fee.ModifiedDate = DateTime.UtcNow;
+
+            AddHistory(fee.CustomerFileId, "Delete", "Custody Charge Cancelled",
+                $"{fee.FeeNo} {Money(fee.Amount)} cancelled before collection.",
+                userId);
+        }
 
         await _context.SaveChangesAsync();
     }

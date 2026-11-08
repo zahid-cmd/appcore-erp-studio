@@ -101,6 +101,89 @@ const TOP_CHIPS =
     6;
 
 
+//===============================================================
+// Colour tag : colour words -> swatch (the colour master keeps
+// names only). Two-word names match on their last word too
+// ("Matte Black" -> black).
+//===============================================================
+
+export interface ShelfColor
+{
+    name:
+        string;
+
+    hex:
+        string;
+
+    // Light swatch : drawn with a darker ring
+    light:
+        boolean;
+}
+
+const COLOR_WORDS:
+    Record<string, string> =
+{
+    black:'#111827',
+    white:'#f8fafc',
+    grey:'#9ca3af',
+    gray:'#9ca3af',
+    silver:'#c0c7d1',
+    red:'#dc2626',
+    maroon:'#7f1d1d',
+    pink:'#f9a8d4',
+    purple:'#8b5cf6',
+    violet:'#7c3aed',
+    blue:'#2563eb',
+    navy:'#1e3a8a',
+    sky:'#38bdf8',
+    cyan:'#06b6d4',
+    teal:'#0d9488',
+    green:'#16a34a',
+    olive:'#65a30d',
+    mint:'#86efac',
+    yellow:'#facc15',
+    golden:'#d4a017',
+    gold:'#d4a017',
+    orange:'#f97316',
+    brown:'#92400e',
+    beige:'#e7d7b8',
+    cream:'#fdf4dc',
+    champagne:'#e8d5b0',
+    bronze:'#b06d2a',
+    copper:'#b87333'
+};
+
+function colorHex(name: string): string
+{
+    const words =
+        (name ?? '').toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w);
+
+    const word =
+        [...words].reverse().find(w => COLOR_WORDS[w]);
+
+    return word ? COLOR_WORDS[word] : '';
+}
+
+function isLightColor(hex: string): boolean
+{
+    const m =
+        /^#([0-9a-f]{6})$/i.exec(hex ?? '');
+
+    if (!m)
+    {
+        return false;
+    }
+
+    const n = parseInt(m[1], 16);
+
+    const r = (n >> 16) & 255;
+    const g = (n >> 8) & 255;
+    const b = n & 255;
+
+    return (r * 299 + g * 587 + b * 114) / 1000 > 200;
+}
+
+
 @Component(
 {
     selector:'app-product-shelf',
@@ -646,6 +729,48 @@ export class ProductShelfComponent
         boolean
     {
         return this.filtered.length > MAX_CARDS;
+    }
+
+    //===========================================================
+    // Colour tag on the card picture : the item's colour (given,
+    // or the last part of its name when that is a colour word)
+    //===========================================================
+
+    private readonly colorCache =
+        new Map<string, ShelfColor | null>();
+
+    colorOf
+    (
+        item:
+            ShelfProduct
+    ):
+        ShelfColor | null
+    {
+        if (this.colorCache.has(item.code))
+        {
+            return this.colorCache.get(item.code) ?? null;
+        }
+
+        const given =
+            (item.colorName ?? '').trim();
+
+        const parts =
+            (item.name ?? '').split(' - ');
+
+        const name =
+            given || (parts.length > 1 ? parts[parts.length - 1].trim() : '');
+
+        const hex =
+            colorHex(name);
+
+        const color =
+            name && (given || hex)
+                ? { name, hex:hex || '#94a3b8', light:isLightColor(hex) }
+                : null;
+
+        this.colorCache.set(item.code, color);
+
+        return color;
     }
 
     isPicked
