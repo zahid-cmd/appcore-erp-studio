@@ -325,18 +325,22 @@
                                 [class.ps-row-bad]="!!rowProblem(row)"
                                 [title]="rowProblem(row) || row.product.lastText">
 
-                                <!-- Line 1 : name · code · total · remove -->
+                                <!-- Line 1 : name (full) with the code below · total · remove -->
                                 <div class="ps-row-head">
 
-                                    <span class="ps-row-name">{{ row.product.name }}</span>
+                                    <div class="ps-row-id">
 
-                                    <span class="ps-row-code">
-                                        {{ row.product.code }}
-                                        @if (row.product.inOrderQty > 0)
-                                        {
-                                            <i class="fas fa-circle-check ps-row-onrec" [title]="'Already on the ' + (options.docWord || 'order') + ' : change a figure to update its line'"></i>
-                                        }
-                                    </span>
+                                        <span class="ps-row-name">{{ row.product.name }}</span>
+
+                                        <span class="ps-row-code">
+                                            {{ row.product.code }}
+                                            @if (row.product.inOrderQty > 0)
+                                            {
+                                                <i class="fas fa-circle-check ps-row-onrec" [title]="'Already on the ' + (options.docWord || 'order') + ' : change a figure to update its line'"></i>
+                                            }
+                                        </span>
+
+                                    </div>
 
                                     <b class="ps-row-total">{{ rowTotal(row) }}</b>
 
