@@ -86,6 +86,17 @@ from '../../core/authentication/authentication-storage.service';
 
 
 //===============================================================
+// User Profile (Profile menu : own profile's public id)
+//===============================================================
+
+import
+{
+    UserProfileService
+}
+from '../../features/security-permission/user-management/services/user-profile.service';
+
+
+//===============================================================
 // Toast Service
 //===============================================================
 
@@ -180,6 +191,12 @@ export class TopbarComponent
     private readonly toast =
         inject(
             ToastService
+        );
+
+
+    private readonly userProfileService =
+        inject(
+            UserProfileService
         );
 
 
@@ -298,29 +315,74 @@ export class TopbarComponent
 
         //=======================================================
         // Navigate To User Profile Edit
+        // The edit page takes the public id (uuid), not the
+        // internal number : look it up first.
         //=======================================================
 
-        void this.router.navigate
-        (
-            [
-                '/security-permission',
-
-                'user-management',
-
-                'user-profile',
-
-                'edit',
-
+        this.userProfileService
+            .getByInternalId(
                 userProfileId
-            ],
+            )
+            .subscribe(
             {
-                queryParams:
-                {
-                    source:
-                        'profile'
-                }
-            }
-        );
+                next:
+                    profile =>
+                    {
+                        const publicId =
+                            String(
+                                (profile as any)?.publicId
+                                ??
+                                (profile as any)?.PublicId
+                                ??
+                                ''
+                            )
+                            .trim();
+
+                        if
+                        (
+                            publicId.length === 0
+                        )
+                        {
+                            this.toast.error(
+                                'Error',
+                                'Could not open your profile.'
+                            );
+
+                            return;
+                        }
+
+                        void this.router.navigate
+                        (
+                            [
+                                '/security-permission',
+
+                                'user-management',
+
+                                'user-profile',
+
+                                'edit',
+
+                                publicId
+                            ],
+                            {
+                                queryParams:
+                                {
+                                    source:
+                                        'profile'
+                                }
+                            }
+                        );
+                    },
+
+                error:
+                    () =>
+                    {
+                        this.toast.error(
+                            'Error',
+                            'Could not open your profile.'
+                        );
+                    }
+            });
     }
 
 

@@ -535,6 +535,20 @@
     animation: dc-fade 0.18s ease-out;
 }
 
+/* the page canvas area (left / width set from the page) : the
+   popup is centred in it, the dark backdrop still covers all */
+.dc-lane
+{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
 .dc-modal
 {
     --tone: #2563eb;
@@ -545,7 +559,9 @@
     display: flex;
     flex-direction: column;
     width: min(1000px, 100%);
-    max-height: calc(100vh - 48px);
+    /* one fixed size in every step (check, confirm, job) : the
+       popup never grows or jumps while the log fills */
+    height: min(560px, calc(100vh - 48px));
     padding: 20px 22px 18px 22px;
     border: 1px solid #e2e8f0;
     border-radius: 16px;
@@ -846,6 +862,17 @@
 }
 
 
+/* In the popup : the log fills the space left in the fixed-size
+   popup and scrolls inside (no growing while lines arrive) */
+.dc-modal .dc-log
+{
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    margin-bottom: 16px;
+}
+
+
 /* ---------- confirm / problems ---------- */
 
 .dc-facts
@@ -944,9 +971,11 @@
 .dc-modal-foot
 {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     gap: 10px;
-    margin-top: 16px;
+    /* always at the bottom of the fixed popup */
+    margin-top: auto;
     padding-top: 14px;
     border-top: 1px solid #eef2f7;
 }

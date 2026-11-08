@@ -303,6 +303,12 @@ implements
             case 'financial-year':
                 return 'fa-solid fa-calendar-plus';
 
+            case 'user-request':
+                return 'fa-solid fa-user-plus';
+
+            case 'welcome':
+                return 'fa-solid fa-user-check';
+
             default:
                 return 'fa-regular fa-bell';
         }

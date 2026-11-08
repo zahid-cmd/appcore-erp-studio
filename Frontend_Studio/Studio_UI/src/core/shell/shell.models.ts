@@ -114,7 +114,13 @@ export type ShellNotificationKind =
     |
     // Next financial year : will be / was created automatically,
     // or not created yet (Financial Years)
-    'financial-year';
+    'financial-year'
+    |
+    // New user registered, still Inactive (User Profile)
+    'user-request'
+    |
+    // Own registration approved (account activated)
+    'welcome';
 
 
 export interface ShellNotificationDto

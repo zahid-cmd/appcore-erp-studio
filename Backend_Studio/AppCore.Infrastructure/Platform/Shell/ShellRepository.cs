@@ -16,7 +16,12 @@
 //                     EMI) nobody has taken yet, login branch, for
 //                     users who can open Sales Enquiries; and
 //                     website repeats on the user's own enquiries
-// Context       : the financial year that covers today (Dhaka).
+//                   • new user requests (registered, still
+//                     Inactive, not reviewed yet) for users who
+//                     can open User Profile
+//                   • a welcome note for a registered user once
+//                     their account is activated
+// Context      : the financial year that covers today (Dhaka).
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +35,7 @@ using AppCore.Application.Settings.GeneralSettings.SystemConfigurations.DTOs;
 using AppCore.Domain.Entities.AccountsFinance.VoucherManagement;
 using AppCore.Domain.Entities.EnquiryManagement.EnquiryProfiles;
 using AppCore.Domain.Entities.InfrastructureControl.NavigationManagement;
+using AppCore.Domain.Entities.SecurityPermission.UserManagement;
 using AppCore.Domain.Entities.Settings.GeneralSettings;
 using AppCore.Domain.Platform.Accounting;
 using AppCore.Domain.Platform.Shell;
@@ -76,6 +82,14 @@ public class ShellRepository : IShellRepository
     // Most website items shown in the bell
     private const int MaxWebsiteItems =
         15;
+
+    // User Profile : access check and the page a new user
+    // request opens (edit : activate the user, assign roles)
+    private const string UserProfileRoutePart =
+        "user-profile";
+
+    private const string UserProfileEditRoute =
+        "/security-permission/user-management/user-profile/edit/";
 
 
     //===========================================================
@@ -331,6 +345,17 @@ public class ShellRepository : IShellRepository
 
         items.AddRange(
             await WebsiteServiceEnquiriesAsync(userId, branchId));
+
+        items.AddRange(
+            await NewUserRequestsAsync(userId));
+
+        ShellNotificationDto? welcome =
+            await AccountApprovedAsync(userId);
+
+        if (welcome != null)
+        {
+            items.Add(welcome);
+        }
 
         ShellNotificationDto? backup =
             await BackupAlertAsync(userId);
@@ -698,6 +723,151 @@ public class ShellRepository : IShellRepository
                 };
             })
             .ToList();
+    }
+
+
+    //-----------------------------------------------------------
+    // New user requests : profiles made by Register on the
+    // website / login page. They start Inactive and nobody has
+    // saved them yet (ModifiedDate empty). Once someone opens and
+    // saves the profile (activates it, or keeps it inactive on
+    // purpose) the item goes away. One item each, newest first.
+    // Shown to users who can open User Profile.
+    //-----------------------------------------------------------
+
+    private async Task<List<ShellNotificationDto>> NewUserRequestsAsync
+    (
+        long userId
+    )
+    {
+        try
+        {
+            if (!await CanOpenPageAsync(userId, UserProfileRoutePart))
+            {
+                return new List<ShellNotificationDto>();
+            }
+
+            var rows =
+                await _context.Set<UserProfile>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted
+                                && !x.IsActive
+                                && x.ModifiedDate == null)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .Take(MaxWebsiteItems)
+                    .Select(x => new
+                    {
+                        x.PublicId,
+                        x.ProfileCode,
+                        x.UserName,
+                        x.FullName,
+                        x.MobileNo,
+                        x.Email,
+                        x.CreatedDate
+                    })
+                    .ToListAsync();
+
+            return rows
+                .Select(x =>
+                {
+                    string name =
+                        string.IsNullOrWhiteSpace(x.FullName)
+                            ? x.UserName
+                            : x.FullName;
+
+                    string contact =
+                        !string.IsNullOrWhiteSpace(x.MobileNo)
+                            ? x.MobileNo
+                            : x.Email;
+
+                    return new ShellNotificationDto
+                    {
+                        Key = $"user-{x.PublicId}",
+                        Kind = "user-request",
+                        Title = "New user request",
+                        Detail = $"{name} ({x.UserName})"
+                                 + (string.IsNullOrWhiteSpace(contact) ? string.Empty : $" · {contact}")
+                                 + $" · {x.ProfileCode} · waiting for approval",
+                        Route = UserProfileEditRoute + x.PublicId,
+                        Date = x.CreatedDate
+                    };
+                })
+                .ToList();
+        }
+        catch
+        {
+            // the bell never fails because of the user check
+            return new List<ShellNotificationDto>();
+        }
+    }
+
+
+    //-----------------------------------------------------------
+    // Account approved (welcome) : for the user's own profile
+    // when it was made by Register (CreatedBy 0), is Active now,
+    // and someone else saved it in the last 7 days (the
+    // activation). The key never changes, so once read it stays
+    // read. No page to open.
+    //-----------------------------------------------------------
+
+    private async Task<ShellNotificationDto?> AccountApprovedAsync
+    (
+        long userId
+    )
+    {
+        try
+        {
+            DateTime since =
+                DateTime.UtcNow.AddDays(-7);
+
+            var me =
+                await _context.Set<UserProfile>()
+                    .AsNoTracking()
+                    .Where(x => x.UserProfileId == userId
+                                && !x.IsDeleted
+                                && x.IsActive
+                                && x.CreatedBy == 0
+                                && x.ModifiedBy != null
+                                && x.ModifiedBy != userId
+                                && x.ModifiedDate != null
+                                && x.ModifiedDate > since)
+                    .Select(x => new
+                    {
+                        x.UserProfileId,
+                        x.DisplayName,
+                        x.FullName,
+                        x.UserName,
+                        x.ModifiedDate
+                    })
+                    .FirstOrDefaultAsync();
+
+            if (me == null)
+            {
+                return null;
+            }
+
+            string name =
+                !string.IsNullOrWhiteSpace(me.DisplayName)
+                    ? me.DisplayName
+                    : !string.IsNullOrWhiteSpace(me.FullName)
+                        ? me.FullName
+                        : me.UserName;
+
+            return new ShellNotificationDto
+            {
+                Key = $"welcome-{me.UserProfileId}",
+                Kind = "welcome",
+                Title = $"Welcome, {name}! Your account is approved",
+                Detail = "You can now use the pages your roles allow. If a page you need is missing, please ask the administrator.",
+                Route = string.Empty,
+                Date = me.ModifiedDate!.Value
+            };
+        }
+        catch
+        {
+            // the bell never fails because of the welcome check
+            return null;
+        }
     }
 
 

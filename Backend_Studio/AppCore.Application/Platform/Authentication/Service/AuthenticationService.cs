@@ -137,12 +137,21 @@ public class AuthenticationService : IAuthenticationService
 
         //===========================================================
         // Inactive User
+        // A registration nobody has reviewed yet (made by Register,
+        // never saved by an administrator) gets a "waiting for
+        // approval" message; any other inactive user the usual one.
         //===========================================================
 
         if (!userProfile.IsActive)
         {
+            bool waitingForApproval =
+                userProfile.CreatedBy == 0
+                && userProfile.ModifiedDate == null;
+
             return CreateFailureResponse(
-                "Your Login ID is inactive. Please contact the administrator for activation.");
+                waitingForApproval
+                    ? "Your registration is waiting for approval. You can log in as soon as the administrator activates your account."
+                    : "Your Login ID is inactive. Please contact the administrator for activation.");
         }
 
 

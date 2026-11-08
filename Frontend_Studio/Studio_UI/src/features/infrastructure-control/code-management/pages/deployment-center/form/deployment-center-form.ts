@@ -307,6 +307,11 @@ implements OnInit, OnDestroy
         number =
         0;
 
+    // View : the job popup was opened once already
+    private jobShown:
+        boolean =
+        false;
+
     private pollTimer?:
         ReturnType<typeof setInterval>;
 
@@ -512,16 +517,23 @@ implements OnInit, OnDestroy
                             this.loadDraftDefaults(false);
                         }
 
-                        // a running job : show its progress
+                        // View of a job (running or finished) : open it
+                        // in the popup, once per visit (Close goes back
+                        // to the list). Drafts stay on the page.
                         if
                         (
                             this.mode === 'view'
                             &&
-                            item.deployStatus === 'Running'
+                            item.deployStatus !== 'Draft'
                             &&
                             !this.pollTimer
+                            &&
+                            !this.jobShown
                         )
                         {
+                            this.jobShown =
+                                true;
+
                             this.follow(item.publicId);
                         }
 
@@ -1536,6 +1548,51 @@ implements OnInit, OnDestroy
     private awayToSourceControl:
         boolean =
         false;
+
+    //===========================================================
+    // Popup lane : the popup is centred over the page canvas (the
+    // part right of the side menu), not over the whole window
+    //===========================================================
+
+    private readonly host =
+        inject<ElementRef<HTMLElement>>(ElementRef);
+
+    get laneLeft():
+        number
+    {
+        return this.pageRect()?.left ?? 0;
+    }
+
+    get laneWidth():
+        number
+    {
+        return this.pageRect()?.width ?? window.innerWidth;
+    }
+
+    private pageRect():
+        DOMRect | null
+    {
+        const root =
+            (this.host.nativeElement.firstElementChild as HTMLElement | null)
+            ?? this.host.nativeElement;
+
+        const rect =
+            root?.getBoundingClientRect();
+
+        return rect && rect.width > 0 ? rect : null;
+    }
+
+    // the side menu may open / close or the window resize
+    @HostListener('window:resize')
+    onWindowResize():
+        void
+    {
+        if (this.liveOpen)
+        {
+            this.cdr.detectChanges();
+        }
+    }
+
 
     @HostListener('window:focus')
     onWindowFocus():

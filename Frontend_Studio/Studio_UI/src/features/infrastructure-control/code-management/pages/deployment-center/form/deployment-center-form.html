@@ -412,6 +412,15 @@
     {
         <div class="dc-overlay">
 
+            <!-- lane : the page canvas area, the popup centred in it -->
+            <div
+
+                class="dc-lane"
+
+                [style.left.px]="laneLeft"
+
+                [style.width.px]="laneWidth">
+
             <div class="dc-modal" [ngClass]="'dc-' + liveTone()">
 
                 <!-- Head -->
@@ -690,6 +699,8 @@
 
             </div>
 
+
+            </div>
         </div>
     }
 
