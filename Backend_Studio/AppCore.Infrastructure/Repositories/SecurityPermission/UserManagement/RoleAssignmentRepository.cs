@@ -13,6 +13,8 @@ using AppCore.Application.SecurityPermission.UserManagement.RoleAssignment.DTOs;
 
 using AppCore.Infrastructure.Persistence;
 
+using AppCore.Application.Platform.CurrentUser;
+
 
 //===============================================================
 // Namespace
@@ -39,13 +41,19 @@ public class RoleAssignmentRepository
     // Constructor
     //===========================================================
 
+    private readonly ICurrentUserService _currentUser;
+
     public RoleAssignmentRepository
     (
-        AppDbContext context
+        AppDbContext context,
+        ICurrentUserService currentUser
     )
     {
         _context =
             context;
+
+        _currentUser =
+            currentUser;
     }
 
 
@@ -73,6 +81,13 @@ public class RoleAssignmentRepository
     public async Task<List<RoleAssignmentDto>>
         GetAllAsync()
     {
+        // Developer accounts : seen by developers only
+        bool viewerIsDeveloper =
+            DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
+
+        IQueryable<long> hiddenUsers =
+            DeveloperAccess.DeveloperUserIds(_context);
+
         var assignments =
 
             await
@@ -89,6 +104,10 @@ public class RoleAssignmentRepository
                 where
 
                     !assignment.IsDeleted
+
+                    &&
+
+                    (viewerIsDeveloper || !hiddenUsers.Contains(assignment.UserProfileId))
 
                 orderby
                     userProfile.ProfileCode
@@ -218,6 +237,13 @@ public class RoleAssignmentRepository
             long roleAssignmentId
         )
     {
+        // Developer accounts : seen by developers only
+        bool viewerIsDeveloper =
+            DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
+
+        IQueryable<long> hiddenUsers =
+            DeveloperAccess.DeveloperUserIds(_context);
+
         var assignment =
 
             await
@@ -239,6 +265,10 @@ public class RoleAssignmentRepository
                     &&
 
                     !roleAssignment.IsDeleted
+
+                    &&
+
+                    (viewerIsDeveloper || !hiddenUsers.Contains(roleAssignment.UserProfileId))
 
                 select new RoleAssignmentDto
                 {
@@ -321,6 +351,13 @@ public class RoleAssignmentRepository
             long userProfileId
         )
     {
+        // Developer accounts : seen by developers only
+        bool viewerIsDeveloper =
+            DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
+
+        IQueryable<long> hiddenUsers =
+            DeveloperAccess.DeveloperUserIds(_context);
+
         var assignment =
 
             await
@@ -342,6 +379,10 @@ public class RoleAssignmentRepository
                     &&
 
                     !roleAssignment.IsDeleted
+
+                    &&
+
+                    (viewerIsDeveloper || !hiddenUsers.Contains(roleAssignment.UserProfileId))
 
                 select new RoleAssignmentDto
                 {
@@ -570,6 +611,27 @@ public class RoleAssignmentRepository
 
     public async Task<long>
         CreateAsync
+        (
+            CreateRoleAssignmentDto dto
+        )
+    {
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            dto.UserProfileId, dto.Details?.Select(x => x.RoleProfileId));
+
+        long id =
+            await CreateCoreAsync(dto);
+
+        await DeveloperAccess.SyncProfileCodeAsync(
+            _context,
+            dto.UserProfileId);
+
+        return id;
+    }
+
+    private async Task<long>
+        CreateCoreAsync
         (
             CreateRoleAssignmentDto dto
         )
@@ -943,6 +1005,27 @@ public class RoleAssignmentRepository
 
     public async Task<bool>
         UpdateAsync
+        (
+            UpdateRoleAssignmentDto dto
+        )
+    {
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            dto.UserProfileId, dto.Details?.Select(x => x.RoleProfileId));
+
+        bool done =
+            await UpdateCoreAsync(dto);
+
+        await DeveloperAccess.SyncProfileCodeAsync(
+            _context,
+            dto.UserProfileId);
+
+        return done;
+    }
+
+    private async Task<bool>
+        UpdateCoreAsync
         (
             UpdateRoleAssignmentDto dto
         )
@@ -1576,6 +1659,35 @@ public class RoleAssignmentRepository
             long roleAssignmentId
         )
     {
+        long userProfileId =
+            await _context
+                .Set<RoleAssignment>()
+                .AsNoTracking()
+                .Where(x => x.RoleAssignmentId == roleAssignmentId)
+                .Select(x => x.UserProfileId)
+                .FirstOrDefaultAsync();
+
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            userProfileId);
+
+        bool done =
+            await DeleteCoreAsync(roleAssignmentId);
+
+        await DeveloperAccess.SyncProfileCodeAsync(
+            _context,
+            userProfileId);
+
+        return done;
+    }
+
+    private async Task<bool>
+        DeleteCoreAsync
+        (
+            long roleAssignmentId
+        )
+    {
         const long systemUserId =
             1;
 
@@ -1748,6 +1860,18 @@ public class RoleAssignmentRepository
 
     public async Task<bool>
         RestoreLastDeletedAsync()
+    {
+        bool done =
+            await RestoreLastDeletedCoreAsync();
+
+        await DeveloperAccess.SyncAllProfileCodesAsync(
+            _context);
+
+        return done;
+    }
+
+    private async Task<bool>
+        RestoreLastDeletedCoreAsync()
     {
         const long systemUserId =
             1;

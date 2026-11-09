@@ -101,6 +101,7 @@ from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialo
 
 import
 {
+    DeploymentAnalysis,
     DeploymentCenter,
     DeploymentDraftDefaults,
     DeploymentPreflight,
@@ -204,6 +205,154 @@ implements OnInit, OnDestroy
     releaseNotes:
         string =
         '';
+
+    //===========================================================
+    // Version (2026-11-09)
+    //===========================================================
+
+    // Fix / Feature / Major
+    changeType:
+        string =
+        'Feature';
+
+    // lines users see after the update
+    whatsNew:
+        string =
+        '';
+
+    analysis:
+        DeploymentAnalysis | null =
+        null;
+
+    analysing:
+        boolean =
+        false;
+
+    readonly changeTypes =
+    [
+        { value:'Fix',     label:'Fix',     icon:'fas fa-screwdriver-wrench', hint:'small fix or tweak' },
+        { value:'Feature', label:'Feature', icon:'fas fa-wand-magic-sparkles', hint:'new feature or page' },
+        { value:'Major',   label:'Major',   icon:'fas fa-rocket',            hint:'big change' }
+    ];
+
+    // the version this draft becomes when deployed now
+    nextVersionFor
+    (
+        type:
+            string
+    ):
+        string
+    {
+        const d =
+            this.draft;
+
+        if (!d)
+        {
+            return '';
+        }
+
+        return type === 'Fix'
+            ? d.nextFix
+            : type === 'Major'
+                ? d.nextMajor
+                : d.nextFeature;
+    }
+
+    setChangeType
+    (
+        type:
+            string
+    ):
+        void
+    {
+        this.changeType =
+            type;
+    }
+
+    onWhatsNewInput
+    (
+        event:
+            Event
+    ):
+        void
+    {
+        this.whatsNew =
+            (event.target as HTMLTextAreaElement).value;
+    }
+
+    // "Analyse changes" : commits + changed pages since the last
+    // deployment on the chosen server -> What's new draft
+    analyse():
+        void
+    {
+        if (this.analysing)
+        {
+            return;
+        }
+
+        this.analysing =
+            true;
+
+        this.service
+            .analyse(
+                this.serverPublicId
+            )
+            .subscribe
+            ({
+                next:
+                    result =>
+                    {
+                        this.analysis =
+                            result;
+
+                        this.whatsNew =
+                            result.whatsNewDraft;
+
+                        this.analysing =
+                            false;
+
+                        this.cdr.detectChanges();
+                    },
+                error:
+                    () =>
+                    {
+                        this.analysing =
+                            false;
+
+                        this.toast.error(
+                            'Analyse changes',
+                            'Unable to read the repository (Source Control).'
+                        );
+
+                        this.cdr.detectChanges();
+                    }
+            });
+    }
+
+    get screenAreas():
+        string[]
+    {
+        return (this.analysis?.areas ?? [])
+            .filter(x => x.side === 'Screen')
+            .map(x => x.name);
+    }
+
+    get serverAreas():
+        string[]
+    {
+        return (this.analysis?.areas ?? [])
+            .filter(x => x.side !== 'Screen')
+            .map(x => x.name);
+    }
+
+    get whatsNewLines():
+        string[]
+    {
+        return (this.item?.whatsNew ?? '')
+            .split('\n')
+            .map(x => x.trim())
+            .filter(x => x.length > 0);
+    }
 
     remarks:
         string =
@@ -511,6 +660,12 @@ implements OnInit, OnDestroy
                             this.releaseNotes =
                                 item.releaseNotes;
 
+                            this.changeType =
+                                item.changeType || 'Feature';
+
+                            this.whatsNew =
+                                item.whatsNew ?? '';
+
                             this.remarks =
                                 item.remarks;
 
@@ -604,10 +759,16 @@ implements OnInit, OnDestroy
                         this.draftLoading =
                             false;
 
+                        this.analysis =
+                            draft.analysis ?? null;
+
                         if (fillNotes)
                         {
                             this.releaseNotes =
                                 draft.releaseNotes;
+
+                            this.whatsNew =
+                                draft.analysis?.whatsNewDraft ?? '';
 
                             if (!this.title)
                             {
@@ -718,6 +879,8 @@ implements OnInit, OnDestroy
             serverPublicId:this.serverPublicId,
             name:this.title.trim(),
             releaseNotes:this.releaseNotes.trim(),
+            changeType:this.changeType,
+            whatsNew:this.whatsNew.trim(),
             remarks:this.remarks.trim(),
             updateCommit:this.updateCommit
         };

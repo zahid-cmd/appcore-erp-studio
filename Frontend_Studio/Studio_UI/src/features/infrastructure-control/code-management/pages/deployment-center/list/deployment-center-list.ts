@@ -140,6 +140,8 @@ interface DeploymentRow
 {
     commitShort: string;
 
+    versionText: string;
+
     startedText: string;
 
     durationText: string;
@@ -328,8 +330,9 @@ implements OnInit, OnDestroy
     [
         { header:'#',        field:'serial',          type:'serial', width:'56px',  align:'center' },
         { header:'Release',  field:'code',            width:'110px', align:'center' },
+        { header:'Version',  field:'versionText',     width:'100px', align:'center' },
         { header:'Kind',     field:'kind',            width:'100px', align:'center' },
-        { header:'Title',    field:'name',            width:'26%',   align:'left' },
+        { header:'Title',    field:'name',            width:'24%',   align:'left' },
         { header:'Server',   field:'serverName',      width:'150px', align:'center' },
         { header:'Commit',   field:'commitShort',     width:'110px', align:'center' },
         { header:'Started',  field:'startedText',     width:'200px', align:'center' },
@@ -648,6 +651,8 @@ implements OnInit, OnDestroy
             ...x,
             commitShort:
                 (x.commitHash ?? '').substring(0, 7),
+            versionText:
+                x.version ? `v${x.version}` : '-',
             startedText:
                 x.startedDate
                     ? new Date(x.startedDate).toLocaleString()

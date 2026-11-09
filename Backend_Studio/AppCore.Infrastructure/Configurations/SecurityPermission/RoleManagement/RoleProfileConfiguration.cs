@@ -106,6 +106,10 @@ public class RoleProfileConfiguration
         builder.Property(x => x.IsSystemRole)
                .IsRequired();
 
+        builder.Property(x => x.IsDeveloperRole)
+               .IsRequired()
+               .HasDefaultValue(false);
+
         builder.Property(x => x.IsDefaultRole)
                .IsRequired();
 

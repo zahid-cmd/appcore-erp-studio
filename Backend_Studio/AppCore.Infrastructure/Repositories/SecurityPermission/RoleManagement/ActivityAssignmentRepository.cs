@@ -12,6 +12,8 @@ using AppCore.Application.SecurityPermission.RoleManagement.ActivityAssignment.D
 
 using AppCore.Infrastructure.Persistence;
 
+using AppCore.Application.Platform.CurrentUser;
+
 
 //===============================================================
 // Namespace
@@ -38,13 +40,19 @@ public class ActivityAssignmentRepository
     // Constructor
     //===========================================================
 
+    private readonly ICurrentUserService _currentUser;
+
     public ActivityAssignmentRepository
     (
-        AppDbContext context
+        AppDbContext context,
+        ICurrentUserService currentUser
     )
     {
         _context =
             context;
+
+        _currentUser =
+            currentUser;
     }
 
 
@@ -72,6 +80,10 @@ public class ActivityAssignmentRepository
     public async Task<List<ActivityAssignmentDto>>
         GetAllAsync()
     {
+        // The developer role : seen by developers only
+        bool viewerIsDeveloper =
+            DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
+
         var assignments =
 
             await
@@ -87,6 +99,10 @@ public class ActivityAssignmentRepository
 
                 where
                     !assignment.IsDeleted
+
+                    &&
+
+                    (viewerIsDeveloper || !roleProfile.IsDeveloperRole)
 
                 orderby
                     roleProfile.ProfileName
@@ -259,6 +275,10 @@ public class ActivityAssignmentRepository
             long activityAssignmentId
         )
     {
+        // The developer role : seen by developers only
+        bool viewerIsDeveloper =
+            DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
+
         var assignment =
 
             await
@@ -280,6 +300,10 @@ public class ActivityAssignmentRepository
                     &&
 
                     !activityAssignment.IsDeleted
+
+                    &&
+
+                    (viewerIsDeveloper || !roleProfile.IsDeveloperRole)
 
                 select new ActivityAssignmentDto
                 {
@@ -373,6 +397,10 @@ public class ActivityAssignmentRepository
             long roleProfileId
         )
     {
+        // The developer role : seen by developers only
+        bool viewerIsDeveloper =
+            DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
+
         var assignment =
 
             await
@@ -394,6 +422,10 @@ public class ActivityAssignmentRepository
                     &&
 
                     !activityAssignment.IsDeleted
+
+                    &&
+
+                    (viewerIsDeveloper || !roleProfile.IsDeveloperRole)
 
                 select new ActivityAssignmentDto
                 {

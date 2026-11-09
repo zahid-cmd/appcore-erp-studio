@@ -38,6 +38,14 @@ public class DeploymentCenterDto
 
     public string ReleaseNotes { get; set; } = string.Empty;
 
+    // 1.4.2 ('' = before versions / not deployed yet)
+    public string Version { get; set; } = string.Empty;
+
+    // Fix / Feature / Major
+    public string ChangeType { get; set; } = "Feature";
+
+    public string WhatsNew { get; set; } = string.Empty;
+
     public string Branch { get; set; } = string.Empty;
 
     public string CommitHash { get; set; } = string.Empty;
@@ -171,5 +179,68 @@ public class DeploymentDraftDefaultsDto
 
     public int NewCommits { get; set; }
 
+    // Version : the last one on the server and the three choices
+    public string LastVersion { get; set; } = string.Empty;
+
+    public string NextFix { get; set; } = string.Empty;
+
+    public string NextFeature { get; set; } = string.Empty;
+
+    public string NextMajor { get; set; } = string.Empty;
+
+    // Analysis of the changes since the last deployment
+    public DeploymentAnalysisDto Analysis { get; set; } = new();
+
     public List<string> Problems { get; set; } = new();
+}
+
+
+//===============================================================
+// Analysis : what changed since the last deployment
+//===============================================================
+
+public class DeploymentAnalysisDto
+{
+    // commit messages since the last deployed commit
+    public List<string> Commits { get; set; } = new();
+
+    // pages / parts of the ERP whose files changed
+    public List<DeploymentChangeAreaDto> Areas { get; set; } = new();
+
+    // SQL scripts changed : run them on the database
+    public List<string> DatabaseScripts { get; set; } = new();
+
+    public int FilesChanged { get; set; }
+
+    // draft for "What's new" (one line each; edit before deploy)
+    public string WhatsNewDraft { get; set; } = string.Empty;
+}
+
+public class DeploymentChangeAreaDto
+{
+    // "Settings - Website Configuration"
+    public string Name { get; set; } = string.Empty;
+
+    // Screen (user facing) / Server
+    public string Side { get; set; } = string.Empty;
+
+    public int Files { get; set; }
+}
+
+
+//===============================================================
+// Version history (every signed-in user)
+//===============================================================
+
+public class AppVersionDto
+{
+    public string Version { get; set; } = string.Empty;
+
+    public string Release { get; set; } = string.Empty;
+
+    public string ChangeType { get; set; } = string.Empty;
+
+    public DateTime? Date { get; set; }
+
+    public List<string> WhatsNew { get; set; } = new();
 }

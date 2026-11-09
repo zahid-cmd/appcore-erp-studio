@@ -40,7 +40,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Price Adjustment'
+            breadcrumb:'Price & Stock Adjustment'
         },
 
         loadComponent:() =>
@@ -63,7 +63,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Add Price Adjustment'
+            breadcrumb:'Add Price & Stock Adjustment'
         },
 
         loadComponent:() =>
@@ -86,7 +86,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'Edit Price Adjustment'
+            breadcrumb:'Edit Price & Stock Adjustment'
         },
 
         loadComponent:() =>
@@ -109,7 +109,7 @@ Routes =
 
         data:
         {
-            breadcrumb:'View Price Adjustment'
+            breadcrumb:'View Price & Stock Adjustment'
         },
 
         loadComponent:() =>

@@ -533,6 +533,13 @@ public class ProductPricingRepository
         string type =
             TypeOf(pageType);
 
+        // Motor Bikes are priced on the price cards now
+        if (type == "MB")
+        {
+            throw new InvalidOperationException(
+                "Motor Bikes are priced on Product Pricing - Motor Bikes (price cards).");
+        }
+
         DateOnly today =
             BusinessToday();
 
@@ -1837,6 +1844,13 @@ public class ProductPricingRepository
     {
         string type =
             TypeOf(dto.PageType);
+
+        // Motor Bikes are priced on the price cards now
+        if (type == "MB")
+        {
+            throw new InvalidOperationException(
+                "Motor Bikes are priced on Product Pricing - Motor Bikes (price cards).");
+        }
 
         DateOnly date =
             ParseDate(dto.PricingDate, "The effective date");

@@ -1103,3 +1103,112 @@
 {
     flex: 1 1 auto;
 }
+
+
+/* ===============================================================
+   Version + What's new (2026-11-09)
+   =============================================================== */
+
+.dc-ver-row
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.dc-ver-type
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dc-ver-type b
+{
+    margin-left: auto;
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+.dc-ver-type:hover
+{
+    border-color: #6366f1;
+}
+
+.dc-ver-type.on
+{
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+}
+
+.dc-ver-hint
+{
+    margin: 8px 0 0;
+    font-size: 11.5px;
+    opacity: 0.7;
+}
+
+.dc-ana
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.dc-ana-count
+{
+    opacity: 0.7;
+}
+
+.dc-ana-row
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+}
+
+.dc-ana-label
+{
+    margin-right: 4px;
+    font-weight: 700;
+}
+
+.dc-ana-chip
+{
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.dc-ana-chip.dc-ana-muted
+{
+    background: rgba(100, 116, 139, 0.12);
+    color: #475569;
+}
+
+.dc-ana-warn .dc-ana-label
+{
+    color: #b45309;
+}
+
+.dc-ana-warn .dc-ana-chip
+{
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+}

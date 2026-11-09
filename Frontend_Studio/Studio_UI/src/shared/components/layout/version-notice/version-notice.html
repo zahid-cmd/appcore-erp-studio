@@ -1,0 +1,180 @@
+<!-- =====================================================
+     NEW VERSION BANNER
+====================================================== -->
+
+@if (versions.showBanner())
+{
+    <div
+        class="vn-banner"
+        role="status">
+
+        <i class="fas fa-rotate"></i>
+
+        <span class="vn-banner-text">
+            A new version
+            @if (versions.latest()?.version)
+            {
+                <b>(v{{ versions.latest()?.version }})</b>
+            }
+            is available. Reload to get it; your work stays until you reload.
+        </span>
+
+        <button
+            type="button"
+            class="vn-btn vn-btn-primary"
+            (click)="versions.reload()">
+            Reload
+        </button>
+
+        <button
+            type="button"
+            class="vn-x"
+            aria-label="Hide"
+            (click)="versions.closeBanner()">
+            <i class="fas fa-xmark"></i>
+        </button>
+
+    </div>
+}
+
+
+<!-- =====================================================
+     WHAT'S NEW (once after an update)
+====================================================== -->
+
+@if (versions.showWhatsNew() && versions.current(); as info)
+{
+    <div
+        class="vn-backdrop"
+        (click)="versions.closeWhatsNew()">
+
+        <div
+            class="vn-modal"
+            role="dialog"
+            aria-modal="true"
+            (click)="$event.stopPropagation()">
+
+            <div class="vn-head">
+                <span class="vn-icon"><i class="fas fa-wand-magic-sparkles"></i></span>
+
+                <div>
+                    <div class="vn-title">What's new in v{{ info.version }}</div>
+                    <div class="vn-sub">{{ dateText(info.date) }}</div>
+                </div>
+            </div>
+
+            <ul class="vn-list">
+                @for (line of info.whatsNew; track $index)
+                {
+                    <li><i class="fas fa-check"></i> {{ line }}</li>
+                }
+            </ul>
+
+            <div class="vn-foot">
+                <button
+                    type="button"
+                    class="vn-link"
+                    (click)="versions.openHistory()">
+                    All versions
+                </button>
+
+                <button
+                    type="button"
+                    class="vn-btn vn-btn-primary"
+                    (click)="versions.closeWhatsNew()">
+                    Got it
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+
+<!-- =====================================================
+     VERSION HISTORY
+====================================================== -->
+
+@if (versions.showHistory())
+{
+    <div
+        class="vn-backdrop"
+        (click)="versions.closeHistory()">
+
+        <div
+            class="vn-modal vn-modal-wide"
+            role="dialog"
+            aria-modal="true"
+            (click)="$event.stopPropagation()">
+
+            <div class="vn-head">
+                <span class="vn-icon"><i class="fas fa-code-branch"></i></span>
+
+                <div>
+                    <div class="vn-title">Version history</div>
+                    <div class="vn-sub">You are on {{ versions.label() }}</div>
+                </div>
+
+                <button
+                    type="button"
+                    class="vn-x"
+                    aria-label="Close"
+                    (click)="versions.closeHistory()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="vn-history appcore-scrollbar">
+
+                @if (versions.historyLoading())
+                {
+                    <p class="vn-muted"><i class="fas fa-spinner fa-spin"></i> Loading...</p>
+                }
+                @else if (versions.historyError())
+                {
+                    <p class="vn-muted">{{ versions.historyError() }}</p>
+                }
+                @else if (versions.history().length === 0)
+                {
+                    <p class="vn-muted">No versions yet.</p>
+                }
+                @else
+                {
+                    @for (v of versions.history(); track v.version)
+                    {
+                        <div
+                            class="vn-ver"
+                            [class.vn-ver-current]="'v' + v.version === versions.label()">
+
+                            <div class="vn-ver-head">
+                                <i [class]="typeIcon(v.changeType)"></i>
+                                <b>v{{ v.version }}</b>
+                                <span class="vn-tag">{{ v.changeType }}</span>
+                                @if ('v' + v.version === versions.label())
+                                {
+                                    <span class="vn-tag vn-tag-on">Current</span>
+                                }
+                                <span class="vn-date">{{ dateText(v.date) }}</span>
+                            </div>
+
+                            @if (v.whatsNew.length)
+                            {
+                                <ul class="vn-list vn-list-small">
+                                    @for (line of v.whatsNew; track $index)
+                                    {
+                                        <li><i class="fas fa-check"></i> {{ line }}</li>
+                                    }
+                                </ul>
+                            }
+                            @else
+                            {
+                                <p class="vn-muted">Internal improvements.</p>
+                            }
+                        </div>
+                    }
+                }
+
+            </div>
+        </div>
+    </div>
+}

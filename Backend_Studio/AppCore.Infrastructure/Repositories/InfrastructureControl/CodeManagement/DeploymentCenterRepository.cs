@@ -161,6 +161,9 @@ public class DeploymentCenterRepository
 
         entity.Name = Cut(Ascii(entity.Name), 200);
         entity.ReleaseNotes = Ascii(entity.ReleaseNotes);
+        entity.WhatsNew = Ascii(entity.WhatsNew);
+        entity.ChangeType = ChangeTypeOf(entity.ChangeType);
+        entity.Version = Cut(entity.Version, 20);
         entity.Remarks = Cut(Ascii(entity.Remarks), 1000);
         entity.CommitMessage = Cut(Ascii(entity.CommitMessage), 500);
 
@@ -206,6 +209,8 @@ public class DeploymentCenterRepository
         existing.ServerManagementId = entity.ServerManagementId;
         existing.ServerName = Cut(Ascii(entity.ServerName), 200);
         existing.ReleaseNotes = Ascii(entity.ReleaseNotes);
+        existing.WhatsNew = Ascii(entity.WhatsNew);
+        existing.ChangeType = ChangeTypeOf(entity.ChangeType);
         existing.Remarks = Cut(Ascii(entity.Remarks), 1000);
         existing.Branch = Cut(entity.Branch, 100);
         existing.CommitHash = Cut(entity.CommitHash, 64);
@@ -266,6 +271,7 @@ public class DeploymentCenterRepository
         }
 
         existing.DeployStatus = "Running";
+        existing.Version = Cut(entity.Version, 20);
         existing.Step = "Starting";
         existing.Percent = 0;
         existing.StartedDate = entity.StartedDate ?? DateTime.UtcNow;
@@ -305,9 +311,51 @@ public class DeploymentCenterRepository
             {
                 Id = x.Id,
                 Code = x.Code,
-                CommitHash = x.CommitHash
+                CommitHash = x.CommitHash,
+                Version = x.Version
             })
             .FirstOrDefaultAsync();
+    }
+
+
+    //===========================================================
+    // Version history : successful deployments with a version
+    //===========================================================
+
+    public async Task<IReadOnlyList<DeploymentEntity>>
+        GetVersionHistoryAsync()
+    {
+        return await _context
+            .Set<DeploymentEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted
+                     && x.Kind == "Deploy"
+                     && x.DeployStatus == "Succeeded"
+                     && x.Version != "")
+            .OrderByDescending(x => x.FinishedDate ?? x.StartedDate)
+            .Select(x => new DeploymentEntity
+            {
+                Id = x.Id,
+                Code = x.Code,
+                Version = x.Version,
+                ChangeType = x.ChangeType,
+                WhatsNew = x.WhatsNew,
+                StartedDate = x.StartedDate,
+                FinishedDate = x.FinishedDate
+            })
+            .Take(200)
+            .ToListAsync();
+    }
+
+
+    private static string ChangeTypeOf(string? value)
+    {
+        return (value ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "fix" => "Fix",
+            "major" => "Major",
+            _ => "Feature"
+        };
     }
 
 

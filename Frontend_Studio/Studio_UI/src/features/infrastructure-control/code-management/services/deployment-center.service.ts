@@ -37,6 +37,7 @@ import
     ServerRelease,
     DeploymentDraftDefaults,
     SaveDeploymentDraft,
+    DeploymentAnalysis,
     StartRollback,
     DeploymentCapabilities,
     StartedJob
@@ -153,6 +154,28 @@ export class DeploymentCenterService
 
         return this.http.get<DeploymentDraftDefaults>(
             `${this.apiUrl}/draft-defaults`,
+            { params }
+        );
+    }
+
+    // what changed since the last deployment on the server
+    analyse
+    (
+        serverPublicId?: string | null
+    ):
+        Observable<DeploymentAnalysis>
+    {
+        let params =
+            new HttpParams();
+
+        if (serverPublicId)
+        {
+            params =
+                params.set('server', serverPublicId);
+        }
+
+        return this.http.get<DeploymentAnalysis>(
+            `${this.apiUrl}/analyse`,
             { params }
         );
     }

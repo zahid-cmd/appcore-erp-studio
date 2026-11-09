@@ -47,6 +47,15 @@ export interface DeploymentCenter
     // what is in the release (one change per line)
     releaseNotes: string;
 
+    // 1.4.2 ('' = before versions / not deployed yet)
+    version: string;
+
+    // Fix / Feature / Major
+    changeType: string;
+
+    // lines users see after the update
+    whatsNew: string;
+
     backupFile: string;
 
     previousRelease: string;
@@ -177,6 +186,17 @@ export interface DeploymentDraftDefaults
 
     newCommits: number;
 
+    // version : last on the server and the three choices
+    lastVersion: string;
+
+    nextFix: string;
+
+    nextFeature: string;
+
+    nextMajor: string;
+
+    analysis: DeploymentAnalysis;
+
     problems: string[];
 }
 
@@ -192,8 +212,38 @@ export interface SaveDeploymentDraft
 
     remarks: string;
 
+    // Fix / Feature / Major
+    changeType: string;
+
+    whatsNew: string;
+
     // Edit : take the latest pushed commit
     updateCommit: boolean;
+}
+
+
+// what changed since the last deployment (Analyse changes)
+export interface DeploymentAnalysis
+{
+    commits: string[];
+
+    areas: DeploymentChangeArea[];
+
+    databaseScripts: string[];
+
+    filesChanged: number;
+
+    whatsNewDraft: string;
+}
+
+export interface DeploymentChangeArea
+{
+    name: string;
+
+    // Screen / Server
+    side: string;
+
+    files: number;
 }
 
 

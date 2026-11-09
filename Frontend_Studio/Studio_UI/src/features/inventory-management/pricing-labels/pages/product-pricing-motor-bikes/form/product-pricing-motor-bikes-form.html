@@ -1,0 +1,565 @@
+<div class="app-form-page ppm-form">
+
+    <!-- =====================================================
+         SECTION 01 : HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-motorcycle"
+        [title]="pageTitle"
+        [subtitle]="subtitle">
+
+        <div
+            pageHeaderCenter
+            class="ppm-center">
+
+            <div class="ppm-ribbon">
+
+                <div class="ppm-chip">
+                    <span class="ppm-chip-icon">
+                        <i class="fas fa-hashtag"></i>
+                    </span>
+                    <span class="ppm-chip-text">
+                        <span class="ppm-chip-label">Card No</span>
+                        <strong>{{ numberText || '—' }}</strong>
+                    </span>
+                </div>
+
+                <span class="ppm-ribbon-sep"></span>
+
+                <div class="ppm-chip">
+                    <span class="ppm-chip-icon ppm-chip-icon-vat">
+                        <i class="fas fa-percent"></i>
+                    </span>
+                    <span class="ppm-chip-text">
+                        <span class="ppm-chip-label">Sales VAT</span>
+                        <strong>{{ vatRate }} %</strong>
+                    </span>
+                </div>
+
+                <span class="ppm-ribbon-sep"></span>
+
+                <span
+                    class="ppm-status"
+                    [class.ppm-status-posted]="statusText === 'Posted'"
+                    [class.ppm-status-cancelled]="statusText === 'Cancelled'">
+                    {{ statusText }}
+                </span>
+
+                @if (doc?.InForce)
+                {
+                    <span
+                        class="ppm-status ppm-status-force"
+                        title="Posted and deciding the price of at least one model today">
+                        In Force
+                    </span>
+                }
+
+            </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="isView ? 'History' : (mode === 'edit' ? 'Update' : 'Save')"
+            [command1Icon]="isView ? 'fas fa-clock-rotate-left' : (mode === 'edit' ? 'fas fa-pen-to-square' : 'fas fa-floppy-disk')"
+            [command1Permission]="isView ? '' : (mode === 'edit' ? 'update' : 'add')"
+            [command1Title]="isView ? 'History of the card' : (mode === 'edit' ? 'Update the draft' : 'Save as a draft (numbered on the first save)')"
+            (command1Click)="command1()"
+            [command2Text]="doc?.Status === 'Posted' ? 'Cancel' : 'Post'"
+            [command2Icon]="doc?.Status === 'Posted' ? 'fas fa-ban' : 'fas fa-check-double'"
+            [command2Activity]="doc?.Status === 'Posted' ? 'Cancel' : 'Post'"
+            [command2Title]="doc?.Status === 'Posted' ? 'Cancel the card : the models go back to the card before it' : 'Save and post : the card decides the DP and MRP of its models'"
+            [command2Visible]="doc?.Status !== 'Cancelled'"
+            (command2Click)="doc?.Status === 'Posted' ? openCancel() : post()"
+            [command3Text]="mode === 'edit' ? 'Delete' : 'Clear'"
+            [command3Icon]="mode === 'edit' ? 'fas fa-trash-can' : 'fas fa-broom'"
+            [command3Activity]="mode === 'edit' ? 'Delete' : ''"
+            [command3Visible]="!isView"
+            (command3Click)="mode === 'edit' ? openDelete() : clear()"
+            rightCommandIcon="fas fa-arrow-left"
+            rightCommandTitle="Back to the list"
+            (rightCommandClick)="back()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         SECTION 02 : BODY
+    ====================================================== -->
+
+    <div class="ppm-body">
+
+        @if (loading)
+        {
+            <div class="ppm-loading">
+                <app-orbit-loader
+                    title="Loading Price Card"
+                    message="Please wait while the price card is being loaded."
+                    size="medium"
+                    [showMessage]="true"
+                    [overlay]="false">
+                </app-orbit-loader>
+            </div>
+        }
+        @else
+        {
+            @if (doc?.Status === 'Cancelled')
+            {
+                <div class="ppm-banner">
+                    <i class="fas fa-ban"></i>
+                    <span>
+                        Cancelled on {{ doc?.CancelledDate }} : {{ doc?.CancelReason }}
+                    </span>
+                </div>
+            }
+
+            <!-- CARD DETAILS -->
+            <div class="ppm-card ppm-head">
+
+                <div class="ppm-f ppm-f-supplier">
+                    <app-search-dropdown
+                        label="Supplier"
+                        placeholder="Choose the supplier"
+                        [required]="true"
+                        [items]="suppliers"
+                        labelField="SupplierName"
+                        valueField="SupplierCode"
+                        [value]="supplierCode"
+                        [disabled]="isView"
+                        (valueChange)="onSupplier($event)">
+                    </app-search-dropdown>
+                </div>
+
+                <div class="ppm-f ppm-f-type">
+                    <span class="ppm-label">Card Type</span>
+                    <app-control-segment
+                        name="ppmCardType"
+                        [items]="cardTypes"
+                        [value]="cardType"
+                        [disabled]="isView"
+                        (valueChange)="onCardType($event)">
+                    </app-control-segment>
+                </div>
+
+                <div class="ppm-f ppm-f-date">
+                    <app-datepicker
+                        label="Effective From"
+                        [required]="true"
+                        [value]="fromDate"
+                        [disabled]="isView"
+                        (valueChange)="onFromDate($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="ppm-f ppm-f-date">
+                    @if (cardType === 'Campaign')
+                    {
+                        <app-datepicker
+                            label="Effective To"
+                            [required]="true"
+                            [value]="toDate"
+                            [minDate]="fromDate"
+                            [disabled]="isView"
+                            (valueChange)="toDate = $event">
+                        </app-datepicker>
+                    }
+                    @else
+                    {
+                        <span class="ppm-label">Effective To</span>
+                        <span class="ppm-until">
+                            <i class="fas fa-infinity"></i>
+                            Until a later Regular card
+                        </span>
+                    }
+                </div>
+
+                <div class="ppm-f ppm-f-ref">
+                    <app-textbox
+                        label="Reference"
+                        placeholder="Price list / letter no"
+                        [maxLength]="100"
+                        [value]="reference"
+                        [disabled]="isView"
+                        (valueChange)="reference = $any($event)">
+                    </app-textbox>
+                </div>
+
+                <div class="ppm-f ppm-f-remarks">
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Remarks"
+                        [maxLength]="500"
+                        [value]="remarks"
+                        [disabled]="isView"
+                        (valueChange)="remarks = $any($event)">
+                    </app-textbox>
+                </div>
+
+            </div>
+
+            <!-- MODELS -->
+            <div class="ppm-card ppm-lines">
+
+                <div class="ppm-tools">
+
+                    <span class="ppm-tools-title">
+                        <i class="fas fa-list-check"></i>
+                        Models
+                    </span>
+
+                    @if (!isView)
+                    {
+                        <div class="ppm-pick">
+                            <app-search-dropdown
+                                [inline]="true"
+                                placeholder="Add a model…"
+                                [items]="pickItems"
+                                labelField="Label"
+                                valueField="MotorBikeId"
+                                [value]="pickId"
+                                (valueChange)="onPick($event)">
+                            </app-search-dropdown>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="ppm-btn"
+                            title="The models of the card in force for this supplier on Effective From, with their DP and MRP"
+                            [disabled]="loadingCurrent || !supplierCode"
+                            (click)="loadCurrent()">
+                            <i class="fas" [class.fa-download]="!loadingCurrent" [class.fa-spinner]="loadingCurrent" [class.fa-spin]="loadingCurrent"></i>
+                            Load Current Card
+                        </button>
+
+                        <button
+                            type="button"
+                            class="ppm-btn"
+                            title="Every active model not on the card yet (DP / MRP blank)"
+                            (click)="addAllModels()">
+                            <i class="fas fa-layer-group"></i>
+                            Add All Models
+                        </button>
+                    }
+
+                    <span class="ppm-tools-gap"></span>
+
+                    <div class="ppm-filter">
+                        <i class="fas fa-magnifying-glass"></i>
+                        <input
+                            type="text"
+                            placeholder="Filter models"
+                            [value]="filterText"
+                            (input)="filterText = $any($event.target).value">
+                    </div>
+
+                    @if (!isView && lines.length)
+                    {
+                        <button
+                            type="button"
+                            class="ppm-btn ppm-btn-danger"
+                            title="Remove every model"
+                            (click)="clearLines()">
+                            <i class="fas fa-trash-can"></i>
+                        </button>
+                    }
+
+                </div>
+
+                <div class="ppm-grid-wrap">
+
+                    <table class="ppm-grid">
+
+                        <thead>
+                            <tr>
+                                <th class="ppm-c-no">#</th>
+                                <th class="ppm-c-model">Model</th>
+                                <th class="ppm-c-num">DP</th>
+                                <th class="ppm-c-num">MRP</th>
+                                <th class="ppm-c-num">VAT Inside</th>
+                                <th class="ppm-c-num">Net Sale</th>
+                                <th class="ppm-c-num">Commission</th>
+                                <th class="ppm-c-pct">Comm %</th>
+                                <th class="ppm-c-old">Current Card</th>
+                                @if (!isView)
+                                {
+                                    <th class="ppm-c-x"></th>
+                                }
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @for (line of shownLines; track line.MotorBikeId; let i = $index)
+                            {
+                                <tr [class.ppm-bad]="!!lineProblem(line)">
+
+                                    <td class="ppm-c-no">{{ i + 1 }}</td>
+
+                                    <td class="ppm-c-model">
+                                        <strong>{{ line.ProductName }}</strong>
+                                        <span>
+                                            {{ line.ProductCode }}
+                                            @if (line.ColorName)
+                                            {
+                                                · {{ line.ColorName }}
+                                            }
+                                        </span>
+                                    </td>
+
+                                    <td class="ppm-c-num">
+                                        @if (isView)
+                                        {
+                                            {{ money(line.Dp) }}
+                                        }
+                                        @else
+                                        {
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                class="ppm-in"
+                                                [value]="line.Dp || ''"
+                                                (change)="setDp(line, $any($event.target).value)">
+                                        }
+                                    </td>
+
+                                    <td class="ppm-c-num">
+                                        @if (isView)
+                                        {
+                                            <b>{{ money(line.Mrp) }}</b>
+                                        }
+                                        @else
+                                        {
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                class="ppm-in ppm-in-mrp"
+                                                [value]="line.Mrp || ''"
+                                                (change)="setMrp(line, $any($event.target).value)">
+                                        }
+                                    </td>
+
+                                    <td class="ppm-c-num ppm-dim">{{ money(vatInside(line)) }}</td>
+
+                                    <td class="ppm-c-num ppm-dim">{{ money(netSale(line)) }}</td>
+
+                                    <td
+                                        class="ppm-c-num"
+                                        [class.ppm-neg]="commission(line) <= 0"
+                                        [title]="lineProblem(line)">
+                                        {{ money(commission(line)) }}
+                                    </td>
+
+                                    <td class="ppm-c-pct">{{ commissionPercent(line) }} %</td>
+
+                                    <td class="ppm-c-old">
+                                        @if (line.OldMrp > 0)
+                                        {
+                                            <span [class.ppm-changed]="changed(line)">
+                                                {{ money(line.OldDp) }} / {{ money(line.OldMrp) }}
+                                            </span>
+                                        }
+                                        @else
+                                        {
+                                            <span class="ppm-dim">—</span>
+                                        }
+                                    </td>
+
+                                    @if (!isView)
+                                    {
+                                        <td class="ppm-c-x">
+                                            <button
+                                                type="button"
+                                                class="ppm-x"
+                                                title="Remove the model"
+                                                (click)="removeLine(line)">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+                                        </td>
+                                    }
+
+                                </tr>
+                            }
+                            @empty
+                            {
+                                <tr class="ppm-empty">
+                                    <td [attr.colspan]="isView ? 9 : 10">
+                                        <i class="fas fa-motorcycle"></i>
+                                        @if (lines.length)
+                                        {
+                                            No model matches the filter.
+                                        }
+                                        @else
+                                        {
+                                            No model yet : add a model, load the current card of the supplier, or add all models.
+                                        }
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+    <!-- =====================================================
+         SUMMARY LINE
+    ====================================================== -->
+
+    @if (!loading)
+    {
+        <div class="ics-summary">
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Models</span>
+                <b class="ics-summary-value">{{ lines.length }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Total DP</span>
+                <b class="ics-summary-value">{{ money(totalDp) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Total MRP</span>
+                <b class="ics-summary-value">{{ money(totalMrp) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
+                <span class="ics-summary-label">Commission</span>
+                <b class="ics-summary-value ics-ok">{{ money(totalCommission) }}</b>
+            </span>
+
+            @if (problemCount)
+            {
+                <span class="ics-summary-item">
+                    <span class="ics-summary-label">To Check</span>
+                    <b class="ics-summary-value ics-bad">{{ problemCount }}</b>
+                </span>
+            }
+
+            <span class="ics-summary-note">
+                Commission = MRP − DP · VAT inside = MRP × rate ÷ (100 + rate)
+            </span>
+
+        </div>
+    }
+
+    <!-- =====================================================
+         CANCEL (posted)
+    ====================================================== -->
+
+    @if (cancelOpen && doc)
+    {
+        <div class="ppm-overlay">
+
+            <div
+                class="ppm-cx"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="ppm-cx-title">
+
+                <div class="ppm-cx-head">
+                    <span class="ppm-cx-icon">
+                        <i class="fas fa-ban"></i>
+                    </span>
+                    <div class="ppm-cx-title">
+                        <strong id="ppm-cx-title">Cancel Price Card</strong>
+                        <span>{{ doc.CardNo }} · {{ doc.SupplierName }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="ppm-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="cancelOpen = false">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="ppm-cx-body">
+
+                    <div class="ppm-cx-summary">
+                        <div>
+                            <span>Card Type</span>
+                            <strong>{{ doc.CardType }}</strong>
+                        </div>
+                        <div>
+                            <span>Effective From</span>
+                            <strong>{{ date(doc.EffectiveFrom) }}</strong>
+                        </div>
+                        <div>
+                            <span>Models</span>
+                            <strong>{{ doc.ProductCount }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="ppm-cx-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>
+                            The models go back to the card in force before this one.
+                            Purchases and sales already made keep their prices. This cannot be undone.
+                        </span>
+                    </div>
+
+                    <app-textarea
+                        label="Reason"
+                        placeholder="Why is this price card cancelled?"
+                        [required]="true"
+                        [rows]="4"
+                        [maxLength]="500"
+                        [value]="cancelReason"
+                        (valueChange)="cancelReason = $event">
+                    </app-textarea>
+
+                </div>
+
+                <div class="ppm-cx-foot">
+                    <span class="ppm-cx-note">
+                        <i class="fas fa-circle-info"></i>
+                        Reason is required (at least 5 characters).
+                    </span>
+                    <button
+                        type="button"
+                        class="ppm-btn"
+                        (click)="cancelOpen = false">
+                        <i class="fas fa-arrow-left"></i>
+                        Keep It
+                    </button>
+                    <button
+                        type="button"
+                        class="ppm-btn ppm-btn-solid-danger"
+                        [disabled]="progress.busy"
+                        (click)="confirmCancel()">
+                        <i class="fas fa-ban"></i>
+                        Cancel Price Card
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        title="Price Card History"
+        [items]="historyItems"
+        (closed)="historyOpened = false">
+    </app-history-drawer>
+
+</div>
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

@@ -186,9 +186,112 @@
 
                 </div>
 
+                <!-- ===========================================
+                     VERSION + WHAT'S NEW (users see this)
+                ============================================ -->
+
+                <div class="dc-card">
+                    <div class="dc-card-head">
+                        <span><i class="fas fa-code-branch"></i> Version</span>
+                        <small>
+                            @if (draft?.lastVersion)
+                            {
+                                Live on this server : v{{ draft?.lastVersion }}
+                            }
+                            @else
+                            {
+                                No version on this server yet : starts at v1.0.0
+                            }
+                        </small>
+                    </div>
+
+                    <div class="dc-ver-row">
+                        @for (t of changeTypes; track t.value)
+                        {
+                            <button
+                                type="button"
+                                class="dc-ver-type"
+                                [class.on]="changeType === t.value"
+                                [title]="t.hint"
+                                (click)="setChangeType(t.value)">
+                                <i [class]="t.icon"></i>
+                                <span>{{ t.label }}</span>
+                                @if (nextVersionFor(t.value))
+                                {
+                                    <b>v{{ nextVersionFor(t.value) }}</b>
+                                }
+                            </button>
+                        }
+                    </div>
+
+                    <p class="dc-ver-hint">
+                        Fix = small fix or tweak, Feature = new feature or page, Major = big change.
+                        The number is fixed when you press Deploy.
+                    </p>
+                </div>
+
+                <div class="dc-card">
+                    <div class="dc-card-head">
+                        <span><i class="fas fa-bullhorn"></i> What's new <small>(every user sees this after the update)</small></span>
+
+                        <button type="button" class="dc-btn dc-btn-ghost dc-btn-sm" [disabled]="analysing" (click)="analyse()">
+                            <i [class]="analysing ? 'fas fa-spinner fa-spin' : 'fas fa-magnifying-glass-chart'"></i>
+                            {{ analysing ? 'Analysing...' : 'Analyse changes' }}
+                        </button>
+                    </div>
+
+                    @if (analysis)
+                    {
+                        <div class="dc-ana">
+                            <span class="dc-ana-count">
+                                {{ analysis.commits.length }} commit(s) · {{ analysis.filesChanged }} file(s) since the last deployment
+                            </span>
+
+                            @if (screenAreas.length)
+                            {
+                                <div class="dc-ana-row">
+                                    <span class="dc-ana-label"><i class="fas fa-desktop"></i> Screens</span>
+                                    @for (a of screenAreas; track a)
+                                    {
+                                        <span class="dc-ana-chip">{{ a }}</span>
+                                    }
+                                </div>
+                            }
+
+                            @if (serverAreas.length)
+                            {
+                                <div class="dc-ana-row">
+                                    <span class="dc-ana-label"><i class="fas fa-server"></i> Server</span>
+                                    @for (a of serverAreas; track a)
+                                    {
+                                        <span class="dc-ana-chip dc-ana-muted">{{ a }}</span>
+                                    }
+                                </div>
+                            }
+
+                            @if (analysis.databaseScripts.length)
+                            {
+                                <div class="dc-ana-row dc-ana-warn">
+                                    <span class="dc-ana-label"><i class="fas fa-database"></i> Run on the database</span>
+                                    @for (f of analysis.databaseScripts; track f)
+                                    {
+                                        <span class="dc-ana-chip">{{ f }}</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <textarea
+                        class="dc-textarea dc-textarea-small appcore-scrollbar"
+                        placeholder="One line each, in plain words for the staff. Empty = no pop-up after the update."
+                        [value]="whatsNew"
+                        (input)="onWhatsNewInput($event)"></textarea>
+                </div>
+
                 <div class="dc-card dc-grow">
                     <div class="dc-card-head">
-                        <span><i class="fas fa-list-check"></i> What is in this release</span>
+                        <span><i class="fas fa-list-check"></i> What is in this release <small>(developers)</small></span>
 
                         @if (draft)
                         {
@@ -301,6 +404,37 @@
                         <div class="dc-field dc-wide"><span>Remarks</span><b>{{ item.remarks || '-' }}</b></div>
                     }
 
+                </div>
+
+
+                <!-- =============================================
+                     VIEW : version + What's new
+                ============================================== -->
+
+                <div class="dc-card">
+                    <div class="dc-card-head">
+                        <span><i class="fas fa-bullhorn"></i> What's new
+                            @if (item.version)
+                            {
+                                in v{{ item.version }}
+                            }
+                        </span>
+                        <small>{{ item.changeType }}{{ item.version ? '' : (item.deployStatus === 'Draft' ? ' · number given on Deploy' : '') }}</small>
+                    </div>
+
+                    @if (whatsNewLines.length > 0)
+                    {
+                        <ul class="dc-notes appcore-scrollbar">
+                            @for (line of whatsNewLines; track $index)
+                            {
+                                <li>{{ line }}</li>
+                            }
+                        </ul>
+                    }
+                    @else
+                    {
+                        <div class="dc-muted">Nothing for users (no pop-up after the update).</div>
+                    }
                 </div>
 
 

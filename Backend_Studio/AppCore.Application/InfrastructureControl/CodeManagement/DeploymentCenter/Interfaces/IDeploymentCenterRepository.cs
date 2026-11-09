@@ -52,4 +52,8 @@ public interface IDeploymentCenterRepository
     // jobs left "Running" when the API stopped -> Failed
     Task<int>
         CloseInterruptedAsync();
+
+    // successful deployments with a version, newest first
+    Task<IReadOnlyList<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>>
+        GetVersionHistoryAsync();
 }

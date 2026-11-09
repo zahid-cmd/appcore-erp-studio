@@ -21,6 +21,8 @@ using AppCore.Domain.Common;
 
 using AppCore.Infrastructure.CodeMaster;
 
+using AppCore.Application.Platform.CurrentUser;
+
 
 //===============================================================
 // Namespace
@@ -47,6 +49,9 @@ public class UserProfileRepository : IUserProfileRepository
     private readonly ISpecialAssignmentRepository
         _specialAssignmentRepository;
 
+    private readonly ICurrentUserService
+        _currentUser;
+
 
     //===========================================================
     // Constructor
@@ -57,8 +62,13 @@ public class UserProfileRepository : IUserProfileRepository
 
         IRoleAssignmentRepository roleAssignmentRepository,
 
-        ISpecialAssignmentRepository specialAssignmentRepository)
+        ISpecialAssignmentRepository specialAssignmentRepository,
+
+        ICurrentUserService currentUser)
     {
+        _currentUser =
+            currentUser;
+
         _context =
             context;
 
@@ -74,16 +84,30 @@ public class UserProfileRepository : IUserProfileRepository
     // User Profile Query
     //===========================================================
 
+    // Developer accounts : seen by developers only
+    private IQueryable<UserProfileEntity> VisibleProfiles()
+    {
+        IQueryable<UserProfileEntity> rows =
+            _context
+                .Set<UserProfileEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+        if (!DeveloperAccess.ViewerIsDeveloper(_context, _currentUser))
+        {
+            IQueryable<long> developers =
+                DeveloperAccess.DeveloperUserIds(_context);
+
+            rows =
+                rows.Where(x => !developers.Contains(x.UserProfileId));
+        }
+
+        return rows;
+    }
+
     private IQueryable<UserProfileDto> UserProfileQuery()
     {
-        return _context
-            .Set<UserProfileEntity>()
-            .AsNoTracking()
-            .Where
-            (
-                x =>
-                    !x.IsDeleted
-            )
+        return VisibleProfiles()
             .Select
             (
                 x =>
@@ -344,54 +368,11 @@ public class UserProfileRepository : IUserProfileRepository
     public async Task<string>
         GetNextCodeAsync()
     {
-        List<string> existingCodes =
-            await _context
-                .Set<UserProfileEntity>()
-
-                .AsNoTracking()
-
-                .Where
-                (
-                    x =>
-                        !x.IsDeleted
-                )
-
-                .Select
-                (
-                    x =>
-                        x.ProfileCode
-                )
-
-                .ToListAsync();
-
-
-        int nextSequenceNo =
-            1;
-
-
-        while
-        (
-            existingCodes.Any
-            (
-                x =>
-                    string.Equals
-                    (
-                        x,
-
-                        CodeGenerator.GenerateUserProfileCode(
-                            nextSequenceNo),
-
-                        StringComparison.OrdinalIgnoreCase
-                    )
-            )
-        )
-        {
-            nextSequenceNo++;
-        }
-
-
-        return CodeGenerator.GenerateUserProfileCode(
-            nextSequenceNo);
+        // Client series CUP-001 ... (developers get DUP- through
+        // Role Assignment)
+        return await DeveloperAccess.NextCodeAsync(
+            _context,
+            false);
     }
 
 
@@ -560,6 +541,11 @@ public class UserProfileRepository : IUserProfileRepository
             long userId
         )
     {
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            dto.UserProfileId);
+
         UserProfileEntity? entity =
 
             await _context
@@ -695,6 +681,11 @@ public class UserProfileRepository : IUserProfileRepository
             long userId
         )
     {
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            userProfileId);
+
         UserProfileEntity? entity =
 
             await _context
@@ -796,6 +787,11 @@ public class UserProfileRepository : IUserProfileRepository
             long userId
         )
     {
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            userProfileId);
+
         UserProfileEntity? entity =
 
             await _context
@@ -895,6 +891,11 @@ public class UserProfileRepository : IUserProfileRepository
             long userId
         )
     {
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            id);
+
         //===========================================================
         // Resolve User Profile
         //===========================================================
@@ -1181,20 +1182,8 @@ public class UserProfileRepository : IUserProfileRepository
             long id
         )
     {
-        return await _context
-            .Set<UserProfileEntity>()
-
-            .AnyAsync
-            (
-                x =>
-
-                    x.UserProfileId ==
-                    id
-
-                    &&
-
-                    !x.IsDeleted
-            );
+        return await VisibleProfiles()
+            .AnyAsync(x => x.UserProfileId == id);
     }
 
 
@@ -1346,10 +1335,8 @@ public class UserProfileRepository : IUserProfileRepository
             return null;
         }
 
-        return await _context
-            .Set<global::AppCore.Domain.Entities.SecurityPermission.UserManagement.UserProfile>()
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+        return await VisibleProfiles()
+            .Where(x => x.PublicId == publicId)
             .Select(x => (long?)x.UserProfileId)
             .FirstOrDefaultAsync();
     }

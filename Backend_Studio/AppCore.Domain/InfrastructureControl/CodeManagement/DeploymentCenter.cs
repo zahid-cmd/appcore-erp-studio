@@ -71,6 +71,20 @@ public class DeploymentCenter
     // what is in the release (commit messages; editable)
     public string ReleaseNotes { get; set; } = string.Empty;
 
+
+    //===========================================================
+    // Version (2026-11-09)
+    //===========================================================
+
+    // 1.4.2 : given on Deploy ('' = before versions)
+    public string Version { get; set; } = string.Empty;
+
+    // Fix / Feature / Major
+    public string ChangeType { get; set; } = "Feature";
+
+    // lines users see after the update ('' = no pop-up)
+    public string WhatsNew { get; set; } = string.Empty;
+
     //===========================================================
     // Audit
     //===========================================================

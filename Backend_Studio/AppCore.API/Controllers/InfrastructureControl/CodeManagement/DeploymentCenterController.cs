@@ -248,7 +248,40 @@ public class DeploymentCenterController
         result.ReleaseNotes = notes;
         result.NewCommits = count;
 
+        // version choices + what changed
+        result.LastVersion = last?.Version ?? string.Empty;
+        result.NextFix = DeploymentRunner.NextVersion(result.LastVersion, "Fix");
+        result.NextFeature = DeploymentRunner.NextVersion(result.LastVersion, "Feature");
+        result.NextMajor = DeploymentRunner.NextVersion(result.LastVersion, "Major");
+        result.Analysis = await DeploymentRunner.AnalyseAsync(source.Value.Path, source.Value.Branch, result.LastCommit);
+
         return Ok(result);
+    }
+
+
+    //===========================================================
+    // Analyse changes : since the last successful deployment on
+    // the server (the "Analyse changes" button)
+    //===========================================================
+
+    [HttpGet("analyse")]
+    public async Task<IActionResult> Analyse([FromQuery] Guid? server)
+    {
+        var source = await SourceAsync();
+
+        if (source is null)
+        {
+            return BadRequest(new { message = "No active repository in Source Control. Add one first." });
+        }
+
+        // fetch first, so origin/<branch> is up to date
+        await DeploymentRunner.PreflightAsync(source.Value.Path, source.Value.Branch, fetch: true);
+
+        long? serverId = server is null ? null : await _servers.GetIdByPublicIdAsync(server.Value);
+
+        var last = serverId is null ? null : await _repository.GetLastSucceededAsync(serverId.Value);
+
+        return Ok(await DeploymentRunner.AnalyseAsync(source.Value.Path, source.Value.Branch, last?.CommitHash ?? string.Empty));
     }
 
 
@@ -375,6 +408,8 @@ public class DeploymentCenterController
             CommitHash = check.CommitHash,
             CommitMessage = check.CommitMessage,
             ReleaseNotes = (dto.ReleaseNotes ?? string.Empty).Trim(),
+            ChangeType = dto.ChangeType ?? "Feature",
+            WhatsNew = (dto.WhatsNew ?? string.Empty).Trim(),
             Remarks = (dto.Remarks ?? string.Empty).Trim(),
             PerformedByName = UserName()
         };
@@ -426,6 +461,8 @@ public class DeploymentCenterController
         entity.ServerName = server.Name;
         entity.Name = string.IsNullOrWhiteSpace(dto.Name) ? entity.Name : dto.Name.Trim();
         entity.ReleaseNotes = (dto.ReleaseNotes ?? string.Empty).Trim();
+        entity.ChangeType = dto.ChangeType ?? "Feature";
+        entity.WhatsNew = (dto.WhatsNew ?? string.Empty).Trim();
         entity.Remarks = (dto.Remarks ?? string.Empty).Trim();
 
         if (dto.UpdateCommit)
@@ -523,6 +560,12 @@ public class DeploymentCenterController
         {
             return BadRequest(new { message = "No active repository in Source Control. Add one first." });
         }
+
+        // the version is fixed now : last successful version on
+        // this server + the change type of the draft
+        var lastOk = await _repository.GetLastSucceededAsync(entity.ServerManagementId);
+
+        entity.Version = DeploymentRunner.NextVersion(lastOk?.Version, entity.ChangeType);
 
         var (record, error) = await DeploymentRunner.StartDeploymentAsync(
             _scopes,
@@ -737,6 +780,9 @@ public class DeploymentCenterController
         CommitHash = x.CommitHash,
         CommitMessage = x.CommitMessage,
         ReleaseNotes = x.ReleaseNotes,
+        Version = x.Version,
+        ChangeType = x.ChangeType,
+        WhatsNew = x.WhatsNew,
         BackupFile = x.BackupFile,
         PreviousRelease = x.PreviousRelease,
         PackageMb = x.PackageMb,

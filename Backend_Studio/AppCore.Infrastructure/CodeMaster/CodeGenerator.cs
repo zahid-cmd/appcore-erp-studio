@@ -256,7 +256,26 @@ public static class CodeGenerator
         }
 
 
-        return $"UP-{sequenceNo:D3}";
+        // Client User Profile (2026-11-09 : was UP-)
+        return $"CUP-{sequenceNo:D3}";
+    }
+
+
+    //===============================================================
+    // Developer User Profile Code (DUP-001 ...) : users holding the
+    // developer role (see DeveloperAccess)
+    //===============================================================
+
+    public static string GenerateDeveloperProfileCode(
+        int sequenceNo)
+    {
+        if (sequenceNo < 1)
+        {
+            throw new ArgumentException(
+                "Invalid user profile sequence number.");
+        }
+
+        return $"DUP-{sequenceNo:D3}";
     }
 
 

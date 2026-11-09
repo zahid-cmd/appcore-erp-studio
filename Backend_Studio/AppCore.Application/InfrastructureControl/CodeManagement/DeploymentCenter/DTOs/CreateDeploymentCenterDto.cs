@@ -14,6 +14,12 @@ public class SaveDeploymentDraftDto
 
     public string ReleaseNotes { get; set; } = string.Empty;
 
+    // Fix / Feature / Major
+    public string ChangeType { get; set; } = "Feature";
+
+    // lines users see after the update
+    public string WhatsNew { get; set; } = string.Empty;
+
     public string Remarks { get; set; } = string.Empty;
 
     // Edit : take the latest pushed commit

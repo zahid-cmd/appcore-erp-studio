@@ -1299,6 +1299,16 @@ public static class DependencyInjection
 
         // AUTO-END : ProductPricing
 
+        // AUTO-BEGIN : ProductPricingMotorBikes
+
+        services.AddScoped
+        <
+            IProductPricingMotorBikesRepository,
+            ProductPricingMotorBikesRepository
+        >();
+
+        // AUTO-END : ProductPricingMotorBikes
+
         // AUTO-BEGIN : PurchaseOrdersSp
 
         services.AddScoped

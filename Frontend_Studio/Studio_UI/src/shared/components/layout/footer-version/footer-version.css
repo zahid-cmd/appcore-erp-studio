@@ -58,7 +58,17 @@
 
     white-space:nowrap;
 
-    cursor:default;
+    border:0;
+
+    font-family:inherit;
+
+    cursor:pointer;
+}
+
+
+.version-label:hover
+{
+    background:rgba(255,255,255,.16);
 }
 
 

@@ -135,6 +135,7 @@ import
     PRODUCT_PRICING_PRINT_KEY,
     PRODUCT_PRICING_ROUTE,
     PRODUCT_PRICING_TYPES,
+    PRODUCT_PRICING_PAGE_TYPES,
     ProductPricing,
     ProductPricingBatch,
     ProductPricingBatchList,
@@ -444,7 +445,7 @@ export class ProductPricingForm
 
     readonly typeItems:
         Option[] =
-        PRODUCT_PRICING_TYPES.map(x => ({ label:x.title, value:x.type }));
+        PRODUCT_PRICING_PAGE_TYPES.map(x => ({ label:x.title, value:x.type }));
 
     productItems:
         Option[] = [];
@@ -621,7 +622,7 @@ export class ProductPricingForm
         const type =
             String(this.route.snapshot.queryParamMap.get('type') ?? '').toUpperCase();
 
-        this.setType(PRODUCT_PRICING_TYPES.some(x => x.type === type) ? type : 'SP');
+        this.setType(PRODUCT_PRICING_PAGE_TYPES.some(x => x.type === type) ? type : 'SP');
 
         this.loadDefaults();
     }

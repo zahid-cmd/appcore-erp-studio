@@ -19,6 +19,8 @@ using AppCore.Domain.Common;
 
 using AppCore.Infrastructure.CodeMaster;
 
+using AppCore.Application.Platform.CurrentUser;
+
 
 //===============================================================
 // Namespace
@@ -44,10 +46,42 @@ public class RoleProfileRepository : IRoleProfileRepository
     // Constructor
     //===========================================================
 
+    private readonly ICurrentUserService _currentUser;
+
     public RoleProfileRepository(
-        AppDbContext context)
+        AppDbContext context,
+        ICurrentUserService currentUser)
     {
         _context = context;
+
+        _currentUser = currentUser;
+    }
+
+
+    // The developer role : seen by developers only
+    private IQueryable<RoleProfileEntity> VisibleRoles()
+    {
+        IQueryable<RoleProfileEntity> rows =
+            _context.RoleProfiles
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted);
+
+        if (!DeveloperAccess.ViewerIsDeveloper(_context, _currentUser))
+        {
+            rows =
+                rows.Where(x => !x.IsDeveloperRole);
+        }
+
+        return rows;
+    }
+
+    private async Task GuardRoleAsync(long roleProfileId)
+    {
+        if (!DeveloperAccess.ViewerIsDeveloper(_context, _currentUser)
+            && await DeveloperAccess.IsDeveloperRoleAsync(_context, roleProfileId))
+        {
+            throw new KeyNotFoundException("Role Profile not found.");
+        }
     }
 
 
@@ -57,12 +91,7 @@ public class RoleProfileRepository : IRoleProfileRepository
 
     private IQueryable<RoleProfileDto> RoleProfileQuery()
     {
-        return _context.RoleProfiles
-
-            .AsNoTracking()
-
-            .Where(x =>
-                !x.IsDeleted)
+        return VisibleRoles()
 
             .Select(x => new RoleProfileDto
             {
@@ -393,6 +422,8 @@ public class RoleProfileRepository : IRoleProfileRepository
         UpdateRoleProfileDto dto,
         long userId)
     {
+        await GuardRoleAsync(dto.RoleProfileId);
+
         RoleProfileEntity? entity =
             await _context.RoleProfiles
 
@@ -502,6 +533,8 @@ public class RoleProfileRepository : IRoleProfileRepository
         long id,
         long userId)
     {
+        await GuardRoleAsync(id);
+
         //===========================================================
         // Resolve Role Profile
         //===========================================================
@@ -724,12 +757,10 @@ public class RoleProfileRepository : IRoleProfileRepository
     public async Task<bool> ExistsAsync(
         long id)
     {
-        return await _context.RoleProfiles
+        return await VisibleRoles()
 
             .AnyAsync(x =>
-                x.RoleProfileId == id
-                &&
-                !x.IsDeleted);
+                x.RoleProfileId == id);
     }
 
 
@@ -751,10 +782,8 @@ public class RoleProfileRepository : IRoleProfileRepository
             return null;
         }
 
-        return await _context
-            .Set<global::AppCore.Domain.Entities.SecurityPermission.RoleManagement.RoleProfile>()
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && x.PublicId == publicId)
+        return await VisibleRoles()
+            .Where(x => x.PublicId == publicId)
             .Select(x => (long?)x.RoleProfileId)
             .FirstOrDefaultAsync();
     }

@@ -145,6 +145,20 @@ public class DeploymentCenterConfiguration
                .HasColumnName("releaseNotes")
                .IsRequired();
 
+        builder.Property(x => x.Version)
+               .HasColumnName("version")
+               .IsRequired()
+               .HasMaxLength(20);
+
+        builder.Property(x => x.ChangeType)
+               .HasColumnName("changeType")
+               .IsRequired()
+               .HasMaxLength(10);
+
+        builder.Property(x => x.WhatsNew)
+               .HasColumnName("whatsNew")
+               .IsRequired();
+
         builder.Property(x => x.Status)
                .HasColumnName("status")
                .IsRequired();

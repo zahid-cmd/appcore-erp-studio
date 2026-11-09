@@ -25,6 +25,12 @@ import
 }
 from '../../../../core/sidebar/sidebar.service';
 
+import
+{
+    VersionService
+}
+from '../../../../core/version/version.service';
+
 
 //===============================================================
 // Application Version
@@ -65,8 +71,10 @@ export class FooterVersionComponent
     // State
     //===========================================================
 
-    readonly version =
-        APPCORE_VERSION;
+    // the running version (version.json of the release); click
+    // opens the version history
+    readonly versions =
+        inject(VersionService);
 
     readonly isCollapsed =
         toSignal(

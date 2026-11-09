@@ -13,6 +13,8 @@ using AppCore.Application.SecurityPermission.UserManagement.BranchAssignment.DTO
 
 using AppCore.Infrastructure.Persistence;
 
+using AppCore.Application.Platform.CurrentUser;
+
 
 //===============================================================
 // Namespace
@@ -39,13 +41,19 @@ public class BranchAssignmentRepository
     // Constructor
     //===========================================================
 
+    private readonly ICurrentUserService _currentUser;
+
     public BranchAssignmentRepository
     (
-        AppDbContext context
+        AppDbContext context,
+        ICurrentUserService currentUser
     )
     {
         _context =
             context;
+
+        _currentUser =
+            currentUser;
     }
 
 
@@ -73,6 +81,13 @@ public class BranchAssignmentRepository
     public async Task<List<BranchAssignmentDto>>
         GetAllAsync()
     {
+        // Developer accounts : seen by developers only
+        bool viewerIsDeveloper =
+            DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
+
+        IQueryable<long> hiddenUsers =
+            DeveloperAccess.DeveloperUserIds(_context);
+
         var assignments =
 
             await
@@ -89,6 +104,10 @@ public class BranchAssignmentRepository
                 where
 
                     !assignment.IsDeleted
+
+                    &&
+
+                    (viewerIsDeveloper || !hiddenUsers.Contains(assignment.UserProfileId))
 
                 orderby
                     userProfile.ProfileCode
@@ -218,6 +237,13 @@ public class BranchAssignmentRepository
             long branchAssignmentId
         )
     {
+        // Developer accounts : seen by developers only
+        bool viewerIsDeveloper =
+            DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
+
+        IQueryable<long> hiddenUsers =
+            DeveloperAccess.DeveloperUserIds(_context);
+
         var assignment =
 
             await
@@ -239,6 +265,10 @@ public class BranchAssignmentRepository
                     &&
 
                     !branchAssignment.IsDeleted
+
+                    &&
+
+                    (viewerIsDeveloper || !hiddenUsers.Contains(branchAssignment.UserProfileId))
 
                 select new BranchAssignmentDto
                 {
@@ -321,6 +351,13 @@ public class BranchAssignmentRepository
             long userProfileId
         )
     {
+        // Developer accounts : seen by developers only
+        bool viewerIsDeveloper =
+            DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
+
+        IQueryable<long> hiddenUsers =
+            DeveloperAccess.DeveloperUserIds(_context);
+
         var assignment =
 
             await
@@ -342,6 +379,10 @@ public class BranchAssignmentRepository
                     &&
 
                     !branchAssignment.IsDeleted
+
+                    &&
+
+                    (viewerIsDeveloper || !hiddenUsers.Contains(branchAssignment.UserProfileId))
 
                 select new BranchAssignmentDto
                 {
@@ -570,6 +611,23 @@ public class BranchAssignmentRepository
 
     public async Task<long>
         CreateAsync
+        (
+            CreateBranchAssignmentDto dto
+        )
+    {
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            dto.UserProfileId);
+
+        long id =
+            await CreateCoreAsync(dto);
+
+        return id;
+    }
+
+    private async Task<long>
+        CreateCoreAsync
         (
             CreateBranchAssignmentDto dto
         )
@@ -943,6 +1001,23 @@ public class BranchAssignmentRepository
 
     public async Task<bool>
         UpdateAsync
+        (
+            UpdateBranchAssignmentDto dto
+        )
+    {
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            dto.UserProfileId);
+
+        bool done =
+            await UpdateCoreAsync(dto);
+
+        return done;
+    }
+
+    private async Task<bool>
+        UpdateCoreAsync
         (
             UpdateBranchAssignmentDto dto
         )
@@ -1385,6 +1460,31 @@ public class BranchAssignmentRepository
             long branchAssignmentId
         )
     {
+        long userProfileId =
+            await _context
+                .Set<BranchAssignment>()
+                .AsNoTracking()
+                .Where(x => x.BranchAssignmentId == branchAssignmentId)
+                .Select(x => x.UserProfileId)
+                .FirstOrDefaultAsync();
+
+        await DeveloperAccess.GuardAsync(
+            _context,
+            _currentUser,
+            userProfileId);
+
+        bool done =
+            await DeleteCoreAsync(branchAssignmentId);
+
+        return done;
+    }
+
+    private async Task<bool>
+        DeleteCoreAsync
+        (
+            long branchAssignmentId
+        )
+    {
         const long systemUserId =
             1;
 
@@ -1557,6 +1657,15 @@ public class BranchAssignmentRepository
 
     public async Task<bool>
         RestoreLastDeletedAsync()
+    {
+        bool done =
+            await RestoreLastDeletedCoreAsync();
+
+        return done;
+    }
+
+    private async Task<bool>
+        RestoreLastDeletedCoreAsync()
     {
         const long systemUserId =
             1;

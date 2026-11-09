@@ -9,10 +9,12 @@
     class="footer-version"
     [class.collapsed]="isCollapsed()">
 
-    <span
+    <button
+        type="button"
         class="version-label"
-        [title]="'AppCore ERP ' + version">
-        {{ version }}
-    </span>
+        [title]="'AppCore ERP ' + versions.label() + ' : version history'"
+        (click)="versions.openHistory()">
+        {{ versions.label() }}
+    </button>
 
 </div>

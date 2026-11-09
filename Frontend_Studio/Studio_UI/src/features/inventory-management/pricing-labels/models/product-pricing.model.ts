@@ -305,6 +305,12 @@ export const PRODUCT_PRICING_TYPES:
     { type:'AC', title:'Accessories', item:'Accessory', itemLower:'accessories', icon:'fas fa-box-open' }
 ];
 
+// Types priced on this page : Motor Bikes moved to the price cards
+// (Product Pricing - Motor Bikes, 2026-11-09)
+export const PRODUCT_PRICING_PAGE_TYPES:
+    ProductPricingTypeInfo[] =
+    PRODUCT_PRICING_TYPES.filter(x => x.type !== 'MB');
+
 export function productPricingType
 (
     type:

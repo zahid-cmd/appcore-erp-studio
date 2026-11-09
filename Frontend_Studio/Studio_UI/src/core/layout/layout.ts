@@ -113,6 +113,12 @@ import
 }
 from './screen.service';
 
+import
+{
+    VersionNoticeComponent
+}
+from '../../shared/components/layout/version-notice/version-notice';
+
 
 //===============================================================
 // Component
@@ -137,6 +143,8 @@ from './screen.service';
         SidebarComponent,
 
         FooterComponent,
+
+        VersionNoticeComponent,
 
         TopbarNavComponent,
 
@@ -419,4 +427,4 @@ implements
         this.subscriptions.unsubscribe();
     }
 
-}
+}

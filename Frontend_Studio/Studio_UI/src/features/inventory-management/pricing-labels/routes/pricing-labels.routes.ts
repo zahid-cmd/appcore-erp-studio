@@ -122,7 +122,7 @@ Routes =
 
                     data:
                     {
-                        breadcrumb:'Price Adjustment'
+                        breadcrumb:'Price & Stock Adjustment'
                     },
 
                     loadChildren:() =>
@@ -136,6 +136,32 @@ Routes =
                 },
 
                 // AUTO-END : SUB-012-004-004
+
+            // AUTO-BEGIN : SUB-012-004-005
+
+                //===========================================================
+                // Product Pricing - Motor Bikes
+                //===========================================================
+
+                {
+                    path:'product-pricing-motor-bikes',
+
+                    data:
+                    {
+                        breadcrumb:'Product Pricing - Motor Bikes'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './product-pricing-motor-bikes.routes'
+                        )
+                        .then(
+                            m =>
+                                m.ProductPricingMotorBikesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-012-004-005
 
         ]
 

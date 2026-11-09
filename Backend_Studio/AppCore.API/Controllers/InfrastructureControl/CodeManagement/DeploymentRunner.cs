@@ -311,6 +311,285 @@ public static class DeploymentRunner
 
 
     //===========================================================
+    // version.json (in wwwroot of the release)
+    //===========================================================
+
+    private static void WriteVersionFile(string wwwroot, DeploymentCenter record)
+    {
+        var lines = (record.WhatsNew ?? string.Empty)
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim().TrimStart('-', '*').Trim())
+            .Where(x => x.Length > 0)
+            .ToList();
+
+        var content = new
+        {
+            version = record.Version,
+            release = record.Code,
+            changeType = record.ChangeType,
+            date = DateTime.UtcNow,
+            commit = record.CommitHash,
+            whatsNew = lines
+        };
+
+        File.WriteAllText(
+            Path.Combine(wwwroot, "version.json"),
+            JsonSerializer.Serialize(content, Json));
+    }
+
+
+    //===========================================================
+    // Version numbers : 1.4.2 -> Fix 1.4.3, Feature 1.5.0,
+    // Major 2.0.0. No earlier version : 1.0.0.
+    //===========================================================
+
+    public static string NextVersion(string? last, string? changeType)
+    {
+        var parts = (last ?? string.Empty).Trim().TrimStart('v', 'V').Split('.');
+
+        if (parts.Length != 3
+            || !int.TryParse(parts[0], out var major)
+            || !int.TryParse(parts[1], out var minor)
+            || !int.TryParse(parts[2], out var patch))
+        {
+            return "1.0.0";
+        }
+
+        return (changeType ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "fix" => $"{major}.{minor}.{patch + 1}",
+            "major" => $"{major + 1}.0.0",
+            _ => $"{major}.{minor + 1}.0"
+        };
+    }
+
+
+    //===========================================================
+    // Analysis : what changed since a commit
+    //
+    // Commit messages + the changed files turned into the pages
+    // / parts of the ERP they belong to. SQL scripts are listed
+    // apart (to run on the database), server files are listed
+    // for developers only. The What's new draft = the commit
+    // messages, then one "Updated : ..." line for the screens.
+    //===========================================================
+
+    public static async Task<DeploymentAnalysisDto> AnalyseAsync(
+        string repositoryPath,
+        string branch,
+        string sinceCommit)
+    {
+        var result = new DeploymentAnalysisDto();
+
+        if (string.IsNullOrWhiteSpace(repositoryPath) || !Directory.Exists(repositoryPath))
+        {
+            return result;
+        }
+
+        var target = $"origin/{branch}";
+
+        // commits
+        var log = string.IsNullOrWhiteSpace(sinceCommit)
+            ? await GitAsync(repositoryPath, TimeSpan.FromSeconds(30), "log", "--no-merges", "-20", "--format=%s", target)
+            : await GitAsync(repositoryPath, TimeSpan.FromSeconds(30), "log", "--no-merges", "-200", "--format=%s", $"{sinceCommit}..{target}");
+
+        if (log.ExitCode == 0)
+        {
+            result.Commits = log.Output
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .Where(x => x.Length > 1)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        // files
+        var diff = string.IsNullOrWhiteSpace(sinceCommit)
+            ? await GitAsync(repositoryPath, TimeSpan.FromSeconds(30), "log", "--no-merges", "-20", "--name-only", "--format=", target)
+            : await GitAsync(repositoryPath, TimeSpan.FromSeconds(30), "diff", "--name-only", $"{sinceCommit}..{target}");
+
+        if (diff.ExitCode != 0)
+        {
+            return Draft(result);
+        }
+
+        var files = diff.Output
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim().Replace('\\', '/'))
+            .Where(x => x.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        result.FilesChanged = files.Count;
+
+        var areas = new Dictionary<string, DeploymentChangeAreaDto>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var file in files)
+        {
+            if (file.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
+            {
+                result.DatabaseScripts.Add(Path.GetFileName(file));
+                continue;
+            }
+
+            var (name, side) = AreaOf(file);
+
+            if (name.Length == 0)
+            {
+                continue;
+            }
+
+            if (!areas.TryGetValue(name, out var area))
+            {
+                area = new DeploymentChangeAreaDto { Name = name, Side = side };
+                areas[name] = area;
+            }
+
+            area.Files++;
+        }
+
+        result.Areas = areas.Values
+            .OrderBy(x => x.Side == "Screen" ? 0 : 1)
+            .ThenBy(x => x.Name)
+            .ToList();
+
+        result.DatabaseScripts = result.DatabaseScripts
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+        return Draft(result);
+    }
+
+    private static DeploymentAnalysisDto Draft(DeploymentAnalysisDto result)
+    {
+        var lines = new List<string>(result.Commits);
+
+        var screens = result.Areas
+            .Where(x => x.Side == "Screen")
+            .Select(x => x.Name)
+            .ToList();
+
+        if (screens.Count > 0)
+        {
+            lines.Add("Updated : " + string.Join(", ", screens));
+        }
+
+        result.WhatsNewDraft = string.Join("\n", lines);
+
+        return result;
+    }
+
+    // path -> ("Settings - Website Configuration", "Screen")
+    private static (string Name, string Side) AreaOf(string path)
+    {
+        var p = path.Replace('\\', '/');
+
+        var parts = p.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        int At(string segment) =>
+            Array.FindIndex(parts, x => string.Equals(x, segment, StringComparison.OrdinalIgnoreCase));
+
+        // ---- Angular (screens)
+        var src = At("src");
+
+        if (src >= 0 && p.Contains("Studio_UI", StringComparison.OrdinalIgnoreCase))
+        {
+            var rest = parts.Skip(src + 1).ToArray();
+
+            if (rest.Length == 0)
+            {
+                return (string.Empty, string.Empty);
+            }
+
+            if (rest[0] == "features" && rest.Length > 2)
+            {
+                var module = Words(rest[1]);
+                var pages = Array.IndexOf(rest, "pages");
+
+                // file name without ".service.ts" / ".model.ts" ...
+                string BaseName(string name) =>
+                    name.Contains('.') ? name[..name.IndexOf('.')] : name;
+
+                var page = pages >= 0 && rest.Length > pages + 1
+                    ? Words(BaseName(rest[pages + 1]))
+                    : rest.Length > 3 && rest[2] == "shared"
+                        ? Words(BaseName(rest[3]))
+                        : Words(BaseName(rest[^1]));
+
+                return ($"{module} - {page}", "Screen");
+            }
+
+            if (rest[0] == "shared" && rest.Length > 2)
+            {
+                if (rest[1] == "login-pages")
+                {
+                    return ($"Login - {Words(rest[2])}", "Screen");
+                }
+
+                if (rest[1] == "components" && rest.Length > 3)
+                {
+                    var group = rest[2] switch
+                    {
+                        "website-components" => "Website",
+                        "layout" => "Layout",
+                        "core-components" => "Login",
+                        "controls" => "Controls",
+                        _ => Words(rest[2])
+                    };
+
+                    return ($"{group} - {Words(rest[3])}", "Screen");
+                }
+
+                return ($"Shared - {Words(rest[1])}", "Screen");
+            }
+
+            if (rest[0] == "core" && rest.Length > 2)
+            {
+                return ($"Core - {Words(rest[1])}", "Screen");
+            }
+
+            return ("Screens - general", "Screen");
+        }
+
+        // ---- .NET (server)
+        var project = parts.FirstOrDefault(x => x.StartsWith("AppCore.", StringComparison.OrdinalIgnoreCase));
+
+        if (project is not null && p.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+        {
+            var index = Array.IndexOf(parts, project);
+
+            var rest = parts.Skip(index + 1)
+                .Where(x => x is not ("Controllers" or "Repositories" or "Configurations" or "Interfaces" or "DTOs" or "Service" or "Entities"))
+                .ToArray();
+
+            var area = rest.Length >= 3
+                ? $"{Words(rest[0])} - {Words(rest[1])}"
+                : rest.Length == 2
+                    ? Words(rest[0])
+                    : "General";
+
+            return ($"Server : {area}", "Server");
+        }
+
+        return (string.Empty, string.Empty);
+    }
+
+    // "website-configuration" / "SalesOperations" -> "Website Configuration" / "Sales Operations"
+    private static string Words(string value)
+    {
+        var text = System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, "([a-z])([A-Z])", "$1 $2")
+            .Replace('-', ' ')
+            .Replace('_', ' ')
+            .Trim();
+
+        return string.Join(" ", text
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(w => w.Length > 2 && w.ToUpperInvariant() == w ? w : char.ToUpperInvariant(w[0]) + w[1..]));
+    }
+
+
+    //===========================================================
     // Start a deployment
     //===========================================================
 
@@ -581,6 +860,12 @@ public static class DeploymentRunner
             }
 
             CopyFolder(uiBrowser, wwwroot);
+
+            // version.json : read by every open page (footer,
+            // "new version" banner, What's new pop-up). Each
+            // release folder has its own, so a rollback brings
+            // the older version back by itself.
+            WriteVersionFile(wwwroot, record);
 
             // development settings never go to a server
             foreach (var file in Directory.GetFiles(appFolder, "appsettings.Development*.json"))

@@ -80,6 +80,18 @@ public class RoleProfile
     } = false;
 
 
+    //===========================================================
+    // Developer role : its users and the role itself are seen
+    // by developers only (2026-11-09)
+    //===========================================================
+
+    public bool IsDeveloperRole
+    {
+        get;
+        set;
+    }
+
+
     public bool IsDefaultRole
     {
         get;

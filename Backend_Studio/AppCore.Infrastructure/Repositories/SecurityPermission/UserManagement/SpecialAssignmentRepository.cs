@@ -8,6 +8,8 @@ using AppCore.Domain.Common;
 using AppCore.Domain.Entities.SecurityPermission.UserManagement;
 using AppCore.Domain.Entities.InfrastructureControl.NavigationManagement;
 using AppCore.Infrastructure.Persistence;
+
+using AppCore.Application.Platform.CurrentUser;
 //===============================================================
 // Namespace
 //===============================================================
@@ -26,20 +28,36 @@ public class SpecialAssignmentRepository
     //===========================================================
     // Constructor
     //===========================================================
+    private readonly ICurrentUserService _currentUser;
+
     public SpecialAssignmentRepository
     (
-        AppDbContext context
+        AppDbContext context,
+        ICurrentUserService currentUser
     )
     {
         _context =
             context;
+
+        _currentUser =
+            currentUser;
     }
+
+    // Developer accounts : seen by developers only
+    private bool HideDevelopers =>
+        !DeveloperAccess.ViewerIsDeveloper(_context, _currentUser);
     //===========================================================
     // Get All
     //===========================================================
     public async Task<IReadOnlyList<SpecialAssignment>>
         GetAllAsync()
     {
+        bool hideDevelopers =
+            HideDevelopers;
+
+        IQueryable<long> hiddenUsers =
+            DeveloperAccess.DeveloperUserIds(_context);
+
         var entities =
             await _context
                 .Set<SpecialAssignment>()
@@ -64,6 +82,12 @@ public class SpecialAssignmentRepository
                 .Where(
                     x =>
                         !x.IsDeleted
+                )
+                .Where(
+                    x =>
+                        !hideDevelopers
+                        ||
+                        !hiddenUsers.Contains(x.UserProfileId)
                 )
                 //================================================
                 // Order
@@ -180,6 +204,8 @@ public class SpecialAssignmentRepository
         if
         (
             entity is null
+            ||
+            (HideDevelopers && await DeveloperAccess.IsDeveloperAsync(_context, entity.UserProfileId))
         )
         {
             return null;

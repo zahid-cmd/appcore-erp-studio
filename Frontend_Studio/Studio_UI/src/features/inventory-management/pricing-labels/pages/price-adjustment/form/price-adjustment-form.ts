@@ -2965,13 +2965,13 @@ export class PriceAdjustmentForm
         )
         {
             case 'add':
-                return 'Add Price Adjustment';
+                return 'Add Price & Stock Adjustment';
 
             case 'edit':
-                return 'Update Price Adjustment';
+                return 'Update Price & Stock Adjustment';
 
             default:
-                return 'View Price Adjustment';
+                return 'View Price & Stock Adjustment';
         }
     }
 

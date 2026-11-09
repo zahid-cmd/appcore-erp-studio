@@ -132,7 +132,7 @@ from '../../../../../../shared/components/utilities/progress-dialog/progress-run
 import
 {
     PRODUCT_PRICING_ROUTE,
-    PRODUCT_PRICING_TYPES,
+    PRODUCT_PRICING_PAGE_TYPES,
     ProductPricing,
     formatPricingDate,
     productPricingMatches,
@@ -249,7 +249,7 @@ export class ProductPricingList
     readonly types =
         [
             { id:'', label:'All Types', icon:'fas fa-layer-group' },
-            ...PRODUCT_PRICING_TYPES.map(x => ({ id:x.type as string, label:x.title, icon:x.icon }))
+            ...PRODUCT_PRICING_PAGE_TYPES.map(x => ({ id:x.type as string, label:x.title, icon:x.icon }))
         ];
 
     selectedType:

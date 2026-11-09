@@ -1,0 +1,90 @@
+/* ============================================================
+   Product Pricing - Motor Bikes
+============================================================ */
+
+export interface ProductPricingMotorBikes
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create Product Pricing - Motor Bikes
+============================================================ */
+
+export interface CreateProductPricingMotorBikes
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update Product Pricing - Motor Bikes
+============================================================ */
+
+export interface UpdateProductPricingMotorBikes
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Product Pricing - Motor Bikes Defaults
+============================================================ */
+
+export interface ProductPricingMotorBikesDefaults
+{
+    code:
+        string;
+}
