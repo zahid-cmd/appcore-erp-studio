@@ -319,6 +319,29 @@ public class DeploymentCenterRepository
 
 
     //===========================================================
+    // Last version on a server (releases before versions are
+    // skipped)
+    //===========================================================
+
+    public async Task<string>
+        GetLastVersionAsync(long serverManagementId)
+    {
+        return await _context
+            .Set<DeploymentEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted
+                     && x.Kind == "Deploy"
+                     && x.DeployStatus == "Succeeded"
+                     && x.Version != ""
+                     && x.ServerManagementId == serverManagementId)
+            .OrderByDescending(x => x.StartedDate)
+            .Select(x => x.Version)
+            .FirstOrDefaultAsync()
+            ?? string.Empty;
+    }
+
+
+    //===========================================================
     // Version history : successful deployments with a version
     //===========================================================
 

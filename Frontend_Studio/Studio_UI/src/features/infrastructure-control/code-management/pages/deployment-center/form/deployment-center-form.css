@@ -21,20 +21,21 @@
     flex-shrink: 0;
 }
 
-/* New / Edit : everything fits; only the notes scroll */
+/* New / Edit : the page scrolls when the Version / What's new
+   boxes do not fit */
 .dc-page.dc-page-form
 {
     flex: 1 1 auto;
     height: 100%;
     min-height: 0;
-    overflow: hidden;
+    overflow-y: auto;
     box-sizing: border-box;
 }
 
 .dc-page > .dc-grow
 {
     flex: 1 1 auto;
-    min-height: 120px;
+    min-height: 160px;
 }
 
 .dc-textarea.dc-textarea-fill
@@ -1211,4 +1212,18 @@
 {
     background: rgba(245, 158, 11, 0.14);
     color: #b45309;
+}
+
+
+/* What's new : the analysis never pushes the text box away */
+.dc-ana
+{
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.dc-whatsnew
+{
+    min-height: 120px;
+    resize: vertical;
 }

@@ -240,9 +240,15 @@
                         </button>
                     </div>
 
+                    <textarea
+                        class="dc-textarea dc-whatsnew appcore-scrollbar"
+                        placeholder="One line each, in plain words for the staff. Empty = no pop-up after the update."
+                        [value]="whatsNew"
+                        (input)="onWhatsNewInput($event)"></textarea>
+
                     @if (analysis)
                     {
-                        <div class="dc-ana">
+                        <div class="dc-ana appcore-scrollbar">
                             <span class="dc-ana-count">
                                 {{ analysis.commits.length }} commit(s) · {{ analysis.filesChanged }} file(s) since the last deployment
                             </span>
@@ -282,11 +288,6 @@
                         </div>
                     }
 
-                    <textarea
-                        class="dc-textarea dc-textarea-small appcore-scrollbar"
-                        placeholder="One line each, in plain words for the staff. Empty = no pop-up after the update."
-                        [value]="whatsNew"
-                        (input)="onWhatsNewInput($event)"></textarea>
                 </div>
 
                 <div class="dc-card dc-grow">

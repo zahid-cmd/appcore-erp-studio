@@ -53,6 +53,10 @@ public interface IDeploymentCenterRepository
     Task<int>
         CloseInterruptedAsync();
 
+    // the newest version given on a server ('' = none yet)
+    Task<string>
+        GetLastVersionAsync(long serverManagementId);
+
     // successful deployments with a version, newest first
     Task<IReadOnlyList<global::AppCore.Domain.Entities.InfrastructureControl.CodeManagement.DeploymentCenter>>
         GetVersionHistoryAsync();

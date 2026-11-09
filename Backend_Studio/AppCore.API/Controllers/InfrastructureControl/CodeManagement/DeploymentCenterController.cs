@@ -249,7 +249,7 @@ public class DeploymentCenterController
         result.NewCommits = count;
 
         // version choices + what changed
-        result.LastVersion = last?.Version ?? string.Empty;
+        result.LastVersion = serverId is null ? string.Empty : await _repository.GetLastVersionAsync(serverId.Value);
         result.NextFix = DeploymentRunner.NextVersion(result.LastVersion, "Fix");
         result.NextFeature = DeploymentRunner.NextVersion(result.LastVersion, "Feature");
         result.NextMajor = DeploymentRunner.NextVersion(result.LastVersion, "Major");
@@ -563,9 +563,9 @@ public class DeploymentCenterController
 
         // the version is fixed now : last successful version on
         // this server + the change type of the draft
-        var lastOk = await _repository.GetLastSucceededAsync(entity.ServerManagementId);
+        var lastVersion = await _repository.GetLastVersionAsync(entity.ServerManagementId);
 
-        entity.Version = DeploymentRunner.NextVersion(lastOk?.Version, entity.ChangeType);
+        entity.Version = DeploymentRunner.NextVersion(lastVersion, entity.ChangeType);
 
         var (record, error) = await DeploymentRunner.StartDeploymentAsync(
             _scopes,
