@@ -117,7 +117,7 @@ public abstract class InventoryStatusControllerBase : ControllerBase
 
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
-                failure);
+                $"{failure} {ex.GetBaseException().Message}");
         }
     }
 

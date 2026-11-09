@@ -503,6 +503,12 @@
                                     <dt>Registration By</dt>
                                     <dd>{{ panelFile.RegistrationBy }}</dd>
 
+                                    <dt>CKD Documents</dt>
+                                    <dd>
+                                        <span class="cf-tag" [class.cf-tag-required]="panelFile.CkdStatus !== 'Yes'">{{ panelFile.CkdStatus }}</span>
+                                        @if (panelFile.CkdStatus !== 'Yes') { · needed before Ready for Delivery }
+                                    </dd>
+
                                     @if (panelFile.FileReadyDate)
                                     {
                                         <dt>Ready On</dt>

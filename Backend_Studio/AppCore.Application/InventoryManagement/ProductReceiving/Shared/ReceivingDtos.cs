@@ -136,6 +136,12 @@ public class ReceivingUnitDto
     public string KeyNo { get; set; } = string.Empty;
 
     public string BatteryNo { get; set; } = string.Empty;
+
+    // CKD documents in hand / on the portal : Yes / No
+    public string CkdStatus { get; set; } = "No";
+
+    // Year of manufacture (0 / null = the purchase invoice's year)
+    public int? ManufactureYear { get; set; }
 }
 
 

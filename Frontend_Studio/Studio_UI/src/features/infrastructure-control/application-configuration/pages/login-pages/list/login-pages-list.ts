@@ -1250,12 +1250,28 @@ implements
     ):
         void
     {
+        //=======================================================
+        // Page number from the Page Key (login-page-6 -> 6), so
+        // a row's own id never decides which page is shown.
+        // Falls back to the id for an unusual key.
+        //=======================================================
+
+        const keyMatch =
+            /login-page-(\d+)$/i.exec(
+                (item.pageKey || '').trim()
+            );
+
+        const pageNumber =
+            keyMatch
+                ? Number(keyMatch[1])
+                : item.id;
+
         void this.router.navigate
         (
             [
                 'preview',
 
-                item.id
+                pageNumber
             ],
 
             {

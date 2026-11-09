@@ -89,6 +89,12 @@ from '../../../../../shared/components/controls/textbox/textbox';
 
 import
 {
+    YearPickerComponent
+}
+from '../../../../../shared/components/controls/year-picker/year-picker';
+
+import
+{
     SearchDropdownComponent
 }
 from '../../../../../shared/components/controls/search-dropdown/search-dropdown';
@@ -221,6 +227,7 @@ from '../../purchase-order/purchase-order.model';
 import
 {
     Purchase,
+    PurchaseAccessoryLine,
     PurchaseLine,
     PurchaseUnit,
     PurchaseDefaults,
@@ -348,6 +355,16 @@ const NO_COMMAND:
 //===============================================================
 
 // The four numbers of a bike (Unit Desk)
+// MB : one free accessory row of the Accessories Due pop-up :
+// NowText = typed in the pop-up, AddedText = kept on the purchase
+// (Add)
+interface PurchaseAccessoryRow
+{
+    Line:PurchaseAccessoryLine;
+    NowText:string;
+    AddedText:string;
+}
+
 type UnitField =
     'ChassisNo' | 'EngineNo' | 'KeyNo' | 'BatteryNo';
 
@@ -374,6 +391,7 @@ type UnitField =
 
         DatepickerComponent,
         TextareaComponent,
+        YearPickerComponent,
         TextboxComponent,
         SearchDropdownComponent,
         ControlSegmentComponent,
@@ -2034,6 +2052,12 @@ implements OnInit, OnDestroy
         this.lines =
             [];
 
+        this.accessoryRows =
+            [];
+
+        this.accessoryKey =
+            '';
+
         this.orderNoText =
             '';
 
@@ -2168,6 +2192,13 @@ implements OnInit, OnDestroy
 
                     this.lines =
                         item.Lines.map(line => ({ ...line }));
+
+                    // MB : free accessories (worked out by the server,
+                    // with the quantities saved / received here)
+                    this.setAccessories(item.Accessories ?? [], true);
+
+                    this.accessoryKey =
+                        this.accessoryKeyOf();
 
                     this.orderNoText =
                         item.PurchaseNo;
@@ -7114,8 +7145,9 @@ implements OnInit, OnDestroy
         const wanted =
             this.unitsWanted(line);
 
+        // Year of manufacture : the purchase date's year by default
         const saved =
-            (line.Units ?? []).map(x => ({ ...x }));
+            (line.Units ?? []).map(x => ({ ...x, ManufactureYear:x.ManufactureYear || this.unitYearDefault }));
 
         // One row per bike (a read-only purchase shows what was saved)
         this.unitRows =
@@ -7130,7 +7162,9 @@ implements OnInit, OnDestroy
                             ChassisNo:'',
                             EngineNo:'',
                             KeyNo:'',
-                            BatteryNo:''
+                            BatteryNo:'',
+                            CkdStatus:'No',
+                            ManufactureYear:this.unitYearDefault
                         }
                 );
 
@@ -7212,6 +7246,171 @@ implements OnInit, OnDestroy
         this.queueUnitCheck();
     }
 
+    //===========================================================
+    // Unit Desk : CKD documents (distributor's import document
+    // set : in hand / on the portal) per bike, Yes / No
+    //===========================================================
+
+    unitCkdYes
+    (
+        row:
+            PurchaseUnit
+    ):
+        boolean
+    {
+        return row.CkdStatus === 'Yes';
+    }
+
+    toggleUnitCkd
+    (
+        index:
+            number
+    ):
+        void
+    {
+        if
+        (
+            this.isReadonly
+            ||
+            !this.unitRows[index]
+        )
+        {
+            return;
+        }
+
+        this.unitRows =
+            this.unitRows.map
+            (
+                (row, i) =>
+                    i === index
+                        ? { ...row, CkdStatus:row.CkdStatus === 'Yes' ? 'No' : 'Yes' }
+                        : row
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    // Header : all Yes (or all back to No when every bike is Yes)
+    toggleAllUnitCkd():
+        void
+    {
+        if
+        (
+            this.isReadonly
+            ||
+            this.unitRows.length === 0
+        )
+        {
+            return;
+        }
+
+        const next =
+            this.allUnitCkdYes ? 'No' : 'Yes';
+
+        this.unitRows =
+            this.unitRows.map(row => ({ ...row, CkdStatus:next }));
+
+        this.cdr.detectChanges();
+    }
+
+    get allUnitCkdYes():
+        boolean
+    {
+        return this.unitRows.length > 0 && this.unitRows.every(row => row.CkdStatus === 'Yes');
+    }
+
+
+    //===========================================================
+    // Year of manufacture per bike (BRTA Form-17) : the purchase
+    // date's year by default, 2000 .. next year
+    //===========================================================
+
+    readonly unitYears:
+        number[] =
+        Array.from(
+            { length:new Date().getFullYear() + 1 - 2000 + 1 },
+            (_, i) => new Date().getFullYear() + 1 - i
+        );
+
+    get unitYearDefault():
+        number
+    {
+        const date =
+            this.orderDateValue instanceof Date && !isNaN(this.orderDateValue.getTime())
+                ? this.orderDateValue
+                : new Date();
+
+        return date.getFullYear();
+    }
+
+    unitYear
+    (
+        row:
+            PurchaseUnit
+    ):
+        number
+    {
+        return row.ManufactureYear || this.unitYearDefault;
+    }
+
+    onUnitYear
+    (
+        index:
+            number,
+        value:
+            number
+    ):
+        void
+    {
+        if
+        (
+            this.isReadonly
+            ||
+            !this.unitRows[index]
+        )
+        {
+            return;
+        }
+
+        const year =
+            Number(value) || this.unitYearDefault;
+
+        this.unitRows =
+            this.unitRows.map
+            (
+                (row, i) =>
+                    i === index
+                        ? { ...row, ManufactureYear:year }
+                        : row
+            );
+
+        this.cdr.detectChanges();
+    }
+
+    // Header : every bike to the year of the first one
+    sameUnitYear():
+        void
+    {
+        if
+        (
+            this.isReadonly
+            ||
+            this.unitRows.length === 0
+        )
+        {
+            return;
+        }
+
+        const year =
+            this.unitYear(this.unitRows[0]);
+
+        this.unitRows =
+            this.unitRows.map(row => ({ ...row, ManufactureYear:year }));
+
+        this.cdr.detectChanges();
+    }
+
+
     // Clear one bike's four numbers
     clearUnitRow
     (
@@ -7235,7 +7434,7 @@ implements OnInit, OnDestroy
             (
                 (row, i) =>
                     i === index
-                        ? { ...row, ChassisNo:'', EngineNo:'', KeyNo:'', BatteryNo:'' }
+                        ? { ...row, ChassisNo:'', EngineNo:'', KeyNo:'', BatteryNo:'', CkdStatus:'No' }
                         : row
             );
 
@@ -7793,7 +7992,8 @@ implements OnInit, OnDestroy
                 noVat:this.noVatInvoice,
                 supplier:this.supplierCode,
                 narration:this.narration.trim(),
-                lines:this.lines.map(x => [x.ProductCode, x.Quantity, x.FreeQuantity, x.Mrp, x.ProfitPercent, x.UnitPrice, x.IsTotalTyped, x.IsTotalTyped ? x.DpAmount : 0, x.VatRate, x.ShortNotes, x.PurchaseOrderLineId, (x.Units ?? []).map(u => [u.ChassisNo, u.EngineNo, u.KeyNo, u.BatteryNo])])
+                lines:this.lines.map(x => [x.ProductCode, x.Quantity, x.FreeQuantity, x.Mrp, x.ProfitPercent, x.UnitPrice, x.IsTotalTyped, x.IsTotalTyped ? x.DpAmount : 0, x.VatRate, x.ShortNotes, x.PurchaseOrderLineId, (x.Units ?? []).map(u => [u.ChassisNo, u.EngineNo, u.KeyNo, u.BatteryNo, u.CkdStatus ?? 'No', u.ManufactureYear ?? 0])]),
+                accessories:this.accessoryRows.filter(x => this.accessoryAdded(x) > 0).map(x => [x.Line.BikeAccessorySchemeId, x.Line.AccessoryId, this.accessoryAdded(x)])
             }
         );
     }
@@ -7815,6 +8015,441 @@ implements OnInit, OnDestroy
 
         this.hasChanges =
             this.snapshot() !== this.originalState;
+
+        // The bikes or the date changed : the free accessories due
+        this.scheduleAccessoryPreview();
+    }
+
+
+    //===========================================================
+    // MB : free accessories received with the purchase
+    // (Products Received on Purchase ON). The Accessories Due card
+    // beside Narration opens a pop-up; Add keeps the quantities on
+    // the purchase, taken in on Post. The rest stays due for
+    // Motor Bike Receiving.
+    //===========================================================
+
+    accessoryRows:
+        PurchaseAccessoryRow[] =
+        [];
+
+    accessoryOpen:
+        boolean =
+        false;
+
+    accessoryLoading:
+        boolean =
+        false;
+
+    // Date + bikes the rows were worked out for
+    private accessoryKey:
+        string =
+        '';
+
+    private accessoryTimer?:
+        ReturnType<typeof setTimeout>;
+
+    private accessoryCall:
+        number =
+        0;
+
+    // Shown for MB when received on purchase (always : empty
+    // until bikes with a supplier scheme are added), or when
+    // something was received with it
+    get accessoryCard():
+        boolean
+    {
+        return this.pageType === 'MB'
+            &&
+            (this.receivedOnPurchase || this.accessoryAddedTotal > 0);
+    }
+
+    // Empty card : what to do to see the accessories
+    get accessoryEmptyText():
+        string
+    {
+        if (this.accessoryLoading)
+        {
+            return 'Working out the free accessories…';
+        }
+
+        if (!this.supplierCode)
+        {
+            return 'Pick the supplier, then add bikes.';
+        }
+
+        return this.lines.length === 0
+            ? 'Add bikes : their free accessories show here.'
+            : 'No supplier scheme on these bikes for this date.';
+    }
+
+    // Where the accessories go on Post (the purchase's warehouse)
+    get accessoryWarehouseText():
+        string
+    {
+        const found =
+            (this.defaults?.Warehouses ?? []).find(x => x.WarehouseId === this.warehouseId);
+
+        return found?.WarehouseName
+            || this.order?.WarehouseName
+            || 'the warehouse';
+    }
+
+    // The pop-up can change the quantities (draft)
+    get accessoryEditable():
+        boolean
+    {
+        return this.receivedOnPurchase && !this.isReadonly;
+    }
+
+    private accessoryKeyOf():
+        string
+    {
+        const bikes =
+            this.accessoryBikes()
+                .map(x => `${x.ProductId}:${x.Bikes}`)
+                .join(',');
+
+        return `${toIsoDate(this.orderDateValue)}|${bikes}`;
+    }
+
+    // Bikes (paid + free) per product on the page
+    private accessoryBikes():
+        { ProductId:number; Bikes:number }[]
+    {
+        const map =
+            new Map<number, number>();
+
+        this.lines.forEach
+        (
+            x =>
+            {
+                const id =
+                    Number(x.ProductId) || 0;
+
+                const bikes =
+                    (Number(x.Quantity) || 0) + (Number(x.FreeQuantity) || 0);
+
+                if (id > 0 && bikes > 0)
+                {
+                    map.set(id, (map.get(id) ?? 0) + bikes);
+                }
+            }
+        );
+
+        return [...map.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([ProductId, Bikes]) => ({ ProductId, Bikes }));
+    }
+
+    private scheduleAccessoryPreview():
+        void
+    {
+        if
+        (
+            this.pageType !== 'MB'
+            ||
+            !this.receivedOnPurchase
+            ||
+            this.isReadonly
+        )
+        {
+            return;
+        }
+
+        const key =
+            this.accessoryKeyOf();
+
+        if (key === this.accessoryKey)
+        {
+            return;
+        }
+
+        this.accessoryKey =
+            key;
+
+        clearTimeout(this.accessoryTimer);
+
+        this.accessoryTimer =
+            setTimeout(() => this.loadAccessoryPreview(), 400);
+    }
+
+    private loadAccessoryPreview():
+        void
+    {
+        const bikes =
+            this.accessoryBikes();
+
+        if (bikes.length === 0)
+        {
+            this.setAccessories([], false);
+
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+        const call =
+            ++this.accessoryCall;
+
+        this.accessoryLoading =
+            true;
+
+        this.purchasesService
+            .previewAccessories(toIsoDate(this.orderDateValue), bikes)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    rows =>
+                    {
+                        if (call !== this.accessoryCall)
+                        {
+                            return;
+                        }
+
+                        this.accessoryLoading =
+                            false;
+
+                        this.setAccessories(rows, false);
+
+                        this.hasChanges =
+                            this.snapshot() !== this.originalState;
+
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    () =>
+                    {
+                        if (call !== this.accessoryCall)
+                        {
+                            return;
+                        }
+
+                        // Tried again on the next change
+                        this.accessoryLoading =
+                            false;
+
+                        this.accessoryKey =
+                            '';
+
+                        this.cdr.detectChanges();
+                    }
+            });
+    }
+
+    // New rows keep the quantities already added (same scheme +
+    // accessory), up to what is due now
+    private setAccessories
+    (
+        lines:
+            PurchaseAccessoryLine[],
+        fromSaved:
+            boolean
+    ):
+        void
+    {
+        const kept =
+            new Map(this.accessoryRows.map(x => [`${x.Line.BikeAccessorySchemeId}|${x.Line.AccessoryId}`, x.AddedText]));
+
+        this.accessoryRows =
+            lines.map
+            (
+                line =>
+                {
+                    const limit =
+                        this.accessoryLimit(line);
+
+                    let added =
+                        fromSaved
+                            ? (line.QuantityTaken > 0 ? String(line.QuantityTaken) : '')
+                            : (kept.get(`${line.BikeAccessorySchemeId}|${line.AccessoryId}`) ?? '');
+
+                    if (Number(added) > limit)
+                    {
+                        added = limit > 0 ? String(limit) : '';
+                    }
+
+                    return { Line:line, NowText:added, AddedText:added };
+                }
+            );
+    }
+
+    // Most that can come with this purchase
+    accessoryLimit
+    (
+        line:
+            PurchaseAccessoryLine
+    ):
+        number
+    {
+        return Math.max(0, line.QuantityDue - (line.ReceivedElsewhere || 0));
+    }
+
+    accessoryNow
+    (
+        row:
+            PurchaseAccessoryRow
+    ):
+        number
+    {
+        return Number(row.NowText) || 0;
+    }
+
+    accessoryAdded
+    (
+        row:
+            PurchaseAccessoryRow
+    ):
+        number
+    {
+        return Number(row.AddedText) || 0;
+    }
+
+    // Purchase Summary : the accessories added (shown only, not
+    // in the totals)
+    get accessoryGridRows():
+        PurchaseAccessoryRow[]
+    {
+        return this.accessoryRows.filter(x => this.accessoryAdded(x) > 0);
+    }
+
+    // Summary row : take the accessory off the purchase
+    removeAccessory
+    (
+        row:
+            PurchaseAccessoryRow
+    ):
+        void
+    {
+        if (!this.accessoryEditable)
+        {
+            return;
+        }
+
+        row.AddedText = '';
+
+        row.NowText = '';
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+
+    get accessoryDueTotal():
+        number
+    {
+        return this.accessoryRows.reduce((sum, x) => sum + this.accessoryLimit(x.Line), 0);
+    }
+
+    get accessoryAddedTotal():
+        number
+    {
+        return this.accessoryRows.reduce((sum, x) => sum + this.accessoryAdded(x), 0);
+    }
+
+    get accessoryNowTotal():
+        number
+    {
+        return this.accessoryRows.reduce((sum, x) => sum + this.accessoryNow(x), 0);
+    }
+
+    openAccessories():
+        void
+    {
+        this.accessoryRows.forEach(x => x.NowText = x.AddedText);
+
+        this.accessoryOpen =
+            true;
+
+        this.cdr.detectChanges();
+    }
+
+    // Close / Cancel : the changes in the pop-up are dropped
+    closeAccessories():
+        void
+    {
+        this.accessoryRows.forEach(x => x.NowText = x.AddedText);
+
+        this.accessoryOpen =
+            false;
+
+        this.cdr.detectChanges();
+    }
+
+    addAccessories():
+        void
+    {
+        if (!this.accessoryEditable)
+        {
+            this.closeAccessories();
+
+            return;
+        }
+
+        this.accessoryRows.forEach(x => x.AddedText = x.NowText);
+
+        this.accessoryOpen =
+            false;
+
+        const total =
+            this.accessoryAddedTotal;
+
+        if (total > 0)
+        {
+            this.toast.success('Accessories Added', `${total} free accessories come in with this purchase on Post.`);
+        }
+
+        this.checkForChanges();
+
+        this.cdr.detectChanges();
+    }
+
+    accessoriesAll():
+        void
+    {
+        this.accessoryRows.forEach(x => x.NowText = String(this.accessoryLimit(x.Line)));
+
+        this.cdr.detectChanges();
+    }
+
+    accessoriesNone():
+        void
+    {
+        this.accessoryRows.forEach(x => x.NowText = '');
+
+        this.cdr.detectChanges();
+    }
+
+    onAccessoryInput
+    (
+        row:
+            PurchaseAccessoryRow,
+        event:
+            Event
+    ):
+        void
+    {
+        const input =
+            event.target as HTMLInputElement;
+
+        let digits =
+            input.value.replace(/\D/g, '').slice(0, 6);
+
+        const limit =
+            this.accessoryLimit(row.Line);
+
+        if (digits && Number(digits) > limit)
+        {
+            digits = String(limit);
+        }
+
+        input.value = digits;
+
+        row.NowText = digits;
+
+        this.cdr.detectChanges();
     }
 
     //===========================================================
@@ -8157,7 +8792,13 @@ implements OnInit, OnDestroy
                         ShortNotes:x.ShortNotes,
                         Units:this.unitDesk ? (x.Units ?? []) : []
                     })
-                )
+                ),
+            Accessories:
+                this.pageType === 'MB' && this.receivedOnPurchase
+                    ? this.accessoryRows
+                        .filter(x => this.accessoryAdded(x) > 0)
+                        .map(x => ({ BikeAccessorySchemeId:x.Line.BikeAccessorySchemeId, AccessoryId:x.Line.AccessoryId, Quantity:this.accessoryAdded(x) }))
+                    : []
         };
     }
 

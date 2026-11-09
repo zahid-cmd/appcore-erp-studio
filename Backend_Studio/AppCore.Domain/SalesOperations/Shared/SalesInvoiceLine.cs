@@ -68,3 +68,45 @@ public abstract class SalesInvoiceLine
 
     public decimal ReturnedQuantity { get; set; }
 }
+
+
+//===============================================================
+// Sales Invoices - MB : a line sells one bike (chassis). The
+// engine reads / writes these through this interface (only the
+// MB lines table has the columns).
+//===============================================================
+
+public interface IMotorBikeSaleLine
+{
+    long? MotorBikeUnitId { get; set; }
+
+    string ChassisNo { get; set; }
+
+    string EngineNo { get; set; }
+
+    string ColorName { get; set; }
+
+    // Year of manufacture (BRTA Form-17)
+    int? ManufactureYear { get; set; }
+
+    // CKD documents of the chassis when sold : Yes / No
+    string CkdStatus { get; set; }
+
+    // Pending (sold, not handed over) / Delivered / Cancelled
+    string DeliveryStatus { get; set; }
+
+    DateOnly? DeliveredDate { get; set; }
+}
+
+
+//===============================================================
+// Sales Invoices - MB header : Regular (one chassis) or
+// Corporate (several chassis; a Corporate / Institution
+// customer; switch 0073 and its date window). Only the MB header
+// table has the column.
+//===============================================================
+
+public interface IMotorBikeSaleHeader
+{
+    string SaleType { get; set; }
+}

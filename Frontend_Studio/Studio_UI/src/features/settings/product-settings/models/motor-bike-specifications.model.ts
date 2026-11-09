@@ -73,6 +73,11 @@ export interface MotorBikeSpecifications
 
     Rpm: number;
 
+    // Website : mileage / range text and top speed (km/h, 0 = none)
+    Mileage: string;
+
+    TopSpeedKmh: number;
+
     WheelBaseMm: number;
 
     LengthMm: number;
@@ -144,6 +149,11 @@ export interface CreateMotorBikeSpecifications
     HorsePower: string;
 
     Rpm: number;
+
+    // Website : mileage / range text and top speed (km/h, 0 = none)
+    Mileage: string;
+
+    TopSpeedKmh: number;
 
     WheelBaseMm: number;
 

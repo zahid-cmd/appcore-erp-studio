@@ -924,6 +924,17 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // CKD Documents Status Repository (manual, hand-written
+        // page) : Inventory Management > Inventory Status.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.InventoryManagement.CkdDocuments.ICkdDocumentsRepository,
+            AppCore.Infrastructure.Repositories.InventoryManagement.CkdDocuments.CkdDocumentsRepository
+        >();
+
+        //=======================================================
         // Warranty Configuration Repository (manual, hand-
         // written page)
         //

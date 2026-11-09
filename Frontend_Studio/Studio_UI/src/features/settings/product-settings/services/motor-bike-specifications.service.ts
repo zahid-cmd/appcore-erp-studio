@@ -155,6 +155,10 @@ export function normalizeMotorBikeSpecification
             text(x, 'HorsePower'),
         Rpm:
             num(x, 'Rpm'),
+        Mileage:
+            text(x, 'Mileage'),
+        TopSpeedKmh:
+            num(x, 'TopSpeedKmh'),
         WheelBaseMm:
             num(x, 'WheelBaseMm'),
         LengthMm:

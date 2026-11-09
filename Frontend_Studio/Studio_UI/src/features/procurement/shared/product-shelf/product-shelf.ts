@@ -1353,24 +1353,19 @@ export class ProductShelfComponent
             updated > 0
         )
         {
-            return `Add ${added} · Update ${updated}`;
+            return `Add & Update ${this.docTitle}`;
         }
 
+        // No counts on the button : the footer shows items and qty
         if
         (
             updated > 0
         )
         {
-            return updated === 1
-                ? `Update 1 Line`
-                : `Update ${updated} Lines`;
+            return `Update ${this.docTitle}`;
         }
 
-        return added === 0
-            ? `Add to ${this.docTitle}`
-            : added === 1
-                ? `Add 1 to ${this.docTitle}`
-                : `Add ${added} to ${this.docTitle}`;
+        return `Add to ${this.docTitle}`;
     }
 
     // "MRP 400.00" → "400.00"

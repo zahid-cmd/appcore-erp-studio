@@ -563,25 +563,7 @@ implements OnInit, OnDestroy
             align:'center'
         },
 
-        {
-            header:'Website',
 
-            field:'WebsiteText',
-
-            width:'160px',
-
-            align:'center'
-        },
-
-        {
-            header:'Featured',
-
-            field:'FeaturedText',
-
-            width:'160px',
-
-            align:'center'
-        },
 
         {
             header:'Status',
@@ -1863,4 +1845,4 @@ implements OnInit, OnDestroy
             false;
     }
 
-}
+}

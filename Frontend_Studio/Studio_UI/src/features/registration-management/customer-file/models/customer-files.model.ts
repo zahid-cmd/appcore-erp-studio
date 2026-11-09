@@ -81,6 +81,9 @@ export interface CustomerFile
     Remarks:string;
     // A transfer waiting for its fee
     PendingTransferNo:string;
+    // CKD documents of the chassis : Yes / No (Ready for
+    // Delivery needs Yes)
+    CkdStatus:string;
 }
 
 

@@ -253,6 +253,20 @@ public static class PurchaseModel
         builder.Property(x => x.ProductName)
                .IsRequired()
                .HasMaxLength(200);
+        // CKD documents (CkdDocuments_Status.sql)
+        builder.Property(x => x.CkdStatus)
+               .IsRequired()
+               .HasMaxLength(5);
+        builder.Property(x => x.CkdCheckedDate)
+               .HasColumnType("date");
+        builder.Property(x => x.CkdCheckedByName)
+               .IsRequired()
+               .HasMaxLength(150);
+        builder.Property(x => x.CkdRemarks)
+               .IsRequired()
+               .HasMaxLength(250);
+        // Year of manufacture (ManufactureYear.sql)
+        builder.Property(x => x.ManufactureYear);
         builder.Property(x => x.ChassisNo)
                .IsRequired()
                .HasMaxLength(50);

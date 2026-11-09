@@ -33,6 +33,15 @@ using ProductCategoryEntity =
 using MotorBikesEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.MotorBikes;
 
+using BikeModelsEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.BikeModels;
+
+using ProductSubCategoryEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.ProductSubCategory;
+
+using MotorBikeSpecificationsEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.MotorBikeSpecifications;
+
 
 //===============================================================
 // Namespace
@@ -126,6 +135,8 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
         dto.Branches = await LoadBranchesAsync();
 
         dto.Policies = await LoadPoliciesAsync(dto.Brands);
+
+        dto.Bikes = await LoadBikesAsync();
 
         return dto;
     }
@@ -293,6 +304,121 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
                         About = s?.About ?? string.Empty
                     };
                 }
+            )
+            .ToList();
+    }
+
+
+    //---------------------------------------------------------------
+    // Bikes tab : active Bike Models with their website fields, in
+    // Display Order (0 = not ordered yet : after the ordered ones,
+    // by brand and name). The photo is the first Motor Bike of the
+    // model that has a picture.
+    //---------------------------------------------------------------
+
+    private async Task<List<WebsiteBikeDto>> LoadBikesAsync()
+    {
+        List<BikeModelsEntity> models =
+            await _context
+                .Set<BikeModelsEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.Status)
+                .ToListAsync();
+
+        if (models.Count == 0)
+        {
+            return new List<WebsiteBikeDto>();
+        }
+
+        List<long> brandIds =
+            models.Select(x => x.BrandManagementId).Distinct().ToList();
+
+        Dictionary<long, string> brandNames =
+            await _context
+                .Set<BrandManagementEntity>()
+                .AsNoTracking()
+                .Where(x => brandIds.Contains(x.BrandManagementId))
+                .ToDictionaryAsync(x => x.BrandManagementId, x => x.BrandName ?? string.Empty);
+
+        List<long> mbCategoryIds =
+            await _context
+                .Set<ProductCategoryEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.CategoryType == MotorBikesType)
+                .Select(x => x.ProductCategoryId)
+                .ToListAsync();
+
+        List<long> modelIds =
+            models.Select(x => x.BikeModelId).ToList();
+
+        var subCategories =
+            await _context
+                .Set<ProductSubCategoryEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.BikeModelId.HasValue && modelIds.Contains(x.BikeModelId.Value) && mbCategoryIds.Contains(x.ProductCategoryId))
+                .Select(x => new { x.ProductSubCategoryId, BikeModelId = x.BikeModelId!.Value })
+                .ToListAsync();
+
+        List<long> subCategoryIds =
+            subCategories.Select(x => x.ProductSubCategoryId).ToList();
+
+        var photos =
+            await _context
+                .Set<MotorBikesEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.IsActive && subCategoryIds.Contains(x.ProductSubCategoryId) && x.ImagePath != null && x.ImagePath != "")
+                .OrderBy(x => x.ProductCode)
+                .Select(x => new { x.ProductSubCategoryId, x.ImagePath })
+                .ToListAsync();
+
+        // Specifications : one record per model (the oldest if more)
+        Dictionary<long, bool> specsOfModel =
+            (await _context
+                .Set<MotorBikeSpecificationsEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && modelIds.Contains(x.BikeModelId))
+                .OrderBy(x => x.MotorBikeSpecificationId)
+                .Select(x => new { x.BikeModelId, x.ShowOnWebsite })
+                .ToListAsync())
+            .GroupBy(x => x.BikeModelId)
+            .ToDictionary(g => g.Key, g => g.First().ShowOnWebsite);
+
+        Dictionary<long, string> photoOfModel = new();
+
+        foreach (var sub in subCategories)
+        {
+            string? path =
+                photos.FirstOrDefault(p => p.ProductSubCategoryId == sub.ProductSubCategoryId)?.ImagePath;
+
+            if (!string.IsNullOrWhiteSpace(path) && !photoOfModel.ContainsKey(sub.BikeModelId))
+            {
+                photoOfModel[sub.BikeModelId] = path;
+            }
+        }
+
+        return models
+            .OrderBy(x => x.DisplayOrder > 0 ? x.DisplayOrder : int.MaxValue)
+            .ThenBy(x => brandNames.GetValueOrDefault(x.BrandManagementId, string.Empty))
+            .ThenBy(x => x.ModelName)
+            .Select
+            (
+                x =>
+                    new WebsiteBikeDto
+                    {
+                        BikeModelId = x.BikeModelId,
+                        ModelCode = x.ModelCode ?? string.Empty,
+                        ModelName = x.ModelName ?? string.Empty,
+                        BikeType = x.BikeType ?? string.Empty,
+                        BrandManagementId = x.BrandManagementId,
+                        BrandName = brandNames.GetValueOrDefault(x.BrandManagementId, string.Empty),
+                        PhotoPath = photoOfModel.GetValueOrDefault(x.BikeModelId, string.Empty),
+                        ShowOnWebsite = x.ShowOnWebsite,
+                        IsFeatured = x.IsFeatured,
+                        Tagline = x.Tagline ?? string.Empty,
+                        Description = x.Description ?? string.Empty,
+                        HasSpecs = specsOfModel.ContainsKey(x.BikeModelId),
+                        ShowSpecs = specsOfModel.GetValueOrDefault(x.BikeModelId, false)
+                    }
             )
             .ToList();
     }
@@ -587,6 +713,10 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
             }
         }
 
+        // Bikes tab : only the website fields of Bike Models; the
+        // list order becomes Display Order (1, 2, 3 ...)
+        await SaveBikesAsync(dto.Bikes, userId, now);
+
         await _context.SaveChangesAsync();
 
         string changed =
@@ -609,6 +739,88 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
         await _context.SaveChangesAsync();
 
         await transaction.CommitAsync();
+    }
+
+
+    private async Task SaveBikesAsync(
+        List<WebsiteBikeDto> bikes,
+        long userId,
+        DateTime now)
+    {
+        if (bikes.Count == 0)
+        {
+            return;
+        }
+
+        List<long> ids =
+            bikes.Select(x => x.BikeModelId).ToList();
+
+        Dictionary<long, BikeModelsEntity> rows =
+            await _context
+                .Set<BikeModelsEntity>()
+                .Where(x => !x.IsDeleted && ids.Contains(x.BikeModelId))
+                .ToDictionaryAsync(x => x.BikeModelId);
+
+        // Specifications : only their Show on Website switch
+        // (a bike without a record when the page was opened is skipped)
+        Dictionary<long, bool> showSpecs =
+            bikes.Where(x => x.HasSpecs).ToDictionary(x => x.BikeModelId, x => x.ShowSpecs);
+
+        List<MotorBikeSpecificationsEntity> specs =
+            await _context
+                .Set<MotorBikeSpecificationsEntity>()
+                .Where(x => !x.IsDeleted && ids.Contains(x.BikeModelId))
+                .ToListAsync();
+
+        foreach (MotorBikeSpecificationsEntity spec in specs)
+        {
+            if (!showSpecs.TryGetValue(spec.BikeModelId, out bool show) || spec.ShowOnWebsite == show)
+            {
+                continue;
+            }
+
+            spec.ShowOnWebsite = show;
+            spec.ModifiedBy = userId;
+            spec.ModifiedDate = now;
+        }
+
+        int order = 0;
+
+        foreach (WebsiteBikeDto b in bikes)
+        {
+            order++;
+
+            if (!rows.TryGetValue(b.BikeModelId, out BikeModelsEntity? row))
+            {
+                continue;
+            }
+
+            string tagline =
+                Clean(b.Tagline);
+
+            string description =
+                Clean(b.Description);
+
+            bool changed =
+                row.ShowOnWebsite != b.ShowOnWebsite
+                || row.IsFeatured != b.IsFeatured
+                || (row.Tagline ?? string.Empty) != tagline
+                || (row.Description ?? string.Empty) != description
+                || row.DisplayOrder != order;
+
+            if (!changed)
+            {
+                continue;
+            }
+
+            row.ShowOnWebsite = b.ShowOnWebsite;
+            row.IsFeatured = b.IsFeatured;
+            row.Tagline = tagline;
+            row.Description = description;
+            row.DisplayOrder = order;
+            row.ModifiedBy = userId;
+            row.ModifiedDate = now;
+        }
     }
 
 
@@ -659,6 +871,7 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
         dto.Brands ??= new();
         dto.Branches ??= new();
         dto.Policies ??= new();
+        dto.Bikes ??= new();
         dto.EmiDownPercents ??= new();
         dto.EmiMonths ??= new();
 
@@ -676,6 +889,17 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
         Max(dto.Email, 150, "Email");
         Max(dto.MapQuery, 300, "Map location");
         Max(dto.MapLink, 1000, "Google Maps link");
+
+        if (dto.Bikes.Select(x => x.BikeModelId).Distinct().Count() != dto.Bikes.Count)
+        {
+            throw new InvalidOperationException("A bike model is listed twice on the Bikes tab.");
+        }
+
+        foreach (WebsiteBikeDto b in dto.Bikes)
+        {
+            Max(b.Tagline, 200, $"Tagline of {b.ModelName}");
+            Max(b.Description, 2000, $"Description of {b.ModelName}");
+        }
 
         if (Clean(dto.MapLink).Length > 0 && !GoogleMapsLink.IsGoogleMapsUrl(Clean(dto.MapLink)))
         {
@@ -946,6 +1170,12 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
             != J(new { EmiExamplePrice = Math.Round(b.EmiExamplePrice, 2), EmiDownPercents = b.EmiDownPercents.Distinct().OrderBy(x => x).ToList(), EmiMonths = b.EmiMonths.Distinct().OrderBy(x => x).ToList(), EmiNote = Clean(b.EmiNote) }))
         {
             tabs.Add("EMI");
+        }
+
+        if (J(a.Bikes.Select(x => new { x.BikeModelId, x.ShowOnWebsite, x.IsFeatured, x.Tagline, x.Description, ShowSpecs = x.HasSpecs && x.ShowSpecs }))
+            != J(b.Bikes.Select(x => new { x.BikeModelId, x.ShowOnWebsite, x.IsFeatured, Tagline = Clean(x.Tagline), Description = Clean(x.Description), ShowSpecs = x.HasSpecs && x.ShowSpecs })))
+        {
+            tabs.Add("Bikes");
         }
 
         if (J(a.Policies.Select(x => new { x.PolicyKey, x.BrandManagementId, x.Title, x.UpdatedOn, x.Sections }))

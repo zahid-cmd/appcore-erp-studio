@@ -151,6 +151,13 @@ from '../../../../../shared/components/accounting/payment-desk/payment-desk';
 
 import
 {
+    BikeShelfComponent,
+    BikeCkdChange
+}
+from '../../bike-shelf/bike-shelf';
+
+import
+{
     AccountingLookupService
 }
 from '../../../../../shared/components/accounting/accounting-lookup.service';
@@ -191,6 +198,7 @@ import
 {
     SalesInvoice,
     SalesInvoiceLine,
+    SalesInvoiceBikeUnit,
     SalesInvoiceDefaults,
     SalesInvoiceSwitches,
     SalesInvoiceCustomer,
@@ -316,6 +324,25 @@ interface EntryLine
 
     specialText:
         string;
+
+    // MB : the bike (chassis) on the line
+    MotorBikeUnitId?:
+        number | null;
+
+    ChassisNo?:
+        string;
+
+    EngineNo?:
+        string;
+
+    ColorName?:
+        string;
+
+    ManufactureYear?:
+        number | null;
+
+    CkdStatus?:
+        string;
 }
 
 // One row of the items table : what was entered + the server's
@@ -406,7 +433,8 @@ const MODE_LEDGER_TYPES:
         OrbitLoaderComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
-        PaymentDeskComponent
+        PaymentDeskComponent,
+        BikeShelfComponent
     ],
 
     templateUrl:'./sales-invoice-form.html',
@@ -1420,6 +1448,9 @@ implements OnInit, OnDestroy
                 ? defaults.DefaultSalesPersonId
                 : null;
 
+        this.saleType =
+            'Regular';
+
         this.loadProductList();
     }
 
@@ -1667,6 +1698,9 @@ implements OnInit, OnDestroy
             CustomerType:invoice.CustomerType,
             IsWalkIn:invoice.CustomerIsWalkIn,
             CustomerTag:invoice.CustomerTag || (invoice.CustomerIsWalkIn ? 'Walk-in' : invoice.CustomerType),
+            // A corporate invoice's customer was corporate (the
+            // look-up below refreshes it)
+            IsCorporate:invoice.SaleType === 'Corporate',
             IsActive:true,
             ReceivableLedgerCode:invoice.ReceivableLedgerCode,
             Balance:0,
@@ -1686,6 +1720,11 @@ implements OnInit, OnDestroy
             CanAddWalkIn:false,
             Message:''
         };
+
+        this.saleType =
+            invoice.SaleType === 'Corporate'
+                ? 'Corporate'
+                : 'Regular';
 
         this.lines =
             invoice.Lines.map
@@ -1768,7 +1807,13 @@ implements OnInit, OnDestroy
             Mrp:line.Mrp,
             qtyText:this.qtyString(line.Quantity),
             priceText:price != null ? String(price) : '',
-            specialText:special != null ? String(special) : ''
+            specialText:special != null ? String(special) : '',
+            MotorBikeUnitId:line.MotorBikeUnitId ?? null,
+            ChassisNo:line.ChassisNo ?? '',
+            EngineNo:line.EngineNo ?? '',
+            ColorName:line.ColorName ?? '',
+            ManufactureYear:line.ManufactureYear ?? null,
+            CkdStatus:line.CkdStatus ?? ''
         };
     }
 
@@ -3155,6 +3200,14 @@ implements OnInit, OnDestroy
     private loadProductList():
         void
     {
+        // MB : bikes by chassis, not the product search
+        if (this.isBikes)
+        {
+            this.loadBikeUnits();
+
+            return;
+        }
+
         const seq =
             ++this.productListSeq;
 
@@ -3681,6 +3734,1008 @@ implements OnInit, OnDestroy
         return '';
     }
 
+    //===========================================================
+    // MB : Add Motor Bike (model -> colour -> chassis). One bike
+    // per line, quantity 1; the chassis in stock in the warehouse,
+    // oldest first
+    //===========================================================
+
+    get isBikes():
+        boolean
+    {
+        return this.page.pageType === 'MB';
+    }
+
+    bikeUnits:
+        SalesInvoiceBikeUnit[] =
+        [];
+
+    bikeUnitsLoading:
+        boolean =
+        false;
+
+    bikeModelId:
+        number | null =
+        null;
+
+    bikeColor:
+        string =
+        '';
+
+    bikeUnitId:
+        number | null =
+        null;
+
+    private bikeUnitsSeq:
+        number =
+        0;
+
+    private loadBikeUnits():
+        void
+    {
+        const seq =
+            ++this.bikeUnitsSeq;
+
+        if
+        (
+            !this.warehouseId
+            ||
+            this.branchBlocked
+        )
+        {
+            this.bikeUnits =
+                [];
+
+            this.bikeUnitsLoading =
+                false;
+
+            return;
+        }
+
+        // Not "isEditable" : the defaults arrive while the page
+        // is still loading (the list came back empty, 2026-11-09)
+        this.bikeUnitsLoading =
+            true;
+
+        this.salesInvoiceService
+            .getBikeUnits(this.warehouseId, this.invoice?.SalesInvoiceId ?? 0)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    units =>
+                    {
+                        if (seq !== this.bikeUnitsSeq)
+                        {
+                            return;
+                        }
+
+                        this.bikeUnitsLoading =
+                            false;
+
+                        this.bikeUnits =
+                            units;
+
+                        // The picked chassis may be gone
+                        if (this.bikeUnitId && !units.some(x => x.MotorBikeUnitId === this.bikeUnitId))
+                        {
+                            this.bikeUnitId =
+                                null;
+                        }
+
+                        this.refresh();
+                    },
+
+                error:
+                    () =>
+                    {
+                        if (seq !== this.bikeUnitsSeq)
+                        {
+                            return;
+                        }
+
+                        this.bikeUnitsLoading =
+                            false;
+
+                        this.bikeUnits =
+                            [];
+
+                        this.toast.error('Not Loaded', 'The bikes in stock could not be loaded.');
+
+                        this.refresh();
+                    }
+            });
+    }
+
+    // Bikes not on this invoice (lines) yet
+    private get freeBikes():
+        SalesInvoiceBikeUnit[]
+    {
+        const taken =
+            new Set(this.lines.map(x => x.MotorBikeUnitId ?? 0));
+
+        // Priced bikes only (no MRP : not saleable)
+        return this.bikeUnits.filter(x => !taken.has(x.MotorBikeUnitId) && x.Mrp > 0);
+    }
+
+    // Bikes in stock here without an MRP (left out)
+    get unpricedBikeCount():
+        number
+    {
+        return this.bikeUnits.filter(x => !(x.Mrp > 0)).length;
+    }
+
+    // The dropdowns' bikes : the free ones, plus the bike of a
+    // line loaded by a double click (it is on the invoice)
+    private get pickerBikes():
+        SalesInvoiceBikeUnit[]
+    {
+        const loaded =
+            this.pickedBike;
+
+        return loaded && !this.freeBikes.includes(loaded)
+            ? [...this.freeBikes, loaded]
+            : this.freeBikes;
+    }
+
+    // The picked bike is on this invoice (loaded from its line)
+    get pickedOnInvoice():
+        boolean
+    {
+        const unit =
+            this.pickedBike;
+
+        return !!unit && this.lines.some(x => x.MotorBikeUnitId === unit.MotorBikeUnitId);
+    }
+
+    get pickedLineNo():
+        number
+    {
+        const unit =
+            this.pickedBike;
+
+        return unit ? this.lines.findIndex(x => x.MotorBikeUnitId === unit.MotorBikeUnitId) + 1 : 0;
+    }
+
+    // Items : a double click on a bike line loads it into the Add
+    // card (its chassis, engine and CKD in full)
+    onRowDblClick
+    (
+        row:
+            any
+    ):
+        void
+    {
+        const id =
+            row?.entry?.MotorBikeUnitId ?? 0;
+
+        if (!this.isBikes || !id)
+        {
+            return;
+        }
+
+        const unit =
+            this.bikeUnits.find(x => x.MotorBikeUnitId === id);
+
+        if (!unit)
+        {
+            this.toast.error('Not Loaded', `Chassis ${row.entry.ChassisNo} is not in the bikes of this warehouse.`);
+
+            return;
+        }
+
+        this.addCkdReasonOpen =
+            false;
+
+        this.bikeModelId =
+            unit.ProductSubCategoryId;
+
+        this.bikeColor =
+            unit.ColorName || unit.ProductName;
+
+        this.bikeUnitId =
+            unit.MotorBikeUnitId;
+
+        this.entryError =
+            '';
+
+        this.refresh();
+    }
+
+    get bikeModelItems():
+        any[]
+    {
+        const models =
+            new Map<number, { name:string; count:number }>();
+
+        this.pickerBikes.forEach
+        (
+            x =>
+            {
+                const found =
+                    models.get(x.ProductSubCategoryId);
+
+                models.set(x.ProductSubCategoryId, { name:x.ModelName || x.ProductName, count:(found?.count ?? 0) + (x.OnInvoiceNo ? 0 : 1) });
+            }
+        );
+
+        return [...models.entries()]
+            .sort((a, b) => a[1].name.localeCompare(b[1].name))
+            .map(([id, m]) => ({ label:m.name, value:id, badge:`${m.count} in stock` }));
+    }
+
+    get bikeColorItems():
+        any[]
+    {
+        if (!this.bikeModelId)
+        {
+            return [];
+        }
+
+        const colors =
+            new Map<string, number>();
+
+        this.pickerBikes
+            .filter(x => x.ProductSubCategoryId === this.bikeModelId)
+            .forEach(x => colors.set(x.ColorName || x.ProductName, (colors.get(x.ColorName || x.ProductName) ?? 0) + (x.OnInvoiceNo ? 0 : 1)));
+
+        return [...colors.entries()]
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([name, count]) => ({ label:name, value:name, badge:`${count}` }));
+    }
+
+    private get bikeChoices():
+        SalesInvoiceBikeUnit[]
+    {
+        return this.pickerBikes
+            .filter(x => x.ProductSubCategoryId === this.bikeModelId && (x.ColorName || x.ProductName) === this.bikeColor);
+    }
+
+    get bikeChassisItems():
+        any[]
+    {
+        if (!this.bikeModelId || !this.bikeColor)
+        {
+            return [];
+        }
+
+        return this.bikeChoices
+            .map
+            (
+                x =>
+                ({
+                    label:`${x.ChassisNo} · ${x.EngineNo}${x.ManufactureYear ? ' · ' + x.ManufactureYear : ''}`,
+                    value:x.MotorBikeUnitId,
+                    badge:x.OnInvoiceNo ? `on ${x.OnInvoiceNo}` : `CKD ${x.CkdStatus}`,
+                    disabled:!!x.OnInvoiceNo
+                })
+            );
+    }
+
+    get pickedBike():
+        SalesInvoiceBikeUnit | null
+    {
+        return this.bikeUnits.find(x => x.MotorBikeUnitId === this.bikeUnitId) ?? null;
+    }
+
+    get bikeFreeCount():
+        number
+    {
+        return this.freeBikes.filter(x => !x.OnInvoiceNo).length;
+    }
+
+    onBikeModel
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.bikeModelId =
+            Number(value) || null;
+
+        this.bikeColor =
+            '';
+
+        this.bikeUnitId =
+            null;
+
+        // One colour only : picked
+        const colors =
+            this.bikeColorItems;
+
+        if (colors.length === 1)
+        {
+            this.onBikeColor(colors[0].value);
+
+            return;
+        }
+
+        this.refresh();
+    }
+
+    onBikeColor
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.bikeColor =
+            String(value ?? '');
+
+        // Oldest chassis first : the first free one
+        const first =
+            this.bikeChoices.find(x => !x.OnInvoiceNo);
+
+        this.bikeUnitId =
+            first?.MotorBikeUnitId ?? null;
+
+        this.refresh();
+    }
+
+    onBikeChassis
+    (
+        value:
+            any
+    ):
+        void
+    {
+        const id =
+            Number(value) || null;
+
+        const unit =
+            this.bikeUnits.find(x => x.MotorBikeUnitId === id);
+
+        if (unit?.OnInvoiceNo)
+        {
+            this.entryError =
+                `Chassis ${unit.ChassisNo} is on invoice ${unit.OnInvoiceNo}.`;
+
+            this.refresh();
+
+            return;
+        }
+
+        this.bikeUnitId =
+            id;
+
+        this.entryError =
+            '';
+
+        this.refresh();
+    }
+
+    clearBikeEntry():
+        void
+    {
+        this.addCkdReasonOpen =
+            false;
+
+        this.bikeModelId =
+            null;
+
+        this.bikeColor =
+            '';
+
+        this.bikeUnitId =
+            null;
+
+        this.entryError =
+            '';
+
+        this.refresh();
+    }
+
+    addBike():
+        void
+    {
+        if
+        (
+            this.isReadonly
+        )
+        {
+            return;
+        }
+
+        const unit =
+            this.pickedBike;
+
+        if
+        (
+            !unit
+        )
+        {
+            this.entryError =
+                'Pick the model, colour and chassis first.';
+
+            this.refresh();
+
+            return;
+        }
+
+        const error =
+            this.bikeProblem(unit);
+
+        if
+        (
+            error
+        )
+        {
+            this.entryError =
+                error;
+
+            this.refresh();
+
+            return;
+        }
+
+        this.lines =
+        [
+            ...this.lines,
+            this.bikeLine(unit)
+        ];
+
+        // Next bike of the same model / colour ready (corporate sale)
+        this.bikeUnitId =
+            this.bikeChoices.find(x => !x.OnInvoiceNo)?.MotorBikeUnitId ?? null;
+
+        this.cancelAddCkd();
+
+        this.entryError =
+            '';
+
+        this.onChanged();
+    }
+
+    // Why a chassis cannot go on the invoice ('' = it can)
+    private bikeProblem
+    (
+        unit:
+            SalesInvoiceBikeUnit
+    ):
+        string
+    {
+        if (!(unit.Mrp > 0))
+        {
+            return `${unit.ProductCode} (chassis ${unit.ChassisNo}) has no MRP and cannot be sold.`;
+        }
+
+        if (unit.OnInvoiceNo)
+        {
+            return `Chassis ${unit.ChassisNo} is on invoice ${unit.OnInvoiceNo}.`;
+        }
+
+        if (this.lines.some(x => x.MotorBikeUnitId === unit.MotorBikeUnitId))
+        {
+            return `Chassis ${unit.ChassisNo} is on the invoice already.`;
+        }
+
+        if (this.saleType === 'Regular' && this.lines.length >= 1)
+        {
+            return `Regular sale : one chassis per invoice. ${this.corporateAvailable ? 'Choose Corporate for several bikes.' : 'Remove the bike on the invoice first.'}`;
+        }
+
+        return '';
+    }
+
+
+    //===========================================================
+    // Sale Type (MB) : Regular = one chassis; Corporate = several,
+    // for a Corporate / Institution customer, while switch 0073 is
+    // ON and the invoice date is inside its window (0074 / 0075)
+    //===========================================================
+
+    saleType:
+        'Regular' | 'Corporate' =
+        'Regular';
+
+    // Switch ON and the date inside From / Until
+    get corporateAvailable():
+        boolean
+    {
+        return !this.corporateBlockText;
+    }
+
+    // Why the Corporate tab is closed ('' = open)
+    get corporateBlockText():
+        string
+    {
+        const sw =
+            this.switches;
+
+        if (!sw?.AllowCorporateSale)
+        {
+            return 'Corporate sales are OFF (System Configuration › Allow Corporate Sale).';
+        }
+
+        const date =
+            this.invoiceDate;
+
+        if (sw.CorporateSaleFrom && date && date < sw.CorporateSaleFrom)
+        {
+            return `Corporate sales start on ${this.dateLabel(sw.CorporateSaleFrom)}.`;
+        }
+
+        if (sw.CorporateSaleUntil && date && date > sw.CorporateSaleUntil)
+        {
+            return `Corporate sales ended on ${this.dateLabel(sw.CorporateSaleUntil)}.`;
+        }
+
+        return '';
+    }
+
+    private dateLabel
+    (
+        iso:
+            string
+    ):
+        string
+    {
+        const m =
+            /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '');
+
+        const months =
+            ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        return m ? `${m[3]}-${months[Number(m[2]) - 1]}-${m[1]}` : iso;
+    }
+
+    // The tab is shown when the switch is ON (or the invoice is
+    // already Corporate)
+    get showSaleType():
+        boolean
+    {
+        return this.isBikes
+            &&
+            (
+                !!this.switches?.AllowCorporateSale
+                ||
+                this.saleType === 'Corporate'
+            );
+    }
+
+    get saleTypeItems():
+        ControlSegmentItem[]
+    {
+        return [
+            { value:'Regular', text:'Regular' },
+            { value:'Corporate', text:'Corporate', disabled:this.saleType !== 'Corporate' && !this.corporateAvailable }
+        ];
+    }
+
+    // The customer on a Corporate invoice must be Corporate /
+    // Institution ('' = fine)
+    get saleTypeHint():
+        string
+    {
+        if (this.saleType === 'Corporate')
+        {
+            if (this.customer && !this.customer.IsCorporate)
+            {
+                return `${this.customer.DisplayName} is not a Corporate / Institution customer : mark it in Customer Profiles, or choose Regular.`;
+            }
+
+            return this.corporateBlockText
+                ? this.corporateBlockText
+                : 'Corporate sale : several chassis on this invoice (one customer file each).';
+        }
+
+        return this.lines.length >= 1
+            ? 'Regular sale : one chassis per invoice.'
+            : '';
+    }
+
+    get saleTypeHintBad():
+        boolean
+    {
+        return this.saleType === 'Corporate'
+            &&
+            (
+                (!!this.customer && !this.customer.IsCorporate)
+                ||
+                !!this.corporateBlockText
+            );
+    }
+
+    onSaleTypeChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        const next =
+            value === 'Corporate'
+                ? 'Corporate'
+                : 'Regular';
+
+        if (next === this.saleType || this.isReadonly)
+        {
+            this.refresh();
+
+            return;
+        }
+
+        if (next === 'Corporate' && !this.corporateAvailable)
+        {
+            this.toast.error('Corporate Sale', this.corporateBlockText);
+
+            this.refresh();
+
+            return;
+        }
+
+        if (next === 'Corporate' && this.customer && !this.customer.IsCorporate)
+        {
+            this.toast.error(
+                'Corporate Sale',
+                `${this.customer.DisplayName} is not a Corporate / Institution customer (Customer Profiles).`);
+
+            this.refresh();
+
+            return;
+        }
+
+        if (next === 'Regular' && this.lines.length > 1)
+        {
+            this.toast.error(
+                'Regular Sale',
+                `A regular sale has one chassis : remove ${this.lines.length - 1} of the ${this.lines.length} bikes first.`);
+
+            this.refresh();
+
+            return;
+        }
+
+        this.saleType =
+            next;
+
+        this.onChanged();
+    }
+
+    // Shelf : how many more chassis this invoice can take (null =
+    // no limit)
+    get bikeRoom():
+        number | null
+    {
+        return this.saleType === 'Regular'
+            ? Math.max(0, 1 - this.lines.length)
+            : null;
+    }
+
+    // One invoice line for one chassis
+    private bikeLine
+    (
+        unit:
+            SalesInvoiceBikeUnit
+    ):
+        EntryLine
+    {
+        return {
+            ProductId:unit.ProductId,
+            ProductCode:unit.ProductCode,
+            PartNumber:'',
+            ProductName:unit.ProductName,
+            ProductType:'Motor Bikes',
+            Unit:'Pcs',
+            Quantity:1,
+            UnitPrice:null,
+            SpecialPercent:null,
+            OnHand:1,
+            Mrp:unit.Mrp,
+            qtyText:'1',
+            priceText:'',
+            specialText:'',
+            MotorBikeUnitId:unit.MotorBikeUnitId,
+            ChassisNo:unit.ChassisNo,
+            EngineNo:unit.EngineNo,
+            ColorName:unit.ColorName,
+            ManufactureYear:unit.ManufactureYear,
+            CkdStatus:unit.CkdStatus
+        } as EntryLine;
+    }
+
+
+    //===========================================================
+    // Motor Bike Shelf : priced bikes as model cards, chassis
+    // picked after the model
+    //===========================================================
+
+    bikeShelfOpen =
+        false;
+
+    get takenBikeIds():
+        number[]
+    {
+        return this.lines
+            .map(x => x.MotorBikeUnitId ?? 0)
+            .filter(x => x > 0);
+    }
+
+    get bikeShelfSubtitle():
+        string
+    {
+        const warehouse =
+            (this.defaults?.Warehouses ?? []).find(x => x.WarehouseId === this.warehouseId);
+
+        return `${warehouse?.WarehouseName ?? 'Warehouse'} · ${this.bikeFreeCount} priced ${this.bikeFreeCount === 1 ? 'bike' : 'bikes'} free · pick the model, then its chassis`;
+    }
+
+    openBikeShelf():
+        void
+    {
+        if (this.isReadonly || this.bikeUnitsLoading)
+        {
+            return;
+        }
+
+        this.bikeShelfOpen =
+            true;
+
+        this.refresh();
+    }
+
+    closeBikeShelf():
+        void
+    {
+        this.bikeShelfOpen =
+            false;
+
+        this.refresh();
+    }
+
+    onBikeShelfAdd
+    (
+        ids:
+            number[]
+    ):
+        void
+    {
+        const added:
+            EntryLine[] =
+            [];
+
+        const problems:
+            string[] =
+            [];
+
+        ids.forEach
+        (
+            id =>
+            {
+                const unit =
+                    this.bikeUnits.find(x => x.MotorBikeUnitId === id);
+
+                if (!unit)
+                {
+                    return;
+                }
+
+                const error =
+                    this.bikeProblem(unit)
+                    ||
+                    (this.saleType === 'Regular' && added.length >= 1 ? 'Regular sale : one chassis per invoice.' : '');
+
+                if (error)
+                {
+                    problems.push(error);
+
+                    return;
+                }
+
+                added.push(this.bikeLine(unit));
+            }
+        );
+
+        if (added.length > 0)
+        {
+            this.lines =
+            [
+                ...this.lines,
+                ...added
+            ];
+
+            this.toast.success(
+                'Bikes Added',
+                `${added.length} ${added.length === 1 ? 'chassis' : 'chassis'} added to the invoice.`);
+        }
+
+        if (problems.length > 0)
+        {
+            this.toast.error('Not Added', [...new Set(problems)].join(' '));
+        }
+
+        this.bikeShelfOpen =
+            false;
+
+        this.clearBikeEntry();
+
+        // The last bike added shows in the Add card (green : on
+        // this invoice)
+        const last =
+            added.length > 0
+                ? this.bikeUnits.find(x => x.MotorBikeUnitId === added[added.length - 1].MotorBikeUnitId)
+                : undefined;
+
+        if (last)
+        {
+            this.bikeModelId =
+                last.ProductSubCategoryId;
+
+            this.bikeColor =
+                last.ColorName || last.ProductName;
+
+            this.bikeUnitId =
+                last.MotorBikeUnitId;
+        }
+
+        this.onChanged();
+    }
+
+
+    //===========================================================
+    // CKD status of a chassis (the shelf and the Add card) :
+    // No -> Yes at once; Yes -> No with a reason. Saved on the
+    // bike (CKD Documents Status) with its history.
+    //===========================================================
+
+    ckdBusyId:
+        number | null =
+        null;
+
+    // Add card : the reason box (Yes -> No)
+    addCkdReasonOpen =
+        false;
+
+    addCkdReason =
+        '';
+
+    flipPickedCkd():
+        void
+    {
+        const unit =
+            this.pickedBike;
+
+        if (!unit || this.ckdBusyId)
+        {
+            return;
+        }
+
+        if (unit.CkdStatus === 'Yes')
+        {
+            this.addCkdReasonOpen =
+                true;
+
+            this.addCkdReason =
+                '';
+
+            this.refresh();
+
+            return;
+        }
+
+        this.changeBikeCkd({ unitId:unit.MotorBikeUnitId, status:'Yes', remarks:'' });
+    }
+
+    onAddCkdReason
+    (
+        event:
+            Event
+    ):
+        void
+    {
+        this.addCkdReason =
+            (event.target as HTMLInputElement).value ?? '';
+    }
+
+    saveAddCkdNo():
+        void
+    {
+        const unit =
+            this.pickedBike;
+
+        if (!unit || !this.addCkdReason.trim())
+        {
+            return;
+        }
+
+        this.changeBikeCkd({ unitId:unit.MotorBikeUnitId, status:'No', remarks:this.addCkdReason.trim() });
+
+        this.cancelAddCkd();
+    }
+
+    cancelAddCkd():
+        void
+    {
+        this.addCkdReasonOpen =
+            false;
+
+        this.addCkdReason =
+            '';
+
+        this.refresh();
+    }
+
+    changeBikeCkd
+    (
+        change:
+            BikeCkdChange
+    ):
+        void
+    {
+        if (this.ckdBusyId)
+        {
+            return;
+        }
+
+        const unit =
+            this.bikeUnits.find(x => x.MotorBikeUnitId === change.unitId);
+
+        if (!unit)
+        {
+            return;
+        }
+
+        this.ckdBusyId =
+            change.unitId;
+
+        this.refresh();
+
+        this.salesInvoiceService
+            .setBikeCkd(change.unitId, change.status, change.remarks)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    () =>
+                    {
+                        this.ckdBusyId =
+                            null;
+
+                        // The chassis everywhere : the list, and its
+                        // line when it is on the invoice
+                        this.bikeUnits =
+                            this.bikeUnits.map
+                            (
+                                x =>
+                                    x.MotorBikeUnitId === change.unitId
+                                        ? { ...x, CkdStatus:change.status }
+                                        : x
+                            );
+
+                        this.lines =
+                            this.lines.map
+                            (
+                                x =>
+                                    x.MotorBikeUnitId === change.unitId
+                                        ? { ...x, CkdStatus:change.status }
+                                        : x
+                            );
+
+                        this.toast.success(
+                            'CKD Status Changed',
+                            `Chassis ${unit.ChassisNo} : CKD ${change.status}.`);
+
+                        this.refresh();
+                    },
+
+                error:
+                    error =>
+                    {
+                        this.ckdBusyId =
+                            null;
+
+                        this.toast.error(
+                            'CKD Not Changed',
+                            this.errorText(error, `The CKD status of chassis ${unit.ChassisNo} could not be changed.`));
+
+                        this.refresh();
+                    }
+            });
+    }
+
+
     onAddLine():
         void
     {
@@ -3825,7 +4880,8 @@ implements OnInit, OnDestroy
             (
                 (entry, index) =>
                 ({
-                    key:entry.ProductId,
+                    // MB : one row per chassis
+                    key:entry.MotorBikeUnitId ? 1_000_000_000 + entry.MotorBikeUnitId : entry.ProductId,
                     index,
                     entry,
                     // Quote lines come in the order sent; a stale
@@ -5572,13 +6628,15 @@ implements OnInit, OnDestroy
                         ProductId:line.ProductId,
                         Quantity:line.Quantity,
                         UnitPrice:this.canEditPrice || line.UnitPrice != null ? line.UnitPrice : null,
-                        SpecialDiscountPercent:line.SpecialPercent
+                        SpecialDiscountPercent:line.SpecialPercent,
+                        MotorBikeUnitId:line.MotorBikeUnitId ?? null
                     })
                 ),
             InvoiceSpecialType:special > 0 ? this.specialType : 'None',
             InvoiceSpecialValue:special > 0 ? special : 0,
             Payments:this.payments.map(row => this.paymentRow(row)),
-            Narration:toAsciiText(this.narration).replace(/[\r\n]+/g, ' ').trim().substring(0, 500)
+            Narration:toAsciiText(this.narration).replace(/[\r\n]+/g, ' ').trim().substring(0, 500),
+            SaleType:this.isBikes ? this.saleType : ''
         };
     }
 

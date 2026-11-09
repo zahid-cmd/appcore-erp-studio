@@ -127,6 +127,12 @@ from '../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.s
 
 import
 {
+    ToastService
+}
+from '../../../../../shared/components/utilities/toast/toast.service';
+
+import
+{
     ConfirmDialogComponent
 }
 from '../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
@@ -187,6 +193,10 @@ type SalesInvoiceRow =
         IsWalkIn:
             boolean;
 
+        // MB : a Corporate sale
+        IsCorporate:
+            boolean;
+
         CustomerTitle:
             string;
 
@@ -239,7 +249,7 @@ type SalesInvoiceRow =
 // Sales Invoices List (shared by SP / AC / MB : the page's
 // config and service come from its own list file)
 //
-// No toasts : every message shows inline in the toolbar.
+// Errors show as toasts; other messages inline in the toolbar.
 //===============================================================
 
 export class SalesInvoiceList
@@ -262,6 +272,9 @@ implements OnInit
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
+
+    private readonly toast =
+        inject(ToastService);
 
     private readonly router =
         inject(Router);
@@ -454,7 +467,10 @@ implements OnInit
             header:'Invoice No',
             field:'InvoiceNo',
             width:'200px',
-            align:'center'
+            align:'center',
+            // MB : a Corporate sale (several chassis)
+            flagField:'IsCorporate',
+            flagText:'Corporate'
         },
         {
             header:'Date',
@@ -593,6 +609,19 @@ implements OnInit
     ):
         void
     {
+        // Failures go to the toast (owner 2026-11-09)
+        if
+        (
+            tone === 'error'
+        )
+        {
+            this.toast.error(
+                this.page.title,
+                text);
+
+            return;
+        }
+
         if
         (
             text !== this.notice
@@ -872,6 +901,9 @@ implements OnInit
 
                 IsWalkIn:
                     item.CustomerTag === 'Walk-in',
+
+                IsCorporate:
+                    item.SaleType === 'Corporate',
 
                 CustomerTitle:
                     [item.CustomerCode, item.CustomerTag].filter(x => !!x).join(' · '),

@@ -247,6 +247,31 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
             ? date.Value.ToString(DateFormat, CultureInfo.InvariantCulture)
             : string.Empty;
 
+    // Year of manufacture : null / 0 = not given; otherwise
+    // 2000 .. next year
+    private static int? CheckYear
+    (
+        int? year,
+        string chassisNo
+    )
+    {
+        if (year == null || year == 0)
+        {
+            return null;
+        }
+
+        int max =
+            DateTime.UtcNow.Year + 1;
+
+        if (year < 2000 || year > max)
+        {
+            throw new InvalidOperationException(
+                $"Chassis {chassisNo} : Year of Manufacture {year} is not valid (2000 - {max}).");
+        }
+
+        return year;
+    }
+
     private static string Limit
     (
         string? value,
@@ -617,7 +642,9 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                                 ChassisNo = x.ChassisNo,
                                 EngineNo = x.EngineNo,
                                 KeyNo = x.KeyNo,
-                                BatteryNo = x.BatteryNo
+                                BatteryNo = x.BatteryNo,
+                                CkdStatus = x.CkdStatus,
+                                ManufactureYear = x.ManufactureYear
                             }
                     )
                     .ToListAsync();
@@ -1580,7 +1607,11 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                                 ChassisNo = Limit(x.ChassisNo, 50).ToUpperInvariant(),
                                 EngineNo = Limit(x.EngineNo, 50).ToUpperInvariant(),
                                 KeyNo = keyBattery ? Limit(x.KeyNo, 50).ToUpperInvariant() : string.Empty,
-                                BatteryNo = keyBattery ? Limit(x.BatteryNo, 50).ToUpperInvariant() : string.Empty
+                                BatteryNo = keyBattery ? Limit(x.BatteryNo, 50).ToUpperInvariant() : string.Empty,
+                                // CKD documents : Yes / No (anything else = No)
+                                CkdStatus = string.Equals((x.CkdStatus ?? string.Empty).Trim(), "Yes", StringComparison.OrdinalIgnoreCase) ? "Yes" : "No",
+                                // Year of manufacture (null = the purchase's year)
+                                ManufactureYear = CheckYear(x.ManufactureYear, (x.ChassisNo ?? string.Empty).Trim().ToUpperInvariant())
                             }
                     )
                     .Where(x => x.ChassisNo.Length + x.EngineNo.Length + x.KeyNo.Length + x.BatteryNo.Length > 0)
@@ -1914,6 +1945,21 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                         bike.StockInDate = date;
                         bike.ReceivingId = entity.ReceivingId;
                         bike.WarehouseId = warehouse.WarehouseId;
+
+                        // Year of manufacture : entered here, else the
+                        // purchase's, else the purchase invoice's year
+                        bike.ManufactureYear = unit.ManufactureYear ?? bike.ManufactureYear ?? purchase.PurchaseDate.Year;
+
+                        // CKD documents : ticked Yes here (a Yes from the
+                        // purchase stays; changed later on CKD Documents
+                        // Status)
+                        if (unit.CkdStatus == "Yes" && bike.CkdStatus != "Yes")
+                        {
+                            bike.CkdStatus = "Yes";
+                            bike.CkdCheckedDate = BusinessToday();
+                            bike.CkdCheckedBy = userId;
+                            bike.CkdRemarks = $"Receiving {entity.ReceivingNo} Unit Desk";
+                        }
                     }
                 }
 

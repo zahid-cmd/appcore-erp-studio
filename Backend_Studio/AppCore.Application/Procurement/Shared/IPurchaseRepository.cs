@@ -53,6 +53,10 @@ public interface IPurchaseRepository
     Task<List<PurchaseUnitTakenDto>> CheckUnitsAsync(
         PurchaseUnitCheckDto dto);
 
+    // MB draft : the free accessories due on the bikes on the page
+    Task<List<PurchaseAccessoryLineDto>> PreviewAccessoriesAsync(
+        PurchaseAccessoryPreviewDto dto);
+
     Task<PurchaseSavedDto> CreateAsync(
         CreatePurchaseDto dto,
         long userId);

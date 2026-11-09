@@ -91,6 +91,14 @@ public class MotorBikeSpecificationsConfiguration
                .IsRequired()
                .HasMaxLength(60);
 
+        builder.Property(x => x.Mileage)
+               .IsRequired()
+               .HasMaxLength(60)
+               .HasDefaultValue(string.Empty);
+
+        builder.Property(x => x.TopSpeedKmh)
+               .HasDefaultValue(0);
+
         builder.Property(x => x.FrontTyreSize)
                .IsRequired()
                .HasMaxLength(40);

@@ -2035,3 +2035,139 @@
 {
     position:relative;
 }
+
+
+/* =============================================================
+   BIKES TAB
+============================================================= */
+
+.wc-bike-list
+{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+}
+
+.wc-bike-head,
+.wc-bike-row
+{
+    display:grid;
+    grid-template-columns:28px 64px minmax(170px, 1fr) 58px 72px 58px minmax(180px, 1.2fr) minmax(220px, 1.6fr);
+    align-items:center;
+    gap:12px;
+    padding:8px 4px;
+}
+
+.wc-bike-head
+{
+    position:sticky;
+    top:-18px;
+    z-index:2;
+    padding-top:0;
+    border-bottom:1px solid #e3e9f2;
+    background:#ffffff;
+    color:#6b7a93;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.6px;
+    text-transform:uppercase;
+}
+
+.wc-bike-row
+{
+    border-bottom:1px solid #eef2f7;
+}
+
+.wc-bike-row:last-child
+{
+    border-bottom:0;
+}
+
+.wc-bike-row:hover
+{
+    background:#f8fafd;
+}
+
+.wc-bike-row.wc-off > *:not(.wc-c):not(.wc-order)
+{
+    opacity:.55;
+}
+
+.wc-bike-photo
+{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:64px;
+    height:48px;
+    border:1px solid #e3e9f2;
+    border-radius:10px;
+    background:#f8fafd;
+    color:#94a3b8;
+    font-size:18px;
+    overflow:hidden;
+}
+
+.wc-bike-photo img
+{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.wc-bike-name
+{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+}
+
+.wc-bike-name b
+{
+    color:#13254a;
+    font-size:14px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.wc-bike-name small
+{
+    color:#6b7a93;
+    font-size:12px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.wc-bike-desc
+{
+    min-height:48px;
+    resize:vertical;
+}
+
+@media (max-width: 1100px)
+{
+    .wc-bike-head
+    {
+        display:none;
+    }
+
+    .wc-bike-row
+    {
+        grid-template-columns:28px 64px minmax(0, 1fr) 58px 72px 58px;
+    }
+
+    .wc-bike-row > .wc-in
+    {
+        grid-column:3 / -1;
+    }
+}
+
+
+.wc-bike-nospec
+{
+    font-size:11px;
+    color:var(--text-muted, #94a3b8);
+}

@@ -217,6 +217,9 @@ public class CustomerProfilesRepository :
                         ReceivableLedgerName = x.ReceivableLedgerName,
                         CreditLimit = x.CreditLimit,
                         IsWalkIn = x.IsWalkIn,
+                        IsCorporate = x.IsCorporate,
+                        TinNo = x.TinNo,
+                        BinNo = x.BinNo,
                         Remarks = x.Remarks,
                         IsActive = x.IsActive,
                         IsDeleted = x.IsDeleted,
@@ -375,11 +378,23 @@ public class CustomerProfilesRepository :
                     search.ToLowerInvariant(),
                     StringComparison.Ordinal);
 
+            // "corp", "corporate", "institution" : Corporate / Institution
+            bool corporate =
+                search.Length >= 4 &&
+                (
+                    "corporate".StartsWith(search.ToLowerInvariant(), StringComparison.Ordinal)
+                    ||
+                    "institution".StartsWith(search.ToLowerInvariant(), StringComparison.Ordinal)
+                );
+
             query =
                 query.Where
                 (
                     x =>
                         EF.Functions.ILike(x.CustomerCode, like) ||
+                        EF.Functions.ILike(x.TinNo, like) ||
+                        EF.Functions.ILike(x.BinNo, like) ||
+                        (corporate && x.IsCorporate) ||
                         EF.Functions.ILike(x.PreviousCode, like) ||
                         EF.Functions.ILike(x.CustomerName, like) ||
                         EF.Functions.ILike(x.DisplayName, like) ||
@@ -735,6 +750,13 @@ public class CustomerProfilesRepository :
         // Outside only
         public bool IsWalkIn { get; init; }
 
+        // Inbound only : Corporate / Institution, its TIN / BIN
+        public bool IsCorporate { get; init; }
+
+        public string TinNo { get; init; } = string.Empty;
+
+        public string BinNo { get; init; } = string.Empty;
+
         public string Remarks { get; init; } = string.Empty;
     }
 
@@ -864,6 +886,9 @@ public class CustomerProfilesRepository :
             // null (an older page) keeps the tag : the update can
             // only clear it
             IsWalkIn = dto.IsWalkIn ?? true,
+            IsCorporate = dto.IsCorporate,
+            TinNo = dto.TinNo,
+            BinNo = dto.BinNo,
             Remarks = dto.Remarks,
             IsActive = dto.IsActive
         };
@@ -881,6 +906,40 @@ public class CustomerProfilesRepository :
 
         bool inbound =
             customerType == InboundType;
+
+        // Corporate / Institution : Inbound only; no personal
+        // identity (NID, Date of Birth, parents), TIN / BIN instead
+        bool corporate =
+            inbound
+            &&
+            dto.IsCorporate;
+
+        bool person =
+            inbound
+            &&
+            !corporate;
+
+        string tin =
+            corporate
+                ? (dto.TinNo ?? string.Empty).Trim()
+                : string.Empty;
+
+        string bin =
+            corporate
+                ? (dto.BinNo ?? string.Empty).Trim()
+                : string.Empty;
+
+        if (tin.Length > 0 && !Regex.IsMatch(tin, "^[0-9]{12}$"))
+        {
+            throw new InvalidOperationException(
+                "TIN No must be 12 digits (digits only).");
+        }
+
+        if (bin.Length > 0 && !Regex.IsMatch(bin, "^([0-9]{9}|[0-9]{13})$"))
+        {
+            throw new InvalidOperationException(
+                "BIN No must be 9 or 13 digits (digits only).");
+        }
 
         // CAPITAL LETTERS (the Display Name and the ledger name
         // follow it)
@@ -935,7 +994,7 @@ public class CustomerProfilesRepository :
 
         if
         (
-            inbound
+            person
         )
         {
             nid =
@@ -1024,12 +1083,12 @@ public class CustomerProfilesRepository :
             CustomerName = name,
 
             FatherName =
-                inbound
+                person
                     ? Upper(CheckText(dto.FatherName, "Father's Name", MaxNameLength, false))
                     : string.Empty,
 
             MotherName =
-                inbound
+                person
                     ? Upper(CheckText(dto.MotherName, "Mother's Name", MaxNameLength, false))
                     : string.Empty,
 
@@ -1073,6 +1132,12 @@ public class CustomerProfilesRepository :
                 !inbound
                 &&
                 dto.IsWalkIn,
+
+            IsCorporate = corporate,
+
+            TinNo = tin,
+
+            BinNo = bin,
 
             Remarks =
                 (dto.Remarks ?? string.Empty).Trim()
@@ -1627,6 +1692,9 @@ public class CustomerProfilesRepository :
         entity.ReceivableLedgerName = entity.DisplayName;
         entity.CreditLimit = input.CreditLimit;
         entity.IsWalkIn = input.IsWalkIn;
+        entity.IsCorporate = input.IsCorporate;
+        entity.TinNo = input.TinNo;
+        entity.BinNo = input.BinNo;
         entity.Remarks = input.Remarks;
         entity.IsActive = isActive;
     }

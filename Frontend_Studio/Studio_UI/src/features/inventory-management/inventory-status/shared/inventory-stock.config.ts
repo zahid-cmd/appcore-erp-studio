@@ -105,8 +105,8 @@ export const STOCK_MB_PAGE:
     productHeader:'Model',
     tabs:
     [
-        { id:'models', label:'Models', kind:'Motor Bikes' },
-        { id:'accessories', label:'Free Accessories', kind:'Free Accessories', accessories:true },
+        { id:'models', label:'Motor Bikes', kind:'Motor Bikes' },
+        { id:'accessories', label:'Accessories', kind:'Free Accessories', accessories:true },
         { id:'bikes', label:'Technical Records', kind:'' }
     ],
     showLocation:false,

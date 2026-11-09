@@ -51,6 +51,10 @@ public class CreateSalesInvoiceDto
     public List<ReceiptVoucherDebitDto> Payments { get; set; } = new();
 
     public string Narration { get; set; } = string.Empty;
+
+    // MB : Regular (one chassis) / Corporate (several; switch
+    // 0073 and a Corporate / Institution customer). Others : ''
+    public string SaleType { get; set; } = string.Empty;
 }
 
 
@@ -71,6 +75,9 @@ public class CreateSalesInvoiceLineDto
     // Line special discount % (switch Allow Discount + activity
     // "Give Special Discount"); null / 0 = none
     public decimal? SpecialDiscountPercent { get; set; }
+
+    // Sales Invoices - MB : the bike (chassis) sold; quantity 1
+    public long? MotorBikeUnitId { get; set; }
 }
 
 
@@ -151,6 +158,9 @@ public class SalesInvoiceListItemDto
 
     // Inbound / Outside / Walk-in
     public string CustomerTag { get; set; } = string.Empty;
+
+    // MB : Regular / Corporate; others ''
+    public string SaleType { get; set; } = string.Empty;
 
     public int LineCount { get; set; }
 
@@ -299,6 +309,24 @@ public class SalesInvoiceLineDto
     public decimal ReturnedQuantity { get; set; }
 
     public List<SalesInvoiceAllocationDto> Allocations { get; set; } = new();
+
+    // Sales Invoices - MB : the bike sold
+    public long? MotorBikeUnitId { get; set; }
+
+    public string ChassisNo { get; set; } = string.Empty;
+
+    public string EngineNo { get; set; } = string.Empty;
+
+    public string ColorName { get; set; } = string.Empty;
+
+    public int? ManufactureYear { get; set; }
+
+    public string CkdStatus { get; set; } = string.Empty;
+
+    // Pending / Delivered / Cancelled ('' = not a bike line)
+    public string DeliveryStatus { get; set; } = string.Empty;
+
+    public string DeliveredDate { get; set; } = string.Empty;
 }
 
 
@@ -351,6 +379,10 @@ public class SalesInvoiceCustomerDto
 
     // Inbound / Outside / Walk-in
     public string CustomerTag { get; set; } = string.Empty;
+
+    // Corporate / Institution (Inbound) : may buy on a Corporate
+    // sale (MB)
+    public bool IsCorporate { get; set; }
 
     public bool IsActive { get; set; }
 
@@ -472,6 +504,14 @@ public class SalesInvoiceSwitchesDto
     public bool SellAtBatchMrp { get; set; }
 
     public bool RoundDownWholeTaka { get; set; }
+
+    // MB : 0073 Allow Corporate Sale, with its window (0074 From /
+    // 0075 Until, yyyy-MM-dd; '' = open)
+    public bool AllowCorporateSale { get; set; }
+
+    public string CorporateSaleFrom { get; set; } = string.Empty;
+
+    public string CorporateSaleUntil { get; set; } = string.Empty;
 }
 
 
@@ -550,6 +590,8 @@ public class SalesInvoiceCustomerSearchItemDto
     public string CustomerType { get; set; } = string.Empty;
 
     public bool IsWalkIn { get; set; }
+
+    public bool IsCorporate { get; set; }
 
     // Phone 1 / Phone 2 / Name / Code : which field matched
     public string MatchedOn { get; set; } = string.Empty;
@@ -735,6 +777,9 @@ public class SalesInvoiceDto
 
     public string CustomerTag { get; set; } = string.Empty;
 
+    // MB : Regular / Corporate; others ''
+    public string SaleType { get; set; } = string.Empty;
+
     public string ReceivableLedgerCode { get; set; } = string.Empty;
 
     public long? MembershipId { get; set; }
@@ -847,4 +892,55 @@ public class SalesInvoicePageRequest : AppCore.Application.Common.Paging.PagedRe
 public class SalesInvoicePagedResult : AppCore.Application.Common.Paging.PagedResult<SalesInvoiceListItemDto>
 {
     public decimal DueTotal { get; set; }
+}
+
+
+//===============================================================
+// Sales Invoices - MB : a bike in stock in the warehouse, to pick
+// model -> colour -> chassis
+//   GET bike-units?warehouseId=3&invoiceId=12
+//===============================================================
+
+public class SalesInvoiceBikeUnitDto
+{
+    public long MotorBikeUnitId { get; set; }
+
+    public long ProductId { get; set; }
+
+    public string ProductCode { get; set; } = string.Empty;
+
+    public string ProductName { get; set; } = string.Empty;
+
+    // The model (sub category) and the colour
+    public long ProductSubCategoryId { get; set; }
+
+    public string ModelName { get; set; } = string.Empty;
+
+    public string ColorName { get; set; } = string.Empty;
+
+    public string ChassisNo { get; set; } = string.Empty;
+
+    public string EngineNo { get; set; } = string.Empty;
+
+    // From the purchase / receiving ('' = not kept)
+    public string KeyNo { get; set; } = string.Empty;
+
+    public string BatteryNo { get; set; } = string.Empty;
+
+    public int? ManufactureYear { get; set; }
+
+    // Yes / No
+    public string CkdStatus { get; set; } = "No";
+
+    // yyyy-MM-dd : oldest first (Oldest Chassis First)
+    public string StockInDate { get; set; } = string.Empty;
+
+    // Sale price of its batch (MRP)
+    public decimal Mrp { get; set; }
+
+    // On another open (draft / approved) invoice : its number
+    public string OnInvoiceNo { get; set; } = string.Empty;
+
+    // Picture of the model (/uploads/...) : the Motor Bike Shelf
+    public string ImagePath { get; set; } = string.Empty;
 }

@@ -5,9 +5,11 @@
 using System.Globalization;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 
 using AppCore.Application.Common.ActivityHistory.DTOs;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
+using AppCore.Application.InventoryManagement.CkdDocuments;
 using AppCore.Application.Platform.EffectiveAccess.Interfaces;
 using AppCore.Application.SalesOperations.Shared;
 using AppCore.Api.Extensions;
@@ -219,7 +221,7 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
 
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
-                failure);
+                $"{failure} {ex.GetBaseException().Message}");
         }
     }
 
@@ -309,6 +311,78 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
         return Run(
             async () => Ok(await _repository.GetProductsAsync(PageType, warehouseId, search, categoryId, subCategoryId, browse)),
             "Failed to load the items.");
+    }
+
+
+    //===========================================================
+    // Sales Invoices - MB : bikes in stock (model -> colour ->
+    // chassis), oldest first
+    //   GET bike-units?warehouseId=3&invoiceId=12
+    //===========================================================
+
+    [HttpGet("bike-units")]
+    public Task<IActionResult> GetBikeUnits(
+        [FromQuery] long warehouseId,
+        [FromQuery] long invoiceId = 0)
+    {
+        return Run(
+            async () => Ok(await _repository.GetBikeUnitsAsync(warehouseId, invoiceId)),
+            "Failed to load the bikes in stock.");
+    }
+
+
+    //===========================================================
+    // Sales Invoices - MB : change a chassis' CKD status from the
+    // invoice (Add card / Motor Bike Shelf). Same rules and
+    // history as CKD Documents Status (Yes -> No needs a reason);
+    // the user needs Add on this invoice page.
+    //   PUT bike-units/12/ckd { CkdStatus, Remarks }
+    //===========================================================
+
+    [HttpPut("bike-units/{id:long}/ckd")]
+    public async Task<IActionResult> SetBikeCkd(
+        long id,
+        [FromBody] SetCkdStatusDto? dto)
+    {
+        long userId = UserId;
+
+        IActionResult? denied =
+            await DenyAsync("Add");
+
+        if (denied != null)
+        {
+            return denied;
+        }
+
+        if (PageType != "MB")
+        {
+            return NotFound("The CKD status is changed on Sales Invoices - MB.");
+        }
+
+        ICkdDocumentsRepository ckd =
+            HttpContext.RequestServices.GetRequiredService<ICkdDocumentsRepository>();
+
+        string status =
+            dto?.CkdStatus ?? string.Empty;
+
+        return await Run(
+            async () =>
+            {
+                // The year stays as it is (null = unchanged)
+                await ckd.SetUnitStatusAsync(
+                    id,
+                    new SetCkdStatusDto
+                    {
+                        CkdStatus = status,
+                        Remarks = dto?.Remarks ?? string.Empty,
+                        ManufactureYear = null
+                    },
+                    userId,
+                    this.CurrentUserName());
+
+                return Ok(new { MotorBikeUnitId = id, CkdStatus = status });
+            },
+            "Failed to change the CKD status.");
     }
 
 

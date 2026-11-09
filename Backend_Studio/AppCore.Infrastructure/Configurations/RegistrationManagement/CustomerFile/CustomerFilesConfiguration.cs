@@ -69,6 +69,16 @@ public class CustomerFilesConfiguration
 
         builder.Property(x => x.TransferCount).IsRequired();
 
+        builder.Property(x => x.CkdStatus).IsRequired().HasMaxLength(5);
+
+        builder.Property(x => x.CkdCheckedDate).HasColumnType("date");
+
+        builder.Property(x => x.CkdCheckedByName).IsRequired().HasMaxLength(150);
+
+        builder.Property(x => x.CkdRemarks).IsRequired().HasMaxLength(250);
+
+        builder.Property(x => x.ManufactureYear);
+
         builder.Property(x => x.FileReadyDate).HasColumnType("date");
 
         builder.Property(x => x.CollectedDate).HasColumnType("date");

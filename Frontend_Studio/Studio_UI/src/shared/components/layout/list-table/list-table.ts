@@ -53,7 +53,10 @@ export type ListTableColumnType =
   | 'boolean'
   | 'image'
   | 'operation'
-  | 'actions';
+  | 'actions'
+  // The page's own cell : <ng-template #cellTemplate let-row
+  // let-column="column"> inside <app-list-table>
+  | 'template';
 
 
 //===============================================================
@@ -571,6 +574,11 @@ private readonly navigationContextSubscription =
 
   @ContentChild('rowDetail')
   detailTemplate?: TemplateRef<any>;
+
+  // Cells of columns with type 'template' (e.g. a dropdown per
+  // row); context : $implicit = row, column = the column
+  @ContentChild('cellTemplate')
+  cellTemplate?: TemplateRef<any>;
 
   @Input()
   detailKey = '';

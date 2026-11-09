@@ -64,6 +64,21 @@ using StockBatchesEntity =
 using StockMovementsEntity =
     AppCore.Domain.Platform.Inventory.StockMovements;
 
+using AccessoryDuesEngine =
+    AppCore.Infrastructure.Repositories.Procurement.MotorBikePurchase.PurchaseAccessoryDuesEngine;
+
+using AccessoryDuesEntity =
+    AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchaseAccessoryDues;
+
+using AccessoryReceiptsEntity =
+    AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchaseAccessoryReceipts;
+
+using AccessoryTakesEntity =
+    AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchaseAccessoryTakes;
+
+using CreateReceivingAccessoryDto =
+    AppCore.Application.InventoryManagement.ProductReceiving.CreateReceivingAccessoryDto;
+
 using VatRegisterEntity =
     AppCore.Domain.Platform.Inventory.VatRegister;
 
@@ -325,6 +340,10 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         // Motor bike units per line number (Products Received on
         // Purchase ON)
         public Dictionary<int, List<PurchaseUnitDto>> Units { get; set; } = new();
+
+        // MB, Products Received on Purchase ON : free accessories
+        // received with the purchase (taken in on Post)
+        public List<PurchaseAccessoryTakeDto> Accessories { get; set; } = new();
     }
 
 
@@ -540,6 +559,10 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
         if (row.PageType == "MB")
         {
+            // Free accessories due on the bikes
+            dto.Accessories =
+                await AccessoryLinesAsync(row, dto.Lines);
+
             List<MotorBikeUnitsEntity> units =
                 await _context
                     .Set<MotorBikeUnitsEntity>()
@@ -563,7 +586,9 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                                     EngineNo = x.EngineNo,
                                     KeyNo = x.KeyNo,
                                     BatteryNo = x.BatteryNo,
-                                    Status = x.Status
+                                    Status = x.Status,
+                                    CkdStatus = x.CkdStatus,
+                                    ManufactureYear = x.ManufactureYear
                                 }
                         )
                         .ToList();
@@ -2043,6 +2068,31 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 : $"{a} | {b}";
     }
 
+    // Year of manufacture : null / 0 = not given (the purchase
+    // invoice's year is used); otherwise 2000 .. next year
+    private static int? CheckYear
+    (
+        int? year,
+        string label
+    )
+    {
+        if (year == null || year == 0)
+        {
+            return null;
+        }
+
+        int max =
+            DateTime.UtcNow.Year + 1;
+
+        if (year < 2000 || year > max)
+        {
+            throw new InvalidOperationException(
+                $"{label} : Year of Manufacture {year} is not valid (2000 - {max}).");
+        }
+
+        return year;
+    }
+
     private static string Limit
     (
         string? value,
@@ -3013,6 +3063,16 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 currentPurchaseId);
         }
 
+        // MB free accessories received with the purchase (checked
+        // against the schemes when saved)
+        if (received && page.PageType == "MB")
+        {
+            input.Accessories =
+                (dto.Accessories ?? new List<PurchaseAccessoryTakeDto>())
+                    .Where(x => x.Quantity > 0m)
+                    .ToList();
+        }
+
         ApplyDiscountAndVat(input);
 
         await ApplyRoundingAsync(input);
@@ -3064,7 +3124,11 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                             EngineNo = Limit(x.EngineNo, 50).ToUpperInvariant(),
                             // Key & Battery Required OFF : not kept
                             KeyNo = keyBattery ? Limit(x.KeyNo, 50).ToUpperInvariant() : string.Empty,
-                            BatteryNo = keyBattery ? Limit(x.BatteryNo, 50).ToUpperInvariant() : string.Empty
+                            BatteryNo = keyBattery ? Limit(x.BatteryNo, 50).ToUpperInvariant() : string.Empty,
+                            // CKD documents : Yes / No (anything else = No)
+                            CkdStatus = string.Equals((x.CkdStatus ?? string.Empty).Trim(), "Yes", StringComparison.OrdinalIgnoreCase) ? "Yes" : "No",
+                            // Year of manufacture (null = the purchase's year)
+                            ManufactureYear = CheckYear(x.ManufactureYear, label)
                         }
                 )
                 .Where
@@ -3496,6 +3560,285 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
     }
 
 
+    //===========================================================
+    // MB : free accessories received with the purchase
+    // (Products Received on Purchase ON)
+    //===========================================================
+
+    // Draft : the dues of the bikes on the page
+    public async Task<List<PurchaseAccessoryLineDto>>
+        PreviewAccessoriesAsync
+        (
+            PurchaseAccessoryPreviewDto dto
+        )
+    {
+        if (Page.PageType != "MB")
+        {
+            return new List<PurchaseAccessoryLineDto>();
+        }
+
+        DateOnly date =
+            ParseDate(dto?.PurchaseDate, "Purchase Date");
+
+        return await AccessoryDuesEngine.PreviewAsync(
+            _context,
+            date,
+            (dto?.Lines ?? new List<PurchaseAccessoryPreviewLineDto>())
+                .Select(x => (x.ProductId, x.Bikes)));
+    }
+
+
+    // Draft save : the quantities to take in on Post, checked
+    // against the dues of the bikes (schemes on the purchase date)
+    private async Task SaveAccessoryTakesAsync
+    (
+        THeader entity,
+        PurchaseInput input,
+        long userId,
+        DateTime now
+    )
+    {
+        if (entity.PageType != "MB")
+        {
+            return;
+        }
+
+        List<AccessoryTakesEntity> old =
+            await _context
+                .Set<AccessoryTakesEntity>()
+                .Where(x => x.PurchaseId == entity.PurchaseId)
+                .ToListAsync();
+
+        _context.Set<AccessoryTakesEntity>().RemoveRange(old);
+
+        if (input.Accessories.Count == 0)
+        {
+            return;
+        }
+
+        if (input.Accessories.GroupBy(x => new { x.BikeAccessorySchemeId, x.AccessoryId }).Any(g => g.Count() > 1))
+        {
+            throw new InvalidOperationException(
+                "A free accessory is on the purchase twice.");
+        }
+
+        List<PurchaseAccessoryLineDto> dues =
+            await AccessoryDuesEngine.PreviewAsync(
+                _context,
+                entity.PurchaseDate,
+                input.Lines.Select(x => (x.ProductId, x.Quantity + x.FreeQuantity)));
+
+        foreach (PurchaseAccessoryTakeDto take in input.Accessories)
+        {
+            PurchaseAccessoryLineDto due =
+                dues.FirstOrDefault(x => x.BikeAccessorySchemeId == take.BikeAccessorySchemeId && x.AccessoryId == take.AccessoryId)
+                ??
+                throw new InvalidOperationException(
+                    "A free accessory is no longer due on these bikes (the schemes of the purchase date). Open Accessories Due again.");
+
+            if (take.Quantity != Math.Truncate(take.Quantity))
+            {
+                throw new InvalidOperationException(
+                    $"{due.AccessoryName} : the quantity must be whole pieces.");
+            }
+
+            if (take.Quantity > due.QuantityDue)
+            {
+                throw new InvalidOperationException(
+                    $"{due.AccessoryName} : only {due.QuantityDue:0.##} {due.Unit} is due on these bikes.");
+            }
+
+            _context.Set<AccessoryTakesEntity>().Add(
+                new AccessoryTakesEntity
+                {
+                    PurchaseId = entity.PurchaseId,
+                    BikeAccessorySchemeId = take.BikeAccessorySchemeId,
+                    AccessoryId = take.AccessoryId,
+                    Quantity = take.Quantity,
+                    CreatedBy = userId,
+                    CreatedDate = now
+                });
+        }
+    }
+
+
+    // View / edit : the dues with the quantity taken here
+    private async Task<List<PurchaseAccessoryLineDto>>
+        AccessoryLinesAsync
+        (
+            THeader row,
+            List<PurchaseLineDto> lines
+        )
+    {
+        List<AccessoryDuesEntity> dues =
+            await _context
+                .Set<AccessoryDuesEntity>()
+                .AsNoTracking()
+                .Where(x => x.PurchaseId == row.PurchaseId && x.Status != AccessoryDuesEngine.StatusCancelled)
+                .OrderBy(x => x.SchemeCode)
+                .ThenBy(x => x.AccessoryName)
+                .ToListAsync();
+
+        // Posted : the due rows, received here / elsewhere
+        if (dues.Count > 0)
+        {
+            Dictionary<long, decimal> here =
+                await _context
+                    .Set<AccessoryReceiptsEntity>()
+                    .AsNoTracking()
+                    .Where
+                    (
+                        x =>
+                            x.PurchaseId == row.PurchaseId
+                            &&
+                            x.ReceivedOn == AccessoryDuesEngine.ReceivedOnPurchase
+                            &&
+                            !x.IsCancelled
+                    )
+                    .GroupBy(x => x.PurchaseAccessoryDueId)
+                    .Select(g => new { g.Key, Quantity = g.Sum(x => x.Quantity) })
+                    .ToDictionaryAsync(x => x.Key, x => x.Quantity);
+
+            return dues
+                .Select
+                (
+                    x =>
+                    {
+                        decimal taken =
+                            here.GetValueOrDefault(x.PurchaseAccessoryDueId);
+
+                        return new PurchaseAccessoryLineDto
+                        {
+                            BikeAccessorySchemeId = x.BikeAccessorySchemeId,
+                            SchemeCode = x.SchemeCode,
+                            SchemeName = x.SchemeName,
+                            SchemeKind = x.SchemeKind,
+                            AccessoryId = x.AccessoryId,
+                            ProductCode = x.ProductCode,
+                            AccessoryName = x.AccessoryName,
+                            Unit = x.Unit,
+                            QuantityDue = x.QuantityDue,
+                            ReceivedElsewhere = Math.Max(0m, x.QuantityReceived - taken) + x.QuantityClosed,
+                            QuantityTaken = taken
+                        };
+                    }
+                )
+                .ToList();
+        }
+
+        // Draft / approved : worked out, with the saved quantities
+        List<PurchaseAccessoryLineDto> preview =
+            await AccessoryDuesEngine.PreviewAsync(
+                _context,
+                row.PurchaseDate,
+                lines.Select(x => (x.ProductId, x.Quantity + x.FreeQuantity)));
+
+        if (preview.Count == 0)
+        {
+            return preview;
+        }
+
+        List<AccessoryTakesEntity> takes =
+            await _context
+                .Set<AccessoryTakesEntity>()
+                .AsNoTracking()
+                .Where(x => x.PurchaseId == row.PurchaseId)
+                .ToListAsync();
+
+        foreach (PurchaseAccessoryLineDto line in preview)
+        {
+            AccessoryTakesEntity? take =
+                takes.FirstOrDefault(x => x.BikeAccessorySchemeId == line.BikeAccessorySchemeId && x.AccessoryId == line.AccessoryId);
+
+            line.QuantityTaken =
+                Math.Min(take?.Quantity ?? 0m, line.QuantityDue);
+        }
+
+        return preview;
+    }
+
+
+    // Post (received on purchase) : the saved quantities taken in,
+    // zero cost, on hand in the purchase's warehouse
+    private async Task ReceiveAccessoryTakesAsync
+    (
+        THeader entity,
+        long userId,
+        DateTime now
+    )
+    {
+        List<AccessoryTakesEntity> takes =
+            await _context
+                .Set<AccessoryTakesEntity>()
+                .AsNoTracking()
+                .Where(x => x.PurchaseId == entity.PurchaseId && x.Quantity > 0m)
+                .ToListAsync();
+
+        if (takes.Count == 0 || !entity.WarehouseId.HasValue)
+        {
+            return;
+        }
+
+        // The due rows just made
+        await _context.SaveChangesAsync();
+
+        List<AccessoryDuesEntity> dues =
+            await _context
+                .Set<AccessoryDuesEntity>()
+                .AsNoTracking()
+                .Where(x => x.PurchaseId == entity.PurchaseId && x.Status == AccessoryDuesEngine.StatusPending)
+                .ToListAsync();
+
+        List<CreateReceivingAccessoryDto> inputs =
+            new();
+
+        foreach (AccessoryTakesEntity take in takes)
+        {
+            AccessoryDuesEntity? due =
+                dues.FirstOrDefault(x => x.BikeAccessorySchemeId == take.BikeAccessorySchemeId && x.AccessoryId == take.AccessoryId);
+
+            if (due == null)
+            {
+                continue;
+            }
+
+            decimal quantity =
+                Math.Min(take.Quantity, Math.Max(0m, due.QuantityDue - due.QuantityReceived - due.QuantityClosed));
+
+            if (quantity > 0m)
+            {
+                inputs.Add(
+                    new CreateReceivingAccessoryDto
+                    {
+                        PurchaseAccessoryDueId = due.PurchaseAccessoryDueId,
+                        Quantity = quantity
+                    });
+            }
+        }
+
+        if (inputs.Count == 0)
+        {
+            return;
+        }
+
+        await AccessoryDuesEngine.ReceiveAsync(
+            _context,
+            entity.PurchaseId,
+            entity.BranchId,
+            entity.SupplierCode,
+            entity.PurchaseId,
+            entity.PurchaseNo,
+            entity.PurchaseDate,
+            entity.WarehouseId.Value,
+            entity.WarehouseName,
+            Page.Prefix,
+            inputs,
+            userId,
+            now,
+            AccessoryDuesEngine.ReceivedOnPurchase);
+    }
+
+
     // Lines (and the Unit Desk bikes) replaced on every draft save
     private async Task ReplaceLinesAsync
     (
@@ -3511,6 +3854,11 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 .Where(x => x.PurchaseId == entity.PurchaseId)
                 .ToListAsync();
 
+        // CKD documents of the bikes saved before (by chassis) : a
+        // Yes kept on the desk keeps its checked date / by / remarks
+        Dictionary<string, MotorBikeUnitsEntity> oldCkd =
+            new(StringComparer.OrdinalIgnoreCase);
+
         if (entity.PageType == "MB")
         {
             List<MotorBikeUnitsEntity> oldUnits =
@@ -3518,6 +3866,11 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                     .Set<MotorBikeUnitsEntity>()
                     .Where(x => x.PurchaseId == entity.PurchaseId)
                     .ToListAsync();
+
+            foreach (MotorBikeUnitsEntity old in oldUnits.Where(x => !x.IsDeleted && x.CkdStatus == "Yes"))
+            {
+                oldCkd[old.ChassisNo] = old;
+            }
 
             _context.Set<MotorBikeUnitsEntity>().RemoveRange(oldUnits);
         }
@@ -3542,9 +3895,19 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
             foreach (PurchaseUnitDto unit in units)
             {
+                bool ckd = unit.CkdStatus == "Yes";
+
+                oldCkd.TryGetValue(unit.ChassisNo, out MotorBikeUnitsEntity? before);
+
                 _context.Set<MotorBikeUnitsEntity>().Add(
                     new MotorBikeUnitsEntity
                     {
+                        CkdStatus = ckd ? "Yes" : "No",
+                        CkdCheckedDate = ckd ? (before?.CkdCheckedDate ?? BusinessToday()) : null,
+                        CkdCheckedBy = ckd ? (before?.CkdCheckedBy ?? userId) : null,
+                        CkdCheckedByName = ckd ? (before?.CkdCheckedByName ?? string.Empty) : string.Empty,
+                        CkdRemarks = ckd ? (before?.CkdRemarks ?? $"Purchase {entity.PurchaseNo} Unit Desk") : string.Empty,
+                        ManufactureYear = unit.ManufactureYear ?? entity.PurchaseDate.Year,
                         ProductId = line.ProductId,
                         ProductCode = line.ProductCode,
                         ProductName = line.ProductName,
@@ -3722,6 +4085,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                     userId,
                     now);
 
+                await SaveAccessoryTakesAsync(entity, input, userId, now);
+
                 AddHistory(entity, "Create", "Created", userId, now);
 
                 await _context.SaveChangesAsync();
@@ -3786,6 +4151,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                     input,
                     userId,
                     now);
+
+                await SaveAccessoryTakesAsync(entity, input, userId, now);
 
                 AddHistory(entity, "Update", "Updated", userId, now);
 
@@ -4760,6 +5127,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 unit.UnitCost = batch?.UnitCost ?? unit.UnitCost;
                 unit.StockInDate = entity.PurchaseDate;
                 unit.BranchId = entity.BranchId;
+                unit.WarehouseId = entity.WarehouseId;
                 unit.ModifiedBy = userId;
                 unit.ModifiedDate = now;
             }
@@ -4778,6 +5146,13 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 lines,
                 userId,
                 now);
+
+            // Received on purchase : the free accessories entered
+            // on the purchase come in with the bikes
+            if (received)
+            {
+                await ReceiveAccessoryTakesAsync(entity, userId, now);
+            }
         }
 
         entity.Status = StatusPosted;
@@ -5036,8 +5411,27 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
                 if (entity.PageType == "MB")
                 {
+                    // Free accessories received with the purchase :
+                    // back out while all of them are still on hand
+                    if (entity.WarehouseId.HasValue)
+                    {
+                        await AccessoryDuesEngine.CancelReceivingAsync(
+                            _context,
+                            entity.PurchaseId,
+                            entity.PurchaseNo,
+                            BusinessToday(),
+                            entity.BranchId,
+                            entity.WarehouseId.Value,
+                            entity.WarehouseName,
+                            Page.Prefix,
+                            reason,
+                            userId,
+                            now,
+                            AccessoryDuesEngine.ReceivedOnPurchase);
+                    }
+
                     // Free accessories due : cancelled with it
-                    // (refused when some were received)
+                    // (refused when some were received elsewhere)
                     await AppCore.Infrastructure.Repositories.Procurement.MotorBikePurchase.PurchaseAccessoryDuesEngine.CancelForPurchaseAsync(
                         _context,
                         entity.PurchaseId,

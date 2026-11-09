@@ -46,6 +46,7 @@ from '../purchase-order/purchase-order.model';
 import
 {
     Purchase,
+    PurchaseAccessoryLine,
     PurchaseLine,
     PurchaseUnit,
     PurchaseDefaults,
@@ -201,7 +202,32 @@ export abstract class PurchaseService
             EngineNo:this.text(item, 'EngineNo'),
             KeyNo:this.text(item, 'KeyNo'),
             BatteryNo:this.text(item, 'BatteryNo'),
-            Status:this.text(item, 'Status')
+            Status:this.text(item, 'Status'),
+            CkdStatus:this.text(item, 'CkdStatus') === 'Yes' ? 'Yes' : 'No',
+            ManufactureYear:this.num(item, 'ManufactureYear') || null
+        };
+    }
+
+
+    private normalizeAccessory
+    (
+        item:
+            any
+    ):
+        PurchaseAccessoryLine
+    {
+        return {
+            BikeAccessorySchemeId:this.num(item, 'BikeAccessorySchemeId'),
+            SchemeCode:this.text(item, 'SchemeCode'),
+            SchemeName:this.text(item, 'SchemeName'),
+            SchemeKind:this.text(item, 'SchemeKind'),
+            AccessoryId:this.num(item, 'AccessoryId'),
+            ProductCode:this.text(item, 'ProductCode'),
+            AccessoryName:this.text(item, 'AccessoryName'),
+            Unit:this.text(item, 'Unit'),
+            QuantityDue:this.num(item, 'QuantityDue'),
+            ReceivedElsewhere:this.num(item, 'ReceivedElsewhere'),
+            QuantityTaken:this.num(item, 'QuantityTaken')
         };
     }
 
@@ -310,7 +336,8 @@ export abstract class PurchaseService
             PostedDate:this.text(item, 'PostedDate'),
             CancelledDate:this.text(item, 'CancelledDate'),
             CreatedDate:this.text(item, 'CreatedDate'),
-            Lines:((this.pick(item, 'Lines') ?? []) as any[]).map(line => this.normalizeLine(line))
+            Lines:((this.pick(item, 'Lines') ?? []) as any[]).map(line => this.normalizeLine(line)),
+            Accessories:((this.pick(item, 'Accessories') ?? []) as any[]).map(row => this.normalizeAccessory(row))
         };
     }
 
@@ -592,6 +619,29 @@ export abstract class PurchaseService
 
     // Mushak 6.3 No : once per supplier in the financial year of
     // the purchase date ('' message = free)
+    // MB draft : the free accessories due on the bikes on the page
+    previewAccessories
+    (
+        purchaseDate:
+            string,
+        lines:
+            { ProductId:number; Bikes:number }[]
+    ):
+        Observable<PurchaseAccessoryLine[]>
+    {
+        return this.http
+            .post<any[]>(
+                `${this.apiUrl}/accessory-preview`,
+                {
+                    PurchaseDate:purchaseDate,
+                    Lines:lines
+                }
+            )
+            .pipe(
+                map(response => (response ?? []).map(row => this.normalizeAccessory(row)))
+            );
+    }
+
     // Unit Desk : bike numbers already on another purchase
     checkUnits
     (

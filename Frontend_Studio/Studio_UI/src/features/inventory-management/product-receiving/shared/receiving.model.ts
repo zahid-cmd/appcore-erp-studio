@@ -43,6 +43,10 @@ export interface ReceivingUnit
     EngineNo:string;
     KeyNo:string;
     BatteryNo:string;
+    // CKD documents in hand / on the portal : 'Yes' / 'No'
+    CkdStatus?:string;
+    // Year of manufacture (default : the purchase date's year)
+    ManufactureYear?:number | null;
 }
 
 export interface Receiving

@@ -185,7 +185,7 @@ const FALLBACK_CLASSES:
 // The number boxes are edited as text
 type NumberField =
     'cc' | 'watts' | 'cylinders' | 'seats' | 'unladen' | 'laden'
-    | 'rpm' | 'wheelbase' | 'length' | 'width' | 'height' | 'tyres' | 'axles';
+    | 'rpm' | 'topspeed' | 'wheelbase' | 'length' | 'width' | 'height' | 'tyres' | 'axles';
 
 type NumberTexts =
     Record<NumberField, string>;
@@ -630,6 +630,8 @@ implements OnInit, OnDestroy
             CountryOfOrigin:'',
             HorsePower:'',
             Rpm:0,
+            Mileage:'',
+            TopSpeedKmh:0,
             WheelBaseMm:0,
             LengthMm:0,
             WidthMm:0,
@@ -657,6 +659,7 @@ implements OnInit, OnDestroy
             unladen:'',
             laden:'',
             rpm:'',
+            topspeed:'',
             wheelbase:'',
             length:'',
             width:'',
@@ -943,6 +946,7 @@ implements OnInit, OnDestroy
             unladen:numberText(this.entity.UnladenWeightKg),
             laden:numberText(this.entity.LadenWeightKg),
             rpm:numberText(this.entity.Rpm),
+            topspeed:numberText(this.entity.TopSpeedKmh),
             wheelbase:numberText(this.entity.WheelBaseMm),
             length:numberText(this.entity.LengthMm),
             width:numberText(this.entity.WidthMm),
@@ -1307,6 +1311,8 @@ implements OnInit, OnDestroy
                         CountryOfOrigin:copy.CountryOfOrigin,
                         HorsePower:copy.HorsePower,
                         Rpm:copy.Rpm,
+                        Mileage:copy.Mileage,
+                        TopSpeedKmh:copy.TopSpeedKmh,
                         WheelBaseMm:copy.WheelBaseMm,
                         LengthMm:copy.LengthMm,
                         WidthMm:copy.WidthMm,
@@ -1479,6 +1485,9 @@ implements OnInit, OnDestroy
 
         this.entity.Rpm =
             whole(this.numbers.rpm);
+
+        this.entity.TopSpeedKmh =
+            whole(this.numbers.topspeed);
 
         this.entity.WheelBaseMm =
             whole(this.numbers.wheelbase);
@@ -1994,6 +2003,12 @@ implements OnInit, OnDestroy
             return;
         }
 
+        if (e.TopSpeedKmh < 0 || e.TopSpeedKmh > 400)
+        {
+            fail('Top Speed must be between 0 and 400 km/h.');
+            return;
+        }
+
         if (e.UnladenWeightKg > 0 && e.LadenWeightKg > 0 && e.LadenWeightKg < e.UnladenWeightKg)
         {
             fail('Laden Weight cannot be less than Unladen Weight.', 'size');
@@ -2108,6 +2123,10 @@ implements OnInit, OnDestroy
                 (e.HorsePower?.trim() ?? '').toUpperCase(),
             Rpm:
                 e.Rpm,
+            Mileage:
+                (e.Mileage ?? '').trim(),
+            TopSpeedKmh:
+                e.TopSpeedKmh,
             WheelBaseMm:
                 e.WheelBaseMm,
             LengthMm:

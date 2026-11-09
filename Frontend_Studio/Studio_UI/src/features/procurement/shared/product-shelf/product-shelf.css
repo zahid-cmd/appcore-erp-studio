@@ -802,6 +802,37 @@
     color: #0f172a;
 }
 
+/* The total : a navy pill with a big figure */
+.ps-foot-total
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 6px 16px;
+    border: 1px solid #c7d6f5;
+    border-radius: 12px;
+    background: linear-gradient(120deg, #eef4ff 0%, #f8fbff 100%);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ps-foot-total-label
+{
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.ps-foot-total b
+{
+    color: #1e3a8a;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+}
+
 .ps-foot-error,
 .ps-foot-warn
 {

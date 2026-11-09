@@ -2100,6 +2100,25 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Sales Invoices - MB : lines (one bike each) and Payment Desk
+    // rows (MANUAL : the head SalesInvoicesMb is in the sync's AUTO
+    // block; without these the line / payment configurations are
+    // skipped by the registered-only filter below)
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.MotorBikeSales.SalesInvoicesMbLines>
+    SalesInvoicesMbLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.MotorBikeSales.SalesInvoicesMbPayments>
+    SalesInvoicesMbPaymentRows
+    {
+    get;
+    set;
+    } = null!;
+
 
     //===========================================================
     // Configure Entity Models

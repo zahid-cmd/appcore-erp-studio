@@ -10,6 +10,7 @@
         - Login Page 3
         - Login Page 4
         - Login Page 5
+        - Login Page 6
 
     MODES:
 
@@ -253,6 +254,33 @@
         "
     >
     </app-login-page-5>
+
+
+
+    <!--===========================================================
+        Login Page 6
+        -----------------------------------------------------------
+        Premium split showcase.
+
+        Rendered when:
+
+            activePageKey === 'login-page-6'
+
+        Preview:
+
+            /preview/6
+    ============================================================-->
+
+    <app-login-page-6
+        *ngIf="
+            !isLoading
+            &&
+            !loadError
+            &&
+            activePageKey === 'login-page-6'
+        "
+    >
+    </app-login-page-6>
 
 
 </div>

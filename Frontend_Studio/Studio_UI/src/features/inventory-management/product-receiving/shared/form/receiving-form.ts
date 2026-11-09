@@ -70,6 +70,12 @@ from '../../../../../shared/components/controls/textbox/textbox';
 
 import
 {
+    YearPickerComponent
+}
+from '../../../../../shared/components/controls/year-picker/year-picker';
+
+import
+{
     TextareaComponent
 }
 from '../../../../../shared/components/controls/textarea/textarea';
@@ -91,6 +97,24 @@ import
     ToastComponent
 }
 from '../../../../../shared/components/utilities/toast/toast';
+
+import
+{
+    ProgressDialogComponent
+}
+from '../../../../../shared/components/utilities/progress-dialog/progress-dialog';
+
+import
+{
+    ProgressDialogService
+}
+from '../../../../../shared/components/utilities/progress-dialog/progress-dialog.service';
+
+import
+{
+    ProgressRunner
+}
+from '../../../../../shared/components/utilities/progress-dialog/progress-runner';
 
 import
 {
@@ -167,6 +191,8 @@ interface AccessoryRow
     Due:ReceivingAccessoryDue;
     // Typed "Receive Now" (digits only)
     NowText:string;
+    // Added to the Receiving Summary (Add on the pop-up) : posted
+    AddedText:string;
 }
 
 interface Fact
@@ -182,6 +208,10 @@ interface UnitRow
     EngineNo:string;
     KeyNo:string;
     BatteryNo:string;
+    // CKD documents in hand / on the portal : 'Yes' / 'No'
+    CkdStatus:string;
+    // Year of manufacture (default : the purchase date's year)
+    ManufactureYear:number;
 }
 
 // One line of the purchase still in transit; Added = in the
@@ -262,7 +292,9 @@ type UnitField =
         TextboxComponent,
         TextareaComponent,
         CheckboxComponent,
-        ToastComponent
+        YearPickerComponent,
+        ToastComponent,
+        ProgressDialogComponent
     ],
 
     templateUrl:'./receiving-form.html',
@@ -304,6 +336,13 @@ export class ReceivingForm
 
     private readonly cdr =
         inject(ChangeDetectorRef);
+
+    // Post : the progress dialog
+    readonly progress =
+        new ProgressRunner(
+            inject(ProgressDialogService),
+            () => this.cdr.detectChanges()
+        );
 
     private readonly destroyRef =
         inject(DestroyRef);
@@ -448,6 +487,10 @@ export class ReceivingForm
     // MB : free accessories due on the chosen purchase
     accessoryRows:
         AccessoryRow[] = [];
+
+    // Free Accessories Due dialog (MB)
+    accessoryOpen:
+        boolean = false;
 
     // Close Due dialog
     closeRow:
@@ -888,7 +931,7 @@ export class ReceivingForm
         this.accessoryRows =
             (this.purchase?.Accessories ?? [])
                 .filter(x => x.PendingQuantity > 0)
-                .map(x => ({ Due:x, NowText:'' }));
+                .map(x => ({ Due:x, NowText:'', AddedText:'' }));
 
         this.resetPick();
 
@@ -1570,7 +1613,7 @@ export class ReceivingForm
     {
         return this.isView
             ? (this.receiving?.Lines.length ?? 0)
-            : this.addedLines.length;
+            : this.addedLines.length + this.accessoryGridRows.length;
     }
 
     get totalQuantity():
@@ -1578,7 +1621,8 @@ export class ReceivingForm
     {
         return this.isView
             ? (this.receiving?.TotalQuantity ?? 0)
-            : this.addedLines.reduce((t, x) => t + x.Quantity, 0);
+            : this.addedLines.reduce((t, x) => t + x.Quantity, 0)
+                + this.accessoryGridRows.reduce((t, x) => t + this.accessoryAdded(x), 0);
     }
 
     get totalPurchased():
@@ -1586,7 +1630,8 @@ export class ReceivingForm
     {
         return this.isView
             ? (this.receiving?.Lines ?? []).reduce((t, x) => t + x.PurchasedQuantity, 0)
-            : this.addedLines.reduce((t, x) => t + x.Purchased, 0);
+            : this.addedLines.reduce((t, x) => t + x.Purchased, 0)
+                + this.accessoryGridRows.reduce((t, x) => t + x.Due.QuantityDue, 0);
     }
 
     get totalBefore():
@@ -1594,7 +1639,8 @@ export class ReceivingForm
     {
         return this.isView
             ? (this.receiving?.Lines ?? []).reduce((t, x) => t + x.ReceivedBefore, 0)
-            : this.addedLines.reduce((t, x) => t + x.ReceivedBefore, 0);
+            : this.addedLines.reduce((t, x) => t + x.ReceivedBefore, 0)
+                + this.accessoryGridRows.reduce((t, x) => t + x.Due.ReceivedBefore + x.Due.QuantityClosed, 0);
     }
 
     //===========================================================
@@ -1719,7 +1765,7 @@ export class ReceivingForm
 
         while (line.Units.length < count)
         {
-            line.Units.push({ ChassisNo:'', EngineNo:'', KeyNo:'', BatteryNo:'' });
+            line.Units.push({ ChassisNo:'', EngineNo:'', KeyNo:'', BatteryNo:'', CkdStatus:'No', ManufactureYear:this.unitYearDefault });
         }
 
         if
@@ -1746,7 +1792,7 @@ export class ReceivingForm
             readonly:false,
             keys:this.keyBattery,
             fields:this.fieldsOf(this.keyBattery),
-            rows:line.Units.map(x => ({ ...x }))
+            rows:line.Units.map(x => ({ ...x, ManufactureYear:x.ManufactureYear || this.unitYearDefault }))
         };
 
         this.scheduleCheck(0);
@@ -1760,7 +1806,7 @@ export class ReceivingForm
         void
     {
         const rows =
-            this.unitsOfLine(line.PurchaseLineId).map(x => ({ ChassisNo:x.ChassisNo, EngineNo:x.EngineNo, KeyNo:x.KeyNo, BatteryNo:x.BatteryNo }));
+            this.unitsOfLine(line.PurchaseLineId).map(x => ({ ChassisNo:x.ChassisNo, EngineNo:x.EngineNo, KeyNo:x.KeyNo, BatteryNo:x.BatteryNo, CkdStatus:x.CkdStatus === 'Yes' ? 'Yes' : 'No', ManufactureYear:x.ManufactureYear ?? 0 }));
 
         const keys =
             this.keyBattery || rows.some(x => !!x.KeyNo || !!x.BatteryNo);
@@ -1809,7 +1855,9 @@ export class ReceivingForm
                     ChassisNo:x.ChassisNo.trim().toUpperCase(),
                     EngineNo:x.EngineNo.trim().toUpperCase(),
                     KeyNo:desk.keys ? x.KeyNo.trim().toUpperCase() : '',
-                    BatteryNo:desk.keys ? x.BatteryNo.trim().toUpperCase() : ''
+                    BatteryNo:desk.keys ? x.BatteryNo.trim().toUpperCase() : '',
+                    CkdStatus:x.CkdStatus === 'Yes' ? 'Yes' : 'No',
+                    ManufactureYear:x.ManufactureYear || this.unitYearDefault
                 })
             );
 
@@ -1948,6 +1996,157 @@ export class ReceivingForm
         this.refreshView();
     }
 
+    //===========================================================
+    // Unit Desk : CKD documents (distributor's import document
+    // set : in hand / on the portal) per bike, Yes / No
+    //===========================================================
+
+    unitCkdYes
+    (
+        row:
+            UnitRow
+    ):
+        boolean
+    {
+        return row.CkdStatus === 'Yes';
+    }
+
+    toggleUnitCkd
+    (
+        row:
+            UnitRow
+    ):
+        void
+    {
+        if
+        (
+            !this.desk
+            ||
+            this.desk.readonly
+        )
+        {
+            return;
+        }
+
+        row.CkdStatus = row.CkdStatus === 'Yes' ? 'No' : 'Yes';
+
+        this.desk.rows = this.desk.rows.map(x => ({ ...x }));
+    }
+
+    // Header : all Yes (or all back to No when every bike is Yes)
+    toggleAllUnitCkd():
+        void
+    {
+        const desk =
+            this.desk;
+
+        if
+        (
+            !desk
+            ||
+            desk.readonly
+            ||
+            desk.rows.length === 0
+        )
+        {
+            return;
+        }
+
+        const next =
+            desk.rows.every(x => x.CkdStatus === 'Yes') ? 'No' : 'Yes';
+
+        desk.rows = desk.rows.map(x => ({ ...x, CkdStatus:next }));
+    }
+
+    allUnitCkdYes
+    (
+        rows:
+            UnitRow[]
+    ):
+        boolean
+    {
+        return rows.length > 0 && rows.every(x => x.CkdStatus === 'Yes');
+    }
+
+    //===========================================================
+    // Unit Desk : year of manufacture per bike (BRTA Form-17),
+    // the purchase date's year by default, 2000 .. next year
+    //===========================================================
+
+    readonly unitYears:
+        number[] =
+        Array.from(
+            { length:new Date().getFullYear() + 1 - 2000 + 1 },
+            (_, i) => new Date().getFullYear() + 1 - i
+        );
+
+    get unitYearDefault():
+        number
+    {
+        return Number((this.purchase?.PurchaseDate ?? '').slice(0, 4)) || new Date().getFullYear();
+    }
+
+    unitYear
+    (
+        row:
+            UnitRow
+    ):
+        number
+    {
+        return row.ManufactureYear || this.unitYearDefault;
+    }
+
+    onUnitYear
+    (
+        row:
+            UnitRow,
+        value:
+            number
+    ):
+        void
+    {
+        if
+        (
+            !this.desk
+            ||
+            this.desk.readonly
+        )
+        {
+            return;
+        }
+
+        row.ManufactureYear =
+            Number(value) || this.unitYearDefault;
+
+        this.desk.rows = this.desk.rows.map(x => ({ ...x }));
+    }
+
+    // Header : every bike to the year of the first one
+    sameUnitYear():
+        void
+    {
+        const desk =
+            this.desk;
+
+        if
+        (
+            !desk
+            ||
+            desk.readonly
+            ||
+            desk.rows.length === 0
+        )
+        {
+            return;
+        }
+
+        const year =
+            this.unitYear(desk.rows[0]);
+
+        desk.rows = desk.rows.map(x => ({ ...x, ManufactureYear:year }));
+    }
+
+
     clearUnit
     (
         unit:
@@ -1962,6 +2161,8 @@ export class ReceivingForm
         unit.KeyNo = '';
 
         unit.BatteryNo = '';
+
+        unit.CkdStatus = 'No';
 
         if
         (
@@ -2055,7 +2256,9 @@ export class ReceivingForm
                     ChassisNo:x.unit.ChassisNo.trim().toUpperCase(),
                     EngineNo:x.unit.EngineNo.trim().toUpperCase(),
                     KeyNo:this.keyBattery ? x.unit.KeyNo.trim().toUpperCase() : '',
-                    BatteryNo:this.keyBattery ? x.unit.BatteryNo.trim().toUpperCase() : ''
+                    BatteryNo:this.keyBattery ? x.unit.BatteryNo.trim().toUpperCase() : '',
+                    CkdStatus:x.unit.CkdStatus === 'Yes' ? 'Yes' : 'No',
+                    ManufactureYear:x.unit.ManufactureYear || this.unitYearDefault
                 })
             );
     }
@@ -2172,7 +2375,7 @@ export class ReceivingForm
 
         if
         (
-            lines.length === 0 && this.accessoryNowTotal === 0
+            lines.length === 0 && this.accessoryAddedTotal === 0
         )
         {
             return {
@@ -2312,7 +2515,8 @@ export class ReceivingForm
 
         this.refreshView();
 
-        this.service
+        const postCall =
+            this.service
             .create(
                 this.page.path,
                 {
@@ -2338,11 +2542,18 @@ export class ReceivingForm
                     Units:this.isBikes ? this.allUnits() : [],
                     Accessories:this.isBikes
                         ? this.accessoryRows
-                            .map(x => ({ PurchaseAccessoryDueId:x.Due.PurchaseAccessoryDueId, Quantity:this.accessoryNow(x) }))
+                            .map(x => ({ PurchaseAccessoryDueId:x.Due.PurchaseAccessoryDueId, Quantity:this.accessoryAdded(x) }))
                             .filter(x => x.Quantity > 0)
                         : []
                 }
-            )
+            );
+
+        this.progress
+            .run(
+                'Posting Receiving',
+                `Please wait while the ${this.page.itemLower} of ${this.purchase?.PurchaseNo ?? 'the purchase'} are received into ${this.warehouseText || 'the warehouse'}...`,
+                'Receiving posted.',
+                postCall)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
@@ -2517,6 +2728,75 @@ export class ReceivingForm
         return Number(row.NowText) || 0;
     }
 
+    // Added to the Receiving Summary : what is posted
+    accessoryAdded
+    (
+        row:
+            AccessoryRow
+    ):
+        number
+    {
+        return Number(row.AddedText) || 0;
+    }
+
+    get accessoryAddedTotal():
+        number
+    {
+        return this.accessoryRows.reduce((sum, x) => sum + this.accessoryAdded(x), 0);
+    }
+
+    // Pop-up : starts from what is in the summary; Close drops
+    // the changes, Add puts them in the summary
+    openAccessories():
+        void
+    {
+        if
+        (
+            this.saving
+        )
+        {
+            return;
+        }
+
+        this.accessoryRows.forEach(x => x.NowText = x.AddedText);
+
+        this.accessoryOpen = true;
+
+        this.refreshView();
+    }
+
+    closeAccessories():
+        void
+    {
+        this.accessoryRows.forEach(x => x.NowText = x.AddedText);
+
+        this.accessoryOpen = false;
+
+        this.refreshView();
+    }
+
+    addAccessories():
+        void
+    {
+        this.accessoryRows.forEach(x => x.AddedText = x.NowText);
+
+        this.accessoryOpen = false;
+
+        const total =
+            this.accessoryAddedTotal;
+
+        if
+        (
+            total > 0
+        )
+        {
+            this.toast.success('Accessories Added', `${formatReceivingQty(total)} free accessories in the Receiving Summary.`);
+        }
+
+        this.refreshView();
+    }
+
+    // Pop-up (draft) total
     get accessoryNowTotal():
         number
     {
@@ -2566,6 +2846,39 @@ export class ReceivingForm
         this.refreshView();
     }
 
+    // Accessories with a Receive Now : shown in the Receiving
+    // Summary under the bike lines (Add on the pop-up)
+    get accessoryGridRows():
+        AccessoryRow[]
+    {
+        return this.isView
+            ? []
+            : this.accessoryRows.filter(x => this.accessoryAdded(x) > 0);
+    }
+
+    // Summary row : take the accessory off this receiving
+    removeAccessory
+    (
+        row:
+            AccessoryRow
+    ):
+        void
+    {
+        if
+        (
+            this.saving
+        )
+        {
+            return;
+        }
+
+        row.AddedText = '';
+
+        row.NowText = '';
+
+        this.refreshView();
+    }
+
     // Every pending accessory at its full quantity
     accessoriesAll():
         void
@@ -2587,7 +2900,7 @@ export class ReceivingForm
         string
     {
         const over =
-            this.accessoryRows.find(x => this.accessoryNow(x) > x.Due.PendingQuantity);
+            this.accessoryRows.find(x => this.accessoryAdded(x) > x.Due.PendingQuantity);
 
         return over
             ? `${over.Due.AccessoryName} : only ${formatReceivingQty(over.Due.PendingQuantity)} ${over.Due.Unit} is still due.`

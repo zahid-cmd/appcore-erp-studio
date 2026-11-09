@@ -99,6 +99,28 @@ Routes =
                     )
             },
 
+            //===========================================================
+            // CKD Documents Status (hand-written : list + panel, no Code Sync)
+            //===========================================================
+
+            {
+                path:'ckd-documents-status',
+
+                data:
+                {
+                    breadcrumb:'CKD Documents Status'
+                },
+
+                loadChildren:() =>
+                    import(
+                        './ckd-documents-status.routes'
+                    )
+                    .then(
+                        m =>
+                            m.CkdDocumentsStatusRoutes
+                    )
+            },
+
         ]
 
     }

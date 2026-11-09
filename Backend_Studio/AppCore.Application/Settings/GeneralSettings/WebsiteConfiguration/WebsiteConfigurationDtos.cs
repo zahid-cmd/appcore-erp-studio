@@ -3,7 +3,8 @@
 //
 // One shape for reading (GET) and saving (PUT). On save the
 // server ignores the read-only parts : Company, the brand and
-// branch names, BikeModels, Exists, ModifiedDate.
+// branch names, BikeModels, Exists, ModifiedDate, and on Bikes
+// everything but the website fields.
 //===============================================================
 
 namespace AppCore.Application.Settings.GeneralSettings.WebsiteConfiguration.DTOs;
@@ -82,6 +83,10 @@ public class WebsiteConfigurationDto
     public List<WebsiteBranchDto> Branches { get; set; } = new();
     public List<WebsitePolicyDto> Policies { get; set; } = new();
 
+    // Bikes tab : the website fields of Bike Models, in website
+    // order (the list order is saved as Display Order)
+    public List<WebsiteBikeDto> Bikes { get; set; } = new();
+
     // Read-only
     public WebsiteCompanyInfoDto Company { get; set; } = new();
     public DateTime? ModifiedDate { get; set; }
@@ -150,6 +155,29 @@ public class WebsitePolicySectionDto
 {
     public string Heading { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
+}
+
+
+// One bike model on the Bikes tab. Saved to Bike Models :
+// ShowOnWebsite, IsFeatured, Tagline, Description and (from the
+// list order) DisplayOrder. The rest is read-only.
+public class WebsiteBikeDto
+{
+    public long BikeModelId { get; set; }
+    public string ModelCode { get; set; } = string.Empty;
+    public string ModelName { get; set; } = string.Empty;
+    public string BikeType { get; set; } = string.Empty;
+    public long BrandManagementId { get; set; }
+    public string BrandName { get; set; } = string.Empty;
+    // A photo of the model (first Motor Bike with a picture)
+    public string PhotoPath { get; set; } = string.Empty;
+    public bool ShowOnWebsite { get; set; }
+    public bool IsFeatured { get; set; }
+    public string Tagline { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    // Motor Bike Specifications : is there a record, and is it shown
+    public bool HasSpecs { get; set; }
+    public bool ShowSpecs { get; set; }
 }
 
 

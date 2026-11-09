@@ -1,0 +1,1535 @@
+/* =============================================================
+   LOGIN PAGE 6 : PREMIUM SPLIT SHOWCASE
+   -------------------------------------------------------------
+   Layout and theme of Login Page 6. The core components keep
+   their own logic; their look is adjusted here through
+   ::ng-deep, always scoped under .lp6 so no other login page
+   changes.
+
+   THEMES:
+       .lp6-deep   dark showcase, dark authentication panel
+       .lp6-light  light showcase, white authentication panel
+
+   RESPONSIVE:
+       <= 1100px : the showcase is hidden, the authentication
+                   panel fills the screen.
+============================================================= */
+
+
+/* =============================================================
+   THEME TOKENS
+============================================================= */
+
+.lp6
+{
+    --lp6-accent:            #2563eb;
+    --lp6-accent-strong:     #1d4ed8;
+
+    --lp6-font:              "Segoe UI", Inter, Arial, sans-serif;
+    --lp6-font-display:      "Segoe UI Variable Display", "Segoe UI", Inter, Arial, sans-serif;
+}
+
+.lp6-deep
+{
+    --lp6-tag-shadow:        0 10px 24px -14px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .06);
+    --lp6-tag-shadow-hover:  0 14px 30px -12px rgba(37, 99, 235, .55), inset 0 1px 0 rgba(255, 255, 255, .10);
+    --lp6-page-bg:           #070b16;
+    --lp6-showcase-bg:       #0a1022;
+    --lp6-overlay:           rgba(7, 11, 22, .82);
+    --lp6-grid-line:         rgba(148, 163, 184, .07);
+    --lp6-ring:              rgba(96, 165, 250, .16);
+
+    --lp6-auth-bg:           #0d1426;
+    --lp6-auth-border:       rgba(255, 255, 255, .07);
+
+    --lp6-text:              #ffffff;
+    --lp6-text-soft:         #cbd5e1;
+    --lp6-text-muted:        #94a3b8;
+    --lp6-eyebrow:           #93c5fd;
+    --lp6-link:              #93c5fd;
+
+    --lp6-tag-border:        rgba(148, 163, 184, .22);
+    --lp6-tag-bg:            rgba(255, 255, 255, .05);
+
+    --lp6-input-bg:          rgba(255, 255, 255, .04);
+    --lp6-input-border:      rgba(255, 255, 255, .12);
+    --lp6-input-text:        #ffffff;
+    --lp6-input-placeholder: #7d8aa3;
+    --lp6-input-icon:        #94a3b8;
+
+    --lp6-line:              rgba(255, 255, 255, .08);
+    --lp6-panel-soft:        rgba(255, 255, 255, .04);
+}
+
+.lp6-light
+{
+    --lp6-tag-shadow:        0 10px 22px -14px rgba(15, 23, 42, .35), inset 0 1px 0 rgba(255, 255, 255, .9);
+    --lp6-tag-shadow-hover:  0 14px 28px -12px rgba(37, 99, 235, .35), inset 0 1px 0 rgba(255, 255, 255, .9);
+    --lp6-page-bg:           #f1f5f9;
+    --lp6-showcase-bg:       #e8eef8;
+    --lp6-overlay:           rgba(232, 238, 248, .88);
+    --lp6-grid-line:         rgba(30, 58, 138, .06);
+    --lp6-ring:              rgba(37, 99, 235, .14);
+
+    --lp6-auth-bg:           #ffffff;
+    --lp6-auth-border:       rgba(15, 23, 42, .08);
+
+    --lp6-text:              #0a1022;
+    --lp6-text-soft:         #334155;
+    --lp6-text-muted:        #475569;
+    --lp6-eyebrow:           #1d4ed8;
+    --lp6-link:              #1d4ed8;
+
+    --lp6-tag-border:        rgba(15, 23, 42, .10);
+    --lp6-tag-bg:            rgba(255, 255, 255, .78);
+
+    --lp6-input-bg:          #ffffff;
+    --lp6-input-border:      #cbd5e1;
+    --lp6-input-text:        #0f172a;
+    --lp6-input-placeholder: #64748b;
+    --lp6-input-icon:        #64748b;
+
+    --lp6-line:              #e2e8f0;
+    --lp6-panel-soft:        #f8fafc;
+}
+
+
+/* =============================================================
+   ROOT + LAYOUT
+============================================================= */
+
+:host
+{
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.lp6
+{
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--lp6-page-bg);
+    color: var(--lp6-text);
+    font-family: var(--lp6-font);
+    transition: background .25s ease, color .25s ease;
+}
+
+.lp6-layout
+{
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+
+/* =============================================================
+   LEFT : SHOWCASE
+============================================================= */
+
+.lp6-showcase
+{
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 44px 64px 40px;
+    background-color: var(--lp6-showcase-bg);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.lp6-showcase-image
+{
+    position: absolute;
+    inset: 0;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    filter: saturate(.9);
+}
+
+.lp6-showcase-overlay
+{
+    position: absolute;
+    inset: 0;
+    background-color: var(--lp6-overlay);
+    background-image:
+        linear-gradient(var(--lp6-grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--lp6-grid-line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    transition: background-color .25s ease;
+}
+
+.lp6-rings
+{
+    position: absolute;
+    right: -260px;
+    top: 50%;
+    width: 760px;
+    height: 760px;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.lp6-ring
+{
+    fill: none;
+    stroke: var(--lp6-ring);
+    stroke-width: 1;
+}
+
+.lp6-ring-dashed
+{
+    stroke-width: 1.5;
+    stroke-dasharray: 2 10;
+}
+
+.lp6-ring-arc
+{
+    fill: none;
+    stroke: var(--lp6-accent);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+}
+
+.lp6-ring-dot
+{
+    fill: var(--lp6-accent);
+}
+
+.lp6-showcase-top,
+.lp6-showcase-middle,
+.lp6-showcase-bottom
+{
+    position: relative;
+    z-index: 1;
+}
+
+
+/* ---------- Branding ---------- */
+
+.lp6-showcase-top
+{
+    display: flex;
+    align-items: center;
+    height: 64px;
+}
+
+.lp6-showcase-top app-login-page-branding
+{
+    display: inline-flex;
+    width: auto;
+    height: 64px;
+}
+
+.lp6-deep .lp6-showcase-top app-login-page-branding
+{
+    padding: 8px 16px;
+    border-radius: 16px;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.lp6 .lp6-showcase-top ::ng-deep .login-page-branding,
+.lp6 .lp6-showcase-top ::ng-deep .branding-content
+{
+    width: auto;
+    min-width: 0;
+    height: 100%;
+    align-items: center;
+}
+
+.lp6 .lp6-showcase-top ::ng-deep .branding-logo
+{
+    width: auto !important;
+    height: 100% !important;
+    max-height: 48px !important;
+    transform: none !important;
+}
+
+
+/* ---------- Headline ---------- */
+
+.lp6-showcase-middle
+{
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    max-width: 640px;
+}
+
+.lp6-eyebrow
+{
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--lp6-eyebrow);
+}
+
+.lp6-headline
+{
+    margin: 0;
+    font-family: var(--lp6-font-display);
+    font-size: clamp(40px, 4.2vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    color: var(--lp6-text);
+}
+
+.lp6-lead
+{
+    margin: 0;
+    max-width: 520px;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--lp6-text-muted);
+}
+
+.lp6-tags
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 10px;
+    max-width: 640px;
+    margin-top: 10px;
+}
+
+/* Floating glass pills : each one drifts gently up and down,
+   out of step with its neighbours; lifts and glows on hover */
+.lp6-tag
+{
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 16px 9px 13px;
+    border: 1px solid var(--lp6-tag-border);
+    border-radius: 999px;
+    background: var(--lp6-tag-bg);
+    box-shadow: var(--lp6-tag-shadow);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .01em;
+    color: var(--lp6-text-soft);
+    cursor: default;
+    animation: lp6-float 6s ease-in-out infinite;
+    transition: border-color .2s ease, box-shadow .2s ease, color .2s ease, background .2s ease;
+}
+
+.lp6-tag::before
+{
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--lp6-accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .18), 0 0 10px rgba(59, 130, 246, .7);
+    flex: 0 0 7px;
+}
+
+.lp6-tag:hover
+{
+    border-color: rgba(59, 130, 246, .55);
+    color: var(--lp6-text);
+    box-shadow: var(--lp6-tag-shadow-hover);
+    animation-play-state: paused;
+}
+
+.lp6-tag:nth-child(3n+1) { animation-duration: 6s;   animation-delay: 0s;    }
+.lp6-tag:nth-child(3n+2) { animation-duration: 7s;   animation-delay: -2.2s; }
+.lp6-tag:nth-child(3n)   { animation-duration: 6.5s; animation-delay: -4.1s; }
+.lp6-tag:nth-child(4n)   { animation-delay: -1.3s; }
+.lp6-tag:nth-child(5n)   { animation-delay: -3.4s; }
+
+@keyframes lp6-float
+{
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
+}
+
+
+/* ---------- Powered By ---------- */
+
+.lp6-showcase-bottom app-login-page-powered-by
+{
+    --powered-by-logo-size: 76px;
+    --powered-by-gap: 10px;
+    --powered-by-glass-radius: 14px;
+
+    display: block;
+    height: auto;
+}
+
+.lp6 .lp6-showcase-bottom ::ng-deep .login-page-powered-by
+{
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    margin: 0;
+    align-items: flex-start;
+}
+
+.lp6 .lp6-showcase-bottom ::ng-deep .powered-by-heading
+{
+    margin: 0 0 14px 0;
+    color: var(--lp6-text-muted) !important;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .24em;
+    text-align: left;
+    text-shadow: none;
+}
+
+.lp6 .lp6-showcase-bottom ::ng-deep .powered-by-logo-area
+{
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    justify-content: start;
+}
+
+
+/* =============================================================
+   RIGHT : AUTHENTICATION
+============================================================= */
+
+.lp6-auth
+{
+    flex: 0 0 600px;
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 56px 28px;
+    background: var(--lp6-auth-bg);
+    border-left: 1px solid var(--lp6-auth-border);
+    box-sizing: border-box;
+    transition: background .25s ease;
+}
+
+.lp6-auth-top
+{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    height: 48px;
+    padding-right: 56px;
+    flex: 0 0 auto;
+}
+
+.lp6-auth-top app-login-page-theme-selector
+{
+    display: block;
+    width: auto;
+    height: 44px;
+}
+
+.lp6-light .lp6-auth-top ::ng-deep .theme-selector
+{
+    border-color: #e2e8f0;
+    background: #f1f5f9;
+    box-shadow: none;
+}
+
+.lp6-light .lp6-auth-top ::ng-deep .theme-option
+{
+    color: #475569;
+}
+
+.lp6-light .lp6-auth-top ::ng-deep .theme-option.active
+{
+    color: #0f172a;
+}
+
+.lp6-light .lp6-auth-top ::ng-deep .theme-option-deep .theme-option-icon
+{
+    color: #475569;
+}
+
+.lp6-auth-center
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.lp6-auth-center > *
+{
+    flex: 0 1 auto;
+    min-height: 0;
+}
+
+.lp6-auth-bottom
+{
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    font-size: 12px;
+    color: var(--lp6-text-muted);
+}
+
+.lp6-secure
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+
+/* =============================================================
+   NOTIFICATION BELL (fixed, top right)
+============================================================= */
+
+.lp6.lp6-deep ::ng-deep app-login-page-notification-panel .notification-button
+{
+    border-color: rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .06);
+    color: #e2e8f0;
+}
+
+.lp6.lp6-light ::ng-deep app-login-page-notification-panel .notification-button
+{
+    border-color: #e2e8f0;
+    background: #ffffff;
+    color: #334155;
+}
+
+
+/* =============================================================
+   LOGIN PANEL : flat, inside the authentication panel
+============================================================= */
+
+.lp6 .lp6-auth-center app-login-page-login-panel
+{
+    --login-card-width: 100%;
+    --login-card-height: auto;
+    --login-card-max-width: 100%;
+    --login-card-max-height: none;
+    --login-card-padding-top: 0;
+    --login-card-padding-right: 0;
+    --login-card-padding-bottom: 0;
+    --login-card-padding-left: 0;
+
+    height: auto;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-page-login-panel,
+.lp6 .lp6-layout ::ng-deep .login-panel-content
+{
+    height: auto;
+    padding: 0;
+    overflow: visible;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-card
+{
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
+}
+
+/* The left side already carries these */
+.lp6 .lp6-layout ::ng-deep .login-card-top-meta,
+.lp6 .lp6-layout ::ng-deep .login-card-accent,
+.lp6 .lp6-layout ::ng-deep .login-card-bottom-meta
+{
+    display: none;
+}
+
+/* Client branding (company logo + name) */
+.lp6 .lp6-layout ::ng-deep .login-card-client-branding
+{
+    min-height: 56px;
+    margin: 0 0 30px 0;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-client-logo-area
+{
+    width: auto;
+    height: 56px;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-client-logo
+{
+    width: auto;
+    height: 56px;
+    max-height: 56px;
+    padding: 0;
+    transform: none;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-client-separator
+{
+    height: 56px;
+    margin: 0 16px 0 14px;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-client-separator-line
+{
+    height: 32px;
+    background: var(--lp6-accent);
+}
+
+.lp6 .lp6-layout ::ng-deep .login-client-separator-dot
+{
+    width: 7px;
+    height: 7px;
+    flex-basis: 7px;
+    background: var(--lp6-accent);
+}
+
+.lp6 .lp6-layout ::ng-deep .login-client-name
+{
+    color: var(--lp6-text);
+    font-family: var(--lp6-font-display);
+    font-size: 22px;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-client-name-accent
+{
+    width: 40px;
+    height: 3px;
+    margin-top: 8px;
+    background: var(--lp6-accent);
+}
+
+/* Deep : company logo on a white badge, so a dark logo stays visible */
+.lp6-deep .lp6-layout ::ng-deep .login-client-logo-area
+{
+    height: 56px;
+    padding: 6px 14px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.lp6-deep .lp6-layout ::ng-deep .login-client-logo
+{
+    height: 44px;
+    max-height: 44px;
+}
+
+/* Heading */
+.lp6 .lp6-layout ::ng-deep .login-card-heading
+{
+    color: var(--lp6-text);
+    font-family: var(--lp6-font-display);
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-card-subtitle
+{
+    margin-top: 8px;
+    color: var(--lp6-text-muted);
+    font-family: var(--lp6-font);
+    font-size: 15px;
+}
+
+/* Fields */
+.lp6 .lp6-layout ::ng-deep .login-form
+{
+    margin-top: 28px;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-form-field,
+.lp6 .lp6-layout ::ng-deep .login-branch-field
+{
+    margin-bottom: 20px;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-form-label
+{
+    margin-bottom: 8px;
+    color: var(--lp6-text-soft);
+    font-family: var(--lp6-font);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-input-wrapper
+{
+    flex-basis: 52px;
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    padding: 0 14px;
+    border: 1px solid var(--lp6-input-border);
+    border-radius: 12px;
+    background: var(--lp6-input-bg);
+    box-shadow: none;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-input-wrapper:focus-within
+{
+    border-color: var(--lp6-accent);
+    background: var(--lp6-input-bg);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .18);
+}
+
+.lp6 .lp6-layout ::ng-deep .login-input-icon
+{
+    flex-basis: 22px;
+    width: 22px;
+    margin-right: 10px;
+    color: var(--lp6-input-icon);
+    font-size: 16px;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-form-input
+{
+    color: var(--lp6-input-text);
+    font-family: var(--lp6-font);
+    font-size: 16px;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-form-input::placeholder
+{
+    color: var(--lp6-input-placeholder);
+}
+
+.lp6 .lp6-layout ::ng-deep .password-visibility-button
+{
+    width: 40px;
+    height: 40px;
+    right: 6px;
+    color: var(--lp6-input-icon);
+    font-size: 16px;
+}
+
+.lp6 .lp6-layout ::ng-deep .login-branch-field app-search-dropdown
+{
+    --dropdown-height: 52px;
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+}
+
+/* Browser autofill : keep the field in the theme colours */
+.lp6-deep .lp6-layout ::ng-deep .login-form-input:-webkit-autofill
+{
+    -webkit-box-shadow: 0 0 0 1000px #121a2c inset;
+    -webkit-text-fill-color: #ffffff;
+    caret-color: #ffffff;
+}
+
+.lp6-light .lp6-layout ::ng-deep .login-form-input:-webkit-autofill
+{
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+    -webkit-text-fill-color: #0f172a;
+    caret-color: #0f172a;
+}
+
+/* Remember me / Forgot password */
+.lp6 .lp6-layout ::ng-deep .login-form-options
+{
+    margin-bottom: 24px;
+}
+
+.lp6 .lp6-layout ::ng-deep .remember-me
+{
+    color: var(--lp6-text-soft);
+    font-family: var(--lp6-font);
+}
+
+.lp6 .lp6-layout ::ng-deep .remember-text
+{
+    color: var(--lp6-text-soft);
+    letter-spacing: normal;
+}
+
+.lp6 .lp6-layout ::ng-deep .remember-checkbox
+{
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--lp6-input-border);
+    border-radius: 5px;
+    background: var(--lp6-input-bg);
+}
+
+.lp6 .lp6-layout ::ng-deep .remember-me input:checked + .remember-checkbox
+{
+    border-color: var(--lp6-accent);
+    background: var(--lp6-accent);
+}
+
+.lp6 .lp6-layout ::ng-deep .remember-me input:checked + .remember-checkbox::after
+{
+    width: 5px;
+    height: 10px;
+    margin: 0 0 0 5px;
+}
+
+.lp6 .lp6-layout ::ng-deep .forgot-password-button
+{
+    color: var(--lp6-link);
+    font-family: var(--lp6-font);
+    font-weight: 600;
+    letter-spacing: normal;
+}
+
+/* Error */
+.lp6-deep .lp6-layout ::ng-deep .login-error
+{
+    border-color: rgba(248, 113, 113, .45);
+    background: rgba(127, 29, 29, .35);
+    color: #fecaca;
+}
+
+/* Sign in */
+.lp6 .lp6-layout ::ng-deep .sign-in-button
+{
+    flex-basis: 54px;
+    height: 54px;
+    min-height: 54px;
+    max-height: 54px;
+    border-radius: 12px;
+    background: var(--lp6-accent);
+    font-family: var(--lp6-font);
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 12px 30px -12px rgba(37, 99, 235, .75);
+}
+
+.lp6 .lp6-layout ::ng-deep .sign-in-button:hover:not(:disabled)
+{
+    background: var(--lp6-accent-strong);
+    box-shadow: 0 14px 32px -12px rgba(37, 99, 235, .85);
+}
+
+.lp6 .lp6-layout ::ng-deep .sign-in-icon,
+.lp6 .lp6-layout ::ng-deep .sign-in-arrow
+{
+    font-size: 16px;
+}
+
+/* OR + registration */
+.lp6 .lp6-layout ::ng-deep .login-or-separator
+{
+    margin: 22px 0;
+}
+
+.lp6 .lp6-layout ::ng-deep .separator-line
+{
+    background: var(--lp6-line);
+}
+
+.lp6 .lp6-layout ::ng-deep .separator-text
+{
+    color: var(--lp6-text-muted);
+    font-family: var(--lp6-font);
+}
+
+.lp6 .lp6-layout ::ng-deep .registration-area
+{
+    min-height: 0;
+    padding: 14px 16px;
+    border: 1px solid var(--lp6-line);
+    border-radius: 14px;
+    background: var(--lp6-panel-soft);
+}
+
+.lp6 .lp6-layout ::ng-deep .registration-icon
+{
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+    background: rgba(37, 99, 235, .14);
+    color: var(--lp6-accent);
+    font-size: 18px;
+}
+
+.lp6-deep .lp6-layout ::ng-deep .registration-icon
+{
+    color: #93c5fd;
+}
+
+.lp6 .lp6-layout ::ng-deep .registration-heading
+{
+    color: var(--lp6-text);
+    font-family: var(--lp6-font);
+}
+
+.lp6 .lp6-layout ::ng-deep .registration-description
+{
+    color: var(--lp6-text-muted);
+    font-family: var(--lp6-font);
+    font-size: 12px;
+}
+
+.lp6 .lp6-layout ::ng-deep .registration-button
+{
+    height: 44px;
+    border: 1px solid var(--lp6-input-border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--lp6-text);
+    font-family: var(--lp6-font);
+    font-weight: 600;
+}
+
+.lp6 .lp6-layout ::ng-deep .registration-button:hover:not(:disabled)
+{
+    border-color: var(--lp6-accent);
+    background: var(--lp6-accent);
+    color: #ffffff;
+}
+
+
+/* =============================================================
+   POP-UP : REGISTRATION / FORGOT PASSWORD
+   -------------------------------------------------------------
+   Backdrop + centred, movable window in the page's theme.
+   Moved with left / top (no transform, no backdrop-filter on
+   the window) so the panel's fixed success dialog stays centred.
+============================================================= */
+
+.lp6-deep
+{
+    --lp6-modal-bg:          #0f172a;
+    --lp6-modal-border:      rgba(255, 255, 255, .10);
+    --lp6-modal-bar:         rgba(255, 255, 255, .04);
+    --lp6-backdrop:          rgba(3, 6, 14, .62);
+    --lp6-error:             #fca5a5;
+}
+
+.lp6-light
+{
+    --lp6-modal-bg:          #ffffff;
+    --lp6-modal-border:      rgba(15, 23, 42, .10);
+    --lp6-modal-bar:         #f8fafc;
+    --lp6-backdrop:          rgba(15, 23, 42, .40);
+    --lp6-error:             #b91c1c;
+}
+
+.lp6-modal-backdrop
+{
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--lp6-backdrop);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: lp6-fade .18s ease-out;
+}
+
+.lp6-modal-layer
+{
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.lp6-modal
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 760px;
+    max-width: 100%;
+    max-height: calc(100vh - 48px);
+    border: 1px solid var(--lp6-modal-border);
+    border-radius: 22px;
+    background: var(--lp6-modal-bg);
+    box-shadow: 0 40px 120px -30px rgba(0, 0, 0, .65);
+    overflow: hidden;
+    pointer-events: auto;
+    animation: lp6-rise .2s ease-out;
+}
+
+.lp6-modal-narrow
+{
+    width: 520px;
+}
+
+.lp6-modal-bar
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 10px 0 20px;
+    border-bottom: 1px solid var(--lp6-modal-border);
+    background: var(--lp6-modal-bar);
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+}
+
+.lp6-modal-dragging .lp6-modal-bar
+{
+    cursor: grabbing;
+}
+
+.lp6-modal-grip
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--lp6-text-muted);
+}
+
+.lp6-modal-close
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--lp6-text-muted);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.lp6-modal-close:hover
+{
+    background: var(--lp6-panel-soft);
+    color: var(--lp6-text);
+}
+
+.lp6-modal-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 26px 32px 28px;
+}
+
+@keyframes lp6-fade
+{
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes lp6-rise
+{
+    from { opacity: 0; margin-top: 16px; }
+    to   { opacity: 1; margin-top: 0; }
+}
+
+
+/* ---------- Registration panel inside the pop-up ---------- */
+
+.lp6 .lp6-modal-body app-login-page-registration-panel
+{
+    --registration-card-width: 100%;
+    --registration-card-height: auto;
+    --registration-card-max-width: 100%;
+    --registration-card-max-height: none;
+    --registration-card-padding-top: 0;
+    --registration-card-padding-right: 0;
+    --registration-card-padding-bottom: 0;
+    --registration-card-padding-left: 0;
+
+    height: auto;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-page-registration-panel,
+.lp6 .lp6-modal ::ng-deep .registration-panel-content
+{
+    height: auto;
+    padding: 0;
+    overflow: visible;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-card
+{
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-card-top-meta,
+.lp6 .lp6-modal ::ng-deep .registration-card-accent,
+.lp6 .lp6-modal ::ng-deep .registration-card-bottom-meta,
+.lp6 .lp6-modal ::ng-deep .registration-or-separator,
+.lp6 .lp6-modal ::ng-deep .login-registration-area
+{
+    display: none;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-card-heading
+{
+    color: var(--lp6-text);
+    font-family: var(--lp6-font-display);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-card-subtitle
+{
+    margin-top: 6px;
+    color: var(--lp6-text-muted);
+    font-family: var(--lp6-font);
+    font-size: 15px;
+}
+
+/* Two columns : Full Name | Display Name, Email | Mobile,
+   Login ID (full), Password | Confirm, then the rest full */
+.lp6 .lp6-modal ::ng-deep .registration-form
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 18px;
+    row-gap: 4px;
+    margin-top: 22px;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-form > :nth-child(5),
+.lp6 .lp6-modal ::ng-deep .registration-form > :nth-child(n+8)
+{
+    grid-column: 1 / -1;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-form-field
+{
+    margin: 0 0 10px 0;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-form-label
+{
+    color: var(--lp6-text-soft);
+    font-family: var(--lp6-font);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-field-info
+{
+    color: var(--lp6-input-icon);
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-input-wrapper
+{
+    height: 50px;
+    border: 1px solid var(--lp6-input-border);
+    border-radius: 12px;
+    background: var(--lp6-input-bg);
+    box-shadow: none;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-input-wrapper:hover
+{
+    border-color: var(--lp6-input-border);
+    background: var(--lp6-input-bg);
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-input-wrapper:focus-within
+{
+    border-color: var(--lp6-accent);
+    background: var(--lp6-input-bg);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .18);
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-field-invalid .registration-input-wrapper
+{
+    border-color: var(--lp6-error);
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-input-icon
+{
+    color: var(--lp6-input-icon);
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-form-input
+{
+    color: var(--lp6-input-text);
+    font-family: var(--lp6-font);
+    font-size: 15px;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-form-input::placeholder
+{
+    color: var(--lp6-input-placeholder);
+}
+
+.lp6-deep .lp6-modal ::ng-deep .registration-form-input:-webkit-autofill
+{
+    -webkit-box-shadow: 0 0 0 1000px #141c30 inset;
+    -webkit-text-fill-color: #ffffff;
+}
+
+.lp6 .lp6-modal ::ng-deep .password-visibility-button
+{
+    color: var(--lp6-input-icon);
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-field-error,
+.lp6 .lp6-modal ::ng-deep .registration-terms-error,
+.lp6 .lp6-modal ::ng-deep .registration-error
+{
+    color: var(--lp6-error);
+    font-size: 12px;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-success
+{
+    font-size: 12px;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-terms,
+.lp6 .lp6-modal ::ng-deep .registration-terms-text
+{
+    margin: 6px 0 14px 0;
+    color: var(--lp6-text-soft);
+    font-family: var(--lp6-font);
+    font-size: 14px;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-terms-text
+{
+    margin: 0;
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-terms-checkbox
+{
+    border: 1.5px solid var(--lp6-input-border);
+    border-radius: 5px;
+    background: var(--lp6-input-bg);
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-terms input:checked + .registration-terms-checkbox
+{
+    border-color: var(--lp6-accent);
+    background: var(--lp6-accent);
+}
+
+.lp6 .lp6-modal ::ng-deep .registration-terms-link
+{
+    color: var(--lp6-link);
+    font-weight: 600;
+}
+
+.lp6 .lp6-modal ::ng-deep .create-account-button
+{
+    height: 54px;
+    border-radius: 12px;
+    background: var(--lp6-accent);
+    font-family: var(--lp6-font);
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 12px 30px -12px rgba(37, 99, 235, .75);
+}
+
+.lp6 .lp6-modal ::ng-deep .create-account-button:hover:not(:disabled)
+{
+    background: var(--lp6-accent-strong);
+}
+
+
+/* ---------- Forgot Password panel inside the pop-up ---------- */
+
+.lp6 .lp6-modal-body app-login-page-forget-password-panel
+{
+    --forget-password-card-width: 100%;
+    --forget-password-card-height: auto;
+    --forget-password-card-max-width: 100%;
+    --forget-password-card-max-height: none;
+    --forget-password-card-padding-top: 0;
+    --forget-password-card-padding-right: 0;
+    --forget-password-card-padding-bottom: 0;
+    --forget-password-card-padding-left: 0;
+
+    height: auto;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-page-forget-password-panel,
+.lp6 .lp6-modal ::ng-deep .forget-password-panel-content
+{
+    height: auto;
+    padding: 0;
+    overflow: visible;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-card
+{
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-card-top-meta,
+.lp6 .lp6-modal ::ng-deep .forget-password-card-accent,
+.lp6 .lp6-modal ::ng-deep .forget-password-card-bottom-meta,
+.lp6 .lp6-modal ::ng-deep .forget-password-or-separator,
+.lp6 .lp6-modal ::ng-deep .sign-in-registration-area
+{
+    display: none;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-card-heading
+{
+    color: var(--lp6-text);
+    font-family: var(--lp6-font-display);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-card-subtitle
+{
+    margin-top: 8px;
+    color: var(--lp6-text-muted);
+    font-family: var(--lp6-font);
+    font-size: 15px;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-form
+{
+    margin-top: 22px;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-form-field
+{
+    margin: 0 0 16px 0;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-form-label
+{
+    color: var(--lp6-text-soft);
+    font-family: var(--lp6-font);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-input-wrapper,
+.lp6 .lp6-modal ::ng-deep .forget-password-input-wrapper:hover
+{
+    height: 50px;
+    border: 1px solid var(--lp6-input-border);
+    border-radius: 12px;
+    background: var(--lp6-input-bg);
+    box-shadow: none;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-input-wrapper:focus-within
+{
+    border-color: var(--lp6-accent);
+    background: var(--lp6-input-bg);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .18);
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-input-wrapper.verification-invalid,
+.lp6 .lp6-modal ::ng-deep .forget-password-input-wrapper.password-invalid
+{
+    border-color: var(--lp6-error);
+    background: var(--lp6-input-bg);
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-input-wrapper.verification-disabled
+{
+    background: var(--lp6-panel-soft);
+    opacity: .7;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-input-icon
+{
+    flex-basis: 22px;
+    width: 22px;
+    margin-right: 10px;
+    color: var(--lp6-input-icon);
+    font-size: 16px;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-form-input,
+.lp6 .lp6-modal ::ng-deep .forget-password-verification-input,
+.lp6 .lp6-modal ::ng-deep .forget-password-form-input:disabled
+{
+    color: var(--lp6-input-text);
+    font-family: var(--lp6-font);
+    font-size: 15px;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-form-input::placeholder
+{
+    color: var(--lp6-input-placeholder);
+}
+
+.lp6-deep .lp6-modal ::ng-deep .forget-password-form-input:-webkit-autofill
+{
+    -webkit-box-shadow: 0 0 0 1000px #141c30 inset;
+    -webkit-text-fill-color: #ffffff;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-visibility-button
+{
+    color: var(--lp6-input-icon);
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-message
+{
+    border-color: var(--lp6-line);
+    border-radius: 10px;
+    background: var(--lp6-panel-soft);
+    color: var(--lp6-text-soft);
+    font-family: var(--lp6-font);
+    font-size: 13px;
+}
+
+.lp6 .lp6-modal ::ng-deep .forget-password-message.error
+{
+    border-color: var(--lp6-error);
+    color: var(--lp6-error);
+}
+
+.lp6-deep .lp6-modal ::ng-deep .forget-password-message.success
+{
+    border-color: rgba(74, 222, 128, .4);
+    background: rgba(22, 101, 52, .25);
+    color: #86efac;
+}
+
+.lp6 .lp6-modal ::ng-deep .reset-password-button
+{
+    height: 54px;
+    border-radius: 12px;
+    background: var(--lp6-accent);
+    font-family: var(--lp6-font);
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 12px 30px -12px rgba(37, 99, 235, .75);
+}
+
+.lp6 .lp6-modal ::ng-deep .reset-password-button:hover:not(:disabled)
+{
+    background: var(--lp6-accent-strong);
+}
+
+.lp6 .lp6-modal ::ng-deep .reset-password-icon,
+.lp6 .lp6-modal ::ng-deep .reset-password-arrow
+{
+    font-size: 16px;
+}
+
+
+/* =============================================================
+   RESPONSIVE
+============================================================= */
+
+@media (max-width: 1280px)
+{
+    .lp6-auth
+    {
+        flex-basis: 520px;
+        width: 520px;
+        padding: 24px 40px 24px;
+    }
+
+    .lp6-showcase
+    {
+        padding: 40px 48px 36px;
+    }
+}
+
+@media (max-width: 1100px)
+{
+    .lp6-showcase
+    {
+        display: none;
+    }
+
+    .lp6-auth
+    {
+        flex: 1 1 auto;
+        width: 100%;
+        border-left: 0;
+        padding: 20px max(24px, calc((100vw - 520px) / 2)) 20px;
+    }
+}
+
+@media (max-width: 560px)
+{
+    .lp6-modal-layer
+    {
+        padding: 12px;
+    }
+
+    .lp6-modal-body
+    {
+        padding: 20px 18px 22px;
+    }
+
+    .lp6 .lp6-modal ::ng-deep .registration-form
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lp6-auth
+    {
+        padding: 16px 20px;
+    }
+
+    .lp6-auth-top
+    {
+        justify-content: flex-start;
+        padding-right: 0;
+    }
+
+    .lp6 .lp6-layout ::ng-deep .login-card-heading
+    {
+        font-size: 28px;
+    }
+
+    .lp6-auth-bottom
+    {
+        flex-direction: column;
+        gap: 6px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+    .lp6,
+    .lp6-showcase-overlay,
+    .lp6-auth
+    {
+        transition: none;
+    }
+
+    .lp6-modal,
+    .lp6-modal-backdrop,
+    .lp6-tag
+    {
+        animation: none;
+    }
+}

@@ -109,6 +109,27 @@ export interface WebsitePolicy
 }
 
 
+// One bike model on the Bikes tab. Editable : showOnWebsite,
+// isFeatured, tagline, description and the order of the list
+// (saved to Bike Models). The rest is read-only.
+export interface WebsiteBike
+{
+    bikeModelId:number;
+    modelCode:string;
+    modelName:string;
+    bikeType:string;
+    brandManagementId:number;
+    brandName:string;
+    photoPath:string;
+    showOnWebsite:boolean;
+    isFeatured:boolean;
+    tagline:string;
+    description:string;
+    // Motor Bike Specifications record : exists / shown on the website
+    hasSpecs:boolean;
+    showSpecs:boolean;
+}
+
 export interface WebsiteCompanyInfo
 {
     name:string;
@@ -229,6 +250,8 @@ export interface WebsiteConfiguration
     branches:WebsiteBranchSetting[];
 
     policies:WebsitePolicy[];
+    // Bikes tab : website fields of Bike Models, in website order
+    bikes:WebsiteBike[];
 
     company:WebsiteCompanyInfo;
 

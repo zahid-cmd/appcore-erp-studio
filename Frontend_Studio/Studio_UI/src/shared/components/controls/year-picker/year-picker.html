@@ -1,0 +1,48 @@
+<button
+    #trigger
+    type="button"
+    class="yp-trigger"
+    [class.yp-open]="opened()"
+    [disabled]="disabled"
+    [attr.aria-label]="ariaLabel"
+    aria-haspopup="listbox"
+    [attr.aria-expanded]="opened()"
+    (click)="toggle($event)">
+
+    <span class="yp-text" [class.yp-empty]="!value">{{ value || placeholder }}</span>
+
+    <i class="fas fa-chevron-down yp-caret"></i>
+
+</button>
+
+
+<!-- Moved to <body> : never clipped by a modal or a table -->
+<div
+    #panel
+    class="yp-panel appcore-scrollbar"
+    role="listbox"
+    [attr.aria-label]="ariaLabel"
+    [class.yp-shown]="opened()"
+    [style.top.px]="top()"
+    [style.left.px]="left()"
+    [style.width.px]="width()"
+    [style.max-height.px]="maxHeight()"
+    (mousedown)="$event.stopPropagation()">
+
+    @if (opened())
+    {
+        @for (y of years; track y)
+        {
+            <button
+                type="button"
+                class="yp-item"
+                role="option"
+                [class.yp-on]="y === value"
+                [attr.aria-selected]="y === value"
+                (click)="pick(y, $event)">
+                {{ y }}
+            </button>
+        }
+    }
+
+</div>

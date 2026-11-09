@@ -1,0 +1,359 @@
+/*---------------------------------------------------------------
+  Motor Bike Shelf : the Product Shelf look (product-shelf.css)
+  plus the chassis panel of a picked model.
+---------------------------------------------------------------*/
+
+.bs-term-warn
+{
+    border-color: #fde68a !important;
+    background: #fffbeb !important;
+    color: #92400e !important;
+}
+
+.bs-panel
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bs-panel-head
+{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.bs-back
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.bs-back:hover
+{
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+.bs-panel-img
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 48px;
+    flex: none;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #94a3b8;
+    font-size: 20px;
+}
+
+.bs-panel-img img
+{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.bs-panel-title
+{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.bs-panel-title b
+{
+    color: #0f172a;
+    font-size: 15px;
+}
+
+.bs-panel-title span
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.bs-panel-facts
+{
+    display: flex;
+    gap: 18px;
+    margin-left: auto;
+}
+
+.bs-panel-facts span
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.bs-panel-facts small
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.bs-panel-facts b
+{
+    color: #0f172a;
+    font-size: 14px;
+}
+
+.bs-grid
+{
+    overflow: hidden;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.bs-row
+{
+    display: grid;
+    grid-template-columns: 34px minmax(170px, 1.5fr) minmax(150px, 1.3fr) 60px 100px 82px 110px;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 4px 14px;
+    border-bottom: 1px solid #eef2f7;
+    color: #334155;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.bs-row:last-child
+{
+    border-bottom: none;
+}
+
+.bs-row:hover
+{
+    background: #f8fafc;
+}
+
+.bs-row.bs-row-head
+{
+    min-height: 34px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: default;
+}
+
+.bs-row.bs-row-on
+{
+    background: #eff6ff;
+}
+
+.bs-row.bs-row-off
+{
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.bs-tick
+{
+    color: #2563eb;
+    font-size: 15px;
+}
+
+.bs-row-off .bs-tick
+{
+    color: #94a3b8;
+}
+
+.bs-tick-in
+{
+    color: #16a34a;
+}
+
+.bs-mono
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: #0f172a;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bs-on
+{
+    color: #b45309;
+    font-family: inherit;
+    font-size: 10.5px;
+    font-style: normal;
+}
+
+.bs-on.bs-on-here
+{
+    color: #15803d;
+}
+
+.bs-right
+{
+    text-align: right;
+}
+
+.bs-ckd,
+.bs-ckd-tag
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 24px;
+    padding: 0 9px;
+    border: 1px solid #86efac;
+    border-radius: 999px;
+    background: #f0fdf4;
+    color: #15803d;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.bs-ckd
+{
+    cursor: pointer;
+}
+
+.bs-ckd i
+{
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.bs-ckd.bs-ckd-no,
+.bs-ckd-tag.bs-ckd-no
+{
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.bs-ckd:hover:not(:disabled)
+{
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.bs-ckd:disabled
+{
+    cursor: wait;
+}
+
+.bs-ckd-tag
+{
+    flex: none;
+    height: 20px;
+    padding: 0 7px;
+    font-size: 10.5px;
+}
+
+.bs-reason
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-bottom: 1px solid #eef2f7;
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.bs-reason input
+{
+    flex: 1;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 12.5px;
+    outline: none;
+}
+
+.bs-reason input:focus
+{
+    border-color: #f59e0b;
+}
+
+@media (max-width: 900px)
+{
+    .bs-row
+    {
+        grid-template-columns: 30px minmax(140px, 1fr) minmax(120px, 1fr) 82px 90px;
+    }
+
+    .bs-row > span:nth-child(4),
+    .bs-row > span:nth-child(5)
+    {
+        display: none;
+    }
+}
+
+
+/* Picked tray : chassis / engine line a little larger */
+.bs-tray-code
+{
+    font-size: 12.5px !important;
+    font-weight: 600;
+    color: #334155;
+}
+
+
+/* Second row under Chassis / Engine : Key No / Battery No
+   (blank when the purchase did not keep them) */
+.bs-sub
+{
+    margin-top: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bs-sub b
+{
+    margin-right: 4px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: #94a3b8;
+}

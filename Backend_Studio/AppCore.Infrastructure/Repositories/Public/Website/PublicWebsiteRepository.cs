@@ -2,6 +2,8 @@
 // Imports
 //===============================================================
 
+using System.Globalization;
+
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.Public.Website;
@@ -23,6 +25,15 @@ using ProductCategoryEntity =
 
 using ProductSubCategoryEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.ProductSubCategory;
+
+using BikeModelsEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.BikeModels;
+
+using MotorBikeSpecificationsEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.MotorBikeSpecifications;
+
+using MotorBikeSpecificationItemsEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.MotorBikeSpecificationItems;
 
 using MotorBikesEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.MotorBikes;
@@ -570,6 +581,50 @@ public class PublicWebsiteRepository : IPublicWebsiteRepository
         Dictionary<long, ProductCategoryEntity> categoryById =
             categories.ToDictionary(x => x.ProductCategoryId);
 
+        // Website fields of the linked Bike Models
+        // (Website Configuration › Bikes)
+        List<long> bikeModelIds =
+            models
+                .Where(x => x.BikeModelId.HasValue)
+                .Select(x => x.BikeModelId!.Value)
+                .Distinct()
+                .ToList();
+
+        Dictionary<long, BikeModelsEntity> bikeModels =
+            await _context
+                .Set<BikeModelsEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && bikeModelIds.Contains(x.BikeModelId))
+                .ToDictionaryAsync(x => x.BikeModelId);
+
+        // Specification sheets (Motor Bike Specifications), one per
+        // Bike Model : the oldest active record
+        Dictionary<long, MotorBikeSpecificationsEntity> specOfModel =
+            (await _context
+                .Set<MotorBikeSpecificationsEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.Status && bikeModelIds.Contains(x.BikeModelId))
+                .OrderBy(x => x.MotorBikeSpecificationId)
+                .ToListAsync())
+            .GroupBy(x => x.BikeModelId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        List<long> specIds =
+            specOfModel.Values
+                .Where(x => x.ShowOnWebsite)
+                .Select(x => x.MotorBikeSpecificationId)
+                .ToList();
+
+        List<MotorBikeSpecificationItemsEntity> specItems =
+            specIds.Count == 0
+                ? new List<MotorBikeSpecificationItemsEntity>()
+                : await _context
+                    .Set<MotorBikeSpecificationItemsEntity>()
+                    .AsNoTracking()
+                    .Where(x => specIds.Contains(x.MotorBikeSpecificationId))
+                    .OrderBy(x => x.LineNo)
+                    .ToListAsync();
+
         List<PublicBikeModelDto> result =
             new List<PublicBikeModelDto>();
 
@@ -614,6 +669,16 @@ public class PublicWebsiteRepository : IPublicWebsiteRepository
             List<decimal> colourPrices =
                 colourRows.Where(x => x.Price.HasValue).Select(x => x.Price!.Value).ToList();
 
+            BikeModelsEntity? bikeModel =
+                model.BikeModelId.HasValue
+                    ? bikeModels.GetValueOrDefault(model.BikeModelId.Value)
+                    : null;
+
+            MotorBikeSpecificationsEntity? spec =
+                model.BikeModelId.HasValue
+                    ? specOfModel.GetValueOrDefault(model.BikeModelId.Value)
+                    : null;
+
             result.Add
             (
                 new PublicBikeModelDto
@@ -625,12 +690,100 @@ public class PublicWebsiteRepository : IPublicWebsiteRepository
                     BrandLogoPath = Clean(brand?.BrandImagePath),
                     Price = colourPrices.Count > 0 ? colourPrices.Min() : null,
                     Stock = Best(colourRows.Select(x => x.Stock)),
-                    Colours = colourRows
+                    Colours = colourRows,
+                    ShowOnWebsite = bikeModel?.ShowOnWebsite,
+                    Featured = bikeModel?.IsFeatured,
+                    Tagline = Clean(bikeModel?.Tagline),
+                    Description = Clean(bikeModel?.Description),
+                    DisplayOrder = bikeModel?.DisplayOrder,
+                    ShowSpecs = spec?.ShowOnWebsite,
+                    Engine = spec is { ShowOnWebsite: true } ? EngineLine(spec) : string.Empty,
+                    Mileage = spec is { ShowOnWebsite: true } ? Clean(spec.Mileage) : string.Empty,
+                    TopSpeed = spec is { ShowOnWebsite: true } && spec.TopSpeedKmh > 0 ? $"{spec.TopSpeedKmh} km/h" : string.Empty,
+                    Specs = spec is { ShowOnWebsite: true } ? SpecSheet(spec, specItems) : new()
                 }
             );
         }
 
         return result;
+    }
+
+
+    // "1200 W" for a motor, "125 cc" for an engine, else empty
+    private static string EngineLine(
+        MotorBikeSpecificationsEntity spec)
+    {
+        if (spec.MotorPowerWatts > 0)
+        {
+            return $"{spec.MotorPowerWatts} W";
+        }
+
+        return spec.EngineCc > 0
+            ? $"{spec.EngineCc.ToString("0.##", CultureInfo.InvariantCulture)} cc"
+            : string.Empty;
+    }
+
+
+    // Key figures first, then the technical rows by section
+    private static List<PublicSpecGroupDto> SpecSheet(
+        MotorBikeSpecificationsEntity spec,
+        List<MotorBikeSpecificationItemsEntity> items)
+    {
+        string N(decimal v, string unit) =>
+            v > 0 ? $"{v.ToString("0.##", CultureInfo.InvariantCulture)} {unit}" : string.Empty;
+
+        List<PublicSpecRowDto> key =
+            new List<(string Label, string Value)>
+            {
+                ("Fuel type", Clean(spec.FuelType)),
+                ("Motor power", N(spec.MotorPowerWatts, "W")),
+                ("Engine", N(spec.EngineCc, "cc")),
+                (spec.MotorPowerWatts > 0 ? "Battery" : "Horse power", Clean(spec.HorsePower)),
+                (spec.MotorPowerWatts > 0 ? "Range" : "Mileage", Clean(spec.Mileage)),
+                ("Top speed", spec.TopSpeedKmh > 0 ? $"{spec.TopSpeedKmh} km/h" : string.Empty),
+                ("RPM", spec.Rpm > 0 ? spec.Rpm.ToString(CultureInfo.InvariantCulture) : string.Empty),
+                ("Body type", Clean(spec.BodyType)),
+                ("Seating", spec.SeatingCapacity > 0 ? $"{spec.SeatingCapacity} person" : string.Empty),
+                ("Weight", N(spec.UnladenWeightKg, "kg")),
+                ("Wheel base", N(spec.WheelBaseMm, "mm")),
+                ("Size (L x W x H)", spec.LengthMm > 0 && spec.WidthMm > 0 && spec.HeightMm > 0 ? $"{spec.LengthMm} x {spec.WidthMm} x {spec.HeightMm} mm" : string.Empty),
+                ("Front tyre", Clean(spec.FrontTyreSize)),
+                ("Rear tyre", Clean(spec.RearTyreSize)),
+                ("Maker", Clean(spec.Maker)),
+                ("Country of origin", Clean(spec.CountryOfOrigin))
+            }
+            .Where(x => x.Value.Length > 0)
+            .Select(x => new PublicSpecRowDto { Label = x.Label, Value = x.Value })
+            .ToList();
+
+        List<PublicSpecGroupDto> groups =
+            new List<PublicSpecGroupDto>();
+
+        if (key.Count > 0)
+        {
+            groups.Add(new PublicSpecGroupDto { Title = "Key figures", Rows = key });
+        }
+
+        foreach (var section in items
+            .Where(x => x.MotorBikeSpecificationId == spec.MotorBikeSpecificationId
+                && !string.IsNullOrWhiteSpace(x.Label)
+                && !string.IsNullOrWhiteSpace(x.Value))
+            .GroupBy(x => Clean(x.Section)))
+        {
+            groups.Add
+            (
+                new PublicSpecGroupDto
+                {
+                    Title = section.Key.Length > 0 ? section.Key : "More",
+                    Rows = section
+                        .OrderBy(x => x.LineNo)
+                        .Select(x => new PublicSpecRowDto { Label = Clean(x.Label), Value = Clean(x.Value) })
+                        .ToList()
+                }
+            );
+        }
+
+        return groups;
     }
 
 

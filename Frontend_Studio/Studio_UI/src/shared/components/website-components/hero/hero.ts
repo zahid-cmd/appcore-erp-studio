@@ -101,7 +101,7 @@ export class HeroComponent
 
     // Tabs shown at a time, and the first one shown
     private readonly tabCount =
-        4;
+        6;
 
     readonly tabStart =
         signal(0);
@@ -228,6 +228,74 @@ export class HeroComponent
                 this.hero().title || ('Welcome to ' + this.content().company.name)
         );
 
+    // A bike's name for the slide title, without its category,
+    // split before its model code so the code can be shown a
+    // little bigger:
+    //   "Motor Bikes - REVOO - A09" -> "REVOO - " + "A09"
+    //   "REVOO - A09"               -> "REVOO - " + "A09"
+    //   "A09"                       -> ""         + "A09"
+    modelParts(
+        model:
+            string | null | undefined
+    ):
+        { name: string; code: string }
+    {
+        const parts =
+            (model || '')
+                .split(' - ')
+                .map(p => p.trim())
+                .filter(p => p.length > 0);
+
+        if (parts.length === 0)
+        {
+            return { name: '', code: '' };
+        }
+
+        // Category first (Motor Bikes ...) : not shown
+        const shown =
+            parts.length >= 3
+                ? parts.slice(1)
+                : parts;
+
+        const code =
+            shown[shown.length - 1];
+
+        const name =
+            shown.length > 1
+                ? shown.slice(0, -1).join(' - ') + ' - '
+                : '';
+
+        return { name, code };
+    }
+
+    // The title split around the company name, so the name can
+    // be shown bigger and in the accent colour.
+    readonly welcomeParts =
+        computed(
+            () =>
+            {
+                const title =
+                    this.welcomeTitle() || '';
+
+                const name =
+                    (this.content().company.name || '').trim();
+
+                const at =
+                    name
+                        ? title.toLowerCase().indexOf(name.toLowerCase())
+                        : -1;
+
+                return at < 0
+                    ? { before: title, brand: '', after: '' }
+                    :
+                    {
+                        before: title.slice(0, at),
+                        brand:  title.slice(at, at + name.length),
+                        after:  title.slice(at + name.length)
+                    };
+            }
+        );
+
     readonly welcomeText =
         computed(
             () =>
@@ -310,7 +378,16 @@ export class HeroComponent
     ):
         string
     {
-        return item.kind === 'bike' ? item.bike.model : 'Welcome';
+        if (item.kind !== 'bike')
+        {
+            return 'Welcome';
+        }
+
+        // Same as the big title : "REVOO - A04" (no "Motor Bikes")
+        const parts =
+            this.modelParts(item.bike.model);
+
+        return (parts.name + parts.code).trim() || item.bike.model;
     }
 
     tabSub

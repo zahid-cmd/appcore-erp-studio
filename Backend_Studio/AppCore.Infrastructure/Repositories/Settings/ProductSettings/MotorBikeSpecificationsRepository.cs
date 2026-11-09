@@ -150,6 +150,8 @@ public class MotorBikeSpecificationsRepository
                 CountryOfOrigin = x.CountryOfOrigin,
                 HorsePower = x.HorsePower,
                 Rpm = x.Rpm,
+                Mileage = x.Mileage,
+                TopSpeedKmh = x.TopSpeedKmh,
                 WheelBaseMm = x.WheelBaseMm,
                 LengthMm = x.LengthMm,
                 WidthMm = x.WidthMm,
@@ -623,6 +625,8 @@ public class MotorBikeSpecificationsRepository
         string CountryOfOrigin,
         string HorsePower,
         int Rpm,
+        string Mileage,
+        int TopSpeedKmh,
         int WheelBaseMm,
         int LengthMm,
         int WidthMm,
@@ -848,6 +852,14 @@ public class MotorBikeSpecificationsRepository
             throw new InvalidOperationException("RPM must be between 0 and 30,000.");
         }
 
+        string mileage =
+            Text(dto.Mileage, 60, electric ? "Range" : "Mileage");
+
+        if (dto.TopSpeedKmh < 0 || dto.TopSpeedKmh > 400)
+        {
+            throw new InvalidOperationException("Top Speed must be between 0 and 400 km/h.");
+        }
+
         foreach ((int mm, string what) in new[]
         {
             (dto.WheelBaseMm, "Wheel Base"),
@@ -946,7 +958,7 @@ public class MotorBikeSpecificationsRepository
 
         return new CleanInput(
             model, cc, watts, fuel, cylinders, vehicleClass, bodyType, dto.SeatingCapacity,
-            unladen, laden, maker, country, horsePower, dto.Rpm,
+            unladen, laden, maker, country, horsePower, dto.Rpm, mileage, dto.TopSpeedKmh,
             dto.WheelBaseMm, dto.LengthMm, dto.WidthMm, dto.HeightMm,
             dto.TyreCount, frontTyre, rearTyre, dto.AxleCount, items, remarks);
     }
@@ -973,6 +985,8 @@ public class MotorBikeSpecificationsRepository
         entity.CountryOfOrigin = input.CountryOfOrigin;
         entity.HorsePower = input.HorsePower;
         entity.Rpm = input.Rpm;
+        entity.Mileage = input.Mileage;
+        entity.TopSpeedKmh = input.TopSpeedKmh;
         entity.WheelBaseMm = input.WheelBaseMm;
         entity.LengthMm = input.LengthMm;
         entity.WidthMm = input.WidthMm;

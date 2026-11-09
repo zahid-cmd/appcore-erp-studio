@@ -994,7 +994,7 @@ implements OnInit
                         },
 
                     error:
-                        () =>
+                        error =>
                         {
                             this.loading =
                                 false;
@@ -1006,6 +1006,13 @@ implements OnInit
                                 [];
 
                             this.applyFilters();
+
+                            this.toast.error(
+                                'Load Failed',
+                                typeof error?.error === 'string'
+                                    ? error.error
+                                    : 'The bikes could not be loaded.'
+                            );
                         }
                 });
     }

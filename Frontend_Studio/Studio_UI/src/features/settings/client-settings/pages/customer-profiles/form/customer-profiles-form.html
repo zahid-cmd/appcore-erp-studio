@@ -606,14 +606,98 @@
 
                     </app-textbox>
 
+
+                    <!-- Category : Individual / Corporate / Institution
+                         (Inbound only; Corporate buys on Corporate
+                         sales of Sales Invoices - MB) -->
+
+                    <app-dropdown
+
+                        label="Customer Category"
+
+                        [items]="categoryItems"
+
+                        [value]="entity.IsCorporate"
+
+                        (valueChange)="onCategoryChange($event)"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-dropdown>
+
                 </app-form-section>
 
 
                 <!-- =============================================
                      SECTION 02
-                     PERSONAL DETAILS
+                     PERSONAL DETAILS (Individual) /
+                     TAX DETAILS (Corporate / Institution)
                 ============================================== -->
 
+                @if (entity.IsCorporate)
+                {
+                    <app-form-section
+
+                        title="Tax Details"
+
+                        icon="fas fa-building">
+
+
+                        <!-- TIN : 12 digits, optional -->
+
+                        <app-textbox
+
+                            label="TIN No"
+
+                            placeholder="Optional, 12 digits"
+
+                            [value]="entity.TinNo"
+
+                            (valueChange)="onTinChange($event)"
+
+                            [disabled]="isViewMode || isSaving">
+
+                        </app-textbox>
+
+                        @if (!isViewMode && tinWarning)
+                        {
+                            <div class="cus-warning">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                {{ tinWarning }}
+                            </div>
+                        }
+
+
+                        <!-- BIN : 9 or 13 digits, optional -->
+
+                        <app-textbox
+
+                            label="BIN No"
+
+                            placeholder="Optional, 9 or 13 digits"
+
+                            [value]="entity.BinNo"
+
+                            (valueChange)="onBinChange($event)"
+
+                            [disabled]="isViewMode || isSaving">
+
+                        </app-textbox>
+
+                        @if (!isViewMode && binWarning)
+                        {
+                            <div class="cus-warning">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                {{ binWarning }}
+                            </div>
+                        }
+
+                    </app-form-section>
+                }
+                @else
+                {
                 <app-form-section
 
                     title="Personal Details"
@@ -670,6 +754,7 @@
                     </div>
 
                 </app-form-section>
+                }
 
 
                 <!-- =============================================
@@ -801,30 +886,34 @@
                     icon="fas fa-fingerprint">
 
 
-                    <!-- NID : 10 / 13 / 17 digits, unique among Inbound -->
+                    <!-- NID : 10 / 13 / 17 digits, unique among Inbound
+                         (not for Corporate / Institution) -->
 
-                    <app-textbox
-
-                        label="NID No"
-
-                        placeholder="10, 13 or 17 digits"
-
-                        [value]="entity.NidNo"
-
-                        (valueChange)="onNidChange($event)"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-                    @if (!isViewMode && nidWarning)
+                    @if (!entity.IsCorporate)
                     {
-                        <div class="cus-warning">
-                            <i class="fas fa-triangle-exclamation"></i>
-                            {{ nidWarning }}
-                        </div>
+                        <app-textbox
+
+                            label="NID No"
+
+                            placeholder="10, 13 or 17 digits"
+
+                            [value]="entity.NidNo"
+
+                            (valueChange)="onNidChange($event)"
+
+                            [disabled]="isViewMode || isSaving"
+
+                            [required]="true">
+
+                        </app-textbox>
+
+                        @if (!isViewMode && nidWarning)
+                        {
+                            <div class="cus-warning">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                {{ nidWarning }}
+                            </div>
+                        }
                     }
 
 

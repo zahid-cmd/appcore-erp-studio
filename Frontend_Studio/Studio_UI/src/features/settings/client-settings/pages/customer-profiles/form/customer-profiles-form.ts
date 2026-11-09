@@ -953,7 +953,10 @@ implements OnInit, OnDestroy
             CreditLimit:0,
             Remarks:'',
             IsActive:true,
-            IsWalkIn:false
+            IsWalkIn:false,
+            IsCorporate:false,
+            TinNo:'',
+            BinNo:''
         };
     }
 
@@ -1612,6 +1615,96 @@ implements OnInit, OnDestroy
         this.onValueChange();
     }
 
+    //===========================================================
+    // Corporate / Institution (Inbound only) : TIN / BIN in place
+    // of NID, Date of Birth and the parents' names
+    //===========================================================
+
+    readonly categoryItems:
+        any[]
+        =
+        [
+            {
+                label:'Individual',
+                value:false
+            },
+            {
+                label:'Corporate / Institution',
+                value:true
+            }
+        ];
+
+    onCategoryChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.entity.IsCorporate =
+            value === true || value === 'true';
+
+        this.onValueChange();
+    }
+
+    onTinChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.entity.TinNo =
+            String(value ?? '');
+
+        this.cdr.detectChanges();
+
+        this.entity.TinNo =
+            this.digitsOnly(value, 12);
+
+        this.onValueChange();
+    }
+
+    onBinChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.entity.BinNo =
+            String(value ?? '');
+
+        this.cdr.detectChanges();
+
+        this.entity.BinNo =
+            this.digitsOnly(value, 13);
+
+        this.onValueChange();
+    }
+
+    get tinWarning():
+        string
+    {
+        const tin =
+            this.entity.TinNo ?? '';
+
+        return tin && tin.length !== 12
+            ? `TIN No must be 12 digits (${tin.length} entered).`
+            : '';
+    }
+
+    get binWarning():
+        string
+    {
+        const bin =
+            this.entity.BinNo ?? '';
+
+        return bin && bin.length !== 9 && bin.length !== 13
+            ? `BIN No must be 9 or 13 digits (${bin.length} entered).`
+            : '';
+    }
+
     onNidChange
     (
         value:
@@ -2193,6 +2286,28 @@ implements OnInit, OnDestroy
                 failed:
                     inbound
                     &&
+                    this.entity.IsCorporate
+                    &&
+                    !!this.tinWarning,
+                message:
+                    this.tinWarning
+            },
+            {
+                failed:
+                    inbound
+                    &&
+                    this.entity.IsCorporate
+                    &&
+                    !!this.binWarning,
+                message:
+                    this.binWarning
+            },
+            {
+                failed:
+                    inbound
+                    &&
+                    !this.entity.IsCorporate
+                    &&
                     !this.entity.NidNo,
                 message:
                     'NID No is required for Inbound customers.',
@@ -2202,6 +2317,8 @@ implements OnInit, OnDestroy
             {
                 failed:
                     inbound
+                    &&
+                    !this.entity.IsCorporate
                     &&
                     !!this.nidWarning,
                 message:
@@ -2321,6 +2438,17 @@ implements OnInit, OnDestroy
         const inbound =
             this.isInbound;
 
+        // Corporate / Institution : no personal identity
+        const corporate =
+            inbound
+            &&
+            this.entity.IsCorporate;
+
+        const person =
+            inbound
+            &&
+            !corporate;
+
         return {
             CustomerType:
                 this.entity.CustomerType,
@@ -2338,13 +2466,13 @@ implements OnInit, OnDestroy
                 this.entity.DisplayName,
 
             FatherName:
-                inbound ? this.cleanText(this.entity.FatherName) : '',
+                person ? this.cleanText(this.entity.FatherName) : '',
 
             MotherName:
-                inbound ? this.cleanText(this.entity.MotherName) : '',
+                person ? this.cleanText(this.entity.MotherName) : '',
 
             DateOfBirth:
-                inbound ? this.entity.DateOfBirth : '',
+                person ? this.entity.DateOfBirth : '',
 
             PhotoPath:
                 this.entity.PhotoPath,
@@ -2359,7 +2487,7 @@ implements OnInit, OnDestroy
                 this.entity.Email?.trim() ?? '',
 
             NidNo:
-                inbound ? this.entity.NidNo : '',
+                person ? this.entity.NidNo : '',
 
             DrivingLicenseNo:
                 inbound ? this.cleanText(this.entity.DrivingLicenseNo) : '',
@@ -2396,7 +2524,16 @@ implements OnInit, OnDestroy
             IsWalkIn:
                 this.isEditMode
                     ? (this.savedWalkIn && !this.entity.IsWalkIn ? false : null)
-                    : false
+                    : false,
+
+            IsCorporate:
+                corporate,
+
+            TinNo:
+                corporate ? this.entity.TinNo ?? '' : '',
+
+            BinNo:
+                corporate ? this.entity.BinNo ?? '' : ''
         };
     }
 

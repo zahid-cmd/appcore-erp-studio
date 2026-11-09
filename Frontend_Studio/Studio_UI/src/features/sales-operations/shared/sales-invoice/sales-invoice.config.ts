@@ -240,9 +240,9 @@ export const SI_AC_PAGE:
 };
 
 
-// Not wired yet (its page comes later). MB has no "Without
-// Stock" / "Walk-in"; 0011-0016 are MB-only switches (Delivery on
-// Sale, Enquiry Required, ...) its page will add.
+// Sales Invoices - MB (Motor Bike Sales) : one bike (chassis) per
+// line, picked model -> colour -> chassis. No "Without Stock" /
+// "Walk-in"; 0011 Delivery on Sale (server), EMI comes later.
 export const SI_MB_PAGE:
     SalesInvoicePageConfig =
 {
@@ -259,7 +259,7 @@ export const SI_MB_PAGE:
     itemLower:'motor bike',
     items:'motor bikes',
     icon:'fa-motorcycle',
-    paymentModes:['Cash', 'Bank', 'Check', 'MFS', 'POS', 'EMI'],
+    paymentModes:['Cash', 'Bank', 'Check', 'MFS', 'POS'],
     switches:
     {
         POST_ON_APPROVAL:'CFG-MOD-008-0001',

@@ -153,6 +153,12 @@ import
 }
 from '../../../../../../shared/components/sub-ordinate-components/background-image-5/background-image-5';
 
+import
+{
+    BackgroundImageComponent as BackgroundImageComponent6
+}
+from '../../../../../../shared/components/sub-ordinate-components/background-image-6/background-image-6';
+
 
 //===============================================================
 // Service
@@ -1019,6 +1025,27 @@ implements OnInit
         )
         {
             return BackgroundImageComponent5;
+        }
+
+
+        //=======================================================
+        // Background Image 6 (Login Page 6)
+        //=======================================================
+
+        if
+        (
+            componentPath.includes(
+                'background-image-6'
+            )
+            ||
+            componentName ===
+                'background image 6'
+            ||
+            tabName ===
+                'background image 6'
+        )
+        {
+            return BackgroundImageComponent6;
         }
 
 

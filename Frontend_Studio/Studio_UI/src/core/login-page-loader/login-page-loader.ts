@@ -80,6 +80,12 @@ import
 }
 from '../../shared/login-pages/login-page-5/login-page-5';
 
+import
+{
+    LoginPage6
+}
+from '../../shared/login-pages/login-page-6/login-page-6';
+
 
 //===============================================================
 // Orbit Loader
@@ -150,7 +156,9 @@ from '../../shared/components/layout/empty-state/empty-state';
 
         LoginPage4,
 
-        LoginPage5
+        LoginPage5,
+
+        LoginPage6
     ],
 
     templateUrl:
@@ -250,6 +258,7 @@ export class LoginPageLoader
     //     loginPageId = 1
     //
     //     /preview/5
+    //     /preview/6
     //         ↓
     //     loginPageId = 5
     //===========================================================
@@ -332,7 +341,7 @@ export class LoginPageLoader
         (
             id >= 1
             &&
-            id <= 5
+            id <= 6
         )
         {
             this.isPreviewMode =
@@ -481,6 +490,14 @@ export class LoginPageLoader
                 break;
 
 
+            case 'login-page-6':
+
+                this.activePageKey =
+                    'login-page-6';
+
+                break;
+
+
             default:
 
                 this.loadError =
@@ -614,6 +631,14 @@ export class LoginPageLoader
 
                                 this.activePageKey =
                                     'login-page-5';
+
+                                break;
+
+
+                            case 'login-page-6':
+
+                                this.activePageKey =
+                                    'login-page-6';
 
                                 break;
 

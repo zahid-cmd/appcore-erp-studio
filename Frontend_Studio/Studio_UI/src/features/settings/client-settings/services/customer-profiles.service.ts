@@ -208,6 +208,19 @@ export class CustomerProfilesService
                     false
                 ),
 
+            IsCorporate:
+                Boolean(
+                    this.pick(item, 'IsCorporate')
+                    ??
+                    false
+                ),
+
+            TinNo:
+                text('TinNo'),
+
+            BinNo:
+                text('BinNo'),
+
             LocationName:
                 text('LocationName')
         };

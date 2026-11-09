@@ -508,7 +508,9 @@ function toReceiving
                 ChassisNo:text(pick(u, 'ChassisNo')),
                 EngineNo:text(pick(u, 'EngineNo')),
                 KeyNo:text(pick(u, 'KeyNo')),
-                BatteryNo:text(pick(u, 'BatteryNo'))
+                BatteryNo:text(pick(u, 'BatteryNo')),
+                CkdStatus:text(pick(u, 'CkdStatus')) === 'Yes' ? 'Yes' : 'No',
+                ManufactureYear:num(pick(u, 'ManufactureYear')) || null
             })
         ),
         Accessories:list(pick(x, 'Accessories')).map

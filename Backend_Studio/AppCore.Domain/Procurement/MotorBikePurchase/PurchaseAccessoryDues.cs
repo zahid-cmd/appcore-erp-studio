@@ -116,10 +116,33 @@ public class PurchaseAccessoryReceipts
 
     public long WarehouseId { get; set; }
 
+    // Receiving (Motor Bike Receiving : ReceivingId / No = the
+    // receiving) / Purchase (received with the purchase, Products
+    // Received on Purchase ON : ReceivingId / No = the purchase)
+    public string ReceivedOn { get; set; } = "Receiving";
+
     // Set when its receiving is cancelled (kept for the record)
     public bool IsCancelled { get; set; }
 
     public long CreatedBy { get; set; }
 
+    public DateTime CreatedDate { get; set; }
+}
+
+
+//===============================================================
+// A purchase's free accessories to receive with it (draft) :
+// Products Received on Purchase ON. One row per scheme ·
+// accessory; replaced on every draft save, taken in on Post.
+//===============================================================
+
+public class PurchaseAccessoryTakes
+{
+    public long PurchaseAccessoryTakeId { get; set; }
+    public long PurchaseId { get; set; }
+    public long BikeAccessorySchemeId { get; set; }
+    public long AccessoryId { get; set; }
+    public decimal Quantity { get; set; }
+    public long CreatedBy { get; set; }
     public DateTime CreatedDate { get; set; }
 }

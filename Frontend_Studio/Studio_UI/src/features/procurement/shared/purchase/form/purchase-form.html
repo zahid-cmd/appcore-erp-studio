@@ -515,28 +515,78 @@
 
                 </div>
 
-                <!-- NARRATION : fills what the terms bar leaves, so this
-                     block is as tall as Purchase Information -->
+                <!-- Accessories Due (MB, received on purchase) | NARRATION :
+                     side by side, sharing the width; the row fills what the
+                     terms bar leaves -->
 
-                <div class="pof-card pur-narr-card">
+                <div class="pur-narr-row" [class.pur-narr-row-acc]="accessoryCard">
 
-                    <div class="pof-card-header">
-                        <i class="fas fa-align-left"></i>
-                        <span>Narration <b class="pof-req">*</b></span>
-                    </div>
+                    @if (accessoryCard)
+                    {
+                        <div class="pof-card pur-acc-card">
 
-                    <div class="pof-narration pur-narr">
+                            <div class="pof-card-header">
+                                <i class="fas fa-gift"></i>
+                                <span>Accessories Due</span>
+                                @if (accessoryLoading)
+                                {
+                                    <i class="fas fa-spinner fa-spin pur-acc-spin" aria-label="Working out"></i>
+                                }
+                            </div>
 
-                        <app-textarea
-                            placeholder="Remarks on this purchase (required; goes to the journal)"
-                            [required]="true"
-                            [rows]="1"
-                            [maxLength]="1000"
-                            [value]="narration"
-                            (valueChange)="onNarrationChange($event)"
-                            [readonly]="isReadonly">
+                            <div class="pur-acc-body">
 
-                        </app-textarea>
+                                @if (accessoryRows.length > 0)
+                                {
+                                    <span class="pur-acc-sub" [title]="accessoryRows.length + ' items from the supplier\'s schemes'">
+                                        {{ accessoryDueTotal }} due · {{ accessoryRows.length }} {{ accessoryRows.length === 1 ? 'item' : 'items' }}
+                                    </span>
+                                }
+                                @else
+                                {
+                                    <span class="pur-acc-sub" [title]="accessoryEmptyText">{{ accessoryEmptyText }}</span>
+                                }
+
+                                <button
+                                    type="button"
+                                    class="pof-shelf pur-acc-open"
+                                    [disabled]="accessoryRows.length === 0"
+                                    [class.pur-acc-open-on]="accessoryAddedTotal > 0"
+                                    [title]="accessoryEditable ? 'Free accessories that came with this purchase' : 'Free accessories received with this purchase'"
+                                    (click)="openAccessories()">
+                                    <i class="fas fa-gift"></i>
+                                    Accessories {{ accessoryAddedTotal }}/{{ accessoryDueTotal }}
+                                </button>
+
+                            </div>
+
+                        </div>
+                    }
+
+                    <!-- NARRATION : fills what the terms bar leaves, so this
+                         block is as tall as Purchase Information -->
+
+                    <div class="pof-card pur-narr-card">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-align-left"></i>
+                            <span>Narration <b class="pof-req">*</b></span>
+                        </div>
+
+                        <div class="pof-narration pur-narr">
+
+                            <app-textarea
+                                placeholder="Remarks on this purchase (required; goes to the journal)"
+                                [required]="true"
+                                [rows]="1"
+                                [maxLength]="1000"
+                                [value]="narration"
+                                (valueChange)="onNarrationChange($event)"
+                                [readonly]="isReadonly">
+
+                            </app-textarea>
+
+                        </div>
 
                     </div>
 
@@ -1286,6 +1336,92 @@
                                         </tr>
                                     }
 
+                                    <!-- Free accessories (received on purchase) : shown only,
+                                         not in the totals / VAT / payable -->
+                                    @if (accessoryGridRows.length > 0)
+                                    {
+                                        <tr class="pur-acc-divider">
+                                            <td [attr.colspan]="tableCols">
+                                                <i class="fas fa-gift"></i>
+                                                Free Accessories
+                                                <span>{{ accessoryAddedTotal }} with this purchase · not in the totals</span>
+                                            </td>
+                                        </tr>
+                                    }
+
+                                    @for (row of accessoryGridRows; track row.Line.BikeAccessorySchemeId + '-' + row.Line.AccessoryId)
+                                    {
+                                        <tr
+                                            class="pur-acc-line"
+                                            [class.pof-row-editable]="accessoryEditable"
+                                            [title]="accessoryEditable ? 'Double-click to change the quantity' : 'Free accessory received with this purchase'"
+                                            (dblclick)="openAccessories()">
+
+                                            <td class="pof-sl">{{ $index + 1 }}</td>
+
+                                            <td>
+                                                <div class="pof-ledger">
+                                                    {{ row.Line.AccessoryName }}
+                                                    <span class="pur-acc-tag"><i class="fas fa-gift"></i> Free</span>
+                                                </div>
+                                                <div class="pof-sub">{{ row.Line.ProductCode }} · {{ row.Line.SchemeCode }} {{ row.Line.SchemeKind }}</div>
+                                            </td>
+
+                                            <td class="pof-num">
+                                                {{ accessoryAdded(row) }} <span class="pof-unit">{{ row.Line.Unit }}</span>
+                                                @if (accessoryAdded(row) < accessoryLimit(row.Line))
+                                                {
+                                                    <span class="pof-billed" title="Stays due for Motor Bike Receiving">{{ accessoryLimit(row.Line) - accessoryAdded(row) }} later</span>
+                                                }
+                                            </td>
+
+                                            @if (showMrp)
+                                            {
+                                                <td class="pof-num pur-acc-dim">—</td>
+                                            }
+
+                                            @if (marginMode)
+                                            {
+                                                <td class="pof-num pur-acc-dim">—</td>
+                                            }
+
+                                            <td class="pof-num pur-acc-dim">—</td>
+
+                                            <td class="pof-num pur-acc-dim">0.00</td>
+
+                                            <td class="pof-num pur-acc-dim">—</td>
+
+                                            @if (mrpPricing)
+                                            {
+                                                <td class="pof-num pur-acc-dim">—</td>
+                                            }
+
+                                            <td class="pof-action">
+                                                <button
+                                                    type="button"
+                                                    class="pur-units-btn pur-acc-edit"
+                                                    [title]="accessoryEditable ? 'Change in Accessories Due' : 'Accessories Due'"
+                                                    [disabled]="isSaving"
+                                                    (click)="openAccessories(); $event.stopPropagation()">
+                                                    <i class="fas fa-gift"></i>
+                                                </button>
+                                                @if (accessoryEditable)
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="pof-remove"
+                                                        title="Remove"
+                                                        [disabled]="isSaving"
+                                                        [attr.aria-label]="'Remove ' + row.Line.AccessoryName"
+                                                        (click)="removeAccessory(row); $event.stopPropagation()">
+                                                        <i class="fas fa-xmark"></i>
+                                                    </button>
+                                                }
+                                            </td>
+
+                                        </tr>
+                                    }
+
                                     @if (lines.length === 0)
                                     {
                                         <tr>
@@ -1578,6 +1714,146 @@
     }
 
     <!-- =====================================================
+         ACCESSORIES DUE (MB, received on purchase) : the
+         supplier's free accessories that came with this purchase.
+         Add keeps them on the purchase (taken in on Post); Cancel
+         drops the changes. The rest stays due for Motor Bike
+         Receiving.
+    ====================================================== -->
+
+    @if (accessoryOpen && accessoryRows.length > 0)
+    {
+        <div class="pof-overlay" (click)="closeAccessories()">
+
+            <div
+                class="pof-cx pur-acc-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="pur-acc-title"
+                (click)="$event.stopPropagation()">
+
+                <div class="pof-cx-head pur-acc-head">
+
+                    <span class="pof-cx-icon pur-acc-icon">
+                        <i class="fas fa-gift"></i>
+                    </span>
+
+                    <div class="pof-cx-title">
+                        <strong id="pur-acc-title">Accessories Due</strong>
+                        <span>{{ orderNoText || 'New purchase' }} · {{ accessoryEditable ? accessoryNowTotal : accessoryAddedTotal }} of {{ accessoryDueTotal }} with this purchase</span>
+                    </div>
+
+                    @if (accessoryEditable)
+                    {
+                        <button
+                            type="button"
+                            class="pof-shelf pur-acc-all"
+                            title="Every accessory due, full quantity"
+                            (click)="accessoryNowTotal === accessoryDueTotal ? accessoriesNone() : accessoriesAll()">
+                            <i class="fas fa-layer-group"></i>
+                            {{ accessoryNowTotal === accessoryDueTotal ? 'None' : 'All' }}
+                        </button>
+                    }
+
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeAccessories()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+                <div class="pof-cx-body">
+
+                    <div class="pur-acc-scroll appcore-scrollbar">
+                        <table class="pof-table pur-acc-table">
+                            <thead>
+                                <tr>
+                                    <th>Accessory</th>
+                                    <th class="pof-num">Due</th>
+                                    <th class="pof-num">Elsewhere</th>
+                                    <th class="pof-num">With Purchase</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of accessoryRows; track row.Line.BikeAccessorySchemeId + '-' + row.Line.AccessoryId)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="pof-ledger">{{ row.Line.AccessoryName }}</div>
+                                            <div class="pof-sub">{{ row.Line.ProductCode }} · {{ row.Line.SchemeCode }} {{ row.Line.SchemeKind }}</div>
+                                        </td>
+                                        <td class="pof-num">{{ row.Line.QuantityDue }} <span class="pof-unit">{{ row.Line.Unit }}</span></td>
+                                        <td class="pof-num pur-acc-dim" title="Received on Motor Bike Receiving or closed">{{ row.Line.ReceivedElsewhere || 0 }}</td>
+                                        <td class="pof-num">
+                                            @if (accessoryEditable)
+                                            {
+                                                <input
+                                                    class="pur-acc-qty"
+                                                    inputmode="numeric"
+                                                    placeholder="0"
+                                                    [title]="'Up to ' + accessoryLimit(row.Line)"
+                                                    [attr.aria-label]="row.Line.AccessoryName + ' with this purchase'"
+                                                    [value]="row.NowText"
+                                                    (input)="onAccessoryInput(row, $event)">
+                                            }
+                                            @else
+                                            {
+                                                <b>{{ accessoryAdded(row) }}</b>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                <div class="pof-modal-foot">
+
+                    <span class="pof-modal-note">
+                        <i class="fas fa-circle-info"></i>
+                        @if (accessoryEditable)
+                        {
+                            Supplier's free items : on Post into {{ accessoryWarehouseText }} at zero cost. Leave 0 to receive later on Motor Bike Receiving.
+                        }
+                        @else
+                        {
+                            Received with this purchase at zero cost; the rest is received on Motor Bike Receiving.
+                        }
+                    </span>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="closeAccessories()">
+                        <i class="fas fa-arrow-left"></i>
+                        {{ accessoryEditable ? 'Cancel' : 'Close' }}
+                    </button>
+
+                    @if (accessoryEditable)
+                    {
+                        <button
+                            type="button"
+                            class="pof-btn pof-btn-primary"
+                            (click)="addAccessories()">
+                            <i class="fas fa-plus"></i>
+                            Add
+                        </button>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <!-- =====================================================
          UNIT DESK (MB, received here) : one row per bike
            Header : bike, line, X
            Body   : Chassis / Engine / Key / Battery per bike
@@ -1641,6 +1917,8 @@
                                     <col class="pur-ud-c-key">
                                     <col class="pur-ud-c-bat">
                                 }
+                                <col class="pur-ud-c-year">
+                                <col class="pur-ud-c-ckd">
                                 @if (isReadonly)
                                 {
                                     <col class="pur-ud-c-status">
@@ -1661,6 +1939,40 @@
                                         <th>Key No @if (unitsRequired) { <b class="pof-req">*</b> }</th>
                                         <th>Battery No @if (unitsRequired) { <b class="pof-req">*</b> }</th>
                                     }
+                                    <th class="pur-ud-year-head">
+                                        @if (isReadonly)
+                                        {
+                                            Year
+                                        }
+                                        @else
+                                        {
+                                            <button
+                                                type="button"
+                                                class="pur-ud-ckd-all"
+                                                title="Year of manufacture : set every bike to the first bike's year"
+                                                (click)="sameUnitYear()">
+                                                Year
+                                                <i class="fas fa-angles-down"></i>
+                                            </button>
+                                        }
+                                    </th>
+                                    <th class="pur-ud-ckd-head">
+                                        @if (isReadonly)
+                                        {
+                                            CKD Docs
+                                        }
+                                        @else
+                                        {
+                                            <button
+                                                type="button"
+                                                class="pur-ud-ckd-all"
+                                                [title]="allUnitCkdYes ? 'Set every bike back to No' : 'CKD documents in hand / on the portal for every bike : set all Yes'"
+                                                (click)="toggleAllUnitCkd()">
+                                                CKD Docs
+                                                <i [class]="allUnitCkdYes ? 'fas fa-check-double' : 'fas fa-list-check'"></i>
+                                            </button>
+                                        }
+                                    </th>
                                     @if (isReadonly)
                                     {
                                         <th>Status</th>
@@ -1687,6 +1999,15 @@
                                                 <td>{{ row.KeyNo || '—' }}</td>
                                                 <td>{{ row.BatteryNo || '—' }}</td>
                                             }
+                                            <td>{{ row.ManufactureYear || '—' }}</td>
+                                            <td>
+                                                <span
+                                                    class="pur-ud-ckd pur-ud-ckd-static"
+                                                    [class.pur-ud-ckd-yes]="unitCkdYes(row)">
+                                                    <i [class]="unitCkdYes(row) ? 'fas fa-circle-check' : 'fas fa-circle-xmark'"></i>
+                                                    {{ unitCkdYes(row) ? 'Yes' : 'No' }}
+                                                </span>
+                                            </td>
                                             <td>{{ row.Status || '—' }}</td>
                                         }
                                         @else
@@ -1742,6 +2063,25 @@
                                                     </app-textbox>
                                                 </td>
                                             }
+                                            <td>
+                                                <app-year-picker
+                                                    [value]="unitYear(row)"
+                                                    [ariaLabel]="'Year of manufacture of bike ' + ($index + 1)"
+                                                    (valueChange)="onUnitYear($index, $event)">
+                                                </app-year-picker>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    class="pur-ud-ckd"
+                                                    [class.pur-ud-ckd-yes]="unitCkdYes(row)"
+                                                    [title]="unitCkdYes(row) ? 'CKD documents in hand / on the portal : click for No' : 'CKD documents not yet : click for Yes'"
+                                                    [attr.aria-label]="'CKD documents of bike ' + ($index + 1)"
+                                                    (click)="toggleUnitCkd($index)">
+                                                    <i [class]="unitCkdYes(row) ? 'fas fa-circle-check' : 'fas fa-circle-xmark'"></i>
+                                                    {{ unitCkdYes(row) ? 'Yes' : 'No' }}
+                                                </button>
+                                            </td>
                                             <td class="pur-ud-act">
                                                 <button
                                                     type="button"
@@ -1760,7 +2100,7 @@
                                 @if (unitRows.length === 0)
                                 {
                                     <tr>
-                                        <td [attr.colspan]="unitKeysShown ? 6 : 4" class="pof-empty">No bikes entered.</td>
+                                        <td [attr.colspan]="unitKeysShown ? 8 : 6" class="pof-empty">No bikes entered.</td>
                                     </tr>
                                 }
 

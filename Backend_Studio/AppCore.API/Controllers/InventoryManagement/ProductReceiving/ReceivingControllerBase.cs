@@ -122,9 +122,10 @@ public abstract class ReceivingControllerBase : ControllerBase
         {
             _logger.LogError(ex, "{Failure}", failure);
 
+            // The database's reason, e.g. a check constraint
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
-                failure);
+                $"{failure} {ex.GetBaseException().Message}");
         }
     }
 

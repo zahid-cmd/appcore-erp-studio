@@ -34,6 +34,9 @@ public class CreatePurchaseDto
     public bool NoVatInvoice { get; set; }
     public string Narration { get; set; } = string.Empty;
     public List<CreatePurchaseLineDto> Lines { get; set; } = new();
+    // MB, Products Received on Purchase ON : the supplier's free
+    // accessories received with this purchase (taken in on Post)
+    public List<PurchaseAccessoryTakeDto> Accessories { get; set; } = new();
 }
 
 
@@ -73,6 +76,10 @@ public class PurchaseUnitDto
     public string KeyNo { get; set; } = string.Empty;
     public string BatteryNo { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
+    // CKD documents in hand / on the portal : Yes / No
+    public string CkdStatus { get; set; } = "No";
+    // Year of manufacture (0 / null = the purchase invoice's year)
+    public int? ManufactureYear { get; set; }
 }
 
 
@@ -150,6 +157,10 @@ public class PurchaseDto
     public DateTime CreatedDate { get; set; }
     public DateTime? ModifiedDate { get; set; }
     public List<PurchaseLineDto> Lines { get; set; } = new();
+    // MB : the free accessories due on the bikes (draft : worked
+    // out from the schemes; posted : the due rows) and the
+    // quantity received with this purchase
+    public List<PurchaseAccessoryLineDto> Accessories { get; set; } = new();
 }
 
 
@@ -420,4 +431,55 @@ public class PurchaseListSupplierDto
     public string SupplierCode { get; set; } = string.Empty;
 
     public string SupplierName { get; set; } = string.Empty;
+}
+
+
+//===============================================================
+// MB : free accessories received with a purchase (Products
+// Received on Purchase ON). Key = scheme + accessory.
+//===============================================================
+
+public class PurchaseAccessoryTakeDto
+{
+    public long BikeAccessorySchemeId { get; set; }
+    public long AccessoryId { get; set; }
+    public decimal Quantity { get; set; }
+}
+
+
+// One accessory due on the purchase's bikes
+public class PurchaseAccessoryLineDto
+{
+    public long BikeAccessorySchemeId { get; set; }
+    public string SchemeCode { get; set; } = string.Empty;
+    public string SchemeName { get; set; } = string.Empty;
+    // Additional / Promotional
+    public string SchemeKind { get; set; } = string.Empty;
+    public long AccessoryId { get; set; }
+    public string ProductCode { get; set; } = string.Empty;
+    public string AccessoryName { get; set; } = string.Empty;
+    public string Unit { get; set; } = string.Empty;
+    public decimal QuantityDue { get; set; }
+    // Posted : received on Motor Bike Receiving or closed
+    public decimal ReceivedElsewhere { get; set; }
+    // Received with this purchase (draft : to take in on Post)
+    public decimal QuantityTaken { get; set; }
+}
+
+
+// Draft : work out the dues of the bikes on the page
+//   POST accessory-preview { PurchaseDate, Lines:[{ ProductId, Bikes }] }
+public class PurchaseAccessoryPreviewDto
+{
+    // yyyy-MM-dd
+    public string PurchaseDate { get; set; } = string.Empty;
+    public List<PurchaseAccessoryPreviewLineDto> Lines { get; set; } = new();
+}
+
+
+public class PurchaseAccessoryPreviewLineDto
+{
+    public long ProductId { get; set; }
+    // Quantity + free quantity
+    public decimal Bikes { get; set; }
 }

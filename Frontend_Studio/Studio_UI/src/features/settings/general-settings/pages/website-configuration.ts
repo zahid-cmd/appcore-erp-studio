@@ -153,6 +153,7 @@ implements OnInit, AfterViewInit, OnDestroy
         { id:'contact', label:'Contact & Location' },
         { id:'hours', label:'Hours & Social' },
         { id:'brands', label:'Brands' },
+        { id:'bikes', label:'Bikes' },
         { id:'hero', label:'Hero' },
         { id:'home', label:'Home Sections' },
         { id:'service', label:'Service & FAQ' },
@@ -331,6 +332,7 @@ implements OnInit, AfterViewInit, OnDestroy
         contact:{ icon:'fa-solid fa-location-dot', text:'Phone, WhatsApp and email on the website, and the map pin.' },
         hours:{ icon:'fa-solid fa-clock', text:'Opening hours in "Visit us" and the social links in the footer.' },
         brands:{ icon:'fa-solid fa-tag', text:'Which brands show, their order and brand pages, and brands per branch.' },
+        bikes:{ icon:'fa-solid fa-motorcycle', text:'Which bike models show, the featured ones, their order, tagline, description (saved to Bike Models) and whether the specification sheet shows (saved to Motor Bike Specifications).' },
         hero:{ icon:'fa-solid fa-image', text:'Showroom photo in the hero : welcome slide and / or background behind the bikes.' },
         home:{ icon:'fa-solid fa-house', text:'Moving strip, offer ribbon and the "Why us" section of the home page.' },
         service:{ icon:'fa-solid fa-screwdriver-wrench', text:'Service cards and the questions in the FAQ.' },
@@ -374,6 +376,7 @@ implements OnInit, AfterViewInit, OnDestroy
                     next:
                         model =>
                         {
+                            model.bikes ??= [];
                             this.model = model;
                             this.fillContact(model);
                             this.fillHeadings();
@@ -591,6 +594,20 @@ implements OnInit, AfterViewInit, OnDestroy
                     ? '88' + digits
                     : digits;
         }
+    }
+
+    // Bikes tab : counts for the header line
+    bikeCounts():
+        { shown:number; featured:number; total:number }
+    {
+        const bikes =
+            this.model?.bikes ?? [];
+
+        return {
+            shown:bikes.filter(b => b.showOnWebsite).length,
+            featured:bikes.filter(b => b.showOnWebsite && b.isFeatured).length,
+            total:bikes.length
+        };
     }
 
     // Brands switched on for the website (columns of "Brands per branch")

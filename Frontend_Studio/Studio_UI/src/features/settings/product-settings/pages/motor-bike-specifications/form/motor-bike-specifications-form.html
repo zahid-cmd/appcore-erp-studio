@@ -385,6 +385,42 @@
 
                     </app-textbox>
 
+
+                    <app-textbox
+
+                        [label]="isElectric ? 'Range (website)' : 'Mileage (website)'"
+
+                        [placeholder]="isElectric ? 'e.g. 80 km per charge' : 'e.g. 45 km per litre'"
+
+                        [(value)]="entity.Mileage"
+
+                        [maxLength]="60"
+
+                        (valueChange)="onValueChange()"
+
+                        [disabled]="isViewMode">
+
+                    </app-textbox>
+
+
+                    <app-textbox
+
+                        label="Top Speed (km/h)"
+
+                        placeholder="e.g. 60"
+
+                        inputMode="numeric"
+
+                        [value]="numbers.topspeed"
+
+                        (valueChange)="onNumber('topspeed', $event)"
+
+                        [maxLength]="3"
+
+                        [disabled]="isViewMode">
+
+                    </app-textbox>
+
                 </app-form-section>
 
 
@@ -495,31 +531,16 @@
 
 
                 <!-- =========================================
-                     WEBSITE & REMARKS
+                     REMARKS
                 ========================================== -->
 
                 <app-form-section
 
-                    title="Website & Remarks"
+                    title="Remarks"
 
-                    icon="fas fa-globe">
+                    icon="fas fa-comment-dots">
 
 
-                    <app-dropdown
-
-                        label="Show on Website"
-
-                        [items]="websiteItems"
-
-                        [(value)]="entity.ShowOnWebsite"
-
-                        (valueChange)="onValueChange()"
-
-                        [disabled]="isViewMode"
-
-                        [required]="true">
-
-                    </app-dropdown>
 
 
                     <div class="mbs-hint">

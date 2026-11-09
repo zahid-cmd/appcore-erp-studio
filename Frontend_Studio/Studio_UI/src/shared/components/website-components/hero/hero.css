@@ -535,16 +535,17 @@
 }
 
 
-/* 4 tabs share the row (no half tab behind the arrows) */
+/* Up to 6 compact tabs on the row ("REVOO - A04" needs little room);
+   fewer slides : the tabs keep their size instead of stretching */
 .tab
 {
-    flex:1 1 0;
+    flex:0 0 calc((100% - 50px) / 6);
     min-width:0;
     height:62px;
     display:flex;
     align-items:center;
-    gap:12px;
-    padding:0 16px 0 14px;
+    gap:10px;
+    padding:0 12px;
     border:1px solid var(--w-card-edge);
     border-radius:14px;
     background:var(--w-glass);
@@ -804,8 +805,38 @@
 /* Welcome slide */
 .welcome-title
 {
-    font-size:clamp(44px, 6vw, 84px);
-    line-height:.92;
+    /* one line : the size follows the screen width so the
+       whole title fits the left column */
+    font-size:clamp(22px, 3.2vw, 52px);
+    line-height:1;
+    white-space:nowrap;
+}
+
+/* Bike name : one line, the model code (A09, C32Y ...) a
+   little bigger and in the accent colour */
+.bike-title
+{
+    font-size:clamp(26px, 4vw, 66px);
+    line-height:1;
+    white-space:nowrap;
+}
+
+.model-code
+{
+    display:inline-block;
+    font-size:1.45em;
+    color:var(--w-accent);
+    text-shadow:0 6px 28px color-mix(in srgb, var(--w-accent) 35%, transparent);
+}
+
+/* Company name : bigger, in the theme's accent colour
+   (works in both Light and Deep) */
+.welcome-brand
+{
+    display:inline-block;
+    font-size:1.38em;
+    color:var(--w-accent);
+    text-shadow:0 6px 28px color-mix(in srgb, var(--w-accent) 35%, transparent);
 }
 
 .welcome-text
@@ -1033,4 +1064,28 @@
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
+}
+
+
+/* Tablets and phones : 3 / 2 tabs in view, swipe for the rest */
+@media (max-width: 960px)
+{
+    .tabs
+    {
+        overflow-x:auto;
+        scrollbar-width:none;
+    }
+
+    .tab
+    {
+        flex-basis:calc((100% - 20px) / 3);
+    }
+}
+
+@media (max-width: 640px)
+{
+    .tab
+    {
+        flex-basis:calc((100% - 10px) / 2);
+    }
 }

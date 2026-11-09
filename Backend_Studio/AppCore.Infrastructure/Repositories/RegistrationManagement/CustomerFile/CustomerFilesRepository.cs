@@ -659,6 +659,19 @@ public class CustomerFilesRepository
         Dictionary<long, CustomerFiles> fileById =
             files.ToDictionary(x => x.CustomerFileId);
 
+        // CKD documents per chassis (bike records; an opening file
+        // without one uses its own status)
+        List<string> chassisList =
+            files.Select(x => x.ChassisNo.ToUpper()).Distinct().ToList();
+
+        Dictionary<string, string> ckdByChassis =
+            (await _context.Set<AppCore.Domain.Entities.Procurement.MotorBikePurchase.MotorBikeUnits>().AsNoTracking()
+                .Where(x => !x.IsDeleted && chassisList.Contains(x.ChassisNo.ToUpper()))
+                .Select(x => new { Chassis = x.ChassisNo.ToUpper(), x.CkdStatus })
+                .ToListAsync())
+            .GroupBy(x => x.Chassis)
+            .ToDictionary(g => g.Key, g => g.Any(x => x.CkdStatus == "Yes") ? "Yes" : "No");
+
         Dictionary<long, CustomerFileNameTransfers> transferById =
             transfers.ToDictionary(x => x.NameTransferId);
 
@@ -731,7 +744,8 @@ public class CustomerFilesRepository
                             CollectedDate = DateText(x.CollectedDate),
                             Status = x.Status,
                             Remarks = x.Remarks,
-                            PendingTransferNo = pendingByFile.GetValueOrDefault(x.CustomerFileId, string.Empty)
+                            PendingTransferNo = pendingByFile.GetValueOrDefault(x.CustomerFileId, string.Empty),
+                            CkdStatus = ckdByChassis.GetValueOrDefault(x.ChassisNo.ToUpper(), x.CkdStatus)
                         };
                     }).ToList(),
 
@@ -1067,6 +1081,32 @@ public class CustomerFilesRepository
 
 
     //===========================================================
+    // CKD DOCUMENTS : the bike's status (MotorBikeUnits, by
+    // chassis); a chassis with no bike record (opening file) uses
+    // the file's own status
+    //===========================================================
+
+    private async Task<bool> CkdReadyAsync
+    (
+        CustomerFiles file
+    )
+    {
+        string chassis = file.ChassisNo.Trim().ToUpperInvariant();
+
+        List<string> statuses =
+            await _context.Set<AppCore.Domain.Entities.Procurement.MotorBikePurchase.MotorBikeUnits>().AsNoTracking()
+                .Where(x => !x.IsDeleted && x.ChassisNo.ToUpper() == chassis)
+                .Select(x => x.CkdStatus)
+                .ToListAsync();
+
+        return statuses.Count > 0
+            ? statuses.Any(x => x == "Yes")
+            : file.CkdStatus == "Yes";
+    }
+
+
+
+    //===========================================================
     // CUSTODY CHARGE
     //===========================================================
 
@@ -1235,6 +1275,13 @@ public class CustomerFilesRepository
                 {
                     throw new InvalidOperationException(
                         $"Transfer {pendingNo} is waiting for its fee : collect or cancel it first.");
+                }
+
+                // CKD documents must be in hand / on the portal
+                if (!await CkdReadyAsync(entity))
+                {
+                    throw new InvalidOperationException(
+                        $"CKD documents of chassis {entity.ChassisNo} are not marked Yes : the file cannot be ready for delivery (Inventory Status > CKD Documents Status).");
                 }
 
                 DateOnly ready = ParseDate(dto.Date, "Ready Date");

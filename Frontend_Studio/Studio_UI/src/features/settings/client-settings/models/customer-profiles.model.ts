@@ -103,6 +103,19 @@ export interface Customer
     IsWalkIn:
         boolean;
 
+    // Corporate / Institution (Inbound only) : no NID, Date of
+    // Birth, Father's / Mother's Name; TIN / BIN instead
+    IsCorporate:
+        boolean;
+
+    // 12 digits, optional (Corporate)
+    TinNo:
+        string;
+
+    // 9 or 13 digits, optional (Corporate)
+    BinNo:
+        string;
+
     // Location display name (from the server)
     LocationName?:
         string;
@@ -201,6 +214,16 @@ export interface CreateCustomer
     // Update : false = clear the tag; null / missing = keep it
     IsWalkIn?:
         boolean | null;
+
+    // Corporate / Institution (Inbound only), TIN, BIN
+    IsCorporate:
+        boolean;
+
+    TinNo:
+        string;
+
+    BinNo:
+        string;
 }
 
 

@@ -303,6 +303,25 @@ public abstract class PurchaseControllerBase : ControllerBase
 
 
     //===========================================================
+    // MB draft : the supplier's free accessories due on the bikes
+    // on the page (schemes valid on the purchase date)
+    //   POST accessory-preview { PurchaseDate, Lines:[{ProductId, Bikes}] }
+    //===========================================================
+
+    [HttpPost("accessory-preview")]
+    public Task<IActionResult> PreviewAccessories(
+        [FromBody] PurchaseAccessoryPreviewDto? dto)
+    {
+        return Run(
+            async () =>
+                Ok(
+                    await _repository.PreviewAccessoriesAsync(
+                        dto ?? new PurchaseAccessoryPreviewDto())),
+            "Failed to work out the free accessories.");
+    }
+
+
+    //===========================================================
     // Open Purchase Orders of a supplier (PO Required ON)
     //   GET open-orders?supplierCode=SUP-000001&keepOrderId=12
     //===========================================================

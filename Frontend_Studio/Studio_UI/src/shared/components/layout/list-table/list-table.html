@@ -134,6 +134,23 @@
 
 
                         <!-- =================================================
+                             THE PAGE'S OWN CELL (type 'template')
+                        ================================================== -->
+
+                        <ng-container
+                            *ngIf="column.type==='template' && cellTemplate">
+
+                            <ng-container
+                                *ngTemplateOutlet="
+                                    cellTemplate;
+                                    context:{ $implicit:row, column:column }
+                                ">
+                            </ng-container>
+
+                        </ng-container>
+
+
+                        <!-- =================================================
                              SERIAL
                         ================================================== -->
 

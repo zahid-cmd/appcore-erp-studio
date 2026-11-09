@@ -33,6 +33,29 @@ Routes =
 
             // SUBMENU ROUTE PLACEHOLDER
 
+            //===========================================================
+            // Sales Invoices - MB (hand-wired : the shared Sales
+            // Invoice pages)
+            //===========================================================
+
+            {
+                path:'sales-invoices-mb',
+
+                data:
+                {
+                    breadcrumb:'Sales Invoices - MB'
+                },
+
+                loadChildren:() =>
+                    import(
+                        './sales-invoices-mb.routes'
+                    )
+                    .then(
+                        m =>
+                            m.SalesInvoicesMbRoutes
+                    )
+            },
+
         ]
 
     }

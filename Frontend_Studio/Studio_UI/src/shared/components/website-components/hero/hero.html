@@ -95,7 +95,7 @@
 
                     <span class="badge rise" style="--d:0">{{ content().company.name }}</span>
 
-                    <h1 class="model welcome-title rise" style="--d:1">{{ welcomeTitle() }}</h1>
+                    <h1 class="model welcome-title rise" style="--d:1">{{ welcomeParts().before }}<span class="welcome-brand">{{ welcomeParts().brand }}</span>{{ welcomeParts().after }}</h1>
 
                     @if (welcomeText())
                     {
@@ -148,7 +148,7 @@
                         <p class="tagline rise" style="--d:1">{{ s.tagline }}</p>
                     }
 
-                    <h1 class="model rise" style="--d:2">{{ s.model }}</h1>
+                    <h1 class="model bike-title rise" style="--d:2">{{ modelParts(s.model).name }}<span class="model-code">{{ modelParts(s.model).code }}</span></h1>
 
                     <div class="tiles rise" style="--d:3">
                         @if (s.engine)

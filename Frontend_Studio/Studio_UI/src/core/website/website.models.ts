@@ -128,6 +128,9 @@ export interface WebsiteBike
 
     tagline:string;
 
+    // Longer text from the Bikes tab (optional)
+    description?:string;
+
     engine:string;
 
     mileage:string;

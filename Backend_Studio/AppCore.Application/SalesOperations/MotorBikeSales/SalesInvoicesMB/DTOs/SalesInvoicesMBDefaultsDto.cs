@@ -1,4 +1,11 @@
 //===============================================================
+// Namespaces
+//===============================================================
+
+using AppCore.Application.SalesOperations.Shared;
+
+
+//===============================================================
 // Namespace
 //===============================================================
 
@@ -6,20 +13,10 @@ namespace AppCore.Application.SalesOperations.MotorBikeSales;
 
 
 //===============================================================
-// SalesInvoicesMbDefaultsDto
+// Sales Invoices - MB (every field is in the shared SalesInvoiceDefaultsDto)
 //===============================================================
 
 public class SalesInvoicesMbDefaultsDto
+    : SalesInvoiceDefaultsDto
 {
-    //===========================================================
-    // Code
-    //===========================================================
-
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
 }

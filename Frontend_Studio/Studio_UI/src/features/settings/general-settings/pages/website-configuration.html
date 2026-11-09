@@ -1,6 +1,6 @@
 <!-- ===========================================================
      WEBSITE CONFIGURATION
-     One record : opens straight into the form. Six tabs.
+     One record : opens straight into the form.
 ============================================================ -->
 
 <div class="app-form-page">
@@ -503,6 +503,77 @@
                                             }
                                         </tbody>
                                     </table>
+                                </div>
+
+                            </app-form-section>
+
+                        </app-form-grid>
+                    }
+
+                    @case ('bikes')
+                    {
+                        <!-- SECTION 05 / BIKES : website fields of Bike Models -->
+                        <app-form-grid class="wc-fill"
+                            [columns]="1">
+
+                            <app-form-section
+                                title="Bikes on the website"
+                                icon="fa-solid fa-motorcycle">
+
+                                <span class="wc-hint">From Bike Models. The order here is the order on the website; featured bikes come first. Tagline and description show on the slides and the bike page; empty = the website's own text. Specs = the Motor Bike Specifications sheet (None = no record yet). {{ bikeCounts().shown }} of {{ bikeCounts().total }} shown, {{ bikeCounts().featured }} featured.</span>
+
+                                <div class="wc-bike-list">
+                                    <div class="wc-bike-head">
+                                        <span></span>
+                                        <span></span>
+                                        <span>Bike model</span>
+                                        <span class="wc-c">Show</span>
+                                        <span class="wc-c">Featured</span>
+                                        <span class="wc-c">Specs</span>
+                                        <span>Tagline</span>
+                                        <span>Description</span>
+                                    </div>
+                                    @for (b of m.bikes; track b.bikeModelId; let i = $index; let last = $last)
+                                    {
+                                        <div class="wc-bike-row" [class.wc-off]="!b.showOnWebsite">
+                                            <span class="wc-order">
+                                                <button type="button" aria-label="Move up" title="Up" [disabled]="i === 0" (click)="move(m.bikes, i, -1)"><i class="fa-solid fa-chevron-up"></i></button>
+                                                <button type="button" aria-label="Move down" title="Down" [disabled]="last" (click)="move(m.bikes, i, 1)"><i class="fa-solid fa-chevron-down"></i></button>
+                                            </span>
+                                            <span class="wc-bike-photo">
+                                                @if (b.photoPath)
+                                                {
+                                                    <img [src]="fileUrl(b.photoPath)" [alt]="b.modelName">
+                                                }
+                                                @else
+                                                {
+                                                    <i class="fa-solid fa-motorcycle" aria-hidden="true"></i>
+                                                }
+                                            </span>
+                                            <span class="wc-bike-name">
+                                                <b>{{ b.modelName }}</b>
+                                                <small>{{ b.brandName }} · {{ b.modelCode }}@if (b.bikeType) { · {{ b.bikeType }} }</small>
+                                            </span>
+                                            <span class="wc-c"><app-checkbox appearance="switch" color="success" [value]="b.showOnWebsite" (valueChange)="b.showOnWebsite = $event"></app-checkbox></span>
+                                            <span class="wc-c"><app-checkbox appearance="switch" color="success" [disabled]="!b.showOnWebsite" [value]="b.isFeatured" (valueChange)="b.isFeatured = $event"></app-checkbox></span>
+                                            <span class="wc-c" [title]="b.hasSpecs ? 'Show the specification sheet on the website' : 'No record in Motor Bike Specifications yet'">
+                                                @if (b.hasSpecs)
+                                                {
+                                                    <app-checkbox appearance="switch" color="success" [disabled]="!b.showOnWebsite" [value]="b.showSpecs" (valueChange)="b.showSpecs = $event"></app-checkbox>
+                                                }
+                                                @else
+                                                {
+                                                    <small class="wc-bike-nospec">None</small>
+                                                }
+                                            </span>
+                                            <input class="wc-in" maxlength="200" placeholder="One short line" [attr.aria-label]="'Tagline of ' + b.modelName" [title]="b.tagline" [value]="b.tagline" (input)="b.tagline = $any($event.target).value">
+                                            <textarea class="wc-in wc-ta wc-bike-desc" maxlength="2000" rows="2" placeholder="A few lines for the bike page" [attr.aria-label]="'Description of ' + b.modelName" [value]="b.description" (input)="b.description = $any($event.target).value"></textarea>
+                                        </div>
+                                    }
+                                    @empty
+                                    {
+                                        <p class="wc-empty">No active bike models in Bike Models.</p>
+                                    }
                                 </div>
 
                             </app-form-section>

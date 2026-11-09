@@ -1,0 +1,115 @@
+:host
+{
+    display: inline-block;
+}
+
+.yp-trigger
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 84px;
+    height: 30px;
+    padding: 0 8px 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.yp-trigger:hover:not(:disabled),
+.yp-trigger.yp-open
+{
+    border-color: #475569;
+}
+
+.yp-trigger.yp-open
+{
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.15);
+}
+
+.yp-trigger:focus-visible
+{
+    outline: none;
+    border-color: #475569;
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.15);
+}
+
+.yp-trigger:disabled
+{
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.yp-text.yp-empty
+{
+    color: #94a3b8;
+}
+
+.yp-caret
+{
+    color: #64748b;
+    font-size: 10px;
+    transition: transform 0.15s;
+}
+
+.yp-trigger.yp-open .yp-caret
+{
+    transform: rotate(180deg);
+}
+
+.yp-panel
+{
+    position: fixed;
+    z-index: 3000;
+    display: none;
+    flex-direction: column;
+    padding: 4px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow:
+    0 14px 30px -12px rgba(15, 23, 42, 0.35),
+    0 2px 6px rgba(15, 23, 42, 0.08);
+    box-sizing: border-box;
+}
+
+.yp-panel.yp-shown
+{
+    display: flex;
+}
+
+.yp-item
+{
+    flex: 0 0 auto;
+    height: 28px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: #0f172a;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+}
+
+.yp-item:hover
+{
+    background: #f1f5f9;
+}
+
+.yp-item.yp-on
+{
+    background: #334155;
+    color: #ffffff;
+    font-weight: 700;
+}

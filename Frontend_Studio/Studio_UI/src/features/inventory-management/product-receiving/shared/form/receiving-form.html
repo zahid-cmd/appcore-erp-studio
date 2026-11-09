@@ -139,7 +139,7 @@
 
               <div class="pof-col pof-col-left pur-top">
 
-                <div class="pof-card">
+                <div class="pof-card rc-info-card">
 
                     <div class="pof-card-header">
                         <i class="fas fa-truck-ramp-box"></i>
@@ -226,6 +226,36 @@
                     </div>
 
                 </div>
+
+
+                @if (!isView && isBikes && accessoryRows.length > 0)
+                {
+                    <!-- Free accessories due : same shape and height as Remarks on the right; the table in a pop-up -->
+                    <div class="pof-card rc-acc-ribbon">
+
+                        <div class="pof-card-header">
+                            <i class="fas fa-gift"></i>
+                            <span>Accessories Due</span>
+                        </div>
+
+                        <div class="rc-acc-ribbon-body">
+
+                            <span class="rc-acc-ribbon-sub">{{ qty(accessoryPendingTotal) }} pending · {{ accessoryRows.length }} items from the supplier</span>
+
+                            <button
+                                type="button"
+                                class="pof-shelf rc-acc-open"
+                                [class.rc-acc-open-on]="accessoryAddedTotal > 0"
+                                title="Receive the supplier's free accessories"
+                                (click)="openAccessories()">
+                                <i class="fas fa-gift"></i>
+                                Accessories {{ qty(accessoryAddedTotal) }}/{{ qty(accessoryPendingTotal) }}
+                            </button>
+
+                        </div>
+
+                    </div>
+                }
 
               </div>
 
@@ -353,6 +383,7 @@
                 }
                 @else
                 {
+
                     <!-- Add <item> : loads into the summary on the right -->
                     <div
                         class="pof-card pur-add-card"
@@ -536,82 +567,6 @@
 
                     </div>
 
-                    @if (isBikes && accessoryRows.length > 0)
-                    {
-                        <div class="pof-card rc-acc-card">
-
-                            <div class="pof-card-header">
-                                <i class="fas fa-gift"></i>
-                                <span>Free Accessories Due</span>
-                                <span class="pof-count">{{ qty(accessoryNowTotal) }} of {{ qty(accessoryPendingTotal) }} now</span>
-
-                                <button
-                                    type="button"
-                                    class="pof-shelf rc-acc-all"
-                                    title="Receive every accessory still due, full quantity"
-                                    [disabled]="saving"
-                                    (click)="accessoryNowTotal === accessoryPendingTotal ? accessoriesNone() : accessoriesAll()">
-                                    <i class="fas fa-layer-group"></i>
-                                    {{ accessoryNowTotal === accessoryPendingTotal ? 'None' : 'All' }}
-                                </button>
-                            </div>
-
-                            <div class="rc-acc-scroll appcore-scrollbar">
-                                <table class="pof-table rc-acc-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Accessory</th>
-                                            <th class="pof-num">Due</th>
-                                            <th class="pof-num">Before</th>
-                                            <th class="pof-num">Pending</th>
-                                            <th class="pof-num">Receive Now</th>
-                                            <th class="pof-action">Close</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (row of accessoryRows; track row.Due.PurchaseAccessoryDueId)
-                                        {
-                                            <tr>
-                                                <td>
-                                                    <div class="pof-ledger">{{ row.Due.AccessoryName }}</div>
-                                                    <div class="pof-sub">{{ row.Due.ProductCode }} · {{ row.Due.SchemeCode }} {{ row.Due.SchemeKind }}</div>
-                                                </td>
-                                                <td class="pof-num">{{ qty(row.Due.QuantityDue) }}</td>
-                                                <td class="pof-num rc-dim">{{ qty(row.Due.ReceivedBefore + row.Due.QuantityClosed) }}</td>
-                                                <td class="pof-num rc-strong">{{ qty(row.Due.PendingQuantity) }}</td>
-                                                <td class="pof-num">
-                                                    <input
-                                                        class="rc-acc-qty"
-                                                        inputmode="numeric"
-                                                        placeholder="0"
-                                                        [title]="'Up to ' + qty(row.Due.PendingQuantity)"
-                                                        [value]="row.NowText"
-                                                        [disabled]="saving"
-                                                        (input)="onAccessoryInput(row, $event)">
-                                                </td>
-                                                <td class="pof-action">
-                                                    <button
-                                                        type="button"
-                                                        class="pof-remove"
-                                                        title="Close Due : the supplier will not send the rest"
-                                                        [disabled]="saving"
-                                                        (click)="openCloseDue(row)">
-                                                        <i class="fas fa-ban"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="pof-hint rc-hint">
-                                <i class="fas fa-circle-info"></i>
-                                <span>Supplier's free items : into {{ warehouseText || 'the warehouse' }} at zero cost. Leave 0 to receive later.</span>
-                            </div>
-
-                        </div>
-                    }
                 }
 
               </div>
@@ -628,7 +583,7 @@
                             <i class="fas fa-list-check"></i>
                             <span>Receiving Summary</span>
                             <span class="pof-count">
-                                {{ rowCount }} {{ rowCount === 1 ? 'line' : 'lines' }}@if (!isView && lines.length) { of {{ lines.length }} in transit }
+                                {{ rowCount }} {{ rowCount === 1 ? 'line' : 'lines' }}@if (!isView && lines.length) { @if (accessoryGridRows.length) { · {{ addedLines.length }} } of {{ lines.length }} in transit }
                             </span>
                         </div>
 
@@ -761,6 +716,56 @@
                                                         [disabled]="saving || editingId === line.PurchaseLineId"
                                                         [attr.aria-label]="'Remove ' + line.ProductName"
                                                         (click)="removeLine(line); $event.stopPropagation()">
+                                                        <i class="fas fa-xmark"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+
+                                        <!-- Free accessories : loaded from the Accessories Due pop-up -->
+                                        @for (row of accessoryGridRows; track row.Due.PurchaseAccessoryDueId)
+                                        {
+                                            <tr
+                                                class="pof-row-editable rc-acc-line"
+                                                title="Double-click to change the quantity"
+                                                (dblclick)="openAccessories()">
+                                                <td class="pof-sl">{{ addedLines.length + $index + 1 }}</td>
+                                                <td>
+                                                    <div class="pof-ledger">
+                                                        {{ row.Due.AccessoryName }}
+                                                        <span class="rc-acc-tag"><i class="fas fa-gift"></i> Free</span>
+                                                    </div>
+                                                    <div class="pof-sub">{{ row.Due.ProductCode }} · {{ row.Due.SchemeCode }} {{ row.Due.SchemeKind }}</div>
+                                                </td>
+                                                <td class="pof-num">{{ qty(row.Due.QuantityDue) }} <span class="pof-unit">{{ row.Due.Unit }}</span></td>
+                                                <td class="pof-num rc-dim">{{ qty(row.Due.ReceivedBefore + row.Due.QuantityClosed) }}</td>
+                                                <td class="pof-num rc-strong">
+                                                    {{ qty(accessoryAdded(row)) }}
+                                                    @if (accessoryAdded(row) < row.Due.PendingQuantity)
+                                                    {
+                                                        <span class="pof-billed" title="Stays due for a later receiving">{{ qty(row.Due.PendingQuantity - accessoryAdded(row)) }} left</span>
+                                                    }
+                                                </td>
+                                                @if (page.hasShelves)
+                                                {
+                                                    <td class="rc-dim">—</td>
+                                                }
+                                                <td class="pof-action">
+                                                    <button
+                                                        type="button"
+                                                        class="pur-units-btn rc-acc-edit"
+                                                        title="Change in the Accessories Due pop-up"
+                                                        [disabled]="saving"
+                                                        (click)="openAccessories(); $event.stopPropagation()">
+                                                        <i class="fas fa-gift"></i>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        class="pof-remove"
+                                                        title="Remove"
+                                                        [disabled]="saving"
+                                                        [attr.aria-label]="'Remove ' + row.Due.AccessoryName"
+                                                        (click)="removeAccessory(row); $event.stopPropagation()">
                                                         <i class="fas fa-xmark"></i>
                                                     </button>
                                                 </td>
@@ -942,6 +947,137 @@
 
 
     <!-- =====================================================
+         FREE ACCESSORIES DUE MODAL (MB)
+    ====================================================== -->
+
+    @if (accessoryOpen && isBikes && accessoryRows.length > 0)
+    {
+        <div class="pof-overlay" (click)="closeAccessories()">
+
+            <div
+                class="pof-cx rc-acc-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="rc-acc-title"
+                (click)="$event.stopPropagation()">
+
+                <div class="pof-cx-head rc-acc-head">
+
+                    <span class="pof-cx-icon rc-acc-icon">
+                        <i class="fas fa-gift"></i>
+                    </span>
+
+                    <div class="pof-cx-title">
+                        <strong id="rc-acc-title">Accessories Due</strong>
+                        <span>{{ purchase?.PurchaseNo }} · {{ qty(accessoryNowTotal) }} of {{ qty(accessoryPendingTotal) }} now</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="pof-shelf rc-acc-all"
+                        title="Receive every accessory still due, full quantity"
+                        [disabled]="saving"
+                        (click)="accessoryNowTotal === accessoryPendingTotal ? accessoriesNone() : accessoriesAll()">
+                        <i class="fas fa-layer-group"></i>
+                        {{ accessoryNowTotal === accessoryPendingTotal ? 'None' : 'All' }}
+                    </button>
+
+                    <button
+                        type="button"
+                        class="pof-modal-x"
+                        title="Close"
+                        aria-label="Close"
+                        (click)="closeAccessories()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+                <div class="pof-cx-body">
+
+                    <div class="rc-acc-scroll appcore-scrollbar">
+                        <table class="pof-table rc-acc-table">
+                            <thead>
+                                <tr>
+                                    <th>Accessory</th>
+                                    <th class="pof-num">Due</th>
+                                    <th class="pof-num">Before</th>
+                                    <th class="pof-num">Pending</th>
+                                    <th class="pof-num">Receive Now</th>
+                                    <th class="pof-action">Close</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of accessoryRows; track row.Due.PurchaseAccessoryDueId)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="pof-ledger">{{ row.Due.AccessoryName }}</div>
+                                            <div class="pof-sub">{{ row.Due.ProductCode }} · {{ row.Due.SchemeCode }} {{ row.Due.SchemeKind }}</div>
+                                        </td>
+                                        <td class="pof-num">{{ qty(row.Due.QuantityDue) }}</td>
+                                        <td class="pof-num rc-dim">{{ qty(row.Due.ReceivedBefore + row.Due.QuantityClosed) }}</td>
+                                        <td class="pof-num rc-strong">{{ qty(row.Due.PendingQuantity) }}</td>
+                                        <td class="pof-num">
+                                            <input
+                                                class="rc-acc-qty"
+                                                inputmode="numeric"
+                                                placeholder="0"
+                                                [title]="'Up to ' + qty(row.Due.PendingQuantity)"
+                                                [value]="row.NowText"
+                                                [disabled]="saving"
+                                                (input)="onAccessoryInput(row, $event)">
+                                        </td>
+                                        <td class="pof-action">
+                                            <button
+                                                type="button"
+                                                class="pof-remove"
+                                                title="Close Due : the supplier will not send the rest"
+                                                [disabled]="saving"
+                                                (click)="openCloseDue(row)">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                <div class="pof-modal-foot">
+
+                    <span class="pof-modal-note">
+                        <i class="fas fa-circle-info"></i>
+                        Supplier's free items : into {{ warehouseText || 'the warehouse' }} at zero cost. Leave 0 to receive later.
+                    </span>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-light"
+                        (click)="closeAccessories()">
+                        <i class="fas fa-arrow-left"></i>
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        class="pof-btn pof-btn-primary"
+                        [disabled]="saving"
+                        (click)="addAccessories()">
+                        <i class="fas fa-plus"></i>
+                        Add
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <!-- =====================================================
          CLOSE DUE MODAL (MB, free accessories)
     ====================================================== -->
 
@@ -1111,6 +1247,8 @@
                                     <col class="pur-ud-c-key">
                                     <col class="pur-ud-c-bat">
                                 }
+                                <col class="pur-ud-c-year">
+                                <col class="pur-ud-c-ckd">
                                 @if (!d.readonly)
                                 {
                                     <col class="pur-ud-c-act">
@@ -1127,6 +1265,40 @@
                                         <th>Key No @if (keyBattery) { <b class="pof-req">*</b> }</th>
                                         <th>Battery No @if (keyBattery) { <b class="pof-req">*</b> }</th>
                                     }
+                                    <th class="pur-ud-year-head">
+                                        @if (d.readonly)
+                                        {
+                                            Year
+                                        }
+                                        @else
+                                        {
+                                            <button
+                                                type="button"
+                                                class="pur-ud-ckd-all"
+                                                title="Year of manufacture : set every bike to the first bike's year"
+                                                (click)="sameUnitYear()">
+                                                Year
+                                                <i class="fas fa-angles-down"></i>
+                                            </button>
+                                        }
+                                    </th>
+                                    <th class="pur-ud-ckd-head">
+                                        @if (d.readonly)
+                                        {
+                                            CKD Docs
+                                        }
+                                        @else
+                                        {
+                                            <button
+                                                type="button"
+                                                class="pur-ud-ckd-all"
+                                                [title]="allUnitCkdYes(d.rows) ? 'Set every bike back to No' : 'CKD documents in hand / on the portal for every bike : set all Yes'"
+                                                (click)="toggleAllUnitCkd()">
+                                                CKD Docs
+                                                <i [class]="allUnitCkdYes(d.rows) ? 'fas fa-check-double' : 'fas fa-list-check'"></i>
+                                            </button>
+                                        }
+                                    </th>
                                     @if (!d.readonly)
                                     {
                                         <th class="pur-ud-act" aria-label="Clear"></th>
@@ -1149,6 +1321,15 @@
                                                 <td>{{ row.KeyNo || '—' }}</td>
                                                 <td>{{ row.BatteryNo || '—' }}</td>
                                             }
+                                            <td>{{ row.ManufactureYear || '—' }}</td>
+                                            <td>
+                                                <span
+                                                    class="pur-ud-ckd pur-ud-ckd-static"
+                                                    [class.pur-ud-ckd-yes]="unitCkdYes(row)">
+                                                    <i [class]="unitCkdYes(row) ? 'fas fa-circle-check' : 'fas fa-circle-xmark'"></i>
+                                                    {{ unitCkdYes(row) ? 'Yes' : 'No' }}
+                                                </span>
+                                            </td>
                                         }
                                         @else
                                         {
@@ -1167,6 +1348,25 @@
                                                     </app-textbox>
                                                 </td>
                                             }
+                                            <td>
+                                                <app-year-picker
+                                                    [value]="unitYear(row)"
+                                                    [ariaLabel]="'Year of manufacture of bike ' + (u + 1)"
+                                                    (valueChange)="onUnitYear(row, $event)">
+                                                </app-year-picker>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    class="pur-ud-ckd"
+                                                    [class.pur-ud-ckd-yes]="unitCkdYes(row)"
+                                                    [title]="unitCkdYes(row) ? 'CKD documents in hand / on the portal : click for No' : 'CKD documents not yet : click for Yes'"
+                                                    [attr.aria-label]="'CKD documents of bike ' + (u + 1)"
+                                                    (click)="toggleUnitCkd(row)">
+                                                    <i [class]="unitCkdYes(row) ? 'fas fa-circle-check' : 'fas fa-circle-xmark'"></i>
+                                                    {{ unitCkdYes(row) ? 'Yes' : 'No' }}
+                                                </button>
+                                            </td>
                                             <td class="pur-ud-act">
                                                 <button
                                                     type="button"
@@ -1185,7 +1385,7 @@
                                 @if (d.rows.length === 0)
                                 {
                                     <tr>
-                                        <td [attr.colspan]="d.keys ? 6 : 4" class="pof-empty">No bikes.</td>
+                                        <td [attr.colspan]="d.keys ? 8 : 6" class="pof-empty">No bikes.</td>
                                     </tr>
                                 }
 
@@ -1241,3 +1441,5 @@
 </div>
 
 <app-toast></app-toast>
+
+<app-progress-dialog></app-progress-dialog>

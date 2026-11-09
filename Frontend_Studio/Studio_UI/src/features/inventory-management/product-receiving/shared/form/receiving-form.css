@@ -1802,6 +1802,115 @@
     margin-left: auto;
 }
 
+/* Free accessories in the Receiving Summary */
+.rc-acc-tag
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 10.5px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.rc-acc-edit
+{
+    min-width: 34px;
+    justify-content: center;
+}
+
+/* Free Accessories Due : a modal from the Add Motor Bike header */
+.pof-col-left > .pof-card.rc-info-card
+{
+    flex: 1 1 auto;
+}
+
+/* Level with Remarks on the right : same header, same 60px body
+   (6 + 44 + 10, as .pur-narr) */
+.pof-col-left > .pof-card.rc-acc-ribbon.rc-acc-ribbon
+{
+    flex: 0 0 auto;
+}
+
+.rc-acc-ribbon-body
+{
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    min-height: 60px;
+    padding: 6px 16px 10px;
+}
+
+.rc-acc-ribbon-sub
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    color: #64748b;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rc-acc-open
+{
+    flex: 0 0 auto;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.rc-acc-open-on
+{
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.pof-cx.rc-acc-modal
+{
+    max-width: 760px;
+}
+
+.rc-acc-head
+{
+    border-bottom-color: #e2e8f0;
+    background: linear-gradient(120deg, #e2e8f0 0%, #f1f5f9 55%, #f8fafc 100%);
+}
+
+.rc-acc-head::before
+{
+    background: linear-gradient(90deg, #334155, #64748b 55%, #cbd5e1);
+}
+
+.rc-acc-icon
+{
+    background: linear-gradient(135deg, #334155, #64748b);
+    box-shadow: 0 6px 14px -6px rgba(51, 65, 85, 0.7);
+}
+
+.rc-acc-head .pof-cx-title
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.rc-acc-modal .rc-acc-scroll
+{
+    flex: 0 1 auto;
+    max-height: calc(100vh - 300px);
+    min-height: 120px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
 .rc-acc-all
 {
     margin-left: 8px;
@@ -1889,4 +1998,109 @@
 .rc-acc-table.rc-acc-view th:nth-child(3)
 {
     width: 96px;
+}
+
+
+/* CKD documents column (Unit Desk) : Yes / No toggle per bike */
+.pur-ud-c-ckd
+{
+    width: 108px;
+}
+
+.pur-ud-ckd-head
+{
+    white-space: nowrap;
+}
+
+.pur-ud-ckd-all
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pur-ud-ckd-all i
+{
+    color: #2563eb;
+    font-size: 12px;
+}
+
+.pur-ud-ckd
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 72px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #fecaca;
+    border-radius: 999px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pur-ud-ckd:hover
+{
+    border-color: #f87171;
+}
+
+.pur-ud-ckd.pur-ud-ckd-yes
+{
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.pur-ud-ckd.pur-ud-ckd-yes:hover
+{
+    border-color: #22c55e;
+}
+
+.pur-ud-ckd.pur-ud-ckd-static
+{
+    cursor: default;
+}
+
+
+/* Year of manufacture column (Unit Desk) : one year per bike */
+.pur-ud-c-year
+{
+    width: 96px;
+}
+
+.pur-ud-year-head
+{
+    white-space: nowrap;
+}
+
+.pur-ud-year
+{
+    width: 84px;
+    height: 30px;
+    padding: 0 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pur-ud-year:focus
+{
+    border-color: #475569;
+    outline: none;
 }

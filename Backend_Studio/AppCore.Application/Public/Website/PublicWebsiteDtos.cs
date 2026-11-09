@@ -243,6 +243,50 @@ public class PublicBikeModelDto
     public string Stock { get; set; } = string.Empty;
 
     public List<PublicBikeColourDto> Colours { get; set; } = new();
+
+    // From Bike Models (Website Configuration › Bikes). Null when
+    // the model is not linked to a Bike Model : the website then
+    // keeps its own texts.
+    public bool? ShowOnWebsite { get; set; }
+
+    public bool? Featured { get; set; }
+
+    public string Tagline { get; set; } = string.Empty;
+
+    public string Description { get; set; } = string.Empty;
+
+    public int? DisplayOrder { get; set; }
+
+    // From Motor Bike Specifications. ShowSpecs null = no record
+    // (the website keeps its own sheet); false = hide the sheet.
+    public bool? ShowSpecs { get; set; }
+
+    // Short engine / motor line, e.g. "1200 W" or "125 cc"
+    public string Engine { get; set; } = string.Empty;
+
+    // e.g. "80 km per charge" / "60 km/h"; empty = not given
+    public string Mileage { get; set; } = string.Empty;
+
+    public string TopSpeed { get; set; } = string.Empty;
+
+    public List<PublicSpecGroupDto> Specs { get; set; } = new();
+}
+
+
+// One block of the specification sheet
+public class PublicSpecGroupDto
+{
+    public string Title { get; set; } = string.Empty;
+
+    public List<PublicSpecRowDto> Rows { get; set; } = new();
+}
+
+
+public class PublicSpecRowDto
+{
+    public string Label { get; set; } = string.Empty;
+
+    public string Value { get; set; } = string.Empty;
 }
 
 

@@ -459,8 +459,11 @@ implements OnInit, OnDestroy
         {
             header:'Customer Code',
             field:'CustomerCode',
-            width:'130px',
-            align:'center'
+            width:'170px',
+            align:'center',
+            // Corporate / Institution (Inbound)
+            flagField:'IsCorporate',
+            flagText:'Corporate'
         },
         // "Walk-in" tag : Outside customers added at a sales counter
         {

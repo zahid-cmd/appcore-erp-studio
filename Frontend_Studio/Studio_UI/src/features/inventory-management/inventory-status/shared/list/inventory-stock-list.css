@@ -682,3 +682,12 @@
         grid-template-columns:minmax(0, 1fr);
     }
 }
+
+
+/* Tabs : all the same width */
+.is-tabs ::ng-deep .control-tab
+{
+    justify-content: center;
+    min-width: 150px;
+    text-align: center;
+}

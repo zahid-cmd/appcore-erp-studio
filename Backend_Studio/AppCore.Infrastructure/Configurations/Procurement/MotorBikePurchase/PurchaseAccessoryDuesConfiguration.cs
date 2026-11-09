@@ -81,8 +81,32 @@ public class PurchaseAccessoryReceiptsConfiguration
         builder.Property(x => x.BatchNo).IsRequired().HasMaxLength(50);
         builder.Property(x => x.Quantity).HasPrecision(18, 2);
 
+        // PurchaseAccessories_OnPurchase.sql
+        builder.Property(x => x.ReceivedOn).IsRequired().HasMaxLength(10);
+
         builder.HasIndex(x => x.ReceivingId).HasDatabaseName("IX_PurchaseAccessoryReceipts_Receiving");
 
         builder.HasIndex(x => x.PurchaseAccessoryDueId).HasDatabaseName("IX_PurchaseAccessoryReceipts_Due");
+    }
+}
+
+
+public class PurchaseAccessoryTakesConfiguration
+    : IEntityTypeConfiguration<PurchaseAccessoryTakes>
+{
+    public void Configure(
+        EntityTypeBuilder<PurchaseAccessoryTakes> builder)
+    {
+        builder.ToTable("PurchaseAccessoryTakes");
+
+        builder.HasKey(x => x.PurchaseAccessoryTakeId);
+
+        builder.Property(x => x.PurchaseAccessoryTakeId).ValueGeneratedOnAdd();
+
+        builder.Property(x => x.Quantity).HasPrecision(18, 2);
+
+        builder.HasIndex(x => new { x.PurchaseId, x.BikeAccessorySchemeId, x.AccessoryId })
+               .IsUnique()
+               .HasDatabaseName("UX_PurchaseAccessoryTakes_Purchase_Scheme_Accessory");
     }
 }

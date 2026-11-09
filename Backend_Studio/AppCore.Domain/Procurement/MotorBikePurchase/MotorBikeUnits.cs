@@ -40,6 +40,23 @@ public class MotorBikeUnits
 
     // Opening Stock that brought the bike in (PurchaseId 0 then)
     public long? OpeningStockId { get; set; }
+
+    // CKD documents (the distributor's import document set for
+    // BRTA registration / the customer file) : Yes = in hand or on
+    // the CKD portal; No (default) = not yet. No accounting.
+    public string CkdStatus { get; set; } = "No";
+
+    public DateOnly? CkdCheckedDate { get; set; }
+
+    public long? CkdCheckedBy { get; set; }
+
+    public string CkdCheckedByName { get; set; } = string.Empty;
+
+    public string CkdRemarks { get; set; } = string.Empty;
+
+    // Year of manufacture (BRTA Form-17) : defaults to the purchase
+    // invoice's year, editable per bike; null = not known
+    public int? ManufactureYear { get; set; }
     public bool IsDeleted { get; set; }
     public long? DeletedBy { get; set; }
     public DateTime? DeletedDate { get; set; }

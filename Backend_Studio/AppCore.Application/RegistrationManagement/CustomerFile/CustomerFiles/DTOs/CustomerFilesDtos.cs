@@ -129,6 +129,10 @@ public class CustomerFileDto
 
     // A transfer waiting for its fee (blocks another transfer)
     public string PendingTransferNo { get; set; } = string.Empty;
+
+    // CKD documents of the chassis : Yes / No (Ready for Delivery
+    // needs Yes)
+    public string CkdStatus { get; set; } = "No";
 }
 
 

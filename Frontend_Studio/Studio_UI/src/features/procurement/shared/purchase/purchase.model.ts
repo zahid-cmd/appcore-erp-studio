@@ -46,6 +46,12 @@ export interface PurchaseUnit
         string;
     Status?:
         string;
+    // CKD documents in hand / on the portal : 'Yes' / 'No'
+    CkdStatus?:
+        string;
+    // Year of manufacture (default : the purchase date's year)
+    ManufactureYear?:
+        number | null;
 }
 
 
@@ -186,6 +192,57 @@ export interface Purchase
         string;
     Lines:
         PurchaseLine[];
+    // MB : free accessories due on the bikes, with the quantity
+    // received with this purchase (Products Received on Purchase)
+    Accessories?:
+        PurchaseAccessoryLine[];
+}
+
+
+//===============================================================
+// MB : one free accessory due on the purchase's bikes (Supplier
+// Bike Accessory Schemes on the purchase date). Key = scheme +
+// accessory.
+//===============================================================
+
+export interface PurchaseAccessoryLine
+{
+    BikeAccessorySchemeId:
+        number;
+    SchemeCode:
+        string;
+    SchemeName:
+        string;
+    // Additional / Promotional
+    SchemeKind:
+        string;
+    AccessoryId:
+        number;
+    ProductCode:
+        string;
+    AccessoryName:
+        string;
+    Unit:
+        string;
+    QuantityDue:
+        number;
+    // Posted : received on Motor Bike Receiving or closed
+    ReceivedElsewhere:
+        number;
+    // Received with this purchase (draft : taken in on Post)
+    QuantityTaken:
+        number;
+}
+
+
+export interface PurchaseAccessoryTake
+{
+    BikeAccessorySchemeId:
+        number;
+    AccessoryId:
+        number;
+    Quantity:
+        number;
 }
 
 
@@ -271,6 +328,9 @@ export interface CreatePurchase
         string;
     Lines:
         SavePurchaseLine[];
+    // MB, received on purchase : free accessories taken in on Post
+    Accessories?:
+        PurchaseAccessoryTake[];
 }
 
 

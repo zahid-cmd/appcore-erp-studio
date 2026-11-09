@@ -217,6 +217,32 @@ public class UpdateCustomerProfilesDto
         set;
     }
 
+    // Corporate / Institution (Inbound only) : no NID, Date of
+    // Birth, Father's / Mother's Name; TIN and BIN instead
+    // (optional). Such a customer may buy on a Corporate sale (MB).
+    public bool IsCorporate
+    {
+        get;
+        set;
+    }
+
+
+    // Corporate only, optional : 12 digits
+    public string TinNo
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    // Corporate only, optional : 9 or 13 digits
+    public string BinNo
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
 
     //===========================================================
     // Remarks & Status

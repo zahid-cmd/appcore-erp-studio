@@ -47,6 +47,7 @@ from '../../../../shared/components/accounting/accounting.models';
 import
 {
     SalesInvoice,
+    SalesInvoiceBikeUnit,
     SalesInvoiceLine,
     SalesInvoiceAllocation,
     SalesInvoiceListItem,
@@ -348,7 +349,15 @@ export abstract class SalesInvoiceService
             OnHand:this.num(item, 'OnHand'),
             UnallocatedQuantity:this.num(item, 'UnallocatedQuantity'),
             ReturnedQuantity:this.num(item, 'ReturnedQuantity'),
-            Allocations:this.list(item, 'Allocations').map(x => this.normalizeAllocation(x))
+            Allocations:this.list(item, 'Allocations').map(x => this.normalizeAllocation(x)),
+            MotorBikeUnitId:this.num(item, 'MotorBikeUnitId') || null,
+            ChassisNo:this.text(item, 'ChassisNo'),
+            EngineNo:this.text(item, 'EngineNo'),
+            ColorName:this.text(item, 'ColorName'),
+            ManufactureYear:this.num(item, 'ManufactureYear') || null,
+            CkdStatus:this.text(item, 'CkdStatus'),
+            DeliveryStatus:this.text(item, 'DeliveryStatus'),
+            DeliveredDate:this.text(item, 'DeliveredDate')
         };
     }
 
@@ -451,6 +460,7 @@ export abstract class SalesInvoiceService
             CustomerType:this.text(item, 'CustomerType'),
             CustomerIsWalkIn:this.bool(item, 'CustomerIsWalkIn'),
             CustomerTag:this.text(item, 'CustomerTag'),
+            SaleType:this.text(item, 'SaleType'),
             ReceivableLedgerCode:this.text(item, 'ReceivableLedgerCode'),
             MembershipId:this.optionalId(item, 'MembershipId'),
             MembershipNo:this.text(item, 'MembershipNo'),
@@ -517,6 +527,7 @@ export abstract class SalesInvoiceService
             CustomerName:this.text(item, 'CustomerName'),
             CustomerPhone:this.text(item, 'CustomerPhone'),
             CustomerTag:this.text(item, 'CustomerTag'),
+            SaleType:this.text(item, 'SaleType'),
             LineCount:this.num(item, 'LineCount'),
             InvoiceTotal:this.num(item, 'InvoiceTotal'),
             PaidAmount:this.num(item, 'PaidAmount'),
@@ -551,7 +562,10 @@ export abstract class SalesInvoiceService
             PrintAfterPosting:this.bool(item, 'PrintAfterPosting', true),
             AllowWalkInCustomers:this.bool(item, 'AllowWalkInCustomers', true),
             SellAtBatchMrp:this.bool(item, 'SellAtBatchMrp', true),
-            RoundDownWholeTaka:this.bool(item, 'RoundDownWholeTaka', true)
+            RoundDownWholeTaka:this.bool(item, 'RoundDownWholeTaka', true),
+            AllowCorporateSale:this.bool(item, 'AllowCorporateSale', false),
+            CorporateSaleFrom:this.text(item, 'CorporateSaleFrom').substring(0, 10),
+            CorporateSaleUntil:this.text(item, 'CorporateSaleUntil').substring(0, 10)
         };
     }
 
@@ -658,6 +672,7 @@ export abstract class SalesInvoiceService
             CustomerType:type,
             IsWalkIn:walkIn,
             CustomerTag:this.text(item, 'CustomerTag') || (walkIn ? 'Walk-in' : type),
+            IsCorporate:this.bool(item, 'IsCorporate', false),
             IsActive:this.bool(item, 'IsActive', true),
             ReceivableLedgerCode:this.text(item, 'ReceivableLedgerCode'),
             Balance:this.num(item, 'Balance'),
@@ -878,6 +893,103 @@ export abstract class SalesInvoiceService
     }
 
 
+    // MB : the bikes in stock in the warehouse (oldest first); the
+    // invoice's own bikes are not shown as taken
+    getBikeUnits
+    (
+        warehouseId:
+            number,
+        invoiceId:
+            number
+    ):
+        Observable<SalesInvoiceBikeUnit[]>
+    {
+        return this.http
+            .get<any[]>(
+                `${this.apiUrl}/bike-units`,
+                { params:{ warehouseId:String(warehouseId), invoiceId:String(invoiceId || 0) } }
+            )
+            .pipe(
+                map
+                (
+                    response =>
+                        (Array.isArray(response) ? response : []).map
+                        (
+                            x =>
+                            ({
+                                MotorBikeUnitId:this.num(x, 'MotorBikeUnitId'),
+                                ProductId:this.num(x, 'ProductId'),
+                                ProductCode:this.text(x, 'ProductCode'),
+                                ProductName:this.text(x, 'ProductName'),
+                                ProductSubCategoryId:this.num(x, 'ProductSubCategoryId'),
+                                ModelName:this.text(x, 'ModelName'),
+                                ColorName:this.text(x, 'ColorName'),
+                                ChassisNo:this.text(x, 'ChassisNo'),
+                                EngineNo:this.text(x, 'EngineNo'),
+                                KeyNo:this.text(x, 'KeyNo'),
+                                BatteryNo:this.text(x, 'BatteryNo'),
+                                ManufactureYear:this.num(x, 'ManufactureYear') || null,
+                                CkdStatus:this.text(x, 'CkdStatus') === 'Yes' ? 'Yes' : 'No',
+                                StockInDate:this.text(x, 'StockInDate').slice(0, 10),
+                                Mrp:this.num(x, 'Mrp'),
+                                OnInvoiceNo:this.text(x, 'OnInvoiceNo'),
+                                ImageUrl:this.imageUrl(this.text(x, 'ImagePath'))
+                            })
+                        )
+                )
+            );
+    }
+
+
+    // MB : change a chassis' CKD status (Yes -> No needs a reason)
+    setBikeCkd
+    (
+        motorBikeUnitId:
+            number,
+        ckdStatus:
+            string,
+        remarks:
+            string
+    ):
+        Observable<any>
+    {
+        return this.http.put<any>(
+            `${this.apiUrl}/bike-units/${motorBikeUnitId}/ckd`,
+            { CkdStatus:ckdStatus, Remarks:remarks ?? '' });
+    }
+
+
+    // Saved image path (/uploads/...) -> full URL, served from
+    // the API root (apiUrl without /api)
+    private imageUrl
+    (
+        path:
+            string
+    ):
+        string
+    {
+        const value =
+            (path ?? '').trim();
+
+        if
+        (
+            !value
+            ||
+            /^(https?:|blob:|data:)/i.test(value)
+        )
+        {
+            return value;
+        }
+
+        const root =
+            environment.apiUrl
+                .replace(/\/+$/, '')
+                .replace(/\/api$/i, '');
+
+        return `${root}/${value.replace(/^\/+/, '')}`;
+    }
+
+
     // Code / part number / name (contains) or a scanned barcode,
     // optionally within a category / sub category
     searchProducts
@@ -956,6 +1068,7 @@ export abstract class SalesInvoiceService
                                 Phone2:this.text(row, 'Phone2'),
                                 CustomerType:this.text(row, 'CustomerType'),
                                 IsWalkIn:this.bool(row, 'IsWalkIn'),
+                                IsCorporate:this.bool(row, 'IsCorporate', false),
                                 MatchedOn:this.text(row, 'MatchedOn')
                             })
                         )

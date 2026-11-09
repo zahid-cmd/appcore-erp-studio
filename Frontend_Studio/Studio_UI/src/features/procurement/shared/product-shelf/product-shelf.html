@@ -460,8 +460,13 @@
                 {
                     <span class="ps-foot-sum">
                         <b>{{ tray.length }} {{ tray.length === 1 ? 'item' : 'items' }}</b>
-                        · {{ totalQty }}{{ totalFree > 0 ? ' + ' + totalFree + ' free' : '' }}
-                        · <b>Tk {{ totalAmount }}</b>
+                        · Qty {{ totalQty }}{{ totalFree > 0 ? ' + ' + totalFree + ' free' : '' }}
+                    </span>
+
+                    <!-- The total : big, on its own -->
+                    <span class="ps-foot-total">
+                        <span class="ps-foot-total-label">Total</span>
+                        <b>Tk {{ totalAmount }}</b>
                     </span>
 
                     @if (error)

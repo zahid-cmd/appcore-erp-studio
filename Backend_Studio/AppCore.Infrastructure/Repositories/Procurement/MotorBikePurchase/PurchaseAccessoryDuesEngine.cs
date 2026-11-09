@@ -5,6 +5,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.InventoryManagement.ProductReceiving;
+using AppCore.Application.Procurement.Shared;
 using AppCore.Domain.Common;
 using AppCore.Domain.Entities.Procurement.MotorBikePurchase;
 using AppCore.Domain.Entities.Procurement.Shared;
@@ -75,6 +76,11 @@ public static class PurchaseAccessoryDuesEngine
     // Batch source of a received accessory
     public const string SourceScheme = "AccessoryScheme";
 
+    // Where a receipt was taken in (PurchaseAccessoryReceipts)
+    public const string ReceivedOnReceiving = "Receiving";
+
+    public const string ReceivedOnPurchase = "Purchase";
+
     private const string ProductTypeAccessories = "AC";
 
     private const string BucketOnHand = "OnHand";
@@ -142,12 +148,75 @@ public static class PurchaseAccessoryDuesEngine
                 .GroupBy(x => x.ProductId)
                 .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity + x.FreeQuantity));
 
+        List<DueDraft> drafts =
+            await ComputeAsync(context, purchase.PurchaseDate, bikesOfProduct);
+
+        foreach (DueDraft item in drafts)
+        {
+            context.Set<PurchaseAccessoryDues>().Add(
+                new PurchaseAccessoryDues
+                {
+                    PurchaseId = purchase.PurchaseId,
+                    PurchaseNo = Limit(purchase.PurchaseNo, 50),
+                    PurchaseDate = purchase.PurchaseDate,
+                    BranchId = purchase.BranchId,
+                    SupplierCode = Limit(purchase.SupplierCode, 50),
+                    SupplierName = Limit(purchase.SupplierName, 200),
+                    BikeAccessorySchemeId = item.SchemeId,
+                    SchemeCode = Limit(item.SchemeCode, 30),
+                    SchemeName = Limit(item.SchemeName, 150),
+                    SchemeKind = Limit(item.SchemeKind, 20),
+                    AccessoryId = item.AccessoryId,
+                    ProductCode = Limit(item.ProductCode, 50),
+                    AccessoryName = Limit(item.AccessoryName, 200),
+                    Unit = Limit(item.Unit, 30),
+                    BikeQuantity = item.Bikes,
+                    QuantityDue = item.QuantityDue,
+                    QuantityReceived = 0m,
+                    QuantityClosed = 0m,
+                    CloseReason = string.Empty,
+                    Status = StatusPending,
+                    CreatedBy = userId,
+                    CreatedDate = now
+                });
+        }
+    }
+
+
+    // One accessory due from one scheme (worked out, not saved)
+    private sealed class DueDraft
+    {
+        public long SchemeId { get; set; }
+        public string SchemeCode { get; set; } = string.Empty;
+        public string SchemeName { get; set; } = string.Empty;
+        public string SchemeKind { get; set; } = string.Empty;
+        public long AccessoryId { get; set; }
+        public string ProductCode { get; set; } = string.Empty;
+        public string AccessoryName { get; set; } = string.Empty;
+        public string Unit { get; set; } = string.Empty;
+        public decimal Bikes { get; set; }
+        public decimal QuantityDue { get; set; }
+    }
+
+
+    // The dues of a set of bikes (product -> bikes incl. free) on
+    // a date : Supplier schemes valid that day x quantity per bike
+    private static async Task<List<DueDraft>> ComputeAsync
+    (
+        AppDbContext context,
+        DateOnly date,
+        Dictionary<long, decimal> bikesOfProduct
+    )
+    {
+        List<DueDraft> result =
+            new();
+
         List<long> productIds =
             bikesOfProduct.Keys.ToList();
 
         if (productIds.Count == 0)
         {
-            return;
+            return result;
         }
 
         // Product -> bike model (its sub category's model)
@@ -173,11 +242,8 @@ public static class PurchaseAccessoryDuesEngine
 
         if (modelIds.Count == 0)
         {
-            return;
+            return result;
         }
-
-        DateOnly date =
-            purchase.PurchaseDate;
 
         // Supplier schemes valid on the purchase date covering
         // these models
@@ -206,7 +272,7 @@ public static class PurchaseAccessoryDuesEngine
 
         if (schemeModels.Count == 0)
         {
-            return;
+            return result;
         }
 
         List<long> schemeIds =
@@ -251,34 +317,73 @@ public static class PurchaseAccessoryDuesEngine
 
             foreach (var item in items.Where(x => x.BikeAccessorySchemeId == schemeId))
             {
-                context.Set<PurchaseAccessoryDues>().Add(
-                    new PurchaseAccessoryDues
+                result.Add(
+                    new DueDraft
                     {
-                        PurchaseId = purchase.PurchaseId,
-                        PurchaseNo = Limit(purchase.PurchaseNo, 50),
-                        PurchaseDate = purchase.PurchaseDate,
-                        BranchId = purchase.BranchId,
-                        SupplierCode = Limit(purchase.SupplierCode, 50),
-                        SupplierName = Limit(purchase.SupplierName, 200),
-                        BikeAccessorySchemeId = schemeId,
-                        SchemeCode = Limit(scheme.SchemeCode, 30),
-                        SchemeName = Limit(scheme.SchemeName, 150),
-                        SchemeKind = Limit(scheme.SchemeKind, 20),
+                        SchemeId = schemeId,
+                        SchemeCode = scheme.SchemeCode,
+                        SchemeName = scheme.SchemeName,
+                        SchemeKind = scheme.SchemeKind,
                         AccessoryId = item.AccessoryId,
-                        ProductCode = Limit(item.ProductCode, 50),
-                        AccessoryName = Limit(item.AccessoryName, 200),
-                        Unit = Limit(item.Unit, 30),
-                        BikeQuantity = bikes,
-                        QuantityDue = bikes * item.QuantityPerBike,
-                        QuantityReceived = 0m,
-                        QuantityClosed = 0m,
-                        CloseReason = string.Empty,
-                        Status = StatusPending,
-                        CreatedBy = userId,
-                        CreatedDate = now
+                        ProductCode = item.ProductCode,
+                        AccessoryName = item.AccessoryName,
+                        Unit = item.Unit,
+                        Bikes = bikes,
+                        QuantityDue = bikes * item.QuantityPerBike
                     });
             }
         }
+
+        return result;
+    }
+
+
+    //===========================================================
+    // Purchase (draft) : the accessories the supplier owes for
+    // these bikes on this date, before the purchase is posted
+    //===========================================================
+
+    public static async Task<List<PurchaseAccessoryLineDto>> PreviewAsync
+    (
+        AppDbContext context,
+        DateOnly date,
+        IEnumerable<(long ProductId, decimal Bikes)> lines
+    )
+    {
+        Dictionary<long, decimal> bikesOfProduct =
+            lines
+                .Where(x => x.ProductId > 0 && x.Bikes > 0m)
+                .GroupBy(x => x.ProductId)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.Bikes));
+
+        if (bikesOfProduct.Count == 0)
+        {
+            return new List<PurchaseAccessoryLineDto>();
+        }
+
+        List<DueDraft> drafts =
+            await ComputeAsync(context, date, bikesOfProduct);
+
+        return drafts
+            .OrderBy(x => x.SchemeCode)
+            .ThenBy(x => x.AccessoryName)
+            .Select
+            (
+                x =>
+                    new PurchaseAccessoryLineDto
+                    {
+                        BikeAccessorySchemeId = x.SchemeId,
+                        SchemeCode = x.SchemeCode,
+                        SchemeName = x.SchemeName,
+                        SchemeKind = x.SchemeKind,
+                        AccessoryId = x.AccessoryId,
+                        ProductCode = x.ProductCode,
+                        AccessoryName = x.AccessoryName,
+                        Unit = x.Unit,
+                        QuantityDue = x.QuantityDue
+                    }
+            )
+            .ToList();
     }
 
 
@@ -406,7 +511,10 @@ public static class PurchaseAccessoryDuesEngine
         string documentType,
         List<CreateReceivingAccessoryDto> inputs,
         long userId,
-        DateTime now
+        DateTime now,
+        // Receiving (Motor Bike Receiving) / Purchase (a purchase
+        // that receives its goods : Products Received on Purchase)
+        string receivedOn = ReceivedOnReceiving
     )
     {
         List<CreateReceivingAccessoryDto> wanted =
@@ -533,6 +641,7 @@ public static class PurchaseAccessoryDuesEngine
                     Quantity = input.Quantity,
                     BatchNo = batchNo,
                     WarehouseId = warehouseId,
+                    ReceivedOn = receivedOn,
                     IsCancelled = false,
                     CreatedBy = userId,
                     CreatedDate = now
@@ -601,13 +710,14 @@ public static class PurchaseAccessoryDuesEngine
         string documentType,
         string reason,
         long userId,
-        DateTime now
+        DateTime now,
+        string receivedOn = ReceivedOnReceiving
     )
     {
         List<PurchaseAccessoryReceipts> receipts =
             await context
                 .Set<PurchaseAccessoryReceipts>()
-                .Where(x => x.ReceivingId == receivingId && !x.IsCancelled)
+                .Where(x => x.ReceivingId == receivingId && x.ReceivedOn == receivedOn && !x.IsCancelled)
                 .ToListAsync();
 
         if (receipts.Count == 0)
@@ -656,7 +766,7 @@ public static class PurchaseAccessoryDuesEngine
                 || batch.QuantityOnHand < receipt.Quantity)
             {
                 throw new InvalidOperationException(
-                    $"{receipt.AccessoryName} : only {Qty(Math.Max(0m, held))} of the {Qty(receipt.Quantity)} received is still in {warehouseName}; the rest was given, moved or sold. The receiving cannot be cancelled.");
+                    $"{receipt.AccessoryName} : only {Qty(Math.Max(0m, held))} of the {Qty(receipt.Quantity)} received is still in {warehouseName}; the rest was given, moved or sold. The {(receivedOn == ReceivedOnPurchase ? "purchase" : "receiving")} cannot be cancelled.");
             }
         }
 
@@ -670,7 +780,7 @@ public static class PurchaseAccessoryDuesEngine
                 .ToDictionaryAsync(x => x.PurchaseAccessoryDueId);
 
         string narration =
-            Limit($"Receiving {receivingNo} cancelled : {reason}", 300);
+            Limit($"{(receivedOn == ReceivedOnPurchase ? "Purchase" : "Receiving")} {receivingNo} cancelled : {reason}", 300);
 
         foreach (PurchaseAccessoryReceipts receipt in receipts)
         {
@@ -730,7 +840,7 @@ public static class PurchaseAccessoryDuesEngine
         return await
         (
             from r in context.Set<PurchaseAccessoryReceipts>().AsNoTracking()
-            where r.ReceivingId == receivingId
+            where r.ReceivingId == receivingId && r.ReceivedOn == ReceivedOnReceiving
             join d in context.Set<PurchaseAccessoryDues>().AsNoTracking()
                 on r.PurchaseAccessoryDueId equals d.PurchaseAccessoryDueId into dueRows
             from d in dueRows.DefaultIfEmpty()

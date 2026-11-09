@@ -1,0 +1,492 @@
+@if (open)
+{
+    <div class="ps-backdrop" [style.padding]="canvasPadding">
+
+        <div
+            class="ps-modal"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-label]="title">
+
+            <!-- Header -->
+            <div class="ps-head">
+
+                <div class="ps-head-icon">
+                    <i class="fas fa-motorcycle"></i>
+                </div>
+
+                <div class="ps-head-text">
+                    <div class="ps-title">{{ title }}</div>
+                    <div class="ps-subtitle">{{ subtitle }}</div>
+                </div>
+
+                <div class="ps-head-right">
+
+                    <span class="ps-term">Priced bikes only</span>
+
+                    @if (maxPick !== null)
+                    {
+                        <span class="ps-term" title="Regular sale : one chassis per invoice">Regular · 1 chassis</span>
+                    }
+
+                    @if (unpricedCount > 0)
+                    {
+                        <span class="ps-term bs-term-warn" title="Bikes without an MRP cannot be sold : price them in Product Pricing">
+                            {{ unpricedCount }} not priced
+                        </span>
+                    }
+
+                    <button
+                        type="button"
+                        class="ps-close"
+                        aria-label="Close the shelf"
+                        title="Close"
+                        (click)="requestClose()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- Toolbar : search, model chips -->
+            <div class="ps-bar">
+
+                <label class="ps-search">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input
+                        type="text"
+                        placeholder="Model, colour, chassis or engine (Enter picks a chassis)"
+                        aria-label="Search bikes"
+                        [value]="search"
+                        (input)="onSearch($event)"
+                        (keydown.enter)="onSearchEnter()">
+                </label>
+
+                <div class="ps-chips">
+
+                    <button
+                        type="button"
+                        class="ps-chip"
+                        [class.ps-chip-on]="modelId === null"
+                        (click)="pickModel(null)">
+                        All · {{ allCount }}
+                    </button>
+
+                    @for (chip of chips; track chip.id)
+                    {
+                        <button
+                            type="button"
+                            class="ps-chip"
+                            [class.ps-chip-on]="modelId === chip.id"
+                            (click)="pickModel(chip.id)">
+                            {{ chip.label }} · {{ chip.count }}
+                        </button>
+                    }
+
+                </div>
+
+            </div>
+
+            <!-- Body -->
+            <div class="ps-body">
+
+                <div class="ps-cards-wrap appcore-scrollbar">
+
+                    @if (card; as c)
+                    {
+                        <!-- 2. The chassis of the picked model / colour -->
+                        <div class="bs-panel">
+
+                            <div class="bs-panel-head">
+
+                                <button
+                                    type="button"
+                                    class="bs-back"
+                                    title="Back to the models"
+                                    (click)="backToCards()">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Models
+                                </button>
+
+                                <div class="bs-panel-img">
+                                    @if (c.imageUrl)
+                                    {
+                                        <img [src]="c.imageUrl" [alt]="c.name">
+                                    }
+                                    @else
+                                    {
+                                        <i class="fas fa-motorcycle"></i>
+                                    }
+                                </div>
+
+                                <div class="bs-panel-title">
+                                    <b>{{ c.name }}</b>
+                                    <span>
+                                        {{ c.code }}
+                                        @if (c.colorName)
+                                        {
+                                            ·
+                                            <i
+                                                class="ps-color-dot"
+                                                [class.ps-color-dot-light]="c.colorLight"
+                                                [style.background]="c.colorHex || '#94a3b8'"></i>
+                                            {{ c.colorName }}
+                                        }
+                                    </span>
+                                </div>
+
+                                <div class="bs-panel-facts">
+                                    <span><small>MRP</small><b>{{ mrpText(c) }}</b></span>
+                                    <span><small>Free</small><b>{{ c.free }}</b></span>
+                                </div>
+
+                            </div>
+
+                            <div class="bs-grid">
+
+                                <div class="bs-row bs-row-head">
+                                    <span></span>
+                                    <span>Chassis No</span>
+                                    <span>Engine No</span>
+                                    <span>Year</span>
+                                    <span>Stock In</span>
+                                    <span>CKD</span>
+                                    <span class="bs-right">MRP</span>
+                                </div>
+
+                                @for (u of chassis; track u.MotorBikeUnitId; let i = $index)
+                                {
+                                    <div
+                                        class="bs-row"
+                                        role="button"
+                                        tabindex="0"
+                                        [class.bs-row-on]="isPicked(u)"
+                                        [class.bs-row-off]="!isFree(u)"
+                                        [attr.title]="isTaken(u) ? 'On this invoice already' : (u.OnInvoiceNo ? 'On invoice ' + u.OnInvoiceNo : (i === 0 ? 'Oldest chassis' : null))"
+                                        (click)="toggle(u)"
+                                        (keydown.enter)="toggle(u)">
+
+                                        <span class="bs-tick">
+                                            @if (isTaken(u))
+                                            {
+                                                <i class="fas fa-circle-check bs-tick-in"></i>
+                                            }
+                                            @else if (u.OnInvoiceNo)
+                                            {
+                                                <i class="fas fa-lock"></i>
+                                            }
+                                            @else
+                                            {
+                                                <i [class]="isPicked(u) ? 'fas fa-square-check' : 'far fa-square'"></i>
+                                            }
+                                        </span>
+
+                                        <span class="bs-mono">
+                                            {{ u.ChassisNo }}
+                                            @if (u.OnInvoiceNo)
+                                            {
+                                                <em class="bs-on">on {{ u.OnInvoiceNo }}</em>
+                                            }
+                                            @else if (isTaken(u))
+                                            {
+                                                <em class="bs-on bs-on-here">on this invoice</em>
+                                            }
+                                            <small class="bs-sub"><b>Key</b> {{ u.KeyNo }}</small>
+                                        </span>
+
+                                        <span class="bs-mono">
+                                            {{ u.EngineNo }}
+                                            <small class="bs-sub"><b>Battery</b> {{ u.BatteryNo }}</small>
+                                        </span>
+
+                                        <span>{{ u.ManufactureYear || '-' }}</span>
+
+                                        <span>{{ dateText(u.StockInDate) }}</span>
+
+                                        <span (click)="$event.stopPropagation()">
+                                            <button
+                                                type="button"
+                                                class="bs-ckd"
+                                                [class.bs-ckd-no]="u.CkdStatus !== 'Yes'"
+                                                [disabled]="ckdBusyId === u.MotorBikeUnitId"
+                                                [title]="u.CkdStatus === 'Yes' ? 'CKD documents in hand : press to change to No (reason needed)' : 'CKD documents not in hand : press to change to Yes'"
+                                                (click)="flipCkd(u, $event)">
+                                                @if (ckdBusyId === u.MotorBikeUnitId)
+                                                {
+                                                    <i class="fas fa-spinner fa-spin"></i>
+                                                }
+                                                @else
+                                                {
+                                                    <i class="fas fa-right-left"></i>
+                                                }
+                                                {{ u.CkdStatus === 'Yes' ? 'Yes' : 'No' }}
+                                            </button>
+                                        </span>
+
+                                        <span class="bs-right"><b>{{ money(u.Mrp) }}</b></span>
+
+                                    </div>
+
+                                    @if (ckdEditId === u.MotorBikeUnitId)
+                                    {
+                                        <div class="bs-reason">
+                                            <i class="fas fa-triangle-exclamation"></i>
+                                            <input
+                                                type="text"
+                                                maxlength="250"
+                                                placeholder="Reason for CKD Yes -> No (e.g. lost by the customer : GD no.)"
+                                                aria-label="Reason"
+                                                [value]="ckdReason"
+                                                (input)="onCkdReason($event)"
+                                                (keydown.enter)="saveCkdNo(u)"
+                                                (keydown.escape)="cancelCkd()">
+                                            <button type="button" class="ps-btn" (click)="cancelCkd()">Cancel</button>
+                                            <button
+                                                type="button"
+                                                class="ps-btn ps-btn-danger"
+                                                [disabled]="!ckdReason.trim()"
+                                                (click)="saveCkdNo(u)">
+                                                Set No
+                                            </button>
+                                        </div>
+                                    }
+                                }
+
+                                @if (chassis.length === 0)
+                                {
+                                    <div class="ps-empty">
+                                        <i class="fas fa-box-open"></i>
+                                        No chassis of this model in stock here.
+                                    </div>
+                                }
+
+                            </div>
+
+                        </div>
+                    }
+                    @else
+                    {
+                        <!-- 1. The models (one card per model and colour) -->
+                        @if (cards.length === 0)
+                        {
+                            <div class="ps-empty">
+                                <i class="fas fa-box-open"></i>
+                                No priced bike matches. Clear the search or pick another model.
+                            </div>
+                        }
+
+                        <div class="ps-cards">
+
+                            @for (c of cards; track c.productId)
+                            {
+                                <div
+                                    class="ps-card"
+                                    role="button"
+                                    tabindex="0"
+                                    [attr.aria-label]="'Chassis of ' + c.name"
+                                    [class.ps-card-picked]="pickedOf(c) > 0"
+                                    [class.ps-card-full]="c.free === 0"
+                                    (click)="openCard(c)"
+                                    (keydown.enter)="openCard(c)">
+
+                                    <div class="ps-card-img">
+
+                                        @if (c.imageUrl)
+                                        {
+                                            <img [src]="c.imageUrl" [alt]="c.name" loading="lazy">
+                                        }
+                                        @else
+                                        {
+                                            <i class="fas fa-motorcycle"></i>
+                                        }
+
+                                        @if (c.colorName)
+                                        {
+                                            <span class="ps-color" [title]="'Colour : ' + c.colorName">
+                                                <i
+                                                    class="ps-color-dot"
+                                                    [class.ps-color-dot-light]="c.colorLight"
+                                                    [style.background]="c.colorHex || '#94a3b8'"></i>
+                                                {{ c.colorName }}
+                                            </span>
+
+                                            <span class="ps-color-bar" [style.background]="c.colorHex || '#94a3b8'"></span>
+                                        }
+
+                                        @if (pickedOf(c) > 0)
+                                        {
+                                            <span class="ps-added ps-added-picked" [title]="pickedOf(c) + ' picked'">
+                                                <i class="fas fa-check"></i>
+                                                {{ pickedOf(c) }}
+                                            </span>
+                                        }
+                                        @else if (c.onInvoice > 0)
+                                        {
+                                            <span class="ps-added" [title]="c.onInvoice + ' on this invoice'">
+                                                <i class="fas fa-check"></i>
+                                                {{ c.onInvoice }}
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                    <div class="ps-card-body">
+
+                                        <div class="ps-card-name" [title]="c.name">{{ c.name }}</div>
+
+                                        <div class="ps-card-meta">
+                                            <span class="ps-card-code" [title]="c.code">{{ c.code }}</span>
+                                        </div>
+
+                                        <div
+                                            class="ps-card-stock"
+                                            [class.ps-tone-green]="c.free > 0"
+                                            [class.ps-tone-red]="c.free === 0">
+                                            <i class="fas fa-circle"></i>
+                                            {{ c.free }} free{{ c.onInvoice > 0 ? ' · ' + c.onInvoice + ' on this invoice' : '' }}
+                                        </div>
+
+                                        <div class="ps-card-foot">
+
+                                            <span class="ps-card-mrp">
+                                                <small>MRP</small>
+                                                <b>{{ mrpText(c) }}</b>
+                                            </span>
+
+                                            <button
+                                                type="button"
+                                                class="ps-add"
+                                                title="Pick the oldest free chassis"
+                                                [disabled]="c.free - pickedOf(c) <= 0"
+                                                (click)="pickOldest(c, $event)">
+                                                <i class="fas fa-plus"></i>
+                                                Oldest
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="ps-cards-note">
+                            Open a card to pick its chassis · the oldest stock comes first
+                        </div>
+                    }
+
+                </div>
+
+                <!-- Picked tray -->
+                <div class="ps-tray">
+
+                    <div class="ps-tray-head">
+                        <span class="ps-tray-title">Picked</span>
+                        <span class="ps-count">{{ tray.length }}</span>
+                        <span class="ps-tray-hint">one line per chassis</span>
+                    </div>
+
+                    <div class="ps-tray-rows appcore-scrollbar">
+
+                        @if (tray.length === 0)
+                        {
+                            <div class="ps-tray-empty">
+                                <i class="fas fa-hand-pointer"></i>
+                                Open a model and tick its chassis.
+                            </div>
+                        }
+
+                        @for (u of tray; track u.MotorBikeUnitId)
+                        {
+                            <div class="ps-row">
+
+                                <div class="ps-row-head">
+
+                                    <div class="ps-row-id">
+                                        <span class="ps-row-name">{{ u.ProductName.replace('Motor Bikes - ', '') }}</span>
+                                        <span class="ps-row-code bs-tray-code">
+                                            {{ u.ChassisNo }} · {{ u.EngineNo }}{{ u.ManufactureYear ? ' · ' + u.ManufactureYear : '' }}
+                                        </span>
+                                    </div>
+
+                                    <span class="bs-ckd-tag" [class.bs-ckd-no]="u.CkdStatus !== 'Yes'">CKD {{ u.CkdStatus === 'Yes' ? 'Yes' : 'No' }}</span>
+
+                                    <b class="ps-row-total">{{ money(u.Mrp) }}</b>
+
+                                    <button
+                                        type="button"
+                                        class="ps-remove"
+                                        [attr.aria-label]="'Remove ' + u.ChassisNo"
+                                        title="Remove"
+                                        (click)="unpick(u)">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="ps-foot">
+
+                @if (confirmDiscard)
+                {
+                    <span class="ps-foot-warn">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        Close without adding the {{ tray.length }} picked {{ tray.length === 1 ? 'bike' : 'bikes' }}?
+                    </span>
+
+                    <div class="ps-foot-buttons">
+                        <button type="button" class="ps-btn" (click)="keepPicking()">Keep Picking</button>
+                        <button type="button" class="ps-btn ps-btn-danger" (click)="requestClose()">Discard</button>
+                    </div>
+                }
+                @else
+                {
+                    <span class="ps-foot-sum">
+                        <b>{{ tray.length }} {{ tray.length === 1 ? 'bike' : 'bikes' }}</b>
+                        · one line each
+                    </span>
+
+                    <span class="ps-foot-total">
+                        <span class="ps-foot-total-label">Total (MRP)</span>
+                        <b>Tk {{ money(total) }}</b>
+                    </span>
+
+                    @if (limitNote)
+                    {
+                        <span class="ps-foot-error">
+                            <i class="fas fa-circle-exclamation"></i>
+                            {{ limitNote }}
+                        </span>
+                    }
+
+                    <div class="ps-foot-buttons">
+                        <button type="button" class="ps-btn" (click)="requestClose()">Close</button>
+                        <button
+                            type="button"
+                            class="ps-btn ps-btn-primary"
+                            [disabled]="tray.length === 0"
+                            (click)="confirmAdd()">
+                            <i class="fas fa-check"></i>
+                            {{ addText }}
+                        </button>
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+}

@@ -128,6 +128,20 @@
                 </app-dropdown>
 
 
+            </app-form-section>
+
+
+            <!-- =============================================
+                 MODEL DETAILS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Model Details"
+
+                icon="fas fa-tags">
+
+
                 <!-- Model Name -->
 
                 <app-textbox
@@ -175,129 +189,12 @@
 
 
             <!-- =============================================
-                 WEBSITE
+                 STATUS
             ============================================== -->
 
             <app-form-section
 
-                title="Website"
-
-                icon="fas fa-globe">
-
-
-                <!-- Show on Website -->
-
-                <app-dropdown
-
-                    label="Show on Website"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.ShowOnWebsite"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-dropdown>
-
-
-                <!-- Featured -->
-
-                <app-dropdown
-
-                    label="Featured"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.IsFeatured"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-dropdown>
-
-
-                <!-- Short Tagline -->
-
-                <app-textbox
-
-                    label="Short Tagline"
-
-                    placeholder="Enter a short tagline"
-
-                    [(value)]="entity.Tagline"
-
-                    [maxLength]="200"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-                <!-- Display Order (digits only) -->
-
-                <app-textbox
-
-                    label="Display Order"
-
-                    placeholder="0"
-
-                    [value]="displayOrderText"
-
-                    (valueChange)="onDisplayOrderChange($event)"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 DESCRIPTION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Description"
-
-                icon="fas fa-align-left">
-
-
-                <!-- Description (optional) -->
-
-                <app-textarea
-
-                    label="Description"
-
-                    placeholder="Enter model description"
-
-                    [rows]="8"
-
-                    [(value)]="entity.Description"
-
-                    [maxLength]="2000"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 STATUS & REMARKS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Remarks"
+                title="Status"
 
                 icon="fas fa-sliders">
 
@@ -319,6 +216,20 @@
                     [required]="true">
 
                 </app-dropdown>
+
+
+            </app-form-section>
+
+
+            <!-- =============================================
+                 REMARKS
+            ============================================== -->
+
+            <app-form-section
+
+                title="Remarks"
+
+                icon="fas fa-comment-dots">
 
 
                 <!-- Remarks (optional) -->
@@ -359,4 +270,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

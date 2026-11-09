@@ -483,6 +483,7 @@ function bike
         brandLogo:text(x?.brandLogo),
         category:text(x?.category),
         tagline:text(x?.tagline),
+        description:text(x?.description),
         engine:text(x?.engine),
         mileage:text(x?.mileage),
         topSpeed:text(x?.topSpeed),
@@ -792,9 +793,21 @@ function fromErp
     const phone =
         text(c.mobile) || text(c.phone);
 
+    // Bikes tab (Website Configuration): hidden ones are left out,
+    // the rest follow the tab's order (0 = no order, goes last)
+    const order =
+        (x:any) =>
+            typeof x?.displayOrder === 'number' && x.displayOrder > 0
+                ? x.displayOrder
+                : Number.MAX_SAFE_INTEGER;
+
     const models =
         list(erp?.models)
-            .filter(x => text(x?.model));
+            .filter(x => text(x?.model))
+            .filter(x => x?.showOnWebsite !== false)
+            .map((x, i) => ({ x, i }))
+            .sort((a, b) => order(a.x) - order(b.x) || a.i - b.i)
+            .map(a => a.x);
 
     const brandNames =
         [...new Set(models.map(x => text(x?.brand)).filter(Boolean))];
@@ -861,11 +874,16 @@ function fromErp
         (
             m =>
             {
-                const model =
+                const full =
                     text(m.model);
 
+                // Shown as "REVOO - A04" : the category in front of the
+                // sub category name ("Motor Bikes - ") is not shown
+                const model =
+                    full.replace(/^motor\s*bikes?\s*-\s*/i, '') || full;
+
                 const extra =
-                    specs.get(slugify(model));
+                    specs.get(slugify(full)) ?? specs.get(slugify(model));
 
                 const colours =
                     list(m.colours)
@@ -898,19 +916,24 @@ function fromErp
                             brand:text(m.brand),
                             brandLogo:fileUrl(m.brandLogoPath),
                             category:real(extra?.category),
-                            tagline:real(extra?.tagline),
-                            engine:real(extra?.engine),
-                            mileage:real(extra?.mileage),
-                            topSpeed:real(extra?.topSpeed),
+                            tagline:text(m.tagline) || real(extra?.tagline),
+                            description:text(m.description) || real((extra as any)?.description),
+                            engine:text(m.engine) || real(extra?.engine),
+                            mileage:text(m.mileage) || real(extra?.mileage),
+                            topSpeed:text(m.topSpeed) || real(extra?.topSpeed),
                             price,
                             priceText:price === null ? (real(extra?.priceText) || 'Call for price') : '',
                             stock:text(m.stock),
                             photo:photos[0] || real(extra?.photo),
-                            featured:extra?.featured === true,
+                            featured:typeof m.featured === 'boolean' ? m.featured : extra?.featured === true,
                             colours,
                             gallery:(extra?.gallery?.length ? extra.gallery : photos.slice(1)),
                             highlights:extra?.highlights ?? [],
-                            specs:extra?.specs ?? []
+                            // Motor Bike Specifications : switched off = no sheet;
+                            // no record yet = the website's own sheet
+                            specs:m.showSpecs === false
+                                ? []
+                                : (list(m.specs).length ? list(m.specs) : (extra?.specs ?? []))
                         },
                         used
                     );

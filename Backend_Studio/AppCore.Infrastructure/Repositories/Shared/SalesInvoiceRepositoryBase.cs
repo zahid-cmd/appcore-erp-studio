@@ -39,6 +39,15 @@ using MembershipCardsEntity =
 using SparePartsEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.SpareParts;
 
+using MotorBikesEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.MotorBikes;
+
+using ColorManagementEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.ColorManagement;
+
+using MotorBikeUnitsEntity =
+    AppCore.Domain.Entities.Procurement.MotorBikePurchase.MotorBikeUnits;
+
 using AccessoriesEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.Accessories;
 
@@ -232,6 +241,34 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     private const string TypeLubricants = "Lubricants";
 
     private const string TypeAccessories = "Accessories";
+
+    private const string TypeMotorBikes = "Motor Bikes";
+
+    // MotorBikeUnits.Status
+    private const string UnitInStock = "InStock";
+
+    private const string UnitSold = "Sold";
+
+    // Sales Invoices - MB lines : DeliveryStatus
+    private const string DeliveryPending = "Pending";
+
+    private const string DeliveryDelivered = "Delivered";
+
+    private const string DeliveryCancelled = "Cancelled";
+
+    // MB : Delivery on Sale (ON = handed over when posted)
+    private const string SwitchDeliveryOnSale = "CFG-MOD-008-0011";
+
+    // MB : Corporate sale (several chassis) and its date window
+    private const string SwitchCorporateSale = "CFG-MOD-008-0073";
+
+    private const string SwitchCorporateFrom = "CFG-MOD-008-0074";
+
+    private const string SwitchCorporateUntil = "CFG-MOD-008-0075";
+
+    private const string SaleRegular = "Regular";
+
+    private const string SaleCorporate = "Corporate";
 
     private const string MembershipActive = "Active";
 
@@ -464,6 +501,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         public bool SellAtBatchMrp { get; set; } = true;
 
         public bool RoundDown { get; set; } = true;
+
+        // MB only
+        public bool AllowCorporate { get; set; }
+
+        public DateOnly? CorporateFrom { get; set; }
+
+        public DateOnly? CorporateUntil { get; set; }
     }
 
 
@@ -589,6 +633,9 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         public ProductInfo Product { get; set; } = new();
 
+        // MB : the bike sold and its stock batch
+        public BikeUnit? Bike { get; set; }
+
         public decimal Quantity { get; set; }
 
         public List<Slice> Slices { get; set; } = new();
@@ -678,6 +725,9 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         public string Narration { get; set; } = string.Empty;
 
+        // MB : Regular / Corporate
+        public string SaleType { get; set; } = string.Empty;
+
         public List<PricedLine> Lines { get; set; } = new();
 
         public List<TPayment> Payments { get; set; } = new();
@@ -713,6 +763,28 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
 
     // How to price
+    // MB : a bike (chassis) on a line
+    private sealed class BikeUnit
+    {
+        public long MotorBikeUnitId { get; set; }
+
+        public long ProductId { get; set; }
+
+        public string ChassisNo { get; set; } = string.Empty;
+
+        public string EngineNo { get; set; } = string.Empty;
+
+        public string ColorName { get; set; } = string.Empty;
+
+        public int? ManufactureYear { get; set; }
+
+        public string CkdStatus { get; set; } = "No";
+
+        // Its stock batch (purchase line / opening stock)
+        public long StockBatchId { get; set; }
+    }
+
+
     private sealed class PriceOptions
     {
         // The user has "Give Special Discount"
@@ -973,7 +1045,10 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 Page.SwitchPrintAfterPosting,
                 Page.SwitchAllowWalkIn,
                 Page.SwitchSellAtBatchMrp,
-                Page.SwitchRoundDownWholeTaka
+                Page.SwitchRoundDownWholeTaka,
+                Page.PageType == "MB" ? SwitchCorporateSale : null,
+                Page.PageType == "MB" ? SwitchCorporateFrom : null,
+                Page.PageType == "MB" ? SwitchCorporateUntil : null
             }
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(x => x!)
@@ -1036,6 +1111,23 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         bool credit =
             On(Page.SwitchAllowCreditSale, false);
 
+        // A date switch : its value when it is ON (yyyy-MM-dd)
+        DateOnly? DateOf(string code)
+        {
+            return found.TryGetValue(code, out var row)
+                   && row.IsOn
+                   && DateOnly.TryParse(
+                       row.Value.Trim().Length >= 10 ? row.Value.Trim()[..10] : row.Value.Trim(),
+                       CultureInfo.InvariantCulture,
+                       DateTimeStyles.None,
+                       out DateOnly day)
+                ? day
+                : null;
+        }
+
+        bool corporate =
+            Page.PageType == "MB" && On(SwitchCorporateSale, false);
+
         return new SwitchSet
         {
             PostOnApproval = On(Page.SwitchPostOnApproval, false),
@@ -1053,7 +1145,10 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             PrintAfterPosting = On(Page.SwitchPrintAfterPosting, true),
             AllowWalkIn = On(Page.SwitchAllowWalkIn, true),
             SellAtBatchMrp = On(Page.SwitchSellAtBatchMrp, true),
-            RoundDown = On(Page.SwitchRoundDownWholeTaka, true)
+            RoundDown = On(Page.SwitchRoundDownWholeTaka, true),
+            AllowCorporate = corporate,
+            CorporateFrom = corporate ? DateOf(SwitchCorporateFrom) : null,
+            CorporateUntil = corporate ? DateOf(SwitchCorporateUntil) : null
         };
     }
 
@@ -1080,7 +1175,10 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             PrintAfterPosting = x.PrintAfterPosting,
             AllowWalkInCustomers = x.AllowWalkIn,
             SellAtBatchMrp = x.SellAtBatchMrp,
-            RoundDownWholeTaka = x.RoundDown
+            RoundDownWholeTaka = x.RoundDown,
+            AllowCorporateSale = x.AllowCorporate,
+            CorporateSaleFrom = x.CorporateFrom.HasValue ? DateText(x.CorporateFrom.Value) : string.Empty,
+            CorporateSaleUntil = x.CorporateUntil.HasValue ? DateText(x.CorporateUntil.Value) : string.Empty
         };
     }
 
@@ -1092,7 +1190,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
     private void RequireWiredPage()
     {
-        if (Page.PageType != "SP" && Page.PageType != "AC")
+        if (Page.PageType != "SP" && Page.PageType != "AC" && Page.PageType != "MB")
         {
             throw new InvalidOperationException(
                 $"{Page.Title} is not built yet.");
@@ -1126,10 +1224,14 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 ProductCode = x.ProductCode,
                 PartNumber = x.PartNumber ?? string.Empty,
                 PartName = x.PartName ?? string.Empty,
-                ProductName = $"{x.PartNumber} - {x.PartName}",
+                ProductName = Page.PageType == "MB"
+                    ? x.PartName
+                    : $"{x.PartNumber} - {x.PartName}",
                 ProductType = Page.PageType == "AC"
                     ? TypeAccessories
-                    : TypeOf(categoryTypes, x.ProductCategoryId),
+                    : Page.PageType == "MB"
+                        ? TypeMotorBikes
+                        : TypeOf(categoryTypes, x.ProductCategoryId),
                 Unit = x.Unit ?? string.Empty,
                 InventoryLedgerCode = (x.InventoryLedgerCode ?? string.Empty).Trim(),
                 CogsLedgerCode = (x.CogsLedgerCode ?? string.Empty).Trim(),
@@ -1176,6 +1278,33 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
     private IQueryable<ProductRow> ProductRows()
     {
+        // MB : Motor Bikes (model + colour; a bike is one piece)
+        if (Page.PageType == "MB")
+        {
+            return _context
+                .Set<MotorBikesEntity>()
+                .AsNoTracking()
+                .Select
+                (
+                    x =>
+                        new ProductRow
+                        {
+                            ProductId = x.MotorBikeId,
+                            ProductCode = x.ProductCode,
+                            PartNumber = string.Empty,
+                            PartName = x.ProductName,
+                            Unit = "Pcs",
+                            ProductCategoryId = x.ProductCategoryId,
+                            ProductSubCategoryId = x.ProductSubCategoryId,
+                            InventoryLedgerCode = x.InventoryLedgerCode,
+                            CogsLedgerCode = x.CogsLedgerCode,
+                            SalesLedgerCode = x.SalesLedgerCode,
+                            IsActive = x.IsActive,
+                            IsDeleted = x.IsDeleted
+                        }
+                );
+        }
+
         if (Page.PageType == "AC")
         {
             return _context
@@ -1224,6 +1353,505 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         IsDeleted = x.IsDeleted
                     }
             );
+    }
+
+
+    //===========================================================
+    // Sales Invoices - MB : bikes (chassis)
+    //===========================================================
+
+    // A bike on another open (draft / approved) invoice
+    private sealed class OpenBikeRow
+    {
+        public long MotorBikeUnitId { get; set; }
+
+        public long SalesInvoiceId { get; set; }
+
+        public string InvoiceNo { get; set; } = string.Empty;
+    }
+
+
+    private async Task<List<OpenBikeRow>>
+        OpenBikesAsync
+        (
+            List<long> unitIds
+        )
+    {
+        if (unitIds.Count == 0)
+        {
+            return new List<OpenBikeRow>();
+        }
+
+        return await _context.Database
+            .SqlQueryRaw<OpenBikeRow>(
+                "SELECT l.\"MotorBikeUnitId\" AS \"MotorBikeUnitId\", h.\"SalesInvoiceId\" AS \"SalesInvoiceId\", h.\"InvoiceNo\" AS \"InvoiceNo\" " +
+                "FROM \"SalesInvoicesMbLines\" l JOIN \"SalesInvoicesMb\" h ON h.\"SalesInvoiceId\" = l.\"SalesInvoiceId\" " +
+                "WHERE h.\"IsDeleted\" = false AND h.\"Status\" IN ('Draft', 'Approved') AND l.\"MotorBikeUnitId\" = ANY({0})",
+                unitIds.ToArray())
+            .ToListAsync();
+    }
+
+
+    // Each bike's stock batch : its purchase line, or its opening
+    // stock (same product)
+    private async Task<Dictionary<long, long>>
+        BatchesOfBikesAsync
+        (
+            List<MotorBikeUnitsEntity> units
+        )
+    {
+        List<long> lineIds =
+            units
+                .Where(x => x.PurchaseId > 0 && x.PurchaseLineId > 0)
+                .Select(x => x.PurchaseLineId)
+                .Distinct()
+                .ToList();
+
+        List<long> openingIds =
+            units
+                .Where(x => x.OpeningStockId.HasValue)
+                .Select(x => x.OpeningStockId!.Value)
+                .Distinct()
+                .ToList();
+
+        var batches =
+            await _context
+                .Set<StockBatchesEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.ProductType == "MB"
+                        &&
+                        x.Status != BatchCancelled
+                        &&
+                        (
+                            (x.SourceType == "Purchase" && lineIds.Contains(x.SourceLineId))
+                            ||
+                            (x.SourceType == "Opening" && openingIds.Contains(x.SourceId))
+                        )
+                )
+                .Select(x => new { x.StockBatchId, x.SourceType, x.SourceId, x.SourceLineId, x.ProductId })
+                .ToListAsync();
+
+        Dictionary<long, long> result =
+            new();
+
+        foreach (MotorBikeUnitsEntity unit in units)
+        {
+            var batch =
+                unit.OpeningStockId.HasValue
+                    ? batches
+                        .Where(x => x.SourceType == "Opening" && x.SourceId == unit.OpeningStockId.Value && x.ProductId == unit.ProductId)
+                        .OrderBy(x => x.StockBatchId)
+                        .FirstOrDefault()
+                    : batches
+                        .FirstOrDefault(x => x.SourceType == "Purchase" && x.SourceLineId == unit.PurchaseLineId);
+
+            if (batch != null)
+            {
+                result[unit.MotorBikeUnitId] = batch.StockBatchId;
+            }
+        }
+
+        return result;
+    }
+
+
+    private async Task<Dictionary<long, string>>
+        BikeColorsAsync
+        (
+            List<long> productIds
+        )
+    {
+        return await
+        (
+            from b in _context.Set<MotorBikesEntity>().AsNoTracking()
+            where productIds.Contains(b.MotorBikeId)
+            join c in _context.Set<ColorManagementEntity>().AsNoTracking()
+                on b.ColorManagementId equals c.ColorManagementId into colors
+            from c in colors.DefaultIfEmpty()
+            select new { b.MotorBikeId, ColorName = c != null ? c.ColorName : string.Empty }
+        )
+        .ToDictionaryAsync(x => x.MotorBikeId, x => x.ColorName ?? string.Empty);
+    }
+
+
+    // The lines' bikes : in stock in the warehouse, not on another
+    // open invoice (the reasons go to the errors)
+    private async Task<Dictionary<long, BikeUnit>>
+        BikeUnitsForLinesAsync
+        (
+            List<CreateSalesInvoiceLineDto> input,
+            long warehouseId,
+            long branchId,
+            string invoiceNo,
+            List<string> errors
+        )
+    {
+        List<long> ids =
+            input
+                .Select(x => x.MotorBikeUnitId ?? 0)
+                .Where(x => x > 0)
+                .Distinct()
+                .ToList();
+
+        Dictionary<long, BikeUnit> result =
+            new();
+
+        if (ids.Count == 0)
+        {
+            return result;
+        }
+
+        List<MotorBikeUnitsEntity> units =
+            await _context
+                .Set<MotorBikeUnitsEntity>()
+                .AsNoTracking()
+                .Where(x => ids.Contains(x.MotorBikeUnitId) && !x.IsDeleted)
+                .ToListAsync();
+
+        List<OpenBikeRow> open =
+            (await OpenBikesAsync(ids))
+                .Where(x => !string.Equals(x.InvoiceNo, invoiceNo, StringComparison.OrdinalIgnoreCase) || invoiceNo.Length == 0)
+                .ToList();
+
+        Dictionary<long, long> batches =
+            await BatchesOfBikesAsync(units);
+
+        Dictionary<long, string> colors =
+            await BikeColorsAsync(units.Select(x => x.ProductId).Distinct().ToList());
+
+        foreach (long id in ids)
+        {
+            MotorBikeUnitsEntity? unit =
+                units.FirstOrDefault(x => x.MotorBikeUnitId == id);
+
+            if (unit == null)
+            {
+                errors.Add("A chassis on the invoice was not found. Pick it again.");
+
+                continue;
+            }
+
+            if (unit.Status != UnitInStock)
+            {
+                errors.Add($"Chassis {unit.ChassisNo} is {unit.Status}, not in stock.");
+
+                continue;
+            }
+
+            if ((unit.WarehouseId ?? warehouseId) != warehouseId || unit.BranchId != branchId)
+            {
+                errors.Add($"Chassis {unit.ChassisNo} is not in this warehouse.");
+
+                continue;
+            }
+
+            OpenBikeRow? other =
+                open.FirstOrDefault(x => x.MotorBikeUnitId == id);
+
+            if (other != null)
+            {
+                errors.Add($"Chassis {unit.ChassisNo} is on invoice {other.InvoiceNo} (draft / approved).");
+
+                continue;
+            }
+
+            if (!batches.TryGetValue(id, out long batchId))
+            {
+                errors.Add($"Chassis {unit.ChassisNo} has no stock batch (purchase / opening stock).");
+
+                continue;
+            }
+
+            result[id] =
+                new BikeUnit
+                {
+                    MotorBikeUnitId = unit.MotorBikeUnitId,
+                    ProductId = unit.ProductId,
+                    ChassisNo = unit.ChassisNo,
+                    EngineNo = unit.EngineNo,
+                    ColorName = colors.GetValueOrDefault(unit.ProductId, string.Empty),
+                    ManufactureYear = unit.ManufactureYear,
+                    CkdStatus = unit.CkdStatus == "Yes" ? "Yes" : "No",
+                    StockBatchId = batchId
+                };
+        }
+
+        return result;
+    }
+
+
+    // The picker : bikes in stock in the warehouse, oldest first
+    public async Task<List<SalesInvoiceBikeUnitDto>>
+        GetBikeUnitsAsync
+        (
+            long warehouseId,
+            long invoiceId
+        )
+    {
+        if (Page.PageType != "MB" || warehouseId <= 0)
+        {
+            return new List<SalesInvoiceBikeUnitDto>();
+        }
+
+        // A bike received on the purchase (switch 0045) before
+        // 2026-11-09 has no warehouse : it is in its branch
+        long branchId =
+            await _context
+                .Set<WarehousesEntity>()
+                .AsNoTracking()
+                .Where(x => x.WarehouseId == warehouseId)
+                .Select(x => x.BranchId)
+                .FirstOrDefaultAsync();
+
+        List<MotorBikeUnitsEntity> units =
+            await _context
+                .Set<MotorBikeUnitsEntity>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        !x.IsDeleted
+                        &&
+                        x.Status == UnitInStock
+                        &&
+                        (
+                            x.WarehouseId == warehouseId
+                            ||
+                            (x.WarehouseId == null && x.BranchId == branchId)
+                        )
+                )
+                .OrderBy(x => x.StockInDate)
+                .ThenBy(x => x.MotorBikeUnitId)
+                .ToListAsync();
+
+        if (units.Count == 0)
+        {
+            return new List<SalesInvoiceBikeUnitDto>();
+        }
+
+        List<long> productIds =
+            units.Select(x => x.ProductId).Distinct().ToList();
+
+        var products =
+            await
+            (
+                from b in _context.Set<MotorBikesEntity>().AsNoTracking()
+                where productIds.Contains(b.MotorBikeId) && !b.IsDeleted
+                join s in _context.Set<ProductSubCategoryEntity>().AsNoTracking()
+                    on b.ProductSubCategoryId equals s.ProductSubCategoryId into subs
+                from s in subs.DefaultIfEmpty()
+                join c in _context.Set<ColorManagementEntity>().AsNoTracking()
+                    on b.ColorManagementId equals c.ColorManagementId into colors
+                from c in colors.DefaultIfEmpty()
+                select new
+                {
+                    b.MotorBikeId,
+                    b.ProductCode,
+                    b.ProductName,
+                    b.ProductSubCategoryId,
+                    b.IsActive,
+                    b.ImagePath,
+                    ModelName = s != null ? s.SubCategoryName : string.Empty,
+                    ColorName = c != null ? c.ColorName : string.Empty
+                }
+            )
+            .ToDictionaryAsync(x => x.MotorBikeId);
+
+        Dictionary<long, long> batches =
+            await BatchesOfBikesAsync(units);
+
+        List<long> batchIds =
+            batches.Values.Distinct().ToList();
+
+        Dictionary<long, decimal> mrps =
+            await _context
+                .Set<StockBatchesEntity>()
+                .AsNoTracking()
+                .Where(x => batchIds.Contains(x.StockBatchId))
+                .ToDictionaryAsync(x => x.StockBatchId, x => x.Mrp);
+
+        List<OpenBikeRow> open =
+            (await OpenBikesAsync(units.Select(x => x.MotorBikeUnitId).ToList()))
+                .Where(x => x.SalesInvoiceId != invoiceId)
+                .ToList();
+
+        return units
+            .Where(x => products.TryGetValue(x.ProductId, out var p) && p.IsActive)
+            .Select
+            (
+                x =>
+                {
+                    var p =
+                        products[x.ProductId];
+
+                    decimal mrp =
+                        batches.TryGetValue(x.MotorBikeUnitId, out long batchId)
+                            ? mrps.GetValueOrDefault(batchId)
+                            : 0m;
+
+                    return new SalesInvoiceBikeUnitDto
+                    {
+                        MotorBikeUnitId = x.MotorBikeUnitId,
+                        ProductId = x.ProductId,
+                        ProductCode = p.ProductCode,
+                        ProductName = p.ProductName,
+                        ProductSubCategoryId = p.ProductSubCategoryId,
+                        ModelName = p.ModelName ?? string.Empty,
+                        ColorName = p.ColorName ?? string.Empty,
+                        ChassisNo = x.ChassisNo,
+                        EngineNo = x.EngineNo,
+                        KeyNo = x.KeyNo ?? string.Empty,
+                        BatteryNo = x.BatteryNo ?? string.Empty,
+                        ManufactureYear = x.ManufactureYear,
+                        CkdStatus = x.CkdStatus == "Yes" ? "Yes" : "No",
+                        StockInDate = x.StockInDate.HasValue ? DateText(x.StockInDate.Value) : string.Empty,
+                        Mrp = mrp,
+                        OnInvoiceNo = open.FirstOrDefault(o => o.MotorBikeUnitId == x.MotorBikeUnitId)?.InvoiceNo ?? string.Empty,
+                        ImagePath = p.ImagePath ?? string.Empty
+                    };
+                }
+            )
+            .ToList();
+    }
+
+
+    private async Task<bool>
+        SwitchOnAsync
+        (
+            string code,
+            bool fallback
+        )
+    {
+        var row =
+            await _context
+                .Set<SystemConfigurationsEntity>()
+                .AsNoTracking()
+                .Where(x => x.ConfigurationCode == code && !x.IsDeleted)
+                .Select(x => new { x.IsEnabled })
+                .FirstOrDefaultAsync();
+
+        return row?.IsEnabled ?? fallback;
+    }
+
+
+    // Post : the bikes are sold; Delivery on Sale ON = handed over
+    // now, OFF = Pending (Bike Deliveries)
+    private async Task
+        BikesSoldAsync
+        (
+            THeader entity,
+            List<TLine> lines,
+            long userId,
+            DateTime now
+        )
+    {
+        List<IMotorBikeSaleLine> bikeLines =
+            lines
+                .OfType<IMotorBikeSaleLine>()
+                .Where(x => (x.MotorBikeUnitId ?? 0) > 0)
+                .ToList();
+
+        if (bikeLines.Count == 0)
+        {
+            return;
+        }
+
+        List<long> ids =
+            bikeLines.Select(x => x.MotorBikeUnitId!.Value).ToList();
+
+        await _context.Database.ExecuteSqlRawAsync(
+            "SELECT 1 FROM \"MotorBikeUnits\" WHERE \"MotorBikeUnitId\" = ANY({0}) FOR UPDATE",
+            ids.ToArray());
+
+        List<MotorBikeUnitsEntity> units =
+            await _context
+                .Set<MotorBikeUnitsEntity>()
+                .Where(x => ids.Contains(x.MotorBikeUnitId) && !x.IsDeleted)
+                .ToListAsync();
+
+        bool deliver =
+            await SwitchOnAsync(SwitchDeliveryOnSale, false);
+
+        foreach (IMotorBikeSaleLine line in bikeLines)
+        {
+            MotorBikeUnitsEntity unit =
+                units.FirstOrDefault(x => x.MotorBikeUnitId == line.MotorBikeUnitId)
+                ??
+                throw new InvalidOperationException(
+                    $"Chassis {line.ChassisNo} was not found.");
+
+            if (unit.Status != UnitInStock)
+            {
+                throw new InvalidOperationException(
+                    $"Chassis {unit.ChassisNo} is {unit.Status}, not in stock : it cannot be sold.");
+            }
+
+            unit.Status = UnitSold;
+            unit.ModifiedBy = userId;
+            unit.ModifiedDate = now;
+
+            line.DeliveryStatus =
+                deliver
+                    ? DeliveryDelivered
+                    : DeliveryPending;
+
+            line.DeliveredDate =
+                deliver
+                    ? entity.InvoiceDate
+                    : null;
+        }
+    }
+
+
+    // Cancel of a posted invoice : the bikes back in stock
+    private async Task
+        BikesBackAsync
+        (
+            THeader entity,
+            long userId,
+            DateTime now
+        )
+    {
+        List<TLine> lines =
+            await _context
+                .Set<TLine>()
+                .Where(x => x.SalesInvoiceId == entity.SalesInvoiceId)
+                .ToListAsync();
+
+        List<IMotorBikeSaleLine> bikeLines =
+            lines
+                .OfType<IMotorBikeSaleLine>()
+                .Where(x => (x.MotorBikeUnitId ?? 0) > 0)
+                .ToList();
+
+        if (bikeLines.Count == 0)
+        {
+            return;
+        }
+
+        List<long> ids =
+            bikeLines.Select(x => x.MotorBikeUnitId!.Value).ToList();
+
+        List<MotorBikeUnitsEntity> units =
+            await _context
+                .Set<MotorBikeUnitsEntity>()
+                .Where(x => ids.Contains(x.MotorBikeUnitId) && !x.IsDeleted)
+                .ToListAsync();
+
+        foreach (MotorBikeUnitsEntity unit in units.Where(x => x.Status == UnitSold))
+        {
+            unit.Status = UnitInStock;
+            unit.ModifiedBy = userId;
+            unit.ModifiedDate = now;
+        }
+
+        foreach (IMotorBikeSaleLine line in bikeLines)
+        {
+            line.DeliveryStatus = DeliveryCancelled;
+        }
     }
 
 
@@ -2046,6 +2674,68 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         Dictionary<long, int> seen =
             new();
 
+        // MB : one bike (chassis) per line, in stock in the
+        // warehouse, not on another open invoice
+        bool bikes =
+            Page.PageType == "MB";
+
+        Dictionary<long, BikeUnit> bikeUnits =
+            bikes
+                ? await BikeUnitsForLinesAsync(
+                    input,
+                    warehouse.WarehouseId,
+                    dto.BranchId,
+                    options.InvoiceNo,
+                    result.Errors)
+                : new Dictionary<long, BikeUnit>();
+
+        Dictionary<long, int> seenBikes =
+            new();
+
+        // MB : Regular = one chassis; Corporate = several, while
+        // switch 0073 is ON and the date is in its window (a saved
+        // invoice keeps its date), for a Corporate / Institution
+        // customer
+        if (bikes)
+        {
+            string saleType =
+                string.Equals((dto.SaleType ?? string.Empty).Trim(), SaleCorporate, StringComparison.OrdinalIgnoreCase)
+                    ? SaleCorporate
+                    : SaleRegular;
+
+            result.SaleType =
+                saleType;
+
+            if (saleType == SaleRegular && input.Count > 1)
+            {
+                result.Errors.Add($"Regular sale : one chassis per invoice ({input.Count} on it). Choose Corporate for several bikes.");
+            }
+
+            if (saleType == SaleCorporate)
+            {
+                bool savedDate =
+                    options.SavedDate.HasValue && options.SavedDate.Value == date;
+
+                if (!savedDate && !switches.AllowCorporate)
+                {
+                    result.Errors.Add("Corporate sales are not allowed (System Configuration › Allow Corporate Sale is OFF).");
+                }
+                else if (!savedDate && switches.CorporateFrom.HasValue && date < switches.CorporateFrom.Value)
+                {
+                    result.Errors.Add($"Corporate sales start on {DateText(switches.CorporateFrom.Value)} (System Configuration › Corporate Sale From).");
+                }
+                else if (!savedDate && switches.CorporateUntil.HasValue && date > switches.CorporateUntil.Value)
+                {
+                    result.Errors.Add($"Corporate sales ended on {DateText(switches.CorporateUntil.Value)} (System Configuration › Corporate Sale Until).");
+                }
+
+                if (result.Customer != null && !(result.Customer.IsCorporate && result.Customer.CustomerType == CustomerInbound))
+                {
+                    result.Errors.Add($"Corporate sale : '{result.Customer.DisplayName}' is not a Corporate / Institution customer (Customer Profiles).");
+                }
+            }
+        }
+
         for (int i = 0; i < input.Count; i++)
         {
             CreateSalesInvoiceLineDto row =
@@ -2064,6 +2754,53 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             if (!product.IsActive)
             {
                 result.Errors.Add($"Line {lineNo} : '{product.ProductName}' is inactive.");
+            }
+
+            if (bikes)
+            {
+                long unitId =
+                    row.MotorBikeUnitId ?? 0;
+
+                if (unitId <= 0)
+                {
+                    result.Errors.Add($"Line {lineNo} : choose the chassis of '{product.ProductName}'.");
+
+                    continue;
+                }
+
+                if (seenBikes.TryGetValue(unitId, out int firstBike))
+                {
+                    result.Errors.Add($"Line {lineNo} : this chassis is already on line {firstBike}.");
+
+                    continue;
+                }
+
+                seenBikes[unitId] = lineNo;
+
+                if (!bikeUnits.TryGetValue(unitId, out BikeUnit? bike))
+                {
+                    // The reason is in the errors already
+                    continue;
+                }
+
+                if (bike.ProductId != product.ProductId)
+                {
+                    result.Errors.Add($"Line {lineNo} : chassis {bike.ChassisNo} is not a '{product.ProductName}'.");
+
+                    continue;
+                }
+
+                result.Lines.Add(
+                    new PricedLine
+                    {
+                        LineNo = lineNo,
+                        Product = product,
+                        Bike = bike,
+                        Quantity = 1m,
+                        SpecialPercentTyped = row.SpecialDiscountPercent ?? 0m
+                    });
+
+                continue;
             }
 
             if (seen.TryGetValue(product.ProductId, out int first))
@@ -2133,6 +2870,22 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             List<BatchStock> fifo =
                 stock.Saleable.GetValueOrDefault(line.Product.ProductId)
                 ?? new List<BatchStock>();
+
+            // MB : only the bike's own batch
+            if (line.Bike != null)
+            {
+                fifo =
+                    fifo
+                        .Where(x => x.Batch.StockBatchId == line.Bike.StockBatchId)
+                        .ToList();
+
+                if (fifo.Count == 0 || fifo.Sum(x => x.OnHand) < 1m)
+                {
+                    result.Errors.Add($"{label} : chassis {line.Bike.ChassisNo} is not on hand in {warehouse.WarehouseName} (or its batch has no MRP).");
+
+                    continue;
+                }
+            }
 
             line.OnHand =
                 fifo.Sum(x => x.OnHand);
@@ -2951,7 +3704,14 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             OnHand = x.OnHand,
             UnallocatedQuantity = x.Unallocated,
             ReturnedQuantity = 0m,
-            Allocations = AllocationsOf(x)
+            Allocations = AllocationsOf(x),
+            MotorBikeUnitId = x.Bike?.MotorBikeUnitId,
+            ChassisNo = x.Bike?.ChassisNo ?? string.Empty,
+            EngineNo = x.Bike?.EngineNo ?? string.Empty,
+            ColorName = x.Bike?.ColorName ?? string.Empty,
+            ManufactureYear = x.Bike?.ManufactureYear,
+            CkdStatus = x.Bike?.CkdStatus ?? string.Empty,
+            DeliveryStatus = x.Bike != null ? DeliveryPending : string.Empty
         };
     }
 
@@ -3028,7 +3788,18 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             OnHand = 0m,
             UnallocatedQuantity = x.UnallocatedQuantity,
             ReturnedQuantity = x.ReturnedQuantity,
-            Allocations = allocations
+            Allocations = allocations,
+            MotorBikeUnitId = (x as IMotorBikeSaleLine)?.MotorBikeUnitId,
+            ChassisNo = (x as IMotorBikeSaleLine)?.ChassisNo ?? string.Empty,
+            EngineNo = (x as IMotorBikeSaleLine)?.EngineNo ?? string.Empty,
+            ColorName = (x as IMotorBikeSaleLine)?.ColorName ?? string.Empty,
+            ManufactureYear = (x as IMotorBikeSaleLine)?.ManufactureYear,
+            CkdStatus = (x as IMotorBikeSaleLine)?.CkdStatus ?? string.Empty,
+            DeliveryStatus = (x as IMotorBikeSaleLine)?.DeliveryStatus ?? string.Empty,
+            DeliveredDate =
+                (x as IMotorBikeSaleLine)?.DeliveredDate is DateOnly delivered
+                    ? DateText(delivered)
+                    : string.Empty
         };
     }
 
@@ -3052,6 +3823,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             CustomerName = x.CustomerName,
             CustomerPhone = x.CustomerPhone,
             CustomerTag = CustomerTagOf(x.CustomerType, x.CustomerIsWalkIn),
+            SaleType = (x as IMotorBikeSaleHeader)?.SaleType ?? string.Empty,
             LineCount = lineCount,
             InvoiceTotal = x.InvoiceTotal,
             PaidAmount = x.PaidAmount,
@@ -3177,6 +3949,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 CustomerType = x.CustomerType,
                 CustomerIsWalkIn = x.CustomerIsWalkIn,
                 CustomerTag = CustomerTagOf(x.CustomerType, x.CustomerIsWalkIn),
+                SaleType = (x as IMotorBikeSaleHeader)?.SaleType ?? string.Empty,
                 ReceivableLedgerCode = x.ReceivableLedgerCode,
                 MembershipId = x.MembershipId,
                 MembershipNo = x.MembershipNo,
@@ -3863,6 +4636,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             CustomerType = x.CustomerType,
             IsWalkIn = x.IsWalkIn,
             CustomerTag = CustomerTagOf(x.CustomerType, x.IsWalkIn),
+            IsCorporate = x.IsCorporate && x.CustomerType == CustomerInbound,
             IsActive = x.IsActive,
             ReceivableLedgerCode = x.ReceivableLedgerCode,
             Balance = balance,
@@ -3986,6 +4760,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         Phone2 = x.Phone2 ?? string.Empty,
                         CustomerType = x.CustomerType ?? string.Empty,
                         IsWalkIn = x.IsWalkIn,
+                        IsCorporate = x.IsCorporate && x.CustomerType == CustomerInbound,
                         MatchedOn =
                             isPhone
                                 ? ((x.Phone1 ?? string.Empty).StartsWith(digits) ? "Phone 1" : "Phone 2")
@@ -4215,6 +4990,11 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         entity.PaidAmount = priced.Paid;
         entity.DueAmount = priced.Due;
         entity.Narration = priced.Narration;
+
+        if (entity is IMotorBikeSaleHeader bikeHeader)
+        {
+            bikeHeader.SaleType = string.IsNullOrEmpty(priced.SaleType) ? SaleRegular : priced.SaleType;
+        }
     }
 
 
@@ -4255,6 +5035,21 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         entity.BelowCost = x.BelowCost;
         entity.UnallocatedQuantity = x.Unallocated;
         entity.PlannedAllocations = JsonSerializer.Serialize(AllocationsOf(x));
+
+        if (entity is IMotorBikeSaleLine bike && x.Bike != null)
+        {
+            bike.MotorBikeUnitId = x.Bike.MotorBikeUnitId;
+            bike.ChassisNo = Limit(x.Bike.ChassisNo, 50);
+            bike.EngineNo = Limit(x.Bike.EngineNo, 50);
+            bike.ColorName = Limit(x.Bike.ColorName, 50);
+            bike.ManufactureYear = x.Bike.ManufactureYear;
+            bike.CkdStatus = x.Bike.CkdStatus == "Yes" ? "Yes" : "No";
+
+            if (string.IsNullOrWhiteSpace(bike.DeliveryStatus))
+            {
+                bike.DeliveryStatus = DeliveryPending;
+            }
+        }
     }
 
 
@@ -4341,7 +5136,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                                 ProductId = x.ProductId,
                                 Quantity = x.Quantity,
                                 UnitPrice = x.PriceEdited ? x.UnitPrice : null,
-                                SpecialDiscountPercent = x.SpecialDiscountPercent != 0m ? x.SpecialDiscountPercent : null
+                                SpecialDiscountPercent = x.SpecialDiscountPercent != 0m ? x.SpecialDiscountPercent : null,
+                                MotorBikeUnitId = (x as IMotorBikeSaleLine)?.MotorBikeUnitId
                             }
                     )
                     .ToList(),
@@ -4352,7 +5148,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     .OrderBy(x => x.LineNo)
                     .Select(x => ToDebitDto(x))
                     .ToList(),
-            Narration = entity.Narration
+            Narration = entity.Narration,
+            SaleType = (entity as IMotorBikeSaleHeader)?.SaleType ?? string.Empty
         };
     }
 
@@ -5442,6 +6239,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             entity.ReceiptVoucherNo = receipt.VoucherNo;
         }
 
+        // MB : the bikes are sold (and handed over when Delivery
+        // on Sale is ON)
+        if (Page.PageType == "MB")
+        {
+            await BikesSoldAsync(entity, lines, userId, now);
+        }
+
         entity.Status = StatusPosted;
         entity.PostedBy = userId;
         entity.PostedDate = now;
@@ -5684,6 +6488,12 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         row.CreatedDate = now;
 
                         _context.Set<VatRegisterEntity>().Add(row);
+                    }
+
+                    // MB : the bikes back in stock
+                    if (Page.PageType == "MB")
+                    {
+                        await BikesBackAsync(entity, userId, now);
                     }
                 }
 

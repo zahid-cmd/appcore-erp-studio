@@ -475,7 +475,6 @@ implements OnInit, OnDestroy
         { header:'Fuel', field:'FuelType', width:'100px', align:'center' },
         { header:'Vehicle Class', field:'VehicleClass', width:'140px', align:'center' },
         { header:'Rows', field:'RowsText', width:'70px', align:'center' },
-        { header:'Website', field:'WebsiteText', width:'90px', align:'center' },
         { header:'Status', field:'Status', type:'status', width:'130px', align:'center' },
         { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];

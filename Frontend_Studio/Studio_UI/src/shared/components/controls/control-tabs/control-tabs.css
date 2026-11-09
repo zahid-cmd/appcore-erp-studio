@@ -4,13 +4,20 @@
 
 .control-tabs
 {
-    display: flex;
+    /* Every tab the same width : as wide as the widest label */
+    display: grid;
+
+    grid-auto-flow: column;
+
+    grid-auto-columns: 1fr;
 
     align-items: center;
 
     gap: 8px;
 
-    width: 100%;
+    width: max-content;
+
+    max-width: 100%;
 
     min-width: 0;
 
@@ -31,6 +38,10 @@
     justify-content: center;
 
     flex: 0 0 auto;
+
+    width: 100%;
+
+    min-width: 96px;
 
     height: 36px;
 
@@ -205,6 +216,8 @@
     .control-tabs
     {
         width: 100%;
+
+        grid-auto-columns: max-content;
 
         overflow-x: auto;
 

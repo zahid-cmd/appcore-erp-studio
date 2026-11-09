@@ -373,7 +373,45 @@
 
                             <span>Invoice Information</span>
 
+                            <!-- MB : Regular (one chassis) / Corporate
+                                 (several; switch 0073 and its dates) -->
+                            @if (showSaleType)
+                            {
+                                <div
+
+                                    class="si-sale-type"
+
+                                    [title]="corporateBlockText || 'Regular : one chassis per invoice · Corporate : several chassis for a Corporate / Institution customer'">
+
+                                    <app-control-segment
+
+                                        name="si-sale-type"
+
+                                        [items]="saleTypeItems"
+
+                                        [value]="saleType"
+
+                                        [disabled]="isReadonly"
+
+                                        (valueChange)="onSaleTypeChange($event)">
+
+                                    </app-control-segment>
+
+                                </div>
+                            }
+
                         </div>
+
+                        @if (showSaleType && saleTypeHint)
+                        {
+                            <div class="si-sale-hint" [class.si-sale-hint-bad]="saleTypeHintBad">
+
+                                <i [class]="saleTypeHintBad ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                                {{ saleTypeHint }}
+
+                            </div>
+                        }
 
                         <div class="si-fields si-grid-2">
 
@@ -625,6 +663,11 @@
 
                                         </div>
 
+                                        @if (customer.IsCorporate)
+                                        {
+                                            <span class="si-corp-tag" title="Corporate / Institution customer">Corporate</span>
+                                        }
+
                                         <span [class]="customerTagClass">{{ customer.CustomerTag }}</span>
 
                                     </div>
@@ -827,15 +870,36 @@
 
                     <!-- 3. ADD ITEMS : search (code / part no / name) or scan -->
 
-                    @if (isEditable)
+                    @if (isEditable && isBikes)
                     {
+                        <!-- MB : model -> colour -> chassis (one bike per line) -->
                         <div class="si-card si-add-card">
 
                             <div class="si-card-header">
 
                                 <i [class]="'fa-solid ' + page.icon"></i>
 
-                                <span>Add Items</span>
+                                <span>Add Motor Bike</span>
+
+                                <!-- Motor Bike Shelf : the priced bikes as model
+                                     cards, chassis picked after the model -->
+                                <button
+
+                                    type="button"
+
+                                    class="si-shelf"
+
+                                    title="Motor Bike Shelf : pick several chassis at once"
+
+                                    [disabled]="bikeUnitsLoading || bikeFreeCount === 0"
+
+                                    (click)="openBikeShelf()">
+
+                                    <i class="fas fa-store"></i>
+
+                                    Shelf
+
+                                </button>
 
                                 <button
 
@@ -843,9 +907,9 @@
 
                                     class="si-add-clear"
 
-                                    title="Clear the category, search and quantity"
+                                    title="Clear the model, colour and chassis"
 
-                                    (click)="clearAddSection()">
+                                    (click)="clearBikeEntry()">
 
                                     <i class="fas fa-eraser"></i>
 
@@ -859,9 +923,9 @@
 
                                     class="si-add"
 
-                                    [disabled]="!selectedProduct"
+                                    [disabled]="!pickedBike || pickedOnInvoice"
 
-                                    (click)="onAddLine()">
+                                    (click)="addBike()">
 
                                     <i class="fas fa-plus"></i>
 
@@ -871,228 +935,455 @@
 
                             </div>
 
-                            <div class="si-fields si-add-fields">
-
-                                <div
-
-                                    class="si-search"
-
-                                    (keydown)="onSearchKey($event)">
-
-                                    <app-textbox
-
-                                        label="Search or Scan"
-
-                                        placeholder="Part no, part name, code or barcode"
-
-                                        textCase="none"
-
-                                        prefixIcon="fas fa-barcode"
-
-                                        [value]="searchText"
-
-                                        (valueChange)="onSearchChange($event)"
-
-                                        (enterPressed)="onSearchEnter()"
-
-                                        (blur)="onSearchBlur()">
-
-                                    </app-textbox>
-
-                                    @if (searchOpen || searchLoading)
-                                    {
-                                        <div class="si-results appcore-scrollbar">
-
-                                            @if (searchLoading)
-                                            {
-                                                <div class="si-results-state">
-
-                                                    <i class="fas fa-circle-notch fa-spin"></i>
-
-                                                    Searching...
-
-                                                </div>
-                                            }
-                                            @else if (searchEmpty)
-                                            {
-                                                <div class="si-results-state">
-
-                                                    <i class="fa-regular fa-folder-open"></i>
-
-                                                    No {{ page.itemLower }} matches.
-
-                                                </div>
-                                            }
-                                            @else
-                                            {
-                                                @for (product of searchResults; track product.ProductId; let i = $index)
-                                                {
-                                                    <button
-
-                                                        type="button"
-
-                                                        class="si-result"
-
-                                                        [class.si-result-out]="product.OnHand <= 0"
-
-                                                        [class.is-active]="i === searchActive"
-
-                                                        (mouseenter)="searchActive = i"
-
-                                                        (mousedown)="$event.preventDefault(); selectProduct(product)">
-
-                                                        <span class="si-result-main">
-
-                                                            <b>{{ product.PartName || product.ProductName }}</b>
-
-                                                            <i>{{ product.ProductCode }}{{ product.PartNumber ? ' || ' + product.PartNumber : '' }}</i>
-
-                                                        </span>
-
-                                                        <span class="si-result-side">
-
-                                                            <b [class.si-text-rose]="product.OnHand <= 0">{{ qtyString(product.OnHand) }} {{ product.Unit }}</b>
-
-                                                            <i>{{ product.Mrp > 0 ? 'MRP ' + money(product.Mrp) : 'Not priced' }}{{ product.HasMixedMrp ? ' · ' + (product.MrpCount || 2) + ' MRPs' : '' }}</i>
-
-                                                        </span>
-
-                                                    </button>
-                                                }
-
-                                                <div class="si-results-hint">
-
-                                                    {{ searchResults.length }} item{{ searchResults.length === 1 ? '' : 's' }} · Up / Down to move · Enter to pick · Esc to close
-
-                                                </div>
-                                            }
-
-                                        </div>
-                                    }
-
-                                </div>
-
-                                <app-textbox
-
-                                    class="si-qty"
-
-                                    label="Qty"
-
-                                    placeholder="1"
-
-                                    inputMode="decimal"
-
-                                    textCase="none"
-
-                                    [required]="true"
-
-                                    [value]="qtyText"
-
-                                    (valueChange)="onQtyTextChange($event)"
-
-                                    (enterPressed)="onAddLine()">
-
-                                </app-textbox>
-
-                            </div>
-
-                            <!-- Category / sub category narrow the search;
-                                 a scanned batch label ignores them -->
-
                             <div class="si-fields si-grid-2 si-filter-fields">
 
                                 <app-search-dropdown
 
-                                    placeholder="All categories"
+                                    [placeholder]="bikeUnitsLoading ? 'Loading bikes...' : (bikeModelItems.length ? 'Model' : 'No bike in stock here')"
 
-                                    title="Category"
+                                    title="Model"
 
-                                    [items]="categoryItems"
+                                    badgeField="badge"
 
-                                    [value]="$any(categoryId)"
+                                    [items]="bikeModelItems"
 
-                                    (valueChange)="onCategoryChange($event)">
+                                    [value]="$any(bikeModelId)"
+
+                                    [disabled]="bikeUnitsLoading || bikeModelItems.length === 0"
+
+                                    (valueChange)="onBikeModel($event)">
 
                                 </app-search-dropdown>
 
                                 <app-search-dropdown
 
-                                    placeholder="All sub categories"
+                                    placeholder="Colour"
 
-                                    title="Sub Category"
+                                    title="Colour"
 
-                                    [items]="subCategoryItems"
+                                    badgeField="badge"
 
-                                    [value]="$any(subCategoryId)"
+                                    [items]="bikeColorItems"
 
-                                    [disabled]="subCategoryItems.length === 0"
+                                    [value]="$any(bikeColor || null)"
 
-                                    (valueChange)="onSubCategoryChange($event)">
+                                    [disabled]="!bikeModelId || bikeColorItems.length === 0"
+
+                                    (valueChange)="onBikeColor($event)">
 
                                 </app-search-dropdown>
 
                             </div>
-
-                            <!-- Manual pick : the narrowed area's items;
-                                 picking fills the search box -->
 
                             <div class="si-fields si-product-field">
 
                                 <app-search-dropdown
 
-                                    [placeholder]="productPlaceholder"
+                                    placeholder="Chassis · Engine · Year (oldest first)"
 
-                                    [items]="productItems"
+                                    title="Chassis"
 
                                     badgeField="badge"
 
-                                    [value]="$any(selectedProduct?.ProductId ?? null)"
+                                    [items]="bikeChassisItems"
 
-                                    [disabled]="productListLoading || productItems.length === 0"
+                                    [value]="$any(bikeUnitId)"
 
-                                    (valueChange)="onProductPick($event)">
+                                    [disabled]="!bikeColor || bikeChassisItems.length === 0"
+
+                                    (valueChange)="onBikeChassis($event)">
 
                                 </app-search-dropdown>
 
                             </div>
 
-                            @if (selectedProduct)
+                            @if (pickedBike; as b)
                             {
-                                <div class="si-picked">
+                                <!-- One bike : name, then chassis and engine in
+                                     full (big), then year / CKD / MRP -->
+                                <div class="si-picked si-picked-bike" [class.si-picked-in]="pickedOnInvoice">
 
-                                    <span class="si-picked-name">
+                                    <div class="si-pb-head">
 
-                                        <b>{{ selectedProduct.PartName || selectedProduct.ProductName }}</b>
+                                        <span class="si-picked-name">
 
-                                        <i>{{ selectedProduct.ProductCode }}{{ selectedProduct.PartNumber ? ' || ' + selectedProduct.PartNumber : '' }}</i>
+                                            <b>{{ b.ProductName }}</b>
 
-                                    </span>
+                                            <i>{{ b.ProductCode }}{{ b.ColorName ? ' · ' + b.ColorName : '' }}</i>
 
-                                    <span class="si-fact">
+                                        </span>
 
-                                        <span>On hand</span>
-
-                                        <b [class.si-text-rose]="selectedProduct.OnHand <= 0">{{ selectedStockText }}</b>
-
-                                    </span>
-
-                                    <span class="si-fact">
-
-                                        <span>MRP</span>
-
-                                        <b>{{ selectedMrpText }}</b>
-
-                                        @if (selectedProduct.HasMixedMrp)
+                                        @if (pickedOnInvoice)
                                         {
-                                            <i class="si-fact-sub">{{ selectedProduct.MrpCount || 2 }} MRPs in stock</i>
+                                            <span class="si-pb-tag">
+
+                                                <i class="fas fa-circle-check"></i>
+
+                                                On this invoice · line {{ pickedLineNo }}
+
+                                            </span>
                                         }
 
-                                    </span>
+                                    </div>
+
+                                    <!-- Chassis and engine (big) with the MRP
+                                         on their right -->
+                                    <div class="si-pb-body">
+
+                                        <div class="si-pb-nos">
+
+                                            <div class="si-pb-no">
+
+                                                <span>Chassis No</span>
+
+                                                <b>{{ b.ChassisNo }}</b>
+
+                                            </div>
+
+                                            <div class="si-pb-no">
+
+                                                <span>Engine No</span>
+
+                                                <b>{{ b.EngineNo }}</b>
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="si-pb-price">
+
+                                            <span>MRP</span>
+
+                                            <b>{{ b.Mrp > 0 ? money(b.Mrp) : 'Not priced' }}</b>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                @if (addCkdReasonOpen)
+                                {
+                                    <div class="si-ckd-reason">
+
+                                        <i class="fas fa-triangle-exclamation"></i>
+
+                                        <input
+
+                                            type="text"
+
+                                            maxlength="250"
+
+                                            placeholder="Reason for CKD Yes -> No (e.g. lost by the customer : GD no.)"
+
+                                            aria-label="Reason"
+
+                                            [value]="addCkdReason"
+
+                                            (input)="onAddCkdReason($event)"
+
+                                            (keydown.enter)="saveAddCkdNo()"
+
+                                            (keydown.escape)="cancelAddCkd()">
+
+                                        <button type="button" class="si-add-clear" (click)="cancelAddCkd()">Cancel</button>
+
+                                        <button
+
+                                            type="button"
+
+                                            class="si-ckd-save"
+
+                                            [disabled]="!addCkdReason.trim()"
+
+                                            (click)="saveAddCkdNo()">
+
+                                            Set No
+
+                                        </button>
+
+                                    </div>
+                                }
+                            }
+                            @else
+                            {
+                                <div class="si-bike-hint">
+
+                                    <i class="fas fa-circle-info"></i>
+
+                                    {{ bikeUnitsLoading ? 'Loading the bikes in stock...' : bikeFreeCount + ' priced bike' + (bikeFreeCount === 1 ? '' : 's') + ' in stock here : pick the model, then the colour (the oldest chassis comes first), or open the Shelf.' + (unpricedBikeCount > 0 ? ' ' + unpricedBikeCount + ' not priced (left out).' : '') }}
 
                                 </div>
                             }
 
                         </div>
+                    }
+                    @else if (isEditable)
+                    {
+                            <div class="si-card si-add-card">
+
+                                <div class="si-card-header">
+
+                                    <i [class]="'fa-solid ' + page.icon"></i>
+
+                                    <span>Add Items</span>
+
+                                    <button
+
+                                        type="button"
+
+                                        class="si-add-clear"
+
+                                        title="Clear the category, search and quantity"
+
+                                        (click)="clearAddSection()">
+
+                                        <i class="fas fa-eraser"></i>
+
+                                        Clear
+
+                                    </button>
+
+                                    <button
+
+                                        type="button"
+
+                                        class="si-add"
+
+                                        [disabled]="!selectedProduct"
+
+                                        (click)="onAddLine()">
+
+                                        <i class="fas fa-plus"></i>
+
+                                        Add
+
+                                    </button>
+
+                                </div>
+
+                                <div class="si-fields si-add-fields">
+
+                                    <div
+
+                                        class="si-search"
+
+                                        (keydown)="onSearchKey($event)">
+
+                                        <app-textbox
+
+                                            label="Search or Scan"
+
+                                            placeholder="Part no, part name, code or barcode"
+
+                                            textCase="none"
+
+                                            prefixIcon="fas fa-barcode"
+
+                                            [value]="searchText"
+
+                                            (valueChange)="onSearchChange($event)"
+
+                                            (enterPressed)="onSearchEnter()"
+
+                                            (blur)="onSearchBlur()">
+
+                                        </app-textbox>
+
+                                        @if (searchOpen || searchLoading)
+                                        {
+                                            <div class="si-results appcore-scrollbar">
+
+                                                @if (searchLoading)
+                                                {
+                                                    <div class="si-results-state">
+
+                                                        <i class="fas fa-circle-notch fa-spin"></i>
+
+                                                        Searching...
+
+                                                    </div>
+                                                }
+                                                @else if (searchEmpty)
+                                                {
+                                                    <div class="si-results-state">
+
+                                                        <i class="fa-regular fa-folder-open"></i>
+
+                                                        No {{ page.itemLower }} matches.
+
+                                                    </div>
+                                                }
+                                                @else
+                                                {
+                                                    @for (product of searchResults; track product.ProductId; let i = $index)
+                                                    {
+                                                        <button
+
+                                                            type="button"
+
+                                                            class="si-result"
+
+                                                            [class.si-result-out]="product.OnHand <= 0"
+
+                                                            [class.is-active]="i === searchActive"
+
+                                                            (mouseenter)="searchActive = i"
+
+                                                            (mousedown)="$event.preventDefault(); selectProduct(product)">
+
+                                                            <span class="si-result-main">
+
+                                                                <b>{{ product.PartName || product.ProductName }}</b>
+
+                                                                <i>{{ product.ProductCode }}{{ product.PartNumber ? ' || ' + product.PartNumber : '' }}</i>
+
+                                                            </span>
+
+                                                            <span class="si-result-side">
+
+                                                                <b [class.si-text-rose]="product.OnHand <= 0">{{ qtyString(product.OnHand) }} {{ product.Unit }}</b>
+
+                                                                <i>{{ product.Mrp > 0 ? 'MRP ' + money(product.Mrp) : 'Not priced' }}{{ product.HasMixedMrp ? ' · ' + (product.MrpCount || 2) + ' MRPs' : '' }}</i>
+
+                                                            </span>
+
+                                                        </button>
+                                                    }
+
+                                                    <div class="si-results-hint">
+
+                                                        {{ searchResults.length }} item{{ searchResults.length === 1 ? '' : 's' }} · Up / Down to move · Enter to pick · Esc to close
+
+                                                    </div>
+                                                }
+
+                                            </div>
+                                        }
+
+                                    </div>
+
+                                    <app-textbox
+
+                                        class="si-qty"
+
+                                        label="Qty"
+
+                                        placeholder="1"
+
+                                        inputMode="decimal"
+
+                                        textCase="none"
+
+                                        [required]="true"
+
+                                        [value]="qtyText"
+
+                                        (valueChange)="onQtyTextChange($event)"
+
+                                        (enterPressed)="onAddLine()">
+
+                                    </app-textbox>
+
+                                </div>
+
+                                <!-- Category / sub category narrow the search;
+                                     a scanned batch label ignores them -->
+
+                                <div class="si-fields si-grid-2 si-filter-fields">
+
+                                    <app-search-dropdown
+
+                                        placeholder="All categories"
+
+                                        title="Category"
+
+                                        [items]="categoryItems"
+
+                                        [value]="$any(categoryId)"
+
+                                        (valueChange)="onCategoryChange($event)">
+
+                                    </app-search-dropdown>
+
+                                    <app-search-dropdown
+
+                                        placeholder="All sub categories"
+
+                                        title="Sub Category"
+
+                                        [items]="subCategoryItems"
+
+                                        [value]="$any(subCategoryId)"
+
+                                        [disabled]="subCategoryItems.length === 0"
+
+                                        (valueChange)="onSubCategoryChange($event)">
+
+                                    </app-search-dropdown>
+
+                                </div>
+
+                                <!-- Manual pick : the narrowed area's items;
+                                     picking fills the search box -->
+
+                                <div class="si-fields si-product-field">
+
+                                    <app-search-dropdown
+
+                                        [placeholder]="productPlaceholder"
+
+                                        [items]="productItems"
+
+                                        badgeField="badge"
+
+                                        [value]="$any(selectedProduct?.ProductId ?? null)"
+
+                                        [disabled]="productListLoading || productItems.length === 0"
+
+                                        (valueChange)="onProductPick($event)">
+
+                                    </app-search-dropdown>
+
+                                </div>
+
+                                @if (selectedProduct)
+                                {
+                                    <div class="si-picked">
+
+                                        <span class="si-picked-name">
+
+                                            <b>{{ selectedProduct.PartName || selectedProduct.ProductName }}</b>
+
+                                            <i>{{ selectedProduct.ProductCode }}{{ selectedProduct.PartNumber ? ' || ' + selectedProduct.PartNumber : '' }}</i>
+
+                                        </span>
+
+                                        <span class="si-fact">
+
+                                            <span>On hand</span>
+
+                                            <b [class.si-text-rose]="selectedProduct.OnHand <= 0">{{ selectedStockText }}</b>
+
+                                        </span>
+
+                                        <span class="si-fact">
+
+                                            <span>MRP</span>
+
+                                            <b>{{ selectedMrpText }}</b>
+
+                                            @if (selectedProduct.HasMixedMrp)
+                                            {
+                                                <i class="si-fact-sub">{{ selectedProduct.MrpCount || 2 }} MRPs in stock</i>
+                                            }
+
+                                        </span>
+
+                                    </div>
+                                }
+
+                            </div>
                     }
 
                 </div>
@@ -1207,7 +1498,15 @@
 
                                     @for (row of rows; track row.key)
                                     {
-                                        <tr [class.si-row-pending]="!row.priced && isEditable">
+                                        <tr
+
+                                            [class.si-row-pending]="!row.priced && isEditable"
+
+                                            [class.si-row-bike]="isBikes && !!row.entry.MotorBikeUnitId"
+
+                                            [attr.title]="isBikes && row.entry.MotorBikeUnitId ? 'Double click : show this bike in the Add card' : null"
+
+                                            (dblclick)="onRowDblClick(row)">
 
                                             <td class="si-c si-sl">{{ row.index + 1 }}</td>
 
@@ -1216,6 +1515,23 @@
                                                 <div class="si-part">{{ lineName(row) }}</div>
 
                                                 <div class="si-sub">{{ lineMeta(row) }}</div>
+
+                                                @if (row.entry.ChassisNo)
+                                                {
+                                                    <div class="si-bike-line">
+                                                        <span>Chassis <b>{{ row.entry.ChassisNo }}</b></span>
+                                                        <span>Engine <b>{{ row.entry.EngineNo }}</b></span>
+                                                        @if (row.entry.ManufactureYear)
+                                                        {
+                                                            <span>Year <b>{{ row.entry.ManufactureYear }}</b></span>
+                                                        }
+                                                        <span class="si-ckd" [class.si-ckd-no]="row.entry.CkdStatus !== 'Yes'">CKD {{ row.entry.CkdStatus || 'No' }}</span>
+                                                        @if (row.priced?.DeliveryStatus && !isEditable)
+                                                        {
+                                                            <span class="si-ckd">{{ row.priced?.DeliveryStatus }}</span>
+                                                        }
+                                                    </div>
+                                                }
 
                                                 @for (flag of lineFlags(row); track flag.text)
                                                 {
@@ -1238,7 +1554,7 @@
 
                                             <td class="si-r">
 
-                                                @if (isEditable)
+                                                @if (isEditable && !row.entry.MotorBikeUnitId)
                                                 {
                                                     <app-textbox
 
@@ -2192,6 +2508,34 @@
 <!-- =========================================================
      UTILITIES (no toasts : messages are inline)
 ========================================================== -->
+
+<!-- Motor Bike Shelf (MB) -->
+@if (isBikes)
+{
+    <app-bike-shelf
+
+        [open]="bikeShelfOpen"
+
+        [title]="'Motor Bike Shelf'"
+
+        [subtitle]="bikeShelfSubtitle"
+
+        [units]="bikeUnits"
+
+        [takenIds]="takenBikeIds"
+
+        [ckdBusyId]="ckdBusyId"
+
+        [maxPick]="bikeRoom"
+
+        (add)="onBikeShelfAdd($event)"
+
+        (ckdChange)="changeBikeCkd($event)"
+
+        (closed)="closeBikeShelf()">
+
+    </app-bike-shelf>
+}
 
 <app-confirm-dialog></app-confirm-dialog>
 

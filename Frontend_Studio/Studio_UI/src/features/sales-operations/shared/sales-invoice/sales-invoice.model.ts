@@ -163,6 +163,24 @@ export interface SalesInvoiceLine
         number;
     Allocations:
         SalesInvoiceAllocation[];
+    // MB : the bike sold (null / '' on SP / AC lines)
+    MotorBikeUnitId?:
+        number | null;
+    ChassisNo?:
+        string;
+    EngineNo?:
+        string;
+    ColorName?:
+        string;
+    ManufactureYear?:
+        number | null;
+    CkdStatus?:
+        string;
+    // Pending / Delivered / Cancelled
+    DeliveryStatus?:
+        string;
+    DeliveredDate?:
+        string;
 }
 
 
@@ -211,6 +229,9 @@ export interface SalesInvoiceCustomerSearchItem
         string;
     IsWalkIn:
         boolean;
+    // Corporate / Institution (Inbound)
+    IsCorporate:
+        boolean;
     MatchedOn:
         string;
 }
@@ -239,6 +260,9 @@ export interface SalesInvoiceCustomer
     // Inbound / Outside / Walk-in
     CustomerTag:
         string;
+    // Corporate / Institution (Inbound) : may buy on a Corporate sale
+    IsCorporate:
+        boolean;
     IsActive:
         boolean;
     ReceivableLedgerCode:
@@ -355,6 +379,14 @@ export interface SalesInvoiceSwitches
     // 0033
     RoundDownWholeTaka:
         boolean;
+    // MB 0073 Allow Corporate Sale, window 0074 / 0075
+    // (yyyy-MM-dd; '' = open)
+    AllowCorporateSale:
+        boolean;
+    CorporateSaleFrom:
+        string;
+    CorporateSaleUntil:
+        string;
 }
 
 
@@ -569,6 +601,9 @@ export interface SalesInvoiceListItem
     // Inbound / Outside / Walk-in
     CustomerTag:
         string;
+    // MB : Regular / Corporate; others ''
+    SaleType:
+        string;
     LineCount:
         number;
     InvoiceTotal:
@@ -634,6 +669,9 @@ export interface SalesInvoice
     CustomerIsWalkIn:
         boolean;
     CustomerTag:
+        string;
+    // MB : Regular / Corporate; others ''
+    SaleType:
         string;
     ReceivableLedgerCode:
         string;
@@ -744,6 +782,9 @@ export interface CreateSalesInvoiceLine
     // null = none
     SpecialDiscountPercent:
         number | null;
+    // MB : the bike (chassis) sold; quantity 1
+    MotorBikeUnitId?:
+        number | null;
 }
 
 // A Payment Desk row sent (= ReceiptVoucherDebitDto)
@@ -829,6 +870,9 @@ export interface CreateSalesInvoice
         SalesInvoicePaymentRow[];
     // Single line, at most 500
     Narration:
+        string;
+    // MB : Regular / Corporate; others ''
+    SaleType:
         string;
 }
 
@@ -940,4 +984,52 @@ export function toAsciiText
         .replace(/\u00B7/g, '-')
         .replace(/\u00D7/g, 'x')
         .replace(/[^\x20-\x7E]/g, '');
+}
+
+
+//===============================================================
+// MB : a bike in stock (model -> colour -> chassis picker)
+//===============================================================
+
+export interface SalesInvoiceBikeUnit
+{
+    MotorBikeUnitId:
+        number;
+    ProductId:
+        number;
+    ProductCode:
+        string;
+    ProductName:
+        string;
+    ProductSubCategoryId:
+        number;
+    ModelName:
+        string;
+    ColorName:
+        string;
+    ChassisNo:
+        string;
+    EngineNo:
+        string;
+    // From the purchase / receiving ('' = not kept)
+    KeyNo?:
+        string;
+    BatteryNo?:
+        string;
+    ManufactureYear:
+        number | null;
+    // Yes / No
+    CkdStatus:
+        string;
+    // yyyy-MM-dd
+    StockInDate:
+        string;
+    Mrp:
+        number;
+    // On another open (draft / approved) invoice
+    OnInvoiceNo:
+        string;
+    // Picture of the model (full URL; '' = none) : the shelf
+    ImageUrl:
+        string;
 }

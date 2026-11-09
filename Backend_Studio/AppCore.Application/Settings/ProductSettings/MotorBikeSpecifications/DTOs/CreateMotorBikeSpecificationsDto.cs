@@ -40,6 +40,10 @@ public class CreateMotorBikeSpecificationsDto
 
     public int Rpm { get; set; }
 
+    public string Mileage { get; set; } = string.Empty;
+
+    public int TopSpeedKmh { get; set; }
+
     public int WheelBaseMm { get; set; }
 
     public int LengthMm { get; set; }

@@ -59,6 +59,22 @@ public class CustomerFiles
 
     public int TransferCount { get; set; }
 
+    // CKD documents : used only when the chassis has no bike record
+    // (an opening file of a bike sold before the system); otherwise
+    // the bike's own CKD status (MotorBikeUnits) counts
+    public string CkdStatus { get; set; } = "No";
+
+    public DateOnly? CkdCheckedDate { get; set; }
+
+    public long? CkdCheckedBy { get; set; }
+
+    public string CkdCheckedByName { get; set; } = string.Empty;
+
+    public string CkdRemarks { get; set; } = string.Empty;
+
+    // Year of manufacture (BRTA Form-17); null = not known
+    public int? ManufactureYear { get; set; }
+
     public DateOnly? FileReadyDate { get; set; }
 
     public DateOnly? CollectedDate { get; set; }

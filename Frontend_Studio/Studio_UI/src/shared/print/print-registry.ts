@@ -150,6 +150,12 @@ export const PRINT_SOURCES:
             import('../../features/sales-operations/accessories-sales/print/sales-invoices-ac.print')
                 .then(module => module.SALES_INVOICES_AC_PRINT),
 
+    // Sales Operations : Sales Invoices - MB (same two documents)
+    'sales-invoices-mb':
+        () =>
+            import('../../features/sales-operations/motor-bike-sales/print/sales-invoices-mb.print')
+                .then(module => module.SALES_INVOICES_MB_PRINT),
+
     // Accounts & Finance : Auto Journal Registers (Journal
     // Register; the id is the page's filter token)
     'auto-journal-registers':

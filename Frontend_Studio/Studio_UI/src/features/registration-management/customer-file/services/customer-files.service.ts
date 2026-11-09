@@ -144,7 +144,8 @@ export class CustomerFilesService
                                     CollectedDate:text(r, 'CollectedDate').slice(0, 10),
                                     Status:(text(r, 'Status') || 'Open') as CustomerFileStatus,
                                     Remarks:text(r, 'Remarks'),
-                                    PendingTransferNo:text(r, 'PendingTransferNo')
+                                    PendingTransferNo:text(r, 'PendingTransferNo'),
+                                    CkdStatus:text(r, 'CkdStatus') === 'Yes' ? 'Yes' : 'No'
                                 })),
                         Transfers:
                             list(x, 'Transfers').map(

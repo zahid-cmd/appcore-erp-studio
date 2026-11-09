@@ -44,6 +44,12 @@ public interface ISalesInvoiceRepository
         long? subCategoryId = null,
         bool browse = false);
 
+    // Sales Invoices - MB : bikes in stock in the warehouse
+    // (oldest first); the invoice's own bikes are not "taken"
+    Task<List<SalesInvoiceBikeUnitDto>> GetBikeUnitsAsync(
+        long warehouseId,
+        long invoiceId);
+
     // Live search : phone (1 / 2), name or code; at most 10
     Task<List<SalesInvoiceCustomerSearchItemDto>> SearchCustomersAsync(
         string pageType,
