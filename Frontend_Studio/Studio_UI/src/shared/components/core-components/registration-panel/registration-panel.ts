@@ -404,6 +404,139 @@ export class LoginPageRegistrationPanelComponent
         boolean =
             false;
 
+
+    //===========================================================
+    // Profile Photo (optional)
+    //
+    // The chosen picture is made square and at most 400 x 400
+    // (JPEG), so it stays small (about 50 KB) whatever was picked.
+    //===========================================================
+
+    photoData:
+        string =
+            '';
+
+    photoError:
+        string =
+            '';
+
+    onPhotoPicked
+    (
+        event:
+            Event
+    ):
+        void
+    {
+        const input =
+            event.target as HTMLInputElement;
+
+        const file =
+            input.files?.[0];
+
+        input.value =
+            '';
+
+        this.photoError =
+            '';
+
+        if (!file)
+        {
+            return;
+        }
+
+        if (!/^image\/(jpeg|png|webp)$/i.test(file.type))
+        {
+            this.photoError =
+                'Please choose a JPG, PNG or WEBP picture.';
+
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024)
+        {
+            this.photoError =
+                'The picture is too large (max 10 MB).';
+
+            return;
+        }
+
+        const reader =
+            new FileReader();
+
+        reader.onload =
+            () =>
+            {
+                const image =
+                    new Image();
+
+                image.onload =
+                    () =>
+                    {
+                        const side =
+                            Math.min(image.width, image.height);
+
+                        const size =
+                            Math.min(400, side);
+
+                        const canvas =
+                            document.createElement('canvas');
+
+                        canvas.width =
+                            size;
+
+                        canvas.height =
+                            size;
+
+                        const context =
+                            canvas.getContext('2d');
+
+                        if (!context)
+                        {
+                            this.photoError =
+                                'The picture could not be read.';
+
+                            return;
+                        }
+
+                        // Centre square crop
+                        context.drawImage(
+                            image,
+                            (image.width - side) / 2,
+                            (image.height - side) / 2,
+                            side,
+                            side,
+                            0,
+                            0,
+                            size,
+                            size
+                        );
+
+                        this.photoData =
+                            canvas.toDataURL('image/jpeg', 0.85);
+                    };
+
+                image.onerror =
+                    () =>
+                        this.photoError =
+                            'The picture could not be read.';
+
+                image.src =
+                    String(reader.result ?? '');
+            };
+
+        reader.readAsDataURL(file);
+    }
+
+    removePhoto():
+        void
+    {
+        this.photoData =
+            '';
+
+        this.photoError =
+            '';
+    }
+
     registrationError:
         string =
             '';
@@ -1765,7 +1898,10 @@ export class LoginPageRegistrationPanelComponent
                 this.mobileNo.trim(),
 
             password:
-                this.password
+                this.password,
+
+            userPhotoData:
+                this.photoData
         };
 
 
@@ -1832,6 +1968,8 @@ export class LoginPageRegistrationPanelComponent
 
                         this.confirmationLoginId =
                             this.loginId.trim();
+
+                        this.removePhoto();
 
 
                         //===================================================

@@ -191,6 +191,65 @@
 
 
                 <!-- ===========================================
+                     PROFILE PHOTO (optional)
+                ============================================ -->
+
+                <div class="registration-photo">
+
+                    <label
+                        class="registration-photo-circle"
+                        [class.has-photo]="!!photoData"
+                        title="Choose a profile photo (optional)">
+
+                        @if (photoData)
+                        {
+                            <img [src]="photoData" alt="Profile photo">
+                        }
+                        @else
+                        {
+                            <i class="fas fa-camera"></i>
+                        }
+
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            [disabled]="isRegistering"
+                            (change)="onPhotoPicked($event)">
+
+                    </label>
+
+                    <div class="registration-photo-text">
+
+                        <span class="registration-photo-title">
+                            Profile Photo <small>(optional)</small>
+                        </span>
+
+                        <span class="registration-photo-hint">
+                            JPG, PNG or WEBP · shown on your account
+                        </span>
+
+                        @if (photoData)
+                        {
+                            <button
+                                type="button"
+                                class="registration-photo-remove"
+                                [disabled]="isRegistering"
+                                (click)="removePhoto()">
+                                <i class="fas fa-xmark"></i> Remove
+                            </button>
+                        }
+
+                        @if (photoError)
+                        {
+                            <span class="registration-photo-error">{{ photoError }}</span>
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <!-- ===========================================
                      FULL NAME
                 ============================================ -->
 

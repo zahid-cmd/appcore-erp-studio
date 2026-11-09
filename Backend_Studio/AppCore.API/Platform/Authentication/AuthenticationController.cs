@@ -42,6 +42,9 @@ public class AuthenticationController
     private readonly LoginAttemptGuard
         _loginAttempts;
 
+    private readonly IWebHostEnvironment
+        _environment;
+
 
     //===========================================================
     // Constructor
@@ -50,9 +53,13 @@ public class AuthenticationController
     public AuthenticationController
     (
         IAuthenticationService authenticationService,
-        LoginAttemptGuard loginAttempts
+        LoginAttemptGuard loginAttempts,
+        IWebHostEnvironment environment
     )
     {
+        _environment =
+            environment;
+
         _authenticationService =
             authenticationService;
 
@@ -165,11 +172,72 @@ public class AuthenticationController
             [FromBody]
             RegisterRequestDto request)
     {
-        LoginResponseDto response =
-            await _authenticationService
-                .RegisterAsync(
-                    request
+        //=======================================================
+        // Profile Photo (optional) : saved first, removed again
+        // when the registration fails
+        //=======================================================
+
+        request.UserPhotoPath =
+            string.Empty;
+
+        string? photoFile =
+            null;
+
+        if
+        (
+            !string.IsNullOrWhiteSpace(
+                request.UserPhotoData
+            )
+        )
+        {
+            (string? path, string? file, string? error) =
+                await SaveRegistrationPhotoAsync(
+                    request.UserPhotoData
                 );
+
+            if
+            (
+                error is not null
+            )
+            {
+                return BadRequest(
+                    new LoginResponseDto
+                    {
+                        Success = false,
+                        Message = error
+                    }
+                );
+            }
+
+            request.UserPhotoPath =
+                path ?? string.Empty;
+
+            photoFile =
+                file;
+        }
+
+        request.UserPhotoData =
+            string.Empty;
+
+
+        LoginResponseDto response;
+
+        try
+        {
+            response =
+                await _authenticationService
+                    .RegisterAsync(
+                        request
+                    );
+        }
+        catch
+        {
+            DeleteQuietly(
+                photoFile
+            );
+
+            throw;
+        }
 
 
         if
@@ -177,6 +245,10 @@ public class AuthenticationController
             !response.Success
         )
         {
+            DeleteQuietly(
+                photoFile
+            );
+
             return BadRequest(
                 response
             );
@@ -186,6 +258,152 @@ public class AuthenticationController
         return Ok(
             response
         );
+    }
+
+
+    //===========================================================
+    // Registration Photo
+    //
+    // Same folder as the User Profile page
+    // (wwwroot/uploads/user-photos), so the Uploads Mirror copies
+    // it to every PC. Max 2 MB; JPG, PNG or WEBP, checked by the
+    // file's own bytes, not by what the browser says.
+    //===========================================================
+
+    private const int MaxRegistrationPhotoBytes =
+        2 * 1024 * 1024;
+
+    private async Task<(string? Path, string? File, string? Error)>
+        SaveRegistrationPhotoAsync
+        (
+            string data
+        )
+    {
+        string base64 =
+            data.Trim();
+
+        int comma =
+            base64.IndexOf(',');
+
+        if
+        (
+            base64.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            &&
+            comma > 0
+        )
+        {
+            base64 =
+                base64[(comma + 1)..];
+        }
+
+        if
+        (
+            base64.Length > (MaxRegistrationPhotoBytes / 3 * 4) + 8
+        )
+        {
+            return (null, null, "Profile photo cannot be larger than 2 MB.");
+        }
+
+        byte[] bytes;
+
+        try
+        {
+            bytes =
+                Convert.FromBase64String(
+                    base64
+                );
+        }
+        catch (FormatException)
+        {
+            return (null, null, "The profile photo could not be read. Please choose it again.");
+        }
+
+        if
+        (
+            bytes.Length == 0
+            ||
+            bytes.Length > MaxRegistrationPhotoBytes
+        )
+        {
+            return (null, null, "Profile photo cannot be larger than 2 MB.");
+        }
+
+        string? extension =
+            bytes.Length > 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF
+                ? ".jpg"
+                : bytes.Length > 8 && bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47
+                    ? ".png"
+                    : bytes.Length > 12
+                      && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
+                      && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50
+                        ? ".webp"
+                        : null;
+
+        if
+        (
+            extension is null
+        )
+        {
+            return (null, null, "Only JPG, PNG and WEBP photos are allowed.");
+        }
+
+        string webRootPath =
+            _environment.WebRootPath
+            ??
+            Path.Combine(
+                _environment.ContentRootPath,
+                "wwwroot"
+            );
+
+        string folder =
+            Path.Combine(
+                webRootPath,
+                "uploads",
+                "user-photos"
+            );
+
+        Directory.CreateDirectory(
+            folder
+        );
+
+        string fileName =
+            $"{Guid.NewGuid():N}{extension}";
+
+        string physical =
+            Path.Combine(
+                folder,
+                fileName
+            );
+
+        await System.IO.File.WriteAllBytesAsync(
+            physical,
+            bytes
+        );
+
+        return ($"/uploads/user-photos/{fileName}", physical, null);
+    }
+
+    private static void DeleteQuietly
+    (
+        string? file
+    )
+    {
+        try
+        {
+            if
+            (
+                file is not null
+                &&
+                System.IO.File.Exists(file)
+            )
+            {
+                System.IO.File.Delete(file);
+            }
+        }
+        catch
+        {
+            // left for the next clean-up
+        }
     }
 
 
@@ -407,4 +625,4 @@ public class AuthenticationController
             response
         );
     }
-}
+}

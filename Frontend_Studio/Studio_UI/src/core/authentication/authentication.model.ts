@@ -96,6 +96,10 @@ export interface RegisterRequest
 
     password:
         string;
+
+    // Optional profile photo as a data URL ('' = none)
+    userPhotoData?:
+        string;
 }
 
 

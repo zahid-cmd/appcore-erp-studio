@@ -804,6 +804,103 @@ export class CalculatorWindowComponent
         );
     }
 
+    //===========================================================
+    // Clipboard : Ctrl + V pastes a figure (Excel cell / column),
+    // Ctrl + C copies the result, while the calculator has focus
+    // or nothing else on the page is being typed / selected
+    //===========================================================
+
+    private clipboardTarget
+    (
+        event:
+            Event
+    ):
+        boolean
+    {
+        if (!this.visible())
+        {
+            return false;
+        }
+
+        const target =
+            (event.target ?? document.activeElement) as HTMLElement | null;
+
+        const panel =
+            this.panel()?.nativeElement;
+
+        const inPanel =
+            !!panel && !!target && panel.contains(target);
+
+        if (inPanel)
+        {
+            // The VAT / Profit rate boxes keep their own paste
+            return !/^(INPUT|TEXTAREA)$/.test(target!.tagName);
+        }
+
+        // Outside the calculator : only when nothing else is
+        // being typed in (no input focused)
+        return !!target
+            && !target.isContentEditable
+            && !/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)
+            && !document.querySelector('[role="dialog"][aria-modal="true"]');
+    }
+
+    @HostListener('document:paste', ['$event'])
+    onPaste
+    (
+        event:
+            ClipboardEvent
+    ):
+        void
+    {
+        if (!this.clipboardTarget(event))
+        {
+            return;
+        }
+
+        const text =
+            event.clipboardData?.getData('text/plain') ?? '';
+
+        if (this.calc.paste(text))
+        {
+            event.preventDefault();
+        }
+    }
+
+    @HostListener('document:copy', ['$event'])
+    onCopy
+    (
+        event:
+            ClipboardEvent
+    ):
+        void
+    {
+        // Text selected on the page : normal copy
+        if (!this.clipboardTarget(event) || (window.getSelection()?.toString() ?? '').trim())
+        {
+            return;
+        }
+
+        const panel =
+            this.panel()?.nativeElement;
+
+        const active =
+            document.activeElement as HTMLElement | null;
+
+        // Ctrl + C copies the result only when the calculator
+        // was the last thing used
+        if (!panel || !active || !panel.contains(active))
+        {
+            return;
+        }
+
+        event.clipboardData?.setData('text/plain', this.calc.plainResult());
+
+        event.preventDefault();
+
+        this.calc.flash.set('Copied ' + this.calc.plainResult());
+    }
+
     @HostListener('window:resize')
     onResize():
         void

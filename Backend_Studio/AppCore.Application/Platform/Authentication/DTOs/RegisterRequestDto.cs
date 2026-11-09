@@ -75,4 +75,26 @@ public class RegisterRequestDto
         get;
         set;
     } = string.Empty;
+
+
+    //===========================================================
+    // Profile Photo (optional)
+    //
+    // UserPhotoData : the picture from the browser as a data URL
+    // ("data:image/jpeg;base64,...").
+    // UserPhotoPath : set by the API after it saves the file
+    // (anything the browser sends here is ignored).
+    //===========================================================
+
+    public string UserPhotoData
+    {
+        get;
+        set;
+    } = string.Empty;
+
+    public string UserPhotoPath
+    {
+        get;
+        set;
+    } = string.Empty;
 }

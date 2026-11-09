@@ -85,6 +85,65 @@ const MAX_TAPE =
 const MAX_DIGITS =
     15;
 
+// 2 decimals, no grouping : "293905.00"
+function plainNumber
+(
+    value:
+        number
+):
+    string
+{
+    return (Math.round((value || 0) * 100) / 100).toFixed(2);
+}
+
+// One pasted cell to a number (null = not a number)
+function readNumber
+(
+    raw:
+        string
+):
+    number | null
+{
+    let text =
+        (raw ?? '').trim();
+
+    if (!text)
+    {
+        return null;
+    }
+
+    let negative =
+        false;
+
+    if (/^\(.*\)$/.test(text))
+    {
+        negative = true;
+
+        text = text.slice(1, -1);
+    }
+
+    text =
+        text
+            .replace(/tk\.?|bdt|\u09F3|\$|\u20B9|%/gi, '')
+            .replace(/[,\s\u00A0]/g, '')
+            .replace(/\u2212/g, '-');
+
+    if (!/^[-+]?\d*\.?\d+$/.test(text))
+    {
+        return null;
+    }
+
+    const value =
+        Number(text);
+
+    if (!Number.isFinite(value))
+    {
+        return null;
+    }
+
+    return negative ? -value : value;
+}
+
 const MONEY =
     new Intl.NumberFormat(
         'en-IN',
@@ -711,10 +770,29 @@ export class CalculatorService
         this.save();
     }
 
+    // Plain number (no lakh commas) : Excel, Word, any field
+    // reads it as a number
     copyResult():
         void
     {
-        this.copy(MONEY.format(this.value()), 'Copied');
+        this.copy(plainNumber(this.value()), 'Copied ' + plainNumber(this.value()));
+    }
+
+    copyValue
+    (
+        value:
+            number
+    ):
+        void
+    {
+        this.copy(plainNumber(value), 'Copied ' + plainNumber(value));
+    }
+
+    // Text for the clipboard 'copy' event (Ctrl + C)
+    plainResult():
+        string
+    {
+        return plainNumber(this.value());
     }
 
     copyTape():
@@ -722,10 +800,54 @@ export class CalculatorService
     {
         const text =
             this.tape()
-                .map(x => `${x.Label}\t${x.Detail}\t${MONEY.format(x.Result)}`)
+                .map(x => `${x.Label}\t${x.Detail}\t${plainNumber(x.Result)}`)
                 .join('\n');
 
         this.copy(text, 'Tape copied');
+    }
+
+    // Paste (Ctrl + V) : one figure becomes the number on the
+    // display; several cells (an Excel column or row) are added
+    // up. "1,23,456.50", "Tk 500", "(250)" (negative) all work.
+    paste
+    (
+        text:
+            string
+    ):
+        boolean
+    {
+        const numbers =
+            (text ?? '')
+                .split(/[\t\r\n;]+/)
+                .map(x => readNumber(x))
+                .filter((x): x is number => x !== null);
+
+        if (numbers.length === 0)
+        {
+            this.flash.set('Nothing to paste');
+
+            return false;
+        }
+
+        const total =
+            Math.round(numbers.reduce((a, b) => a + b, 0) * 1e10) / 1e10;
+
+        this.current.set(String(total));
+
+        this.fresh.set(true);
+
+        if (numbers.length > 1)
+        {
+            this.log('Paste', `${numbers.length} values added`, total);
+
+            this.flash.set(`Pasted ${numbers.length} values (sum)`);
+        }
+        else
+        {
+            this.flash.set('Pasted');
+        }
+
+        return true;
     }
 
     money

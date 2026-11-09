@@ -489,6 +489,10 @@ public class AuthenticationService : IAuthenticationService
                 MobileNo =
                     request.MobileNo?.Trim() ?? string.Empty,
 
+                // Saved by the API before this call ('' = no photo)
+                UserPhotoPath =
+                    request.UserPhotoPath?.Trim() ?? string.Empty,
+
                 IsActive =
                     false,
 
@@ -2042,4 +2046,4 @@ public class AuthenticationService : IAuthenticationService
                 0
         };
     }
-}
+}

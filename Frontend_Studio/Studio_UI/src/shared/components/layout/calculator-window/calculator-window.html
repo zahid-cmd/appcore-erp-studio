@@ -94,7 +94,11 @@
                         <span class="calc-expr">{{ calc.expression() }}</span>
                     </div>
 
-                    <div class="calc-value">{{ calc.display() }}</div>
+                    <div
+                        class="calc-value"
+                        title="Click to copy (Ctrl + C) · Ctrl + V pastes a figure from Excel"
+                        style="cursor:copy"
+                        (click)="calc.copyResult()">{{ calc.display() }}</div>
 
                     <div class="calc-screen-bottom">
                         <span class="calc-words">{{ calc.words() }}</span>
@@ -222,7 +226,11 @@
                     <div class="calc-tape-list">
                         @for (row of calc.tapeNewestFirst(); track $index)
                         {
-                            <div class="calc-tape-row">
+                            <div
+                                class="calc-tape-row"
+                                title="Click to copy this figure"
+                                style="cursor:copy"
+                                (click)="calc.copyValue(row.Result)">
                                 <span class="calc-tape-label">{{ row.Label }}</span>
                                 <span class="calc-tape-detail">{{ row.Detail }}</span>
                                 <b class="calc-tape-result">{{ calc.money(row.Result) }}</b>

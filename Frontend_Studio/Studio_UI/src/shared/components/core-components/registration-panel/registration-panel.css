@@ -4130,3 +4130,106 @@ app-orbit-loader
             none;
     }
 }
+
+
+/* ===============================================================
+   Profile Photo (optional) - top of the registration form
+   =============================================================== */
+
+.registration-photo
+{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.registration-photo-circle
+{
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 64px;
+    height: 64px;
+    overflow: hidden;
+    border: 2px dashed rgba(99, 102, 241, 0.55);
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.08);
+    color: #6366f1;
+    font-size: 20px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.registration-photo-circle:hover
+{
+    border-color: #6366f1;
+    transform: scale(1.03);
+}
+
+.registration-photo-circle.has-photo
+{
+    border-style: solid;
+}
+
+.registration-photo-circle img
+{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.registration-photo-circle input
+{
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.registration-photo-text
+{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+}
+
+.registration-photo-title
+{
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.registration-photo-title small
+{
+    font-weight: 500;
+    opacity: 0.65;
+}
+
+.registration-photo-hint
+{
+    font-size: 11.5px;
+    opacity: 0.7;
+}
+
+.registration-photo-remove
+{
+    margin-top: 2px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.registration-photo-error
+{
+    font-size: 12px;
+    color: #dc2626;
+}
+
