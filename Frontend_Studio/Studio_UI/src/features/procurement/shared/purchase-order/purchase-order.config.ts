@@ -83,6 +83,16 @@ export interface PurchaseOrderSwitchCodes
     // only); OFF / missing = Max is a hard cap
     ABOVE_MAX_STOCK:
         string;
+
+    // List : ON = resting the mouse on a row shows its items
+    // (bikes per model) on a card; OFF / missing = no card
+    ITEM_SUMMARY:
+        string;
+
+    // Form : ON = Up / Down buttons move a line; the saved order
+    // follows (add and edit); OFF / missing = no buttons
+    REORDER_LINES:
+        string;
 }
 
 
@@ -183,7 +193,9 @@ export const PO_MB_PAGE:
         ROUND_PAYABLE:'',
         WHOLE_TAKA_LINES:'',
         EDIT_SUPPLIER_TERMS:'CFG-MOD-007-0040',
-        ABOVE_MAX_STOCK:'CFG-MOD-007-0080'
+        ABOVE_MAX_STOCK:'CFG-MOD-007-0080',
+        ITEM_SUMMARY:'CFG-MOD-007-0086',
+        REORDER_LINES:'CFG-MOD-007-0092'
     }
 };
 
@@ -217,7 +229,9 @@ export const PO_SP_PAGE:
         ROUND_PAYABLE:'CFG-MOD-007-0030',
         WHOLE_TAKA_LINES:'CFG-MOD-007-0032',
         EDIT_SUPPLIER_TERMS:'CFG-MOD-007-0038',
-        ABOVE_MAX_STOCK:'CFG-MOD-007-0081'
+        ABOVE_MAX_STOCK:'CFG-MOD-007-0081',
+        ITEM_SUMMARY:'CFG-MOD-007-0087',
+        REORDER_LINES:'CFG-MOD-007-0093'
     }
 };
 
@@ -251,7 +265,9 @@ export const PO_AC_PAGE:
         ROUND_PAYABLE:'CFG-MOD-007-0031',
         WHOLE_TAKA_LINES:'CFG-MOD-007-0033',
         EDIT_SUPPLIER_TERMS:'CFG-MOD-007-0039',
-        ABOVE_MAX_STOCK:'CFG-MOD-007-0082'
+        ABOVE_MAX_STOCK:'CFG-MOD-007-0082',
+        ITEM_SUMMARY:'CFG-MOD-007-0088',
+        REORDER_LINES:'CFG-MOD-007-0094'
     }
 };
 
@@ -284,4 +300,4 @@ export function purchaseOrderProviders
             useExisting:service
         }
     ];
-}
+}

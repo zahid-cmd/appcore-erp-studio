@@ -831,6 +831,39 @@ public static class PurchaseAccessoryDuesEngine
 
 
     // Received on one receiving (View)
+    // The accessories received with a purchase (Products Received
+    // on Purchase ON) : shown on the receiving the purchase made
+    public static async Task<List<ReceivingAccessoryLineDto>> ReceiptsOnPurchaseAsync
+    (
+        AppDbContext context,
+        long purchaseId
+    )
+    {
+        return await
+        (
+            from r in context.Set<PurchaseAccessoryReceipts>().AsNoTracking()
+            where r.PurchaseId == purchaseId && r.ReceivedOn == ReceivedOnPurchase
+            join d in context.Set<PurchaseAccessoryDues>().AsNoTracking()
+                on r.PurchaseAccessoryDueId equals d.PurchaseAccessoryDueId into dueRows
+            from d in dueRows.DefaultIfEmpty()
+            orderby r.PurchaseAccessoryReceiptId
+            select new ReceivingAccessoryLineDto
+            {
+                PurchaseAccessoryDueId = r.PurchaseAccessoryDueId,
+                SchemeCode = d != null ? d.SchemeCode : string.Empty,
+                SchemeKind = d != null ? d.SchemeKind : string.Empty,
+                AccessoryId = r.AccessoryId,
+                ProductCode = r.ProductCode,
+                AccessoryName = r.AccessoryName,
+                Unit = r.Unit,
+                Quantity = r.Quantity,
+                BatchNo = r.BatchNo
+            }
+        )
+        .ToListAsync();
+    }
+
+
     public static async Task<List<ReceivingAccessoryLineDto>> ReceiptsOfAsync
     (
         AppDbContext context,

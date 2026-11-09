@@ -67,6 +67,11 @@ public abstract class PurchaseHeader
     public decimal TotalVat { get; set; }
     public decimal TotalVatClaimable { get; set; }
     public decimal TotalPayable { get; set; }
+    // Motor bikes (2026-11-10) : 6.3 total - card DP (supplier
+    // allowance), the campaign discount and its campaign name
+    public decimal TotalAllowance { get; set; }
+    public decimal TotalCampaignDiscount { get; set; }
+    public string CampaignName { get; set; } = string.Empty;
 
     public string Narration { get; set; } = string.Empty;
 

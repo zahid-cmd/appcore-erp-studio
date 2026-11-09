@@ -2571,3 +2571,52 @@
     opacity: 0.55;
     filter: grayscale(0.35);
 }
+
+
+/* =====================================================
+   LINE ORDER (switch "Reorder Lines", 2026-11-10) :
+   Up / Down buttons before Remove; the moved line glows
+===================================================== */
+
+.pof-move
+{
+    width: 28px;
+    height: 28px;
+    margin-right: 4px;
+    border: none;
+    border-radius: 999px;
+    background: #e0ecff;
+    color: #1d4ed8;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.pof-move:hover:not(:disabled)
+{
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+.pof-move:disabled
+{
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pof-row-moved td
+{
+    animation: pof-moved 0.9s ease-out;
+}
+
+@keyframes pof-moved
+{
+    from { background: #dbeafe; }
+    to   { background: transparent; }
+}
+
+/* Wider Action column when the move buttons show */
+.pof-table:has(.pof-move) .pof-col-action,
+.pof-summary:has(.pof-move) .pof-col-action
+{
+    width: 136px;
+}

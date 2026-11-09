@@ -68,7 +68,7 @@
             [command2Text]="isView ? 'Cancel' : 'Clear'"
             [command2Icon]="isView ? 'fas fa-ban' : 'fas fa-broom'"
             [command2Activity]="isView ? 'Cancel' : ''"
-            [command2Visible]="isView ? receiving?.Status === 'Posted' : true"
+            [command2Visible]="isView ? (receiving?.Status === 'Posted' && receiving?.ReceivedOn !== 'Purchase') : true"
             (command2Click)="isView ? openCancel() : clear()"
             [command3Visible]="false"
             rightCommandIcon="fas fa-arrow-left"
@@ -119,6 +119,17 @@
                 <div class="pof-banner pof-banner-info">
                     <i class="fas fa-circle-info"></i>
                     <span>No posted purchase of this branch has {{ page.itemLower }} in transit. A purchase shows here once it is posted with its stock coming in on Product Receiving.</span>
+                </div>
+            }
+
+            @if (receiving?.ReceivedOn === 'Purchase')
+            {
+                <div class="pof-banner">
+                    <i class="fas fa-circle-info"></i>
+                    <span>
+                        <strong>Received with purchase {{ receiving?.PurchaseNo }}</strong>
+                        (Products Received on Purchase) : read only here. Cancel the purchase to undo it.
+                    </span>
                 </div>
             }
 

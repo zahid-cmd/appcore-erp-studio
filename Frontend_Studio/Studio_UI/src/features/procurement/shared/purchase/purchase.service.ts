@@ -270,7 +270,12 @@ export abstract class PurchaseService
             RoundingShare:this.num(item, 'RoundingShare'),
             NetUnitCost:this.num(item, 'NetUnitCost'),
             BilledQuantity:0,
-            ShortNotes:this.text(item, 'ShortNotes')
+            ShortNotes:this.text(item, 'ShortNotes'),
+            // MB : the supplier's price card on the line
+            CardNo:this.text(item, 'CardNo'),
+            CardDp:this.num(item, 'CardDp'),
+            Allowance:this.num(item, 'Allowance'),
+            CampaignDiscount:this.num(item, 'CampaignDiscount')
         };
     }
 
@@ -327,6 +332,10 @@ export abstract class PurchaseService
             TotalVat:this.num(item, 'TotalVat'),
             TotalVatClaimable:this.num(item, 'TotalVatClaimable'),
             TotalPayable:this.num(item, 'TotalPayable'),
+            // MB : price card allowance and campaign discount
+            TotalAllowance:this.num(item, 'TotalAllowance'),
+            TotalCampaignDiscount:this.num(item, 'TotalCampaignDiscount'),
+            CampaignName:this.text(item, 'CampaignName'),
             Narration:this.text(item, 'Narration'),
             Status:this.text(item, 'Status') || 'Draft',
             StockedIn:Boolean(this.pick(item, 'StockedIn')),
@@ -468,7 +477,7 @@ export abstract class PurchaseService
     getPaged
     (
         query:
-            PagedQuery & { tab?:string; supplier?:string }
+            PagedQuery & { tab?:string; supplier?:string; from?:string; to?:string }
     ):
         Observable<PagedResult<Purchase>>
     {
@@ -481,11 +490,18 @@ export abstract class PurchaseService
 
 
     // The suppliers on this page's documents (list filter)
-    getListSuppliers():
+    // status : '' = every status, else Draft / Approved / Posted /
+    // Cancelled (the list's Status filter)
+    getListSuppliers
+    (
+        status:
+            string =
+            ''
+    ):
         Observable<{ code:string; name:string }[]>
     {
         return this.http
-            .get<any[]>(`${this.apiUrl}/list-suppliers`)
+            .get<any[]>(`${this.apiUrl}/list-suppliers`, { params:{ status } })
             .pipe(
                 map
                 (
@@ -502,6 +518,35 @@ export abstract class PurchaseService
             );
     }
 
+
+    // The document's items in short (the list's hover card) :
+    // one row per product, motor bikes per model
+    getItemSummary
+    (
+        publicId:
+            string
+    ):
+        Observable<{ name:string; quantity:number; freeQuantity:number; amount:number }[]>
+    {
+        return this.http
+            .get<any[]>(`${this.apiUrl}/item-summary/${encodeURIComponent(publicId)}`)
+            .pipe(
+                map
+                (
+                    rows =>
+                        (rows ?? []).map
+                        (
+                            row =>
+                            ({
+                                name:this.text(row, 'Name'),
+                                quantity:this.num(row, 'Quantity'),
+                                freeQuantity:this.num(row, 'FreeQuantity'),
+                                amount:this.num(row, 'Amount')
+                            })
+                        )
+                )
+            );
+    }
 
     getById
     (
@@ -777,6 +822,7 @@ export abstract class PurchaseService
                                 AdditionalDiscountValue:this.num(row, 'AdditionalDiscountValue'),
                                 NoVatInvoice:Boolean(this.pick(row, 'NoVatInvoice')),
                                 TotalPayable:this.num(row, 'TotalPayable'),
+                                Narration:this.text(row, 'Narration'),
                                 Lines:
                                     ((this.pick(row, 'Lines') ?? []) as any[]).map
                                     (

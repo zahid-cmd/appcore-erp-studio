@@ -1,0 +1,168 @@
+<!-- =====================================================
+     FEEDBACK INBOX (developers only)
+===================================================== -->
+
+<div class="fi">
+
+    <div class="fi-head">
+        <span class="fi-icon"><i class="fas fa-inbox"></i></span>
+
+        <div class="fi-title">
+            <b>Feedback inbox</b>
+            <span>What users sent from the Feedback button · seen by developers only</span>
+        </div>
+
+        <button type="button" class="fi-btn" (click)="load()">
+            <i class="fas fa-rotate"></i> Refresh
+        </button>
+    </div>
+
+    @if (denied)
+    {
+        <div class="fi-empty">
+            <i class="fas fa-lock"></i>
+            This page is not available.
+        </div>
+    }
+    @else
+    {
+        <div class="fi-filters">
+            <div class="fi-tabs">
+                @for (s of statuses; track s)
+                {
+                    <button type="button" class="fi-tab" [class.on]="status === s" (click)="setStatus(s)">{{ s }}</button>
+                }
+            </div>
+
+            <select class="fi-select" [value]="kind" (change)="setKind($event)">
+                @for (k of kinds; track k)
+                {
+                    <option [value]="k">{{ k === 'All' ? 'All types' : k }}</option>
+                }
+            </select>
+
+            <input class="fi-search" type="search" placeholder="Search message, user, page, branch" [value]="search" (input)="onSearch($event)">
+        </div>
+
+        <div class="fi-body">
+
+            <!-- list -->
+            <div class="fi-list appcore-scrollbar">
+                @if (loading)
+                {
+                    <div class="fi-empty"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+                }
+                @else if (items.length === 0)
+                {
+                    <div class="fi-empty"><i class="fa-regular fa-face-smile"></i> Nothing here.</div>
+                }
+                @else
+                {
+                    @for (item of items; track item.publicId)
+                    {
+                        <button
+                            type="button"
+                            class="fi-row"
+                            [class.on]="selected?.publicId === item.publicId"
+                            (click)="select(item)">
+
+                            <span class="fi-kind" [attr.data-kind]="item.kind"><i [class]="kindIcon(item.kind)"></i></span>
+
+                            <span class="fi-row-main">
+                                <b>{{ item.kind }} · {{ item.userName }}</b>
+                                <span class="fi-row-text">{{ item.message }}</span>
+                                <span class="fi-row-meta">#{{ item.number }} · {{ dateText(item.createdDate) }}{{ item.branchName ? ' · ' + item.branchName : '' }}</span>
+                            </span>
+
+                            <span class="fi-status" [attr.data-status]="item.status">{{ item.status }}</span>
+                        </button>
+                    }
+                }
+            </div>
+
+            <!-- detail -->
+            <div class="fi-detail appcore-scrollbar">
+                @if (selected; as f)
+                {
+                    <div class="fi-d-head">
+                        <span class="fi-kind fi-kind-big" [attr.data-kind]="f.kind"><i [class]="kindIcon(f.kind)"></i></span>
+
+                        <div>
+                            <b>{{ f.kind }} #{{ f.number }}</b>
+                            <span class="fi-muted">{{ dateText(f.createdDate) }}</span>
+                        </div>
+
+                        <span class="fi-status" [attr.data-status]="f.status">{{ f.status }}</span>
+                    </div>
+
+                    <p class="fi-message">{{ f.message }}</p>
+
+                    @if (f.screenshotPath)
+                    {
+                        <img
+                            class="fi-shot"
+                            [class.zoom]="zoom"
+                            [src]="imageUrl(f.screenshotPath)"
+                            alt="Screenshot"
+                            title="Click to zoom"
+                            (click)="zoom = !zoom">
+                    }
+
+                    <dl class="fi-meta">
+                        <dt>From</dt><dd>{{ f.userName || '-' }}</dd>
+                        <dt>Branch</dt><dd>{{ f.branchName || '-' }}</dd>
+                        <dt>Page</dt>
+                        <dd>
+                            @if (f.pageUrl)
+                            {
+                                <button type="button" class="fi-link" (click)="openPage(f.pageUrl)">{{ f.pageUrl }}</button>
+                            }
+                            @else
+                            {
+                                -
+                            }
+                        </dd>
+                        <dt>Version</dt><dd>{{ f.appVersion || '-' }}</dd>
+                        @if (f.handledByName)
+                        {
+                            <dt>Handled by</dt><dd>{{ f.handledByName }} · {{ dateText(f.modifiedDate) }}</dd>
+                        }
+                    </dl>
+
+                    <span class="fi-label"><i class="fas fa-reply"></i> Reply to the user (they see it under My feedback and get a bell item)</span>
+
+                    <textarea
+                        class="fi-note fi-reply"
+                        rows="3"
+                        maxlength="2000"
+                        placeholder="e.g. Fixed in the next version, refresh the page after the update"
+                        [value]="reply"
+                        (input)="onReplyInput($event)"></textarea>
+
+                    <span class="fi-label">Developer note (only developers see it)</span>
+
+                    <textarea
+                        class="fi-note"
+                        rows="3"
+                        maxlength="2000"
+                        placeholder="What was done, or why not"
+                        [value]="note"
+                        (input)="onNoteInput($event)"></textarea>
+
+                    <div class="fi-actions">
+                        <span class="fi-msg">{{ message }}</span>
+
+                        <button type="button" class="fi-btn" [disabled]="saving" (click)="save('New')">Keep New</button>
+                        <button type="button" class="fi-btn fi-btn-amber" [disabled]="saving" (click)="save('In progress')">In progress</button>
+                        <button type="button" class="fi-btn fi-btn-green" [disabled]="saving" (click)="save('Done')">Done</button>
+                    </div>
+                }
+                @else
+                {
+                    <div class="fi-empty"><i class="fa-regular fa-hand-pointer"></i> Choose a feedback on the left.</div>
+                }
+            </div>
+
+        </div>
+    }
+</div>

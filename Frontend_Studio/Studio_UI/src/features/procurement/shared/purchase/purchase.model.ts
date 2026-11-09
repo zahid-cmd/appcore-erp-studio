@@ -72,6 +72,17 @@ export interface PurchaseLine
     // Motor bikes received here (Products Received on Purchase ON)
     Units:
         PurchaseUnit[];
+    // Motor bikes (2026-11-10) : the price card used (Product
+    // Pricing - Motor Bikes), its DP, the allowance (6.3 total -
+    // card DP x qty) and the campaign discount per unit
+    CardNo?:
+        string;
+    CardDp?:
+        number;
+    Allowance?:
+        number;
+    CampaignDiscount?:
+        number;
 }
 
 
@@ -172,6 +183,13 @@ export interface Purchase
         number;
     TotalPayable:
         number;
+    // Motor bikes : allowance and campaign discount totals
+    TotalAllowance?:
+        number;
+    TotalCampaignDiscount?:
+        number;
+    CampaignName?:
+        string;
     Narration:
         string;
     Status:
@@ -278,6 +296,9 @@ export interface SavePurchaseLine
         string;
     Units:
         PurchaseUnit[];
+    // Motor bikes : campaign discount per unit
+    CampaignDiscount?:
+        number;
 }
 
 
@@ -325,6 +346,9 @@ export interface CreatePurchase
     NoVatInvoice:
         boolean;
     Narration:
+        string;
+    // Motor bikes : the campaign of the campaign discounts
+    CampaignName?:
         string;
     Lines:
         SavePurchaseLine[];
@@ -493,6 +517,9 @@ export interface PurchaseOpenOrder
         boolean;
     TotalPayable:
         number;
+    // The order's narration (copied to the purchase, editable)
+    Narration:
+        string;
     Lines:
         PurchaseOpenOrderLine[];
 }

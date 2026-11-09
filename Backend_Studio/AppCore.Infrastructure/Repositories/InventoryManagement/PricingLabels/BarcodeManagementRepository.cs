@@ -38,6 +38,9 @@ using BrandManagementEntity =
 using ColorManagementEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.ColorManagement;
 
+using MotorBikeCardPrices =
+    AppCore.Infrastructure.Platform.Inventory.MotorBikeCardPrices;
+
 using StockBatchesEntity =
     AppCore.Domain.Platform.Inventory.StockBatches;
 
@@ -461,11 +464,20 @@ public class BarcodeManagementRepository
                         &&
                         x.QuantityOnHand > 0m
                         &&
-                        x.Mrp > 0m
+                        (x.Mrp > 0m || x.ProductType == "MB")
                 )
                 .GroupBy(x => x.ProductId)
                 .Select(g => new { ProductId = g.Key, Stock = g.Sum(x => x.QuantityOnHand), Batches = g.Count() })
                 .ToListAsync();
+
+        // Motor bikes : priced = a price card prices the bike today
+        if (type == "MB" && stock.Count > 0)
+        {
+            Dictionary<long, decimal> cardMrps =
+                await MbMrpsAsync(stock.Select(x => x.ProductId));
+
+            stock = stock.Where(x => cardMrps.ContainsKey(x.ProductId)).ToList();
+        }
 
         if (stock.Count == 0)
         {
@@ -628,7 +640,7 @@ public class BarcodeManagementRepository
                             &&
                             x.QuantityOnHand > 0m
                             &&
-                            x.Mrp > 0m
+                            (x.Mrp > 0m || x.ProductType == "MB")
                     )
                     .Select(x => x.StockBatchId)
                     .ToListAsync()
@@ -687,7 +699,7 @@ public class BarcodeManagementRepository
                         &&
                         x.Quantity - x.QuantityInTransit > 0m
                 )
-                .Select(x => new { x.SourceId, x.SourceLineId, x.StockBatchId, Priced = x.Mrp > 0m })
+                .Select(x => new { x.SourceId, x.SourceLineId, x.StockBatchId, Priced = x.Mrp > 0m || x.ProductType == "MB" })
                 .ToListAsync();
 
         // Purchase → (priced batches, all batches); a purchase with
@@ -856,7 +868,7 @@ public class BarcodeManagementRepository
             filter ?? new BarcodeRowsFilterDto();
 
         List<StockBatchesEntity> batches =
-            await BatchesOfAsync(type, source, input);
+            await PriceMbAsync(type, await BatchesOfAsync(type, source, input));
 
         // Labels suggested : stock in hand / received / one each
         Func<StockBatchesEntity, int> labelsOf =
@@ -931,7 +943,7 @@ public class BarcodeManagementRepository
                         &&
                         x.Status != BatchClosed
                         &&
-                        x.Mrp > 0m
+                        (x.Mrp > 0m || x.ProductType == "MB")
                 )
                 .OrderBy(x => x.ProductCode)
                 .ThenBy(x => x.StockBatchId)
@@ -973,7 +985,7 @@ public class BarcodeManagementRepository
                         &&
                         x.Quantity - x.QuantityInTransit > 0m
                         &&
-                        x.Mrp > 0m
+                        (x.Mrp > 0m || x.ProductType == "MB")
                 )
                 .OrderBy(x => x.SourceLineId)
                 .ToListAsync();
@@ -1019,7 +1031,7 @@ public class BarcodeManagementRepository
                         &&
                         x.QuantityOnHand > 0m
                         &&
-                        x.Mrp > 0m
+                        (x.Mrp > 0m || x.ProductType == "MB")
                 );
 
         if (productId > 0)
@@ -1294,6 +1306,10 @@ public class BarcodeManagementRepository
         Dictionary<long, string> branches =
             await BranchNamesAsync(pairs.Select(x => x.Unit.BranchId));
 
+        // The MRP of a bike : the price card's today
+        Dictionary<long, decimal> unitMrps =
+            await MbMrpsAsync(productIds);
+
         return pairs
             .Select
             (
@@ -1324,7 +1340,7 @@ public class BarcodeManagementRepository
                         BatteryNo = x.Unit.BatteryNo ?? string.Empty,
                         BrandName = product?.BrandName ?? string.Empty,
                         BrandLogo = product?.BrandLogo ?? string.Empty,
-                        Mrp = x.Batch.Mrp,
+                        Mrp = unitMrps.GetValueOrDefault(x.Unit.ProductId),
                         BarcodeValue = value,
                         QrValue = $"{value}|{x.Unit.ChassisNo}",
                         SourceNo = x.Unit.PurchaseNo.Length > 0 ? x.Unit.PurchaseNo : x.Batch.SourceNo,
@@ -1416,6 +1432,14 @@ public class BarcodeManagementRepository
                     .Where(x => unitIds.Contains(x.MotorBikeUnitId))
                     .ToDictionaryAsync(x => x.MotorBikeUnitId);
 
+        // Motor bikes : the MRP printed is the price card's
+        Dictionary<long, decimal> lineMrps =
+            type == "MB"
+                ? await MbMrpsAsync(
+                    batches.Values.Select(x => x.ProductId)
+                        .Concat(units.Values.Select(x => x.ProductId)))
+                : new Dictionary<long, decimal>();
+
         List<BarcodePrintRunLines> rows =
             new();
 
@@ -1447,7 +1471,9 @@ public class BarcodeManagementRepository
                     MotorBikeUnitId = unit?.MotorBikeUnitId ?? 0,
                     ChassisNo = Limit(unit?.ChassisNo, 50),
                     Quantity = line.Quantity,
-                    Mrp = batch?.Mrp ?? 0m,
+                    Mrp = type == "MB"
+                        ? lineMrps.GetValueOrDefault(batch?.ProductId ?? unit?.ProductId ?? 0)
+                        : batch?.Mrp ?? 0m,
                     BarcodeValue = batch != null ? Limit(BarcodeValueOf(code, batch.StockBatchId), 60) : string.Empty
                 });
         }
@@ -1554,6 +1580,55 @@ public class BarcodeManagementRepository
         // Motor Bikes : ColorManagementId (0 = none)
         public long ColorId { get; set; }
     }
+
+    //===========================================================
+    // Motor bikes : the selling MRP from the price cards (Product
+    // Pricing - Motor Bikes is the only source, 2026-11-10)
+    //===========================================================
+
+    private async Task<Dictionary<long, decimal>>
+        MbMrpsAsync
+        (
+            IEnumerable<long> productIds
+        )
+    {
+        List<long> ids =
+            productIds.Where(x => x > 0).Distinct().ToList();
+
+        if (ids.Count == 0)
+        {
+            return new Dictionary<long, decimal>();
+        }
+
+        return (await MotorBikeCardPrices.MrpAsync(_context, BusinessToday(), ids))
+            .ToDictionary(x => x.Key, x => x.Value.Mrp);
+    }
+
+    // Batches of motor bikes take the card MRP (read only, not
+    // saved); a bike without a card is not priced
+    private async Task<List<StockBatchesEntity>>
+        PriceMbAsync
+        (
+            string type,
+            List<StockBatchesEntity> batches
+        )
+    {
+        if (type != "MB" || batches.Count == 0)
+        {
+            return batches;
+        }
+
+        Dictionary<long, decimal> mrps =
+            await MbMrpsAsync(batches.Select(x => x.ProductId));
+
+        foreach (StockBatchesEntity batch in batches)
+        {
+            batch.Mrp = mrps.GetValueOrDefault(batch.ProductId);
+        }
+
+        return batches.Where(x => x.Mrp > 0m).ToList();
+    }
+
 
     private async Task<List<ProductInfo>>
         ProductRowsAsync

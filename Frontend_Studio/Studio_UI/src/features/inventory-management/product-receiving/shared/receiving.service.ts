@@ -493,6 +493,7 @@ function toReceiving
         GatePassNo:text(pick(x, 'GatePassNo')),
         ReceivedBy:text(pick(x, 'ReceivedBy')),
         Remarks:text(pick(x, 'Remarks')),
+        ReceivedOn:text(pick(x, 'ReceivedOn')) || 'Receiving',
         TotalQuantity:num(pick(x, 'TotalQuantity')),
         LineCount:num(pick(x, 'LineCount')),
         Status:text(pick(x, 'Status')),

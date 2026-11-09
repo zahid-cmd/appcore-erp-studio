@@ -40,6 +40,7 @@ import
 {
     PriceCard,
     PriceCardActive,
+    PriceCardCost,
     PriceCardDefaults,
     PriceCardLine,
     PriceCardSaved,
@@ -115,8 +116,43 @@ export class ProductPricingMotorBikesService
                             Rate:num(pick(r, 'Rate')),
                             EffectiveFrom:text(pick(r, 'EffectiveFrom')).substring(0, 10),
                             ValidTo:text(pick(r, 'ValidTo')).substring(0, 10)
+                        })),
+                        PurchaseVatRules:list(pick(x, 'PurchaseVatRules')).map(r => ({
+                            Rate:num(pick(r, 'Rate')),
+                            EffectiveFrom:text(pick(r, 'EffectiveFrom')).substring(0, 10),
+                            ValidTo:text(pick(r, 'ValidTo')).substring(0, 10)
                         }))
                     })
+                )
+            );
+    }
+
+    // Last purchase cost (from the supplier) and stock per colour
+    getCosts
+    (
+        supplierCode:
+            string
+    ):
+        Observable<PriceCardCost[]>
+    {
+        return this.http
+            .get<any>(`${this.apiUrl}/costs`, { params:{ supplierCode } })
+            .pipe
+            (
+                map
+                (
+                    rows =>
+                        list(rows).map(x => ({
+                            MotorBikeId:num(pick(x, 'MotorBikeId')),
+                            LastBatchId:num(pick(x, 'LastBatchId')),
+                            LastDate:text(pick(x, 'LastDate')),
+                            LastSourceNo:text(pick(x, 'LastSourceNo')),
+                            LastUnitCost:num(pick(x, 'LastUnitCost')),
+                            LastVat:num(pick(x, 'LastVat')),
+                            LastPaid:num(pick(x, 'LastPaid')),
+                            StockQty:num(pick(x, 'StockQty')),
+                            StockAvgPaid:num(pick(x, 'StockAvgPaid'))
+                        }))
                 )
             );
     }
@@ -127,12 +163,15 @@ export class ProductPricingMotorBikesService
         supplierCode:
             string,
         date:
-            string
+            string,
+        // true : the Regular card only (no Campaign prices)
+        regularOnly:
+            boolean = false
     ):
         Observable<PriceCardActive[]>
     {
         return this.http
-            .get<any>(`${this.apiUrl}/active`, { params:{ supplierCode, date } })
+            .get<any>(`${this.apiUrl}/active`, { params:{ supplierCode, date, regularOnly } })
             .pipe
             (
                 map
@@ -140,6 +179,8 @@ export class ProductPricingMotorBikesService
                     rows =>
                         list(rows).map(x => ({
                             MotorBikeId:num(pick(x, 'MotorBikeId')),
+                            ModelId:num(pick(x, 'ModelId')),
+                            FromModel:pick(x, 'FromModel') === true,
                             CardId:num(pick(x, 'CardId')),
                             CardNo:text(pick(x, 'CardNo')),
                             CardType:text(pick(x, 'CardType')),
@@ -307,6 +348,9 @@ function toLine
 {
     return {
         LineNo:num(pick(x, 'LineNo')),
+        ModelId:num(pick(x, 'ModelId')),
+        ModelName:text(pick(x, 'ModelName')),
+        IsException:pick(x, 'IsException') === true,
         MotorBikeId:num(pick(x, 'MotorBikeId')),
         ProductCode:text(pick(x, 'ProductCode')),
         ProductName:text(pick(x, 'ProductName')),
@@ -343,6 +387,9 @@ export function toCard
         PostedDate:text(pick(x, 'PostedDate')),
         CancelledDate:text(pick(x, 'CancelledDate')),
         CancelReason:text(pick(x, 'CancelReason')),
+        SupersededByNo:text(pick(x, 'SupersededByNo')),
+        SupersededFrom:text(pick(x, 'SupersededFrom')).substring(0, 10),
+        Superseded:pick(x, 'Superseded') === true,
         InForce:pick(x, 'InForce') === true,
         Lines:list(pick(x, 'Lines')).map(toLine)
     };

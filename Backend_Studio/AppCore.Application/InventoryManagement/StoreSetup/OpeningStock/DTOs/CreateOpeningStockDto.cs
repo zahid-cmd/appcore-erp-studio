@@ -30,6 +30,9 @@ public class CreateOpeningStockDto
 
     public string Remarks { get; set; } = string.Empty;
 
+    // Motor bikes : the supplier (its price card gives DP / MRP)
+    public string SupplierCode { get; set; } = string.Empty;
+
     public List<CreateOpeningStockLineDto> Lines { get; set; } = new();
 
     // MB : one row per bike (ProductId = its line)

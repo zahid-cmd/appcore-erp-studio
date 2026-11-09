@@ -118,7 +118,9 @@
 
                 <tr
                     class="list-table-row"
-                    [class.detail-open]="isDetailOpen(row)">
+                    [class.detail-open]="isDetailOpen(row)"
+                    (mouseenter)="onRowEnter(row, $event)"
+                    (mouseleave)="onRowLeave()">
 
 
                     <td

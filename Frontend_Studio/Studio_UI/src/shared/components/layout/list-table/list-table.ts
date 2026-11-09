@@ -593,6 +593,47 @@ private readonly navigationContextSubscription =
   cellClick =
     new EventEmitter<ListTableCellClickEvent>();
 
+  // The row under the mouse ({ row, rect }); null when the mouse
+  // leaves it. Only sent when a page listens (e.g. the item
+  // summary card of the purchase lists).
+  @Output()
+  rowHover =
+    new EventEmitter<{ row: any; rect: DOMRect } | null>();
+
+  onRowEnter(
+    row: any,
+    event: MouseEvent
+  ):
+    void
+  {
+    if (!this.rowHover.observed)
+    {
+      return;
+    }
+
+    const target =
+      event.currentTarget as HTMLElement | null;
+
+    if (!target)
+    {
+      return;
+    }
+
+    this.rowHover.emit({
+      row,
+      rect: target.getBoundingClientRect()
+    });
+  }
+
+  onRowLeave():
+    void
+  {
+    if (this.rowHover.observed)
+    {
+      this.rowHover.emit(null);
+    }
+  }
+
   isDetailOpen(
     row: any
   ):

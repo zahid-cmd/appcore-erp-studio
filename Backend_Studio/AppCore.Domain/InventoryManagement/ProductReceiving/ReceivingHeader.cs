@@ -65,6 +65,12 @@ public abstract class ReceivingHeader
 
     public string Remarks { get; set; } = string.Empty;
 
+    // Receiving (made on the Product Receiving page) / Purchase
+    // (made by the purchase itself when its stock was received
+    // with it - Products Received on Purchase ON) : read only
+    // here, cancelled only by cancelling the purchase
+    public string ReceivedOn { get; set; } = "Receiving";
+
     public decimal TotalQuantity { get; set; }
 
     // Posted / Cancelled

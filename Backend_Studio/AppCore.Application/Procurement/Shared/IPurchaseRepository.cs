@@ -103,9 +103,17 @@ public interface IPurchaseRepository
         string pageType,
         PurchasePageRequest request);
 
-    // The suppliers on this page's live documents (filter options)
+    // The suppliers on this page's live documents (filter options);
+    // status = the list's Status filter (empty = every status)
     Task<List<PurchaseListSupplierDto>> GetListSuppliersAsync(
-        string pageType);
+        string pageType,
+        string? status = null);
+
+    // The document's items in short (list hover card); null =
+    // not found on this page
+    Task<List<PurchaseItemSummaryDto>?> GetItemSummaryAsync(
+        string pageType,
+        Guid publicId);
 
     // Public Id -> internal id (live rows; null = not found)
     Task<long?> GetIdByPublicIdAsync(

@@ -58,6 +58,9 @@ public class ReceivingDto
 
     public string Remarks { get; set; } = string.Empty;
 
+    // Receiving / Purchase (received with the purchase : read only)
+    public string ReceivedOn { get; set; } = "Receiving";
+
     public decimal TotalQuantity { get; set; }
 
     public int LineCount { get; set; }

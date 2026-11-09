@@ -1624,6 +1624,15 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Free accessories to take in with the purchase (draft;
+    // Products Received on Purchase ON)
+    public DbSet<AppCore.Domain.Entities.Procurement.MotorBikePurchase.PurchaseAccessoryTakes>
+    PurchaseAccessoryTakeRows
+    {
+    get;
+    set;
+    } = null!;
+
     // Accessory ↔ other sub categories (models) it also fits
     public DbSet<AppCore.Domain.Entities.Settings.ProductSettings.AccessoryFitments>
     AccessoryFitmentRows
@@ -1779,6 +1788,39 @@ public class AppDbContext
     // policy sections
     public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.WebsitePolicySections>
     WebsitePolicySectionRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Feedback (topbar Feedback button; table "Feedbacks", made by
+    // Database/Feedback_Setup.sql). Mapped in OnModelCreating
+    // below (no configuration class)
+    public DbSet<AppCore.Domain.Platform.Feedbacks.FeedbackEntry>
+    Feedbacks
+    {
+    get;
+    set;
+    } = null!;
+
+    // Team Chat (Database/Chat_Setup.sql). Mapped in
+    // OnModelCreating below
+    public DbSet<AppCore.Domain.Platform.Chat.ChatConversation>
+    ChatConversations
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Platform.Chat.ChatMember>
+    ChatMembers
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Platform.Chat.ChatMessage>
+    ChatMessages
     {
     get;
     set;
@@ -2119,6 +2161,24 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Product Pricing - Motor Bikes : price cards and their lines
+    // (MANUAL : registers both, so ProductPricingMotorBikesConfiguration
+    // is applied by the registered-only filter below)
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.ProductPricingMotorBikes>
+    ProductPricingMotorBikesRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.InventoryManagement.PricingLabels.ProductPricingMotorBikeLines>
+    ProductPricingMotorBikeLineRows
+    {
+    get;
+    set;
+    } = null!;
+
 
     //===========================================================
     // Configure Entity Models
@@ -2213,6 +2273,58 @@ public class AppDbContext
                         )
                     !=
                     null;
+            }
+        );
+
+
+        //=======================================================
+        // Feedback : table "Feedbacks", key FeedbackId
+        //=======================================================
+
+        modelBuilder.Entity<AppCore.Domain.Platform.Feedbacks.FeedbackEntry>
+        (
+            entity =>
+            {
+                entity.ToTable("Feedbacks");
+
+                entity.HasKey(x => x.FeedbackId);
+
+                entity.HasIndex(x => x.PublicId).IsUnique();
+            }
+        );
+
+
+        //=======================================================
+        // Team Chat : conversations, members, messages
+        //=======================================================
+
+        modelBuilder.Entity<AppCore.Domain.Platform.Chat.ChatConversation>
+        (
+            entity =>
+            {
+                entity.ToTable("ChatConversations");
+
+                entity.HasKey(x => x.ChatConversationId);
+            }
+        );
+
+        modelBuilder.Entity<AppCore.Domain.Platform.Chat.ChatMember>
+        (
+            entity =>
+            {
+                entity.ToTable("ChatMembers");
+
+                entity.HasKey(x => x.ChatMemberId);
+            }
+        );
+
+        modelBuilder.Entity<AppCore.Domain.Platform.Chat.ChatMessage>
+        (
+            entity =>
+            {
+                entity.ToTable("ChatMessages");
+
+                entity.HasKey(x => x.ChatMessageId);
             }
         );
     }

@@ -1,3 +1,5 @@
+@import '../../../../../../shared/styles/app-form-page.css';
+
 /* =====================================================
    PRODUCT PRICING - MOTOR BIKES FORM
    Compact deep greys; the page does not scroll (the
@@ -108,6 +110,12 @@
     color:#ffffff;
 }
 
+.ppm-status-superseded
+{
+    background:#dbeafe;
+    color:#1e40af;
+}
+
 .ppm-status-cancelled
 {
     background:#fee2e2;
@@ -153,6 +161,13 @@
     font-size:12.5px;
 }
 
+.ppm-banner-info
+{
+    border-color:#bfdbfe;
+    background:#eff6ff;
+    color:#1e3a8a;
+}
+
 .ppm-card
 {
     border:1px solid #d6dbe3;
@@ -165,7 +180,7 @@
 .ppm-head
 {
     display:grid;
-    grid-template-columns:minmax(220px, 1.6fr) 190px 160px 190px minmax(150px, 1fr) minmax(180px, 1.4fr);
+    grid-template-columns:minmax(260px, 1.6fr) 170px 230px minmax(150px, 1fr) minmax(180px, 1.4fr);
     align-items:end;
     gap:10px;
     padding:10px 12px;
@@ -173,32 +188,50 @@
 
 .ppm-f
 {
-    display:flex;
-    flex-direction:column;
-    gap:4px;
+    display:block;
     min-width:0;
 }
 
+/* The controls fill their cell (the search dropdown's own
+   360px flex-basis must not apply here) */
+.ppm-f > app-search-dropdown,
+.ppm-f > app-datepicker,
+.ppm-f > app-textbox
+{
+    --dropdown-width:100%;
+    display:block;
+    flex:none;
+    width:100%;
+    max-width:100%;
+}
+
+/* Same look as the labels of the shared controls */
 .ppm-label
 {
-    color:#374151;
-    font-size:12px;
+    display:flex;
+    align-items:center;
+    margin-bottom:10px;
+    color:#334155;
+    font-size:15px;
     font-weight:600;
+    line-height:1.3;
+    user-select:none;
 }
 
 .ppm-until
 {
     display:flex;
     align-items:center;
-    gap:7px;
-    height:34px;
-    padding:0 10px;
-    border:1px dashed #cbd2db;
-    border-radius:7px;
-    background:#f7f8fa;
-    color:#4b5563;
-    font-size:12px;
+    gap:8px;
+    height:36px;
+    padding:0 12px;
+    border:1px dashed #cbd5e1;
+    border-radius:12px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:13px;
     white-space:nowrap;
+    box-sizing:border-box;
 }
 
 /* ---------- models ---------- */
@@ -316,77 +349,253 @@
 
 .ppm-grid-wrap
 {
+    display:flex;
     flex:1 1 auto;
+    flex-direction:column;
     min-height:0;
     overflow:auto;
+    background:#ffffff;
 }
+
+.ppm-grid-wrap > .ppm-grid
+{
+    flex:0 0 auto;
+}
+
+/* Empty : the space under the header, content centred */
+.ppm-empty-wrap
+{
+    display:flex;
+    flex:1 1 auto;
+    align-items:center;
+    justify-content:center;
+    min-height:220px;
+    padding:24px;
+}
+
+/* ---------- grid : modern rows ---------- */
 
 .ppm-grid
 {
     width:100%;
     border-collapse:separate;
     border-spacing:0;
-    font-size:12.5px;
+    color:#0f172a;
+    font-size:14px;
 }
 
 .ppm-grid th
 {
     position:sticky;
     top:0;
-    z-index:1;
-    height:32px;
-    padding:0 10px;
-    border-bottom:1px solid #d6dbe3;
-    background:#eef0f3;
-    color:#374151;
+    z-index:2;
+    height:40px;
+    padding:0 14px;
+    border-bottom:1px solid #e2e8f0;
+    background:#f8fafc;
+    color:#64748b;
     font-size:11.5px;
     font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
     text-align:left;
     white-space:nowrap;
 }
 
 .ppm-grid td
 {
-    height:36px;
-    padding:2px 10px;
-    border-bottom:1px solid #eef0f3;
-    color:#111827;
+    height:56px;
+    padding:6px 14px;
+    border-bottom:1px solid #eef2f6;
+    background:#ffffff;
     vertical-align:middle;
+    transition:background .12s ease;
 }
 
 .ppm-grid tbody tr:hover td
 {
-    background:#f7f8fa;
+    background:#f8fafc;
 }
 
-.ppm-grid tr.ppm-bad td
+/* A price still to fill / to check : a thin amber mark at the left */
+.ppm-grid tr.ppm-bad td:first-child
 {
-    background:#fffbeb;
+    box-shadow:inset 3px 0 0 #f59e0b;
 }
 
 .ppm-c-no
 {
-    width:40px;
-    color:#6b7280;
+    width:46px;
+    color:#94a3b8;
+    font-size:12.5px;
+    font-weight:600;
     text-align:center !important;
 }
 
-.ppm-c-model strong
+/* ---------- model cell ---------- */
+
+.ppm-c-model
 {
-    display:block;
+    min-width:280px;
+    white-space:nowrap;
+}
+
+.ppm-model-cell
+{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.ppm-toggle
+{
+    display:inline-flex;
+    flex:0 0 auto;
+    align-items:center;
+    justify-content:center;
+    width:28px;
+    height:28px;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    background:#ffffff;
+    color:#475569;
+    font-size:11px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.ppm-toggle:hover
+{
+    border-color:#cbd5e1;
+    background:#f1f5f9;
+    color:#0f172a;
+}
+
+.ppm-toggle.is-open
+{
+    border-color:#1e293b;
+    background:#1e293b;
+    color:#ffffff;
+}
+
+.ppm-model-text
+{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    min-width:0;
+}
+
+.ppm-model-name
+{
+    color:#0f172a;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:-.005em;
+}
+
+.ppm-model-sub
+{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#64748b;
+    font-size:12px;
+}
+
+.ppm-tag
+{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    height:20px;
+    padding:0 8px;
+    border-radius:999px;
+    background:#f1f5f9;
+    color:#475569;
+    font-size:11.5px;
     font-weight:600;
 }
 
-.ppm-c-model span
+.ppm-tag-own
 {
-    color:#6b7280;
-    font-size:11px;
+    background:#fef3c7;
+    color:#92400e;
+}
+
+/* ---------- colour rows ---------- */
+
+.ppm-grid tr.ppm-colour-row td
+{
+    height:48px;
+    background:#fbfcfe;
+    font-size:13.5px;
+}
+
+.ppm-grid tr.ppm-colour-row:hover td
+{
+    background:#f5f8fc;
+}
+
+.ppm-grid tr.ppm-colour-row.ppm-own td
+{
+    background:#fffdf5;
+}
+
+.ppm-c-colour
+{
+    position:relative;
+    padding-left:54px !important;
+}
+
+/* The guide line joining the colours to their model */
+.ppm-c-colour::before
+{
+    content:'';
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:27px;
+    width:2px;
+    background:#e2e8f0;
+}
+
+.ppm-colour-cell
+{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.ppm-dot
+{
+    flex:0 0 auto;
+    width:14px;
+    height:14px;
+    border:2px solid #ffffff;
+    border-radius:50%;
+    background:#cbd5e1;
+    box-shadow:0 0 0 1px #cbd5e1;
+}
+
+.ppm-colour-name
+{
+    color:#1e293b;
+    font-weight:600;
+}
+
+.ppm-colour-code
+{
+    color:#94a3b8;
+    font-size:11.5px;
     font-family:ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
 
+/* ---------- figures ---------- */
+
 .ppm-c-num
 {
-    width:118px;
+    width:128px;
     text-align:right !important;
     font-variant-numeric:tabular-nums;
     white-space:nowrap;
@@ -394,68 +603,206 @@
 
 .ppm-c-pct
 {
-    width:80px;
+    width:92px;
     text-align:right !important;
-    color:#374151;
     white-space:nowrap;
+}
+
+.ppm-pct
+{
+    display:inline-block;
+    min-width:58px;
+    padding:3px 8px;
+    border-radius:999px;
+    background:#ecfdf5;
+    color:#047857;
+    font-size:12px;
+    font-weight:700;
+    text-align:center;
+    font-variant-numeric:tabular-nums;
+}
+
+.ppm-pct.is-zero
+{
+    background:#f1f5f9;
+    color:#94a3b8;
+}
+
+/* VAT payable : collected - paid; below 0 (6.3 VAT higher) green */
+.ppm-vatpay
+{
+    color:#1e293b;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+}
+
+.ppm-vatpay.is-minus
+{
+    color:#047857;
+}
+
+/* VAT adjustment (display only) : above 0 reduces the VAT payable */
+.ppm-cost .ppm-vatadj,
+.ppm-vatadj
+{
+    color:#475569;
+    font-size:14px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+}
+
+.ppm-cost .ppm-vatadj.is-plus,
+.ppm-vatadj.is-plus
+{
+    color:#047857;
+}
+
+.ppm-commission
+{
+    color:#047857;
+    font-weight:700;
+}
+
+/* ---------- last cost ---------- */
+
+.ppm-c-cost
+{
+    width:150px;
+    text-align:right !important;
+    white-space:nowrap;
+    cursor:help;
+}
+
+.ppm-cost
+{
+    display:inline-flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:2px;
+}
+
+.ppm-cost b
+{
+    color:#334155;
+    font-size:14px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+}
+
+.ppm-cost span
+{
+    color:#94a3b8;
+    font-size:11.5px;
+    font-variant-numeric:tabular-nums;
+}
+
+.ppm-colour-row .ppm-cost b
+{
+    font-size:13px;
+    font-weight:600;
+}
+
+/* DP above the last cost : amber ; MRP below it : red */
+.ppm-in.ppm-in-up
+{
+    border-color:#f59e0b;
+    box-shadow:0 0 0 3px rgba(245,158,11,.12);
+}
+
+.ppm-in.ppm-in-loss
+{
+    border-color:#e11d48;
+    color:#be123c;
+    box-shadow:0 0 0 3px rgba(225,29,72,.12);
 }
 
 .ppm-c-old
 {
-    width:190px;
+    width:200px;
     text-align:right !important;
-    color:#4b5563;
-    font-size:11.5px;
+    color:#64748b;
+    font-size:12.5px;
     font-variant-numeric:tabular-nums;
     white-space:nowrap;
 }
 
 .ppm-c-x
 {
-    width:38px;
+    width:48px;
     text-align:center !important;
 }
 
+/* ---------- inputs ---------- */
+
 .ppm-in
 {
-    width:104px;
-    height:28px;
-    padding:0 7px;
-    border:1px solid #cbd2db;
-    border-radius:6px;
+    width:118px;
+    height:36px;
+    padding:0 12px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
     background:#ffffff;
-    color:#111827;
+    color:#0f172a;
     font:inherit;
+    font-size:14px;
+    font-weight:500;
     text-align:right;
     font-variant-numeric:tabular-nums;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+    transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.ppm-in:hover
+{
+    border-color:#cbd5e1;
 }
 
 .ppm-in:focus
 {
-    border-color:#374151;
+    border-color:#1e293b;
     outline:0;
-    box-shadow:0 0 0 2px rgba(55,65,81,.15);
+    box-shadow:0 0 0 3px rgba(30,41,59,.12);
 }
 
 .ppm-in-mrp
 {
+    border-color:#cbd5e1;
     font-weight:700;
+}
+
+.ppm-in-colour
+{
+    height:32px;
+    background:#ffffff;
+    font-size:13.5px;
+}
+
+.ppm-in-colour::placeholder
+{
+    color:#b6c0cc;
+    font-weight:400;
+}
+
+.ppm-own .ppm-in-colour
+{
+    border-color:#fcd34d;
+    background:#fffbeb;
 }
 
 .ppm-dim
 {
-    color:#6b7280;
+    color:#94a3b8;
 }
 
 .ppm-neg
 {
-    color:#b91c1c;
+    color:#be123c !important;
     font-weight:700;
 }
 
 .ppm-changed
 {
-    color:#92400e;
+    color:#b45309;
     text-decoration:line-through;
 }
 
@@ -464,13 +811,14 @@
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    width:24px;
-    height:24px;
+    width:30px;
+    height:30px;
     border:0;
-    border-radius:6px;
+    border-radius:8px;
     background:transparent;
-    color:#6b7280;
+    color:#94a3b8;
     cursor:pointer;
+    transition:background .15s ease, color .15s ease;
 }
 
 .ppm-x:hover
@@ -479,17 +827,12 @@
     color:#b91c1c;
 }
 
-.ppm-empty td
+.ppm-x-reset:hover
 {
-    height:120px;
-    color:#6b7280;
-    text-align:center;
+    background:#e0f2fe;
+    color:#0369a1;
 }
 
-.ppm-empty i
-{
-    margin-right:8px;
-}
 
 /* ---------- cancel modal ---------- */
 
@@ -623,11 +966,80 @@
 {
     .ppm-head
     {
-        grid-template-columns:minmax(200px, 1.4fr) 180px 150px 180px minmax(130px, 1fr);
+        grid-template-columns:minmax(220px, 1.4fr) 160px 220px minmax(130px, 1fr);
     }
 
     .ppm-f-remarks
     {
         grid-column:1 / -1;
     }
+}
+
+/* Summary line below the canvas : plain text, no chips,
+   light blue gradient */
+
+.ics-summary
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 0;
+    min-height: 50px;
+    padding: 12px 22px;
+    box-sizing: border-box;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
+    font-size: 14.5px;
+}
+
+.ics-summary-item
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 20px;
+}
+
+.ics-summary-item:first-child
+{
+    padding-left: 0;
+}
+
+.ics-summary-item + .ics-summary-item
+{
+    border-left: 1px solid #c9daf5;
+}
+
+.ics-summary-label
+{
+    color: #475569;
+    font-weight: 500;
+}
+
+.ics-summary-value
+{
+    color: #1e293b;
+    font-size: 15.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.ics-summary-value.ics-ok
+{
+    color: #047857;
+}
+
+.ics-summary-value.ics-bad
+{
+    color: #be123c;
+}
+
+.ics-summary-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
 }

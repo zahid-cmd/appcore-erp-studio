@@ -1334,22 +1334,32 @@ export class PriceAdjustmentForm
     }
 
     // The products the circular changes (sent to analyse / save)
+    // Motor Bikes : the price cards give the new MRP and DP
+    // (Product Pricing - Motor Bikes, 2026-11-10) : every row goes
+    get isMb():
+        boolean
+    {
+        return this.type === 'MB';
+    }
+
     get changedRows():
         ProductRow[]
     {
-        return this.rows.filter(x => x.State === 'up' || x.State === 'down');
+        return this.isMb
+            ? this.rows
+            : this.rows.filter(x => x.State === 'up' || x.State === 'down');
     }
 
     get sameCount():
         number
     {
-        return this.rows.filter(x => x.State === 'same').length;
+        return this.isMb ? 0 : this.rows.filter(x => x.State === 'same').length;
     }
 
     get badCount():
         number
     {
-        return this.rows.filter(x => x.State === 'bad').length;
+        return this.isMb ? 0 : this.rows.filter(x => x.State === 'bad').length;
     }
 
     get upCount():

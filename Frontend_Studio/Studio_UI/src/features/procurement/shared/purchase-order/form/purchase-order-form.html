@@ -781,6 +781,26 @@
 
                         </app-textbox>
 
+                        <!-- MB : the supplier's price card (reference, read only) -->
+                        @if (isMb)
+                        {
+                            <app-textbox
+                                class="pof-stock"
+                                label="Card DP"
+                                [placeholder]="productCode ? 'No price card' : '—'"
+                                [value]="pickedCard ? money(pickedCard.Dp) : ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="pof-stock"
+                                label="MRP (Card)"
+                                [placeholder]="productCode ? 'No price card' : '—'"
+                                [value]="pickedCard ? money(pickedCard.Mrp) : ''"
+                                [readonly]="true">
+                            </app-textbox>
+                        }
+
                         @if (mrpPricing)
                         {
                             <app-textbox
@@ -942,6 +962,7 @@
                                         <tr
                                             [class.pof-row-editable]="isEditable"
                                             [class.pof-row-editing]="editingIndex === $index"
+                                            [class.pof-row-moved]="movedIndex === $index"
                                             [title]="isEditable ? 'Double-click to edit' : ''"
                                             (dblclick)="startEdit($index)">
 
@@ -1016,6 +1037,29 @@
                                             <td class="pof-action">
                                                 @if (isEditable)
                                                 {
+                                                    @if (canReorder)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="pof-move"
+                                                            title="Move up"
+                                                            [disabled]="isSaving || $first"
+                                                            [attr.aria-label]="'Move ' + line.ProductName + ' up'"
+                                                            (click)="moveLine($index, -1); $event.stopPropagation()"
+                                                            (dblclick)="$event.stopPropagation()">
+                                                            <i class="fas fa-arrow-up"></i>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="pof-move"
+                                                            title="Move down"
+                                                            [disabled]="isSaving || $last"
+                                                            [attr.aria-label]="'Move ' + line.ProductName + ' down'"
+                                                            (click)="moveLine($index, 1); $event.stopPropagation()"
+                                                            (dblclick)="$event.stopPropagation()">
+                                                            <i class="fas fa-arrow-down"></i>
+                                                        </button>
+                                                    }
                                                     <button
                                                         type="button"
                                                         class="pof-remove"

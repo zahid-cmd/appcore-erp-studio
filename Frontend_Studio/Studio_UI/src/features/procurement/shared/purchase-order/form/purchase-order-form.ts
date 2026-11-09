@@ -244,6 +244,18 @@ from '../../product-shelf/product-shelf';
 
 import
 {
+    ProductPricingMotorBikesService
+}
+from '../../../../inventory-management/pricing-labels/services/product-pricing-motor-bikes.service';
+
+import
+{
+    PriceCardActive
+}
+from '../../../../inventory-management/pricing-labels/models/product-pricing-motor-bikes.model';
+
+import
+{
     ShelfOptions,
     ShelfPick,
     ShelfProduct
@@ -435,6 +447,14 @@ implements OnInit, OnDestroy
 
     private readonly purchaseOrdersService =
         inject(PurchaseOrderService);
+
+    // Motor bikes : the supplier's price card is the DP / MRP
+    // reference (Product Pricing - Motor Bikes)
+    private readonly priceCards =
+        inject(ProductPricingMotorBikesService);
+
+    cardPrices:
+        Map<number, PriceCardActive> = new Map();
 
     private readonly purchaseVatService =
         inject(PurchaseVatService);
@@ -1018,6 +1038,19 @@ implements OnInit, OnDestroy
     }
 
     // Above Max Stock Level allowed : Max is a warning, not a cap
+    // Up / Down buttons on the lines (switch "Reorder Lines");
+    // the saved line order follows the list
+    get canReorder():
+        boolean
+    {
+        return this.isEditable
+            && switchOn(
+                this.switches,
+                this.page.switches.REORDER_LINES,
+                false
+            );
+    }
+
     get aboveMaxAllowed():
         boolean
     {
@@ -1863,6 +1896,8 @@ implements OnInit, OnDestroy
                     this.supplierCode =
                         item.SupplierCode;
 
+                    this.loadCardPrices();
+
                     this.narration =
                         item.Narration;
 
@@ -2512,6 +2547,9 @@ implements OnInit, OnDestroy
         {
             // New month / year → new number preview and period
             this.loadDefaults(true);
+
+            // MB : the price card in force on the new date
+            this.loadCardPrices();
 
             this.loadVatRate(true);
 
@@ -3779,6 +3817,9 @@ implements OnInit, OnDestroy
         this.supplierCode =
             supplierCode;
 
+        // MB : the new supplier's price card
+        this.loadCardPrices();
+
         this.loadLastTerms();
 
         // "No VAT on this invoice" follows the supplier's last order
@@ -3873,6 +3914,88 @@ implements OnInit, OnDestroy
         this.buildProductItems();
     }
 
+    //===========================================================
+    // Motor bikes : the supplier's price card on the PO date
+    //===========================================================
+
+    get isMb():
+        boolean
+    {
+        return this.pageType === 'MB';
+    }
+
+    private loadCardPrices():
+        void
+    {
+        if
+        (
+            this.pageType !== 'MB'
+            ||
+            !this.supplierCode
+        )
+        {
+            this.cardPrices =
+                new Map();
+
+            return;
+        }
+
+        const supplier =
+            this.supplierCode;
+
+        this.priceCards
+            .getActive(supplier, toIsoDate(this.orderDateValue), true)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    rows =>
+                    {
+                        if
+                        (
+                            supplier !== this.supplierCode
+                        )
+                        {
+                            return;
+                        }
+
+                        this.cardPrices =
+                            new Map(rows.map(x => [x.MotorBikeId, x]));
+
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    () =>
+                    {
+                        this.cardPrices =
+                            new Map();
+                    }
+            });
+    }
+
+    // The picked bike's card (picker)
+    get pickedCard():
+        PriceCardActive | null
+    {
+        if
+        (
+            this.pageType !== 'MB'
+            ||
+            !this.productCode
+        )
+        {
+            return null;
+        }
+
+        const product =
+            this.activeProducts.find(x => x.ProductCode === this.productCode);
+
+        return product
+            ? this.cardPrices.get(product.ProductId) ?? null
+            : null;
+    }
+
     onProductChange
     (
         value:
@@ -3944,14 +4067,20 @@ implements OnInit, OnDestroy
                     ? String(poConvertProfit(terms.ProfitPercent, terms.ProfitBasis, this.profitBasis))
                     : this.defaultProfitText;
 
+            // MB : the card DP is the price reference
+            const card =
+                this.pageType === 'MB'
+                    ? this.cardPrices.get(product.ProductId)
+                    : undefined;
+
             this.unitPriceText =
-                '';
+                card ? String(card.Dp) : '';
 
             this.totalText =
                 '';
 
             this.dpTyped =
-                false;
+                !!card;
 
             this.totalTyped =
                 false;
@@ -4920,6 +5049,27 @@ implements OnInit, OnDestroy
                     dp =
                         poRound(dp, 2);
 
+                    // MB : the supplier's price card is the only price
+                    // reference (Product Pricing - Motor Bikes)
+                    const card =
+                        this.pageType === 'MB'
+                            ? this.cardPrices.get(item.ProductId)
+                            : undefined;
+
+                    if
+                    (
+                        this.pageType === 'MB'
+                    )
+                    {
+                        dp =
+                            card ? card.Dp : 0;
+                    }
+
+                    const shownMrp =
+                        this.pageType === 'MB'
+                            ? (card ? card.Mrp : 0)
+                            : lastMrp;
+
                     const lastMargin =
                         this.marginMode
                             ? (terms?.HasProfit ? terms.ProfitPercent : margin)
@@ -4937,11 +5087,14 @@ implements OnInit, OnDestroy
                         subCategoryId:item.SubCategoryId || null,
                         subCategoryName:item.SubCategoryName,
                         imageUrl:item.ImageUrl,
-                        lastText:lastDpText(terms),
+                        lastText:
+                            this.pageType === 'MB'
+                                ? (card ? `Card DP ${this.money(card.Dp)} · MRP ${this.money(card.Mrp)} · ${card.CardNo}` : 'No price card from this supplier')
+                                : lastDpText(terms),
                         boughtBefore:!!terms && terms.LastDp > 0,
                         mrpText:
                             this.showMrp
-                                ? (lastMrp > 0 ? `MRP ${this.money(lastMrp)}` : 'MRP —')
+                                ? (shownMrp > 0 ? `MRP ${this.money(shownMrp)}` : 'MRP —')
                                 : '',
                         stockText:
                             pos
@@ -4966,7 +5119,7 @@ implements OnInit, OnDestroy
                                     // The suggestion when it needs ordering
                                     qty:pos?.suggested && pos.suggested > 0 ? pos.suggested : 0,
                                     free:0,
-                                    mrp:lastMrp,
+                                    mrp:shownMrp,
                                     margin:lastMargin,
                                     // MRP invoice : DP from MRP and margin
                                     dp:this.marginMode && lastMrp > 0 && lastMargin !== null ? 0 : dp
@@ -5541,6 +5694,91 @@ implements OnInit, OnDestroy
 
         // The removed product is offered again
         this.buildProductItems();
+
+        this.checkForChanges();
+    }
+
+    //===========================================================
+    // Move a line one place up (-1) or down (+1). The saved order
+    // (Line No) follows the list in add and edit mode.
+    //===========================================================
+
+    // The line just moved (shown highlighted for a moment)
+    movedIndex:
+        number | null =
+        null;
+
+    private movedTimer?:
+        number;
+
+    moveLine
+    (
+        index:
+            number,
+        step:
+            number
+    ):
+        void
+    {
+        if
+        (
+            !this.canReorder
+            ||
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        const target =
+            index + (step < 0 ? -1 : 1);
+
+        if
+        (
+            index < 0
+            ||
+            target < 0
+            ||
+            target >= this.lines.length
+        )
+        {
+            return;
+        }
+
+        const lines =
+            [...this.lines];
+
+        [lines[index], lines[target]] =
+            [lines[target], lines[index]];
+
+        this.lines =
+            lines;
+
+        // The line being edited keeps its editor
+        if (this.editingIndex === index)
+        {
+            this.editingIndex = target;
+        }
+        else if (this.editingIndex === target)
+        {
+            this.editingIndex = index;
+        }
+
+        this.movedIndex =
+            target;
+
+        window.clearTimeout(this.movedTimer);
+
+        this.movedTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.movedIndex = null;
+
+                    // (the page may be gone by now)
+                    try { this.cdr.detectChanges(); } catch { }
+                },
+                900);
 
         this.checkForChanges();
     }

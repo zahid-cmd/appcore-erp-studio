@@ -309,6 +309,12 @@ implements
             case 'welcome':
                 return 'fa-solid fa-user-check';
 
+            case 'feedback':
+                return 'fa-solid fa-comment-dots';
+
+            case 'feedback-reply':
+                return 'fa-solid fa-reply';
+
             default:
                 return 'fa-regular fa-bell';
         }
@@ -414,4 +420,4 @@ implements
             );
     }
 
-}
+}

@@ -33,10 +33,14 @@ public interface IProductPricingMotorBikesRepository
 
     // The posted card in force per model for a supplier on a date
     // (Campaign before Regular); models with no card are left out
+    Task<List<ProductPricingMotorBikesCostDto>> GetCostsAsync(
+        string supplierCode);
+
     Task<List<ProductPricingMotorBikesActiveDto>> GetActiveAsync(
         string supplierCode,
         DateOnly date,
-        IReadOnlyCollection<long>? motorBikeIds = null);
+        IReadOnlyCollection<long>? motorBikeIds = null,
+        bool regularOnly = false);
 
     Task<ProductPricingMotorBikesSavedDto> CreateAsync(
         CreateProductPricingMotorBikesDto dto,

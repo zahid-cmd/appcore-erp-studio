@@ -389,7 +389,7 @@ export abstract class PurchaseOrderService
     getPaged
     (
         query:
-            PagedQuery & { tab?:string; supplier?:string }
+            PagedQuery & { tab?:string; supplier?:string; from?:string; to?:string }
     ):
         Observable<PagedResult<PurchaseOrder>>
     {
@@ -402,11 +402,18 @@ export abstract class PurchaseOrderService
 
 
     // The suppliers on this page's documents (list filter)
-    getListSuppliers():
+    // status : '' = every status, else Draft / Approved / Placed /
+    // Completed / Closed (the list's Status filter)
+    getListSuppliers
+    (
+        status:
+            string =
+            ''
+    ):
         Observable<{ code:string; name:string }[]>
     {
         return this.http
-            .get<any[]>(`${this.apiUrl}/list-suppliers`)
+            .get<any[]>(`${this.apiUrl}/list-suppliers`, { params:{ status } })
             .pipe(
                 map
                 (
@@ -417,6 +424,36 @@ export abstract class PurchaseOrderService
                             ({
                                 code:this.text(row, 'SupplierCode'),
                                 name:this.text(row, 'SupplierName')
+                            })
+                        )
+                )
+            );
+    }
+
+
+    // The document's items in short (the list's hover card) :
+    // one row per product, motor bikes per model
+    getItemSummary
+    (
+        publicId:
+            string
+    ):
+        Observable<{ name:string; quantity:number; freeQuantity:number; amount:number }[]>
+    {
+        return this.http
+            .get<any[]>(`${this.apiUrl}/item-summary/${encodeURIComponent(publicId)}`)
+            .pipe(
+                map
+                (
+                    rows =>
+                        (rows ?? []).map
+                        (
+                            row =>
+                            ({
+                                name:this.text(row, 'Name'),
+                                quantity:this.num(row, 'Quantity'),
+                                freeQuantity:this.num(row, 'FreeQuantity'),
+                                amount:this.num(row, 'Amount')
                             })
                         )
                 )

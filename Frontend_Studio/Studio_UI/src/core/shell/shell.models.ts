@@ -120,7 +120,13 @@ export type ShellNotificationKind =
     'user-request'
     |
     // Own registration approved (account activated)
-    'welcome';
+    'welcome'
+    |
+    // Feedback still New (developers only)
+    'feedback'
+    |
+    // A developer replied / changed the status (the sender)
+    'feedback-reply';
 
 
 export interface ShellNotificationDto

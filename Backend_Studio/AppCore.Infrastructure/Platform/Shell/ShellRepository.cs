@@ -39,6 +39,7 @@ using AppCore.Domain.Entities.SecurityPermission.UserManagement;
 using AppCore.Domain.Entities.Settings.GeneralSettings;
 using AppCore.Domain.Platform.Accounting;
 using AppCore.Domain.Platform.Shell;
+using AppCore.Domain.Platform.Feedbacks;
 
 using AppCore.Infrastructure.Persistence;
 
@@ -348,6 +349,12 @@ public class ShellRepository : IShellRepository
 
         items.AddRange(
             await NewUserRequestsAsync(userId));
+
+        items.AddRange(
+            await NewFeedbackAsync(userId));
+
+        items.AddRange(
+            await FeedbackRepliesAsync(userId));
 
         ShellNotificationDto? welcome =
             await AccountApprovedAsync(userId);
@@ -734,6 +741,118 @@ public class ShellRepository : IShellRepository
     // purpose) the item goes away. One item each, newest first.
     // Shown to users who can open User Profile.
     //-----------------------------------------------------------
+
+    //-----------------------------------------------------------
+    // Feedback (2026-11-09) : developers only (Developer role);
+    // every feedback still "New". Opens it in the inbox.
+    //-----------------------------------------------------------
+
+    private async Task<List<ShellNotificationDto>> NewFeedbackAsync
+    (
+        long userId
+    )
+    {
+        try
+        {
+            if (!await DeveloperAccess.IsDeveloperAsync(_context, userId))
+            {
+                return new List<ShellNotificationDto>();
+            }
+
+            var rows =
+                await _context.Set<FeedbackEntry>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted && x.Status == "New")
+                    .OrderByDescending(x => x.CreatedDate)
+                    .Take(MaxWebsiteItems)
+                    .ToListAsync();
+
+            return rows
+                .Select(x =>
+                {
+                    string text =
+                        x.Message.Length > 80
+                            ? x.Message[..80] + "..."
+                            : x.Message;
+
+                    return new ShellNotificationDto
+                    {
+                        Key = $"feedback-{x.PublicId}",
+                        Kind = "feedback",
+                        Title = $"{x.Kind} from {x.UserName}"
+                                + (string.IsNullOrWhiteSpace(x.BranchName) ? string.Empty : $" ({x.BranchName})"),
+                        Detail = text,
+                        Route = $"/developer/feedback?id={x.PublicId}",
+                        Date = x.CreatedDate
+                    };
+                })
+                .ToList();
+        }
+        catch
+        {
+            // table not created yet : the bell still works
+            return new List<ShellNotificationDto>();
+        }
+    }
+
+
+    //-----------------------------------------------------------
+    // Feedback replies (2026-11-09) : to the sender, when a
+    // developer replied or changed the status (last 30 days).
+    // The key carries the change time : every new answer is a
+    // new (unread) item. Opens "My feedback" on it.
+    //-----------------------------------------------------------
+
+    private async Task<List<ShellNotificationDto>> FeedbackRepliesAsync
+    (
+        long userId
+    )
+    {
+        try
+        {
+            DateTime since =
+                DateTime.UtcNow.AddDays(-30);
+
+            var rows =
+                await _context.Set<FeedbackEntry>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted
+                                && x.UserProfileId == userId
+                                && x.ModifiedDate != null
+                                && x.ModifiedDate >= since
+                                && (x.Status != "New" || x.ReplyToUser != ""))
+                    .OrderByDescending(x => x.ModifiedDate)
+                    .Take(MaxWebsiteItems)
+                    .ToListAsync();
+
+            return rows
+                .Select(x =>
+                {
+                    string reply =
+                        x.ReplyToUser.Length > 90
+                            ? x.ReplyToUser[..90] + "..."
+                            : x.ReplyToUser;
+
+                    return new ShellNotificationDto
+                    {
+                        Key = $"feedback-reply-{x.PublicId}-{x.ModifiedDate!.Value.Ticks}",
+                        Kind = "feedback-reply",
+                        Title = $"Your {x.Kind.ToLowerInvariant()} #{x.FeedbackId} : {x.Status}",
+                        Detail = string.IsNullOrWhiteSpace(reply)
+                            ? "The developers updated your feedback."
+                            : "Reply : " + reply,
+                        Route = $"/dashboard?myFeedback={x.PublicId}",
+                        Date = x.ModifiedDate!.Value
+                    };
+                })
+                .ToList();
+        }
+        catch
+        {
+            return new List<ShellNotificationDto>();
+        }
+    }
+
 
     private async Task<List<ShellNotificationDto>> NewUserRequestsAsync
     (
@@ -1139,4 +1258,4 @@ public class ShellRepository : IShellRepository
                 DateTime.UtcNow,
                 zone));
     }
-}
+}

@@ -72,7 +72,7 @@
 
                     <i class="fas fa-code-branch"></i>
 
-                    Version 1.0.0
+                    Version {{ versionText }}
 
                 </span>
 
@@ -80,7 +80,7 @@
 
                     <span class="live-dot"></span>
 
-                    Production
+                    {{ releaseText }}
 
                 </span>
 
@@ -88,7 +88,7 @@
 
                     <i class="fas fa-cube"></i>
 
-                    Build 2026.07.22
+                    Build {{ buildText }}
 
                 </span>
 
@@ -125,17 +125,17 @@
 
                     <div class="spec-row">
                         <dt>Version</dt>
-                        <dd>1.0.0</dd>
+                        <dd>{{ versionText }}</dd>
                     </div>
 
                     <div class="spec-row">
                         <dt>Build</dt>
-                        <dd>2026.07.22</dd>
+                        <dd>{{ buildText }}</dd>
                     </div>
 
                     <div class="spec-row">
                         <dt>Release</dt>
-                        <dd>Production</dd>
+                        <dd>{{ releaseText }}{{ releaseCode ? ' · ' + releaseCode : '' }}</dd>
                     </div>
 
                     <div class="spec-row">

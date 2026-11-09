@@ -243,6 +243,7 @@ export class ProductPricingMotorBikesList
             { id:'inforce', label:'In Force' },
             { id:'draft', label:'Draft' },
             { id:'posted', label:'Posted' },
+            { id:'superseded', label:'Superseded' },
             { id:'cancelled', label:'Cancelled' }
         ];
 
@@ -308,9 +309,8 @@ export class ProductPricingMotorBikesList
         ListTableColumn[] =
     [
         { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Card No', field:'CardNo', width:'130px', align:'center', sortable:true },
+        { header:'Card No', field:'CardNo', width:'190px', align:'left', sortable:true, flagField:'InForce', flagText:'In Force', flagTitleField:'InForceTitle' },
         { header:'Supplier', field:'SupplierName', align:'left', sortable:true },
-        { header:'Card Type', field:'TypeText', width:'170px', align:'left', sortable:true, flagField:'InForce', flagText:'In Force', flagTitleField:'InForceTitle' },
         { header:'Effective From', field:'FromText', width:'130px', align:'center', sortable:true },
         { header:'Effective To', field:'ToText', width:'130px', align:'center', sortable:true },
         { header:'Models', field:'ProductCount', width:'90px', align:'right', sortable:true },
@@ -368,10 +368,15 @@ export class ProductPricingMotorBikesList
                                 x =>
                                 ({
                                     ...x,
+                                    // A replaced card shows Superseded
+                                    Status:x.Superseded ? 'Superseded' : x.Status,
                                     FromText:priceCardDate(x.EffectiveFrom),
-                                    ToText:x.CardType === 'Campaign' ? priceCardDate(x.EffectiveTo) : 'Until replaced',
+                                    ToText:
+                                        x.SupersededFrom
+                                            ? `Replaced ${priceCardDate(x.SupersededFrom)}`
+                                            : 'Until replaced',
                                     TypeText:x.CardType,
-                                    InForceTitle:'Posted and deciding the price of at least one model today'
+                                    InForceTitle:'The current price card of the supplier'
                                 })
                             );
 

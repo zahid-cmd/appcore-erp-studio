@@ -97,9 +97,18 @@ public interface IPurchaseOrderRepository
         string pageType,
         PurchaseOrderPageRequest request);
 
-    // The suppliers on this page's live documents (filter options)
+    // The suppliers on this page's live documents (filter options);
+    // status : null / "" / "all" = every status, "closed" = Closed
+    // Short + Cancelled, else one status
     Task<List<PurchaseOrderListSupplierDto>> GetListSuppliersAsync(
-        string pageType);
+        string pageType,
+        string? status = null);
+
+    // The document's items in short (list hover card); null =
+    // not found on this page
+    Task<List<PurchaseItemSummaryDto>?> GetItemSummaryAsync(
+        string pageType,
+        Guid publicId);
 
     // Public Id -> internal id (live rows; null = not found)
     Task<long?> GetIdByPublicIdAsync(

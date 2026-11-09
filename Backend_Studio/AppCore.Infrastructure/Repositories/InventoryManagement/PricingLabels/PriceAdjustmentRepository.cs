@@ -30,6 +30,9 @@ using PostingLedgerCodes =
 using PriceIndexWriter =
     AppCore.Infrastructure.Platform.Inventory.ProductPriceIndexWriter;
 
+using MotorBikeCardPrices =
+    AppCore.Infrastructure.Platform.Inventory.MotorBikeCardPrices;
+
 using BranchesEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Branches;
 
@@ -104,6 +107,16 @@ namespace AppCore.Infrastructure.Configurations.InventoryManagement.PricingLabel
 //                             Reserve / Cr Income for Reserve)
 //                 reduction : Dr Stock Price Adjustment /
 //                             Cr Price Adj. on Cost of Sales
+//   Motor Bikes (Product Pricing - Motor Bikes, 2026-11-10) : the
+//             price cards drive it, nothing is typed. Per product
+//             the new MRP = the selling MRP on the cut-off date
+//             (newest posted card of any supplier); per batch the
+//             new cost = the DP of the batch supplier's card on the
+//             cut-off date (no supplier, or none on its cards : the
+//             selling card's DP) less the batch's claimed 6.3 VAT per
+//             unit (the book cost leaves claimed VAT out, as the
+//             purchase allowance does); difference = that - the
+//             batch's book cost. No margin edit, no price index.
 //   Sale    : (sales page, later) each unit sold releases its
 //             difference the same way : ReleaseOnSaleAsync.
 //   Cancel  : refused once a sale released a unit or a later
@@ -1331,12 +1344,34 @@ public class PriceAdjustmentRepository
             lastMrp[current.Key] = current.Value.Mrp;
         }
 
+        // Motor Bikes : the price cards give the MRP and the DP
+        bool cardMode =
+            type == "MB";
+
+        Dictionary<long, MotorBikeCardPrices.CardPrice> sellingCards =
+            cardMode
+                ? await MotorBikeCardPrices.MrpAsync(_context, cutOff, productIds)
+                : new Dictionary<long, MotorBikeCardPrices.CardPrice>();
+
         foreach (PriceAdjustmentProductInputDto row in input)
         {
             if (!products.TryGetValue(row.ProductId, out ProductInfo? product))
             {
                 throw new InvalidOperationException(
                     $"A product on the list is not a {TitleOf(type).ToLowerInvariant()} product (or was deleted).");
+            }
+
+            if (cardMode)
+            {
+                if (!sellingCards.TryGetValue(row.ProductId, out MotorBikeCardPrices.CardPrice? card) || card.Mrp <= 0m)
+                {
+                    throw new InvalidOperationException(
+                        $"{product.Name} : no posted price card on {DateText(cutOff)} (Product Pricing - Motor Bikes).");
+                }
+
+                row.NewMrp = card.Mrp;
+
+                continue;
             }
 
             if (row.NewMrp <= 0m)
@@ -1374,7 +1409,7 @@ public class PriceAdjustmentRepository
                         &&
                         productIds.Contains(x.ProductId)
                         &&
-                        x.Mrp > 0m
+                        (cardMode || x.Mrp > 0m)
                         &&
                         x.Status != BatchCancelled
                 )
@@ -1438,6 +1473,46 @@ public class PriceAdjustmentRepository
                         : g.First().SupplierName ?? g.Key
             );
 
+        // Motor Bikes : each batch supplier's card DP on the cut-off
+        Dictionary<string, Dictionary<long, MotorBikeCardPrices.CardPrice>> supplierCards =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        // Motor Bikes : purchase lines whose VAT was NOT claimable
+        // (the VAT sits in the cost); every other batch keeps its
+        // claimed 6.3 VAT out of the cost
+        HashSet<long> vatInCost =
+            new();
+
+        if (cardMode)
+        {
+            foreach (string code in supplierCodes)
+            {
+                supplierCards[code] =
+                    await MotorBikeCardPrices.DpAsync(_context, code, cutOff, productIds);
+            }
+
+            long[] purchaseLineIds =
+                batches
+                    .Where(x => x.SourceType == "Purchase" && x.SourceLineId > 0)
+                    .Select(x => x.SourceLineId)
+                    .Distinct()
+                    .ToArray();
+
+            if (purchaseLineIds.Length > 0)
+            {
+                vatInCost =
+                    (
+                        await _context.Database
+                            .SqlQueryRaw<long>(
+                                "SELECT \"PurchaseLineId\" AS \"Value\" FROM public.\"PurchasesMbLines\" " +
+                                "WHERE NOT \"VatClaimable\" AND \"PurchaseLineId\" = ANY({0})",
+                                purchaseLineIds)
+                            .ToListAsync()
+                    )
+                    .ToHashSet();
+            }
+        }
+
         // The user's margins
         Dictionary<long, decimal> margins =
             (marginInput ?? new List<PriceAdjustmentMarginInputDto>())
@@ -1488,10 +1563,17 @@ public class PriceAdjustmentRepository
                     newMrp / factor;
 
                 decimal ownMargin =
-                    (1m - batch.UnitCost / oldNetMrp) * 100m;
+                    oldNetMrp > 0m
+                        ? (1m - batch.UnitCost / oldNetMrp) * 100m
+                        : 0m;
+
+                bool found =
+                    margins.TryGetValue(batch.StockBatchId, out decimal userMargin);
 
                 bool edited =
-                    margins.TryGetValue(batch.StockBatchId, out decimal userMargin)
+                    !cardMode
+                    &&
+                    found
                     &&
                     Round4(userMargin) != Round4(ownMargin);
 
@@ -1508,6 +1590,41 @@ public class PriceAdjustmentRepository
 
                 decimal newUnitCost =
                     Round4(newNetMrp * (1m - margin / 100m));
+
+                // Motor Bikes : new cost = the supplier's card DP
+                // (book cost basis : the stock sits at card DP)
+                if (cardMode)
+                {
+                    string batchSupplier =
+                        (batch.SupplierCode ?? string.Empty).Trim();
+
+                    MotorBikeCardPrices.CardPrice? dpCard =
+                        batchSupplier.Length > 0
+                        &&
+                        supplierCards.TryGetValue(batchSupplier, out Dictionary<long, MotorBikeCardPrices.CardPrice>? cards)
+                            ? cards.GetValueOrDefault(batch.ProductId)
+                            : null;
+
+                    dpCard ??=
+                        sellingCards[batch.ProductId];
+
+                    // The card DP is VAT inclusive; the book cost leaves
+                    // the claimed 6.3 VAT out (purchase : cost = card DP
+                    // x qty - VAT, after the allowance), so the new cost
+                    // does the same
+                    decimal claimedVat =
+                        batch.SourceType == "Purchase" && vatInCost.Contains(batch.SourceLineId)
+                            ? 0m
+                            : batch.SourceVatPerUnit;
+
+                    newUnitCost =
+                        Round4(dpCard.Dp - claimedVat);
+
+                    margin =
+                        newNetMrp > 0m
+                            ? Round4((1m - dpCard.Dp / factor / newNetMrp) * 100m)
+                            : 0m;
+                }
 
                 decimal difference =
                     Round4(newUnitCost - batch.UnitCost);
@@ -1571,7 +1688,11 @@ public class PriceAdjustmentRepository
                     PartNumber = Limit(product.PartNumber, 100),
                     OldMrp = oldMrp,
                     NewMrp = newMrp,
-                    Direction = newMrp > oldMrp ? DirectionIncrease : DirectionReduction,
+                    // Motor Bikes : by the stock value (DP), not the MRP
+                    Direction =
+                        cardMode
+                            ? (productLines.Sum(x => x.Line.Amount) >= 0m ? DirectionIncrease : DirectionReduction)
+                            : (newMrp > oldMrp ? DirectionIncrease : DirectionReduction),
                     BatchCount = productLines.Count,
                     Quantity = productLines.Sum(x => x.Line.Quantity),
                     Amount = productLines.Sum(x => x.Line.Amount)
@@ -2151,7 +2272,8 @@ public class PriceAdjustmentRepository
                 // cut-off date
                 //===================================================
 
-                foreach (PriceAdjustmentProducts product in analysis.Products)
+                // Motor Bikes : the price cards are the price, no index
+                foreach (PriceAdjustmentProducts product in analysis.Products.Where(x => entity.PageType != "MB"))
                 {
                     PriceIndexWriter.Add(
                         _context,

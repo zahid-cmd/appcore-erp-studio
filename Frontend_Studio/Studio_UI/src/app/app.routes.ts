@@ -262,6 +262,32 @@ export const routes:
             },
 
 
+            //=======================================================
+            // Feedback inbox (developers only; not in the menu)
+            //=======================================================
+
+            {
+                path:
+                    'developer/feedback',
+
+                data:
+                {
+                    breadcrumb:
+                        'Feedback'
+                },
+
+                loadComponent:
+                    () =>
+                        import(
+                            '../features/infrastructure-control/code-management/pages/feedback-inbox/feedback-inbox'
+                        )
+                        .then(
+                            m =>
+                                m.FeedbackInboxComponent
+                        )
+            },
+
+
             // AUTO-BEGIN : MOD-004
 
             //=======================================================

@@ -14,10 +14,18 @@ export const PRODUCT_PRICING_MB_ROUTE =
 export type PriceCardType =
     'Regular' | 'Campaign';
 
+// A model line (IsException false : every colour of the model)
+// or a colour exception (IsException true : MotorBikeId only)
 export interface PriceCardLine
 {
     LineNo:
         number;
+    ModelId:
+        number;
+    ModelName:
+        string;
+    IsException:
+        boolean;
     MotorBikeId:
         number;
     ProductCode:
@@ -75,7 +83,15 @@ export interface PriceCard
         string;
     CancelReason:
         string;
-    // Posted and deciding at least one model today
+    // Replaced by the supplier's next Regular card (from its date)
+    SupersededByNo:
+        string;
+    SupersededFrom:
+        string;
+    // Replaced today
+    Superseded:
+        boolean;
+    // Posted and deciding prices today
     InForce:
         boolean;
     Lines:
@@ -84,6 +100,9 @@ export interface PriceCard
 
 export interface PriceCardLineInput
 {
+    ModelId:
+        number;
+    // 0 = the model price; > 0 = a colour exception
     MotorBikeId:
         number;
     Dp:
@@ -170,15 +189,49 @@ export interface PriceCardDefaults
         PriceCardSupplier[];
     Products:
         PriceCardProduct[];
+    // Sales VAT (inside the MRP)
     VatRules:
+        PriceCardVatRule[];
+    // Purchase VAT (inside the DP)
+    PurchaseVatRules:
         PriceCardVatRule[];
 }
 
 // The card in force for a supplier + model on a date
+// Per colour : last purchase from the supplier and stock in hand
+// (paid = unit cost + 6.3 VAT per unit)
+export interface PriceCardCost
+{
+    MotorBikeId:
+        number;
+    LastBatchId:
+        number;
+    LastDate:
+        string;
+    LastSourceNo:
+        string;
+    LastUnitCost:
+        number;
+    LastVat:
+        number;
+    LastPaid:
+        number;
+    StockQty:
+        number;
+    StockAvgPaid:
+        number;
+}
+
+// Per colour : the card in force and the price it sets
 export interface PriceCardActive
 {
     MotorBikeId:
         number;
+    ModelId:
+        number;
+    // true : the colour takes its model price
+    FromModel:
+        boolean;
     CardId:
         number;
     CardNo:

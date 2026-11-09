@@ -125,6 +125,8 @@ type ReceivingRow =
         DateText:string;
         QuantityText:string;
         DocumentText:string;
+        // Purchase no, with "(on purchase)" when the purchase made it
+        PurchaseText:string;
     };
 
 
@@ -282,7 +284,7 @@ export class ReceivingList
             { header:'#', field:'serial', type:'serial', width:'55px', align:'center' },
             { header:'Receiving No', field:'ReceivingNo', width:'210px', align:'center', sortable:true },
             { header:'Date', field:'DateText', width:'135px', align:'center', sortable:true },
-            { header:'Purchase', field:'PurchaseNo', width:'200px', align:'center', sortable:true },
+            { header:'Purchase', field:'PurchaseText', width:'230px', align:'center', sortable:true },
             { header:'Supplier', field:'SupplierName', align:'left', sortable:true },
             { header:'Invoice / 6.3', field:'DocumentText', width:'170px', align:'left', sortable:true },
             { header:'Warehouse', field:'WarehouseName', width:'160px', align:'left', sortable:true },
@@ -447,7 +449,10 @@ export class ReceivingList
             ...x,
             DateText:formatReceivingDate(x.ReceivingDate),
             QuantityText:formatReceivingQty(x.TotalQuantity),
-            DocumentText:[x.SupplierInvoiceNo, x.MushakNo].filter(v => !!v).join(' · ')
+            DocumentText:[x.SupplierInvoiceNo, x.MushakNo].filter(v => !!v).join(' · '),
+            PurchaseText:x.ReceivedOn === 'Purchase'
+                ? `${x.PurchaseNo} (on purchase)`
+                : x.PurchaseNo
         });
     }
 

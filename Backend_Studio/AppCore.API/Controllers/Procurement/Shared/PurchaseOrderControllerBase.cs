@@ -185,12 +185,35 @@ public abstract class PurchaseOrderControllerBase : ControllerBase
     }
 
 
+    // GET list-suppliers?status=Draft (the list's Status filter;
+    // empty = every status)
     [HttpGet("list-suppliers")]
-    public Task<IActionResult> GetListSuppliers()
+    public Task<IActionResult> GetListSuppliers(
+        [FromQuery] string? status)
     {
         return Run(
-            async () => Ok(await _repository.GetListSuppliersAsync(PageType)),
+            async () => Ok(await _repository.GetListSuppliersAsync(PageType, status)),
             "Failed to load the suppliers.");
+    }
+
+
+    // GET item-summary/{publicId} : the order's items in short
+    // (the list's hover card; bikes per model)
+    [HttpGet("item-summary/{publicId:guid}")]
+    public Task<IActionResult> GetItemSummary(
+        Guid publicId)
+    {
+        return Run(
+            async () =>
+            {
+                List<PurchaseItemSummaryDto>? items =
+                    await _repository.GetItemSummaryAsync(PageType, publicId);
+
+                return items == null
+                    ? (IActionResult)NotFound(new { message = "Purchase order not found." })
+                    : Ok(items);
+            },
+            "Failed to load the items.");
     }
 
 
@@ -593,4 +616,4 @@ public abstract class PurchaseOrderControllerBase : ControllerBase
                 "Procurement",
                 $"PurchaseOrder{PageType}"));
     }
-}
+}

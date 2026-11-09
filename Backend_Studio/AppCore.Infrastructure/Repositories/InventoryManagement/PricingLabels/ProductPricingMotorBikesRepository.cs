@@ -38,6 +38,12 @@ using ProductSubCategoryEntity =
 using ColorManagementEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.ColorManagement;
 
+using StockBatchesEntity =
+    AppCore.Domain.Platform.Inventory.StockBatches;
+
+using PurchaseVatEntity =
+    AppCore.Domain.Entities.VatManagement.VatSetup.PurchaseVat;
+
 using SalesVatEntity =
     AppCore.Domain.Entities.VatManagement.VatSetup.SalesVat;
 
@@ -280,6 +286,32 @@ public class ProductPricingMotorBikesRepository
             .ToList();
     }
 
+    // Purchase VAT rules of Motor Bikes (the VAT inside the DP)
+    private async Task<List<ProductPricingMotorBikesVatRuleDto>> PurchaseVatRulesAsync()
+    {
+        return
+            (
+                await _context
+                    .Set<PurchaseVatEntity>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted && x.Status && x.VatType == VatMotorBikes)
+                    .Select(x => new { x.VatRate, x.EffectiveFrom, x.ValidTo })
+                    .ToListAsync()
+            )
+            .Select
+            (
+                x =>
+                    new ProductPricingMotorBikesVatRuleDto
+                    {
+                        Rate = x.VatRate,
+                        EffectiveFrom = DateText(x.EffectiveFrom),
+                        ValidTo = DateText(x.ValidTo)
+                    }
+            )
+            .OrderBy(x => x.EffectiveFrom)
+            .ToList();
+    }
+
     private static decimal VatRateOn(
         List<ProductPricingMotorBikesVatRuleDto> rules,
         DateOnly date)
@@ -327,6 +359,9 @@ public class ProductPricingMotorBikesRepository
             PostedDate = DateText(x.PostedDate),
             CancelledDate = DateText(x.CancelledDate),
             CancelReason = x.CancelReason,
+            SupersededByNo = x.SupersededByNo,
+            SupersededFrom = DateText(x.SupersededFrom),
+            Superseded = x.SupersededFrom != null && x.SupersededFrom <= BusinessToday(),
             InForce = inForce,
             Lines =
                 (lines ?? new List<ProductPricingMotorBikeLines>())
@@ -337,7 +372,10 @@ public class ProductPricingMotorBikesRepository
                             new ProductPricingMotorBikesLineDto
                             {
                                 LineNo = l.LineNo,
-                                MotorBikeId = l.MotorBikeId,
+                                ModelId = l.ModelId,
+                                ModelName = l.ModelName,
+                                IsException = l.MotorBikeId != null,
+                                MotorBikeId = l.MotorBikeId ?? 0,
                                 ProductCode = l.ProductCode,
                                 ProductName = l.ProductName,
                                 Dp = l.Dp,
@@ -353,7 +391,25 @@ public class ProductPricingMotorBikesRepository
         };
     }
 
-    // Cards with at least one line in force today
+    // Cards in force today : the active Regular card of each
+    // supplier (started, not yet replaced) and the Campaign cards
+    // covering today
+    private IQueryable<ProductPricingMotorBikes> InForceQuery(
+        IQueryable<ProductPricingMotorBikes> query)
+    {
+        DateOnly today =
+            BusinessToday();
+
+        return query.Where
+        (
+            x =>
+                x.Status == StatusPosted
+                && x.EffectiveFrom <= today
+                && x.CardType == TypeRegular
+                && (x.SupersededFrom == null || x.SupersededFrom > today)
+        );
+    }
+
     private async Task<HashSet<long>> InForceIdsAsync(
         IReadOnlyCollection<long> cardIds)
     {
@@ -362,30 +418,17 @@ public class ProductPricingMotorBikesRepository
             return new HashSet<long>();
         }
 
-        var suppliers =
-            await _context
-                .Set<ProductPricingMotorBikes>()
-                .AsNoTracking()
-                .Where(x => cardIds.Contains(x.Id) && x.Status == StatusPosted)
-                .Select(x => x.SupplierCode)
-                .Distinct()
-                .ToListAsync();
+        List<long> ids =
+            cardIds.ToList();
 
-        DateOnly today =
-            BusinessToday();
-
-        HashSet<long> result =
-            new();
-
-        foreach (string supplier in suppliers)
-        {
-            foreach (ProductPricingMotorBikesActiveDto active in await GetActiveAsync(supplier, today))
-            {
-                result.Add(active.CardId);
-            }
-        }
-
-        return result;
+        return (await InForceQuery(
+                    _context
+                        .Set<ProductPricingMotorBikes>()
+                        .AsNoTracking()
+                        .Where(x => ids.Contains(x.Id)))
+                .Select(x => x.Id)
+                .ToListAsync())
+            .ToHashSet();
     }
 
     public async Task<ProductPricingMotorBikesDto?> GetByIdAsync(
@@ -495,8 +538,85 @@ public class ProductPricingMotorBikesRepository
             NextNumber = NumberOf(last + 1),
             Suppliers = suppliers,
             Products = products,
-            VatRules = await VatRulesAsync()
+            VatRules = await VatRulesAsync(),
+            PurchaseVatRules = await PurchaseVatRulesAsync()
         };
+    }
+
+
+    //===========================================================
+    // Last cost per colour : its last purchase batch from the
+    // supplier (cost + 6.3 VAT per unit) and its stock in hand
+    // (every branch, every source)
+    //===========================================================
+
+    private const string BatchSourcePurchase = "Purchase";
+
+    private const string BatchCancelled = "Cancelled";
+
+    public async Task<List<ProductPricingMotorBikesCostDto>> GetCostsAsync(
+        string supplierCode)
+    {
+        string supplier =
+            (supplierCode ?? string.Empty).Trim();
+
+        var batches =
+            await _context
+                .Set<StockBatchesEntity>()
+                .AsNoTracking()
+                .Where(x => x.ProductType == ProductType && x.Status != BatchCancelled)
+                .Select
+                (
+                    x =>
+                        new
+                        {
+                            x.StockBatchId,
+                            x.ProductId,
+                            x.SourceType,
+                            x.SourceNo,
+                            x.SourceDate,
+                            x.SupplierCode,
+                            x.UnitCost,
+                            x.SourceVatPerUnit,
+                            x.QuantityOnHand
+                        }
+                )
+                .ToListAsync();
+
+        return batches
+            .GroupBy(x => x.ProductId)
+            .Select
+            (
+                g =>
+                {
+                    var last =
+                        g.Where(x => x.SourceType == BatchSourcePurchase && x.SupplierCode == supplier)
+                         .OrderByDescending(x => x.SourceDate)
+                         .ThenByDescending(x => x.StockBatchId)
+                         .FirstOrDefault();
+
+                    decimal qty =
+                        g.Sum(x => x.QuantityOnHand);
+
+                    decimal value =
+                        g.Sum(x => x.QuantityOnHand * (x.UnitCost + x.SourceVatPerUnit));
+
+                    return new ProductPricingMotorBikesCostDto
+                    {
+                        MotorBikeId = g.Key,
+                        LastBatchId = last?.StockBatchId ?? 0,
+                        LastDate = last == null ? string.Empty : DateText(last.SourceDate),
+                        LastSourceNo = last?.SourceNo ?? string.Empty,
+                        LastUnitCost = last == null ? 0m : Money(last.UnitCost),
+                        LastVat = last == null ? 0m : Money(last.SourceVatPerUnit),
+                        LastPaid = last == null ? 0m : Money(last.UnitCost + last.SourceVatPerUnit),
+                        StockQty = qty,
+                        StockAvgPaid = qty > 0m ? Money(value / qty) : 0m
+                    };
+                }
+            )
+            .Where(x => x.LastBatchId > 0 || x.StockQty > 0m)
+            .ToList();
     }
 
 
@@ -509,65 +629,243 @@ public class ProductPricingMotorBikesRepository
     public async Task<List<ProductPricingMotorBikesActiveDto>> GetActiveAsync(
         string supplierCode,
         DateOnly date,
-        IReadOnlyCollection<long>? motorBikeIds = null)
+        IReadOnlyCollection<long>? motorBikeIds = null,
+        bool regularOnly = false)
     {
         string supplier =
             (supplierCode ?? string.Empty).Trim();
 
-        var rows =
-            await
-            (
-                from h in _context.Set<ProductPricingMotorBikes>().AsNoTracking()
-                join l in _context.Set<ProductPricingMotorBikeLines>().AsNoTracking()
-                    on h.Id equals l.CardId
-                where !h.IsDeleted
-                      && h.Status == StatusPosted
-                      && h.SupplierCode == supplier
-                      && h.EffectiveFrom <= date
-                      && (h.CardType == TypeRegular || (h.EffectiveTo != null && h.EffectiveTo >= date))
-                      && (motorBikeIds == null || motorBikeIds.Contains(l.MotorBikeId))
-                select new
-                {
-                    l.MotorBikeId,
-                    h.Id,
-                    h.CardNo,
-                    h.CardType,
-                    h.EffectiveFrom,
-                    h.EffectiveTo,
-                    l.Dp,
-                    l.Mrp,
-                    l.Commission
-                }
-            )
-            .ToListAsync();
+        var cards =
+            await _context
+                .Set<ProductPricingMotorBikes>()
+                .AsNoTracking()
+                .Where
+                (
+                    h =>
+                        !h.IsDeleted
+                        && h.Status == StatusPosted
+                        && h.SupplierCode == supplier
+                        && h.EffectiveFrom <= date
+                        && h.CardType == TypeRegular
+                )
+                .Select(h => new { h.Id, h.CardNo, h.CardType, h.EffectiveFrom, h.EffectiveTo })
+                .ToListAsync();
 
-        return rows
-            .GroupBy(x => x.MotorBikeId)
+        if (cards.Count == 0)
+        {
+            return new List<ProductPricingMotorBikesActiveDto>();
+        }
+
+        List<long> cardIds =
+            cards.Select(x => x.Id).ToList();
+
+        List<ProductPricingMotorBikeLines> lines =
+            await _context
+                .Set<ProductPricingMotorBikeLines>()
+                .AsNoTracking()
+                .Where(x => cardIds.Contains(x.CardId))
+                .ToListAsync();
+
+        List<BikeOfModel> bikes =
+            (await BikesOfModelsAsync(lines.Select(x => x.ModelId).Distinct().ToList()))
+                .Where(x => motorBikeIds == null || motorBikeIds.Contains(x.MotorBikeId))
+                .ToList();
+
+        // The Regular card of the date : the latest one started
+        // (a new Regular card replaces the whole previous card);
+        // Campaign cards covering the date win for their models
+        var regular =
+            cards
+                .Where(x => x.CardType == TypeRegular)
+                .OrderByDescending(x => x.EffectiveFrom)
+                .ThenByDescending(x => x.Id)
+                .FirstOrDefault();
+
+        var deciding =
+            cards
+                .Where(x => regular != null && x.Id == regular.Id)
+                .ToList();
+
+        var priced =
+            deciding
+                .SelectMany
+                (
+                    card =>
+                        ColourPrices(lines.Where(l => l.CardId == card.Id), bikes)
+                            .Select(p => new { Card = card, p.Bike, p.Line, p.FromModel })
+                )
+                .ToList();
+
+        return priced
+            .GroupBy(x => x.Bike.MotorBikeId)
             .Select
             (
                 g =>
                 {
                     var pick =
-                        g.OrderBy(x => x.CardType == TypeCampaign ? 0 : 1)
-                         .ThenByDescending(x => x.EffectiveFrom)
-                         .ThenByDescending(x => x.Id)
+                        g.OrderBy(x => x.Card.CardType == TypeCampaign ? 0 : 1)
+                         .ThenByDescending(x => x.Card.EffectiveFrom)
+                         .ThenByDescending(x => x.Card.Id)
                          .First();
 
                     return new ProductPricingMotorBikesActiveDto
                     {
                         MotorBikeId = g.Key,
-                        CardId = pick.Id,
-                        CardNo = pick.CardNo,
-                        CardType = pick.CardType,
-                        EffectiveFrom = DateText(pick.EffectiveFrom),
-                        EffectiveTo = DateText(pick.EffectiveTo),
-                        Dp = pick.Dp,
-                        Mrp = pick.Mrp,
-                        Commission = pick.Commission
+                        ModelId = pick.Bike.ModelId,
+                        FromModel = pick.FromModel,
+                        CardId = pick.Card.Id,
+                        CardNo = pick.Card.CardNo,
+                        CardType = pick.Card.CardType,
+                        EffectiveFrom = DateText(pick.Card.EffectiveFrom),
+                        EffectiveTo = DateText(pick.Card.EffectiveTo),
+                        Dp = pick.Line.Dp,
+                        Mrp = pick.Line.Mrp,
+                        Commission = pick.Line.Commission
                     };
                 }
             )
             .ToList();
+    }
+
+
+    //===========================================================
+    // Models and colours
+    //===========================================================
+
+    private sealed class BikeOfModel
+    {
+        public long MotorBikeId;
+
+        public long ModelId;
+
+        public string ProductCode = string.Empty;
+
+        public string ProductName = string.Empty;
+    }
+
+    // The colours (motor bikes) of the models
+    private async Task<List<BikeOfModel>> BikesOfModelsAsync(
+        IReadOnlyCollection<long> modelIds)
+    {
+        if (modelIds.Count == 0)
+        {
+            return new List<BikeOfModel>();
+        }
+
+        List<long> ids =
+            modelIds.Distinct().ToList();
+
+        return await _context
+            .Set<MotorBikesEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && ids.Contains(x.ProductSubCategoryId))
+            .Select
+            (
+                x =>
+                    new BikeOfModel
+                    {
+                        MotorBikeId = x.MotorBikeId,
+                        ModelId = x.ProductSubCategoryId,
+                        ProductCode = x.ProductCode,
+                        ProductName = x.ProductName
+                    }
+            )
+            .ToListAsync();
+    }
+
+    private static ProductPricingMotorBikeLines PriceLine(
+        int lineNo,
+        long modelId,
+        string modelName,
+        long? motorBikeId,
+        string productCode,
+        string productName,
+        decimal dp,
+        decimal mrp,
+        decimal vatRate)
+    {
+        if (dp <= 0m)
+        {
+            throw new InvalidOperationException(
+                $"{productName} : DP must be above 0.");
+        }
+
+        if (mrp <= 0m)
+        {
+            throw new InvalidOperationException(
+                $"{productName} : MRP must be above 0.");
+        }
+
+        if (Money(dp) != dp || Money(mrp) != mrp)
+        {
+            throw new InvalidOperationException(
+                $"{productName} : DP and MRP take at most 2 decimals.");
+        }
+
+        decimal vatInside =
+            Money(mrp * vatRate / (100m + vatRate));
+
+        decimal commission =
+            Money(mrp - dp);
+
+        return new ProductPricingMotorBikeLines
+        {
+            LineNo = lineNo,
+            ModelId = modelId,
+            ModelName = Limit(modelName, 250),
+            MotorBikeId = motorBikeId,
+            ProductCode = Limit(productCode, 40),
+            ProductName = Limit(productName, 250),
+            Dp = dp,
+            Mrp = mrp,
+            VatRate = vatRate,
+            VatInside = vatInside,
+            NetSale = Money(mrp - vatInside),
+            Commission = commission,
+            CommissionPercent =
+                mrp > 0m
+                    ? Math.Round(commission * 100m / mrp, 4, MidpointRounding.AwayFromZero)
+                    : 0m
+        };
+    }
+
+    // The price of each colour on a card : its exception, else its
+    // model's price (every current colour of the card's models)
+    private static List<(BikeOfModel Bike, ProductPricingMotorBikeLines Line, bool FromModel)> ColourPrices(
+        IEnumerable<ProductPricingMotorBikeLines> cardLines,
+        IEnumerable<BikeOfModel> bikes)
+    {
+        List<ProductPricingMotorBikeLines> lines =
+            cardLines.ToList();
+
+        Dictionary<long, ProductPricingMotorBikeLines> modelLine =
+            lines
+                .Where(x => x.MotorBikeId == null)
+                .GroupBy(x => x.ModelId)
+                .ToDictionary(g => g.Key, g => g.First());
+
+        Dictionary<long, ProductPricingMotorBikeLines> colourLine =
+            lines
+                .Where(x => x.MotorBikeId != null)
+                .GroupBy(x => x.MotorBikeId!.Value)
+                .ToDictionary(g => g.Key, g => g.First());
+
+        List<(BikeOfModel Bike, ProductPricingMotorBikeLines Line, bool FromModel)> result =
+            new();
+
+        foreach (BikeOfModel bike in bikes)
+        {
+            if (colourLine.TryGetValue(bike.MotorBikeId, out ProductPricingMotorBikeLines? own))
+            {
+                result.Add((bike, own, false));
+            }
+            else if (modelLine.TryGetValue(bike.ModelId, out ProductPricingMotorBikeLines? model))
+            {
+                result.Add((bike, model, true));
+            }
+        }
+
+        return result;
     }
 
 
@@ -630,34 +928,15 @@ public class ProductPricingMotorBikesRepository
                 string.IsNullOrWhiteSpace(supplier.DisplayName) ? supplier.SupplierName : supplier.DisplayName,
                 250);
 
-        string cardType =
-            (dto.CardType ?? string.Empty).Trim();
-
-        input.CardType =
-            string.Equals(cardType, TypeCampaign, StringComparison.OrdinalIgnoreCase)
-                ? TypeCampaign
-                : TypeRegular;
+        // Regular cards only (2026-11-10 : no Campaign cards; a
+        // campaign discount is entered on the purchase invoice)
+        input.CardType = TypeRegular;
 
         input.EffectiveFrom =
             TryDate(dto.EffectiveFrom)
             ??
             throw new InvalidOperationException(
                 "Effective From is required.");
-
-        if (input.CardType == TypeCampaign)
-        {
-            input.EffectiveTo =
-                TryDate(dto.EffectiveTo)
-                ??
-                throw new InvalidOperationException(
-                    "A campaign card needs Effective To (its last day).");
-
-            if (input.EffectiveTo.Value < input.EffectiveFrom)
-            {
-                throw new InvalidOperationException(
-                    "Effective To must be on or after Effective From.");
-            }
-        }
 
         input.Reference =
             Limit(dto.Reference, 100);
@@ -667,10 +946,16 @@ public class ProductPricingMotorBikesRepository
 
         List<ProductPricingMotorBikesLineInputDto> lines =
             (dto.Lines ?? new List<ProductPricingMotorBikesLineInputDto>())
-                .Where(x => x != null && x.MotorBikeId > 0)
+                .Where(x => x != null && x.ModelId > 0)
                 .ToList();
 
-        if (lines.Count == 0)
+        List<ProductPricingMotorBikesLineInputDto> models =
+            lines.Where(x => x.MotorBikeId <= 0).ToList();
+
+        List<ProductPricingMotorBikesLineInputDto> colours =
+            lines.Where(x => x.MotorBikeId > 0).ToList();
+
+        if (models.Count == 0)
         {
             throw new InvalidOperationException(
                 "Add at least one model to the card.");
@@ -679,96 +964,82 @@ public class ProductPricingMotorBikesRepository
         if (lines.Count > MaxLines)
         {
             throw new InvalidOperationException(
-                $"A card holds at most {MaxLines} models.");
+                $"A card holds at most {MaxLines} lines (models and colour exceptions).");
         }
 
-        long? twice =
-            lines
-                .GroupBy(x => x.MotorBikeId)
-                .Where(g => g.Count() > 1)
-                .Select(g => (long?)g.Key)
-                .FirstOrDefault();
+        List<long> modelIds =
+            models.Select(x => x.ModelId).Distinct().ToList();
 
-        List<long> ids =
-            lines.Select(x => x.MotorBikeId).Distinct().ToList();
+        Dictionary<long, string> modelNames =
+            await _context
+                .Set<ProductSubCategoryEntity>()
+                .AsNoTracking()
+                .Where(x => modelIds.Contains(x.ProductSubCategoryId))
+                .ToDictionaryAsync(x => x.ProductSubCategoryId, x => x.SubCategoryName);
 
-        var bikes =
-            (
-                await _context
-                    .Set<MotorBikesEntity>()
-                    .AsNoTracking()
-                    .Where(x => ids.Contains(x.MotorBikeId) && !x.IsDeleted)
-                    .Select(x => new { x.MotorBikeId, x.ProductCode, x.ProductName })
-                    .ToListAsync()
-            )
-            .ToDictionary(x => x.MotorBikeId);
+        List<BikeOfModel> bikes =
+            await BikesOfModelsAsync(modelIds);
 
-        if (twice.HasValue)
-        {
-            string name =
-                bikes.TryGetValue(twice.Value, out var b) ? b.ProductName : $"#{twice.Value}";
-
-            throw new InvalidOperationException(
-                $"{name} is on the card twice.");
-        }
+        Dictionary<long, BikeOfModel> bikeById =
+            bikes.ToDictionary(x => x.MotorBikeId);
 
         decimal vatRate =
             VatRateOn(await VatRulesAsync(), input.EffectiveFrom);
 
         int lineNo = 0;
 
-        foreach (ProductPricingMotorBikesLineInputDto line in lines)
+        HashSet<long> seenModels =
+            new();
+
+        HashSet<long> seenColours =
+            new();
+
+        foreach (ProductPricingMotorBikesLineInputDto model in models)
         {
-            lineNo++;
-
-            if (!bikes.TryGetValue(line.MotorBikeId, out var bike))
+            if (!modelNames.TryGetValue(model.ModelId, out string? modelName))
             {
                 throw new InvalidOperationException(
-                    $"Line {lineNo} : the model was not found.");
+                    $"Line {lineNo + 1} : the model was not found.");
             }
 
-            if (line.Dp <= 0m)
+            if (!seenModels.Add(model.ModelId))
             {
                 throw new InvalidOperationException(
-                    $"{bike.ProductName} : DP must be above 0.");
+                    $"{modelName} is on the card twice.");
             }
 
-            if (line.Mrp <= 0m)
+            if (!bikes.Any(x => x.ModelId == model.ModelId))
             {
                 throw new InvalidOperationException(
-                    $"{bike.ProductName} : MRP must be above 0.");
+                    $"{modelName} has no motor bike (colour) set up.");
             }
-
-            if (Money(line.Dp) != line.Dp || Money(line.Mrp) != line.Mrp)
-            {
-                throw new InvalidOperationException(
-                    $"{bike.ProductName} : DP and MRP take at most 2 decimals.");
-            }
-
-            decimal vatInside =
-                Money(line.Mrp * vatRate / (100m + vatRate));
-
-            decimal commission =
-                Money(line.Mrp - line.Dp);
 
             input.Lines.Add(
-                new ProductPricingMotorBikeLines
+                PriceLine(++lineNo, model.ModelId, modelName, null, string.Empty, modelName, model.Dp, model.Mrp, vatRate));
+
+            foreach (ProductPricingMotorBikesLineInputDto colour in colours.Where(x => x.ModelId == model.ModelId))
+            {
+                if (!bikeById.TryGetValue(colour.MotorBikeId, out BikeOfModel? bike) || bike.ModelId != model.ModelId)
                 {
-                    LineNo = lineNo,
-                    MotorBikeId = bike.MotorBikeId,
-                    ProductCode = Limit(bike.ProductCode, 40),
-                    ProductName = Limit(bike.ProductName, 250),
-                    Dp = line.Dp,
-                    Mrp = line.Mrp,
-                    VatRate = vatRate,
-                    VatInside = vatInside,
-                    NetSale = Money(line.Mrp - vatInside),
-                    Commission = commission,
-                    CommissionPercent =
-                        line.Mrp > 0m
-                            ? Math.Round(commission * 100m / line.Mrp, 4, MidpointRounding.AwayFromZero)
-                            : 0m
-                });
+                    throw new InvalidOperationException(
+                        $"{modelName} : a colour exception is not of this model.");
+                }
+
+                if (!seenColours.Add(bike.MotorBikeId))
+                {
+                    throw new InvalidOperationException(
+                        $"{bike.ProductName} has two colour exceptions.");
+                }
+
+                input.Lines.Add(
+                    PriceLine(++lineNo, model.ModelId, modelName, bike.MotorBikeId, bike.ProductCode, bike.ProductName, colour.Dp, colour.Mrp, vatRate));
+            }
+        }
+
+        if (colours.Any(x => !seenModels.Contains(x.ModelId)))
+        {
+            throw new InvalidOperationException(
+                "A colour exception needs its model on the card.");
         }
 
         return input;
@@ -785,7 +1056,7 @@ public class ProductPricingMotorBikesRepository
         entity.EffectiveTo = input.CardType == TypeCampaign ? input.EffectiveTo : null;
         entity.Reference = input.Reference;
         entity.Remarks = input.Remarks;
-        entity.ProductCount = input.Lines.Count;
+        entity.ProductCount = input.Lines.Count(x => x.MotorBikeId == null);
     }
 
     private async Task WriteLinesAsync(
@@ -1015,43 +1286,40 @@ public class ProductPricingMotorBikesRepository
                 "The card has no models.");
         }
 
-        List<long> ids =
-            lines.Select(x => x.MotorBikeId).ToList();
+        List<long> modelIds =
+            lines.Select(x => x.ModelId).Distinct().ToList();
 
-        var clashes =
-            await
-            (
-                from h in _context.Set<ProductPricingMotorBikes>().AsNoTracking()
-                join l in _context.Set<ProductPricingMotorBikeLines>().AsNoTracking()
-                    on h.Id equals l.CardId
-                where !h.IsDeleted
-                      && h.Status == StatusPosted
-                      && h.Id != id
-                      && h.SupplierCode == entity.SupplierCode
-                      && h.CardType == entity.CardType
-                      && ids.Contains(l.MotorBikeId)
-                select new { h.CardNo, h.EffectiveFrom, h.EffectiveTo, l.ProductName }
-            )
-            .ToListAsync();
-
-        var clash =
+        // A Regular card replaces the supplier's current Regular card
+        // (the whole set) from its Effective From : it must start
+        // after that card
+        ProductPricingMotorBikes? previous =
             entity.CardType == TypeRegular
-                ? clashes.FirstOrDefault(x => x.EffectiveFrom == entity.EffectiveFrom)
-                : clashes.FirstOrDefault
-                  (
-                      x =>
-                          x.EffectiveFrom <= (entity.EffectiveTo ?? entity.EffectiveFrom)
-                          &&
-                          (x.EffectiveTo ?? x.EffectiveFrom) >= entity.EffectiveFrom
-                  );
+                ? await _context
+                    .Set<ProductPricingMotorBikes>()
+                    .Where
+                    (
+                        x =>
+                            !x.IsDeleted
+                            && x.Id != id
+                            && x.Status == StatusPosted
+                            && x.CardType == TypeRegular
+                            && x.SupplierCode == entity.SupplierCode
+                    )
+                    .OrderByDescending(x => x.EffectiveFrom)
+                    .ThenByDescending(x => x.Id)
+                    .FirstOrDefaultAsync()
+                : null;
 
-        if (clash != null)
+        if (previous != null && entity.EffectiveFrom <= previous.EffectiveFrom)
         {
             throw new InvalidOperationException(
-                entity.CardType == TypeRegular
-                    ? $"{clash.ProductName} already has a posted Regular card from {DateText(clash.EffectiveFrom)} for this supplier ({clash.CardNo}). Use another Effective From, or cancel {clash.CardNo}."
-                    : $"{clash.ProductName} already has a posted Campaign card of this supplier on these dates ({clash.CardNo}, {DateText(clash.EffectiveFrom)} to {DateText(clash.EffectiveTo)}).");
+                $"{previous.CardNo} is the supplier's current Regular card from {DateText(previous.EffectiveFrom)}. " +
+                $"A new Regular card replaces it, so its Effective From must be after {DateText(previous.EffectiveFrom)}.");
         }
+
+        // Each current colour of the card's models : its price
+        List<(BikeOfModel Bike, ProductPricingMotorBikeLines Line, bool FromModel)> colourPrices =
+            ColourPrices(lines, await BikesOfModelsAsync(modelIds));
 
         DateTime now =
             DateTime.UtcNow;
@@ -1069,17 +1337,32 @@ public class ProductPricingMotorBikesRepository
 
                 entity.ModifiedDate = now;
 
+                if (previous != null)
+                {
+                    previous.SupersededById = entity.Id;
+
+                    previous.SupersededByNo = entity.CardNo;
+
+                    previous.SupersededFrom = entity.EffectiveFrom;
+
+                    previous.ModifiedBy = userId;
+
+                    previous.ModifiedDate = now;
+
+                    AddHistory(previous, "Superseded", "Superseded", userId, now, $"Replaced by {entity.CardNo} from {DateText(entity.EffectiveFrom)}");
+                }
+
                 if (entity.CardType == TypeRegular)
                 {
-                    foreach (ProductPricingMotorBikeLines line in lines)
+                    foreach (var price in colourPrices)
                     {
                         ProductPriceIndexWriter.Add(
                             _context,
                             ProductType,
-                            line.MotorBikeId,
-                            line.ProductCode,
-                            line.ProductName,
-                            line.Mrp,
+                            price.Bike.MotorBikeId,
+                            price.Bike.ProductCode,
+                            price.Bike.ProductName,
+                            price.Line.Mrp,
                             entity.EffectiveFrom,
                             IndexSource,
                             entity.Id,
@@ -1103,6 +1386,46 @@ public class ProductPricingMotorBikesRepository
     // (Stage 2 : refused once a purchase used the card.)
     //===========================================================
 
+    // The first non-cancelled document that took its DP from the
+    // card ('' = none) : Purchase Invoice - MB, Opening Stock - MB
+    private async Task<string> CardUsedByAsync(
+        string cardNo)
+    {
+        if (string.IsNullOrWhiteSpace(cardNo))
+        {
+            return string.Empty;
+        }
+
+        List<string> purchases =
+            await _context.Database
+                .SqlQueryRaw<string>(
+                    "SELECT h.\"PurchaseNo\" AS \"Value\" FROM public.\"PurchasesMbLines\" l " +
+                    "JOIN public.\"PurchasesMb\" h ON h.\"PurchaseId\" = l.\"PurchaseId\" " +
+                    "WHERE l.\"CardNo\" = {0} AND NOT h.\"IsDeleted\" AND h.\"Status\" <> 'Cancelled' " +
+                    "ORDER BY h.\"PurchaseId\" LIMIT 1",
+                    cardNo)
+                .ToListAsync();
+
+        if (purchases.Count > 0)
+        {
+            return $"purchase invoice {purchases[0]}";
+        }
+
+        List<string> openings =
+            await _context.Database
+                .SqlQueryRaw<string>(
+                    "SELECT h.\"OpeningNo\" AS \"Value\" FROM public.\"OpeningStockLines\" l " +
+                    "JOIN public.\"OpeningStock\" h ON h.\"OpeningStockId\" = l.\"OpeningStockId\" " +
+                    "WHERE l.\"CardNo\" = {0} AND NOT h.\"IsDeleted\" AND h.\"Status\" = 'Posted' " +
+                    "ORDER BY h.\"OpeningStockId\" LIMIT 1",
+                    cardNo)
+                .ToListAsync();
+
+        return openings.Count > 0
+            ? $"opening stock {openings[0]}"
+            : string.Empty;
+    }
+
     public async Task CancelAsync(
         long id,
         CancelProductPricingMotorBikesDto dto,
@@ -1122,8 +1445,34 @@ public class ProductPricingMotorBikesRepository
                 $"{entity.CardNo} is {entity.Status}. Only a posted card can be cancelled.");
         }
 
+        if (entity.SupersededById != null)
+        {
+            throw new InvalidOperationException(
+                $"{entity.CardNo} was replaced by {entity.SupersededByNo}. Cancel {entity.SupersededByNo} first.");
+        }
+
+        // A card already used by a posted / approved Purchase Invoice
+        // - MB or a posted Opening Stock - MB stays : the stock was
+        // valued at its DP (allowance posted)
+        string used =
+            await CardUsedByAsync(entity.CardNo);
+
+        if (used.Length > 0)
+        {
+            throw new InvalidOperationException(
+                $"{entity.CardNo} prices {used}. Cancel that first, or post a new card to replace it.");
+        }
+
         string reason =
             Limit((dto?.Reason ?? string.Empty).Replace("\r", " ").Replace("\n", " "), 500);
+
+        // The card this one replaced becomes current again
+        ProductPricingMotorBikes? replaced =
+            entity.CardType == TypeRegular
+                ? await _context
+                    .Set<ProductPricingMotorBikes>()
+                    .FirstOrDefaultAsync(x => x.SupersededById == entity.Id)
+                : null;
 
         if (reason.Length < 5)
         {
@@ -1138,6 +1487,21 @@ public class ProductPricingMotorBikesRepository
             async () =>
             {
                 entity.Status = StatusCancelled;
+
+                if (replaced != null)
+                {
+                    replaced.SupersededById = null;
+
+                    replaced.SupersededByNo = string.Empty;
+
+                    replaced.SupersededFrom = null;
+
+                    replaced.ModifiedBy = userId;
+
+                    replaced.ModifiedDate = now;
+
+                    AddHistory(replaced, "Restored", "Current again", userId, now, $"{entity.CardNo} was cancelled");
+                }
 
                 entity.CancelledBy = userId;
 
@@ -1247,30 +1611,37 @@ public class ProductPricingMotorBikesRepository
                 );
         }
 
+        DateOnly today =
+            BusinessToday();
+
         var statusCounts =
             await query
                 .GroupBy(x => x.Status)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-        // In force today (posted cards that still decide a model)
-        List<long> postedIds =
-            await query
-                .Where(x => x.Status == StatusPosted)
-                .Select(x => x.Id)
-                .ToListAsync();
+        int supersededCount =
+            await query.CountAsync(x => x.Status == StatusPosted && x.SupersededFrom != null && x.SupersededFrom <= today);
 
+        // In force today
         HashSet<long> inForce =
-            await InForceIdsAsync(postedIds);
+            (await InForceQuery(query).Select(x => x.Id).ToListAsync()).ToHashSet();
 
         string tab =
             (request.Tab ?? string.Empty).Trim().ToLowerInvariant();
 
         if (tab == "inforce")
         {
-            List<long> ids = inForce.ToList();
-
-            query = query.Where(x => ids.Contains(x.Id));
+            query = InForceQuery(query);
+        }
+        else if (tab == "superseded")
+        {
+            query = query.Where(x => x.Status == StatusPosted && x.SupersededFrom != null && x.SupersededFrom <= today);
+        }
+        else if (tab == "posted")
+        {
+            // Posted and not replaced yet
+            query = query.Where(x => x.Status == StatusPosted && (x.SupersededFrom == null || x.SupersededFrom > today));
         }
         else if (tab != string.Empty && tab != "all")
         {
@@ -1305,6 +1676,11 @@ public class ProductPricingMotorBikesRepository
         {
             counts[row.Status ?? string.Empty] = row.Count;
         }
+
+        counts["Superseded"] = supersededCount;
+
+        counts[StatusPosted] =
+            (counts.TryGetValue(StatusPosted, out int posted) ? posted : 0) - supersededCount;
 
         return new PagedResult<ProductPricingMotorBikesDto>
         {

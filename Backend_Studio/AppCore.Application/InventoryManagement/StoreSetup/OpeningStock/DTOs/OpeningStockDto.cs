@@ -48,6 +48,10 @@ public class OpeningStockDto
 
     public string Remarks { get; set; } = string.Empty;
 
+    public string SupplierCode { get; set; } = string.Empty;
+
+    public string SupplierName { get; set; } = string.Empty;
+
     public decimal TotalQuantity { get; set; }
 
     public decimal TotalValue { get; set; }
@@ -121,6 +125,12 @@ public class OpeningStockLineDto
     public string ShortNotes { get; set; } = string.Empty;
 
     public string BatchNo { get; set; } = string.Empty;
+
+    public string CardNo { get; set; } = string.Empty;
+
+    public decimal CardDp { get; set; }
+
+    public decimal Allowance { get; set; }
 }
 
 

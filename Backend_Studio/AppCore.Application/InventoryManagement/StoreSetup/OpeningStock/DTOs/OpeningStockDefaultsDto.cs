@@ -29,6 +29,9 @@ public class OpeningStockDefaultsDto
     // GL ledgers for the credit side
     public List<OpeningStockLedgerDto> Ledgers { get; set; } = new();
 
+    // Motor bikes : suppliers (their price cards price the bikes)
+    public List<OpeningStockLedgerDto> Suppliers { get; set; } = new();
+
     // Lock Opening Stock Ledger (CFG-MOD-012-0006) : ON = the
     // credit ledger is the Posting Setup one, not changeable
     public bool LedgerLocked { get; set; } = true;

@@ -259,6 +259,18 @@ from '../../product-shelf/product-shelf';
 
 import
 {
+    ProductPricingMotorBikesService
+}
+from '../../../../inventory-management/pricing-labels/services/product-pricing-motor-bikes.service';
+
+import
+{
+    PriceCardActive
+}
+from '../../../../inventory-management/pricing-labels/models/product-pricing-motor-bikes.model';
+
+import
+{
     ShelfOptions,
     ShelfPick,
     ShelfProduct
@@ -465,6 +477,27 @@ implements OnInit, OnDestroy
 
     private readonly purchasesService =
         inject(PurchaseService);
+
+    // Motor bikes : the supplier's price card (Product Pricing -
+    // Motor Bikes is the only source of the DP and MRP)
+    private readonly priceCards =
+        inject(ProductPricingMotorBikesService);
+
+    // Bike (ProductId) -> its DP / MRP on the supplier's card on the
+    // purchase date
+    cardPrices:
+        Map<number, PriceCardActive> = new Map();
+
+    // Campaign discount (MB) : the toggle, the campaign and the
+    // per-unit discount typed in the picker
+    campaignOn:
+        boolean = false;
+
+    campaignName:
+        string = '';
+
+    campaignText:
+        string = '';
 
     private readonly purchaseVatService =
         inject(PurchaseVatService);
@@ -1049,6 +1082,22 @@ implements OnInit, OnDestroy
         PurchaseUnit[] =
         [];
 
+    // "All" on the desk (2026-11-10) : every line's bikes on one
+    // list, grouped under the item's name. OFF (default) : the
+    // line opened only.
+    unitAll =
+        false;
+
+    // The line of each desk row (same order as unitRows)
+    unitRowLine:
+        number[] =
+        [];
+
+    // Numbers typed on the desk for lines not shown now (kept
+    // while the desk is open; Save writes them; Close drops them)
+    private unitDrafts =
+        new Map<number, PurchaseUnit[]>();
+
     unitError:
         string =
         '';
@@ -1291,6 +1340,19 @@ implements OnInit, OnDestroy
     }
 
     // Above Max Stock Level allowed : Max is a warning, not a cap
+    // Up / Down buttons on the lines (switch "Reorder Lines");
+    // the saved line order follows the list
+    get canReorder():
+        boolean
+    {
+        return this.isEditable
+            && switchOn(
+                this.switches,
+                this.page.switches.REORDER_LINES,
+                false
+            );
+    }
+
     get aboveMaxAllowed():
         boolean
     {
@@ -2052,6 +2114,18 @@ implements OnInit, OnDestroy
         this.lines =
             [];
 
+        this.cardPrices =
+            new Map();
+
+        this.campaignOn =
+            false;
+
+        this.campaignName =
+            '';
+
+        this.campaignText =
+            '';
+
         this.accessoryRows =
             [];
 
@@ -2192,6 +2266,17 @@ implements OnInit, OnDestroy
 
                     this.lines =
                         item.Lines.map(line => ({ ...line }));
+
+                    // MB : campaign and the supplier's price card
+                    this.campaignName =
+                        item.CampaignName ?? '';
+
+                    this.campaignOn =
+                        (item.TotalCampaignDiscount ?? 0) > 0
+                        ||
+                        item.Lines.some(x => (x.CampaignDiscount ?? 0) > 0);
+
+                    this.loadCardPrices();
 
                     // MB : free accessories (worked out by the server,
                     // with the quantities saved / received here)
@@ -2852,6 +2937,9 @@ implements OnInit, OnDestroy
             // Another financial year may free / take the Mushak No
             this.queueMushakCheck();
 
+            // MB : the price card in force on the new date
+            this.loadCardPrices();
+
             this.loadVatRate(true);
 
             this.loadApplicability();
@@ -2890,12 +2978,52 @@ implements OnInit, OnDestroy
             return;
         }
 
+        const previous =
+            this.supplierInvoiceDate;
+
         this.supplierInvoiceDate =
             value
             ??
             null;
 
+        // Invoice and Mushak both required : the Mushak Date follows
+        // the Invoice Date while it is empty or still the same day
+        // as the invoice was (a date typed for the Mushak is kept).
+        // It stays editable.
+        if
+        (
+            this.invoiceRequired
+            &&
+            this.mushakRequired
+            &&
+            (
+                !this.mushakDate
+                ||
+                (!!previous && this.sameDay(this.mushakDate, previous))
+            )
+        )
+        {
+            this.mushakDate =
+                this.supplierInvoiceDate
+                    ? new Date(this.supplierInvoiceDate.getTime())
+                    : null;
+        }
+
         this.checkForChanges();
+    }
+
+    private sameDay
+    (
+        a:
+            Date,
+        b:
+            Date
+    ):
+        boolean
+    {
+        return a.getFullYear() === b.getFullYear()
+            && a.getMonth() === b.getMonth()
+            && a.getDate() === b.getDate();
     }
 
     onMushakNoChange
@@ -3410,6 +3538,40 @@ implements OnInit, OnDestroy
         );
     }
 
+    // The narration last copied from a Purchase Order ('' = none)
+    private narrationFromOrder =
+        '';
+
+    // The order's narration fills the purchase's : only when the
+    // narration is empty or still the one copied from the previous
+    // order (a typed narration is kept). It stays editable.
+    private copyOrderNarration
+    (
+        text:
+            string
+    ):
+        void
+    {
+        const current =
+            this.narration.trim();
+
+        if
+        (
+            current !== ''
+            &&
+            current !== this.narrationFromOrder.trim()
+        )
+        {
+            return;
+        }
+
+        this.narration =
+            text;
+
+        this.narrationFromOrder =
+            text;
+    }
+
     // The order's terms and every line with quantity left
     private fillFromOrder():
         void
@@ -3425,8 +3587,12 @@ implements OnInit, OnDestroy
             this.lines =
                 [];
 
+            this.copyOrderNarration('');
+
             return;
         }
+
+        this.copyOrderNarration((order.Narration ?? '').trim());
 
         this.priceIncludesVat =
             order.PriceIncludesVat;
@@ -4802,6 +4968,9 @@ implements OnInit, OnDestroy
         this.supplierCode =
             supplierCode;
 
+        // MB : the new supplier's price card
+        this.loadCardPrices();
+
         // A new supplier : its own open orders
         this.orderId =
             null;
@@ -5475,6 +5644,9 @@ implements OnInit, OnDestroy
         this.shortNotes =
             '';
 
+        this.campaignText =
+            '';
+
         this.vatText =
             '';
 
@@ -5847,6 +6019,9 @@ implements OnInit, OnDestroy
         this.shortNotes =
             line.ShortNotes;
 
+        this.campaignText =
+            line.CampaignDiscount ? this.numberText(line.CampaignDiscount) : '';
+
         // VAT as per 6.3 : the line's VAT % comes back to the picker
         this.vatText =
             this.vatEditable
@@ -5973,6 +6148,18 @@ implements OnInit, OnDestroy
                     dp =
                         poRound(dp, 2);
 
+                    // MB : the supplier's price card gives the MRP; the
+                    // price typed stays the 6.3 unit price (legal cost)
+                    const card =
+                        this.isMb
+                            ? this.cardPrices.get(item.ProductId)
+                            : undefined;
+
+                    const shownMrp =
+                        this.isMb
+                            ? (card ? card.Mrp : 0)
+                            : lastMrp;
+
                     const lastMargin =
                         this.marginMode
                             ? (terms?.HasProfit ? terms.ProfitPercent : margin)
@@ -5990,11 +6177,14 @@ implements OnInit, OnDestroy
                         subCategoryId:item.SubCategoryId || null,
                         subCategoryName:item.SubCategoryName,
                         imageUrl:item.ImageUrl,
-                        lastText:lastDpText(terms),
+                        lastText:
+                            this.isMb
+                                ? (card ? `Card DP ${this.money(card.Dp)} · ${card.CardNo} · ${lastDpText(terms)}` : 'No price card from this supplier')
+                                : lastDpText(terms),
                         boughtBefore:!!terms && terms.LastDp > 0,
                         mrpText:
-                            this.showMrp
-                                ? (lastMrp > 0 ? `MRP ${this.money(lastMrp)}` : 'MRP —')
+                            this.showMrp || this.isMb
+                                ? (shownMrp > 0 ? `MRP ${this.money(shownMrp)}` : 'MRP —')
                                 : '',
                         stockText:
                             pos
@@ -6019,7 +6209,7 @@ implements OnInit, OnDestroy
                                     // The suggestion when it needs ordering
                                     qty:pos?.suggested && pos.suggested > 0 ? pos.suggested : 0,
                                     free:0,
-                                    mrp:lastMrp,
+                                    mrp:shownMrp,
                                     margin:lastMargin,
                                     // MRP invoice : DP from MRP and margin
                                     dp:this.marginMode && lastMrp > 0 && lastMargin !== null ? 0 : dp
@@ -6572,6 +6762,49 @@ implements OnInit, OnDestroy
             return;
         }
 
+        // MB : the price card must price the bike; campaign discount
+        // per unit (Campaign ON) from 0 to the card DP
+        let campaignDiscount =
+            0;
+
+        if
+        (
+            this.isMb
+        )
+        {
+            const card =
+                this.cardPrices.get(product.ProductId);
+
+            if
+            (
+                !card
+            )
+            {
+                this.lineError =
+                    `${product.ProductName} has no price card from this supplier on the purchase date. Post the supplier's price card first (Product Pricing - Motor Bikes).`;
+
+                return;
+            }
+
+            campaignDiscount =
+                this.campaignOn
+                    ? roundMoney(parseMoney(this.campaignText))
+                    : 0;
+
+            if
+            (
+                campaignDiscount < 0
+                ||
+                campaignDiscount > card.Dp
+            )
+            {
+                this.lineError =
+                    `Campaign discount must be from 0 to the card DP (${this.money(card.Dp)}).`;
+
+                return;
+            }
+        }
+
         const line:
             PurchaseLine =
                 {
@@ -6608,7 +6841,8 @@ implements OnInit, OnDestroy
                     RoundingShare:0,
                     NetUnitCost:0,
                     BilledQuantity:0,
-                    ShortNotes:this.shortNotes.trim()
+                    ShortNotes:this.shortNotes.trim(),
+                    CampaignDiscount:campaignDiscount
                 };
 
         // One line per product (the server checks it too)
@@ -6693,6 +6927,91 @@ implements OnInit, OnDestroy
 
         // The removed product is offered again
         this.buildProductItems();
+
+        this.checkForChanges();
+    }
+
+    //===========================================================
+    // Move a line one place up (-1) or down (+1). The saved order
+    // (Line No) follows the list in add and edit mode.
+    //===========================================================
+
+    // The line just moved (shown highlighted for a moment)
+    movedIndex:
+        number | null =
+        null;
+
+    private movedTimer?:
+        number;
+
+    moveLine
+    (
+        index:
+            number,
+        step:
+            number
+    ):
+        void
+    {
+        if
+        (
+            !this.canReorder
+            ||
+            this.isSaving
+        )
+        {
+            return;
+        }
+
+        const target =
+            index + (step < 0 ? -1 : 1);
+
+        if
+        (
+            index < 0
+            ||
+            target < 0
+            ||
+            target >= this.lines.length
+        )
+        {
+            return;
+        }
+
+        const lines =
+            [...this.lines];
+
+        [lines[index], lines[target]] =
+            [lines[target], lines[index]];
+
+        this.lines =
+            lines;
+
+        // The line being edited keeps its editor
+        if (this.editingIndex === index)
+        {
+            this.editingIndex = target;
+        }
+        else if (this.editingIndex === target)
+        {
+            this.editingIndex = index;
+        }
+
+        this.movedIndex =
+            target;
+
+        window.clearTimeout(this.movedTimer);
+
+        this.movedTimer =
+            window.setTimeout(
+                () =>
+                {
+                    this.movedIndex = null;
+
+                    // (the page may be gone by now)
+                    try { this.cdr.detectChanges(); } catch { }
+                },
+                900);
 
         this.checkForChanges();
     }
@@ -7030,8 +7349,9 @@ implements OnInit, OnDestroy
     get dpLabel():
         string
     {
+        // MB : the Mushak 6.3 price (the legal cost)
         const word =
-            this.mrpPricing ? 'DP' : 'Unit Price';
+            this.mrpPricing ? 'DP' : this.isMb ? '6.3 Unit Price' : 'Unit Price';
 
         return this.priceIncludesVat
             ? `${word} (incl. VAT)`
@@ -7042,7 +7362,7 @@ implements OnInit, OnDestroy
     get priceWord():
         string
     {
-        return this.mrpPricing ? 'DP' : 'Unit Price';
+        return this.mrpPricing ? 'DP' : this.isMb ? '6.3 Price' : 'Unit Price';
     }
 
     // Order Summary columns : SL, item, Qty, [MRP], [Margin %],
@@ -7050,7 +7370,268 @@ implements OnInit, OnDestroy
     get tableCols():
         number
     {
-        return 7 + (this.mrpPricing ? 1 : 0) + (this.showMrp ? 1 : 0) + (this.marginMode ? 1 : 0);
+        return 7 + (this.mrpPricing ? 1 : 0) + (this.showMrp ? 1 : 0) + (this.marginMode ? 1 : 0) + this.cardCols;
+    }
+
+    //===========================================================
+    // Motor bikes : the price card against the Mushak 6.3
+    //   Card DP / MRP : the supplier's card on the purchase date
+    //   Allowance     : 6.3 total - card DP x qty (Dr Supplier /
+    //                   Cr Inventory on Post)
+    //   Campaign      : discount per unit (Dr Supplier / Cr
+    //                   Campaign Discount, a special income)
+    //===========================================================
+
+    get isMb():
+        boolean
+    {
+        return this.pageType === 'MB';
+    }
+
+    // MB summary : "Motor Bikes - REVOO - A04 - Pink" -> "A04 - Pink"
+    // (the full name is the cell's tooltip)
+    bikeShort
+    (
+        name:
+            string
+    ):
+        string
+    {
+        const parts =
+            String(name ?? '').split(' - ').map(x => x.trim()).filter(x => x);
+
+        return parts.length > 2
+            ? parts.slice(-2).join(' - ')
+            : String(name ?? '');
+    }
+
+    // Card DP, MRP, Allowance (+ Campaign)
+    get cardCols():
+        number
+    {
+        return this.isMb ? 3 + (this.campaignOn ? 1 : 0) : 0;
+    }
+
+    // Cells after Line Total in the totals table
+    get tailSpan():
+        number
+    {
+        return (this.mrpPricing ? 3 : 2) + this.cardCols;
+    }
+
+    private loadCardPrices():
+        void
+    {
+        if
+        (
+            !this.isMb
+            ||
+            !this.supplierCode
+        )
+        {
+            this.cardPrices =
+                new Map();
+
+            return;
+        }
+
+        const supplier =
+            this.supplierCode;
+
+        const date =
+            toIsoDate(this.orderDateValue);
+
+        this.priceCards
+            .getActive(supplier, date, true)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    rows =>
+                    {
+                        if
+                        (
+                            supplier !== this.supplierCode
+                        )
+                        {
+                            return;
+                        }
+
+                        this.cardPrices =
+                            new Map(rows.map(x => [x.MotorBikeId, x]));
+
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    () =>
+                    {
+                        this.cardPrices =
+                            new Map();
+
+                        this.cdr.detectChanges();
+                    }
+            });
+    }
+
+    // The card of a line : saved (posted / view) or today's card
+    cardDpOf
+    (
+        line:
+            PurchaseLine
+    ):
+        number
+    {
+        return this.isEditable
+            ? this.cardPrices.get(line.ProductId)?.Dp ?? 0
+            : line.CardDp ?? 0;
+    }
+
+    cardMrpOf
+    (
+        line:
+            PurchaseLine
+    ):
+        number
+    {
+        return this.isEditable
+            ? this.cardPrices.get(line.ProductId)?.Mrp ?? 0
+            : line.Mrp ?? 0;
+    }
+
+    cardNoOf
+    (
+        line:
+            PurchaseLine
+    ):
+        string
+    {
+        return this.isEditable
+            ? this.cardPrices.get(line.ProductId)?.CardNo ?? ''
+            : line.CardNo ?? '';
+    }
+
+    // 6.3 total - card DP x qty
+    allowanceOf
+    (
+        line:
+            PurchaseLine
+    ):
+        number
+    {
+        if
+        (
+            !this.isEditable
+        )
+        {
+            return line.Allowance ?? 0;
+        }
+
+        const dp =
+            this.cardDpOf(line);
+
+        return dp > 0
+            ? roundMoney(line.LineTotal - roundMoney(dp * line.Quantity))
+            : 0;
+    }
+
+    campaignOf
+    (
+        line:
+            PurchaseLine
+    ):
+        number
+    {
+        return roundMoney((line.CampaignDiscount ?? 0) * line.Quantity);
+    }
+
+    get totalAllowance():
+        number
+    {
+        return roundMoney(this.lines.reduce((sum, x) => sum + this.allowanceOf(x), 0));
+    }
+
+    get totalCampaign():
+        number
+    {
+        return this.campaignOn
+            ? roundMoney(this.lines.reduce((sum, x) => sum + this.campaignOf(x), 0))
+            : 0;
+    }
+
+    // What the supplier is paid : payable as per 6.3 - allowance -
+    // campaign discount
+    get netToSupplier():
+        number
+    {
+        return roundMoney(this.totalPayable - this.totalAllowance - this.totalCampaign);
+    }
+
+    // The picked bike's card (picker)
+    get pickedCard():
+        PriceCardActive | null
+    {
+        if
+        (
+            !this.isMb
+            ||
+            !this.productCode
+        )
+        {
+            return null;
+        }
+
+        const product =
+            this.activeProducts.find(x => x.ProductCode === this.productCode);
+
+        return product
+            ? this.cardPrices.get(product.ProductId) ?? null
+            : null;
+    }
+
+    toggleCampaign():
+        void
+    {
+        this.campaignOn =
+            !this.campaignOn;
+
+        if
+        (
+            !this.campaignOn
+        )
+        {
+            this.lines =
+                this.lines.map(x => ({ ...x, CampaignDiscount:0 }));
+
+            this.campaignText =
+                '';
+        }
+
+        this.checkForChanges();
+    }
+
+    onCampaignName
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.campaignName =
+            value ?? '';
+
+        this.checkForChanges();
+    }
+
+    onCampaignText
+    (
+        value:
+            string
+    ):
+        void
+    {
+        this.campaignText =
+            value ?? '';
     }
 
     // Cells before Line Total
@@ -7142,31 +7723,18 @@ implements OnInit, OnDestroy
             return;
         }
 
-        const wanted =
-            this.unitsWanted(line);
+        // Opens per line (the default); "All" is chosen on the desk
+        this.unitAll =
+            false;
 
-        // Year of manufacture : the purchase date's year by default
-        const saved =
-            (line.Units ?? []).map(x => ({ ...x, ManufactureYear:x.ManufactureYear || this.unitYearDefault }));
+        this.unitDrafts =
+            new Map();
 
-        // One row per bike (a read-only purchase shows what was saved)
         this.unitRows =
-            this.isReadonly
-                ? saved
-                : Array.from(
-                    { length:wanted },
-                    (_, i) =>
-                        saved[i]
-                        ??
-                        {
-                            ChassisNo:'',
-                            EngineNo:'',
-                            KeyNo:'',
-                            BatteryNo:'',
-                            CkdStatus:'No',
-                            ManufactureYear:this.unitYearDefault
-                        }
-                );
+            this.buildUnitRows(index);
+
+        this.unitRowLine =
+            this.unitRows.map(() => index);
 
         this.unitLineIndex =
             index;
@@ -7183,6 +7751,275 @@ implements OnInit, OnDestroy
 
         // Numbers saved earlier may have been taken since
         this.queueUnitCheck(0);
+    }
+
+    // One row per bike of a line : numbers typed on the desk
+    // (draft) or saved, empty rows for the rest (a read-only
+    // purchase shows what was saved)
+    private buildUnitRows
+    (
+        index:
+            number
+    ):
+        PurchaseUnit[]
+    {
+        const line =
+            this.lines[index];
+
+        if
+        (
+            !line
+        )
+        {
+            return [];
+        }
+
+        // Year of manufacture : the purchase date's year by default
+        const saved =
+            (this.unitDrafts.get(index) ?? line.Units ?? [])
+                .map(x => ({ ...x, ManufactureYear:x.ManufactureYear || this.unitYearDefault }));
+
+        if
+        (
+            this.isReadonly
+        )
+        {
+            return saved;
+        }
+
+        return Array.from(
+            { length:this.unitsWanted(line) },
+            (_, i) =>
+                saved[i]
+                ??
+                {
+                    ChassisNo:'',
+                    EngineNo:'',
+                    KeyNo:'',
+                    BatteryNo:'',
+                    CkdStatus:'No',
+                    ManufactureYear:this.unitYearDefault
+                }
+        );
+    }
+
+    // Lines with bikes (the "All" list)
+    private get unitDeskLines():
+        number[]
+    {
+        return this.lines
+            .map((line, i) => ({ line, i }))
+            .filter(x => this.isReadonly ? (x.line.Units ?? []).length > 0 : this.unitsWanted(x.line) > 0)
+            .map(x => x.i);
+    }
+
+    // The desk shows this line now
+    private unitOnDesk
+    (
+        lineIndex:
+            number
+    ):
+        boolean
+    {
+        return this.unitAll
+            ? this.unitRowLine.includes(lineIndex)
+            : lineIndex === this.unitLineIndex;
+    }
+
+    // Bikes of the lines not on the desk now (a draft typed on the
+    // desk counts over the saved ones)
+    private get otherLineUnits():
+        PurchaseUnit[]
+    {
+        return this.lines.flatMap(
+            (line, i) =>
+                this.unitOnDesk(i)
+                    ? []
+                    : (this.unitDrafts.get(i) ?? line.Units ?? [])
+        );
+    }
+
+    // The rows now on the desk, back into drafts per line
+    private keepUnitDrafts():
+        void
+    {
+        const byLine =
+            new Map<number, PurchaseUnit[]>();
+
+        this.unitRows.forEach(
+            (row, i) =>
+            {
+                const lineIndex =
+                    this.unitRowLine[i] ?? this.unitLineIndex ?? -1;
+
+                if (lineIndex < 0)
+                {
+                    return;
+                }
+
+                byLine.set(lineIndex, [...(byLine.get(lineIndex) ?? []), row]);
+            });
+
+        byLine.forEach((rows, lineIndex) => this.unitDrafts.set(lineIndex, rows));
+    }
+
+    // Desk switch : this line only <-> every line (grouped by item)
+    toggleUnitAll():
+        void
+    {
+        if
+        (
+            this.unitLineIndex === null
+        )
+        {
+            return;
+        }
+
+        this.keepUnitDrafts();
+
+        this.unitAll =
+            !this.unitAll;
+
+        const lineIndexes =
+            this.unitAll
+                ? this.unitDeskLines
+                : [this.unitLineIndex];
+
+        const rows:
+            PurchaseUnit[] =
+            [];
+
+        const owners:
+            number[] =
+            [];
+
+        for
+        (
+            const lineIndex of lineIndexes
+        )
+        {
+            for
+            (
+                const row of this.buildUnitRows(lineIndex)
+            )
+            {
+                rows.push(row);
+
+                owners.push(lineIndex);
+            }
+        }
+
+        this.unitRows =
+            rows;
+
+        this.unitRowLine =
+            owners;
+
+        this.unitError =
+            '';
+
+        this.cdr.detectChanges();
+
+        this.queueUnitCheck(0);
+    }
+
+    // "All" list : a heading row before each item's first bike
+    unitGroupStart
+    (
+        index:
+            number
+    ):
+        boolean
+    {
+        return this.unitAll
+            &&
+            (index === 0 || this.unitRowLine[index] !== this.unitRowLine[index - 1]);
+    }
+
+    // The item of a desk row ("Motor Bikes - REVOO - A04 - Black")
+    unitRowItem
+    (
+        index:
+            number
+    ):
+        PurchaseLine | null
+    {
+        const lineIndex =
+            this.unitRowLine[index] ?? this.unitLineIndex;
+
+        return lineIndex === null || lineIndex === undefined
+            ? null
+            : this.lines[lineIndex] ?? null;
+    }
+
+    // Bike number within its item (1, 2, ...)
+    unitRowNo
+    (
+        index:
+            number
+    ):
+        number
+    {
+        if
+        (
+            !this.unitAll
+        )
+        {
+            return index + 1;
+        }
+
+        const lineIndex =
+            this.unitRowLine[index];
+
+        let no =
+            0;
+
+        for (let i = 0; i <= index; i++)
+        {
+            if (this.unitRowLine[i] === lineIndex)
+            {
+                no++;
+            }
+        }
+
+        return no;
+    }
+
+    // Bikes of an item on the "All" list
+    unitGroupCount
+    (
+        index:
+            number
+    ):
+        number
+    {
+        const lineIndex =
+            this.unitRowLine[index];
+
+        return this.unitRowLine.filter(x => x === lineIndex).length;
+    }
+
+    // "Bike 3" / "Motor Bikes - REVOO - A04 - Black, bike 3"
+    private unitRowLabel
+    (
+        index:
+            number
+    ):
+        string
+    {
+        return this.unitAll
+            ? `${this.unitRowItem(index)?.ProductName ?? 'Item'}, bike ${this.unitRowNo(index)}`
+            : `Bike ${index + 1}`;
+    }
+
+    // Lines and bikes on the "All" list (desk header)
+    get unitAllSummary():
+        string
+    {
+        const lines =
+            new Set(this.unitRowLine).size;
+
+        return `${lines} item${lines === 1 ? '' : 's'} · ${this.unitRows.length} bike${this.unitRows.length === 1 ? '' : 's'}`;
     }
 
     closeUnits():
@@ -7206,6 +8043,15 @@ implements OnInit, OnDestroy
 
         this.unitRows =
             [];
+
+        this.unitRowLine =
+            [];
+
+        this.unitAll =
+            false;
+
+        this.unitDrafts =
+            new Map();
 
         this.unitError =
             '';
@@ -7560,7 +8406,7 @@ implements OnInit, OnDestroy
 
         this.unitError =
             rows.length > filled
-                ? `${rows.length - filled} pasted row${rows.length - filled === 1 ? '' : 's'} left out : this line has ${this.unitRows.length} bike${this.unitRows.length === 1 ? '' : 's'}.`
+                ? `${rows.length - filled} pasted row${rows.length - filled === 1 ? '' : 's'} left out : ${this.unitAll ? 'the list' : 'this line'} has ${this.unitRows.length} bike${this.unitRows.length === 1 ? '' : 's'}.`
                 : '';
 
         this.cdr.detectChanges();
@@ -7624,9 +8470,7 @@ implements OnInit, OnDestroy
         const units =
             [
                 ...this.unitRows,
-                ...this.lines
-                    .filter((_, i) => i !== this.unitLineIndex)
-                    .flatMap(line => line.Units ?? [])
+                ...this.otherLineUnits
             ]
             .map
             (
@@ -7774,9 +8618,6 @@ implements OnInit, OnDestroy
     private unitProblem():
         string
     {
-        const index =
-            this.unitLineIndex;
-
         const entered =
             this.unitRows.filter(x => x.ChassisNo || x.EngineNo || x.KeyNo || x.BatteryNo);
 
@@ -7795,7 +8636,7 @@ implements OnInit, OnDestroy
                 (!row.ChassisNo || !row.EngineNo)
             )
             {
-                return `Bike ${i + 1} : Chassis No and Engine No are required.`;
+                return `${this.unitRowLabel(i)} : Chassis No and Engine No are required.`;
             }
 
             if
@@ -7807,15 +8648,13 @@ implements OnInit, OnDestroy
                 (!row.KeyNo || !row.BatteryNo)
             )
             {
-                return `Bike ${i + 1} : Key No and Battery No are required.`;
+                return `${this.unitRowLabel(i)} : Key No and Battery No are required.`;
             }
         }
 
-        // No number twice : on this line or on another line
+        // No number twice : on the desk or on another line
         const others =
-            this.lines
-                .filter((_, i) => i !== index)
-                .flatMap(x => x.Units ?? []);
+            this.otherLineUnits;
 
         const all =
             [...entered, ...others];
@@ -7935,9 +8774,7 @@ implements OnInit, OnDestroy
 
         const others =
             new Set(
-                this.lines
-                    .filter((_, i) => i !== index)
-                    .flatMap(line => line.Units ?? [])
+                this.otherLineUnits
                     .flatMap(
                         unit =>
                             (['ChassisNo', 'EngineNo', 'KeyNo', 'BatteryNo'] as UnitField[])
@@ -7953,17 +8790,25 @@ implements OnInit, OnDestroy
         const keys =
             this.unitsRequired;
 
-        const units =
-            this.unitRows
-                .filter(x => x.ChassisNo || x.EngineNo)
-                .map(x => ({ ...x, KeyNo:keys ? x.KeyNo : '', BatteryNo:keys ? x.BatteryNo : '' }));
+        // Every line typed on the desk (this line, or each line of
+        // the "All" list, and lines left while switching)
+        this.keepUnitDrafts();
+
+        const drafts =
+            this.unitDrafts;
 
         this.lines =
             this.lines.map
             (
                 (x, i) =>
-                    i === index
-                        ? { ...x, Units:units }
+                    drafts.has(i)
+                        ? {
+                            ...x,
+                            Units:
+                                (drafts.get(i) ?? [])
+                                    .filter(u => u.ChassisNo || u.EngineNo)
+                                    .map(u => ({ ...u, KeyNo:keys ? u.KeyNo : '', BatteryNo:keys ? u.BatteryNo : '' }))
+                        }
                         : x
             );
 
@@ -8773,6 +9618,7 @@ implements OnInit, OnDestroy
             AdditionalDiscountValue:this.discountValue,
             NoVatInvoice:this.noVatInvoice,
             Narration:this.narration.trim(),
+            CampaignName:this.isMb && this.campaignOn ? this.campaignName.trim() : '',
             Lines:
                 this.lines.map
                 (
@@ -8790,7 +9636,8 @@ implements OnInit, OnDestroy
                         DpAmount:x.IsTotalTyped ? x.DpAmount : 0,
                         VatRate:x.VatRate,
                         ShortNotes:x.ShortNotes,
-                        Units:this.unitDesk ? (x.Units ?? []) : []
+                        Units:this.unitDesk ? (x.Units ?? []) : [],
+                        CampaignDiscount:this.isMb && this.campaignOn ? (x.CampaignDiscount ?? 0) : 0
                     })
                 ),
             Accessories:
@@ -9156,9 +10003,8 @@ implements OnInit, OnDestroy
             this.unitRows.filter((row, i) => i !== index && (row[field] ?? '').trim().toUpperCase() === value).length;
 
         const elsewhere =
-            this.lines
-                .filter((_, i) => i !== this.unitLineIndex)
-                .some(line => (line.Units ?? []).some(unit => (unit[field] ?? '').toUpperCase() === value));
+            this.otherLineUnits
+                .some(unit => (unit[field] ?? '').toUpperCase() === value);
 
         return here > 0 || elsewhere
             ? `${field.replace('No', '')} No ${value} is entered more than once.`

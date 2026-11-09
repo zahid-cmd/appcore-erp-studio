@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 using AppCore.Api.BackgroundJobs;
+using AppCore.Api.Platform.Chat;
 using AppCore.Api.Platform.Uploads;
 using AppCore.Api.Security;
 using AppCore.Application;
@@ -117,6 +118,20 @@ builder.Services.AddHostedService<FinancialYearAutoCreateJob>();
 // Uploaded pictures mirrored into the database (StoredFiles), so
 // every PC on the same database shows them (Platform\Uploads)
 builder.Services.AddSingleton<UploadsMirror>();
+
+
+//===============================================================
+// Team Chat (SignalR hub /hubs/chat + who is online)
+//===============================================================
+
+builder.Services.AddSignalR(
+    options =>
+    {
+        // pictures go by the REST API, not the hub
+        options.MaximumReceiveMessageSize = 64 * 1024;
+    });
+
+builder.Services.AddSingleton<ChatPresence>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<UploadsMirror>());
 
 
@@ -203,6 +218,31 @@ builder.Services.AddAuthentication(
 
                 ClockSkew =
                     TimeSpan.Zero
+            };
+
+        // Team Chat : a WebSocket cannot send the Authorization
+        // header, so the hub's token comes as ?access_token=
+        options.Events =
+            new JwtBearerEvents
+            {
+                OnMessageReceived =
+                    context =>
+                    {
+                        string? token =
+                            context.Request.Query["access_token"];
+
+                        if
+                        (
+                            !string.IsNullOrEmpty(token)
+                            &&
+                            context.HttpContext.Request.Path.StartsWithSegments("/hubs")
+                        )
+                        {
+                            context.Token = token;
+                        }
+
+                        return Task.CompletedTask;
+                    }
             };
     }
 );
@@ -456,6 +496,13 @@ app.UseAuthorization();
 //===============================================================
 
 app.MapControllers();
+
+
+//===============================================================
+// Team Chat hub (login required, fallback policy)
+//===============================================================
+
+app.MapHub<ChatHub>("/hubs/chat");
 
 
 

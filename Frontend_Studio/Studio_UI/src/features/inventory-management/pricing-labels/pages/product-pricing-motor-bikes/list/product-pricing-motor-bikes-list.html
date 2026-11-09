@@ -6,14 +6,14 @@
 
     <app-page-header
         [title]="pageTitle"
-        subtitle="Pricing &amp; Labels : DP, MRP and commission per model and supplier (Regular / Campaign cards)"
+        subtitle="Pricing &amp; Labels : DP, MRP and commission per model; one current price card per supplier"
         icon="fas fa-motorcycle">
 
         <div pageHeaderCenter>
 
             <app-search-box
                 [value]="searchText"
-                placeholder="Search card no, supplier, type, reference, remarks…"
+                placeholder="Search card no, supplier, reference, remarks…"
                 (valueChange)="onSearch($event)">
 
             </app-search-box>
@@ -128,12 +128,17 @@
             </span>
 
             <span class="ics-summary-item">
+                <span class="ics-summary-label">Superseded</span>
+                <b class="ics-summary-value">{{ summaryText(summaryCount('Superseded')) }}</b>
+            </span>
+
+            <span class="ics-summary-item">
                 <span class="ics-summary-label">Cancelled</span>
                 <b class="ics-summary-value ics-bad">{{ summaryText(summaryCount('Cancelled')) }}</b>
             </span>
 
             <span class="ics-summary-note">
-                A Campaign card wins inside its dates; a Regular card holds until a later Regular card
+                One current price card per supplier : a new card replaces the whole set from its Effective From
             </span>
 
         </div>

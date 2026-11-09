@@ -1,0 +1,394 @@
+<!-- =====================================================
+     CHAT PANEL : conversations (left) + open chat (right)
+===================================================== -->
+
+<div class="cp" [class.cp-has-open]="!!open()">
+
+    <!-- =================================================
+         LEFT : list / new chat / new or edit group
+    ================================================== -->
+
+    <aside class="cp-side">
+
+        @if (view() === 'list')
+        {
+            <div class="cp-side-head">
+                <div class="cp-search">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input
+                        type="text"
+                        placeholder="Search chats"
+                        aria-label="Search chats"
+                        [value]="search()"
+                        (input)="search.set($any($event.target).value)">
+                </div>
+
+                <button type="button" class="cp-icon-btn" title="New chat" aria-label="New chat" (click)="startNewChat()">
+                    <i class="fas fa-pen-to-square"></i>
+                </button>
+
+                <button type="button" class="cp-icon-btn" title="New group" aria-label="New group" (click)="startNewGroup()">
+                    <i class="fas fa-user-group"></i>
+                </button>
+            </div>
+
+            <div class="cp-list appcore-scrollbar">
+                @for (c of filteredConversations(); track c.id)
+                {
+                    <button
+                        type="button"
+                        class="cp-row"
+                        [class.on]="c.id === openId()"
+                        [class.cp-unread]="c.unread > 0"
+                        (click)="openConversation(c.id)">
+
+                        <span class="cp-avatar" [class.cp-group]="c.kind === 'Group'">
+                            @if (c.kind === 'Group')
+                            {
+                                <i class="fas fa-user-group"></i>
+                            }
+                            @else if (c.photoPath)
+                            {
+                                <img [src]="imageUrl(c.photoPath)" alt="">
+                            }
+                            @else
+                            {
+                                {{ initials(c.title) }}
+                            }
+
+                            @if (c.kind === 'Direct' && isOnline(c.otherUserId))
+                            {
+                                <span class="cp-dot" title="Online"></span>
+                            }
+                        </span>
+
+                        <span class="cp-row-main">
+                            <span class="cp-row-top">
+                                <b>{{ c.title }}</b>
+                                <span class="cp-when">{{ whenText(c.lastMessageDate) }}</span>
+                            </span>
+
+                            <span class="cp-row-bottom">
+                                <span class="cp-preview">
+                                    @if ((chat.typing()[c.id] ?? []).length)
+                                    {
+                                        <i class="cp-typing-text">typing...</i>
+                                    }
+                                    @else
+                                    {
+                                        {{ preview(c) }}
+                                    }
+                                </span>
+
+                                @if (c.unread > 0)
+                                {
+                                    <span class="cp-badge">{{ c.unread > 99 ? '99+' : c.unread }}</span>
+                                }
+                            </span>
+                        </span>
+                    </button>
+                }
+                @empty
+                {
+                    <div class="cp-empty">
+                        <i class="fa-regular fa-comments"></i>
+                        <b>No chats yet</b>
+                        <span>Start one with a colleague, or make a group.</span>
+                        <button type="button" class="cp-btn cp-btn-primary" (click)="startNewChat()">
+                            <i class="fas fa-pen-to-square"></i> New chat
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+        @else
+        {
+            <div class="cp-side-head">
+                <button type="button" class="cp-icon-btn" title="Back" aria-label="Back" (click)="view.set('list'); error = ''">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+
+                <b class="cp-side-title">
+                    {{ view() === 'newChat' ? 'New chat' : (view() === 'newGroup' ? 'New group' : 'Edit group') }}
+                </b>
+            </div>
+
+            @if (view() !== 'newChat')
+            {
+                <div class="cp-group-form">
+                    <input
+                        type="text"
+                        class="cp-input"
+                        maxlength="100"
+                        placeholder="Group name"
+                        aria-label="Group name"
+                        [value]="groupTitle"
+                        (input)="groupTitle = $any($event.target).value">
+
+                    <span class="cp-hint">{{ groupMembers().size }} selected</span>
+                </div>
+            }
+
+            <div class="cp-search cp-search-wide">
+                <i class="fas fa-magnifying-glass"></i>
+                <input
+                    type="text"
+                    placeholder="Search people"
+                    aria-label="Search people"
+                    [value]="search()"
+                    (input)="search.set($any($event.target).value)">
+            </div>
+
+            <div class="cp-list appcore-scrollbar">
+                @for (u of filteredUsers(); track u.userId)
+                {
+                    <button
+                        type="button"
+                        class="cp-row"
+                        [class.on]="view() !== 'newChat' && groupMembers().has(u.userId)"
+                        (click)="view() === 'newChat' ? chatWith(u) : toggleMember(u.userId)">
+
+                        <span class="cp-avatar">
+                            @if (u.photoPath)
+                            {
+                                <img [src]="imageUrl(u.photoPath)" alt="">
+                            }
+                            @else
+                            {
+                                {{ initials(u.name) }}
+                            }
+
+                            @if (u.online)
+                            {
+                                <span class="cp-dot" title="Online"></span>
+                            }
+                        </span>
+
+                        <span class="cp-row-main">
+                            <b>{{ u.name }}</b>
+                            <span class="cp-preview">{{ u.online ? 'Online' : 'Offline' }}</span>
+                        </span>
+
+                        @if (view() !== 'newChat')
+                        {
+                            <span class="cp-check" [class.on]="groupMembers().has(u.userId)">
+                                <i class="fas fa-check"></i>
+                            </span>
+                        }
+                    </button>
+                }
+                @empty
+                {
+                    <div class="cp-empty"><span>No other active users found.</span></div>
+                }
+            </div>
+
+            @if (view() !== 'newChat')
+            {
+                <div class="cp-side-foot">
+                    @if (error)
+                    {
+                        <span class="cp-error">{{ error }}</span>
+                    }
+
+                    <button type="button" class="cp-btn cp-btn-primary" [disabled]="saving" (click)="saveGroup()">
+                        <i class="fas fa-check"></i>
+                        {{ saving ? 'Saving...' : (view() === 'newGroup' ? 'Create group' : 'Save group') }}
+                    </button>
+                </div>
+            }
+        }
+
+    </aside>
+
+
+    <!-- =================================================
+         RIGHT : the open conversation
+    ================================================== -->
+
+    <section class="cp-main" (paste)="onPaste($event)">
+
+        @if (open(); as c)
+        {
+            <header class="cp-head">
+                <button type="button" class="cp-icon-btn cp-back" title="Back to chats" aria-label="Back to chats" (click)="back()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+
+                <span class="cp-avatar cp-avatar-sm" [class.cp-group]="c.kind === 'Group'">
+                    @if (c.kind === 'Group')
+                    {
+                        <i class="fas fa-user-group"></i>
+                    }
+                    @else if (c.photoPath)
+                    {
+                        <img [src]="imageUrl(c.photoPath)" alt="">
+                    }
+                    @else
+                    {
+                        {{ initials(c.title) }}
+                    }
+                </span>
+
+                <div class="cp-head-text">
+                    <b>{{ c.title }}</b>
+                    <span [class.cp-online-text]="c.kind === 'Direct' && isOnline(c.otherUserId)">
+                        {{ typingText() || memberText(c) }}
+                    </span>
+                </div>
+
+                @if (c.kind === 'Group' && c.isMember)
+                {
+                    @if (c.isOwner)
+                    {
+                        <button type="button" class="cp-icon-btn" title="Edit group" aria-label="Edit group" (click)="editGroup()">
+                            <i class="fas fa-user-gear"></i>
+                        </button>
+                    }
+
+                    <button type="button" class="cp-icon-btn" title="Leave group" aria-label="Leave group" (click)="leaveGroup()">
+                        <i class="fas fa-right-from-bracket"></i>
+                    </button>
+                }
+            </header>
+
+            <div class="cp-messages appcore-scrollbar" #scroller>
+                @if (loadingMessages)
+                {
+                    <span class="cp-hint cp-center"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                }
+                @else
+                {
+                    @if (chat.hasOlder()[c.id])
+                    {
+                        <button type="button" class="cp-older" (click)="loadOlder()">Load earlier messages</button>
+                    }
+
+                    @for (m of openMessages(); track m.id; let i = $index)
+                    {
+                        @if (newDay(i))
+                        {
+                            <div class="cp-day"><span>{{ dayText(m.createdDate) }}</span></div>
+                        }
+
+                        <div class="cp-msg" [class.mine]="isMine(m)">
+                            @if (showSender(i))
+                            {
+                                <span class="cp-sender">{{ m.senderName }}</span>
+                            }
+
+                            <div class="cp-bubble" [class.cp-deleted]="m.isDeleted">
+                                @if (m.isDeleted)
+                                {
+                                    <i class="fas fa-ban"></i> Message deleted
+                                }
+                                @else
+                                {
+                                    @if (m.imagePath)
+                                    {
+                                        <a [href]="imageUrl(m.imagePath)" target="_blank" rel="noopener">
+                                            <img class="cp-picture" [src]="imageUrl(m.imagePath)" alt="Picture">
+                                        </a>
+                                    }
+
+                                    @if (m.body)
+                                    {
+                                        <span class="cp-text">{{ m.body }}</span>
+                                    }
+                                }
+
+                                <span class="cp-meta">
+                                    {{ timeText(m.createdDate) }}
+
+                                    @if (isMine(m) && !m.isDeleted)
+                                    {
+                                        <button type="button" class="cp-del" title="Delete" aria-label="Delete message" (click)="deleteMessage(m)">
+                                            <i class="fas fa-trash-can"></i>
+                                        </button>
+                                    }
+                                </span>
+                            </div>
+
+                            @if (seen(m))
+                            {
+                                <span class="cp-seen"><i class="fas fa-check-double"></i> Seen</span>
+                            }
+                        </div>
+                    }
+                    @empty
+                    {
+                        <div class="cp-empty">
+                            <i class="fa-regular fa-hand"></i>
+                            <span>No messages yet. Say hello!</span>
+                        </div>
+                    }
+                }
+            </div>
+
+            @if (c.isMember)
+            {
+                <footer class="cp-compose">
+                    @if (error)
+                    {
+                        <span class="cp-error">{{ error }}</span>
+                    }
+
+                    @if (image)
+                    {
+                        <div class="cp-attach">
+                            <img [src]="image" alt="Picture to send">
+                            <button type="button" class="cp-icon-btn" title="Remove picture" aria-label="Remove picture" (click)="image = ''">
+                                <i class="fas fa-xmark"></i>
+                            </button>
+                        </div>
+                    }
+
+                    <div class="cp-compose-row">
+                        <label class="cp-icon-btn" title="Add a picture (or paste one)">
+                            <i class="fas fa-image"></i>
+                            <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onFile($event)">
+                        </label>
+
+                        <textarea
+                            class="cp-textarea"
+                            rows="1"
+                            maxlength="2000"
+                            placeholder="Write a message... (Enter sends, Shift+Enter new line)"
+                            aria-label="Message"
+                            [value]="text"
+                            (input)="text = $any($event.target).value"
+                            (keydown)="onKey($event)"></textarea>
+
+                        <button
+                            type="button"
+                            class="cp-send"
+                            title="Send"
+                            aria-label="Send"
+                            [disabled]="sending || (!text.trim() && !image)"
+                            (click)="send()">
+                            <i class="fas" [class.fa-paper-plane]="!sending" [class.fa-spinner]="sending" [class.fa-spin]="sending"></i>
+                        </button>
+                    </div>
+                </footer>
+            }
+            @else
+            {
+                <footer class="cp-compose cp-left">You are no longer in this group.</footer>
+            }
+        }
+        @else
+        {
+            <div class="cp-empty cp-welcome">
+                <i class="fa-regular fa-comments"></i>
+                <b>Team chat</b>
+                <span>Chat with the people of your company. Only the people in a chat can read it.</span>
+                @if (!chat.connected())
+                {
+                    <span class="cp-hint"><i class="fas fa-plug-circle-xmark"></i> Connecting to the server...</span>
+                }
+            </div>
+        }
+
+    </section>
+
+</div>

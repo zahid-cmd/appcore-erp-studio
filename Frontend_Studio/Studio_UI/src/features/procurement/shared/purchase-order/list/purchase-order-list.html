@@ -47,28 +47,96 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
+        <div
             pageToolbarLeft
-            [tabs]="tabs"
-            [(selectedTab)]="selectedTab"
-            (selectedTabChange)="onTabChange($event)">
+            class="po-toolbar-left">
 
-        </app-control-tabs>
+            <app-control-tabs
+                [tabs]="tabs"
+                selectedTab="all"
+                (selectedTabChange)="onTabChange($event)">
 
-        <!-- =================================================
-             SUPPLIER FILTER
-        ================================================== -->
+            </app-control-tabs>
 
-        <app-search-dropdown
+            <!-- =============================================
+                 DATE RANGE (order date)
+            ============================================== -->
+
+            <div class="po-dates">
+
+                <app-datepicker
+                    class="po-date"
+                    placeholder="From date"
+                    [value]="$any(dateFrom)"
+                    [maxDate]="dateTo"
+                    (valueChange)="onDateFromChange($event)">
+
+                </app-datepicker>
+
+                <span class="po-dates-sep">to</span>
+
+                <app-datepicker
+                    class="po-date"
+                    placeholder="To date"
+                    [value]="$any(dateTo)"
+                    [minDate]="dateFrom"
+                    (valueChange)="onDateToChange($event)">
+
+                </app-datepicker>
+
+                @if (hasDates)
+                {
+                    <button
+                        type="button"
+                        class="po-dates-clear"
+                        title="Clear the dates"
+                        aria-label="Clear the dates"
+                        (click)="clearDates()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+                }
+
+            </div>
+
+        </div>
+
+        <div
             pageToolbarRight
-            placeholder="All Suppliers"
-            [items]="supplierFilterItems"
-            labelField="label"
-            valueField="value"
-            [value]="selectedSupplier"
-            (valueChange)="onSupplierFilterChange($event)">
+            class="po-toolbar-right">
 
-        </app-search-dropdown>
+            <!-- =============================================
+                 STATUS FILTER (the supplier list follows it)
+            ============================================== -->
+
+            <app-search-dropdown
+                class="po-status"
+                placeholder="All Statuses"
+                [items]="statusFilterItems"
+                labelField="label"
+                valueField="value"
+                [value]="selectedStatus"
+                (valueChange)="onStatusFilterChange($event)">
+
+            </app-search-dropdown>
+
+            <!-- =============================================
+                 SUPPLIER FILTER
+            ============================================== -->
+
+            <app-search-dropdown
+                class="po-supplier"
+                placeholder="All Suppliers"
+                [items]="supplierFilterItems"
+                labelField="label"
+                valueField="value"
+                [value]="selectedSupplier"
+                (valueChange)="onSupplierFilterChange($event)">
+
+            </app-search-dropdown>
+
+        </div>
 
     </app-page-toolbar>
 
@@ -94,7 +162,8 @@
                 (view)="view($event)"
                 (edit)="edit($event)"
                 (delete)="delete($event)"
-                (sortChange)="onSort($event)">
+                (sortChange)="onSort($event)"
+                (rowHover)="itemHover.onHover($event)">
 
             </app-list-table>
 
@@ -177,10 +246,14 @@
          UTILITIES
     ====================================================== -->
 
+    <!-- Items of the row under the mouse (switch "Show Items
+         on Hover") -->
+    <app-item-summary-card [card]="itemHover.card"></app-item-summary-card>
+
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
 
     <app-progress-dialog></app-progress-dialog>
 
-</div>
+</div>

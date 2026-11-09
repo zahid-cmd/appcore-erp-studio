@@ -473,9 +473,9 @@
                                     @for (row of rows; track row.ProductId)
                                     {
                                         <tr
-                                            [class.pa-row-same]="row.State === 'same'"
-                                            [class.pa-row-bad]="row.State === 'bad'"
-                                            [title]="row.State === 'same' ? 'New MRP equals the last MRP : not evaluated or saved' : ''">
+                                            [class.pa-row-same]="!isMb && row.State === 'same'"
+                                            [class.pa-row-bad]="!isMb && row.State === 'bad'"
+                                            [title]="!isMb && row.State === 'same' ? 'New MRP equals the last MRP : not evaluated or saved' : ''">
                                             <td class="pa-sl">{{ $index + 1 }}</td>
                                             <td class="pa-prod">
                                                 <div class="pa-name">{{ row.ProductName }}</div>
@@ -499,6 +499,10 @@
                                                 {
                                                     <b>{{ money(row.NewMrp) }}</b>
                                                 }
+                                                @else if (isMb)
+                                                {
+                                                    <span class="pa-dim" title="Motor Bikes : the new MRP and DP come from the posted price cards on the cut-off date">Price card</span>
+                                                }
                                                 @else
                                                 {
                                                     <input
@@ -514,7 +518,11 @@
                                                 }
                                             </td>
                                             <td class="pof-num">
-                                                @if (row.State === 'up' && row.LastMrp)
+                                                @if (isMb)
+                                                {
+                                                    <span class="pa-dim">—</span>
+                                                }
+                                                @else if (row.State === 'up' && row.LastMrp)
                                                 {
                                                     <span class="pa-dev-up">{{ signed(row.NewMrp - row.LastMrp) }}</span>
                                                 }
@@ -528,7 +536,11 @@
                                                 }
                                             </td>
                                             <td class="pof-num">
-                                                @if (row.State === 'up')
+                                                @if (isMb)
+                                                {
+                                                    <span class="pa-fig pa-fig-same">Card</span>
+                                                }
+                                                @else if (row.State === 'up')
                                                 {
                                                     <span class="pa-fig pa-fig-up"><i class="fas fa-arrow-up-long"></i>{{ row.Change === null ? 'New' : pct(row.Change) }}</span>
                                                 }
@@ -820,18 +832,19 @@
                                     <i class="fas fa-percent"></i>
                                     Margin
                                 </span>
-                                <span class="pa-margin-note">Each batch uses its own margin (1 − cost ÷ old MRP excl. VAT); type one per batch, or one for all :</span>
+                                <span class="pa-margin-note">{{ isMb ? 'Motor Bikes : new cost = the batch supplier\'s price card DP; difference = card DP − book cost (margin shown, not editable) :' : 'Each batch uses its own margin (1 − cost ÷ old MRP excl. VAT); type one per batch, or one for all :' }}</span>
                                 <input
                                     class="pa-in pa-in-margin"
                                     inputmode="decimal"
                                     placeholder="%"
+                                    [disabled]="isMb"
                                     [value]="marginAllText"
                                     (input)="onMarginAll($any($event.target).value)"
                                     (keydown.enter)="applyMarginAll()">
                                 <button
                                     type="button"
                                     class="pof-btn pof-btn-light pa-tool"
-                                    [disabled]="!marginAllText"
+                                    [disabled]="isMb || !marginAllText"
                                     (click)="applyMarginAll()">
                                     <i class="fas fa-check"></i>
                                     Apply to all
@@ -959,7 +972,8 @@
                                                                 <input
                                                                     class="pa-in pa-in-margin"
                                                                     inputmode="decimal"
-                                                                    title="This batch's margin % : the new cost keeps it"
+                                                                    [title]="isMb ? 'Margin on the new card (DP vs MRP excl. VAT)' : 'This batch\'s margin % : the new cost keeps it'"
+                                                                    [readonly]="isMb"
                                                                     [class.pa-in-bad]="line.MarginBad"
                                                                     [class.pa-in-edited]="line.MarginEdited"
                                                                     [value]="line.MarginText"

@@ -153,10 +153,21 @@ public class ProductPricingMotorBikesController
             "Failed to load the price card lists.");
     }
 
+    // Last purchase cost (from the supplier) and stock per colour
+    [HttpGet("costs")]
+    public Task<IActionResult> GetCosts(
+        [FromQuery] string? supplierCode)
+    {
+        return Run(
+            async () => Ok(await _repository.GetCostsAsync(supplierCode ?? string.Empty)),
+            "Failed to load the last costs.");
+    }
+
     [HttpGet("active")]
     public Task<IActionResult> GetActive(
         [FromQuery] string? supplierCode,
-        [FromQuery] string? date)
+        [FromQuery] string? date,
+        [FromQuery] bool regularOnly = false)
     {
         return Run(
             async () =>
@@ -171,7 +182,7 @@ public class ProductPricingMotorBikesController
                         ? parsed
                         : DateOnly.FromDateTime(DateTime.UtcNow.AddHours(6));
 
-                return Ok(await _repository.GetActiveAsync(supplierCode ?? string.Empty, day));
+                return Ok(await _repository.GetActiveAsync(supplierCode ?? string.Empty, day, null, regularOnly));
             },
             "Failed to load the cards in force.");
     }

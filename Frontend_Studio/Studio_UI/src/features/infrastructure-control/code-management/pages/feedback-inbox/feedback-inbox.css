@@ -1,0 +1,399 @@
+/* =====================================================
+   FEEDBACK INBOX
+===================================================== */
+
+:host
+{
+    display: block;
+    height: 100%;
+
+    --fi-surface: var(--card-bg, #ffffff);
+    --fi-border: var(--border-color, #e2e8f0);
+    --fi-muted: #64748b;
+    --fi-accent: #4f46e5;
+    --fi-soft: rgba(99, 102, 241, 0.1);
+}
+
+.fi
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    min-height: 0;
+    padding: 4px 2px 12px;
+    box-sizing: border-box;
+}
+
+.fi-head
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--fi-border);
+    border-radius: 14px;
+    background: var(--fi-surface);
+}
+
+.fi-icon
+{
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--fi-accent);
+    color: #ffffff;
+    font-size: 18px;
+}
+
+.fi-title
+{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    font-size: 17px;
+}
+
+.fi-title span,
+.fi-muted,
+.fi-label,
+.fi-row-meta
+{
+    color: var(--fi-muted);
+    font-size: 12px;
+}
+
+.fi-filters
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.fi-tabs
+{
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--fi-border);
+    border-radius: 10px;
+    background: var(--fi-surface);
+}
+
+.fi-tab
+{
+    padding: 6px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fi-tab.on
+{
+    background: var(--fi-accent);
+    color: #ffffff;
+}
+
+.fi-select,
+.fi-search
+{
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--fi-border);
+    border-radius: 9px;
+    background: var(--fi-surface);
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+}
+
+.fi-search
+{
+    flex: 1;
+    min-width: 200px;
+}
+
+.fi-body
+{
+    display: grid;
+    flex: 1;
+    grid-template-columns: minmax(300px, 2fr) minmax(0, 3fr);
+    gap: 12px;
+    min-height: 420px;
+}
+
+.fi-list,
+.fi-detail
+{
+    min-height: 0;
+    overflow-y: auto;
+    border: 1px solid var(--fi-border);
+    border-radius: 14px;
+    background: var(--fi-surface);
+}
+
+.fi-detail
+{
+    padding: 16px 18px;
+}
+
+.fi-row
+{
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 14px;
+    border: 0;
+    border-bottom: 1px solid var(--fi-border);
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.fi-row:hover
+{
+    background: var(--fi-soft);
+}
+
+.fi-row.on
+{
+    background: var(--fi-soft);
+    box-shadow: inset 3px 0 0 var(--fi-accent);
+}
+
+.fi-row-main
+{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    font-size: 13px;
+}
+
+.fi-row-text
+{
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.fi-kind
+{
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--fi-soft);
+    color: var(--fi-accent);
+}
+
+.fi-kind[data-kind="Bug"]
+{
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.fi-kind[data-kind="Praise"]
+{
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+}
+
+.fi-kind-big
+{
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+}
+
+.fi-status
+{
+    align-self: flex-start;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--fi-accent);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.fi-status[data-status="In progress"]
+{
+    background: rgba(245, 158, 11, 0.15);
+    color: #b45309;
+}
+
+.fi-status[data-status="Done"]
+{
+    background: rgba(34, 197, 94, 0.14);
+    color: #15803d;
+}
+
+.fi-d-head
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fi-d-head > div
+{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+
+.fi-message
+{
+    margin: 14px 0;
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.fi-shot
+{
+    display: block;
+    max-width: 100%;
+    max-height: 260px;
+    margin-bottom: 14px;
+    border: 1px solid var(--fi-border);
+    border-radius: 10px;
+    cursor: zoom-in;
+}
+
+.fi-shot.zoom
+{
+    max-height: none;
+    cursor: zoom-out;
+}
+
+.fi-meta
+{
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px 10px;
+    margin: 0 0 14px;
+    font-size: 13px;
+}
+
+.fi-meta dt
+{
+    color: var(--fi-muted);
+}
+
+.fi-meta dd
+{
+    margin: 0;
+    word-break: break-all;
+}
+
+.fi-link
+{
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--fi-accent);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.fi-note
+{
+    width: 100%;
+    margin-top: 4px;
+    padding: 9px 11px;
+    border: 1px solid var(--fi-border);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.fi-actions
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.fi-msg
+{
+    flex: 1;
+    color: var(--fi-muted);
+    font-size: 12.5px;
+}
+
+.fi-btn
+{
+    padding: 7px 14px;
+    border: 1px solid var(--fi-border);
+    border-radius: 9px;
+    background: transparent;
+    color: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fi-btn-amber
+{
+    border-color: #f59e0b;
+    color: #b45309;
+}
+
+.fi-btn-green
+{
+    border-color: #16a34a;
+    background: #16a34a;
+    color: #ffffff;
+}
+
+.fi-empty
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 40px 16px;
+    color: var(--fi-muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.fi-empty i
+{
+    font-size: 22px;
+}
+
+@media (max-width: 900px)
+{
+    .fi-body
+    {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+.fi-reply
+{
+    margin-bottom: 10px;
+    border-color: rgba(99, 102, 241, 0.45);
+}

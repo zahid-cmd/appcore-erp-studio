@@ -73,6 +73,12 @@ import
 }
 from '../../../../core/authentication/branch-switch.service';
 
+import
+{
+    TopbarFeedbackComponent
+}
+from '../topbar-feedback/topbar-feedback';
+
 
 @Component
 ({
@@ -84,6 +90,8 @@ from '../../../../core/authentication/branch-switch.service';
 
     imports:
     [
+        TopbarFeedbackComponent,
+
         TopbarNotificationsComponent
     ],
 

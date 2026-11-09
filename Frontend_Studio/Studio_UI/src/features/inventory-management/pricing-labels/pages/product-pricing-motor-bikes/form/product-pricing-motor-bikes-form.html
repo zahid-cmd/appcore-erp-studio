@@ -39,9 +39,22 @@
 
                 <span class="ppm-ribbon-sep"></span>
 
+                <div class="ppm-chip">
+                    <span class="ppm-chip-icon ppm-chip-icon-vat">
+                        <i class="fas fa-percent"></i>
+                    </span>
+                    <span class="ppm-chip-text">
+                        <span class="ppm-chip-label">Purchase VAT</span>
+                        <strong>{{ purchaseVatRate }} %</strong>
+                    </span>
+                </div>
+
+                <span class="ppm-ribbon-sep"></span>
+
                 <span
                     class="ppm-status"
                     [class.ppm-status-posted]="statusText === 'Posted'"
+                    [class.ppm-status-superseded]="statusText === 'Superseded'"
                     [class.ppm-status-cancelled]="statusText === 'Cancelled'">
                     {{ statusText }}
                 </span>
@@ -70,7 +83,7 @@
             [command2Icon]="doc?.Status === 'Posted' ? 'fas fa-ban' : 'fas fa-check-double'"
             [command2Activity]="doc?.Status === 'Posted' ? 'Cancel' : 'Post'"
             [command2Title]="doc?.Status === 'Posted' ? 'Cancel the card : the models go back to the card before it' : 'Save and post : the card decides the DP and MRP of its models'"
-            [command2Visible]="doc?.Status !== 'Cancelled'"
+            [command2Visible]="doc?.Status !== 'Cancelled' && !doc?.SupersededByNo"
             (command2Click)="doc?.Status === 'Posted' ? openCancel() : post()"
             [command3Text]="mode === 'edit' ? 'Delete' : 'Clear'"
             [command3Icon]="mode === 'edit' ? 'fas fa-trash-can' : 'fas fa-broom'"
@@ -104,6 +117,23 @@
         }
         @else
         {
+            @if (doc?.Status === 'Posted' && doc?.SupersededByNo)
+            {
+                <div class="ppm-banner ppm-banner-info">
+                    <i class="fas fa-layer-group"></i>
+                    <span>
+                        @if (doc?.Superseded)
+                        {
+                            Superseded : a newer price card <b>{{ doc?.SupersededByNo }}</b> replaced this card from {{ date(doc?.SupersededFrom ?? '') }}. This card is kept for history only.
+                        }
+                        @else
+                        {
+                            A newer price card <b>{{ doc?.SupersededByNo }}</b> replaces this card from {{ date(doc?.SupersededFrom ?? '') }}.
+                        }
+                    </span>
+                </div>
+            }
+
             @if (doc?.Status === 'Cancelled')
             {
                 <div class="ppm-banner">
@@ -131,17 +161,6 @@
                     </app-search-dropdown>
                 </div>
 
-                <div class="ppm-f ppm-f-type">
-                    <span class="ppm-label">Card Type</span>
-                    <app-control-segment
-                        name="ppmCardType"
-                        [items]="cardTypes"
-                        [value]="cardType"
-                        [disabled]="isView"
-                        (valueChange)="onCardType($event)">
-                    </app-control-segment>
-                </div>
-
                 <div class="ppm-f ppm-f-date">
                     <app-datepicker
                         label="Effective From"
@@ -153,25 +172,11 @@
                 </div>
 
                 <div class="ppm-f ppm-f-date">
-                    @if (cardType === 'Campaign')
-                    {
-                        <app-datepicker
-                            label="Effective To"
-                            [required]="true"
-                            [value]="toDate"
-                            [minDate]="fromDate"
-                            [disabled]="isView"
-                            (valueChange)="toDate = $event">
-                        </app-datepicker>
-                    }
-                    @else
-                    {
-                        <span class="ppm-label">Effective To</span>
-                        <span class="ppm-until">
-                            <i class="fas fa-infinity"></i>
-                            Until a later Regular card
-                        </span>
-                    }
+                    <span class="ppm-label">Effective To</span>
+                    <span class="ppm-until">
+                        <i class="fas fa-infinity"></i>
+                        Until a newer price card
+                    </span>
                 </div>
 
                 <div class="ppm-f ppm-f-ref">
@@ -216,7 +221,7 @@
                                 placeholder="Add a model…"
                                 [items]="pickItems"
                                 labelField="Label"
-                                valueField="MotorBikeId"
+                                valueField="ModelId"
                                 [value]="pickId"
                                 (valueChange)="onPick($event)">
                             </app-search-dropdown>
@@ -235,7 +240,7 @@
                         <button
                             type="button"
                             class="ppm-btn"
-                            title="Every active model not on the card yet (DP / MRP blank)"
+                            title="Every active model not on the card yet (DP / MRP blank; colours follow the model)"
                             (click)="addAllModels()">
                             <i class="fas fa-layer-group"></i>
                             Add All Models
@@ -266,45 +271,90 @@
 
                 </div>
 
-                <div class="ppm-grid-wrap">
+                <div class="ppm-grid-wrap appcore-scrollbar">
 
                     <table class="ppm-grid">
 
                         <thead>
                             <tr>
                                 <th class="ppm-c-no">#</th>
-                                <th class="ppm-c-model">Model</th>
+                                <th class="ppm-c-model">Model / Colour</th>
+                                <th class="ppm-c-cost">Last Cost</th>
                                 <th class="ppm-c-num">DP</th>
                                 <th class="ppm-c-num">MRP</th>
                                 <th class="ppm-c-num">VAT Inside</th>
+                                <th class="ppm-c-num" title="VAT inside the MRP (sales VAT) - VAT inside the DP (purchase VAT)">VAT Payable</th>
+                                <th class="ppm-c-num" title="6.3 VAT of the last purchase - VAT inside the DP (display only)">VAT Adjust.</th>
                                 <th class="ppm-c-num">Net Sale</th>
                                 <th class="ppm-c-num">Commission</th>
                                 <th class="ppm-c-pct">Comm %</th>
                                 <th class="ppm-c-old">Current Card</th>
-                                @if (!isView)
-                                {
-                                    <th class="ppm-c-x"></th>
-                                }
+                                <th class="ppm-c-x"></th>
                             </tr>
                         </thead>
 
                         <tbody>
 
-                            @for (line of shownLines; track line.MotorBikeId; let i = $index)
+                            @for (line of shownLines; track line.ModelId; let i = $index)
                             {
-                                <tr [class.ppm-bad]="!!lineProblem(line)">
+                                @let mc = modelCost(line);
+
+                                <!-- MODEL : its price for every colour -->
+                                <tr
+                                    class="ppm-model-row"
+                                    [class.ppm-bad]="!!lineProblem(line)">
 
                                     <td class="ppm-c-no">{{ i + 1 }}</td>
 
                                     <td class="ppm-c-model">
-                                        <strong>{{ line.ProductName }}</strong>
-                                        <span>
-                                            {{ line.ProductCode }}
-                                            @if (line.ColorName)
-                                            {
-                                                · {{ line.ColorName }}
-                                            }
-                                        </span>
+                                        <div class="ppm-model-cell">
+                                            <button
+                                                type="button"
+                                                class="ppm-toggle"
+                                                [class.is-open]="line.Open"
+                                                [title]="line.Open ? 'Hide the colours' : 'Show the colours (set a colour price only when it differs)'"
+                                                (click)="toggleColours(line)">
+                                                <i class="fas" [class.fa-chevron-down]="line.Open" [class.fa-chevron-right]="!line.Open"></i>
+                                            </button>
+                                            <div class="ppm-model-text">
+                                                <span class="ppm-model-name">{{ modelShort(line.ModelName) }}</span>
+                                                <span class="ppm-model-sub">
+                                                    @if (modelPrefix(line.ModelName))
+                                                    {
+                                                        <span>{{ modelPrefix(line.ModelName) }}</span>
+                                                    }
+                                                    <span class="ppm-tag">
+                                                        <i class="fas fa-palette"></i>
+                                                        {{ line.Colours.length }} colour{{ line.Colours.length === 1 ? '' : 's' }}
+                                                    </span>
+                                                    @if (exceptionCount(line))
+                                                    {
+                                                        <span class="ppm-tag ppm-tag-own">{{ exceptionCount(line) }} own price</span>
+                                                    }
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="ppm-c-cost" [title]="costTitle(mc)">
+                                        @if (mc && mc.LastPaid)
+                                        {
+                                            <div class="ppm-cost">
+                                                <b>{{ money(mc.LastPaid) }}</b>
+                                                <span>VAT {{ money(mc.LastVat) }} · Stock {{ qtyText(mc.StockQty) }}</span>
+                                            </div>
+                                        }
+                                        @else if (mc && mc.StockQty)
+                                        {
+                                            <div class="ppm-cost">
+                                                <b class="ppm-dim">—</b>
+                                                <span>Stock {{ qtyText(mc.StockQty) }}</span>
+                                            </div>
+                                        }
+                                        @else
+                                        {
+                                            <span class="ppm-dim">—</span>
+                                        }
                                     </td>
 
                                     <td class="ppm-c-num">
@@ -315,12 +365,14 @@
                                         @else
                                         {
                                             <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
+                                                type="text"
+                                                inputmode="decimal"
                                                 class="ppm-in"
-                                                [value]="line.Dp || ''"
-                                                (change)="setDp(line, $any($event.target).value)">
+                                                [class.ppm-in-up]="dpUp(line, mc)"
+                                                [title]="dpUp(line, mc) ? 'DP is above the last cost' : ''"
+                                                [value]="inputText(line.Dp)"
+                                                (focus)="selectAll($any($event.target))"
+                                                (change)="setDp(line, $any($event.target))">
                                         }
                                     </td>
 
@@ -332,27 +384,60 @@
                                         @else
                                         {
                                             <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
+                                                type="text"
+                                                inputmode="decimal"
                                                 class="ppm-in ppm-in-mrp"
-                                                [value]="line.Mrp || ''"
-                                                (change)="setMrp(line, $any($event.target).value)">
+                                                [class.ppm-in-loss]="mrpLoss(line, mc)"
+                                                [title]="mrpLoss(line, mc) ? 'MRP is below the last cost : a sale at a loss' : ''"
+                                                [value]="inputText(line.Mrp)"
+                                                (focus)="selectAll($any($event.target))"
+                                                (change)="setMrp(line, $any($event.target))">
                                         }
                                     </td>
 
                                     <td class="ppm-c-num ppm-dim">{{ money(vatInside(line)) }}</td>
 
+                                    <td
+                                        class="ppm-c-num"
+                                        [title]="vatPayableTitle(line)">
+                                        @let vp = vatPayable(line);
+                                        <span class="ppm-vatpay" [class.is-minus]="vp < 0" [class.ppm-dim]="!line.Mrp && !line.Dp">{{ money(vp) }}</span>
+                                    </td>
+
+                                    <td
+                                        class="ppm-c-num"
+                                        [title]="vatAdjustTitle(line, mc)">
+                                        @let va = vatAdjust(line, mc);
+                                        @if (va === null)
+                                        {
+                                            <span class="ppm-dim">—</span>
+                                        }
+                                        @else
+                                        {
+                                            <div class="ppm-cost">
+                                                <span class="ppm-vatadj" [class.is-plus]="va > 0">{{ money(va) }}</span>
+                                                @if (mc && mc.StockQty > 0)
+                                                {
+                                                    <span>× {{ qtyText(mc.StockQty) }} = {{ money(va * mc.StockQty) }}</span>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+
                                     <td class="ppm-c-num ppm-dim">{{ money(netSale(line)) }}</td>
 
                                     <td
                                         class="ppm-c-num"
-                                        [class.ppm-neg]="commission(line) <= 0"
+                                        [class.ppm-commission]="commission(line) > 0"
+                                        [class.ppm-dim]="!line.Mrp"
+                                        [class.ppm-neg]="!!line.Mrp && commission(line) <= 0"
                                         [title]="lineProblem(line)">
                                         {{ money(commission(line)) }}
                                     </td>
 
-                                    <td class="ppm-c-pct">{{ commissionPercent(line) }} %</td>
+                                    <td class="ppm-c-pct">
+                                        <span class="ppm-pct" [class.is-zero]="commissionPercent(line) <= 0">{{ commissionPercent(line) }} %</span>
+                                    </td>
 
                                     <td class="ppm-c-old">
                                         @if (line.OldMrp > 0)
@@ -367,9 +452,9 @@
                                         }
                                     </td>
 
-                                    @if (!isView)
-                                    {
-                                        <td class="ppm-c-x">
+                                    <td class="ppm-c-x">
+                                        @if (!isView)
+                                        {
                                             <button
                                                 type="button"
                                                 class="ppm-x"
@@ -377,31 +462,198 @@
                                                 (click)="removeLine(line)">
                                                 <i class="fas fa-xmark"></i>
                                             </button>
-                                        </td>
-                                    }
-
-                                </tr>
-                            }
-                            @empty
-                            {
-                                <tr class="ppm-empty">
-                                    <td [attr.colspan]="isView ? 9 : 10">
-                                        <i class="fas fa-motorcycle"></i>
-                                        @if (lines.length)
-                                        {
-                                            No model matches the filter.
-                                        }
-                                        @else
-                                        {
-                                            No model yet : add a model, load the current card of the supplier, or add all models.
                                         }
                                     </td>
+
                                 </tr>
+
+                                <!-- COLOURS : the model price, or an own price -->
+                                @if (line.Open)
+                                {
+                                    @for (colour of line.Colours; track colour.MotorBikeId)
+                                    {
+                                        @let cc = colourCost(colour);
+
+                                        <tr
+                                            class="ppm-colour-row"
+                                            [class.ppm-own]="colour.Own"
+                                            [class.ppm-bad]="colour.Own && !!lineProblem(colour)">
+
+                                            <td class="ppm-c-no"></td>
+
+                                            <td class="ppm-c-model ppm-c-colour">
+                                                <div class="ppm-colour-cell">
+                                                    <span
+                                                        class="ppm-dot"
+                                                        [style.background]="colourDot(colour.ColorName || colour.ProductName)"></span>
+                                                    <span class="ppm-colour-name">{{ colour.ColorName || colour.ProductName }}</span>
+                                                    <span class="ppm-colour-code">{{ colour.ProductCode }}</span>
+                                                    @if (colour.Own)
+                                                    {
+                                                        <span class="ppm-tag ppm-tag-own">Own price</span>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <span class="ppm-tag">Model price</span>
+                                                    }
+                                                </div>
+                                            </td>
+
+                                            <td class="ppm-c-cost" [title]="costTitle(cc)">
+                                                @if (cc && cc.LastPaid)
+                                                {
+                                                    <div class="ppm-cost">
+                                                        <b>{{ money(cc.LastPaid) }}</b>
+                                                        <span>VAT {{ money(cc.LastVat) }} · Stock {{ qtyText(cc.StockQty) }}</span>
+                                                    </div>
+                                                }
+                                                @else if (cc && cc.StockQty)
+                                                {
+                                                    <div class="ppm-cost">
+                                                        <b class="ppm-dim">—</b>
+                                                        <span>Stock {{ qtyText(cc.StockQty) }}</span>
+                                                    </div>
+                                                }
+                                                @else
+                                                {
+                                                    <span class="ppm-dim">—</span>
+                                                }
+                                            </td>
+
+                                            <td class="ppm-c-num">
+                                                @if (isView)
+                                                {
+                                                    <span [class.ppm-dim]="!colour.Own">{{ money(colourPrice(line, colour).Dp) }}</span>
+                                                }
+                                                @else
+                                                {
+                                                    <input
+                                                        type="text"
+                                                        inputmode="decimal"
+                                                        class="ppm-in ppm-in-colour"
+                                                        [class.ppm-in-up]="colour.Own && dpUp(colour, cc)"
+                                                        [placeholder]="inputText(line.Dp)"
+                                                        [value]="colour.Own ? inputText(colour.Dp) : ''"
+                                                        (focus)="selectAll($any($event.target))"
+                                                        (change)="setColourDp(line, colour, $any($event.target))">
+                                                }
+                                            </td>
+
+                                            <td class="ppm-c-num">
+                                                @if (isView)
+                                                {
+                                                    <span [class.ppm-dim]="!colour.Own">{{ money(colourPrice(line, colour).Mrp) }}</span>
+                                                }
+                                                @else
+                                                {
+                                                    <input
+                                                        type="text"
+                                                        inputmode="decimal"
+                                                        class="ppm-in ppm-in-colour"
+                                                        [class.ppm-in-loss]="mrpLoss(colourPrice(line, colour), cc)"
+                                                        [placeholder]="inputText(line.Mrp)"
+                                                        [value]="colour.Own ? inputText(colour.Mrp) : ''"
+                                                        (focus)="selectAll($any($event.target))"
+                                                        (change)="setColourMrp(line, colour, $any($event.target))">
+                                                }
+                                            </td>
+
+                                            <td class="ppm-c-num ppm-dim">{{ money(vatInside(colourPrice(line, colour))) }}</td>
+
+                                            <td
+                                                class="ppm-c-num"
+                                                [title]="vatPayableTitle(colourPrice(line, colour))">
+                                                @let cvp = vatPayable(colourPrice(line, colour));
+                                                <span class="ppm-vatpay" [class.is-minus]="cvp < 0" [class.ppm-dim]="!colour.Own">{{ money(cvp) }}</span>
+                                            </td>
+
+                                            <td
+                                                class="ppm-c-num"
+                                                [title]="vatAdjustTitle(colourPrice(line, colour), cc)">
+                                                @let cva = vatAdjust(colourPrice(line, colour), cc);
+                                                @if (cva === null)
+                                                {
+                                                    <span class="ppm-dim">—</span>
+                                                }
+                                                @else
+                                                {
+                                                    <div class="ppm-cost">
+                                                        <span class="ppm-vatadj" [class.is-plus]="cva > 0">{{ money(cva) }}</span>
+                                                        @if (cc && cc.StockQty > 0)
+                                                        {
+                                                            <span>× {{ qtyText(cc.StockQty) }} = {{ money(cva * cc.StockQty) }}</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </td>
+
+                                            <td class="ppm-c-num ppm-dim">{{ money(netSale(colourPrice(line, colour))) }}</td>
+
+                                            <td
+                                                class="ppm-c-num"
+                                                [class.ppm-dim]="!colour.Own"
+                                                [class.ppm-neg]="colour.Own && commission(colour) <= 0">
+                                                {{ money(commission(colourPrice(line, colour))) }}
+                                            </td>
+
+                                            <td class="ppm-c-pct">
+                                                <span class="ppm-pct" [class.is-zero]="!colour.Own || commissionPercent(colourPrice(line, colour)) <= 0">{{ commissionPercent(colourPrice(line, colour)) }} %</span>
+                                            </td>
+
+                                            <td class="ppm-c-old">
+                                                @if (colour.OldMrp > 0)
+                                                {
+                                                    <span>{{ money(colour.OldDp) }} / {{ money(colour.OldMrp) }}</span>
+                                                }
+                                            </td>
+
+                                            <td class="ppm-c-x">
+                                                @if (!isView && colour.Own)
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="ppm-x ppm-x-reset"
+                                                        title="Back to the model price"
+                                                        (click)="clearColour(colour)">
+                                                        <i class="fas fa-rotate-left"></i>
+                                                    </button>
+                                                }
+                                            </td>
+
+                                        </tr>
+                                    }
+                                }
                             }
 
                         </tbody>
 
                     </table>
+
+                    <!-- EMPTY : centred in what is left of the canvas -->
+                    @if (!shownLines.length)
+                    {
+                        <div class="ppm-empty-wrap">
+                            @if (lines.length)
+                            {
+                                <app-empty-state
+                                    icon="fas fa-filter-circle-xmark"
+                                    title="No Model Matches"
+                                    subtitle="No model or colour on the card matches the filter."
+                                    actionText="Clear Filter"
+                                    [showAction]="true"
+                                    (action)="filterText = ''">
+                                </app-empty-state>
+                            }
+                            @else
+                            {
+                                <app-empty-state
+                                    icon="fas fa-motorcycle"
+                                    title="No Models Yet"
+                                    subtitle="Add a model, load the current card of the supplier, or add all models. Colours follow their model's price.">
+                                </app-empty-state>
+                            }
+                        </div>
+                    }
 
                 </div>
 
@@ -424,18 +676,13 @@
             </span>
 
             <span class="ics-summary-item">
-                <span class="ics-summary-label">Total DP</span>
-                <b class="ics-summary-value">{{ money(totalDp) }}</b>
+                <span class="ics-summary-label">Colours</span>
+                <b class="ics-summary-value">{{ colourTotal }}</b>
             </span>
 
             <span class="ics-summary-item">
-                <span class="ics-summary-label">Total MRP</span>
-                <b class="ics-summary-value">{{ money(totalMrp) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Commission</span>
-                <b class="ics-summary-value ics-ok">{{ money(totalCommission) }}</b>
+                <span class="ics-summary-label">Own Colour Prices</span>
+                <b class="ics-summary-value">{{ colourExceptions }}</b>
             </span>
 
             @if (problemCount)
@@ -447,7 +694,7 @@
             }
 
             <span class="ics-summary-note">
-                Commission = MRP − DP · VAT inside = MRP × rate ÷ (100 + rate)
+                Colours take the model price unless they have their own · Commission = MRP − DP
             </span>
 
         </div>

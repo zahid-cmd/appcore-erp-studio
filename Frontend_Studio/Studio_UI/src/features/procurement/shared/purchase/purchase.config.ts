@@ -104,6 +104,16 @@ export interface PurchaseSwitchCodes
     ABOVE_MAX_STOCK:
         string;
 
+    // List : ON = resting the mouse on a row shows its items
+    // (bikes per model) on a card; OFF / missing = no card
+    ITEM_SUMMARY:
+        string;
+
+    // Form : ON = Up / Down buttons move a line; the saved order
+    // follows (add and edit); OFF / missing = no buttons
+    REORDER_LINES:
+        string;
+
     // Pricing (SP / AC); '' on MB
     FREE_GOODS:
         string;
@@ -218,6 +228,8 @@ export const PUR_MB_PAGE:
         PRICE_ABOVE_PO:'CFG-MOD-007-0068',
         VAT_AS_PER_63:'CFG-MOD-007-0069',
         ABOVE_MAX_STOCK:'CFG-MOD-007-0083',
+        ITEM_SUMMARY:'CFG-MOD-007-0089',
+        REORDER_LINES:'CFG-MOD-007-0095',
         FREE_GOODS:'',
         ROUND_PAYABLE:'',
         WHOLE_TAKA_LINES:'',
@@ -262,6 +274,8 @@ export const PUR_SP_PAGE:
         PRICE_ABOVE_PO:'CFG-MOD-007-0073',
         VAT_AS_PER_63:'CFG-MOD-007-0074',
         ABOVE_MAX_STOCK:'CFG-MOD-007-0084',
+        ITEM_SUMMARY:'CFG-MOD-007-0090',
+        REORDER_LINES:'CFG-MOD-007-0096',
         FREE_GOODS:'CFG-MOD-007-0028',
         ROUND_PAYABLE:'CFG-MOD-007-0030',
         WHOLE_TAKA_LINES:'CFG-MOD-007-0032',
@@ -306,6 +320,8 @@ export const PUR_AC_PAGE:
         PRICE_ABOVE_PO:'CFG-MOD-007-0078',
         VAT_AS_PER_63:'CFG-MOD-007-0079',
         ABOVE_MAX_STOCK:'CFG-MOD-007-0085',
+        ITEM_SUMMARY:'CFG-MOD-007-0091',
+        REORDER_LINES:'CFG-MOD-007-0097',
         FREE_GOODS:'CFG-MOD-007-0029',
         ROUND_PAYABLE:'CFG-MOD-007-0031',
         WHOLE_TAKA_LINES:'CFG-MOD-007-0033',

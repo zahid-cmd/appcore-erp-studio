@@ -83,3 +83,79 @@
     color: #64748b;
     font-size: 13px;
 }
+
+
+/* =====================================================
+   TOOLBAR (2026-11-10) : one tab + order date range on the
+   left; Status filter then Supplier filter on the right
+===================================================== */
+
+.po-toolbar-left,
+.po-toolbar-right
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.po-toolbar-right
+{
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.po-dates
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.po-date
+{
+    display: block;
+    width: 170px;
+}
+
+.po-dates-sep
+{
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.po-dates-clear
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.po-dates-clear:hover
+{
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
+.po-status
+{
+    display: block;
+    width: 200px;
+    flex: 0 0 200px;
+}
+
+.po-supplier
+{
+    display: block;
+    width: 320px;
+    flex: 0 1 320px;
+    min-width: 200px;
+}

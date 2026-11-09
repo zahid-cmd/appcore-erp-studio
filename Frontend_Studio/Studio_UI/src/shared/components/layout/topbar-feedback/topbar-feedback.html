@@ -1,0 +1,261 @@
+<!-- =====================================================
+     TOPBAR FEEDBACK
+     -----------------------------------------------------
+     Button + pop-up form. Goes to the developers only.
+===================================================== -->
+
+<div class="feedback">
+
+    <button
+        type="button"
+        class="fb-button"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="isOpen()"
+        aria-label="Send feedback"
+        title="Send feedback"
+        (click)="toggle()">
+
+        <i class="fa-regular fa-message"></i>
+
+        @if (chat.unreadTotal() > 0)
+        {
+            <span class="fb-count" title="Unread chat messages">{{ chat.unreadTotal() > 99 ? '99+' : chat.unreadTotal() }}</span>
+        }
+        @else if (isDeveloper() && newCount() > 0)
+        {
+            <span class="fb-count fb-count-dev" title="New feedback">{{ newCount() > 99 ? '99+' : newCount() }}</span>
+        }
+    </button>
+
+
+    @if (isOpen())
+    {
+        <div
+            class="fb-panel fb-wide"
+            role="dialog"
+            aria-label="Send feedback"
+            (paste)="onPaste($event)">
+
+            <div class="fb-head">
+                <span class="fb-icon"><i class="fa-regular fa-message"></i></span>
+
+                <div class="fb-head-text">
+                    @if (section === 'chat')
+                    {
+                        <b>Team chat</b>
+                        <span>Only the people in a chat can read it</span>
+                    }
+                    @else
+                    {
+                        <b>Send feedback</b>
+                        <span>Goes straight to the developers</span>
+                    }
+                </div>
+
+                <div class="fb-sections" role="tablist" aria-label="Chat or feedback">
+                    <button type="button" role="tab" class="fb-section" [class.on]="section === 'chat'" [attr.aria-selected]="section === 'chat'" (click)="showSection('chat')">
+                        <i class="fa-regular fa-comments"></i> Chat
+                        @if (chat.unreadTotal() > 0)
+                        {
+                            <span class="fb-section-count">{{ chat.unreadTotal() > 99 ? '99+' : chat.unreadTotal() }}</span>
+                        }
+                    </button>
+
+                    <button type="button" role="tab" class="fb-section" [class.on]="section === 'feedback'" [attr.aria-selected]="section === 'feedback'" (click)="showSection('feedback')">
+                        <i class="fa-regular fa-lightbulb"></i> Feedback
+                    </button>
+                </div>
+
+                <button type="button" class="fb-x" aria-label="Close" (click)="close()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            @if (section === 'chat')
+            {
+                <app-chat-panel></app-chat-panel>
+            }
+            @else
+            {
+            <div class="fb-tabs">
+                <button type="button" class="fb-tab" [class.on]="tab === 'send'" (click)="showSend()">
+                    <i class="fa-regular fa-paper-plane"></i> Send
+                </button>
+
+                <button type="button" class="fb-tab" [class.on]="tab === 'mine'" (click)="showMine()">
+                    <i class="fa-regular fa-rectangle-list"></i> My feedback
+                </button>
+            </div>
+
+            @if (tab === 'mine')
+            {
+                @if (openedMine; as m)
+                {
+                    <div class="fb-mine-detail">
+                        <button type="button" class="fb-link" (click)="openMine(null)">
+                            <i class="fas fa-arrow-left"></i> All my feedback
+                        </button>
+
+                        <div class="fb-mine-top">
+                            <b>{{ m.kind }} #{{ m.number }}</b>
+                            <span class="fb-status" [attr.data-status]="m.status">{{ statusText(m.status) }}</span>
+                        </div>
+
+                        <span class="fb-hint">{{ dateText(m.createdDate) }}{{ m.pageTitle ? ' · ' + m.pageTitle : '' }}</span>
+
+                        <p class="fb-mine-msg">{{ m.message }}</p>
+
+                        @if (m.screenshotPath)
+                        {
+                            <img class="fb-mine-shot" [src]="imageUrl(m.screenshotPath)" alt="Screenshot">
+                        }
+
+                        <div class="fb-reply" [class.empty]="!m.replyToUser">
+                            <span class="fb-reply-head"><i class="fas fa-reply"></i> Developer reply{{ m.modifiedDate && m.replyToUser ? ' · ' + dateText(m.modifiedDate) : '' }}</span>
+                            <span>{{ m.replyToUser || 'No reply yet. You will get a notification when there is one.' }}</span>
+                        </div>
+                    </div>
+                }
+                @else
+                {
+                    <div class="fb-mine appcore-scrollbar">
+                        @if (mineLoading)
+                        {
+                            <span class="fb-hint"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                        }
+                        @else if (mineFailed)
+                        {
+                            <span class="fb-hint">
+                                Your feedback could not be loaded.
+                                <button type="button" class="fb-link" (click)="showMine()">Try again</button>
+                            </span>
+                        }
+                        @else if (mine.length === 0)
+                        {
+                            <span class="fb-hint">You have not sent any feedback yet.</span>
+                        }
+                        @else
+                        {
+                            @for (m of mine; track m.publicId)
+                            {
+                                <button type="button" class="fb-mine-row" (click)="openMine(m)">
+                                    <span class="fb-mine-main">
+                                        <b>{{ m.kind }} #{{ m.number }}</b>
+                                        <span class="fb-mine-text">{{ m.message }}</span>
+                                        @if (m.replyToUser)
+                                        {
+                                            <span class="fb-mine-replied"><i class="fas fa-reply"></i> Replied</span>
+                                        }
+                                    </span>
+
+                                    <span class="fb-status" [attr.data-status]="m.status">{{ statusText(m.status) }}</span>
+                                </button>
+                            }
+                        }
+                    </div>
+                }
+            }
+            @else if (sent)
+            {
+                <div class="fb-sent">
+                    <i class="fas fa-circle-check"></i>
+                    <b>Thanks, your feedback was sent.</b>
+                    <span>The developers will look at it.</span>
+
+                    <div class="fb-sent-actions">
+                        <button type="button" class="fb-btn" (click)="sent = false">Send another</button>
+                        <button type="button" class="fb-btn" (click)="showMine()">My feedback</button>
+                    </div>
+                </div>
+            }
+            @else
+            {
+                <span class="fb-label">Type</span>
+
+                <div class="fb-kinds">
+                    @for (k of kinds; track k.value)
+                    {
+                        <button
+                            type="button"
+                            class="fb-kind"
+                            [class.on]="kind === k.value"
+                            [attr.data-kind]="k.value"
+                            (click)="kind = k.value">
+                            <i [class]="k.icon"></i> {{ k.label }}
+                        </button>
+                    }
+                </div>
+
+                <span class="fb-label">Message</span>
+
+                <textarea
+                    class="fb-text"
+                    maxlength="2000"
+                    rows="4"
+                    placeholder="What happened, or what would help you? (English text)"
+                    [value]="message"
+                    (input)="onMessageInput($event)"></textarea>
+
+                <div class="fb-shot">
+                    @if (screenshot)
+                    {
+                        <img [src]="screenshot" alt="Screenshot">
+
+                        <button type="button" class="fb-link fb-danger" (click)="removeScreenshot()">
+                            <i class="fas fa-xmark"></i> Remove
+                        </button>
+                    }
+                    @else
+                    {
+                        <label class="fb-attach">
+                            <i class="fas fa-camera"></i> Attach screenshot
+                            <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onFilePicked($event)">
+                        </label>
+
+                        <span class="fb-hint">optional · or paste it here (Ctrl + V)</span>
+                    }
+                </div>
+
+                <div class="fb-auto">
+                    <i class="fas fa-paperclip"></i>
+                    Added for you : page <code>{{ where }}</code> · {{ version }}
+                </div>
+
+                @if (error)
+                {
+                    <div class="fb-error">{{ error }}</div>
+                }
+
+                <div class="fb-foot">
+                    @if (isDeveloper())
+                    {
+                        <button type="button" class="fb-link" (click)="openInbox()">
+                            <i class="fas fa-inbox"></i> Inbox
+                            @if (newCount() > 0)
+                            {
+                                ({{ newCount() }} new)
+                            }
+                        </button>
+                    }
+
+                    <span class="fb-spacer"></span>
+
+                    <button type="button" class="fb-btn" (click)="close()">Cancel</button>
+
+                    <button type="button" class="fb-btn fb-btn-primary" [disabled]="sending" (click)="send()">
+                        @if (sending)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i> Sending
+                        }
+                        @else
+                        {
+                            Send feedback
+                        }
+                    </button>
+                </div>
+            }
+            }
+
+        </div>
+    }
+</div>

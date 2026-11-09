@@ -21,6 +21,9 @@ using AppCore.Infrastructure.Persistence;
 using PostingLedgerCodes =
     AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
 
+using MotorBikeCardPrices =
+    AppCore.Infrastructure.Platform.Inventory.MotorBikeCardPrices;
+
 using PriceIndexWriter =
     AppCore.Infrastructure.Platform.Inventory.ProductPriceIndexWriter;
 
@@ -151,6 +154,7 @@ namespace AppCore.Infrastructure.Repositories.SalesOperations.Shared;
 //              Cr VAT Current Account   base VAT
 //              Cr Price Increase Income / Dr Price Reduction
 //                 Expense               VAT inside - base VAT
+//                 (MB : VAT Reimbursement - MB, VAT-REIMB-MB)
 //              Dr COGS / Cr Inventory   FIFO cost
 //              + Price Adjustment release lines
 //            stock out of the batches (movement Sale, allocation,
@@ -210,6 +214,10 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     private const string BatchCancelled = "Cancelled";
 
     private const string MoveSale = "Sale";
+
+    // Posting Setup purpose : VAT Reimbursement - Motor Bikes
+    // (ProductPricingMotorBikes_Engine.sql)
+    private const string PurposeVatReimbursementMb = "VAT-REIMB-MB";
 
     private const string MoveSaleCancel = "SaleCancel";
 
@@ -546,6 +554,10 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         public StockBatchesEntity Batch { get; set; } = new();
 
         public decimal OnHand { get; set; }
+
+        // The selling MRP : the batch's own, or for motor bikes the
+        // price card's (Product Pricing - Motor Bikes, 2026-11-10)
+        public decimal Mrp { get; set; }
     }
 
 
@@ -1666,12 +1678,16 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         List<long> batchIds =
             batches.Values.Distinct().ToList();
 
-        Dictionary<long, decimal> mrps =
-            await _context
-                .Set<StockBatchesEntity>()
-                .AsNoTracking()
-                .Where(x => batchIds.Contains(x.StockBatchId))
-                .ToDictionaryAsync(x => x.StockBatchId, x => x.Mrp);
+        // The selling MRP : the price card's on the invoice date (a
+        // new invoice : today) - Product Pricing - Motor Bikes
+        DateOnly priceDate =
+            invoiceId > 0
+                ? await InvoiceDateAsync(invoiceId) ?? BusinessToday()
+                : BusinessToday();
+
+        Dictionary<long, decimal> cardMrps =
+            await CardMrpsAsync(priceDate, units.Select(x => x.ProductId).Distinct().ToList())
+            ?? new Dictionary<long, decimal>();
 
         List<OpenBikeRow> open =
             (await OpenBikesAsync(units.Select(x => x.MotorBikeUnitId).ToList()))
@@ -1688,9 +1704,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         products[x.ProductId];
 
                     decimal mrp =
-                        batches.TryGetValue(x.MotorBikeUnitId, out long batchId)
-                            ? mrps.GetValueOrDefault(batchId)
-                            : 0m;
+                        cardMrps.GetValueOrDefault(x.ProductId);
 
                     return new SalesInvoiceBikeUnitDto
                     {
@@ -1894,7 +1908,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         (
             long warehouseId,
             List<long> productIds,
-            bool tracking
+            bool tracking,
+            DateOnly? priceDate = null
         )
     {
         StockView view =
@@ -1953,6 +1968,11 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 .ThenBy(x => x.StockBatchId)
                 .ToList();
 
+        // Motor bikes : the MRP is the price card's (no card = not
+        // priced), not the batch's
+        Dictionary<long, decimal>? cardMrp =
+            await CardMrpsAsync(priceDate ?? BusinessToday(), productIds);
+
         foreach (StockBatchesEntity batch in batches)
         {
             decimal quantity =
@@ -1963,7 +1983,12 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 continue;
             }
 
-            if (!(batch.Mrp > 0))
+            decimal mrp =
+                cardMrp != null
+                    ? cardMrp.GetValueOrDefault(batch.ProductId)
+                    : batch.Mrp;
+
+            if (!(mrp > 0))
             {
                 view.Unpriced[batch.ProductId] =
                     view.Unpriced.GetValueOrDefault(batch.ProductId) + quantity;
@@ -1982,11 +2007,47 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 new BatchStock
                 {
                     Batch = batch,
-                    OnHand = quantity
+                    OnHand = quantity,
+                    Mrp = mrp
                 });
         }
 
         return view;
+    }
+
+
+    // The date of a saved invoice (null : not found)
+    private async Task<DateOnly?>
+        InvoiceDateAsync
+        (
+            long invoiceId
+        )
+    {
+        return await _context
+            .Set<THeader>()
+            .AsNoTracking()
+            .Where(h => h.SalesInvoiceId == invoiceId && !h.IsDeleted)
+            .Select(h => (DateOnly?)h.InvoiceDate)
+            .FirstOrDefaultAsync();
+    }
+
+
+    // Motor bikes : the selling MRP per product (bike) from the price
+    // cards on the date; null for the other pages (the batch's MRP)
+    private async Task<Dictionary<long, decimal>?>
+        CardMrpsAsync
+        (
+            DateOnly date,
+            IReadOnlyCollection<long> productIds
+        )
+    {
+        if (Page.PageType != "MB")
+        {
+            return null;
+        }
+
+        return (await MotorBikeCardPrices.MrpAsync(_context, date, productIds))
+            .ToDictionary(x => x.Key, x => x.Value.Mrp);
     }
 
 
@@ -2854,7 +2915,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             await StockAsync(
                 warehouse.WarehouseId,
                 lineProductIds,
-                options.Posting);
+                options.Posting,
+                result.InvoiceDate);
 
         Dictionary<long, StockBatchesEntity>? lastBatches =
             null;
@@ -2913,7 +2975,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     {
                         Batch = held.Batch,
                         Quantity = take,
-                        Mrp = held.Batch.Mrp,
+                        Mrp = held.Mrp,
                         UnitCost = held.Batch.UnitCost,
                         VatRate = held.Batch.SourceVatRate,
                         VatPerUnit = held.Batch.SourceVatPerUnit,
@@ -2955,10 +3017,15 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     continue;
                 }
 
-                decimal mrp =
-                    last.Mrp;
+                Dictionary<long, decimal>? lineCardMrp =
+                    await CardMrpsAsync(result.InvoiceDate, new[] { line.Product.ProductId });
 
-                if (!(mrp > 0))
+                decimal mrp =
+                    lineCardMrp != null
+                        ? lineCardMrp.GetValueOrDefault(line.Product.ProductId)
+                        : last.Mrp;
+
+                if (!(mrp > 0) && lineCardMrp == null)
                 {
                     currentMrps ??=
                         await PriceIndexWriter.CurrentAsync(
@@ -4575,10 +4642,10 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         ProductType = p.ProductType,
                         Unit = p.Unit,
                         OnHand = fifo.Sum(x => x.OnHand),
-                        Mrp = fifo.Count > 0 ? fifo.Min(x => x.Batch.Mrp) : indexMrp,
-                        LatestMrp = fifo.Count > 0 ? fifo[^1].Batch.Mrp : indexMrp,
-                        MrpCount = fifo.Select(x => x.Batch.Mrp).Distinct().Count(),
-                        HasMixedMrp = fifo.Select(x => x.Batch.Mrp).Distinct().Count() > 1,
+                        Mrp = fifo.Count > 0 ? fifo.Min(x => x.Mrp) : indexMrp,
+                        LatestMrp = fifo.Count > 0 ? fifo[^1].Mrp : indexMrp,
+                        MrpCount = fifo.Select(x => x.Mrp).Distinct().Count(),
+                        HasMixedMrp = fifo.Select(x => x.Mrp).Distinct().Count() > 1,
                         ScannedBatchId = scannedBatchId,
                         IsActive = p.IsActive
                     };
@@ -5987,20 +6054,40 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 $"VAT (paid at source)");
         }
 
+        // Motor Bikes (Product Pricing - Motor Bikes, 2026-11-10) : the
+        // difference goes to VAT Reimbursement - MB, settled monthly
+        // with the VAT payable (Dr when the 6.3 VAT is higher, Cr when
+        // lower). Other pages keep Price Increase / Reduction.
+        bool reimburse =
+            Page.PageType == "MB";
+
+        string reimburseLedger =
+            reimburse && (increase > 0m || reduction > 0m)
+                ? PostingLedgerCodes.Get(_context, PurposeVatReimbursementMb)
+                : string.Empty;
+
         if (increase > 0m)
         {
             Credit(
-                PostingLedgerCodes.Get(_context, PostingPurposes.PriceIncreaseIncome),
+                reimburse
+                    ? reimburseLedger
+                    : PostingLedgerCodes.Get(_context, PostingPurposes.PriceIncreaseIncome),
                 increase,
-                $"VAT inside the price above the VAT paid at source");
+                reimburse
+                    ? $"VAT reimbursement : VAT inside the MRP above the 6.3 VAT"
+                    : $"VAT inside the price above the VAT paid at source");
         }
 
         if (reduction > 0m)
         {
             Debit(
-                PostingLedgerCodes.Get(_context, PostingPurposes.PriceReductionExpense),
+                reimburse
+                    ? reimburseLedger
+                    : PostingLedgerCodes.Get(_context, PostingPurposes.PriceReductionExpense),
                 reduction,
-                $"VAT paid at source above the VAT inside the price");
+                reimburse
+                    ? $"VAT reimbursement : 6.3 VAT above the VAT inside the MRP"
+                    : $"VAT paid at source above the VAT inside the price");
         }
 
         //=======================================================

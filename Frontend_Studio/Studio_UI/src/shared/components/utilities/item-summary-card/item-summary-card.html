@@ -1,0 +1,107 @@
+@if (card)
+{
+    <div
+        class="isc"
+        role="tooltip"
+        [style.left.px]="card.left"
+        [style.top.px]="card.top"
+        [style.width.px]="card.width">
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <div class="isc-head">
+
+            <span class="isc-icon">
+                <i class="fas fa-boxes-stacked"></i>
+            </span>
+
+            <div class="isc-titles">
+
+                <b class="isc-title">{{ card.title }}</b>
+
+                @if (card.subtitle)
+                {
+                    <span class="isc-subtitle">{{ card.subtitle }}</span>
+                }
+
+            </div>
+
+        </div>
+
+        <!-- =================================================
+             BODY
+        ================================================== -->
+
+        @if (card.loading)
+        {
+            <div class="isc-state">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                Loading items...
+            </div>
+        }
+        @else if (card.failed)
+        {
+            <div class="isc-state isc-bad">
+                <i class="fas fa-triangle-exclamation"></i>
+                The items could not be loaded.
+            </div>
+        }
+        @else if (card.lines.length === 0)
+        {
+            <div class="isc-state">
+                No items on this document.
+            </div>
+        }
+        @else
+        {
+            <div class="isc-table">
+
+                <div class="isc-row isc-cols">
+                    <span class="isc-name">Product</span>
+                    <span class="isc-qty">{{ quantityLabel }}</span>
+                    <span class="isc-amount">Amount</span>
+                </div>
+
+                @for (line of shownLines; track line.name)
+                {
+                    <div class="isc-row">
+
+                        <span class="isc-name" [title]="line.name">{{ line.name }}</span>
+
+                        <span class="isc-qty">
+                            {{ qty(line.quantity) }}
+                            @if (line.freeQuantity > 0)
+                            {
+                                <small class="isc-free">+{{ qty(line.freeQuantity) }} free</small>
+                            }
+                        </span>
+
+                        <span class="isc-amount">{{ money(line.amount) }}</span>
+
+                    </div>
+                }
+
+                @if (moreCount > 0)
+                {
+                    <div class="isc-more">+ {{ moreCount }} more</div>
+                }
+
+                <div class="isc-row isc-total">
+                    <span class="isc-name">Total ({{ card.lines.length }})</span>
+                    <span class="isc-qty">
+                        {{ qty(totalQuantity) }}
+                        @if (totalFree > 0)
+                        {
+                            <small class="isc-free">+{{ qty(totalFree) }}</small>
+                        }
+                    </span>
+                    <span class="isc-amount">{{ money(totalAmount) }}</span>
+                </div>
+
+            </div>
+        }
+
+    </div>
+}

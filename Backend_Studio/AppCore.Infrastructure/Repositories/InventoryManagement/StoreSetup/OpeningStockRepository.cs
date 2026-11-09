@@ -69,6 +69,12 @@ using StockMovementsEntity =
 using VatRegisterEntity =
     AppCore.Domain.Platform.Inventory.VatRegister;
 
+using MotorBikeCardPrices =
+    AppCore.Infrastructure.Platform.Inventory.MotorBikeCardPrices;
+
+using SupplierProfilesEntity =
+    AppCore.Domain.Entities.Settings.ClientSettings.SupplierProfiles;
+
 using PurchaseVatEntity =
     AppCore.Domain.Entities.VatManagement.VatSetup.PurchaseVat;
 
@@ -656,7 +662,10 @@ public class OpeningStockRepository
                             BinNumber = x.BinNumber,
                             SaveAsDefault = x.SaveAsDefault,
                             ShortNotes = x.ShortNotes,
-                            BatchNo = x.BatchNo
+                            BatchNo = x.BatchNo,
+                            CardNo = x.CardNo,
+                            CardDp = x.CardDp,
+                            Allowance = x.Allowance
                         }
                 )
                 .ToListAsync();
@@ -748,6 +757,8 @@ public class OpeningStockRepository
             LedgerCode = x.LedgerCode,
             LedgerName = x.LedgerName,
             Remarks = x.Remarks,
+            SupplierCode = x.SupplierCode,
+            SupplierName = x.SupplierName,
             TotalQuantity = x.TotalQuantity,
             TotalValue = x.TotalValue,
             Status = x.Status,
@@ -980,6 +991,27 @@ public class OpeningStockRepository
                         }
                 )
                 .ToListAsync();
+
+        // Motor bikes : the suppliers (their price cards price the bikes)
+        if (type == "MB")
+        {
+            result.Suppliers =
+                await _context
+                    .Set<SupplierProfilesEntity>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted && x.IsActive && (x.SupplyType == "Motor Bikes" || x.SupplyType == "General"))
+                    .OrderBy(x => x.SupplierName)
+                    .Select
+                    (
+                        x =>
+                            new OpeningStockLedgerDto
+                            {
+                                Code = x.SupplierCode,
+                                Name = x.DisplayName != string.Empty ? x.DisplayName : x.SupplierName
+                            }
+                    )
+                    .ToListAsync();
+        }
 
         return result;
     }
@@ -1426,6 +1458,14 @@ public class OpeningStockRepository
 
         // Purchase VAT taken out (0 = none)
         public decimal VatRate { get; set; }
+
+        // Motor bikes : the supplier's price card
+        public string CardNo { get; set; } = string.Empty;
+
+        public decimal CardDp { get; set; }
+
+        // Cost as typed (incl. VAT) x qty - card DP x qty
+        public decimal Allowance { get; set; }
     }
 
     private sealed class Resolved
@@ -1456,6 +1496,11 @@ public class OpeningStockRepository
         public List<ResolvedLine> Lines { get; set; } = new();
 
         public List<OpeningStockUnitDto> Units { get; set; } = new();
+
+        // Motor bikes : the supplier of the price card
+        public string SupplierCode { get; set; } = string.Empty;
+
+        public string SupplierName { get; set; } = string.Empty;
     }
 
     // posting = the full rules (bike count, key / battery, every
@@ -1690,6 +1735,55 @@ public class OpeningStockRepository
                 LedgerName = ledger.LedgerName
             };
 
+        //=======================================================
+        // Motor bikes : the supplier's price card gives the DP and
+        // the MRP (Product Pricing - Motor Bikes, 2026-11-10)
+        //=======================================================
+
+        Dictionary<long, MotorBikeCardPrices.CardPrice> cardPrices =
+            new();
+
+        if (type == "MB")
+        {
+            string supplierCode =
+                (dto.SupplierCode ?? string.Empty).Trim();
+
+            if (supplierCode.Length == 0)
+            {
+                if (posting)
+                {
+                    throw new InvalidOperationException(
+                        "Choose the supplier : its price card gives the bikes' DP and MRP.");
+                }
+            }
+            else
+            {
+                var supplier =
+                    await _context
+                        .Set<SupplierProfilesEntity>()
+                        .AsNoTracking()
+                        .Where(x => x.SupplierCode == supplierCode && !x.IsDeleted)
+                        .Select(x => new { x.SupplierCode, x.SupplierName, x.DisplayName })
+                        .FirstOrDefaultAsync()
+                    ??
+                    throw new InvalidOperationException(
+                        $"Supplier {supplierCode} was not found.");
+
+                result.SupplierCode =
+                    supplier.SupplierCode;
+
+                result.SupplierName =
+                    Limit(string.IsNullOrWhiteSpace(supplier.DisplayName) ? supplier.SupplierName : supplier.DisplayName, 200);
+
+                cardPrices =
+                    await MotorBikeCardPrices.DpAsync(
+                        _context,
+                        supplier.SupplierCode,
+                        date,
+                        inputs.Select(x => x.ProductId).Distinct().ToList());
+            }
+        }
+
         foreach (CreateOpeningStockLineDto input in inputs)
         {
             if (!products.TryGetValue(input.ProductId, out ProductInfo? product))
@@ -1714,6 +1808,29 @@ public class OpeningStockRepository
             {
                 throw new InvalidOperationException(
                     $"{product.Name} : the quantity can have at most 2 decimals.");
+            }
+
+            // Motor bikes : MRP from the supplier's price card
+            MotorBikeCardPrices.CardPrice? card =
+                null;
+
+            if (type == "MB")
+            {
+                if (cardPrices.TryGetValue(input.ProductId, out card))
+                {
+                    input.Mrp =
+                        card.Mrp;
+                }
+                else if (posting)
+                {
+                    throw new InvalidOperationException(
+                        $"{product.Name} has no price card from {(result.SupplierName.Length > 0 ? result.SupplierName : "the supplier")} on {date:dd-MMM-yyyy}. Post the supplier's price card first (Product Pricing - Motor Bikes).");
+                }
+                else
+                {
+                    input.Mrp =
+                        0m;
+                }
             }
 
             // MRP is the sale price (single source of truth)
@@ -1818,7 +1935,7 @@ public class OpeningStockRepository
 
             // MRP (the sale price) is never below the cost : equal or
             // more. The cost as typed (incl. VAT when it carries VAT).
-            if (input.Mrp > 0 && input.Mrp < Math.Round(grossCost, 2, MidpointRounding.AwayFromZero))
+            if (type != "MB" && input.Mrp > 0 && input.Mrp < Math.Round(grossCost, 2, MidpointRounding.AwayFromZero))
             {
                 throw new InvalidOperationException(
                     $"{product.Name} : the MRP {input.Mrp:N2} is below the cost {grossCost:N2}. MRP must be equal to or more than the cost.");
@@ -1870,6 +1987,22 @@ public class OpeningStockRepository
                 }
             }
 
+            // Motor bikes : cost as typed (incl. VAT) against the card DP
+            decimal allowance =
+                0m;
+
+            if (card != null)
+            {
+                allowance =
+                    Money(input.Quantity * grossCost) - Money(input.Quantity * card.Dp);
+
+                if (allowance < 0)
+                {
+                    throw new InvalidOperationException(
+                        $"{product.Name} : the cost {grossCost:N2} is below the price card DP {card.Dp:N2} ({card.CardNo}). Check the cost, or the supplier's price card.");
+                }
+            }
+
             result.Lines.Add(
                 new ResolvedLine
                 {
@@ -1878,7 +2011,10 @@ public class OpeningStockRepository
                     Rack = rack,
                     UnitCost = unitCost,
                     GrossUnitCost = grossCost,
-                    VatRate = vatRate
+                    VatRate = vatRate,
+                    CardNo = card?.CardNo ?? string.Empty,
+                    CardDp = card?.Dp ?? 0m,
+                    Allowance = allowance
                 });
         }
 
@@ -2021,6 +2157,8 @@ public class OpeningStockRepository
         entity.LedgerCode = input.LedgerCode;
         entity.LedgerName = Limit(input.LedgerName, 250);
         entity.Remarks = Limit(remarks, 500);
+        entity.SupplierCode = input.SupplierCode;
+        entity.SupplierName = input.SupplierName;
         entity.CostBasis = input.CostBasis;
         entity.VatIncluded = input.VatIncluded;
         entity.TotalQuantity = input.Lines.Sum(x => x.Input.Quantity);
@@ -2084,7 +2222,10 @@ public class OpeningStockRepository
                     BinNumber = line.Rack == null ? 0 : BinOf(line.Input.BinNumber),
                     SaveAsDefault = line.Rack != null && line.Input.SaveAsDefault,
                     ShortNotes = Limit(line.Input.ShortNotes, 200),
-                    BatchNo = string.Empty
+                    BatchNo = string.Empty,
+                    CardNo = Limit(line.CardNo, 30),
+                    CardDp = line.CardDp,
+                    Allowance = line.Allowance
                 });
         }
 
@@ -2433,7 +2574,22 @@ public class OpeningStockRepository
                     line.VatRate = now.VatRate;
 
                     line.VatAmount = Money(line.Quantity * now.GrossUnitCost) - line.LineValue;
+
+                    // Motor bikes : the price card as checked now
+                    line.Mrp = now.Input.Mrp;
+
+                    line.CardNo = Limit(now.CardNo, 30);
+
+                    line.CardDp = now.CardDp;
+
+                    line.Allowance = now.Allowance;
                 }
+
+                entity.SupplierCode =
+                    input.SupplierCode;
+
+                entity.SupplierName =
+                    input.SupplierName;
 
                 entity.VatIncluded =
                     input.VatIncluded;
@@ -2528,6 +2684,30 @@ public class OpeningStockRepository
 
                 total +=
                     vatLines.Sum(x => x.Debit);
+
+                // Motor bikes : cost as typed above the price card DP :
+                // Dr Opening / Cr Inventory (stock at card DP basis)
+                decimal allowanceTotal =
+                    lines.Sum(x => x.Allowance);
+
+                if (allowanceTotal > 0)
+                {
+                    foreach (var g in lines.Where(x => x.Allowance > 0).GroupBy(x => resolved[x.ProductId].Product.InventoryLedgerCode))
+                    {
+                        journal.Add(
+                            new VoucherPostingLine
+                            {
+                                GroupNo = 1,
+                                LedgerCode = g.Key,
+                                Debit = 0m,
+                                Credit = g.Sum(x => x.Allowance),
+                                Narration = "Price card allowance : cost above the card DP"
+                            });
+                    }
+
+                    total -=
+                        allowanceTotal;
+                }
 
                 journal.Add(
                     new VoucherPostingLine
@@ -2626,15 +2806,19 @@ public class OpeningStockRepository
                             SourceLineId = line.OpeningStockLineId,
                             SourceNo = entity.OpeningNo,
                             SourceDate = entity.OpeningDate,
-                            SupplierCode = string.Empty,
+                            SupplierCode = entity.SupplierCode,
                             BranchId = entity.BranchId,
                             Quantity = line.Quantity,
-                            UnitCost = line.UnitCost,
-                            TotalValue = line.LineValue,
+                            // Motor bikes : less the allowance (card DP basis)
+                            UnitCost =
+                                line.Quantity > 0m
+                                    ? Math.Round((line.LineValue - line.Allowance) / line.Quantity, 4, MidpointRounding.AwayFromZero)
+                                    : line.UnitCost,
+                            TotalValue = line.LineValue - line.Allowance,
                             QuantityInTransit = 0m,
                             QuantityOnHand = line.Quantity,
                             QuantityOut = 0m,
-                            RemainingValue = line.LineValue,
+                            RemainingValue = line.LineValue - line.Allowance,
                             Mrp = line.Mrp,
                             // VAT paid at source (base VAT), per unit
                             SourceVatRate = line.VatRate,
@@ -2651,7 +2835,9 @@ public class OpeningStockRepository
 
                     batches.Add((line, batch));
 
-                    // The product's declared MRP (price index)
+                    // The product's declared MRP (price index); motor
+                    // bikes : the price card writes it
+                    if (type != "MB")
                     AppCore.Infrastructure.Platform.Inventory.ProductPriceIndexWriter.Add(
                         _context,
                         type,
@@ -2687,8 +2873,8 @@ public class OpeningStockRepository
                             MovementType = MoveOpening,
                             QuantityIn = line.Quantity,
                             QuantityOut = 0m,
-                            UnitCost = line.UnitCost,
-                            Value = line.LineValue,
+                            UnitCost = batch.UnitCost,
+                            Value = batch.TotalValue,
                             DocumentType = prefix,
                             DocumentId = entity.OpeningStockId,
                             DocumentLineId = line.OpeningStockLineId,
@@ -3010,7 +3196,7 @@ public class OpeningStockRepository
                             QuantityIn = 0m,
                             QuantityOut = line.Quantity,
                             UnitCost = batch.UnitCost,
-                            Value = line.LineValue,
+                            Value = batch.TotalValue,
                             DocumentType = prefix,
                             DocumentId = entity.OpeningStockId,
                             DocumentLineId = line.OpeningStockLineId,

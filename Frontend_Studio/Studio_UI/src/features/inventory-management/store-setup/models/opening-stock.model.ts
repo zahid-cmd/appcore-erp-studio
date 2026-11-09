@@ -41,6 +41,10 @@ export interface OpeningStockLine
     SaveAsDefault:boolean;
     ShortNotes:string;
     BatchNo:string;
+    // MB : the supplier's price card, its DP and the allowance
+    CardNo?:string;
+    CardDp?:number;
+    Allowance?:number;
 }
 
 export interface OpeningStockUnit
@@ -76,6 +80,9 @@ export interface OpeningStock
     LedgerCode:string;
     LedgerName:string;
     Remarks:string;
+    // MB : the supplier whose price card prices the bikes
+    SupplierCode?:string;
+    SupplierName?:string;
     TotalQuantity:number;
     TotalValue:number;
     LineCount:number;
@@ -187,6 +194,8 @@ export interface OpeningStockDefaults
     Racks:OpeningStockRack[];
     Products:OpeningStockProduct[];
     Ledgers:OpeningStockLedger[];
+    // MB : suppliers (their price cards price the bikes)
+    Suppliers?:OpeningStockLedger[];
     // Posting Setup › Opening Stock ('' = not set)
     DefaultLedgerCode:string;
     // MB : Key & Battery Required
@@ -228,6 +237,8 @@ export interface CreateOpeningStock
     CostBasis:string;
     LedgerCode:string;
     Remarks:string;
+    // MB : the supplier (its price card gives DP / MRP)
+    SupplierCode?:string;
     Lines:CreateOpeningStockLine[];
     Units:OpeningStockUnit[];
 }

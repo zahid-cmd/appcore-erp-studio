@@ -3478,3 +3478,481 @@
     letter-spacing: 0;
     text-transform: none;
 }
+
+
+/* =====================================================
+   LINE ORDER (switch "Reorder Lines", 2026-11-10) :
+   Up / Down buttons before Remove; the moved line glows
+===================================================== */
+
+.pof-move
+{
+    width: 28px;
+    height: 28px;
+    margin-right: 4px;
+    border: none;
+    border-radius: 999px;
+    background: #e0ecff;
+    color: #1d4ed8;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.pof-move:hover:not(:disabled)
+{
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+.pof-move:disabled
+{
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pof-row-moved td
+{
+    animation: pof-moved 0.9s ease-out;
+}
+
+@keyframes pof-moved
+{
+    from { background: #dbeafe; }
+    to   { background: transparent; }
+}
+
+/* Wider Action column when the move buttons show */
+.pof-table:has(.pof-move) .pof-col-action,
+.pof-summary:has(.pof-move) .pof-col-action
+{
+    width: 136px;
+}
+
+/* Move buttons and the Bikes button together */
+.pof-table:has(.pof-move):has(.pur-units-btn) .pof-col-action,
+.pof-summary:has(.pof-move):has(.pur-units-btn) .pof-col-action
+{
+    width: 204px;
+}
+
+
+/* =====================================================
+   UNIT DESK : This item / All switch and the item headings
+   of the "All" list (2026-11-10)
+===================================================== */
+
+.pur-ud-mode
+{
+    display: inline-flex;
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding: 3px;
+    border: 1px solid #dbe3ef;
+    border-radius: 999px;
+    background: #f1f5f9;
+}
+
+.pur-ud-mode button
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pur-ud-mode button.pur-ud-mode-on
+{
+    background: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
+}
+
+.pur-ud-mode button:not(.pur-ud-mode-on):hover
+{
+    color: #1d4ed8;
+}
+
+.pur-ud-group td
+{
+    padding: 10px 16px !important;
+    border-bottom: 1px solid #dbe6f7;
+    background: #eef4ff;
+    color: #13254a;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.pur-ud-group td i
+{
+    margin-right: 8px;
+    color: #1d4ed8;
+}
+
+.pur-ud-group td span
+{
+    margin-left: 10px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   MB : price card against the Mushak 6.3 (2026-11-10)
+===================================================== */
+
+.pur-card-none
+{
+    padding:1px 7px;
+    border-radius:999px;
+    background:#fee2e2;
+    color:#b91c1c;
+    font-size:11px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.pur-card-neg
+{
+    color:#b91c1c;
+    font-weight:700;
+}
+
+.pur-campaign-toggle
+{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    height:28px;
+    padding:0 10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#ffffff;
+    color:#475569;
+    font:inherit;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.pur-campaign-toggle.is-on
+{
+    border-color:#047857;
+    background:#ecfdf5;
+    color:#047857;
+}
+
+.pur-campaign-name
+{
+    width:220px;
+}
+
+
+/*---------------------------------------------------------------
+  Motor Bikes : compact summary (card DP / MRP / allowance
+  columns) and the price card settlement strip (2026-11-10)
+---------------------------------------------------------------*/
+
+.pof-summary .pof-table.pur-mb
+{
+    min-width: 0;
+    font-size: 13.5px;
+}
+
+.pof-summary .pof-table.pur-mb th,
+.pof-summary .pof-table.pur-mb td
+{
+    padding: 7px 8px;
+}
+
+.pof-summary .pof-table.pur-mb th
+{
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.pof-summary .pof-table.pur-mb .pof-col-money
+{
+    width: 86px;
+}
+
+.pof-summary .pof-table.pur-mb .pof-col-num
+{
+    width: 96px;
+}
+
+.pof-summary .pof-table.pur-mb .pur-col-bike
+{
+    width: 140px;
+}
+
+.pur-bike-name
+{
+    overflow: hidden;
+    font-weight: 700;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.pur-bike-code
+{
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.pof-summary .pof-table.pur-mb .pof-line-stock,
+.pof-summary .pof-table.pur-mb .pof-billed
+{
+    white-space: nowrap;
+}
+
+.pof-summary .pof-table.pur-mb .pof-col-qty
+{
+    width: 80px;
+}
+
+.pof-summary .pof-table.pur-mb .pof-col-sl
+{
+    width: 38px;
+}
+
+.pof-summary .pof-table-foot .pof-table.pur-mb td
+{
+    font-size: 14.5px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.pur-settle-row td
+{
+    padding: 8px 10px !important;
+    background: #ffffff;
+    border-top: 1px dashed #dbe3ef;
+}
+
+.pur-settle
+{
+    display: grid;
+    grid-template-columns: 1fr 1.25fr 1.05fr;
+    gap: 8px;
+}
+
+.pur-settle-item
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.pur-settle-label
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.pur-settle-value
+{
+    margin-left: auto;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.pur-settle-note
+{
+    overflow: hidden;
+    font-size: 12px;
+    color: #64748b;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pur-settle-allow
+{
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.pur-settle-allow .pur-settle-label
+{
+    color: #92400e;
+}
+
+.pur-settle-allow .pur-settle-value
+{
+    color: #b45309;
+}
+
+.pur-settle-camp.is-on
+{
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+}
+
+.pur-settle-camp .pur-campaign-toggle
+{
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+    font-size: 16px;
+}
+
+.pur-settle-input
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 26px;
+    padding: 0 8px;
+    border: 1px solid #a7f3d0;
+    border-radius: 7px;
+    outline: none;
+    background: #ffffff;
+    font: inherit;
+    font-size: 12.5px;
+    color: #065f46;
+}
+
+.pur-settle-input:focus
+{
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.pur-settle-input::placeholder
+{
+    color: #94a3b8;
+}
+
+.pur-settle-camp .pur-campaign-toggle i
+{
+    color: #94a3b8;
+}
+
+.pur-settle-camp .pur-campaign-toggle.is-on i
+{
+    color: #059669;
+}
+
+.pur-settle-net
+{
+    border-color: #c7d2fe;
+    background: linear-gradient(120deg, #eef2ff 0%, #f5f7ff 100%);
+}
+
+.pur-settle-net .pur-settle-label
+{
+    color: #3730a3;
+}
+
+.pur-settle-net .pur-settle-value
+{
+    font-size: 16px;
+    color: #1e3a8a;
+}
+
+
+/*---------------------------------------------------------------
+  Summary Qty : only the quantity; PO left, returned and the
+  stock position show on hover (2026-11-10)
+---------------------------------------------------------------*/
+
+.pof-table td.pur-qty-cell
+{
+    position: relative;
+    overflow: visible;
+    cursor: help;
+}
+
+.pur-qty-main
+{
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.pur-qty-free
+{
+    line-height: 1.2;
+}
+
+.pur-qty-tip
+{
+    position: absolute;
+    top: calc(100% - 6px);
+    right: 4px;
+    z-index: 30;
+    display: none;
+    min-width: 210px;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.pof-table td.pur-qty-cell:hover .pur-qty-tip
+{
+    display: block;
+}
+
+.pur-qty-tip-row
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 2px 0;
+    font-size: 12.5px;
+    color: #475569;
+}
+
+.pur-qty-tip-row b
+{
+    color: #1d4ed8;
+    font-variant-numeric: tabular-nums;
+}
+
+.pur-qty-tip-row.pur-returned b
+{
+    color: #b45309;
+}
+
+.pur-qty-tip-stock
+{
+    display: block;
+    margin-top: 4px;
+    padding-top: 5px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 12px;
+}
+
+/* The last rows open the hover card upward (stays inside the scroll area) */
+.pof-table tbody tr:nth-last-child(-n+2):not(:first-child) td.pur-qty-cell .pur-qty-tip
+{
+    top: auto;
+    bottom: calc(100% - 6px);
+}

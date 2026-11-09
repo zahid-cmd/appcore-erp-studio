@@ -233,6 +233,15 @@ export class OpeningStockService
                                 Code:text(pick(l, 'Code')),
                                 Name:text(pick(l, 'Name'))
                             })
+                        ),
+
+                        Suppliers:list(pick(x, 'Suppliers')).map
+                        (
+                            l =>
+                            ({
+                                Code:text(pick(l, 'Code')),
+                                Name:text(pick(l, 'Name'))
+                            })
                         )
                     })
                 )
@@ -501,7 +510,10 @@ function toLine
         BinCode:text(pick(x, 'BinCode')),
         SaveAsDefault:!!pick(x, 'SaveAsDefault'),
         ShortNotes:text(pick(x, 'ShortNotes')),
-        BatchNo:text(pick(x, 'BatchNo'))
+        BatchNo:text(pick(x, 'BatchNo')),
+        CardNo:text(pick(x, 'CardNo')),
+        CardDp:num(pick(x, 'CardDp')),
+        Allowance:num(pick(x, 'Allowance'))
     };
 }
 
@@ -530,6 +542,8 @@ function toOpeningStock
         LedgerCode:text(pick(x, 'LedgerCode')),
         LedgerName:text(pick(x, 'LedgerName')),
         Remarks:text(pick(x, 'Remarks')),
+        SupplierCode:text(pick(x, 'SupplierCode')),
+        SupplierName:text(pick(x, 'SupplierName')),
         TotalQuantity:num(pick(x, 'TotalQuantity')),
         TotalValue:num(pick(x, 'TotalValue')),
         LineCount:num(pick(x, 'LineCount')),

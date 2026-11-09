@@ -158,6 +158,18 @@ from '../../../services/opening-stock.service';
 
 import
 {
+    ProductPricingMotorBikesService
+}
+from '../../../../pricing-labels/services/product-pricing-motor-bikes.service';
+
+import
+{
+    PriceCardActive
+}
+from '../../../../pricing-labels/models/product-pricing-motor-bikes.model';
+
+import
+{
     RackManagementService
 }
 from '../../../../../settings/product-settings/services/rack-management.service';
@@ -308,6 +320,20 @@ export class OpeningStockForm
 {
     private readonly service =
         inject(OpeningStockService);
+
+    // MB : the supplier's price card gives the DP and MRP (Product
+    // Pricing - Motor Bikes, 2026-11-10)
+    private readonly priceCards =
+        inject(ProductPricingMotorBikesService);
+
+    supplierCode:
+        string = '';
+
+    supplierItems:
+        { label:string; value:string }[] = [];
+
+    cardPrices:
+        Map<number, PriceCardActive> = new Map();
 
     // The warehouse's rack map (free / held bins)
     private readonly rackService =
@@ -603,6 +629,82 @@ export class OpeningStockForm
         return this.type === 'MB';
     }
 
+    //===========================================================
+    // MB : the supplier and its price card (DP / MRP)
+    //===========================================================
+
+    onSupplierChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.supplierCode =
+            String(value ?? '');
+
+        this.loadCardPrices();
+    }
+
+    private loadCardPrices():
+        void
+    {
+        if
+        (
+            !this.isBikes
+            ||
+            !this.supplierCode
+        )
+        {
+            this.cardPrices =
+                new Map();
+
+            return;
+        }
+
+        const supplier =
+            this.supplierCode;
+
+        this.priceCards
+            .getActive(supplier, toIsoDate(this.openingDate), true)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    rows =>
+                    {
+                        if
+                        (
+                            supplier !== this.supplierCode
+                        )
+                        {
+                            return;
+                        }
+
+                        this.cardPrices =
+                            new Map(rows.map(x => [x.MotorBikeId, x]));
+
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    () =>
+                    {
+                        this.cardPrices =
+                            new Map();
+                    }
+            });
+    }
+
+    // The picked bike's card DP (MB)
+    get pickCardDp():
+        number
+    {
+        return this.isBikes && this.pick
+            ? this.cardPrices.get(this.pick.Id)?.Dp ?? 0
+            : 0;
+    }
+
     // Key & Battery Required (System Configuration, MB)
     get keyBattery():
         boolean
@@ -786,6 +888,9 @@ export class OpeningStockForm
         this.ledgerItems =
             defaults.Ledgers.map(x => ({ label:`${x.Name} · ${x.Code}`, value:x.Code }));
 
+        this.supplierItems =
+            (defaults.Suppliers ?? []).map(x => ({ label:`${x.Name} · ${x.Code}`, value:x.Code }));
+
         if
         (
             fresh
@@ -888,6 +993,10 @@ export class OpeningStockForm
 
         this.remarks = doc.Remarks;
 
+        this.supplierCode = doc.SupplierCode ?? '';
+
+        this.loadCardPrices();
+
         this.lines =
             doc.Lines.map
             (
@@ -968,6 +1077,9 @@ export class OpeningStockForm
         void
     {
         this.openingDate = date;
+
+        // MB : the price card in force on the date
+        this.loadCardPrices();
 
         // MRP basis : the cost follows the Purchase VAT rule of the date
         this.recostLines();
@@ -1827,7 +1939,11 @@ export class OpeningStockForm
             {
                 this.pickQty = '';
                 this.pickCost = product.LastCost > 0 ? String(product.LastCost) : '';
-                this.pickMrp = product.LastMrp > 0 ? String(product.LastMrp) : '';
+                // MB : the MRP is the supplier's price card's
+                this.pickMrp =
+                    this.isBikes
+                        ? (this.cardPrices.get(product.Id) ? String(this.cardPrices.get(product.Id)!.Mrp) : '')
+                        : product.LastMrp > 0 ? String(product.LastMrp) : '';
                 this.pickMargin = '';
                 this.pickNotes = '';
             }
@@ -2022,6 +2138,42 @@ export class OpeningStockForm
             this.refreshView();
 
             return;
+        }
+
+        // MB : the supplier's price card must price the bike
+        if
+        (
+            this.isBikes
+        )
+        {
+            if
+            (
+                !this.supplierCode
+            )
+            {
+                this.lineError = 'Choose the supplier first (its price card gives DP and MRP).';
+
+                this.refreshView();
+
+                return;
+            }
+
+            const card =
+                this.cardPrices.get(product.Id);
+
+            if
+            (
+                !card
+            )
+            {
+                this.lineError = `${product.Name} has no posted price card from this supplier on the opening date. Post one in Product Pricing - Motor Bikes.`;
+
+                this.refreshView();
+
+                return;
+            }
+
+            this.pickMrp = String(card.Mrp);
         }
 
         const figures =
@@ -3473,6 +3625,7 @@ export class OpeningStockForm
             CostBasis:this.mrpBasis ? 'MRP' : 'Cost',
             LedgerCode:this.ledgerCode,
             Remarks:this.remarks.trim(),
+            SupplierCode:this.isBikes ? this.supplierCode : '',
             Lines:this.lines.map
             (
                 x =>

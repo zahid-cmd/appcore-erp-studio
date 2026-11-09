@@ -61,6 +61,14 @@ public class OpeningStockLines
 
     public string ShortNotes { get; set; } = string.Empty;
 
+    // Motor bikes : the supplier's price card, its DP and the
+    // allowance (cost as typed incl. VAT - card DP, per line)
+    public string CardNo { get; set; } = string.Empty;
+
+    public decimal CardDp { get; set; }
+
+    public decimal Allowance { get; set; }
+
     // Set on post
     public long? StockBatchId { get; set; }
 

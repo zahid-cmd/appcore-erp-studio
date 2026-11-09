@@ -55,6 +55,12 @@ public class OpeningStock
 
     public string Remarks { get; set; } = string.Empty;
 
+    // Motor bikes (2026-11-10) : the supplier whose price card
+    // (Product Pricing - Motor Bikes) gives the DP and MRP
+    public string SupplierCode { get; set; } = string.Empty;
+
+    public string SupplierName { get; set; } = string.Empty;
+
     // Cost (unit cost typed, excl. VAT) / MRP (SP / AC : cost =
     // MRP less margin, Purchase VAT taken out)
     public string CostBasis { get; set; } = "Cost";

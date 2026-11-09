@@ -170,6 +170,28 @@ import
 }
 from '../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
+import
+{
+    DatepickerComponent
+}
+from '../../../../../shared/components/controls/datepicker/datepicker';
+
+// Item summary card (row hover)
+import
+{
+    ItemSummaryCardComponent,
+    ItemSummaryHover
+}
+from '../../../../../shared/components/utilities/item-summary-card/item-summary-card';
+
+// System Configuration switches (shared reader)
+import
+{
+    VoucherSwitchesService,
+    switchOn
+}
+from '../../../../../shared/components/accounting/voucher-switches';
+
 //===============================================================
 // Service
 //===============================================================
@@ -238,6 +260,8 @@ type PurchaseOrderRow =
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
+        DatepickerComponent,
+        ItemSummaryCardComponent,
         ToastComponent
     ],
 
@@ -295,42 +319,99 @@ implements OnInit, OnDestroy
     private readonly destroyRef =
         inject(DestroyRef);
 
+    private readonly switchesService =
+        inject(VoucherSwitchesService);
+
+    //===========================================================
+    // Item summary card : resting the mouse on a row shows the
+    // order's items (bikes per model) with qty and amount.
+    // Switch "Show Items on Hover" (page's ITEM_SUMMARY).
+    //===========================================================
+
+    readonly itemHover =
+        new ItemSummaryHover(
+            row => String((row as PurchaseOrderRow)?.PublicId ?? ''),
+            row => this.purchaseOrdersService.getItemSummary(String((row as PurchaseOrderRow).PublicId)),
+            row =>
+            {
+                const order =
+                    row as PurchaseOrderRow;
+
+                return {
+                    title:order.OrderNo || 'Purchase Order',
+                    subtitle:[order.SupplierName, order.OrderDateText, order.Status]
+                        .filter(x => !!x)
+                        .join(' · ')
+                };
+            },
+            () => this.cdr.detectChanges());
+
+    private async loadItemHoverSwitch():
+        Promise<void>
+    {
+        const switches =
+            await this.switchesService.load();
+
+        this.itemHover.enabled =
+            switchOn(switches, this.page.switches.ITEM_SUMMARY, false);
+    }
+
     //===========================================================
     // Page Tabs
     //===========================================================
 
+    // One tab only; the status is chosen in the Status filter
+    // (2026-11-10)
     tabs:
         ControlTab[] =
     [
         {
             id:'all',
             label:'All Purchase Orders'
-        },
-        {
-            id:'Draft',
-            label:'Draft'
-        },
-        {
-            id:'Approved',
-            label:'Approved'
-        },
-        {
-            id:'Placed',
-            label:'Placed'
-        },
-        {
-            id:'Completed',
-            label:'Completed'
-        },
-        {
-            id:'Closed',
-            label:'Closed / Cancelled'
         }
     ];
 
+    // The status filter value sent to the server as "tab"
+    // ('all' / Draft / Approved / Placed / Completed / Closed)
     selectedTab:
         string =
         'all';
+
+    //===========================================================
+    // Status Filter (before the supplier filter; the supplier
+    // list follows it)
+    //===========================================================
+
+    readonly statusFilterItems:
+        any[] =
+    [
+        { label:'All Statuses', value:null },
+        { label:'Draft', value:'Draft' },
+        { label:'Approved', value:'Approved' },
+        { label:'Placed', value:'Placed' },
+        { label:'Completed', value:'Completed' },
+        { label:'Closed / Cancelled', value:'Closed' }
+    ];
+
+    get selectedStatus():
+        string | null
+    {
+        return this.selectedTab === 'all'
+            ? null
+            : this.selectedTab;
+    }
+
+    //===========================================================
+    // Date Range (order date, both ends included; empty = open)
+    //===========================================================
+
+    dateFrom:
+        Date | null =
+        null;
+
+    dateTo:
+        Date | null =
+        null;
 
     //===========================================================
     // Data
@@ -565,6 +646,8 @@ implements OnInit, OnDestroy
         void
     {
         this.loadItems();
+
+        void this.loadItemHoverSwitch();
     }
 
     //===========================================================
@@ -574,6 +657,8 @@ implements OnInit, OnDestroy
     ngOnDestroy():
         void
     {
+        this.itemHover.dispose();
+
         this.clearProgressTimer();
 
         if
@@ -829,6 +914,9 @@ implements OnInit, OnDestroy
     ):
         void
     {
+        // Saved / deleted / paged : the cards are read again
+        this.itemHover.clear();
+
         this.loading =
             true;
 
@@ -862,7 +950,11 @@ implements OnInit, OnDestroy
                 tab:
                     this.selectedTab,
                 supplier:
-                    this.selectedSupplier ?? ''
+                    this.selectedSupplier ?? '',
+                from:
+                    this.isoDate(this.dateFrom),
+                to:
+                    this.isoDate(this.dateTo)
             })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
@@ -991,13 +1083,28 @@ implements OnInit, OnDestroy
         void
     {
         this.purchaseOrdersService
-            .getListSuppliers()
+            .getListSuppliers(this.selectedStatus ?? '')
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe
             ({
                 next:
                     suppliers =>
                     {
+                        // The chosen supplier has no order in this
+                        // status : the supplier filter goes back to All
+                        if
+                        (
+                            this.selectedSupplier
+                            &&
+                            !suppliers.some(x => x.code === this.selectedSupplier)
+                        )
+                        {
+                            this.selectedSupplier =
+                                null;
+
+                            this.reload();
+                        }
+
                         this.supplierFilterItems =
                         [
                             {
@@ -1047,10 +1154,113 @@ implements OnInit, OnDestroy
     ):
         void
     {
+        // One tab only (All Purchase Orders) : nothing to change
+    }
+
+    //===========================================================
+    // Status Filter Change : the supplier list follows it
+    //===========================================================
+
+    onStatusFilterChange
+    (
+        value:
+            string | null
+    ):
+        void
+    {
         this.selectedTab =
-            value;
+            value || 'all';
+
+        this.loadSuppliers();
 
         this.reload();
+    }
+
+    //===========================================================
+    // Date Range Change (a From after the To moves the To, and
+    // the other way round)
+    //===========================================================
+
+    onDateFromChange
+    (
+        value:
+            Date | null
+    ):
+        void
+    {
+        this.dateFrom =
+            this.validDate(value);
+
+        if (this.dateFrom && this.dateTo && this.dateFrom > this.dateTo)
+        {
+            this.dateTo = this.dateFrom;
+        }
+
+        this.reload();
+    }
+
+    onDateToChange
+    (
+        value:
+            Date | null
+    ):
+        void
+    {
+        this.dateTo =
+            this.validDate(value);
+
+        if (this.dateFrom && this.dateTo && this.dateTo < this.dateFrom)
+        {
+            this.dateFrom = this.dateTo;
+        }
+
+        this.reload();
+    }
+
+    clearDates():
+        void
+    {
+        this.dateFrom =
+            null;
+
+        this.dateTo =
+            null;
+
+        this.reload();
+    }
+
+    get hasDates():
+        boolean
+    {
+        return !!this.dateFrom || !!this.dateTo;
+    }
+
+    private validDate
+    (
+        value:
+            Date | null
+    ):
+        Date | null
+    {
+        return value instanceof Date && !isNaN(value.getTime())
+            ? new Date(value.getFullYear(), value.getMonth(), value.getDate())
+            : null;
+    }
+
+    // Date -> "yyyy-MM-dd" (local day; '' = no limit)
+    private isoDate
+    (
+        value:
+            Date | null
+    ):
+        string
+    {
+        if (!value)
+        {
+            return '';
+        }
+
+        return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
     }
 
     //===========================================================
@@ -1172,6 +1382,12 @@ implements OnInit, OnDestroy
         this.selectedSupplier =
             null;
 
+        this.dateFrom =
+            null;
+
+        this.dateTo =
+            null;
+
         this.sortField =
             '';
 
@@ -1239,7 +1455,7 @@ implements OnInit, OnDestroy
     get summaryNote():
         string
     {
-        return this.searchText.trim() || this.selectedSupplier
+        return this.searchText.trim() || this.selectedSupplier || this.selectedStatus || this.hasDates
             ? 'Filtered records'
             : 'All records';
     }

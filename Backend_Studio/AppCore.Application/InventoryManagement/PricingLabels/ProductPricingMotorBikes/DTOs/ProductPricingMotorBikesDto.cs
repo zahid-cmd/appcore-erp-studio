@@ -45,6 +45,14 @@ public class ProductPricingMotorBikesDto
 
     public string CancelReason { get; set; } = string.Empty;
 
+    // Replaced by the supplier's next Regular card (from its date)
+    public string SupersededByNo { get; set; } = string.Empty;
+
+    public string SupersededFrom { get; set; } = string.Empty;
+
+    // Superseded today
+    public bool Superseded { get; set; }
+
     // In force today (posted, inside its dates, not replaced)
     public bool InForce { get; set; }
 
@@ -55,6 +63,13 @@ public class ProductPricingMotorBikesDto
 public class ProductPricingMotorBikesLineDto
 {
     public int LineNo { get; set; }
+
+    public long ModelId { get; set; }
+
+    public string ModelName { get; set; } = string.Empty;
+
+    // true : a colour exception (MotorBikeId); false : the model price
+    public bool IsException { get; set; }
 
     public long MotorBikeId { get; set; }
 
@@ -107,6 +122,9 @@ public class UpdateProductPricingMotorBikesDto
 
 public class ProductPricingMotorBikesLineInputDto
 {
+    public long ModelId { get; set; }
+
+    // 0 = the model price (every colour); > 0 = a colour exception
     public long MotorBikeId { get; set; }
 
     public decimal Dp { get; set; }
@@ -146,7 +164,11 @@ public class ProductPricingMotorBikesDefaultsDto
     public List<ProductPricingMotorBikesProductDto> Products { get; set; } = new();
 
     // Sales VAT % of Motor Bikes by date
+    // Sales VAT (inside the MRP)
     public List<ProductPricingMotorBikesVatRuleDto> VatRules { get; set; } = new();
+
+    // Purchase VAT (inside the DP)
+    public List<ProductPricingMotorBikesVatRuleDto> PurchaseVatRules { get; set; } = new();
 }
 
 
@@ -191,9 +213,41 @@ public class ProductPricingMotorBikesVatRuleDto
 
 
 // The card in force for a supplier + model on a date
+// Last purchase cost and stock of a colour (motor bike), for
+// setting the price : paid = unit cost + 6.3 VAT per unit
+public class ProductPricingMotorBikesCostDto
+{
+    public long MotorBikeId { get; set; }
+
+    // Last purchase from the card's supplier (0 = none)
+    public long LastBatchId { get; set; }
+
+    public string LastDate { get; set; } = string.Empty;
+
+    public string LastSourceNo { get; set; } = string.Empty;
+
+    public decimal LastUnitCost { get; set; }
+
+    public decimal LastVat { get; set; }
+
+    public decimal LastPaid { get; set; }
+
+    // In stock now (every branch, every source)
+    public decimal StockQty { get; set; }
+
+    // Average paid (cost + VAT) of the stock in hand
+    public decimal StockAvgPaid { get; set; }
+}
+
+
 public class ProductPricingMotorBikesActiveDto
 {
     public long MotorBikeId { get; set; }
+
+    public long ModelId { get; set; }
+
+    // true : the colour takes its model price; false : a colour exception
+    public bool FromModel { get; set; }
 
     public long CardId { get; set; }
 

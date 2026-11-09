@@ -33,6 +33,8 @@ public class CreatePurchaseDto
     public decimal AdditionalDiscountValue { get; set; }
     public bool NoVatInvoice { get; set; }
     public string Narration { get; set; } = string.Empty;
+    // Motor bikes : the campaign of the campaign discounts
+    public string CampaignName { get; set; } = string.Empty;
     public List<CreatePurchaseLineDto> Lines { get; set; } = new();
     // MB, Products Received on Purchase ON : the supplier's free
     // accessories received with this purchase (taken in on Post)
@@ -59,6 +61,8 @@ public class CreatePurchaseLineDto
     public decimal DpAmount { get; set; }
     public decimal VatRate { get; set; }
     public string ShortNotes { get; set; } = string.Empty;
+    // Motor bikes : campaign discount per unit (0 = none)
+    public decimal CampaignDiscount { get; set; }
     // Motor bikes (Products Received on Purchase ON) : one per bike
     public List<PurchaseUnitDto> Units { get; set; } = new();
 }
@@ -146,6 +150,9 @@ public class PurchaseDto
     public decimal TotalVat { get; set; }
     public decimal TotalVatClaimable { get; set; }
     public decimal TotalPayable { get; set; }
+    public decimal TotalAllowance { get; set; }
+    public decimal TotalCampaignDiscount { get; set; }
+    public string CampaignName { get; set; } = string.Empty;
     public string Narration { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public bool StockedIn { get; set; }
@@ -199,6 +206,11 @@ public class PurchaseLineDto
     public decimal NetUnitCost { get; set; }
     public decimal ReturnedQuantity { get; set; }
     public string ShortNotes { get; set; } = string.Empty;
+    // Motor bikes : price card and adjustments
+    public string CardNo { get; set; } = string.Empty;
+    public decimal CardDp { get; set; }
+    public decimal Allowance { get; set; }
+    public decimal CampaignDiscount { get; set; }
     public List<PurchaseUnitDto> Units { get; set; } = new();
 }
 
@@ -379,6 +391,8 @@ public class PurchaseOpenOrderDto
     public decimal AdditionalDiscountValue { get; set; }
     public bool NoVatInvoice { get; set; }
     public decimal TotalPayable { get; set; }
+    // The order's narration (copied to the purchase, editable)
+    public string Narration { get; set; } = string.Empty;
     public List<PurchaseOpenOrderLineDto> Lines { get; set; } = new();
 }
 
@@ -423,6 +437,11 @@ public class PurchasePageRequest : AppCore.Application.Common.Paging.PagedReques
     public string? Tab { get; set; }
 
     public string? Supplier { get; set; }
+
+    // Purchase date range (yyyy-MM-dd; empty = open)
+    public string? From { get; set; }
+
+    public string? To { get; set; }
 }
 
 

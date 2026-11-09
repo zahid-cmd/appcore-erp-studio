@@ -52,6 +52,9 @@ public class ProductPricingMotorBikesConfiguration
         builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
         builder.Property(x => x.Status).IsRequired().HasMaxLength(20);
         builder.Property(x => x.CancelReason).IsRequired().HasMaxLength(500);
+        builder.Property(x => x.SupersededById);
+        builder.Property(x => x.SupersededByNo).IsRequired().HasMaxLength(30);
+        builder.Property(x => x.SupersededFrom);
         builder.Property(x => x.CreatedBy).IsRequired();
         builder.Property(x => x.CreatedDate).IsRequired();
     }
@@ -67,7 +70,9 @@ public class ProductPricingMotorBikesConfiguration
 
         builder.Property(x => x.CardId).IsRequired();
         builder.Property(x => x.LineNo).IsRequired();
-        builder.Property(x => x.MotorBikeId).IsRequired();
+        builder.Property(x => x.ModelId).IsRequired();
+        builder.Property(x => x.ModelName).IsRequired().HasMaxLength(250);
+        builder.Property(x => x.MotorBikeId);
         builder.Property(x => x.ProductCode).IsRequired().HasMaxLength(40);
         builder.Property(x => x.ProductName).IsRequired().HasMaxLength(250);
         builder.Property(x => x.Dp).HasPrecision(18, 2);

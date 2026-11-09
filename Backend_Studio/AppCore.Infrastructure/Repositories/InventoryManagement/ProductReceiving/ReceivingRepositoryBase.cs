@@ -107,6 +107,10 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
     private const string ModuleName =
         "Inventory Management";
 
+    // A receiving made by the purchase itself (read only here)
+    private const string ReceivedOnPurchase =
+        "Purchase";
+
     private const string EntityName =
         "Receiving";
 
@@ -649,9 +653,12 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                     )
                     .ToListAsync();
 
-            // Free accessories received on it
+            // Free accessories received on it (a receiving made by
+            // the purchase : the ones received with the purchase)
             dto.Accessories =
-                await PurchaseAccessoryDuesEngine.ReceiptsOfAsync(_context, id);
+                entity.ReceivedOn == ReceivedOnPurchase
+                    ? await PurchaseAccessoryDuesEngine.ReceiptsOnPurchaseAsync(_context, entity.PurchaseId)
+                    : await PurchaseAccessoryDuesEngine.ReceiptsOfAsync(_context, id);
         }
 
         return dto;
@@ -685,6 +692,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
             GatePassNo = x.GatePassNo,
             ReceivedBy = x.ReceivedBy,
             Remarks = x.Remarks,
+            ReceivedOn = x.ReceivedOn,
             TotalQuantity = x.TotalQuantity,
             Status = x.Status,
             CancelReason = x.CancelReason,
@@ -2212,6 +2220,14 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                         $"Receiving {entity.ReceivingNo} is {entity.Status}; only a posted receiving can be cancelled.");
                 }
 
+                // Made by the purchase (received with it) : the
+                // purchase owns the stock
+                if (entity.ReceivedOn == ReceivedOnPurchase)
+                {
+                    throw new InvalidOperationException(
+                        $"Receiving {entity.ReceivingNo} was made by purchase {entity.PurchaseNo} (received with the purchase). Cancel the purchase to undo it.");
+                }
+
                 List<TLine> lines =
                     await _context
                         .Set<TLine>()
@@ -2535,6 +2551,7 @@ public abstract class ReceivingRepositoryBase<THeader, TLine, TPurchase, TPurcha
                 .Add("ReceivingNo", x => x.ReceivingNo)
                 .Add("DateText", x => x.ReceivingDate)
                 .Add("PurchaseNo", x => x.PurchaseNo)
+                .Add("PurchaseText", x => x.PurchaseNo)
                 .Add("SupplierName", x => x.SupplierName)
                 .Add("DocumentText", x => x.SupplierInvoiceNo)
                 .Add("WarehouseName", x => x.WarehouseName)

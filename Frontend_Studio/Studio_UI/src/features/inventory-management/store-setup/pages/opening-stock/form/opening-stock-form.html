@@ -195,6 +195,16 @@
                                 [value]="doc ? doc.LedgerName + ' · ' + doc.LedgerCode : ''"
                                 [readonly]="true">
                             </app-textbox>
+
+                            @if (isBikes)
+                            {
+                                <app-textbox
+                                    class="pof-span-all"
+                                    label="Supplier (price card)"
+                                    [value]="doc?.SupplierName ? doc!.SupplierName + ' · ' + doc!.SupplierCode : 'Not set'"
+                                    [readonly]="true">
+                                </app-textbox>
+                            }
                         }
                         @else
                         {
@@ -267,6 +277,20 @@
                                 [disabled]="ledgerLocked"
                                 (valueChange)="onLedgerChange($event)">
                             </app-search-dropdown>
+
+                            <!-- MB : the supplier's price card gives DP / MRP -->
+                            @if (isBikes)
+                            {
+                                <app-search-dropdown
+                                    class="pof-span-all"
+                                    label="Supplier (price card)"
+                                    placeholder="The supplier whose price card prices the bikes"
+                                    [items]="supplierItems"
+                                    [value]="supplierCode || null"
+                                    [required]="true"
+                                    (valueChange)="onSupplierChange($event)">
+                                </app-search-dropdown>
+                            }
                         }
 
                     </div>
@@ -517,14 +541,26 @@
 
                                 <app-textbox
                                     class="rc-num"
-                                    label="MRP (incl. VAT)"
+                                    [label]="isBikes ? 'MRP (Card)' : 'MRP (incl. VAT)'"
                                     inputMode="decimal"
-                                    placeholder="0.00"
+                                    [placeholder]="isBikes ? (pick ? 'No price card' : '—') : '0.00'"
                                     [disabled]="!pick"
+                                    [readonly]="isBikes"
                                     [value]="pickMrp"
                                     (valueChange)="pickMrp = '' + $event"
                                     (enterPressed)="onAddLine()">
                                 </app-textbox>
+
+                                @if (isBikes)
+                                {
+                                    <app-textbox
+                                        class="rc-num"
+                                        label="Card DP"
+                                        [placeholder]="pick ? 'No price card' : '—'"
+                                        [value]="pickCardDp > 0 ? money(pickCardDp) : ''"
+                                        [readonly]="true">
+                                    </app-textbox>
+                                }
                             }
 
                             <!-- MRP is the sale price : its net (excl. VAT) -->

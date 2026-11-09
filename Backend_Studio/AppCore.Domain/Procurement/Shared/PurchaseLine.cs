@@ -45,4 +45,13 @@ public abstract class PurchaseLine
     public decimal NetUnitCost { get; set; }
     public decimal ReturnedQuantity { get; set; }
     public string ShortNotes { get; set; } = string.Empty;
+    // Motor bikes (2026-11-10) : the price card (Product Pricing -
+    // Motor Bikes) is the dealing price; the 6.3 is the legal cost
+    public string CardNo { get; set; } = string.Empty;
+    // Card DP per unit (the real payable to the supplier)
+    public decimal CardDp { get; set; }
+    // 6.3 total - card DP x quantity : Dr Supplier / Cr Inventory
+    public decimal Allowance { get; set; }
+    // Campaign discount per unit : Dr Supplier / Cr Campaign Discount
+    public decimal CampaignDiscount { get; set; }
 }

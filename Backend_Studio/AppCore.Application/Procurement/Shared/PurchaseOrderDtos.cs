@@ -490,6 +490,11 @@ public class PurchaseOrderPageRequest : AppCore.Application.Common.Paging.PagedR
     public string? Tab { get; set; }
 
     public string? Supplier { get; set; }
+
+    // Order date range, "yyyy-MM-dd", both ends included; empty = open
+    public string? From { get; set; }
+
+    public string? To { get; set; }
 }
 
 
@@ -498,4 +503,24 @@ public class PurchaseOrderListSupplierDto
     public string SupplierCode { get; set; } = string.Empty;
 
     public string SupplierName { get; set; } = string.Empty;
+}
+
+
+//===============================================================
+// Item summary (the hover card of the purchase order and
+// purchase lists) : one row per product; motor bikes per model
+//===============================================================
+
+public class PurchaseItemSummaryDto
+{
+    public string Name { get; set; } = string.Empty;
+
+    public decimal Quantity { get; set; }
+
+    public decimal FreeQuantity { get; set; }
+
+    public decimal Amount { get; set; }
+
+    // How many document lines were folded into this row
+    public int Items { get; set; }
 }

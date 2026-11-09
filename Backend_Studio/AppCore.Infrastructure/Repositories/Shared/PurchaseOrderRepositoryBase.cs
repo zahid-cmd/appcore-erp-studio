@@ -3066,6 +3066,22 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
             : null;
     }
 
+    // "yyyy-MM-dd" from the list's date range (null = no limit)
+    private static DateOnly? ListDate
+    (
+        string? text
+    )
+    {
+        return DateOnly.TryParseExact(
+            (text ?? string.Empty).Trim(),
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out DateOnly date)
+            ? date
+            : null;
+    }
+
     public async Task<AppCore.Application.Common.Paging.PagedResult<PurchaseOrderDto>>
         GetPagedAsync
         (
@@ -3088,6 +3104,27 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
         if (supplier != string.Empty)
         {
             query = query.Where(x => x.SupplierCode == supplier);
+        }
+
+        // Order date range (2026-11-10), both ends included
+        DateOnly? from =
+            ListDate(request.From);
+
+        DateOnly? to =
+            ListDate(request.To);
+
+        if (from.HasValue)
+        {
+            DateOnly fromDay = from.Value;
+
+            query = query.Where(x => x.OrderDate >= fromDay);
+        }
+
+        if (to.HasValue)
+        {
+            DateOnly toDay = to.Value;
+
+            query = query.Where(x => x.OrderDate <= toDay);
         }
 
         foreach
@@ -3200,16 +3237,34 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
     public async Task<List<PurchaseOrderListSupplierDto>>
         GetListSuppliersAsync
         (
-            string pageType
+            string pageType,
+            string? status = null
         )
     {
         string type =
             PageOf(pageType).PageType;
 
-        return await _context
-            .Set<THeader>()
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && x.PageType == type && x.SupplierCode != "")
+        IQueryable<THeader> query =
+            _context
+                .Set<THeader>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.PageType == type && x.SupplierCode != "");
+
+        // The list's Status filter (same rule as the "tab" of the
+        // paged list) : the supplier list follows it
+        string tab =
+            (status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (tab == "closed")
+        {
+            query = query.Where(x => x.Status == "Closed Short" || x.Status == "Cancelled");
+        }
+        else if (tab != string.Empty && tab != "all")
+        {
+            query = query.Where(x => x.Status.ToLower() == tab);
+        }
+
+        return await query
             .GroupBy(x => x.SupplierCode)
             .Select
             (
@@ -3222,6 +3277,59 @@ public abstract class PurchaseOrderRepositoryBase<THeader, TLine>
             )
             .OrderBy(x => x.SupplierName)
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Item summary : the order's items in short (list hover
+    // card); motor bikes per model, not per colour
+    //===========================================================
+
+    public async Task<List<PurchaseItemSummaryDto>?>
+        GetItemSummaryAsync
+        (
+            string pageType,
+            Guid publicId
+        )
+    {
+        string type =
+            PageOf(pageType).PageType;
+
+        long? id =
+            await _context
+                .Set<THeader>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.PublicId == publicId && x.PageType == type)
+                .Select(x => (long?)x.PurchaseOrderId)
+                .FirstOrDefaultAsync();
+
+        if (id == null)
+        {
+            return null;
+        }
+
+        List<PurchaseItemSummaryLine> lines =
+            await _context
+                .Set<TLine>()
+                .AsNoTracking()
+                .Where(x => x.PurchaseOrderId == id.Value)
+                .OrderBy(x => x.LineNo)
+                .Select
+                (
+                    x =>
+                        new PurchaseItemSummaryLine
+                        {
+                            ProductType = x.ProductType,
+                            ProductId = x.ProductId,
+                            ProductName = x.ProductName,
+                            Quantity = x.Quantity,
+                            FreeQuantity = x.FreeQuantity,
+                            LineTotal = x.LineTotal
+                        }
+                )
+                .ToListAsync();
+
+        return await PurchaseItemSummary.BuildAsync(_context, lines);
     }
 
 

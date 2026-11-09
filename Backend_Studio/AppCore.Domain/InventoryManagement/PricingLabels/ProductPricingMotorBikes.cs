@@ -63,6 +63,14 @@ public class ProductPricingMotorBikes
 
     public string CancelReason { get; set; } = string.Empty;
 
+    // A Regular card replaced by the supplier's next Regular card
+    // (set when that card is posted; cleared when it is cancelled)
+    public long? SupersededById { get; set; }
+
+    public string SupersededByNo { get; set; } = string.Empty;
+
+    public DateOnly? SupersededFrom { get; set; }
+
     public bool IsDeleted { get; set; }
 
     public long? DeletedBy { get; set; }
@@ -80,7 +88,9 @@ public class ProductPricingMotorBikes
 
 
 //===============================================================
-// A card line : one model + colour
+// A card line : the price of a model (MotorBikeId null : every
+// colour of the model), or a colour exception (MotorBikeId set :
+// that colour only; its model line is on the same card)
 //===============================================================
 
 public class ProductPricingMotorBikeLines
@@ -91,7 +101,13 @@ public class ProductPricingMotorBikeLines
 
     public int LineNo { get; set; }
 
-    public long MotorBikeId { get; set; }
+    // Model (ProductSubCategoryId of the motor bike)
+    public long ModelId { get; set; }
+
+    public string ModelName { get; set; } = string.Empty;
+
+    // null = model price; set = colour exception
+    public long? MotorBikeId { get; set; }
 
     public string ProductCode { get; set; } = string.Empty;
 

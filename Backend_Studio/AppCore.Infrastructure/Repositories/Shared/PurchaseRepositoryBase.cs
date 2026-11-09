@@ -22,6 +22,9 @@ using BusinessLineAccess =
 
 using static AppCore.Infrastructure.Repositories.Procurement.Shared.PurchaseOrderPricing;
 
+using MotorBikeCardPrices =
+    AppCore.Infrastructure.Platform.Inventory.MotorBikeCardPrices;
+
 using PostingLedgerCodes =
     AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
 
@@ -200,6 +203,10 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
     private const string General = "General";
 
+    // Posting Setup purpose of the MB campaign discount (income or
+    // reserve, chosen on Posting Setup)
+    private const string PurposeCampaignDiscountMb = "CAMPAIGN-DISC-MB";
+
     private const string TypeMotorBikes = "Motor Bikes";
 
     private const string TypeSpareParts = "Spare Parts";
@@ -334,6 +341,9 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         public bool VatCharged { get; set; } = true;
 
         public string Narration { get; set; } = string.Empty;
+
+        // Motor bikes : the campaign of the campaign discounts
+        public string CampaignName { get; set; } = string.Empty;
 
         public List<TLine> Lines { get; set; } = new();
 
@@ -552,7 +562,11 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                             RoundingShare = x.RoundingShare,
                             NetUnitCost = x.NetUnitCost,
                             ReturnedQuantity = x.ReturnedQuantity,
-                            ShortNotes = x.ShortNotes
+                            ShortNotes = x.ShortNotes,
+                            CardNo = x.CardNo,
+                            CardDp = x.CardDp,
+                            Allowance = x.Allowance,
+                            CampaignDiscount = x.CampaignDiscount
                         }
                 )
                 .ToListAsync();
@@ -659,6 +673,9 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             TotalVat = x.TotalVat,
             TotalVatClaimable = x.TotalVatClaimable,
             TotalPayable = x.TotalPayable,
+            TotalAllowance = x.TotalAllowance,
+            TotalCampaignDiscount = x.TotalCampaignDiscount,
+            CampaignName = x.CampaignName,
             Narration = x.Narration,
             Status = x.Status,
             StockedIn = x.StockedIn,
@@ -1388,6 +1405,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                     AdditionalDiscountValue = order.AdditionalDiscountValue,
                     NoVatInvoice = order.NoVatInvoice,
                     TotalPayable = order.TotalPayable,
+                    Narration = order.Narration ?? string.Empty,
                     Lines = open
                 });
         }
@@ -2518,6 +2536,15 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         input.InvoicePriceBasis =
             ParseChoice(dto.InvoicePriceBasis, BasisDp, "Invoice Price", BasisMrp, BasisDp);
 
+        // Motor bikes : the line price is the Mushak 6.3 (the legal
+        // cost); DP and MRP come from the price card (Product
+        // Pricing - Motor Bikes), never typed here
+        if (page.PageType == "MB")
+        {
+            input.InvoicePriceBasis =
+                BasisDp;
+        }
+
         // A margin is always on MRP
         input.ProfitBasis =
             BasisMrp;
@@ -2569,7 +2596,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
         // Supplier terms fixed (direct purchases; a PO already took
         // the supplier's terms)
-        if (order == null && !await IsSwitchOnAsync(page.SwitchEditSupplierTerms, true))
+        if (order == null && page.PageType != "MB" && !await IsSwitchOnAsync(page.SwitchEditSupplierTerms, true))
         {
             string? problem =
                 SupplierTermsProblem(
@@ -2737,6 +2764,21 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         bool freeGoodsAllowed =
             await IsSwitchOnAsync(page.SwitchFreeGoods, false);
 
+        // Motor bikes : the supplier's price card on the purchase date
+        Dictionary<long, MotorBikeCardPrices.CardPrice> cardPrices =
+            page.PageType == "MB"
+                ? await MotorBikeCardPrices.DpAsync(
+                    _context,
+                    supplier.SupplierCode,
+                    input.PurchaseDate,
+                    products.Values.Select(x => x.ProductId).ToList())
+                : new Dictionary<long, MotorBikeCardPrices.CardPrice>();
+
+        input.CampaignName =
+            page.PageType == "MB"
+                ? Limit(dto.CampaignName, 100)
+                : string.Empty;
+
         bool vatEditable =
             await IsSwitchOnAsync(page.SwitchVatAsPer63, false);
 
@@ -2798,6 +2840,31 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             {
                 throw new InvalidOperationException(
                     $"{label} : quantity must be more than 0 with at most 2 decimals.");
+            }
+
+            // Motor bikes : the price card must price the bike
+            MotorBikeCardPrices.CardPrice? card =
+                null;
+
+            decimal campaignDiscount =
+                0m;
+
+            if (page.PageType == "MB")
+            {
+                if (!cardPrices.TryGetValue(product.ProductId, out card))
+                {
+                    throw new InvalidOperationException(
+                        $"{label} : '{product.ProductName}' has no price card from {supplier.DisplayName} on {input.PurchaseDate:dd-MMM-yyyy}. Post the supplier's price card first (Pricing & Labels › Product Pricing - Motor Bikes).");
+                }
+
+                campaignDiscount =
+                    row.CampaignDiscount;
+
+                if (campaignDiscount < 0 || !IsMoney(campaignDiscount) || campaignDiscount > card.Dp)
+                {
+                    throw new InvalidOperationException(
+                        $"{label} : the campaign discount must be from 0 to the card DP ({card.Dp:N2}) with at most 2 decimals.");
+                }
             }
 
             if (product.ProductType == TypeMotorBikes
@@ -3027,14 +3094,22 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                     Unit = Limit(product.Unit, 30),
                     Quantity = row.Quantity,
                     FreeQuantity = row.FreeQuantity,
-                    Mrp = mrp,
+                    // Motor bikes : MRP from the price card
+                    Mrp = card?.Mrp ?? mrp,
                     ProfitPercent = profit,
                     UnitPrice = dp,
                     IsAdjusted = adjusted,
                     IsTotalTyped = row.IsTotalTyped,
-                    GrossMrp = grossMrp,
+                    GrossMrp = card != null ? Money(card.Mrp * row.Quantity) : grossMrp,
                     DpAmount = dpAmount,
-                    ProfitAmount = mrp > 0 ? grossMrp - dpAmount : 0m,
+                    // Motor bikes : MRP - card DP (the commission)
+                    ProfitAmount =
+                        card != null
+                            ? Money(card.Mrp * row.Quantity) - Money(card.Dp * row.Quantity)
+                            : mrp > 0 ? grossMrp - dpAmount : 0m,
+                    CardNo = card?.CardNo ?? string.Empty,
+                    CardDp = card?.Dp ?? 0m,
+                    CampaignDiscount = campaignDiscount,
                     VatRate = vatRate,
                     VatClaimable = claimable,
                     ReturnedQuantity = 0m,
@@ -3077,7 +3152,51 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
         await ApplyRoundingAsync(input);
 
+        if (page.PageType == "MB")
+        {
+            ApplyCardAllowance(input);
+        }
+
         return input;
+    }
+
+
+    //===========================================================
+    // Motor bikes : the 6.3 (legal cost) against the price card
+    // (dealing price). Allowance = 6.3 total - card DP x quantity
+    // (Dr Supplier / Cr Inventory); the stock's cost = card DP
+    // basis. A 6.3 below the card DP is refused (the supplier never
+    // charges more than the 6.3).
+    //===========================================================
+
+    private static void ApplyCardAllowance
+    (
+        PurchaseInput input
+    )
+    {
+        foreach (TLine line in input.Lines)
+        {
+            decimal payable =
+                line.LineTotal + (input.WholeTakaLines ? 0m : line.RoundingShare);
+
+            decimal cardTotal =
+                Money(line.CardDp * line.Quantity);
+
+            decimal allowance =
+                payable - cardTotal;
+
+            if (allowance < 0)
+            {
+                throw new InvalidOperationException(
+                    $"Line {line.LineNo} : the 6.3 total ({payable:N2}) is below the price card DP ({line.CardDp:N2} x {line.Quantity:0.##} = {cardTotal:N2}, {line.CardNo}). Check the 6.3, or the supplier's price card.");
+            }
+
+            line.Allowance =
+                allowance;
+
+            line.NetUnitCost =
+                UnitCost(LineCost(line, input.WholeTakaLines) - allowance, line.Quantity + line.FreeQuantity);
+        }
     }
 
 
@@ -3557,6 +3676,9 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         entity.TotalVat = input.Lines.Sum(x => x.VatAmount);
         entity.TotalVatClaimable = input.Lines.Where(x => x.VatClaimable).Sum(x => x.VatAmount);
         entity.TotalPayable = input.Lines.Sum(x => x.LineTotal) + input.RoundingAdjustment;
+        entity.TotalAllowance = input.Lines.Sum(x => x.Allowance);
+        entity.TotalCampaignDiscount = input.Lines.Sum(x => Money(x.CampaignDiscount * x.Quantity));
+        entity.CampaignName = entity.TotalCampaignDiscount > 0 ? input.CampaignName : string.Empty;
     }
 
 
@@ -4943,6 +5065,86 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 PartyCode = entity.SupplierCode
             });
 
+        //=======================================================
+        // Motor bikes : the price card against the 6.3
+        //   allowance (6.3 total - card DP) : Dr Supplier / Cr
+        //   Inventory (the stock's cost = card DP basis)
+        //   campaign discount : Dr Supplier / Cr Campaign Discount
+        //   (a special income, not the stock's cost)
+        //=======================================================
+
+        if (Page.PageType == "MB")
+        {
+            decimal allowance =
+                lines.Sum(x => x.Allowance);
+
+            if (allowance > 0)
+            {
+                journal.Add(
+                    new VoucherPostingLine
+                    {
+                        GroupNo = 1,
+                        LedgerCode = payableLedger,
+                        Debit = allowance,
+                        Credit = 0m,
+                        Narration = Limit($"Price card allowance : 6.3 above the card DP ({string.Join(", ", lines.Select(x => x.CardNo).Where(x => x.Length > 0).Distinct())})", 500),
+                        PartyType = "Supplier",
+                        PartyCode = entity.SupplierCode
+                    });
+
+                foreach (TLine line in lines.Where(x => x.Allowance > 0))
+                {
+                    journal.Add(
+                        new VoucherPostingLine
+                        {
+                            GroupNo = 1,
+                            LedgerCode = inventoryLedgers[line.ProductId],
+                            Debit = 0m,
+                            Credit = line.Allowance,
+                            Narration = Limit($"Allowance {line.Quantity:0.##} {line.Unit} : 6.3 above card DP {line.CardDp:N2}", 500)
+                        });
+                }
+            }
+
+            decimal campaign =
+                lines.Sum(x => Money(x.CampaignDiscount * x.Quantity));
+
+            if (campaign > 0)
+            {
+                string campaignLedger =
+                    PostingLedgerCodes.Get(
+                        _context,
+                        PurposeCampaignDiscountMb);
+
+                string campaignText =
+                    entity.CampaignName.Length > 0
+                        ? $"Campaign discount : {entity.CampaignName}"
+                        : "Campaign discount";
+
+                journal.Add(
+                    new VoucherPostingLine
+                    {
+                        GroupNo = 1,
+                        LedgerCode = payableLedger,
+                        Debit = campaign,
+                        Credit = 0m,
+                        Narration = Limit(campaignText, 500),
+                        PartyType = "Supplier",
+                        PartyCode = entity.SupplierCode
+                    });
+
+                journal.Add(
+                    new VoucherPostingLine
+                    {
+                        GroupNo = 1,
+                        LedgerCode = campaignLedger,
+                        Debit = 0m,
+                        Credit = campaign,
+                        Narration = Limit(campaignText, 500)
+                    });
+            }
+        }
+
         await _postingService.PostAsync(
             new VoucherPostingRequest
             {
@@ -4976,8 +5178,9 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             decimal units =
                 line.Quantity + line.FreeQuantity;
 
+            // Motor bikes : less the allowance (card DP basis)
             decimal cost =
-                LineCost(line, entity.WholeTakaLines);
+                LineCost(line, entity.WholeTakaLines) - line.Allowance;
 
             StockBatchesEntity batch =
                 new()
@@ -5019,7 +5222,9 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
             batches.Add((line, batch));
 
-            // MRP invoice : the product's declared MRP (price index)
+            // MRP invoice : the product's declared MRP (price index);
+            // motor bikes : the price card writes it, not the purchase
+            if (Page.PageType != "MB")
             AppCore.Infrastructure.Platform.Inventory.ProductPriceIndexWriter.Add(
                 _context,
                 Page.PageType,
@@ -5131,6 +5336,27 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 unit.ModifiedBy = userId;
                 unit.ModifiedDate = now;
             }
+        }
+
+        //=======================================================
+        // Received with the purchase : its receiving document on
+        // Product Receiving (read only there; moves no stock of
+        // its own). MB : the bikes point at it.
+        //=======================================================
+
+        if (received)
+        {
+            await _context.SaveChangesAsync();
+
+            await PurchaseReceivingMirror.CreateAsync(
+                _context,
+                _numberService,
+                entity,
+                batches
+                    .Select(x => ((AppCore.Domain.Entities.Procurement.Shared.PurchaseLine)x.Line, x.Batch))
+                    .ToList(),
+                userId,
+                now);
         }
 
         //=======================================================
@@ -5453,6 +5679,14 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                     }
                 }
 
+                // Its receiving made on Post (received with it)
+                await PurchaseReceivingMirror.CancelAsync(
+                    _context,
+                    entity,
+                    reason,
+                    userId,
+                    now);
+
                 await BillOrderAsync(entity, lines, -1, userId, now);
 
                 entity.Status = StatusCancelled;
@@ -5580,6 +5814,22 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             : null;
     }
 
+    // List date filter (yyyy-MM-dd; anything else = no filter)
+    private static DateOnly? ListDate
+    (
+        string? text
+    )
+    {
+        return DateOnly.TryParseExact(
+            (text ?? string.Empty).Trim(),
+            "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out DateOnly date)
+            ? date
+            : null;
+    }
+
     public async Task<AppCore.Application.Common.Paging.PagedResult<PurchaseDto>>
         GetPagedAsync
         (
@@ -5602,6 +5852,28 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         if (supplier != string.Empty)
         {
             query = query.Where(x => x.SupplierCode == supplier);
+        }
+
+        // Purchase date range (before the status counts, so the
+        // counts follow the dates)
+        DateOnly? from =
+            ListDate(request.From);
+
+        DateOnly? to =
+            ListDate(request.To);
+
+        if (from.HasValue)
+        {
+            DateOnly fromDay = from.Value;
+
+            query = query.Where(x => x.PurchaseDate >= fromDay);
+        }
+
+        if (to.HasValue)
+        {
+            DateOnly toDay = to.Value;
+
+            query = query.Where(x => x.PurchaseDate <= toDay);
         }
 
         foreach
@@ -5717,16 +5989,29 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
     public async Task<List<PurchaseListSupplierDto>>
         GetListSuppliersAsync
         (
-            string pageType
+            string pageType,
+            string? status = null
         )
     {
         string type =
             PageOf(pageType).PageType;
 
-        return await _context
-            .Set<THeader>()
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && x.PageType == type && x.SupplierCode != "")
+        IQueryable<THeader> query =
+            _context
+                .Set<THeader>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.PageType == type && x.SupplierCode != "");
+
+        // The list's Status filter : the supplier list follows it
+        string tab =
+            (status ?? string.Empty).Trim().ToLowerInvariant();
+
+        if (tab != string.Empty && tab != "all")
+        {
+            query = query.Where(x => x.Status.ToLower() == tab);
+        }
+
+        return await query
             .GroupBy(x => x.SupplierCode)
             .Select
             (
@@ -5739,6 +6024,59 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             )
             .OrderBy(x => x.SupplierName)
             .ToListAsync();
+    }
+
+
+    //===========================================================
+    // Item summary : the purchase's items in short (list hover
+    // card); motor bikes per model, not per colour
+    //===========================================================
+
+    public async Task<List<PurchaseItemSummaryDto>?>
+        GetItemSummaryAsync
+        (
+            string pageType,
+            Guid publicId
+        )
+    {
+        string type =
+            PageOf(pageType).PageType;
+
+        long? id =
+            await _context
+                .Set<THeader>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.PublicId == publicId && x.PageType == type)
+                .Select(x => (long?)x.PurchaseId)
+                .FirstOrDefaultAsync();
+
+        if (id == null)
+        {
+            return null;
+        }
+
+        List<PurchaseItemSummaryLine> lines =
+            await _context
+                .Set<TLine>()
+                .AsNoTracking()
+                .Where(x => x.PurchaseId == id.Value)
+                .OrderBy(x => x.LineNo)
+                .Select
+                (
+                    x =>
+                        new PurchaseItemSummaryLine
+                        {
+                            ProductType = x.ProductType,
+                            ProductId = x.ProductId,
+                            ProductName = x.ProductName,
+                            Quantity = x.Quantity,
+                            FreeQuantity = x.FreeQuantity,
+                            LineTotal = x.LineTotal
+                        }
+                )
+                .ToListAsync();
+
+        return await PurchaseItemSummary.BuildAsync(_context, lines);
     }
 
 

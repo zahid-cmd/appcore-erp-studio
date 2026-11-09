@@ -73,6 +73,9 @@ export interface Receiving
     GatePassNo:string;
     ReceivedBy:string;
     Remarks:string;
+    // 'Receiving' (made on this page) / 'Purchase' (made by the
+    // purchase, stock received with it : read only here)
+    ReceivedOn:string;
     TotalQuantity:number;
     LineCount:number;
     Status:string;
