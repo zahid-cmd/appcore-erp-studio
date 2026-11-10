@@ -1,0 +1,15 @@
+{
+  "FileName": "DefaultConnection_AppCoreERP-Studio_2026-11-10_160729.backup",
+  "ConnectionName": "DefaultConnection",
+  "Host": "100.117.11.97",
+  "Database": "AppCoreERP_Studio",
+  "SizeBytes": 65130023,
+  "Kind": "Manual",
+  "Note": "Before data reset",
+  "TakenBy": "Zahid",
+  "TakenDate": "2026-11-10T16:10:42.553598+06:00",
+  "ToolsVersion": "18.3",
+  "TakenOn": "MY-ZBOOK",
+  "OnThisPc": true,
+  "OnOtherPc": false
+}

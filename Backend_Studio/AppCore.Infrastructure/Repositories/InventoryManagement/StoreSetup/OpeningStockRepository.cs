@@ -1403,7 +1403,7 @@ public class OpeningStockRepository
                             batteries.Contains(x.BatteryNo.ToUpper())
                         )
                 )
-                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo })
+                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo, x.ProductId })
                 .Take(1000)
                 .ToListAsync();
 
@@ -1426,10 +1426,14 @@ public class OpeningStockRepository
                 });
         }
 
+        // Electric bikes : "Motor No"
+        HashSet<long> electric =
+            await AppCore.Infrastructure.Platform.Inventory.MotorBikePower.ElectricAsync(_context, rows.Select(x => x.ProductId));
+
         foreach (var row in rows)
         {
             Add("ChassisNo", "Chassis No", row.ChassisNo, chassis, row.PurchaseNo);
-            Add("EngineNo", "Engine No", row.EngineNo, engines, row.PurchaseNo);
+            Add("EngineNo", electric.Contains(row.ProductId) ? "Motor No" : "Engine No", row.EngineNo, engines, row.PurchaseNo);
             Add("KeyNo", "Key No", row.KeyNo, keys, row.PurchaseNo);
             Add("BatteryNo", "Battery No", row.BatteryNo, batteries, row.PurchaseNo);
         }
@@ -2064,7 +2068,7 @@ public class OpeningStockRepository
                 if (of.Any(x => x.ChassisNo.Length == 0 || x.EngineNo.Length == 0))
                 {
                     throw new InvalidOperationException(
-                        $"{line.Product.Name} : every bike needs its Chassis No and Engine No.");
+                        $"{line.Product.Name} : every bike needs its Chassis No and {await AppCore.Infrastructure.Platform.Inventory.MotorBikePower.WordAsync(_context, line.Product.Id)} No.");
                 }
 
                 if (!posting)
@@ -2110,7 +2114,7 @@ public class OpeningStockRepository
             string? repeat =
                 Repeat(x => x.ChassisNo, "Chassis No")
                 ??
-                Repeat(x => x.EngineNo, "Engine No")
+                Repeat(x => x.EngineNo, "Engine / Motor No")
                 ??
                 (uniqueKey ? Repeat(x => x.KeyNo, "Key No") : null)
                 ??

@@ -34,6 +34,12 @@ from '../../../../shared/print/print.models';
 
 import
 {
+    bikesNoWord
+}
+from '../../../../core/motor-power/motor-power.service';
+
+import
+{
     VOUCHER_SWITCH
 }
 from '../../../../shared/components/accounting/voucher-switches';
@@ -510,7 +516,7 @@ function noteSheet
             ...(d.Units.length
                 ? [
                     [] as ExcelCell[],
-                    [bold('SL'), bold('Product'), bold('Chassis No'), bold('Engine No'), bold('Key No'), bold('Battery No')] as ExcelCell[],
+                    [bold('SL'), bold('Product'), bold('Chassis No'), bold(`${bikesNoWord(d.Units.map(x => x.ProductId))} No`), bold('Key No'), bold('Battery No')] as ExcelCell[],
                     ...d.Units.map
                     (
                         (u, i): ExcelCell[] =>

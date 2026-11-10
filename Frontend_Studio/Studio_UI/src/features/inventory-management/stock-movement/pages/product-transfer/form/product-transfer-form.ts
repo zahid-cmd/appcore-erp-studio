@@ -23,6 +23,12 @@ from '@angular/core/rxjs-interop';
 
 import
 {
+    MotorPowerService
+}
+from '../../../../../../core/motor-power/motor-power.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -287,6 +293,19 @@ const NO_PLACES:
 export class ProductTransferForm
     implements OnInit
 {
+    // Electric bikes : "Motor" instead of "Engine"
+    readonly power =
+        inject(MotorPowerService);
+
+    // The picked model : 'Motor' (electric) / 'Engine'
+    get pickNoWord():
+        string
+    {
+        this.power.load();
+
+        return this.power.word(this.pickId);
+    }
+
     private readonly service =
         inject(ProductTransferService);
 

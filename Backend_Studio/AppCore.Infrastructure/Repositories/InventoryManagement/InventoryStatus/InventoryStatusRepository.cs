@@ -1668,7 +1668,7 @@ public class InventoryStatusRepository
                             (battery != "" && x.BatteryNo.ToUpper() == battery)
                         )
                 )
-                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo })
+                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo, x.ProductId })
                 .Take(20)
                 .ToListAsync();
 
@@ -1694,10 +1694,14 @@ public class InventoryStatusRepository
                 });
         }
 
+        // Electric bikes : "Motor No"
+        HashSet<long> electric =
+            await AppCore.Infrastructure.Platform.Inventory.MotorBikePower.ElectricAsync(_context, rows.Select(x => x.ProductId));
+
         foreach (var row in rows)
         {
             Add("ChassisNo", "Chassis No", chassis, row.ChassisNo, row.PurchaseNo);
-            Add("EngineNo", "Engine No", engine, row.EngineNo, row.PurchaseNo);
+            Add("EngineNo", electric.Contains(row.ProductId) ? "Motor No" : "Engine No", engine, row.EngineNo, row.PurchaseNo);
             Add("KeyNo", "Key No", key, row.KeyNo, row.PurchaseNo);
             Add("BatteryNo", "Battery No", battery, row.BatteryNo, row.PurchaseNo);
         }
@@ -1795,10 +1799,14 @@ public class InventoryStatusRepository
         BikeNumbers numbers =
             NumbersOf(dto, unit, rules.KeyBatteryOn);
 
+        // Electric bikes : "Motor No"
+        string noWord =
+            await AppCore.Infrastructure.Platform.Inventory.MotorBikePower.WordAsync(_context, unit.ProductId);
+
         if (numbers.Chassis.Length == 0 || numbers.Engine.Length == 0)
         {
             throw new InvalidOperationException(
-                "Chassis No and Engine No are required.");
+                $"Chassis No and {noWord} No are required.");
         }
 
         string oldChassis = unit.ChassisNo;
@@ -1821,7 +1829,7 @@ public class InventoryStatusRepository
         }
 
         Change("Chassis No", oldChassis, numbers.Chassis);
-        Change("Engine No", oldEngine, numbers.Engine);
+        Change($"{noWord} No", oldEngine, numbers.Engine);
         Change("Key No", oldKey, numbers.Key);
         Change("Battery No", oldBattery, numbers.Battery);
 
@@ -2046,7 +2054,7 @@ public class InventoryStatusRepository
         new(@"^(?<name>.*?) \((?<doc>[^()]*?)(?<sold>, sold)?\) : (?<changes>.*?)\.(?: Also updated : (?<also>.*?)\.)?$");
 
     private static readonly System.Text.RegularExpressions.Regex OldBikeChange =
-        new(@"^(?<label>Chassis No|Engine No|Key No|Battery No) (?<before>.*?) -> (?<after>.*)$");
+        new(@"^(?<label>Chassis No|Engine No|Motor No|Key No|Battery No) (?<before>.*?) -> (?<after>.*)$");
 
 
     private static (string Title, string Text)? ReadOldBikeHistory

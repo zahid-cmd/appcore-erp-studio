@@ -153,9 +153,9 @@
 
                     <app-textbox
 
-                        label="Engine No"
+                        [label]="bikeNoWord + ' No'"
 
-                        placeholder="Enter engine no"
+                        [placeholder]="'Enter ' + bikeNoWord.toLowerCase() + ' no'"
 
                         textCase="none"
 

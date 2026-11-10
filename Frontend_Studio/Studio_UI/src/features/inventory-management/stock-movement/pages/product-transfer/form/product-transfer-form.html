@@ -441,7 +441,7 @@
                                 {
                                     <!-- Motor bikes : one bike (chassis || engine) or every bike of the model -->
                                     <app-search-dropdown
-                                        label="Bike (Chassis || Engine)"
+                                        [label]="'Bike (Chassis || ' + pickNoWord + ')'"
                                         badgeField="count"
                                         [placeholder]="unitPlaceholder"
                                         [items]="unitItems"
@@ -905,7 +905,7 @@
                                                             <span class="pt-chassis-list">
                                                                 @for (unit of row.Units; track unit.MotorBikeUnitId)
                                                                 {
-                                                                    <span class="pt-chassis" [title]="'Engine ' + (unit.EngineNo || '—')">
+                                                                    <span class="pt-chassis" [title]="power.word(row.ProductId) + ' ' + (unit.EngineNo || '—')">
                                                                         {{ unit.ChassisNo }}
                                                                         @if (!isView)
                                                                         {

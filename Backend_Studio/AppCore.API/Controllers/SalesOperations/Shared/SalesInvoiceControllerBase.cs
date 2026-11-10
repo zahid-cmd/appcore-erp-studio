@@ -51,6 +51,13 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
     private const string ActivitySpecial =
         "Give Special Discount";
 
+    // Payment term tabs (2026-11-10)
+    private const string ActivityCredit =
+        "Credit Sale";
+
+    private const string ActivityEmi =
+        "EMI Sale";
+
     private readonly ISalesInvoiceRepository _repository;
 
     private readonly IActivityHistoryRepository _activityHistoryRepository;
@@ -156,6 +163,30 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
                    &&
                    dto.InvoiceSpecialValue != 0m
                );
+    }
+
+
+    // The payment term's activity (Credit Sale / EMI Sale); null
+    // when allowed or Cash / old invoices
+    private async Task<IActionResult?> DenyTermAsync
+    (
+        CreateSalesInvoiceDto dto
+    )
+    {
+        string term =
+            (dto.PaymentTerm ?? string.Empty).Trim();
+
+        if (string.Equals(term, "Credit", StringComparison.OrdinalIgnoreCase))
+        {
+            return await DenyAsync(ActivityCredit);
+        }
+
+        if (string.Equals(term, "EMI", StringComparison.OrdinalIgnoreCase))
+        {
+            return await DenyAsync(ActivityEmi);
+        }
+
+        return null;
     }
 
 
@@ -286,6 +317,8 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
                 defaults.CanPost = await HasAsync("Post");
                 defaults.CanCancel = await HasAsync("Cancel");
                 defaults.CanPrint = await HasAsync("Print");
+                defaults.CanCreditSale = await HasAsync(ActivityCredit);
+                defaults.CanEmiSale = await HasAsync(ActivityEmi);
 
                 return Ok(defaults);
             },
@@ -390,6 +423,30 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
     // Customer live search
     //   GET customer-search?q=0171 (phone 1 / 2, name or code)
     //===========================================================
+
+    //===========================================================
+    // MB : the bike's warranty (Warranty Management)
+    //   GET warranty?productId=12&date=2026-11-10
+    //===========================================================
+
+    [HttpGet("warranty")]
+    public Task<IActionResult> GetWarranty(
+        [FromQuery] long productId,
+        [FromQuery] string? date)
+    {
+        return Run(
+            async () =>
+            {
+                SalesInvoiceWarrantyDto? warranty =
+                    await _repository.GetBikeWarrantyAsync(productId, DayOf(date));
+
+                return warranty == null
+                    ? NoContent()
+                    : Ok(warranty);
+            },
+            "Failed to load the warranty.");
+    }
+
 
     [HttpGet("customer-search")]
     public Task<IActionResult> SearchCustomers(
@@ -523,6 +580,14 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
             }
         }
 
+        denied =
+            await DenyTermAsync(dto);
+
+        if (denied != null)
+        {
+            return denied;
+        }
+
         return await Run(
             async () => Ok(await _repository.CreateAsync(dto, true, userId)),
             "Failed to save the sales invoice.");
@@ -568,6 +633,14 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
             {
                 return denied;
             }
+        }
+
+        denied =
+            await DenyTermAsync(dto);
+
+        if (denied != null)
+        {
+            return denied;
         }
 
         return await Run(

@@ -33,6 +33,9 @@ using ProductCategoryEntity =
 using MotorBikesEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.MotorBikes;
 
+using ColorManagementEntity =
+    AppCore.Domain.Entities.Settings.ProductSettings.ColorManagement;
+
 using BikeModelsEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.BikeModels;
 
@@ -362,14 +365,34 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
         List<long> subCategoryIds =
             subCategories.Select(x => x.ProductSubCategoryId).ToList();
 
-        var photos =
+        // Every active colour of the models (Motor Bike records)
+        var colourBikes =
             await _context
                 .Set<MotorBikesEntity>()
                 .AsNoTracking()
-                .Where(x => !x.IsDeleted && x.IsActive && subCategoryIds.Contains(x.ProductSubCategoryId) && x.ImagePath != null && x.ImagePath != "")
+                .Where(x => !x.IsDeleted && x.IsActive && subCategoryIds.Contains(x.ProductSubCategoryId))
                 .OrderBy(x => x.ProductCode)
-                .Select(x => new { x.ProductSubCategoryId, x.ImagePath })
+                .Select(x => new { x.MotorBikeId, x.ProductSubCategoryId, x.ProductCode, x.ColorManagementId, x.ImagePath })
                 .ToListAsync();
+
+        List<long> colourIds =
+            colourBikes.Select(x => x.ColorManagementId).Distinct().ToList();
+
+        Dictionary<long, string> colourNames =
+            await _context
+                .Set<ColorManagementEntity>()
+                .AsNoTracking()
+                .Where(x => colourIds.Contains(x.ColorManagementId))
+                .ToDictionaryAsync(x => x.ColorManagementId, x => x.ColorName ?? string.Empty);
+
+        var photos =
+            colourBikes
+                .Where(x => !string.IsNullOrWhiteSpace(x.ImagePath))
+                .Select(x => new { x.MotorBikeId, x.ProductSubCategoryId, ImagePath = x.ImagePath! })
+                .ToList();
+
+        Dictionary<long, long> modelOfSubCategory =
+            subCategories.ToDictionary(x => x.ProductSubCategoryId, x => x.BikeModelId);
 
         // Specifications : one record per model (the oldest if more)
         Dictionary<long, bool> specsOfModel =
@@ -396,6 +419,32 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
             }
         }
 
+        // The featured colour's photo shows instead (when it has one)
+        foreach (BikeModelsEntity model in models.Where(x => x.FeaturedMotorBikeId.HasValue))
+        {
+            var featured =
+                photos.FirstOrDefault(p => p.MotorBikeId == model.FeaturedMotorBikeId!.Value);
+
+            if (featured != null && modelOfSubCategory.GetValueOrDefault(featured.ProductSubCategoryId) == model.BikeModelId)
+            {
+                photoOfModel[model.BikeModelId] = featured.ImagePath;
+            }
+        }
+
+        Dictionary<long, List<WebsiteBikeColourDto>> coloursOfModel =
+            colourBikes
+                .Where(x => modelOfSubCategory.ContainsKey(x.ProductSubCategoryId))
+                .GroupBy(x => modelOfSubCategory[x.ProductSubCategoryId])
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => new WebsiteBikeColourDto
+                    {
+                        MotorBikeId = x.MotorBikeId,
+                        ProductCode = x.ProductCode ?? string.Empty,
+                        Colour = colourNames.GetValueOrDefault(x.ColorManagementId, string.Empty),
+                        ImagePath = x.ImagePath ?? string.Empty
+                    }).ToList());
+
         return models
             .OrderBy(x => x.DisplayOrder > 0 ? x.DisplayOrder : int.MaxValue)
             .ThenBy(x => brandNames.GetValueOrDefault(x.BrandManagementId, string.Empty))
@@ -417,7 +466,14 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
                         Tagline = x.Tagline ?? string.Empty,
                         Description = x.Description ?? string.Empty,
                         HasSpecs = specsOfModel.ContainsKey(x.BikeModelId),
-                        ShowSpecs = specsOfModel.GetValueOrDefault(x.BikeModelId, false)
+                        ShowSpecs = specsOfModel.GetValueOrDefault(x.BikeModelId, false),
+                        Colours = coloursOfModel.GetValueOrDefault(x.BikeModelId) ?? new List<WebsiteBikeColourDto>(),
+                        // a colour no longer active reads as "first colour"
+                        FeaturedMotorBikeId =
+                            x.FeaturedMotorBikeId.HasValue
+                            && (coloursOfModel.GetValueOrDefault(x.BikeModelId)?.Any(c => c.MotorBikeId == x.FeaturedMotorBikeId.Value) ?? false)
+                                ? x.FeaturedMotorBikeId
+                                : null
                     }
             )
             .ToList();
@@ -784,11 +840,30 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
             spec.ModifiedDate = now;
         }
 
+        // Featured colour : only a colour of the model itself
+        List<long> wantedColours =
+            bikes.Where(x => x.FeaturedMotorBikeId.HasValue).Select(x => x.FeaturedMotorBikeId!.Value).ToList();
+
+        var colourModels =
+            await (
+                from mb in _context.Set<MotorBikesEntity>().AsNoTracking()
+                where wantedColours.Contains(mb.MotorBikeId) && !mb.IsDeleted
+                join sc in _context.Set<ProductSubCategoryEntity>().AsNoTracking()
+                    on mb.ProductSubCategoryId equals sc.ProductSubCategoryId
+                select new { mb.MotorBikeId, sc.BikeModelId }
+            ).ToListAsync();
+
         int order = 0;
 
         foreach (WebsiteBikeDto b in bikes)
         {
             order++;
+
+            long? featuredColour =
+                b.FeaturedMotorBikeId.HasValue
+                && colourModels.Any(c => c.MotorBikeId == b.FeaturedMotorBikeId.Value && c.BikeModelId == b.BikeModelId)
+                    ? b.FeaturedMotorBikeId
+                    : null;
 
             if (!rows.TryGetValue(b.BikeModelId, out BikeModelsEntity? row))
             {
@@ -806,7 +881,8 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
                 || row.IsFeatured != b.IsFeatured
                 || (row.Tagline ?? string.Empty) != tagline
                 || (row.Description ?? string.Empty) != description
-                || row.DisplayOrder != order;
+                || row.DisplayOrder != order
+                || row.FeaturedMotorBikeId != featuredColour;
 
             if (!changed)
             {
@@ -818,6 +894,7 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
             row.Tagline = tagline;
             row.Description = description;
             row.DisplayOrder = order;
+            row.FeaturedMotorBikeId = featuredColour;
             row.ModifiedBy = userId;
             row.ModifiedDate = now;
         }
@@ -1172,8 +1249,8 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
             tabs.Add("EMI");
         }
 
-        if (J(a.Bikes.Select(x => new { x.BikeModelId, x.ShowOnWebsite, x.IsFeatured, x.Tagline, x.Description, ShowSpecs = x.HasSpecs && x.ShowSpecs }))
-            != J(b.Bikes.Select(x => new { x.BikeModelId, x.ShowOnWebsite, x.IsFeatured, Tagline = Clean(x.Tagline), Description = Clean(x.Description), ShowSpecs = x.HasSpecs && x.ShowSpecs })))
+        if (J(a.Bikes.Select(x => new { x.BikeModelId, x.ShowOnWebsite, x.IsFeatured, x.Tagline, x.Description, ShowSpecs = x.HasSpecs && x.ShowSpecs, x.FeaturedMotorBikeId }))
+            != J(b.Bikes.Select(x => new { x.BikeModelId, x.ShowOnWebsite, x.IsFeatured, Tagline = Clean(x.Tagline), Description = Clean(x.Description), ShowSpecs = x.HasSpecs && x.ShowSpecs, x.FeaturedMotorBikeId })))
         {
             tabs.Add("Bikes");
         }

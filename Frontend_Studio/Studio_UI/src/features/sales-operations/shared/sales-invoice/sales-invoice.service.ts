@@ -48,6 +48,7 @@ import
 {
     SalesInvoice,
     SalesInvoiceBikeUnit,
+    SalesInvoiceWarranty,
     SalesInvoiceLine,
     SalesInvoiceAllocation,
     SalesInvoiceListItem,
@@ -353,6 +354,7 @@ export abstract class SalesInvoiceService
             MotorBikeUnitId:this.num(item, 'MotorBikeUnitId') || null,
             ChassisNo:this.text(item, 'ChassisNo'),
             EngineNo:this.text(item, 'EngineNo'),
+            IsElectric:this.bool(item, 'IsElectric'),
             ColorName:this.text(item, 'ColorName'),
             ManufactureYear:this.num(item, 'ManufactureYear') || null,
             CkdStatus:this.text(item, 'CkdStatus'),
@@ -461,6 +463,9 @@ export abstract class SalesInvoiceService
             CustomerIsWalkIn:this.bool(item, 'CustomerIsWalkIn'),
             CustomerTag:this.text(item, 'CustomerTag'),
             SaleType:this.text(item, 'SaleType'),
+            PaymentTerm:this.text(item, 'PaymentTerm'),
+            EmiAccountCode:this.text(item, 'EmiAccountCode'),
+            EmiAccountName:this.text(item, 'EmiAccountName'),
             ReceivableLedgerCode:this.text(item, 'ReceivableLedgerCode'),
             MembershipId:this.optionalId(item, 'MembershipId'),
             MembershipNo:this.text(item, 'MembershipNo'),
@@ -639,6 +644,9 @@ export abstract class SalesInvoiceService
             CanPost:this.bool(item, 'CanPost'),
             CanCancel:this.bool(item, 'CanCancel'),
             CanPrint:this.bool(item, 'CanPrint'),
+            CanCreditSale:this.bool(item, 'CanCreditSale'),
+            CanEmiSale:this.bool(item, 'CanEmiSale'),
+            EmiAvailable:this.bool(item, 'EmiAvailable'),
             VatApplicable:this.bool(item, 'VatApplicable', true),
             VatApplicableSince:this.date(item, 'VatApplicableSince'),
             // Top level first; the switch block as a fallback
@@ -895,6 +903,64 @@ export abstract class SalesInvoiceService
 
     // MB : the bikes in stock in the warehouse (oldest first); the
     // invoice's own bikes are not shown as taken
+    // MB : the bike's warranty (Warranty Management) on the date;
+    // null = no policy
+    getWarranty
+    (
+        productId:
+            number,
+        date:
+            string
+    ):
+        Observable<SalesInvoiceWarranty | null>
+    {
+        const params:
+            Record<string, string> =
+            { productId:String(productId) };
+
+        if (date)
+        {
+            params['date'] = date;
+        }
+
+        return this.http
+            .get<any>(`${this.apiUrl}/warranty`, { params })
+            .pipe(
+                map
+                (
+                    x =>
+                        !x
+                            ? null
+                            : ({
+                                ProductId:this.num(x, 'ProductId'),
+                                BrandName:this.text(x, 'BrandName'),
+                                PolicyCode:this.text(x, 'PolicyCode'),
+                                PolicyName:this.text(x, 'PolicyName'),
+                                ModelPolicy:this.bool(x, 'ModelPolicy'),
+                                EffectiveFrom:this.text(x, 'EffectiveFrom'),
+                                EffectiveTo:this.text(x, 'EffectiveTo'),
+                                PeriodValue:this.num(x, 'PeriodValue'),
+                                PeriodUnit:this.text(x, 'PeriodUnit'),
+                                KmLimit:this.num(x, 'KmLimit') || null,
+                                Terms:this.text(x, 'Terms'),
+                                Exclusions:this.text(x, 'Exclusions'),
+                                Parts:
+                                    ((this.pick(x, 'Parts') ?? []) as any[]).map
+                                    (
+                                        p =>
+                                        ({
+                                            PartName:this.text(p, 'PartName'),
+                                            PeriodValue:this.num(p, 'PeriodValue'),
+                                            PeriodUnit:this.text(p, 'PeriodUnit'),
+                                            KmLimit:this.num(p, 'KmLimit') || null,
+                                            Notes:this.text(p, 'Notes')
+                                        })
+                                    )
+                            })
+                )
+            );
+    }
+
     getBikeUnits
     (
         warehouseId:
@@ -926,6 +992,7 @@ export abstract class SalesInvoiceService
                                 ColorName:this.text(x, 'ColorName'),
                                 ChassisNo:this.text(x, 'ChassisNo'),
                                 EngineNo:this.text(x, 'EngineNo'),
+                                IsElectric:this.bool(x, 'IsElectric'),
                                 KeyNo:this.text(x, 'KeyNo'),
                                 BatteryNo:this.text(x, 'BatteryNo'),
                                 ManufactureYear:this.num(x, 'ManufactureYear') || null,

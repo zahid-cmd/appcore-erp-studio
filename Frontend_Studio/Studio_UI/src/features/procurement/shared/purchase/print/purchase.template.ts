@@ -26,6 +26,12 @@ from '../../../../../shared/components/accounting/accounting.models';
 
 import
 {
+    bikesNoWord
+}
+from '../../../../../core/motor-power/motor-power.service';
+
+import
+{
     ExcelCell,
     ExcelSheet,
     PrintKit,
@@ -375,7 +381,7 @@ ${mrpInvoice ? `<td class="vd-r">${e(line.ProfitPercent)}</td>` : ''}
 </div>
 <table class="pv-split vd-lines po-lines pu-bikes">
   <colgroup><col style="width:9mm"><col><col style="width:45mm"><col style="width:36mm"><col style="width:18mm"><col style="width:32mm"></colgroup>
-  <thead><tr><th class="vd-c">SL</th><th>Motor Bike</th><th>Chassis No</th><th>Engine No</th><th>Key No</th><th>Battery No</th></tr></thead>
+  <thead><tr><th class="vd-c">SL</th><th>Motor Bike</th><th>Chassis No</th><th>${bikesNoWord(bikes.map(x => x.line.ProductId))} No</th><th>Key No</th><th>Battery No</th></tr></thead>
   <tbody>${bikes.map((x, index) => `<tr><td class="vd-c vd-sl">${index + 1}</td><td><div class="vd-main">${e(x.line.ProductName)}</div><div class="vd-sub">${e(x.line.ProductCode)}</div></td><td class="pu-no">${e(x.unit.ChassisNo)}</td><td class="pu-no">${e(x.unit.EngineNo)}</td><td class="pu-no">${e(x.unit.KeyNo || '—')}</td><td class="pu-no">${e(x.unit.BatteryNo || '—')}</td></tr>`).join('')}</tbody>
 </table>`
             : '';

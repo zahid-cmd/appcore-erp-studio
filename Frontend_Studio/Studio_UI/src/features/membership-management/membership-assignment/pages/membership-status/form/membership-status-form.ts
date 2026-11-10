@@ -14,6 +14,12 @@ from '@angular/core';
 
 import
 {
+    MotorPowerService
+}
+from '../../../../../../core/motor-power/motor-power.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -353,6 +359,18 @@ implements OnInit, OnDestroy
     //===========================================================
     // Dependency Injection
     //===========================================================
+
+    // Electric bikes : "Motor No" instead of "Engine No"
+    readonly power =
+        inject(MotorPowerService);
+
+    get bikeNoLabel():
+        string
+    {
+        this.power.load();
+
+        return this.power.label(Number(this.entity?.MotorBikeId) || 0);
+    }
 
     private readonly route =
         inject(ActivatedRoute);
@@ -2846,4 +2864,4 @@ type NumberField =
     | 'FreeServiceCount'
     | 'ServiceInterval'
     | 'MissedServiceGraceDays'
-    | 'MaxMissedServices';
+    | 'MaxMissedServices';

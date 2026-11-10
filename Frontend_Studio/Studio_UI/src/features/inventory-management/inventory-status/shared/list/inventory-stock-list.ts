@@ -8,9 +8,16 @@ import
     Component,
     DestroyRef,
     OnInit,
+    effect,
     inject
 }
 from '@angular/core';
+
+import
+{
+    MotorPowerService
+}
+from '../../../../../core/motor-power/motor-power.service';
 
 import
 {
@@ -316,6 +323,28 @@ implements OnInit
 
     private readonly router =
         inject(Router);
+
+    // Electric bikes : "Motor No" instead of "Engine No"
+    readonly power =
+        inject(MotorPowerService);
+
+    // The list arrives before / after the electric bikes : the
+    // number heading follows them
+    private readonly powerWatch =
+        effect
+        (
+            () =>
+            {
+                this.power.electricIds();
+
+                if ((this.bikes ?? []).length > 0)
+                {
+                    this.buildColumns();
+
+                    this.cdr.detectChanges();
+                }
+            }
+        );
 
     private readonly cdr =
         inject(ChangeDetectorRef);
@@ -790,6 +819,8 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.power.load();
+
         const user =
             this.authStorage.getUser() as any;
 
@@ -1133,7 +1164,7 @@ implements OnInit
     {
         return [
             { key:'ChassisNo', label:'Chassis No', required:true },
-            { key:'EngineNo', label:'Engine No', required:true },
+            { key:'EngineNo', label:this.power.label(this.editBike?.ProductId), required:true },
             ...(this.keyBatteryOn
                 ? [
                     { key:'KeyNo' as InventoryBikeNumberField, label:'Key No', required:false },
@@ -1261,7 +1292,7 @@ implements OnInit
             !this.editForm[field]
         )
         {
-            return `${field === 'ChassisNo' ? 'Chassis No' : 'Engine No'} is required.`;
+            return `${field === 'ChassisNo' ? 'Chassis No' : this.power.label(this.editBike?.ProductId)} is required.`;
         }
 
         return this.editTaken[field] ?? '';
@@ -1660,7 +1691,7 @@ implements OnInit
             { header:'Purchase No', field:'PurchaseNo', width:'205px', align:'left', sortable:true },
             { header:'Stock In', field:'StockInDateText', width:'105px', align:'center', sortable:true },
             { header:'Chassis No', field:'ChassisNo', width:'150px', align:'left', sortable:true },
-            { header:'Engine No', field:'EngineNo', width:'170px', align:'left', sortable:true },
+            { header:`${this.power.wordFor((this.bikes ?? []).map(x => x.ProductId))} No`, field:'EngineNo', width:'170px', align:'left', sortable:true },
             { header:'Key No', field:'KeyNo', width:'85px', align:'left', sortable:true },
             { header:'Battery No', field:'BatteryNo', width:'105px', align:'left', sortable:true },
             ...(this.canViewCost

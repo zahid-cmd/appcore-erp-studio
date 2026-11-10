@@ -22,10 +22,17 @@ import
 {
     Component,
     OnInit,
+    effect,
     inject,
     ChangeDetectorRef
 }
 from '@angular/core';
+
+import
+{
+    MotorPowerService
+}
+from '../../../../../../core/motor-power/motor-power.service';
 
 import
 {
@@ -228,6 +235,42 @@ implements OnInit
     private readonly toast =
         inject(ToastService);
 
+    // Electric bikes : "Motor No" instead of "Engine No"
+    readonly power =
+        inject(MotorPowerService);
+
+    private readonly powerWatch =
+        effect
+        (
+            () =>
+            {
+                this.power.electricIds();
+
+                this.setNoHeading();
+            }
+        );
+
+    // The number column : Motor / Engine / Engine / Motor (mixed)
+    private setNoHeading():
+        void
+    {
+        const word =
+            (this.rows ?? []).length === 0
+                ? 'Engine'
+                : (() =>
+                {
+                    const electric =
+                        this.rows.filter(x => this.power.wordByName(x.ProductName) === 'Motor').length;
+
+                    return electric === 0 ? 'Engine' : electric === this.rows.length ? 'Motor' : 'Engine / Motor';
+                })();
+
+        this.columns =
+            this.columns.map(x => x.field === 'EngineNo' ? { ...x, header:`${word} No` } : x);
+
+        this.cdr.detectChanges();
+    }
+
     private readonly cdr =
         inject(ChangeDetectorRef);
 
@@ -250,8 +293,8 @@ implements OnInit
     readonly tabs:
         ControlTab[] =
         [
-            { id:'No', label:'CKD No' },
-            { id:'Yes', label:'CKD Yes' },
+            { id:'No', label:'Pending' },
+            { id:'Yes', label:'Available' },
             { id:'All', label:'All' }
         ];
 
@@ -385,7 +428,7 @@ implements OnInit
         footerHeight:56
     };
 
-    readonly columns:
+    columns:
         ListTableColumn[] =
     [
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
@@ -410,6 +453,8 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.power.load();
+
         this.loadItems();
     }
 
@@ -464,6 +509,9 @@ implements OnInit
                                 .sort((a, b) => a[1].localeCompare(b[1]))
                                 .map(([value, label]) => ({ label, value }))
                         ];
+
+
+                    this.setNoHeading();
 
                     this.loading = false;
 

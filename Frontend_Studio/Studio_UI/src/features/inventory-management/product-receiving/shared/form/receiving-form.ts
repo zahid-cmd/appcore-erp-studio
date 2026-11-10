@@ -21,6 +21,12 @@ from '@angular/core/rxjs-interop';
 
 import
 {
+    MotorPowerService
+}
+from '../../../../../core/motor-power/motor-power.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -305,6 +311,28 @@ type UnitField =
 export class ReceivingForm
     implements OnInit
 {
+    // Electric bikes : "Motor No" instead of "Engine No"
+    readonly power =
+        inject(MotorPowerService);
+
+    // The desk's bike : 'Motor' (electric) / 'Engine'
+    get deskWord():
+        string
+    {
+        this.power.load();
+
+        return this.power.word(this.desk?.line?.ProductId);
+    }
+
+    // Bikes on the page : 'Motor' / 'Engine' / 'Engine / Motor'
+    get pageNoWord():
+        string
+    {
+        this.power.load();
+
+        return this.power.wordFor(this.lines.map(x => x.ProductId));
+    }
+
     private readonly service =
         inject(ReceivingService);
 
@@ -2453,8 +2481,8 @@ export class ReceivingForm
                 {
                     return {
                         text:this.defaults?.UnitsRequired
-                            ? `${line.ProductName} : enter Chassis, Engine, Key and Battery No of every bike.`
-                            : `${line.ProductName} : enter Chassis No and Engine No of every bike.`,
+                            ? `${line.ProductName} : enter Chassis, ${this.power.word(line.ProductId)}, Key and Battery No of every bike.`
+                            : `${line.ProductName} : enter Chassis No and ${this.power.word(line.ProductId)} No of every bike.`,
                         line
                     };
                 }

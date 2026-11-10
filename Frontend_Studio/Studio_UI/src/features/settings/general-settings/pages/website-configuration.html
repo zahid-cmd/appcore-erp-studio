@@ -529,6 +529,7 @@
                                         <span>Bike model</span>
                                         <span class="wc-c">Show</span>
                                         <span class="wc-c">Featured</span>
+                                        <span>Featured colour</span>
                                         <span class="wc-c">Specs</span>
                                         <span>Tagline</span>
                                         <span>Description</span>
@@ -541,9 +542,9 @@
                                                 <button type="button" aria-label="Move down" title="Down" [disabled]="last" (click)="move(m.bikes, i, 1)"><i class="fa-solid fa-chevron-down"></i></button>
                                             </span>
                                             <span class="wc-bike-photo">
-                                                @if (b.photoPath)
+                                                @if (bikePhoto(b))
                                                 {
-                                                    <img [src]="fileUrl(b.photoPath)" [alt]="b.modelName">
+                                                    <img [src]="fileUrl(bikePhoto(b))" [alt]="b.modelName">
                                                 }
                                                 @else
                                                 {
@@ -556,6 +557,29 @@
                                             </span>
                                             <span class="wc-c"><app-checkbox appearance="switch" color="success" [value]="b.showOnWebsite" (valueChange)="b.showOnWebsite = $event"></app-checkbox></span>
                                             <span class="wc-c"><app-checkbox appearance="switch" color="success" [disabled]="!b.showOnWebsite" [value]="b.isFeatured" (valueChange)="b.isFeatured = $event"></app-checkbox></span>
+                                            <span class="wc-colour">
+                                                @if (b.colours.length)
+                                                {
+                                                    <select
+                                                        class="wc-in"
+                                                        [attr.aria-label]="'Featured colour of ' + b.modelName"
+                                                        title="Its photo shows on the website card and hero"
+                                                        [disabled]="!b.showOnWebsite"
+                                                        (change)="setFeaturedColour(b, $any($event.target).value)">
+                                                        <option value="" [selected]="!b.featuredMotorBikeId">First colour with a photo</option>
+                                                        @for (c of b.colours; track c.motorBikeId)
+                                                        {
+                                                            <option [value]="c.motorBikeId" [selected]="b.featuredMotorBikeId === c.motorBikeId">
+                                                                {{ c.colour || c.productCode }}{{ c.imagePath ? '' : ' (no photo)' }}
+                                                            </option>
+                                                        }
+                                                    </select>
+                                                }
+                                                @else
+                                                {
+                                                    <small class="wc-bike-nospec">No colours</small>
+                                                }
+                                            </span>
                                             <span class="wc-c" [title]="b.hasSpecs ? 'Show the specification sheet on the website' : 'No record in Motor Bike Specifications yet'">
                                                 @if (b.hasSpecs)
                                                 {

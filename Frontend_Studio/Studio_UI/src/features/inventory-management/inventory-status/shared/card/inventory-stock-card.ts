@@ -72,6 +72,12 @@ import
 }
 from '../../../product-ledgers/models/product-ledgers.model';
 
+import
+{
+    MotorPowerService
+}
+from '../../../../../core/motor-power/motor-power.service';
+
 
 type CardTab =
     'batches' | 'ledger' | 'places' | 'bikes';
@@ -105,6 +111,18 @@ implements OnChanges
 {
     private readonly stockService =
         inject(InventoryStockService);
+
+    // Electric bikes : "Motor" instead of "Engine"
+    readonly power =
+        inject(MotorPowerService);
+
+    get bikeNoWord():
+        string
+    {
+        this.power.load();
+
+        return this.power.word(this.productId);
+    }
 
     private readonly cdr =
         inject(ChangeDetectorRef);

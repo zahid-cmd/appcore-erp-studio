@@ -55,7 +55,7 @@
             (click)="toggleTheme()"
             [attr.aria-label]="
                 isLightTheme
-                    ? 'Switch to Deep Theme'
+                    ? 'Switch to Dark Theme'
                     : 'Switch to Light Theme'
             "
         >
@@ -75,7 +75,7 @@
 
 
         <!-- ===================================================
-             Deep Theme
+             Dark Theme
         ==================================================== -->
 
         <button
@@ -83,7 +83,7 @@
             class="theme-option theme-option-deep"
             [class.active]="!isLightTheme"
             (click)="selectDeepTheme()"
-            aria-label="Select Deep Theme"
+            aria-label="Select Dark Theme"
         >
 
             <i
@@ -94,11 +94,11 @@
             <span
                 class="theme-option-label"
             >
-                Deep
+                Dark
             </span>
 
         </button>
 
     </div>
 
-</section>
+</section>

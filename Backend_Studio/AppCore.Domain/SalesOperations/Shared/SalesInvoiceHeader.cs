@@ -75,6 +75,13 @@ public abstract class SalesInvoiceHeader
 
     public string Narration { get; set; } = string.Empty;
 
+    // Payment term (2026-11-10) : Cash / Credit / EMI ('' = saved
+    // before the terms). EMI : the EMI account (EMI Accounts) the
+    // balance is collected through (Receipt Voucher, EMI row).
+    public string PaymentTerm { get; set; } = string.Empty;
+    public string EmiAccountCode { get; set; } = string.Empty;
+    public string EmiAccountName { get; set; } = string.Empty;
+
     // Draft / Approved / Posted / Cancelled
     public string Status { get; set; } = string.Empty;
     // Journal number (= the invoice number once posted)

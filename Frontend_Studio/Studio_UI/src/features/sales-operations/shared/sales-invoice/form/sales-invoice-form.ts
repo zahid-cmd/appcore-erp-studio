@@ -199,6 +199,7 @@ import
     SalesInvoice,
     SalesInvoiceLine,
     SalesInvoiceBikeUnit,
+    SalesInvoiceWarranty,
     SalesInvoiceDefaults,
     SalesInvoiceSwitches,
     SalesInvoiceCustomer,
@@ -334,6 +335,10 @@ interface EntryLine
 
     EngineNo?:
         string;
+
+    // Electric : a motor number ("Motor No")
+    IsElectric?:
+        boolean;
 
     ColorName?:
         string;
@@ -573,7 +578,7 @@ implements OnInit, OnDestroy
         if (this.actionErrorText)
         {
             this.toast.error(
-                this.page.title,
+                this.page.fullTitle,
                 this.actionErrorText);
         }
     }
@@ -648,9 +653,20 @@ implements OnInit, OnDestroy
         number =
         0;
 
+    // Customer card minimized : only the name row shows
+    customerCollapsed =
+        false;
+
     customer:
         SalesInvoiceCustomer | null =
         null;
+
+    // Items are added only after the customer is picked
+    get hasCustomer():
+        boolean
+    {
+        return !!this.customer && this.customer.CustomerId > 0;
+    }
 
     customerLoading:
         boolean =
@@ -1287,13 +1303,13 @@ implements OnInit, OnDestroy
         )
         {
             case 'add':
-                return `Add ${this.page.title}`;
+                return this.page.fullTitle;
 
             case 'edit':
-                return `Update ${this.page.title}`;
+                return `Update ${this.page.fullTitle}`;
 
             default:
-                return `View ${this.page.title}`;
+                return `View ${this.page.fullTitle}`;
         }
     }
 
@@ -1342,6 +1358,8 @@ implements OnInit, OnDestroy
                         this.setInitialState();
 
                         this.loadPaymentSetup();
+
+                        this.pickReturnedCustomer();
                     },
 
                 error:
@@ -1451,6 +1469,12 @@ implements OnInit, OnDestroy
         this.saleType =
             'Regular';
 
+        this.paymentTerm =
+            'Cash';
+
+        this.emiAccountCode =
+            '';
+
         this.loadProductList();
     }
 
@@ -1462,7 +1486,7 @@ implements OnInit, OnDestroy
         if (this.branchBlocked)
         {
             this.toast.error(
-                this.page.title,
+                this.page.fullTitle,
                 this.branchBlockMessage);
 
             return;
@@ -1471,7 +1495,7 @@ implements OnInit, OnDestroy
         if (this.periodError)
         {
             this.toast.warning(
-                this.page.title,
+                this.page.fullTitle,
                 this.periodError);
         }
     }
@@ -1726,6 +1750,21 @@ implements OnInit, OnDestroy
                 ? 'Corporate'
                 : 'Regular';
 
+        // Payment term ('' = saved before the terms : by the balance)
+        this.paymentTerm =
+            invoice.PaymentTerm === 'EMI' || invoice.PaymentTerm === 'Credit' || invoice.PaymentTerm === 'Cash'
+                ? invoice.PaymentTerm
+                : (invoice.DueAmount > 0 ? 'Credit' : 'Cash');
+
+        this.emiAccountCode =
+            invoice.EmiAccountCode ?? '';
+
+        this.emiAccountName =
+            invoice.EmiAccountName ?? '';
+
+        // An item added : the customer card minimizes (more room)
+        if (this.customer && invoice.Lines.length > 0) { this.customerCollapsed = true; }
+
         this.lines =
             invoice.Lines.map
             (
@@ -1811,6 +1850,7 @@ implements OnInit, OnDestroy
             MotorBikeUnitId:line.MotorBikeUnitId ?? null,
             ChassisNo:line.ChassisNo ?? '',
             EngineNo:line.EngineNo ?? '',
+            IsElectric:!!line.IsElectric,
             ColorName:line.ColorName ?? '',
             ManufactureYear:line.ManufactureYear ?? null,
             CkdStatus:line.CkdStatus ?? ''
@@ -2486,6 +2526,110 @@ implements OnInit, OnDestroy
         this.findCustomer();
     }
 
+    //===========================================================
+    // New customer : Customer Profiles opens with a returnUrl
+    // (Motor Bikes : Inbound; Spare Parts / Accessories : Outside);
+    // after saving it comes back with ?customerPhone=
+    //===========================================================
+
+    openNewCustomer():
+        void
+    {
+        if (!this.isEditable || this.customer)
+        {
+            return;
+        }
+
+        const back =
+            this.router.url.split('?')[0];
+
+        const phone =
+            isCustomerPhone(this.phoneText)
+                ? this.phoneText
+                : '';
+
+        void this.router.navigate(
+            [
+                '/settings/client-settings/customer-profiles/add'
+            ],
+            {
+                queryParams:
+                {
+                    type:
+                        this.newCustomerType,
+
+                    returnUrl:
+                        back,
+
+                    phone:
+                        phone || null
+                }
+            }
+        );
+    }
+
+    get newCustomerType():
+        'Inbound' | 'Outside'
+    {
+        return this.isBikes
+            ? 'Inbound'
+            : 'Outside';
+    }
+
+    // Add mode only : picks the customer just saved, then removes
+    // ?customerPhone= from the address bar
+    private pickReturnedCustomer():
+        void
+    {
+        const phone =
+            String(
+                this.route.snapshot.queryParamMap.get('customerPhone')
+                ??
+                ''
+            ).trim();
+
+        if (!phone)
+        {
+            return;
+        }
+
+        void this.router.navigate(
+            [],
+            {
+                relativeTo:
+                    this.route,
+
+                queryParams:
+                {
+                    customerPhone:
+                        null
+                },
+
+                queryParamsHandling:
+                    'merge',
+
+                replaceUrl:
+                    true
+            }
+        );
+
+        if (!isCustomerPhone(phone) || !this.isEditable)
+        {
+            return;
+        }
+
+        this.customerQuery =
+            phone;
+
+        this.phoneText =
+            phone;
+
+        this.lookedUpPhone =
+            '';
+
+        this.findCustomer();
+    }
+
     customerTypeLabel
     (
         item:
@@ -2640,6 +2784,9 @@ implements OnInit, OnDestroy
     clearCustomer():
         void
     {
+        this.customerCollapsed =
+            false;
+
         if
         (
             this.isReadonly
@@ -4004,7 +4151,7 @@ implements OnInit, OnDestroy
             (
                 x =>
                 ({
-                    label:`${x.ChassisNo} · ${x.EngineNo}${x.ManufactureYear ? ' · ' + x.ManufactureYear : ''}`,
+                    label:`${x.ChassisNo} · ${x.IsElectric ? 'Motor ' : ''}${x.EngineNo}${x.ManufactureYear ? ' · ' + x.ManufactureYear : ''}`,
                     value:x.MotorBikeUnitId,
                     badge:x.OnInvoiceNo ? `on ${x.OnInvoiceNo}` : `CKD ${x.CkdStatus}`,
                     disabled:!!x.OnInvoiceNo
@@ -4017,6 +4164,88 @@ implements OnInit, OnDestroy
     {
         return this.bikeUnits.find(x => x.MotorBikeUnitId === this.bikeUnitId) ?? null;
     }
+
+    //===========================================================
+    // MB : warranty of the picked bike (brand Service Policy),
+    // loaded once per model and kept
+    //===========================================================
+
+    private warranties:
+        Map<number, SalesInvoiceWarranty | null> =
+        new Map();
+
+    private warrantyLoading:
+        Set<number> =
+        new Set();
+
+    warrantyOf
+    (
+        productId:
+            number
+    ):
+        SalesInvoiceWarranty | null | undefined
+    {
+        if (!(productId > 0))
+        {
+            return null;
+        }
+
+        if (this.warranties.has(productId))
+        {
+            return this.warranties.get(productId);
+        }
+
+        if (!this.warrantyLoading.has(productId))
+        {
+            this.warrantyLoading.add(productId);
+
+            this.salesInvoiceService
+                .getWarranty(productId, this.invoiceDate ? String(this.invoiceDate) : '')
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe
+                ({
+                    next:
+                        warranty =>
+                        {
+                            this.warranties.set(productId, warranty);
+                            this.warrantyLoading.delete(productId);
+                            this.refresh();
+                        },
+
+                    error:
+                        () =>
+                        {
+                            this.warranties.set(productId, null);
+                            this.warrantyLoading.delete(productId);
+                            this.refresh();
+                        }
+                });
+        }
+
+        return undefined;
+    }
+
+    // "2 Years / 20,000 km" ; '' when nothing is set
+    warrantyText
+    (
+        w:
+            { PeriodValue:number; PeriodUnit:string; KmLimit:number | null }
+    ):
+        string
+    {
+        const unit =
+            w.PeriodValue === 1 ? (w.PeriodUnit || '').replace(/s$/, '') : w.PeriodUnit;
+
+        const parts =
+            [
+                w.PeriodValue > 0 ? `${w.PeriodValue} ${unit}` : '',
+                (w.KmLimit ?? 0) > 0 ? `${(w.KmLimit ?? 0).toLocaleString('en-US')} km` : ''
+            ]
+            .filter(x => x);
+
+        return parts.join(' / ');
+    }
+
 
     get bikeFreeCount():
         number
@@ -4130,6 +4359,11 @@ implements OnInit, OnDestroy
     addBike():
         void
     {
+        if (!this.hasCustomer)
+        {
+            return;
+        }
+
         if
         (
             this.isReadonly
@@ -4169,6 +4403,9 @@ implements OnInit, OnDestroy
 
             return;
         }
+
+        // An item added : the customer card minimizes (more room)
+        if (this.customer) { this.customerCollapsed = true; }
 
         this.lines =
         [
@@ -4281,18 +4518,292 @@ implements OnInit, OnDestroy
         return m ? `${m[3]}-${months[Number(m[2]) - 1]}-${m[1]}` : iso;
     }
 
+    //===========================================================
+    // Payment term (2026-11-10) : Cash / Credit / EMI
+    //   Cash   : fully paid through Checkout
+    //   Credit : the balance to the receivable (Allow Credit Sale,
+    //            "Credit Sale" activity, not walk-in)
+    //   EMI    : MB; the balance is collected through the chosen
+    //            EMI account (Receipt Voucher, EMI row) - other
+    //            modes still take the down payment ("EMI Sale")
+    // A tab the switch / permission / customer closes is disabled.
+    //===========================================================
+
+    paymentTerm:
+        'Cash' | 'Credit' | 'EMI' =
+        'Cash';
+
+    emiAccountCode:
+        string =
+        '';
+
+    emiAccountName:
+        string =
+        '';
+
+    // Why Credit is closed ('' = open)
+    get creditBlockText():
+        string
+    {
+        if (!this.switches?.AllowCreditSale)
+        {
+            return 'Credit sales are OFF (System Configuration › Allow Credit Sale).';
+        }
+
+        if (!this.defaults?.CanCreditSale)
+        {
+            return 'You do not have the "Credit Sale" permission on this page.';
+        }
+
+        if (this.customer?.IsWalkIn)
+        {
+            return 'Walk-in customers are cash only.';
+        }
+
+        return '';
+    }
+
+    // Why EMI is closed ('' = open)
+    get emiBlockText():
+        string
+    {
+        if (!this.defaults?.EmiAvailable)
+        {
+            return 'EMI : only motor bikes are sold on EMI.';
+        }
+
+        if (!this.defaults?.CanEmiSale)
+        {
+            return 'You do not have the "EMI Sale" permission on this page.';
+        }
+
+        if (this.customer?.IsWalkIn)
+        {
+            return 'EMI needs a named customer (not walk-in).';
+        }
+
+        return '';
+    }
+
+    get termItems():
+        ControlSegmentItem[]
+    {
+        return [
+            { value:'Cash', text:'Cash' },
+            { value:'Credit', text:'Credit', disabled:this.paymentTerm !== 'Credit' && !!this.creditBlockText },
+            { value:'EMI', text:'EMI', disabled:this.paymentTerm !== 'EMI' && !!this.emiBlockText }
+        ];
+    }
+
+    get termTitle():
+        string
+    {
+        const notes =
+            [
+                'Cash : fully paid through Checkout',
+                this.creditBlockText ? `Credit : ${this.creditBlockText}` : 'Credit : the balance goes to the customer receivable',
+                this.emiBlockText ? `EMI : ${this.emiBlockText}` : 'EMI : the balance is collected through the EMI account; take the down payment on Checkout'
+            ];
+
+        return notes.join('\n');
+    }
+
+    // EMI accounts (EMI Setup) : active, collection, branch rule
+    get emiItems():
+        SelectItem[]
+    {
+        const branch =
+            this.branchName.trim().toUpperCase();
+
+        return this.ledgers
+            .filter
+            (
+                ledger =>
+                    ledger.LedgerType === 'EMI'
+                    &&
+                    ledger.CollectionAccount
+                    &&
+                    ledger.IsActive
+                    &&
+                    (!ledger.BranchExclusive || (ledger.Branch ?? '').trim().toUpperCase() === branch)
+            )
+            .sort((a, b) => a.LedgerName.localeCompare(b.LedgerName))
+            .map(ledger => ({ label:ledger.LedgerName, value:ledger.LedgerCode }));
+    }
+
+    get emiPlaceholder():
+        string
+    {
+        return !this.ledgersLoaded
+            ? 'Loading EMI accounts...'
+            : this.emiItems.length
+                ? 'Choose the EMI account (required)'
+                : 'No EMI account for this branch (EMI Setup)';
+    }
+
+    // The term's line under the header ('' = none)
+    get termHint():
+        string
+    {
+        if (!this.isEditable)
+        {
+            return this.paymentTerm === 'EMI' && this.emiAccountName
+                ? `EMI through ${this.emiAccountName}.`
+                : '';
+        }
+
+        const due =
+            this.figures.Due;
+
+        if (this.paymentTerm === 'Cash')
+        {
+            return due > 0 && this.lines.length > 0
+                ? `Cash sale : collect the full amount through Checkout (${formatMoney(due)} left).`
+                : '';
+        }
+
+        if (this.paymentTerm === 'Credit')
+        {
+            return this.creditBlockText
+                ? this.creditBlockText
+                : due > 0
+                    ? `Credit : ${formatMoney(due)} goes to the customer's receivable.`
+                    : 'Credit : leave the balance unpaid on Checkout.';
+        }
+
+        if (this.emiBlockText)
+        {
+            return this.emiBlockText;
+        }
+
+        if (!this.emiAccountCode)
+        {
+            return 'EMI : choose the EMI account; take the down payment (if any) on Checkout.';
+        }
+
+        return due > 0
+            ? `EMI : ${formatMoney(due)} is collected through ${this.emiAccountName || 'the EMI account'} (Receipt Voucher).`
+            : 'EMI : nothing is left for EMI - take less on Checkout, or choose Cash.';
+    }
+
+    get termHintBad():
+        boolean
+    {
+        if (!this.isEditable)
+        {
+            return false;
+        }
+
+        return (this.paymentTerm === 'Cash' && this.figures.Due > 0 && this.lines.length > 0)
+            || (this.paymentTerm === 'Credit' && !!this.creditBlockText)
+            || (this.paymentTerm === 'EMI' && (!!this.emiBlockText || !this.emiAccountCode || !(this.figures.Due > 0)));
+    }
+
+    // One hint line under the header : a problem first (term,
+    // then sale type), else the term's note, else the sale type's
+    get headHint():
+        string
+    {
+        const sale =
+            this.showSaleType ? this.saleTypeHint : '';
+
+        if (this.termHintBad && this.termHint)
+        {
+            return this.termHint;
+        }
+
+        if (sale && this.saleTypeHintBad)
+        {
+            return sale;
+        }
+
+        return this.termHint || sale;
+    }
+
+    get headHintBad():
+        boolean
+    {
+        return (this.termHintBad && !!this.termHint)
+            || (!!this.saleTypeHint && this.showSaleType && this.saleTypeHintBad);
+    }
+
+    onTermChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        const next =
+            value === 'Credit' || value === 'EMI'
+                ? value
+                : 'Cash';
+
+        if (this.isReadonly || next === this.paymentTerm)
+        {
+            this.refresh();
+
+            return;
+        }
+
+        const blocked =
+            next === 'Credit' ? this.creditBlockText
+            : next === 'EMI' ? this.emiBlockText
+            : '';
+
+        if (blocked)
+        {
+            this.toast.error(next === 'EMI' ? 'EMI Sale' : 'Credit Sale', blocked);
+
+            this.refresh();
+
+            return;
+        }
+
+        this.paymentTerm =
+            next;
+
+        if (next === 'EMI')
+        {
+            this.loadPaymentSetup();
+
+            const items =
+                this.emiItems;
+
+            if (!this.emiAccountCode && items.length === 1)
+            {
+                this.emiAccountCode = items[0].value;
+                this.emiAccountName = items[0].label;
+            }
+        }
+
+        this.onChanged();
+    }
+
+    onEmiAccountChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.emiAccountCode =
+            String(value ?? '');
+
+        this.emiAccountName =
+            this.emiItems.find(x => x.value === this.emiAccountCode)?.label ?? '';
+
+        this.onChanged();
+    }
+
     // The tab is shown when the switch is ON (or the invoice is
     // already Corporate)
     get showSaleType():
         boolean
     {
-        return this.isBikes
-            &&
-            (
-                !!this.switches?.AllowCorporateSale
-                ||
-                this.saleType === 'Corporate'
-            );
+        // Always on Motor Bikes : Corporate is greyed out (with the
+        // reason on hover) while the switch / window closes it
+        return this.isBikes;
     }
 
     get saleTypeItems():
@@ -4430,6 +4941,7 @@ implements OnInit, OnDestroy
             MotorBikeUnitId:unit.MotorBikeUnitId,
             ChassisNo:unit.ChassisNo,
             EngineNo:unit.EngineNo,
+            IsElectric:!!unit.IsElectric,
             ColorName:unit.ColorName,
             ManufactureYear:unit.ManufactureYear,
             CkdStatus:unit.CkdStatus
@@ -4465,6 +4977,11 @@ implements OnInit, OnDestroy
     openBikeShelf():
         void
     {
+        if (!this.hasCustomer)
+        {
+            return;
+        }
+
         if (this.isReadonly || this.bikeUnitsLoading)
         {
             return;
@@ -4530,6 +5047,9 @@ implements OnInit, OnDestroy
 
         if (added.length > 0)
         {
+            // An item added : the customer card minimizes (more room)
+            if (this.customer) { this.customerCollapsed = true; }
+
             this.lines =
             [
                 ...this.lines,
@@ -4739,6 +5259,11 @@ implements OnInit, OnDestroy
     onAddLine():
         void
     {
+        if (!this.hasCustomer)
+        {
+            return;
+        }
+
         if
         (
             this.isReadonly
@@ -4835,6 +5360,9 @@ implements OnInit, OnDestroy
         }
         else
         {
+            // An item added : the customer card minimizes (more room)
+            if (this.customer) { this.customerCollapsed = true; }
+
             this.lines =
             [
                 ...this.lines,
@@ -5513,7 +6041,7 @@ implements OnInit, OnDestroy
                                 this.errorText(error, 'The prices could not be worked out. Check the lines and try again.');
 
                             this.toast.error(
-                                this.page.title,
+                                this.page.fullTitle,
                                 this.quoteFailed);
 
                             this.refresh();
@@ -5622,11 +6150,11 @@ implements OnInit, OnDestroy
 
             if (message.error)
             {
-                this.toast.error(this.page.title, message.text);
+                this.toast.error(this.page.fullTitle, message.text);
             }
             else
             {
-                this.toast.warning(this.page.title, message.text);
+                this.toast.warning(this.page.fullTitle, message.text);
             }
         }
 
@@ -5841,11 +6369,19 @@ implements OnInit, OnDestroy
     get dueBlocked():
         boolean
     {
+        // EMI : the balance is the EMI part (not credit)
+        if (this.paymentTerm === 'EMI')
+        {
+            return false;
+        }
+
         return this.isEditable
             &&
             this.figures.Due > 0
             &&
             (
+                this.paymentTerm === 'Cash'
+                ||
                 !!this.customer?.IsWalkIn
                 ||
                 !this.switches?.AllowCreditSale
@@ -5863,7 +6399,9 @@ implements OnInit, OnDestroy
         const allowed =
             VOUCHER_MODES.receipt as string[];
 
-        return this.page.paymentModes.filter(mode => allowed.includes(mode));
+        // EMI is not a receipt on the invoice : the EMI term leaves
+        // the balance for the EMI account (Receipt Voucher)
+        return this.page.paymentModes.filter(mode => allowed.includes(mode) && mode !== 'EMI');
     }
 
     onCheckout():
@@ -6030,7 +6568,11 @@ implements OnInit, OnDestroy
         }
 
         return this.deskRemaining > 0
-            ? `Paid ${formatMoney(this.deskTotal)} · balance ${formatMoney(this.deskRemaining)} on credit.`
+            ? this.paymentTerm === 'EMI'
+                ? `Down payment ${formatMoney(this.deskTotal)} · ${formatMoney(this.deskRemaining)} through EMI.`
+                : this.paymentTerm === 'Cash'
+                    ? `Paid ${formatMoney(this.deskTotal)} · ${formatMoney(this.deskRemaining)} still to collect (cash sale).`
+                    : `Paid ${formatMoney(this.deskTotal)} · balance ${formatMoney(this.deskRemaining)} on credit.`
             : 'Fully paid. Press Okay, then Save.';
     }
 
@@ -6636,7 +7178,9 @@ implements OnInit, OnDestroy
             InvoiceSpecialValue:special > 0 ? special : 0,
             Payments:this.payments.map(row => this.paymentRow(row)),
             Narration:toAsciiText(this.narration).replace(/[\r\n]+/g, ' ').trim().substring(0, 500),
-            SaleType:this.isBikes ? this.saleType : ''
+            SaleType:this.isBikes ? this.saleType : '',
+            PaymentTerm:this.paymentTerm,
+            EmiAccountCode:this.paymentTerm === 'EMI' ? this.emiAccountCode : ''
         };
     }
 

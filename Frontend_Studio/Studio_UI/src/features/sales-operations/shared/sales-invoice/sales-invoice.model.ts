@@ -170,6 +170,9 @@ export interface SalesInvoiceLine
         string;
     EngineNo?:
         string;
+    // Electric : a motor number ("Motor No")
+    IsElectric?:
+        boolean;
     ColorName?:
         string;
     ManufactureYear?:
@@ -502,6 +505,14 @@ export interface SalesInvoiceDefaults
         boolean;
     CanPrint:
         boolean;
+    // Payment term tabs : "Credit Sale" / "EMI Sale" activities;
+    // EmiAvailable = the page takes EMI (MB)
+    CanCreditSale?:
+        boolean;
+    CanEmiSale?:
+        boolean;
+    EmiAvailable?:
+        boolean;
     VatApplicable:
         boolean;
     VatApplicableSince:
@@ -672,6 +683,13 @@ export interface SalesInvoice
         string;
     // MB : Regular / Corporate; others ''
     SaleType:
+        string;
+    // Cash / Credit / EMI ('' = before the terms)
+    PaymentTerm?:
+        string;
+    EmiAccountCode?:
+        string;
+    EmiAccountName?:
         string;
     ReceivableLedgerCode:
         string;
@@ -874,6 +892,11 @@ export interface CreateSalesInvoice
     // MB : Regular / Corporate; others ''
     SaleType:
         string;
+    // Cash / Credit / EMI ; EMI : the EMI account
+    PaymentTerm?:
+        string;
+    EmiAccountCode?:
+        string;
 }
 
 export interface UpdateSalesInvoice
@@ -1011,6 +1034,9 @@ export interface SalesInvoiceBikeUnit
         string;
     EngineNo:
         string;
+    // Electric : a motor number ("Motor No")
+    IsElectric?:
+        boolean;
     // From the purchase / receiving ('' = not kept)
     KeyNo?:
         string;
@@ -1032,4 +1058,53 @@ export interface SalesInvoiceBikeUnit
     // Picture of the model (full URL; '' = none) : the shelf
     ImageUrl:
         string;
+}
+
+
+// MB : the bike's warranty (Warranty Management › Warranty
+// Configuration : the policy in force on the date)
+export interface SalesInvoiceWarrantyPart
+{
+    PartName:
+        string;
+    PeriodValue:
+        number;
+    // Days / Months / Years
+    PeriodUnit:
+        string;
+    KmLimit:
+        number | null;
+    Notes:
+        string;
+}
+
+export interface SalesInvoiceWarranty
+{
+    ProductId:
+        number;
+    BrandName:
+        string;
+    PolicyCode:
+        string;
+    PolicyName:
+        string;
+    // true : the model's own policy (else the brand's)
+    ModelPolicy:
+        boolean;
+    EffectiveFrom:
+        string;
+    EffectiveTo:
+        string;
+    PeriodValue:
+        number;
+    PeriodUnit:
+        string;
+    KmLimit:
+        number | null;
+    Terms:
+        string;
+    Exclusions:
+        string;
+    Parts:
+        SalesInvoiceWarrantyPart[];
 }

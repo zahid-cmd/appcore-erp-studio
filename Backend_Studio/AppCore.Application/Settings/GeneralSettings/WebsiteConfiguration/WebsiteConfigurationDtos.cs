@@ -178,6 +178,20 @@ public class WebsiteBikeDto
     // Motor Bike Specifications : is there a record, and is it shown
     public bool HasSpecs { get; set; }
     public bool ShowSpecs { get; set; }
+    // Featured colour : shown on the card and hero (null = first
+    // colour with a photo); the model's colours to choose from
+    public long? FeaturedMotorBikeId { get; set; }
+    public List<WebsiteBikeColourDto> Colours { get; set; } = new();
+}
+
+
+// A colour of a bike model (one Motor Bike record)
+public class WebsiteBikeColourDto
+{
+    public long MotorBikeId { get; set; }
+    public string ProductCode { get; set; } = string.Empty;
+    public string Colour { get; set; } = string.Empty;
+    public string ImagePath { get; set; } = string.Empty;
 }
 
 

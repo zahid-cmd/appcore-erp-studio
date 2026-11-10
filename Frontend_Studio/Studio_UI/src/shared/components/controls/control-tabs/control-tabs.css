@@ -238,3 +238,181 @@
         flex-shrink: 0;
     }
 }
+
+/* =====================================================
+   HOST : takes the toolbar's width so the tabs can be
+   measured (2026-11-10)
+===================================================== */
+
+:host
+{
+    display: block;
+
+    position: relative;
+
+    min-width: 0;
+
+    max-width: 100%;
+}
+
+
+/* =====================================================
+   MORE : the tabs that do not fit
+===================================================== */
+
+.control-more
+{
+    position: relative;
+}
+
+.control-more-btn
+{
+    gap: 6px;
+}
+
+.control-more-btn .control-tab-label
+{
+    gap: 6px;
+}
+
+.control-more-count
+{
+    min-width: 18px;
+
+    height: 18px;
+
+    padding: 0 5px;
+
+    border-radius: 999px;
+
+    background: #e0ecff;
+
+    color: #1d4ed8;
+
+    font-size: 11px;
+
+    line-height: 18px;
+
+    text-align: center;
+}
+
+.control-more-caret
+{
+    font-size: 10px;
+
+    transition: transform .2s ease;
+}
+
+.control-more-caret.open
+{
+    transform: rotate(180deg);
+}
+
+.control-more-menu
+{
+    position: fixed;
+
+    z-index: 1300;
+
+    display: flex;
+
+    flex-direction: column;
+
+    min-width: 200px;
+
+    padding: 6px;
+
+    border: 1px solid #d9e2ec;
+
+    border-radius: 12px;
+
+    background: #ffffff;
+
+    box-shadow: 0 16px 36px rgba(15, 23, 42, .16);
+}
+
+.control-more-item
+{
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    height: 34px;
+
+    padding: 0 12px;
+
+    border: 0;
+
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #334155;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    text-align: left;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+}
+
+.control-more-item:hover:not(:disabled)
+{
+    background: #f1f5ff;
+
+    color: #1d4ed8;
+}
+
+.control-more-item.active
+{
+    background: #e8efff;
+
+    color: #1e3a8a;
+}
+
+.control-more-item i
+{
+    font-size: 11px;
+}
+
+.control-more-item:disabled
+{
+    opacity: .5;
+
+    cursor: not-allowed;
+}
+
+
+/* Hidden measuring row */
+
+.control-tabs-measure
+{
+    position: absolute;
+
+    top: 0;
+
+    left: 0;
+
+    display: flex;
+
+    gap: 8px;
+
+    height: 0;
+
+    overflow: hidden;
+
+    visibility: hidden;
+
+    pointer-events: none;
+}
+
+.control-tabs-measure .control-tab
+{
+    width: auto;
+}

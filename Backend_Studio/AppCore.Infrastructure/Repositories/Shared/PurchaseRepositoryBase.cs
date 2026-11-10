@@ -1243,9 +1243,13 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                             batteries.Contains(x.BatteryNo.ToUpper())
                         )
                 )
-                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo })
+                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo, x.ProductId })
                 .Take(500)
                 .ToListAsync();
+
+        // Electric bikes : "Motor No"
+        HashSet<long> electric =
+            await AppCore.Infrastructure.Platform.Inventory.MotorBikePower.ElectricAsync(_context, rows.Select(x => x.ProductId));
 
         void Add(string field, string label, string? value, List<string> typed, string purchaseNo)
         {
@@ -1270,7 +1274,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
         foreach (var row in rows)
         {
             Add("ChassisNo", "Chassis No", row.ChassisNo, chassis, row.PurchaseNo);
-            Add("EngineNo", "Engine No", row.EngineNo, engines, row.PurchaseNo);
+            Add("EngineNo", electric.Contains(row.ProductId) ? "Motor No" : "Engine No", row.EngineNo, engines, row.PurchaseNo);
             Add("KeyNo", "Key No", row.KeyNo, keys, row.PurchaseNo);
             Add("BatteryNo", "Battery No", row.BatteryNo, batteries, row.PurchaseNo);
         }
@@ -3127,7 +3131,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                         row.Units,
                         row.Quantity + row.FreeQuantity,
                         label,
-                        keyBattery);
+                        keyBattery,
+                        await AppCore.Infrastructure.Platform.Inventory.MotorBikePower.WordAsync(_context, product.ProductId));
             }
         }
 
@@ -3229,7 +3234,8 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             List<PurchaseUnitDto>? rows,
             decimal bikes,
             string label,
-            bool keyBattery
+            bool keyBattery,
+            string noWord = "Engine"
         )
     {
         List<PurchaseUnitDto> result =
@@ -3274,7 +3280,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             if (result[i].ChassisNo.Length == 0 || result[i].EngineNo.Length == 0)
             {
                 throw new InvalidOperationException(
-                    $"{label}, bike {i + 1} : Chassis No and Engine No are required.");
+                    $"{label}, bike {i + 1} : Chassis No and {noWord} No are required.");
             }
         }
 
@@ -3320,7 +3326,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
 
         Repeats(x => x.ChassisNo, "Chassis No");
 
-        Repeats(x => x.EngineNo, "Engine No");
+        Repeats(x => x.EngineNo, "Engine / Motor No");
 
         if (uniqueKey)
         {
@@ -3361,7 +3367,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                             batteries.Contains(x.BatteryNo.ToUpper())
                         )
                 )
-                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo })
+                .Select(x => new { x.ChassisNo, x.EngineNo, x.KeyNo, x.BatteryNo, x.PurchaseNo, x.ProductId })
                 .FirstOrDefaultAsync();
 
         if (clash != null)
@@ -3370,7 +3376,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                 chassis.Contains(clash.ChassisNo.ToUpper())
                     ? $"Chassis No {clash.ChassisNo}"
                     : engines.Contains(clash.EngineNo.ToUpper())
-                        ? $"Engine No {clash.EngineNo}"
+                        ? $"{await AppCore.Infrastructure.Platform.Inventory.MotorBikePower.WordAsync(_context, clash.ProductId)} No {clash.EngineNo}"
                         : keys.Contains(clash.KeyNo.ToUpper())
                             ? $"Key No {clash.KeyNo}"
                             : $"Battery No {clash.BatteryNo}";
@@ -4567,13 +4573,13 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
             if (mine.Count != bikes)
             {
                 throw new InvalidOperationException(
-                    $"Line {line.LineNo} ({line.ProductName}) : {mine.Count} of {bikes:0} bikes entered on the Unit Desk. Every bike needs its Chassis No and Engine No.");
+                    $"Line {line.LineNo} ({line.ProductName}) : {mine.Count} of {bikes:0} bikes entered on the Unit Desk. Every bike needs its Chassis No and {await AppCore.Infrastructure.Platform.Inventory.MotorBikePower.WordAsync(_context, line.ProductId)} No.");
             }
 
             if (keyBattery && mine.Any(x => x.KeyNo.Length == 0 || x.BatteryNo.Length == 0))
             {
                 throw new InvalidOperationException(
-                    $"Line {line.LineNo} ({line.ProductName}) : every bike needs Chassis, Engine, Key and Battery No (System Configuration › Key & Battery Required is ON).");
+                    $"Line {line.LineNo} ({line.ProductName}) : every bike needs Chassis, {await AppCore.Infrastructure.Platform.Inventory.MotorBikePower.WordAsync(_context, line.ProductId)}, Key and Battery No (System Configuration › Key & Battery Required is ON).");
             }
         }
     }

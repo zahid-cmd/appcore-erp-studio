@@ -20,6 +20,12 @@ from '@angular/core/rxjs-interop';
 
 import
 {
+    MotorPowerService
+}
+from '../../../../../../core/motor-power/motor-power.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -318,6 +324,28 @@ interface ImportResult
 export class OpeningStockForm
     implements OnInit
 {
+    // Electric bikes : "Motor No" instead of "Engine No"
+    readonly power =
+        inject(MotorPowerService);
+
+    // The desk's bike : 'Motor' (electric) / 'Engine'
+    get deskWord():
+        string
+    {
+        this.power.load();
+
+        return this.power.word(this.desk?.line?.ProductId);
+    }
+
+    // Bikes on the page : 'Motor' / 'Engine' / 'Engine / Motor'
+    get pageNoWord():
+        string
+    {
+        this.power.load();
+
+        return this.power.wordFor(this.lines.map(x => x.ProductId));
+    }
+
     private readonly service =
         inject(OpeningStockService);
 
@@ -3288,15 +3316,16 @@ export class OpeningStockForm
                     const chassis =
                         cell('Chassis No').toUpperCase();
 
+                    // Electric bikes : the "Motor No" column is taken too
                     const engine =
-                        cell('Engine No').toUpperCase();
+                        (cell('Engine No') || cell('Motor No')).toUpperCase();
 
                     if
                     (
                         !chassis || !engine
                     )
                     {
-                        errors.push(`${at} : ${product.Code} needs the Chassis No and Engine No.`);
+                        errors.push(`${at} : ${product.Code} needs the Chassis No and ${this.power.word(product.Id)} No.`);
 
                         if
                         (
@@ -3551,7 +3580,7 @@ export class OpeningStockForm
                     half
                 )
                 {
-                    return `${line.ProductName} : a bike has only some of its numbers. Enter its Chassis No and Engine No, or clear the row.`;
+                    return `${line.ProductName} : a bike has only some of its numbers. Enter its Chassis No and ${this.power.word(line.ProductId)} No, or clear the row.`;
                 }
 
                 if
@@ -3560,8 +3589,8 @@ export class OpeningStockForm
                 )
                 {
                     return this.keyBattery
-                        ? `${line.ProductName} : enter Chassis, Engine, Key and Battery No of every bike.`
-                        : `${line.ProductName} : enter Chassis No and Engine No of every bike.`;
+                        ? `${line.ProductName} : enter Chassis, ${this.power.word(line.ProductId)}, Key and Battery No of every bike.`
+                        : `${line.ProductName} : enter Chassis No and ${this.power.word(line.ProductId)} No of every bike.`;
                 }
 
                 for (const unit of line.Units)

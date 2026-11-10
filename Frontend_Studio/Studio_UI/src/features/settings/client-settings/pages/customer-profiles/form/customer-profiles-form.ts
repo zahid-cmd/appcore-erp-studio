@@ -1092,6 +1092,23 @@ implements OnInit, OnDestroy
 
         this.savedType =
             type;
+        // ?phone= from a sale page (first open only, not Clear)
+        if (!startType)
+        {
+            const phone =
+                this.digitsOnly(
+                    this.route.snapshot.queryParamMap.get('phone') ?? '',
+                    11
+                );
+
+            if (/^01[0-9]{9}$/.test(phone))
+            {
+                this.entity.Phone1 =
+                    phone;
+
+                this.refreshDisplayName();
+            }
+        }
 
         this.selectedTab =
             type === 'Outside'
@@ -2606,6 +2623,9 @@ implements OnInit, OnDestroy
             CreateCustomer =
             this.buildPayload();
 
+        const savedPhone =
+            this.entity.Phone1;
+
         this.isSaving =
             true;
 
@@ -2656,6 +2676,20 @@ implements OnInit, OnDestroy
                             'created',
                             photoSaved
                         );
+
+                        // Opened from a sale page : back there with
+                        // this customer picked
+                        if (this.returnUrl)
+                        {
+                            this.hasChanges =
+                                false;
+
+                            this.leaveToReturnUrl(
+                                savedPhone
+                            );
+
+                            return;
+                        }
 
                         this.onBackToList();
                     }
@@ -3101,6 +3135,78 @@ implements OnInit, OnDestroy
     // Back To List
     //===========================================================
 
+    //===========================================================
+    // Return Url : ?returnUrl=/sales-operations/... when the form
+    // is opened from a sale page (internal paths only)
+    //===========================================================
+
+    get returnUrl():
+        string
+    {
+        const url =
+            String(
+                this.route.snapshot.queryParamMap.get('returnUrl')
+                ??
+                ''
+            ).trim();
+
+        return url.startsWith('/') && !url.startsWith('//')
+            ? url
+            : '';
+    }
+
+    // phone : the saved customer's Phone 1 ('' = cancelled)
+    private leaveToReturnUrl
+    (
+        phone:
+            string
+    ):
+        void
+    {
+        const tree =
+            this.router.parseUrl(
+                this.returnUrl
+            );
+
+        if (phone)
+        {
+            tree.queryParams =
+            {
+                ...tree.queryParams,
+
+                customerPhone:
+                    phone
+            };
+        }
+
+        void this.router.navigateByUrl(
+            tree
+        );
+    }
+
+    private goBack():
+        void
+    {
+        if (this.returnUrl)
+        {
+            this.leaveToReturnUrl(
+                ''
+            );
+
+            return;
+        }
+
+        void this.router.navigate(
+            [
+                'list'
+            ],
+            {
+                relativeTo:
+                    this.route.parent
+            }
+        );
+    }
+
     onBackToList():
         void
     {
@@ -3117,15 +3223,7 @@ implements OnInit, OnDestroy
             !this.hasChanges
         )
         {
-            void this.router.navigate(
-                [
-                    'list'
-                ],
-                {
-                    relativeTo:
-                        this.route.parent
-                }
-            );
+            this.goBack();
 
             return;
         }
@@ -3135,15 +3233,7 @@ implements OnInit, OnDestroy
             'Any unsaved changes will be lost. Do you want to leave this page?',
             () =>
             {
-                void this.router.navigate(
-                    [
-                        'list'
-                    ],
-                    {
-                        relativeTo:
-                            this.route.parent
-                    }
-                );
+                this.goBack();
             },
             'Leave',
             'Stay',

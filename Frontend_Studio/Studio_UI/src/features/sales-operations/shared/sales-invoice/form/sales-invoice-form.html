@@ -381,7 +381,7 @@
 
                                     class="si-sale-type"
 
-                                    [title]="corporateBlockText || 'Regular : one chassis per invoice · Corporate : several chassis for a Corporate / Institution customer'">
+                                    [title]="corporateBlockText ? 'Corporate : ' + corporateBlockText : 'Regular : one chassis per invoice · Corporate : several chassis for a Corporate / Institution customer'">
 
                                     <app-control-segment
 
@@ -400,15 +400,68 @@
                                 </div>
                             }
 
+                            <!-- Payment term : Cash / Credit / EMI (a closed
+                                 tab is greyed out; the reason on hover) -->
+                            <div
+
+                                class="si-term"
+
+                                [class.si-term-alone]="!showSaleType"
+
+                                [title]="termTitle">
+
+                                <app-control-segment
+
+                                    name="si-term"
+
+                                    [items]="termItems"
+
+                                    [value]="paymentTerm"
+
+                                    [disabled]="isReadonly"
+
+                                    (valueChange)="onTermChange($event)">
+
+                                </app-control-segment>
+
+                            </div>
+
                         </div>
 
-                        @if (showSaleType && saleTypeHint)
+                        <!-- EMI : the EMI account the balance goes through -->
+                        @if (paymentTerm === 'EMI' && isEditable)
                         {
-                            <div class="si-sale-hint" [class.si-sale-hint-bad]="saleTypeHintBad">
+                            <div class="si-emi-pick">
 
-                                <i [class]="saleTypeHintBad ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+                                <i class="fas fa-credit-card"></i>
 
-                                {{ saleTypeHint }}
+                                <app-search-dropdown
+
+                                    class="si-emi-account"
+
+                                    [placeholder]="emiPlaceholder"
+
+                                    [items]="emiItems"
+
+                                    [value]="emiAccountCode || null"
+
+                                    [required]="true"
+
+                                    (valueChange)="onEmiAccountChange($event)">
+
+                                </app-search-dropdown>
+
+                            </div>
+                        }
+
+                        <!-- One line : the sale type or the term (a problem first) -->
+                        @if (headHint)
+                        {
+                            <div class="si-sale-hint" [class.si-sale-hint-bad]="headHintBad">
+
+                                <i [class]="headHintBad ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                                {{ headHint }}
 
                             </div>
                         }
@@ -488,7 +541,7 @@
 
                     <!-- 2. CUSTOMER : phone -> card / Add Customer -->
 
-                    <div class="si-card">
+                    <div class="si-card si-cust-card" [class.si-cust-min]="customer && customerCollapsed">
 
                         <div class="si-card-header">
 
@@ -513,13 +566,38 @@
                                 </button>
                             }
 
+                            <!-- Minimize : only the customer name row stays -->
+                            @if (customer)
+                            {
+                                <button
+                                    type="button"
+                                    class="si-cust-toggle"
+                                    [class.si-cust-toggle-alone]="!isEditable"
+                                    [title]="customerCollapsed ? 'Show the customer details' : 'Minimize : show only the customer name'"
+                                    (click)="customerCollapsed = !customerCollapsed">
+                                    <i class="fas" [class.fa-chevron-down]="customerCollapsed" [class.fa-chevron-up]="!customerCollapsed"></i>
+                                </button>
+                            }
+
                         </div>
+
+                        <!-- View : the minimized card keeps a name line -->
+                        @if (customer && customerCollapsed && !isEditable)
+                        {
+                            <div class="si-cust-mini">
+                                <i class="fa-regular fa-user"></i>
+                                <strong [title]="customer.DisplayName">{{ customer.DisplayName || customer.Name }}</strong>
+                                <span>{{ customer.CustomerCode }}{{ customer.Phone ? ' · ' + customer.Phone : '' }}</span>
+                            </div>
+                        }
 
                         @if (isEditable)
                         {
                             <div
 
                                 class="si-fields si-cust-search"
+
+                                [class.si-cust-has-add]="!customer"
 
                                 (keydown)="onCustomerKey($event)">
 
@@ -546,6 +624,27 @@
                                     (blur)="onCustomerBlur()">
 
                                 </app-textbox>
+
+                                @if (!customer)
+                                {
+                                    <!-- New customer : Customer Profiles (MB Inbound,
+                                         SP / AC Outside), back here picked -->
+                                    <button
+
+                                        type="button"
+
+                                        class="si-cust-new"
+
+                                        [title]="'New customer (Customer Profiles - ' + newCustomerType + ') : after saving you come back here with the customer picked'"
+
+                                        (mousedown)="$event.preventDefault()"
+
+                                        (click)="openNewCustomer()">
+
+                                        <i class="fas fa-plus"></i>
+
+                                    </button>
+                                }
 
                                 @if (customerSearching || customerLoading)
                                 {
@@ -634,7 +733,7 @@
                         <!-- Fixed-height slot : empty state / not found /
                              Add Customer / the picked customer's card -->
 
-                        <div class="si-cust-slot">
+                        <div class="si-cust-slot" [class.si-cust-slot-hidden]="customer && customerCollapsed">
 
                             @if (customer)
                             {
@@ -831,7 +930,9 @@
 
                                     <strong>{{ customerMessage }}</strong>
 
-                                    @if (canAddWalkIn && isEditable)
+                                    <!-- Walk-in allowed : quick add here; otherwise
+                                         (Motor Bikes, or walk-in off) Customer Profiles -->
+                                    @if (isEditable)
                                     {
                                         <button
 
@@ -839,7 +940,9 @@
 
                                             class="si-btn si-btn-primary si-btn-sm"
 
-                                            (click)="openWalkIn()">
+                                            [title]="canAddWalkIn ? 'Quick add a walk-in customer with this phone' : 'Open Customer Profiles (' + newCustomerType + ') with this phone : you come back here with the customer picked'"
+
+                                            (click)="canAddWalkIn ? openWalkIn() : openNewCustomer()">
 
                                             <i class="fas fa-user-plus"></i>
 
@@ -873,7 +976,7 @@
                     @if (isEditable && isBikes)
                     {
                         <!-- MB : model -> colour -> chassis (one bike per line) -->
-                        <div class="si-card si-add-card">
+                        <div class="si-card si-add-card" [class.si-add-locked]="!hasCustomer">
 
                             <div class="si-card-header">
 
@@ -891,7 +994,7 @@
 
                                     title="Motor Bike Shelf : pick several chassis at once"
 
-                                    [disabled]="bikeUnitsLoading || bikeFreeCount === 0"
+                                    [disabled]="!hasCustomer || bikeUnitsLoading || bikeFreeCount === 0"
 
                                     (click)="openBikeShelf()">
 
@@ -909,6 +1012,8 @@
 
                                     title="Clear the model, colour and chassis"
 
+                                    [disabled]="!hasCustomer"
+
                                     (click)="clearBikeEntry()">
 
                                     <i class="fas fa-eraser"></i>
@@ -923,7 +1028,7 @@
 
                                     class="si-add"
 
-                                    [disabled]="!pickedBike || pickedOnInvoice"
+                                    [disabled]="!hasCustomer || !pickedBike || pickedOnInvoice"
 
                                     (click)="addBike()">
 
@@ -935,7 +1040,7 @@
 
                             </div>
 
-                            <div class="si-fields si-grid-2 si-filter-fields">
+                            <div class="si-fields si-grid-2 si-filter-fields" [attr.inert]="hasCustomer ? null : ''">
 
                                 <app-search-dropdown
 
@@ -975,11 +1080,11 @@
 
                             </div>
 
-                            <div class="si-fields si-product-field">
+                            <div class="si-fields si-product-field" [attr.inert]="hasCustomer ? null : ''">
 
                                 <app-search-dropdown
 
-                                    placeholder="Chassis · Engine · Year (oldest first)"
+                                    placeholder="Chassis · Engine / Motor · Year (oldest first)"
 
                                     title="Chassis"
 
@@ -1013,6 +1118,64 @@
 
                                         </span>
 
+                                        <!-- Warranty (Warranty Management : the
+                                             policy in force) on hover -->
+                                        @let w = warrantyOf(b.ProductId);
+                                        <span class="si-warranty" [class.si-warranty-none]="w === null">
+
+                                            <i class="fas fa-shield-halved"></i>
+
+                                            @if (w)
+                                            {
+                                                <span class="si-warranty-tip">
+
+                                                    <span class="si-wt-head">
+                                                        <i class="fas fa-shield-halved"></i>
+                                                        {{ w.PolicyName || 'Warranty' }}
+                                                        <em>{{ w.PolicyCode }}</em>
+                                                    </span>
+
+                                                    <span class="si-wt-sub">{{ w.BrandName }}{{ w.ModelPolicy ? ' · this model' : ' · all models' }} · from {{ w.EffectiveFrom }}{{ w.EffectiveTo ? ' to ' + w.EffectiveTo : '' }}</span>
+
+                                                    <span class="si-wt-big">{{ warrantyText(w) || 'No period set' }}</span>
+
+                                                    <span class="si-wt-sub">Whole bike · whichever comes first</span>
+
+                                                    @if (w.Parts.length)
+                                                    {
+                                                        <span class="si-wt-list">
+                                                            @for (pt of w.Parts; track pt.PartName)
+                                                            {
+                                                                <span class="si-wt-row" [title]="pt.Notes">
+                                                                    <b class="si-wt-free"><i class="fas fa-check"></i></b>
+                                                                    <span>{{ pt.PartName }}</span>
+                                                                    <i>{{ warrantyText(pt) }}</i>
+                                                                </span>
+                                                            }
+                                                        </span>
+                                                    }
+
+                                                    @if (w.Exclusions)
+                                                    {
+                                                        <span class="si-wt-note"><b>Not covered :</b> {{ w.Exclusions }}</span>
+                                                    }
+
+                                                    @if (w.Terms)
+                                                    {
+                                                        <span class="si-wt-note"><b>Terms :</b> {{ w.Terms }}</span>
+                                                    }
+
+                                                </span>
+                                            }
+                                            @else
+                                            {
+                                                <span class="si-warranty-tip si-wt-empty">
+                                                    {{ w === null ? 'No warranty policy in force for this bike (Warranty Management › Warranty Configuration).' : 'Loading the warranty...' }}
+                                                </span>
+                                            }
+
+                                        </span>
+
                                         @if (pickedOnInvoice)
                                         {
                                             <span class="si-pb-tag">
@@ -1042,7 +1205,7 @@
 
                                             <div class="si-pb-no">
 
-                                                <span>Engine No</span>
+                                                <span>{{ b.IsElectric ? 'Motor No' : 'Engine No' }}</span>
 
                                                 <b>{{ b.EngineNo }}</b>
 
@@ -1111,7 +1274,7 @@
 
                                     <i class="fas fa-circle-info"></i>
 
-                                    {{ bikeUnitsLoading ? 'Loading the bikes in stock...' : bikeFreeCount + ' priced bike' + (bikeFreeCount === 1 ? '' : 's') + ' in stock here : pick the model, then the colour (the oldest chassis comes first), or open the Shelf.' + (unpricedBikeCount > 0 ? ' ' + unpricedBikeCount + ' not priced (left out).' : '') }}
+                                    {{ !hasCustomer ? 'Pick the customer first : the model, colour and Shelf open after that.' : bikeUnitsLoading ? 'Loading the bikes in stock...' : bikeFreeCount + ' priced bike' + (bikeFreeCount === 1 ? '' : 's') + ' in stock here : pick the model, then the colour (the oldest chassis comes first), or open the Shelf.' + (unpricedBikeCount > 0 ? ' ' + unpricedBikeCount + ' not priced (left out).' : '') }}
 
                                 </div>
                             }
@@ -1120,7 +1283,7 @@
                     }
                     @else if (isEditable)
                     {
-                            <div class="si-card si-add-card">
+                            <div class="si-card si-add-card" [class.si-add-locked]="!hasCustomer">
 
                                 <div class="si-card-header">
 
@@ -1136,6 +1299,8 @@
 
                                         title="Clear the category, search and quantity"
 
+                                        [disabled]="!hasCustomer"
+
                                         (click)="clearAddSection()">
 
                                         <i class="fas fa-eraser"></i>
@@ -1150,7 +1315,7 @@
 
                                         class="si-add"
 
-                                        [disabled]="!selectedProduct"
+                                        [disabled]="!hasCustomer || !selectedProduct"
 
                                         (click)="onAddLine()">
 
@@ -1162,7 +1327,7 @@
 
                                 </div>
 
-                                <div class="si-fields si-add-fields">
+                                <div class="si-fields si-add-fields" [attr.inert]="hasCustomer ? null : ''">
 
                                     <div
 
@@ -1287,10 +1452,21 @@
 
                                 </div>
 
+                                @if (!hasCustomer)
+                                {
+                                    <div class="si-bike-hint">
+
+                                        <i class="fas fa-circle-info"></i>
+
+                                        Pick the customer first : search and add open after that.
+
+                                    </div>
+                                }
+
                                 <!-- Category / sub category narrow the search;
                                      a scanned batch label ignores them -->
 
-                                <div class="si-fields si-grid-2 si-filter-fields">
+                                <div class="si-fields si-grid-2 si-filter-fields" [attr.inert]="hasCustomer ? null : ''">
 
                                     <app-search-dropdown
 
@@ -1327,7 +1503,7 @@
                                 <!-- Manual pick : the narrowed area's items;
                                      picking fills the search box -->
 
-                                <div class="si-fields si-product-field">
+                                <div class="si-fields si-product-field" [attr.inert]="hasCustomer ? null : ''">
 
                                     <app-search-dropdown
 
@@ -1520,7 +1696,7 @@
                                                 {
                                                     <div class="si-bike-line">
                                                         <span>Chassis <b>{{ row.entry.ChassisNo }}</b></span>
-                                                        <span>Engine <b>{{ row.entry.EngineNo }}</b></span>
+                                                        <span>{{ row.entry.IsElectric ? 'Motor' : 'Engine' }} <b>{{ row.entry.EngineNo }}</b></span>
                                                         @if (row.entry.ManufactureYear)
                                                         {
                                                             <span>Year <b>{{ row.entry.ManufactureYear }}</b></span>

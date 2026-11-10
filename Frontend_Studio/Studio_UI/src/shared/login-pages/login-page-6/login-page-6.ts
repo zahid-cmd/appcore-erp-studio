@@ -387,6 +387,10 @@ export class LoginPage6
     private loadBrandLogos():
         void
     {
+        // Show the last known logos at once (saved in this
+        // browser); the fresh list below replaces them.
+        this.readPoweredByCache();
+
         this.http
             .get<any>(
                 `${environment.apiUrl}/public/website`
@@ -462,21 +466,91 @@ export class LoginPage6
                         this.poweredByChecked =
                             true;
 
+                        this.writePoweredByCache();
+
                         this.changeDetectorRef.detectChanges();
                     },
 
                 error:
                     () =>
                     {
-                        this.poweredByConfig =
-                            null;
-
+                        // keep the saved logos when the call fails
                         this.poweredByChecked =
                             true;
 
                         this.changeDetectorRef.detectChanges();
                     }
             });
+    }
+
+
+    /* =========================================================
+       POWERED BY CACHE (this browser only)
+       ---------------------------------------------------------
+       The public website call is large, so the logos used to
+       appear late. The last list is kept in localStorage and
+       shown straight away on the next visit.
+    ========================================================= */
+
+    private static readonly poweredByCacheKey =
+        'appcore.login6.poweredBy';
+
+    private readPoweredByCache():
+        void
+    {
+        try
+        {
+            const raw =
+                localStorage.getItem(
+                    LoginPage6.poweredByCacheKey
+                );
+
+            if (!raw)
+            {
+                return;
+            }
+
+            const config =
+                JSON.parse(raw) as LoginPagePoweredByConfig | null;
+
+            if (config && Array.isArray(config.logos) && config.logos.length > 0)
+            {
+                this.poweredByConfig =
+                    config;
+
+                this.poweredByChecked =
+                    true;
+            }
+        }
+        catch
+        {
+            // storage blocked or bad data : wait for the call
+        }
+    }
+
+    private writePoweredByCache():
+        void
+    {
+        try
+        {
+            if (this.poweredByConfig)
+            {
+                localStorage.setItem(
+                    LoginPage6.poweredByCacheKey,
+                    JSON.stringify(this.poweredByConfig)
+                );
+            }
+            else
+            {
+                localStorage.removeItem(
+                    LoginPage6.poweredByCacheKey
+                );
+            }
+        }
+        catch
+        {
+            // storage blocked : nothing to keep
+        }
     }
 
 

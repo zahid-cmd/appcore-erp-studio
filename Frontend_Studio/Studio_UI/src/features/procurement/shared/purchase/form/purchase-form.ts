@@ -21,6 +21,12 @@ from '@angular/core/rxjs-interop';
 
 import
 {
+    MotorPowerService
+}
+from '../../../../../core/motor-power/motor-power.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -468,6 +474,10 @@ implements OnInit, OnDestroy
     //===========================================================
     // Dependency Injection
     //===========================================================
+
+    // Electric bikes : "Motor No" instead of "Engine No"
+    readonly power =
+        inject(MotorPowerService);
 
     private readonly route =
         inject(ActivatedRoute);
@@ -7937,6 +7947,32 @@ implements OnInit, OnDestroy
     }
 
     // The item of a desk row ("Motor Bikes - REVOO - A04 - Black")
+    // The bikes on the desk : 'Motor' (electric) / 'Engine' /
+    // 'Engine / Motor' (mixed, "All" list)
+    get unitNoWord():
+        string
+    {
+        this.power.load();
+
+        const ids =
+            this.unitAll
+                ? this.unitDeskLines.map(i => this.lines[i]?.ProductId)
+                : [this.unitLine?.ProductId];
+
+        return this.power.wordFor(ids);
+    }
+
+    // One row's bike : 'Motor' / 'Engine'
+    unitRowWord
+    (
+        index:
+            number
+    ):
+        string
+    {
+        return this.power.word(this.unitRowItem(index)?.ProductId);
+    }
+
     unitRowItem
     (
         index:
@@ -8636,7 +8672,7 @@ implements OnInit, OnDestroy
                 (!row.ChassisNo || !row.EngineNo)
             )
             {
-                return `${this.unitRowLabel(i)} : Chassis No and Engine No are required.`;
+                return `${this.unitRowLabel(i)} : Chassis No and ${this.unitRowWord(i)} No are required.`;
             }
 
             if
@@ -8663,7 +8699,7 @@ implements OnInit, OnDestroy
             ['ChassisNo' | 'EngineNo' | 'KeyNo' | 'BatteryNo', string, boolean][] =
             [
                 ['ChassisNo', 'Chassis No', true],
-                ['EngineNo', 'Engine No', true],
+                ['EngineNo', `${this.unitNoWord} No`, true],
                 ['KeyNo', 'Key No', this.unitsRequired && switchOn(this.switches, this.page.switches.UNIQUE_KEY_NO, false)],
                 ['BatteryNo', 'Battery No', this.unitsRequired && switchOn(this.switches, this.page.switches.UNIQUE_BATTERY_NO, false)]
             ];
@@ -9871,7 +9907,7 @@ implements OnInit, OnDestroy
         void
     {
         const match =
-            /(Chassis|Engine|Key|Battery) No (.+?) is (already on purchase .+|entered on more than one bike)/
+            /(Chassis|Engine \/ Motor|Engine|Motor|Key|Battery) No (.+?) is (already on purchase .+|entered on more than one bike)/
                 .exec(message ?? '');
 
         if
@@ -9882,8 +9918,9 @@ implements OnInit, OnDestroy
             return;
         }
 
+        // Motor No (electric bikes) is the EngineNo field
         const field =
-            `${match[1]}No` as UnitField;
+            (match[1] === 'Chassis' || match[1] === 'Key' || match[1] === 'Battery' ? `${match[1]}No` : 'EngineNo') as UnitField;
 
         const value =
             match[2].trim().toUpperCase();

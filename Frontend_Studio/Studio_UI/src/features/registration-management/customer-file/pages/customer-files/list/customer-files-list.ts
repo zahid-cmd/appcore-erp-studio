@@ -45,6 +45,12 @@ from '@angular/core';
 
 import
 {
+    MotorPowerService
+}
+from '../../../../../../core/motor-power/motor-power.service';
+
+import
+{
     HttpErrorResponse
 }
 from '@angular/common/http';
@@ -370,6 +376,32 @@ type LookupOption =
 export class CustomerFilesList
 implements OnInit
 {
+    // Electric bikes : "Motor No" instead of "Engine No"
+    readonly power =
+        inject(MotorPowerService);
+
+    // The bike chosen on the file form : 'Motor' / 'Engine'
+    get bikeNoWord():
+        string
+    {
+        this.power.load();
+
+        return this.power.word(this.bikeId);
+    }
+
+    // A file : its Vehicle Power (Electric) or its bike
+    fileNoWord
+    (
+        f:
+            { VehiclePower?:string; MotorBikeId?:number } | null | undefined
+    ):
+        string
+    {
+        return f?.VehiclePower === 'Electric' || this.power.isElectric(f?.MotorBikeId)
+            ? 'Motor'
+            : 'Engine';
+    }
+
     private readonly service =
         inject(CustomerFilesService);
 
@@ -599,7 +631,7 @@ implements OnInit
     // Columns and row actions
     //===========================================================
 
-    private readonly fileColumns:
+    private fileColumns:
         ListTableColumn[] =
     [
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
@@ -789,6 +821,19 @@ implements OnInit
                                 CustomerText:x.CurrentCustomerName,
                                 TransfersText:x.TransferCount ? String(x.TransferCount) : '—'
                             }));
+
+                    // The number column : Motor (all electric) / Engine /
+                    // Engine / Motor (mixed)
+                    {
+                        const electric =
+                            this.fileRows.filter(x => x.VehiclePower === 'Electric').length;
+
+                        const word =
+                            electric === 0 ? 'Engine' : electric === this.fileRows.length ? 'Motor' : 'Engine / Motor';
+
+                        this.fileColumns =
+                            this.fileColumns.map(c => c.field === 'EngineNo' ? { ...c, header:`${word} No` } : c);
+                    }
 
                     this.transferRows =
                         data.Transfers.map(
@@ -2156,7 +2201,7 @@ implements OnInit
             !fileDate ? 'Enter the File Date.'
             : !this.bikeId ? 'Choose the motor bike.'
             : !this.chassisNo.trim() ? 'Enter the Chassis No.'
-            : !this.engineNo.trim() ? 'Enter the Engine No.'
+            : !this.engineNo.trim() ? `Enter the ${this.bikeNoWord} No.`
             : !this.customerId ? 'Choose the customer.'
             : '';
 

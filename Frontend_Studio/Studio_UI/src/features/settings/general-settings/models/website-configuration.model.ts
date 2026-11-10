@@ -128,6 +128,19 @@ export interface WebsiteBike
     // Motor Bike Specifications record : exists / shown on the website
     hasSpecs:boolean;
     showSpecs:boolean;
+    // Featured colour : its photo on the card and hero (null = the
+    // first colour with a photo); the model's colours
+    featuredMotorBikeId:number | null;
+    colours:WebsiteBikeColour[];
+}
+
+// A colour of a bike model (one Motor Bike record)
+export interface WebsiteBikeColour
+{
+    motorBikeId:number;
+    productCode:string;
+    colour:string;
+    imagePath:string;
 }
 
 export interface WebsiteCompanyInfo

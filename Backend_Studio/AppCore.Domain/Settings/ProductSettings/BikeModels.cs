@@ -63,6 +63,11 @@ public class BikeModels
 
     public bool IsFeatured { get; set; }
 
+    // Featured colour (2026-11-10) : the Motor Bike (colour) whose
+    // photo shows on the website's card and hero; null = the first
+    // colour with a photo
+    public long? FeaturedMotorBikeId { get; set; }
+
     // One line on the bike card
     public string Tagline { get; set; } = string.Empty;
 

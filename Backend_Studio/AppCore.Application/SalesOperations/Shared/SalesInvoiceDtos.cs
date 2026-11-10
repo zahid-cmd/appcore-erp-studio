@@ -55,6 +55,14 @@ public class CreateSalesInvoiceDto
     // MB : Regular (one chassis) / Corporate (several; switch
     // 0073 and a Corporate / Institution customer). Others : ''
     public string SaleType { get; set; } = string.Empty;
+
+    // Cash (fully paid) / Credit (balance to the receivable :
+    // Allow Credit Sale + "Credit Sale" activity) / EMI (MB : the
+    // balance collected through EmiAccountCode; "EMI Sale"
+    // activity). '' = old rule (balance = credit)
+    public string PaymentTerm { get; set; } = string.Empty;
+
+    public string EmiAccountCode { get; set; } = string.Empty;
 }
 
 
@@ -316,6 +324,9 @@ public class SalesInvoiceLineDto
     public string ChassisNo { get; set; } = string.Empty;
 
     public string EngineNo { get; set; } = string.Empty;
+
+    // Electric : a motor number (label "Motor No")
+    public bool IsElectric { get; set; }
 
     public string ColorName { get; set; } = string.Empty;
 
@@ -662,6 +673,14 @@ public class SalesInvoiceDefaultsDto
 
     public bool CanPrint { get; set; }
 
+    // Payment term tabs : the user's "Credit Sale" / "EMI Sale"
+    // activities; EmiAvailable = the page takes EMI (MB)
+    public bool CanCreditSale { get; set; }
+
+    public bool CanEmiSale { get; set; }
+
+    public bool EmiAvailable { get; set; }
+
     // Sales VAT Applicable on the date
     public bool VatApplicable { get; set; } = true;
 
@@ -779,6 +798,13 @@ public class SalesInvoiceDto
 
     // MB : Regular / Corporate; others ''
     public string SaleType { get; set; } = string.Empty;
+
+    // Cash / Credit / EMI ('' = before the terms)
+    public string PaymentTerm { get; set; } = string.Empty;
+
+    public string EmiAccountCode { get; set; } = string.Empty;
+
+    public string EmiAccountName { get; set; } = string.Empty;
 
     public string ReceivableLedgerCode { get; set; } = string.Empty;
 
@@ -922,6 +948,9 @@ public class SalesInvoiceBikeUnitDto
 
     public string EngineNo { get; set; } = string.Empty;
 
+    // Electric : a motor number (label "Motor No")
+    public bool IsElectric { get; set; }
+
     // From the purchase / receiving ('' = not kept)
     public string KeyNo { get; set; } = string.Empty;
 
@@ -943,4 +972,58 @@ public class SalesInvoiceBikeUnitDto
 
     // Picture of the model (/uploads/...) : the Motor Bike Shelf
     public string ImagePath { get; set; } = string.Empty;
+}
+
+
+//===============================================================
+// Sales Invoices - MB : the bike's warranty (Warranty Management
+// › Warranty Configuration : the policy in force on the date)
+//===============================================================
+
+public class SalesInvoiceWarrantyDto
+{
+    public long ProductId { get; set; }
+
+    public string BrandName { get; set; } = string.Empty;
+
+    public string PolicyCode { get; set; } = string.Empty;
+
+    public string PolicyName { get; set; } = string.Empty;
+
+    // true : a policy of the bike's model (else the brand's)
+    public bool ModelPolicy { get; set; }
+
+    // yyyy-MM-dd ('' To = open-ended)
+    public string EffectiveFrom { get; set; } = string.Empty;
+
+    public string EffectiveTo { get; set; } = string.Empty;
+
+    // Whole bike : number + Days / Months / Years, optional km
+    // (whichever comes first)
+    public int PeriodValue { get; set; }
+
+    public string PeriodUnit { get; set; } = string.Empty;
+
+    public int? KmLimit { get; set; }
+
+    public string Terms { get; set; } = string.Empty;
+
+    public string Exclusions { get; set; } = string.Empty;
+
+    // Part coverages (battery, motor, controller ...)
+    public List<SalesInvoiceWarrantyPartDto> Parts { get; set; } = new();
+}
+
+
+public class SalesInvoiceWarrantyPartDto
+{
+    public string PartName { get; set; } = string.Empty;
+
+    public int PeriodValue { get; set; }
+
+    public string PeriodUnit { get; set; } = string.Empty;
+
+    public int? KmLimit { get; set; }
+
+    public string Notes { get; set; } = string.Empty;
 }

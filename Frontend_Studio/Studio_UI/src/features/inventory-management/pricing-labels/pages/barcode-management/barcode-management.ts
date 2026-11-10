@@ -24,6 +24,13 @@ from '@angular/core/rxjs-interop';
 
 import
 {
+    MotorPowerService,
+    isElectricName
+}
+from '../../../../../core/motor-power/motor-power.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -315,6 +322,30 @@ export class BarcodeManagementPage
         number = 0;
 
     // Grid
+    // Electric bikes : "Motor No" instead of "Engine No"
+    readonly power =
+        inject(MotorPowerService);
+
+    get bikeNoWord():
+        string
+    {
+        this.power.load();
+
+        this.power.electricIds();
+
+        const rows =
+            this.rows ?? [];
+
+        const electric =
+            rows.filter(x => isElectricName(x.Code) || isElectricName(x.Name)).length;
+
+        return rows.length === 0 || electric === 0
+            ? 'Engine'
+            : electric === rows.length
+                ? 'Motor'
+                : 'Engine / Motor';
+    }
+
     rows:
         BarcodeGridRow[] = [];
 
@@ -2352,6 +2383,7 @@ function itemOf
         color:row.Color,
         chassisNo:row.ChassisNo,
         engineNo:row.EngineNo,
+        motor:isElectricName(row.Code) || isElectricName(row.Name),
         keyNo:row.KeyNo,
         batteryNo:row.BatteryNo
     };

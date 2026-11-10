@@ -78,6 +78,9 @@ using UserProfileEntity =
 using ReceiptVoucherPaymentsEntity =
     AppCore.Domain.Entities.AccountsFinance.VoucherManagement.ReceiptVoucherPayments;
 
+using EmiAccountsEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.EmiAccounts;
+
 using PriceAdjustmentEntity =
     AppCore.Domain.Entities.InventoryManagement.PricingLabels.PriceAdjustment;
 
@@ -295,6 +298,11 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
     private const decimal MaxMoney =
         9_999_999_999_999_999.99m;
+
+    // Payment terms (2026-11-10)
+    private const string TermCash = "Cash";
+    private const string TermCredit = "Credit";
+    private const string TermEmi = "EMI";
 
     // Receipt modes taken on a sales invoice (EMI : not on SP / AC)
     private static readonly string[] PaymentModes =
@@ -739,6 +747,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         // MB : Regular / Corporate
         public string SaleType { get; set; } = string.Empty;
+
+        // Cash / Credit / EMI ('' = before the terms)
+        public string PaymentTerm { get; set; } = string.Empty;
+
+        public string EmiAccountCode { get; set; } = string.Empty;
+
+        public string EmiAccountName { get; set; } = string.Empty;
 
         public List<PricedLine> Lines { get; set; } = new();
 
@@ -1596,6 +1611,210 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
 
     // The picker : bikes in stock in the warehouse, oldest first
+    //===========================================================
+    // MB : electric bikes (the model's Bike Type "Electric ..." or
+    // its specification Fuel Type Electric) : they carry a motor
+    // number, not an engine number
+    //===========================================================
+
+    private async Task<HashSet<long>>
+        ElectricBikesAsync
+        (
+            IEnumerable<long> productIds
+        )
+    {
+        List<long> ids =
+            productIds.Where(x => x > 0).Distinct().ToList();
+
+        if (ids.Count == 0)
+        {
+            return new HashSet<long>();
+        }
+
+        var rows =
+            await
+            (
+                from b in _context.Set<MotorBikesEntity>().AsNoTracking()
+                where ids.Contains(b.MotorBikeId)
+                join s in _context.Set<ProductSubCategoryEntity>().AsNoTracking()
+                    on b.ProductSubCategoryId equals s.ProductSubCategoryId
+                join m in _context.Set<AppCore.Domain.Entities.Settings.ProductSettings.BikeModels>().AsNoTracking()
+                    on s.BikeModelId equals (long?)m.BikeModelId
+                select new
+                {
+                    b.MotorBikeId,
+                    m.BikeModelId,
+                    m.BikeType
+                }
+            )
+            .ToListAsync();
+
+        List<long> modelIds =
+            rows.Select(x => x.BikeModelId).Distinct().ToList();
+
+        HashSet<long> electricModels =
+            (
+                await _context
+                    .Set<AppCore.Domain.Entities.Settings.ProductSettings.MotorBikeSpecifications>()
+                    .AsNoTracking()
+                    .Where(x => modelIds.Contains(x.BikeModelId) && !x.IsDeleted && x.FuelType == "Electric")
+                    .Select(x => x.BikeModelId)
+                    .ToListAsync()
+            )
+            .ToHashSet();
+
+        return rows
+            .Where
+            (
+                x =>
+                    (x.BikeType ?? string.Empty).StartsWith("Electric", StringComparison.OrdinalIgnoreCase)
+                    ||
+                    electricModels.Contains(x.BikeModelId)
+            )
+            .Select(x => x.MotorBikeId)
+            .ToHashSet();
+    }
+
+
+    //===========================================================
+    // MB : the bike's warranty = Warranty Management › Warranty
+    // Configuration : the policy of the bike's brand in force on
+    // the date (a policy of its model wins over the brand one),
+    // its whole-bike period / km and the part coverages
+    //===========================================================
+
+    public async Task<SalesInvoiceWarrantyDto?>
+        GetBikeWarrantyAsync
+        (
+            long productId,
+            DateOnly? date
+        )
+    {
+        if (Page.PageType != "MB" || productId <= 0)
+        {
+            return null;
+        }
+
+        DateOnly day =
+            date ?? BusinessToday();
+
+        var bike =
+            await
+            (
+                from b in _context.Set<MotorBikesEntity>().AsNoTracking()
+                join c in _context.Set<ProductCategoryEntity>().AsNoTracking()
+                    on b.ProductCategoryId equals c.ProductCategoryId
+                join s in _context.Set<ProductSubCategoryEntity>().AsNoTracking()
+                    on b.ProductSubCategoryId equals s.ProductSubCategoryId into subs
+                from s in subs.DefaultIfEmpty()
+                where b.MotorBikeId == productId
+                select new
+                {
+                    c.BrandManagementId,
+                    BikeModelId = s != null ? s.BikeModelId : null
+                }
+            )
+            .FirstOrDefaultAsync();
+
+        long? modelId =
+            bike?.BikeModelId;
+
+        long? brandId =
+            bike?.BrandManagementId;
+
+        // The model's brand when the category has none
+        if (modelId.HasValue && !brandId.HasValue)
+        {
+            brandId =
+                await _context
+                    .Set<AppCore.Domain.Entities.Settings.ProductSettings.BikeModels>()
+                    .AsNoTracking()
+                    .Where(x => x.BikeModelId == modelId.Value)
+                    .Select(x => (long?)x.BrandManagementId)
+                    .FirstOrDefaultAsync();
+        }
+
+        if (!brandId.HasValue)
+        {
+            return null;
+        }
+
+        long brand =
+            brandId.Value;
+
+        var policy =
+            await _context
+                .Set<AppCore.Domain.Entities.WarrantyManagement.WarrantyControl.WarrantyPolicies>()
+                .AsNoTracking()
+                .Where
+                (
+                    x =>
+                        x.BrandManagementId == brand
+                        && !x.IsDeleted
+                        && x.IsActive
+                        && x.EffectiveFrom <= day
+                        && (x.EffectiveTo == null || x.EffectiveTo >= day)
+                        && (x.BikeModelId == null || x.BikeModelId == modelId)
+                )
+                .OrderByDescending(x => x.BikeModelId != null)
+                .ThenByDescending(x => x.EffectiveFrom)
+                .FirstOrDefaultAsync();
+
+        if (policy == null)
+        {
+            return null;
+        }
+
+        string brandName =
+            await _context
+                .Set<AppCore.Domain.Entities.Settings.ProductSettings.BrandManagement>()
+                .AsNoTracking()
+                .Where(x => x.BrandManagementId == brand)
+                .Select(x => x.BrandName)
+                .FirstOrDefaultAsync()
+            ?? string.Empty;
+
+        long policyId =
+            policy.WarrantyPolicyId;
+
+        List<SalesInvoiceWarrantyPartDto> parts =
+            await
+            (
+                from c in _context.Set<AppCore.Domain.Entities.WarrantyManagement.WarrantyControl.WarrantyCoverages>().AsNoTracking()
+                join p in _context.Set<AppCore.Domain.Entities.WarrantyManagement.WarrantyControl.WarrantyParts>().AsNoTracking()
+                    on c.WarrantyPartId equals p.WarrantyPartId
+                where c.WarrantyPolicyId == policyId && !c.IsDeleted && c.IsActive
+                orderby p.DisplayOrder, p.Name
+                select new SalesInvoiceWarrantyPartDto
+                {
+                    PartName = p.Name,
+                    PeriodValue = c.PeriodValue,
+                    PeriodUnit = c.PeriodUnit,
+                    KmLimit = c.KmLimit,
+                    Notes = c.Notes
+                }
+            )
+            .ToListAsync();
+
+        return new SalesInvoiceWarrantyDto
+        {
+            ProductId = productId,
+            BrandName = brandName,
+            PolicyCode = policy.Code,
+            PolicyName = policy.Name,
+            ModelPolicy = policy.BikeModelId.HasValue,
+            EffectiveFrom = DateText(policy.EffectiveFrom),
+            EffectiveTo = policy.EffectiveTo.HasValue ? DateText(policy.EffectiveTo.Value) : string.Empty,
+            PeriodValue = policy.PeriodValue,
+            PeriodUnit = policy.PeriodUnit,
+            KmLimit = policy.KmLimit,
+            Terms = policy.Terms,
+            Exclusions = policy.Exclusions,
+            Parts = parts
+        };
+    }
+
+
     public async Task<List<SalesInvoiceBikeUnitDto>>
         GetBikeUnitsAsync
         (
@@ -1689,6 +1908,10 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             await CardMrpsAsync(priceDate, units.Select(x => x.ProductId).Distinct().ToList())
             ?? new Dictionary<long, decimal>();
 
+        // Electric bikes : a motor number, not an engine number
+        HashSet<long> electricIds =
+            await ElectricBikesAsync(units.Select(x => x.ProductId));
+
         List<OpenBikeRow> open =
             (await OpenBikesAsync(units.Select(x => x.MotorBikeUnitId).ToList()))
                 .Where(x => x.SalesInvoiceId != invoiceId)
@@ -1717,6 +1940,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         ColorName = p.ColorName ?? string.Empty,
                         ChassisNo = x.ChassisNo,
                         EngineNo = x.EngineNo,
+                        IsElectric = electricIds.Contains(x.ProductId),
                         KeyNo = x.KeyNo ?? string.Empty,
                         BatteryNo = x.BatteryNo ?? string.Empty,
                         ManufactureYear = x.ManufactureYear,
@@ -3630,10 +3854,84 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         }
 
         //=======================================================
+        // Payment term (2026-11-10)
+        //   Cash   : fully paid on the invoice
+        //   Credit : the balance goes to the receivable (rules
+        //            below)
+        //   EMI    : MB; the balance is collected through the EMI
+        //            account (Receipt Voucher, EMI row) : no credit
+        //            rule, but a named customer
+        //   ''     : saved before the terms : the old rule
+        //=======================================================
+
+        string term =
+            (dto.PaymentTerm ?? string.Empty).Trim();
+
+        term =
+            string.Equals(term, TermCash, StringComparison.OrdinalIgnoreCase) ? TermCash
+            : string.Equals(term, TermCredit, StringComparison.OrdinalIgnoreCase) ? TermCredit
+            : string.Equals(term, TermEmi, StringComparison.OrdinalIgnoreCase) ? TermEmi
+            : string.Empty;
+
+        result.PaymentTerm =
+            term;
+
+        bool emiTerm =
+            term == TermEmi;
+
+        if (term == TermCash && result.Due > 0m)
+        {
+            result.Errors.Add($"Cash sale : collect the full {Amount(result.InvoiceTotal)} through Checkout ({Amount(result.Due)} left), or choose Credit.");
+        }
+
+        if (emiTerm)
+        {
+            if (Page.PageType != "MB")
+            {
+                result.Errors.Add("EMI : only motor bikes are sold on EMI.");
+            }
+
+            string emiCode =
+                (dto.EmiAccountCode ?? string.Empty).Trim();
+
+            EmiAccountsEntity? emi =
+                emiCode.Length == 0
+                    ? null
+                    : await _context
+                        .Set<EmiAccountsEntity>()
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(x => !x.IsDeleted && x.EmiAccountCode == emiCode);
+
+            if (emi == null)
+            {
+                result.Errors.Add("EMI sale : choose the EMI account (EMI Setup › EMI Accounts) the balance is collected through.");
+            }
+            else if (!emi.Status)
+            {
+                result.Errors.Add($"EMI account '{emi.EmiAccountName}' is inactive.");
+            }
+            else
+            {
+                result.EmiAccountCode = emi.EmiAccountCode;
+                result.EmiAccountName = Limit(emi.EmiAccountName, 250);
+            }
+
+            if (result.Due <= 0m)
+            {
+                result.Errors.Add("EMI sale : nothing is left for EMI (the invoice is fully paid). Choose Cash, or take less on Checkout.");
+            }
+
+            if (result.Customer != null && result.Customer.IsWalkIn)
+            {
+                result.Errors.Add($"'{result.Customer.DisplayName}' is a walk-in customer : EMI needs a named customer.");
+            }
+        }
+
+        //=======================================================
         // Credit (balance left unpaid)
         //=======================================================
 
-        if (result.Due > 0m && result.Customer != null)
+        if (!emiTerm && result.Due > 0m && result.Customer != null)
         {
             CustomerProfilesEntity customer =
                 result.Customer;
@@ -4017,6 +4315,9 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 CustomerIsWalkIn = x.CustomerIsWalkIn,
                 CustomerTag = CustomerTagOf(x.CustomerType, x.CustomerIsWalkIn),
                 SaleType = (x as IMotorBikeSaleHeader)?.SaleType ?? string.Empty,
+                PaymentTerm = x.PaymentTerm,
+                EmiAccountCode = x.EmiAccountCode,
+                EmiAccountName = x.EmiAccountName,
                 ReceivableLedgerCode = x.ReceivableLedgerCode,
                 MembershipId = x.MembershipId,
                 MembershipNo = x.MembershipNo,
@@ -4070,6 +4371,18 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         dto.Lines =
             lines.Select(l => ToLineDto(l)).ToList();
+
+        // MB : electric bikes have a motor, not an engine
+        if (Page.PageType == "MB")
+        {
+            HashSet<long> electric =
+                await ElectricBikesAsync(dto.Lines.Select(l => l.ProductId));
+
+            foreach (SalesInvoiceLineDto line in dto.Lines)
+            {
+                line.IsElectric = electric.Contains(line.ProductId);
+            }
+        }
 
         List<TPayment> payments =
             await _context
@@ -4184,6 +4497,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 Today = DateText(BusinessToday()),
                 InvoiceDate = DateText(invoiceDate),
                 Switches = ToSwitchesDto(switches),
+                EmiAvailable = page.PageType == "MB",
                 MaxPriceEditPercent = switches.AllowPriceEdit ? switches.MaxPriceEditPercent : null,
                 MaxDiscountPercent = switches.AllowDiscount ? switches.MaxDiscountPercent : null,
                 DefaultSalesPersonId = userId
@@ -5057,6 +5371,9 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         entity.PaidAmount = priced.Paid;
         entity.DueAmount = priced.Due;
         entity.Narration = priced.Narration;
+        entity.PaymentTerm = priced.PaymentTerm;
+        entity.EmiAccountCode = priced.EmiAccountCode;
+        entity.EmiAccountName = priced.EmiAccountName;
 
         if (entity is IMotorBikeSaleHeader bikeHeader)
         {
@@ -5216,7 +5533,9 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     .Select(x => ToDebitDto(x))
                     .ToList(),
             Narration = entity.Narration,
-            SaleType = (entity as IMotorBikeSaleHeader)?.SaleType ?? string.Empty
+            SaleType = (entity as IMotorBikeSaleHeader)?.SaleType ?? string.Empty,
+            PaymentTerm = entity.PaymentTerm,
+            EmiAccountCode = entity.EmiAccountCode
         };
     }
 

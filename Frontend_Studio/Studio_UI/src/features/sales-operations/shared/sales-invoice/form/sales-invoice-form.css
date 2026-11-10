@@ -979,17 +979,32 @@
 
 .si-walkin-fields
 {
+    --textbox-height: 34px;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto;
     align-items: end;
     gap: 0 10px;
-    padding: 0 14px 8px;
+    padding: 0 14px 10px;
 }
 
+/* X and Add : the same height as the boxes, level with them */
 .si-walkin-actions
 {
     display: flex;
+    align-items: center;
     gap: 6px;
-    padding-bottom: 12px;
+    height: 34px;
+}
+
+.si-walkin-actions > .si-btn
+{
+    height: 34px;
+}
+
+.si-walkin-actions > .si-btn-light
+{
+    width: 34px;
+    padding: 0;
+    justify-content: center;
 }
 
 /* Inside the card : compact notes, membership on one line */
@@ -2616,3 +2631,391 @@
     white-space: nowrap;
 }
 
+
+
+/*---------------------------------------------------------------
+  Customer card : minimize (only the name row stays)
+---------------------------------------------------------------*/
+
+.si-cust-toggle
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    margin-left: 6px;
+    border: 1px solid #dbe3ef;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.si-cust-toggle:hover
+{
+    border-color: #bfd0ea;
+    background: #eef4ff;
+    color: var(--si-blue);
+}
+
+.si-cust-toggle-alone
+{
+    margin-left: auto;
+}
+
+.si-cust-card
+{
+    position: relative;
+}
+
+/* Minimized : the details open as a card on hover of the name row */
+.si-cust-slot.si-cust-slot-hidden
+{
+    position: absolute;
+    top: calc(100% - 4px);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    display: none;
+    height: auto;
+    min-height: 108px;
+    margin: 0 10px;
+    padding: 10px 8px 8px;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 16px 32px -12px rgba(15, 23, 42, 0.28);
+}
+
+.si-cust-min .si-cust-search:hover ~ .si-cust-slot.si-cust-slot-hidden,
+.si-cust-min .si-cust-mini:hover ~ .si-cust-slot.si-cust-slot-hidden,
+.si-cust-slot.si-cust-slot-hidden:hover
+{
+    display: block;
+}
+
+.si-cust-min .si-cust-search,
+.si-cust-min .si-cust-mini
+{
+    cursor: help;
+}
+
+.si-cust-mini
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin: 10px 18px 12px;
+    font-size: 14px;
+}
+
+.si-cust-mini i
+{
+    color: var(--si-blue);
+}
+
+.si-cust-mini strong
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.si-cust-mini span
+{
+    flex: 0 0 auto;
+    font-size: 12.5px;
+    color: var(--si-muted);
+}
+
+/*---------------------------------------------------------------
+  Left column : the add card takes the room left (the customer
+  card minimizes once an item is added) and the picked bike
+  spreads over it
+---------------------------------------------------------------*/
+
+.si-col-left > .si-card.si-add-card:last-child
+{
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.si-add-card > .si-picked.si-picked-bike
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-bottom: 14px;
+}
+
+.si-add-card > .si-picked.si-picked-bike > .si-pb-body
+{
+    flex: 1 1 auto;
+}
+
+.si-add-card > .si-picked.si-picked-bike .si-pb-nos > .si-pb-no
+{
+    flex: 1 1 0;
+    justify-content: center;
+}
+
+.si-add-card > .si-picked.si-picked-bike .si-pb-price > b
+{
+    font-size: 26px;
+}
+
+
+/*---------------------------------------------------------------
+  Payment term : Cash / Credit / EMI in the Invoice Information
+  header (beside Regular / Corporate on Motor Bikes) and the EMI
+  account picker (2026-11-10)
+---------------------------------------------------------------*/
+
+.si-term
+{
+    flex: 0 0 auto;
+    margin-left: 8px;
+}
+
+.si-term.si-term-alone
+{
+    margin-left: auto;
+}
+
+.si-emi-pick
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 18px 8px;
+    padding: 6px 10px;
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    background: linear-gradient(120deg, #eef2ff 0%, #f8faff 100%);
+}
+
+.si-emi-pick > i
+{
+    color: #4f46e5;
+}
+
+.si-emi-pick .si-emi-account
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+
+/*---------------------------------------------------------------
+  Picked bike : warranty icon, the brand Service Policy on hover
+---------------------------------------------------------------*/
+
+.si-warranty
+{
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 13px;
+    cursor: help;
+}
+
+.si-pb-head > .si-warranty
+{
+    margin-left: auto;
+}
+
+.si-pb-head > .si-warranty + .si-pb-tag
+{
+    margin-left: 8px;
+}
+
+.si-warranty.si-warranty-none
+{
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+}
+
+.si-warranty-tip
+{
+    position: absolute;
+    top: calc(100% + 6px);
+    right: -6px;
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    width: 300px;
+    padding: 10px 12px;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 16px 32px -12px rgba(15, 23, 42, 0.3);
+    color: #1e293b;
+    font-size: 12.5px;
+    text-align: left;
+    cursor: default;
+}
+
+.si-warranty:hover .si-warranty-tip
+{
+    display: flex;
+}
+
+.si-wt-empty
+{
+    color: #64748b;
+}
+
+.si-wt-head
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: #065f46;
+}
+
+.si-wt-head em
+{
+    margin-left: auto;
+    font-style: normal;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.si-wt-big
+{
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.si-wt-sub
+{
+    color: #64748b;
+}
+
+.si-wt-list
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.si-wt-row
+{
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.si-wt-row b
+{
+    font-size: 11px;
+    color: #b45309;
+}
+
+.si-wt-row b.si-wt-free
+{
+    color: #059669;
+}
+
+.si-wt-row span
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.si-wt-row i
+{
+    font-style: normal;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+
+.si-wt-note
+{
+    display: block;
+    margin-top: 4px;
+    padding-top: 5px;
+    border-top: 1px dashed #e2e8f0;
+    max-height: 64px;
+    overflow: hidden;
+    color: #475569;
+    white-space: normal;
+}
+
+.si-wt-note b
+{
+    color: #1e293b;
+}
+
+/* Add card before the customer is picked : dimmed, not clickable */
+.si-add-card.si-add-locked .si-fields
+{
+    opacity: .5;
+    pointer-events: none;
+}
+
+/* New customer (+) beside the customer search */
+.si-cust-search.si-cust-has-add
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.si-cust-search.si-cust-has-add > app-textbox
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.si-cust-search.si-cust-has-add > .si-cust-spin
+{
+    right: 70px;
+}
+
+.si-cust-new
+{
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #bfd3f2;
+    border-radius: 8px;
+    background: #eef4ff;
+    color: #1d4ed8;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, border-color .15s;
+}
+
+.si-cust-new:hover
+{
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #ffffff;
+}

@@ -16,6 +16,12 @@ from '../../../../shared/print/qr-code';
 
 import
 {
+    isElectricName
+}
+from '../../../../core/motor-power/motor-power.service';
+
+import
+{
     PrintSourceDef
 }
 from '../../../../shared/print/print.models';
@@ -78,6 +84,8 @@ export interface LabelItem
     color:string;
     chassisNo:string;
     engineNo:string;
+    // Electric : "Motor No" (else by the code / name)
+    motor?:boolean;
     keyNo?:string;
     batteryNo?:string;
 }
@@ -645,7 +653,7 @@ function tagHtml
     const rows =
         [
             ['Chassis No', item.chassisNo],
-            ['Engine No', item.engineNo],
+            [(item.motor ?? (isElectricName(item.code) || isElectricName(item.name))) ? 'Motor No' : 'Engine No', item.engineNo],
             o.showKey ? ['Key No', item.keyNo ?? ''] : null,
             o.showBattery ? ['Battery No', item.batteryNo ?? ''] : null
         ]

@@ -58,6 +58,7 @@ import { HistoryItem } from '../../../../shared/components/utilities/history-dra
 
 import
 {
+    WebsiteBike,
     WebsiteBranchSetting,
     WebsiteBrandSetting,
     WebsiteConfiguration,
@@ -518,6 +519,39 @@ implements OnInit, AfterViewInit, OnDestroy
         string
     {
         return this.service.fileUrl(path);
+    }
+
+    // Bikes tab : the photo shown for a model = its featured colour's
+    // photo, else the first colour with a photo
+    bikePhoto
+    (
+        bike:
+            WebsiteBike
+    ):
+        string
+    {
+        const featured =
+            bike.colours.find(x => x.motorBikeId === bike.featuredMotorBikeId && !!x.imagePath);
+
+        return featured?.imagePath
+            || bike.colours.find(x => !!x.imagePath)?.imagePath
+            || bike.photoPath;
+    }
+
+    setFeaturedColour
+    (
+        bike:
+            WebsiteBike,
+        value:
+            string
+    ):
+        void
+    {
+        const id =
+            Number(value);
+
+        bike.featuredMotorBikeId =
+            id > 0 ? id : null;
     }
 
     move<T>

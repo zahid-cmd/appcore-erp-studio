@@ -476,7 +476,7 @@
                                     <dt>Motor Bike</dt>
                                     <dd>{{ panelFile.BikeName }} <span class="cf-tag">{{ panelFile.VehiclePower }}</span></dd>
 
-                                    <dt>Chassis / Engine</dt>
+                                    <dt>Chassis / {{ fileNoWord(panelFile) }}</dt>
                                     <dd>{{ panelFile.ChassisNo }} · {{ panelFile.EngineNo }}</dd>
 
                                     <dt>Sales Invoice</dt>
@@ -820,9 +820,9 @@
 
                                     <app-textbox
 
-                                        label="Engine No"
+                                        [label]="bikeNoWord + ' No'"
 
-                                        placeholder="Enter the engine no"
+                                        [placeholder]="'Enter the ' + bikeNoWord.toLowerCase() + ' no'"
 
                                         textCase="upper"
 
@@ -993,7 +993,7 @@
                                         <dt>Motor Bike</dt>
                                         <dd>{{ transferFile.BikeName }}</dd>
 
-                                        <dt>Chassis / Engine</dt>
+                                        <dt>Chassis / {{ fileNoWord(transferFile) }}</dt>
                                         <dd>{{ transferFile.ChassisNo }} · {{ transferFile.EngineNo }}</dd>
 
                                         <dt>{{ isView ? 'From' : 'Current Owner' }}</dt>

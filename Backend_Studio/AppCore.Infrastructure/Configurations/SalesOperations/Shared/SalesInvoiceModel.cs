@@ -143,6 +143,15 @@ public static class SalesInvoiceModel
         builder.Property(x => x.Narration)
                .IsRequired()
                .HasMaxLength(500);
+        builder.Property(x => x.PaymentTerm)
+               .IsRequired()
+               .HasMaxLength(10);
+        builder.Property(x => x.EmiAccountCode)
+               .IsRequired()
+               .HasMaxLength(30);
+        builder.Property(x => x.EmiAccountName)
+               .IsRequired()
+               .HasMaxLength(250);
         builder.Property(x => x.Status)
                .IsRequired()
                .HasMaxLength(20);

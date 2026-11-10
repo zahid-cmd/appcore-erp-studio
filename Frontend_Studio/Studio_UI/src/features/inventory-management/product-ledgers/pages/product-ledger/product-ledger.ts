@@ -20,6 +20,12 @@ from '@angular/core/rxjs-interop';
 
 import
 {
+    MotorPowerService
+}
+from '../../../../../core/motor-power/motor-power.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -179,6 +185,18 @@ type CanvasView =
 export class ProductLedger
     implements OnInit
 {
+    // Electric bikes : "Motor" instead of "Engine"
+    readonly power =
+        inject(MotorPowerService);
+
+    get bikeNoWord():
+        string
+    {
+        this.power.load();
+
+        return this.power.word(this.productId);
+    }
+
     private readonly service =
         inject(ProductLedgersService);
 

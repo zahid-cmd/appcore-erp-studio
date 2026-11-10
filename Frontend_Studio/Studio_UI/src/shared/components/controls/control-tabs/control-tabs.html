@@ -1,14 +1,14 @@
 <div class="control-tabs">
 
     <!-- =====================================================
-         TAB LIST
+         TAB LIST (the ones that fit)
     ====================================================== -->
 
     <button
 
         class="control-tab"
 
-        *ngFor="let tab of tabs"
+        *ngFor="let tab of shownTabs()"
 
         type="button"
 
@@ -20,10 +20,6 @@
 
         (click)="selectTab(tab)">
 
-        <!-- ===================================================
-             LABEL
-        ==================================================== -->
-
         <span class="control-tab-label">
 
             {{ tab.label }}
@@ -31,5 +27,86 @@
         </span>
 
     </button>
+
+    <!-- =====================================================
+         MORE (the tabs that do not fit)
+    ====================================================== -->
+
+    <div class="control-more" *ngIf="moreTabs().length > 0">
+
+        <button
+
+            type="button"
+
+            class="control-tab control-more-btn"
+
+            [class.active]="!!moreActive()"
+
+            aria-haspopup="menu"
+
+            [attr.aria-expanded]="menuOpen()"
+
+            [title]="moreTabs().length + ' more tab(s)'"
+
+            (click)="toggleMenu($event)">
+
+            <span class="control-tab-label">
+
+                {{ moreActive()?.label ?? 'More' }}
+
+                <span class="control-more-count" *ngIf="!moreActive()">{{ moreTabs().length }}</span>
+
+                <i class="fa-solid fa-chevron-down control-more-caret" [class.open]="menuOpen()"></i>
+
+            </span>
+
+        </button>
+
+        <div
+
+            class="control-more-menu"
+
+            role="menu"
+
+            *ngIf="menuOpen()"
+
+            [style.top.px]="menuTop()"
+
+            [style.right.px]="menuRight()">
+
+            <button
+
+                type="button"
+
+                role="menuitem"
+
+                class="control-more-item"
+
+                *ngFor="let tab of moreTabs()"
+
+                [class.active]="tab.id === selectedTab"
+
+                [disabled]="tab.disabled"
+
+                (click)="selectTab(tab)">
+
+                <i class="fa-solid fa-check" *ngIf="tab.id === selectedTab"></i>
+
+                {{ tab.label }}
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Hidden : every tab, to measure the widest label -->
+<div class="control-tabs-measure" #measure aria-hidden="true">
+
+    <span class="control-tab" *ngFor="let tab of tabs"><span class="control-tab-label">{{ tab.label }}</span></span>
+
+    <span class="control-tab"><span class="control-tab-label">Section Headings 99 <i class="fa-solid fa-chevron-down"></i></span></span>
 
 </div>

@@ -702,7 +702,7 @@
                         {
                             <div class="pof-hint rc-hint">
                                 <i class="fas fa-motorcycle"></i>
-                                <span>Bikes' Chassis, Engine{{ keyBattery ? ', Key and Battery' : '' }} No : the <i class="fas fa-motorcycle"></i> button on the line in the summary. A draft may be saved before every bike is entered.</span>
+                                <span>Bikes' Chassis, {{ pageNoWord }}{{ keyBattery ? ', Key and Battery' : '' }} No : the <i class="fas fa-motorcycle"></i> button on the line in the summary. A draft may be saved before every bike is entered.</span>
                             </div>
                         }
 
@@ -1305,7 +1305,7 @@
                     {
                         <div class="pof-hint">
                             <i class="fas fa-paste"></i>
-                            Copy the {{ d.keys ? 'four columns from Excel (Chassis, Engine, Key, Battery)' : 'two columns from Excel (Chassis, Engine)' }} and paste into a Chassis box : every row fills at once, from that bike down.
+                            Copy the {{ d.keys ? 'four columns from Excel (Chassis, ' + deskWord + ', Key, Battery)' : 'two columns from Excel (Chassis, ' + deskWord + ')' }} and paste into a Chassis box : every row fills at once, from that bike down.
                         </div>
                     }
 
@@ -1332,7 +1332,7 @@
                                 <tr>
                                     <th class="pof-sl">SL</th>
                                     <th>Chassis No <b class="pof-req">*</b></th>
-                                    <th>Engine No <b class="pof-req">*</b></th>
+                                    <th>{{ deskWord }} No <b class="pof-req">*</b></th>
                                     @if (d.keys)
                                     {
                                         <th>Key No @if (keyBattery) { <b class="pof-req">*</b> }</th>
@@ -1371,7 +1371,7 @@
                                                     [attr.title]="unitProblem(row, field) || null"
                                                     (paste)="onUnitPaste($event, u, c)">
                                                     <app-textbox
-                                                        [placeholder]="unitPlaceholders[field]"
+                                                        [placeholder]="field === 'EngineNo' ? deskWord : unitPlaceholders[field]"
                                                         textCase="upper"
                                                         [maxLength]="50"
                                                         [value]="row[field]"
@@ -1420,7 +1420,7 @@
                         @else
                         {
                             <i class="fas fa-circle-info"></i>
-                            {{ keyBattery ? 'To post, every bike needs all four numbers.' : 'To post, every bike needs its Chassis No and Engine No.' }}
+                            {{ keyBattery ? 'To post, every bike needs all four numbers.' : 'To post, every bike needs its Chassis No and ' + deskWord + ' No.' }}
                         }
                     </span>
                     <button

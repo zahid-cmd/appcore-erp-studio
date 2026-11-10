@@ -112,6 +112,11 @@ export interface SalesInvoicePageConfig
     title:
         string;
 
+    // Form header in full : "Sales Invoice - Motor Bikes" (add);
+    // Update / View <fullTitle> (edit / view)
+    fullTitle:
+        string;
+
     // One document : "Sales Invoice - SP" (print, messages)
     docTitle:
         string;
@@ -168,8 +173,9 @@ export const SI_SP_PAGE:
 {
     pageType:'SP',
     title:'Sales Invoices - SP',
+    fullTitle:'Sales Invoice - Spare Parts & Lubricants',
     docTitle:'Sales Invoice - SP',
-    listTitle:'Sales Invoices - SP',
+    listTitle:'Sales Invoices - Spare Parts & Lubricants',
     prefix:'SISP',
     apiPath:'sales-operations/spare-parts-lubricant-sales/sales-invoices-sp',
     printKey:'sales-invoices-sp',
@@ -207,8 +213,9 @@ export const SI_AC_PAGE:
 {
     pageType:'AC',
     title:'Sales Invoices - AC',
+    fullTitle:'Sales Invoice - Accessories',
     docTitle:'Sales Invoice - AC',
-    listTitle:'Sales Invoices - AC',
+    listTitle:'Sales Invoices - Accessories',
     prefix:'SIAC',
     apiPath:'sales-operations/accessories-sales/sales-invoices-ac',
     printKey:'sales-invoices-ac',
@@ -248,8 +255,9 @@ export const SI_MB_PAGE:
 {
     pageType:'MB',
     title:'Sales Invoices - MB',
+    fullTitle:'Sales Invoice - Motor Bikes',
     docTitle:'Sales Invoice - MB',
-    listTitle:'Sales Invoices - MB',
+    listTitle:'Sales Invoices - Motor Bikes',
     prefix:'SIMB',
     apiPath:'sales-operations/motor-bike-sales/sales-invoices-mb',
     printKey:'sales-invoices-mb',

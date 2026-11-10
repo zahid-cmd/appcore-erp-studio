@@ -674,6 +674,26 @@ public class PublicWebsiteRepository : IPublicWebsiteRepository
                     ? bikeModels.GetValueOrDefault(model.BikeModelId.Value)
                     : null;
 
+            // Featured colour (Website Configuration > Bikes) goes
+            // first : its photo is the card / hero photo and the
+            // colour chosen when the bike page opens
+            if (bikeModel?.FeaturedMotorBikeId is long featuredId)
+            {
+                MotorBikesEntity? featuredBike =
+                    modelBikes.FirstOrDefault(x => x.MotorBikeId == featuredId);
+
+                if (featuredBike != null)
+                {
+                    string featuredCode =
+                        Clean(featuredBike.ProductCode);
+
+                    colourRows =
+                        colourRows
+                            .OrderBy(x => x.ProductCode == featuredCode && !string.IsNullOrEmpty(x.ImagePath) ? 0 : 1)
+                            .ToList();
+                }
+            }
+
             MotorBikeSpecificationsEntity? spec =
                 model.BikeModelId.HasValue
                     ? specOfModel.GetValueOrDefault(model.BikeModelId.Value)

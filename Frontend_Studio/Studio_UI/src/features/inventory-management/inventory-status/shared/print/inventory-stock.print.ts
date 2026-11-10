@@ -61,6 +61,12 @@ from '../inventory-stock.model';
 
 import
 {
+    bikesNoWord
+}
+from '../../../../../core/motor-power/motor-power.service';
+
+import
+{
     InventoryStockService
 }
 from '../inventory-stock.service';
@@ -845,9 +851,9 @@ ${list.map
     const head =
         landscape
             ? `<colgroup><col style="width:8mm"><col style="width:45mm"><col style="width:30mm"><col style="width:14mm"><col style="width:34mm">${branchCol ? '<col style="width:30mm">' : ''}<col><col style="width:20mm">${cost ? '<col style="width:22mm">' : ''}<col style="width:20mm"></colgroup>
-  <thead><tr><th class="vd-c">SL</th><th>Chassis No</th><th>Engine No</th><th>Key No</th><th>Battery No</th>${branchCol ? '<th>Branch</th>' : ''}<th>Purchase No</th><th class="vd-c">Stock In</th>${cost ? '<th class="vd-r">Unit Cost</th>' : ''}<th>Status</th></tr></thead>`
+  <thead><tr><th class="vd-c">SL</th><th>Chassis No</th><th>${bikesNoWord(data.bikes.map(x => x.ProductId))} No</th><th>Key No</th><th>Battery No</th>${branchCol ? '<th>Branch</th>' : ''}<th>Purchase No</th><th class="vd-c">Stock In</th>${cost ? '<th class="vd-r">Unit Cost</th>' : ''}<th>Status</th></tr></thead>`
             : `<colgroup><col style="width:8mm"><col style="width:46mm"><col style="width:36mm"><col>${cost ? '<col style="width:22mm">' : ''}<col style="width:22mm"></colgroup>
-  <thead><tr><th class="vd-c">SL</th><th>Chassis No<span class="sp-th-sub">Engine No</span></th><th>Key No<span class="sp-th-sub">Battery No</span></th><th>Purchase No<span class="sp-th-sub">Stock In</span></th>${cost ? '<th class="vd-r">Unit Cost</th>' : ''}<th>Status</th></tr></thead>`;
+  <thead><tr><th class="vd-c">SL</th><th>Chassis No<span class="sp-th-sub">${bikesNoWord(data.bikes.map(x => x.ProductId))} No</span></th><th>Key No<span class="sp-th-sub">Battery No</span></th><th>Purchase No<span class="sp-th-sub">Stock In</span></th>${cost ? '<th class="vd-r">Unit Cost</th>' : ''}<th>Status</th></tr></thead>`;
 
     const inStock =
         bikes.filter(x => x.Status === 'In Stock').length;
@@ -1092,7 +1098,7 @@ function bikeUnitsSheet
             [bold('MOTOR BIKE STOCK - BIKE UNITS')],
             [bold('Branch'), data.request.branchName],
             [],
-            [bold('SL'), bold('Chassis No'), bold('Engine No'), bold('Key No'), bold('Battery No'), bold('Model'), bold('Code'), bold('Purchase No'), bold('Stock In'), ...(cost ? [bold('Unit Cost')] : []), bold('Status')],
+            [bold('SL'), bold('Chassis No'), bold(`${bikesNoWord(data.bikes.map(x => x.ProductId))} No`), bold('Key No'), bold('Battery No'), bold('Model'), bold('Code'), bold('Purchase No'), bold('Stock In'), ...(cost ? [bold('Unit Cost')] : []), bold('Status')],
             ...data.bikes.map
             (
                 (bike, index): ExcelCell[] =>

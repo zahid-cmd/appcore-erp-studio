@@ -41,6 +41,12 @@ from '../../../../shared/print/print.models';
 
 import
 {
+    isElectricName
+}
+from '../../../../core/motor-power/motor-power.service';
+
+import
+{
     VOUCHER_SWITCH
 }
 from '../../../../shared/components/accounting/voucher-switches';
@@ -670,7 +676,7 @@ function statementHtml
 
                     const bikeRow =
                         units
-                            ? `<tr class="lp-bikes"><td colspan="${cols.length}"><i>Chassis / Engine</i>${e(units)}</td></tr>`
+                            ? `<tr class="lp-bikes"><td colspan="${cols.length}"><i>Chassis / ${isElectricName(s.ProductCode) || isElectricName(s.ProductName) ? 'Motor' : 'Engine'}</i>${e(units)}</td></tr>`
                             : '';
 
                     return `<tr class="${row.IsReversal || row.IsCancelled ? 'lp-cancel' : ''}">
@@ -856,7 +862,7 @@ function statementSheet
                 bold('Date'), bold('Particulars'), bold('Doc No'), bold('Batch'), bold('Location'),
                 bold('In Transit'), bold('In'), bold('Out'), bold('Balance'),
                 ...(values ? [bold('Unit Cost'), bold('In Value'), bold('Out Value'), bold('Balance Value')] : []),
-                bold('Short Notes'), bold('Chassis / Engine')
+                bold('Short Notes'), bold(`Chassis / ${isElectricName(s.ProductCode) || isElectricName(s.ProductName) ? 'Motor' : 'Engine'}`)
             ],
             [
                 kit.date(s.From), 'Opening Balance', null, null, null, s.OpeningTransit || null, null, null, s.OpeningQty,

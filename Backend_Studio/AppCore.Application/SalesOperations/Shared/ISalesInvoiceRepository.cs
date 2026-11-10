@@ -50,6 +50,13 @@ public interface ISalesInvoiceRepository
         long warehouseId,
         long invoiceId);
 
+    // Sales Invoices - MB : the bike's warranty (Warranty
+    // Management › Warranty Configuration, the policy in force on
+    // the date; null = not a bike / no policy)
+    Task<SalesInvoiceWarrantyDto?> GetBikeWarrantyAsync(
+        long productId,
+        DateOnly? date);
+
     // Live search : phone (1 / 2), name or code; at most 10
     Task<List<SalesInvoiceCustomerSearchItemDto>> SearchCustomersAsync(
         string pageType,

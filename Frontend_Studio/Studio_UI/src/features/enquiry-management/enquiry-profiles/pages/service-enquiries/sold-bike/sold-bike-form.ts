@@ -30,6 +30,12 @@ import
 }
 from '@angular/core';
 
+import
+{
+    MotorPowerService
+}
+from '../../../../../../core/motor-power/motor-power.service';
+
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -212,6 +218,16 @@ implements OnInit, AfterViewInit, OnDestroy
 
 
     private readonly route = inject(ActivatedRoute);
+
+    // Electric bikes : "Motor No" instead of "Engine No"
+    readonly power = inject(MotorPowerService);
+
+    get bikeNoWord(): string
+    {
+        this.power.load();
+
+        return this.power.wordByModel(Number(this.entity?.ModelId) || 0);
+    }
 
     private readonly router = inject(Router);
 

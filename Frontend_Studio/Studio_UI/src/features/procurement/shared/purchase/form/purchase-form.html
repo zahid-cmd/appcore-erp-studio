@@ -2140,7 +2140,7 @@
                     {
                         <div class="pof-hint">
                             <i class="fas fa-paste"></i>
-                            Copy the {{ unitsRequired ? 'four columns from Excel (Chassis, Engine, Key, Battery)' : 'two columns from Excel (Chassis, Engine)' }} and paste into a Chassis box : every row fills at once, from that bike down.
+                            Copy the {{ unitsRequired ? 'four columns from Excel (Chassis, ' + unitNoWord + ', Key, Battery)' : 'two columns from Excel (Chassis, ' + unitNoWord + ')' }} and paste into a Chassis box : every row fills at once, from that bike down.
                         </div>
                     }
 
@@ -2174,7 +2174,7 @@
                                 <tr>
                                     <th class="pof-sl">SL</th>
                                     <th>Chassis No <b class="pof-req">*</b></th>
-                                    <th>Engine No <b class="pof-req">*</b></th>
+                                    <th>{{ unitNoWord }} No <b class="pof-req">*</b></th>
                                     @if (unitKeysShown)
                                     {
                                         <th>Key No @if (unitsRequired) { <b class="pof-req">*</b> }</th>
@@ -2280,7 +2280,7 @@
                                                 [attr.title]="unitBad($index, 'EngineNo') || null"
                                                 (paste)="onUnitPaste($event, $index, 1)">
                                                 <app-textbox
-                                                    placeholder="Engine"
+                                                    [placeholder]="unitRowWord($index)"
                                                     textCase="upper"
                                                     [maxLength]="50"
                                                     [value]="row.EngineNo"
@@ -2382,7 +2382,7 @@
                         @else
                         {
                             <i class="fas fa-circle-info"></i>
-                            {{ unitsRequired ? 'Every bike needs all four numbers.' : 'Every bike needs its Chassis No and Engine No.' }}
+                            {{ unitsRequired ? 'Every bike needs all four numbers.' : 'Every bike needs its Chassis No and ' + unitNoWord + ' No.' }}
                         }
                     </span>
 
