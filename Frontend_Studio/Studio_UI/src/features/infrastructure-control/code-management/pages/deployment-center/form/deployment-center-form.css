@@ -919,6 +919,285 @@
     white-space: nowrap;
 }
 
+/* release ticket (confirm) */
+.dc-ticket
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    margin-top: 18px;
+    border: 1px solid #dbe3ef;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px -16px rgba(15, 23, 42, 0.35);
+    overflow: hidden;
+}
+
+.dc-ticket-main
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 16px 20px;
+    background:
+        radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--tone) 14%, transparent), transparent 60%),
+        var(--tone-soft);
+    border-right: 1px dashed color-mix(in srgb, var(--tone) 35%, #cbd5e1);
+}
+
+/* ticket notches on the dashed edge */
+.dc-ticket-main::before,
+.dc-ticket-main::after
+{
+    content: '';
+    position: absolute;
+    right: -9px;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #dbe3ef;
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+.dc-ticket-main::before { top: -9px; }
+.dc-ticket-main::after  { bottom: -9px; }
+
+.dc-ticket-label
+{
+    color: var(--tone-ink);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.dc-ticket-code
+{
+    color: #0f172a;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.dc-ticket-msg
+{
+    overflow: hidden;
+    color: #334155;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dc-ticket-meta
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dc-meta
+{
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    align-items: center;
+    min-width: 0;
+    padding: 12px 16px;
+}
+
+.dc-meta:nth-child(-n+2) { border-bottom: 1px solid #eef2f7; }
+.dc-meta:nth-child(odd)  { border-right: 1px solid #eef2f7; }
+
+.dc-meta i
+{
+    display: inline-flex;
+    grid-row: span 2;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 13px;
+}
+
+.dc-meta span
+{
+    color: #94a3b8;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.dc-meta b
+{
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dc-mono
+{
+    font-family: Consolas, 'Courier New', monospace;
+    letter-spacing: 0.04em;
+}
+
+/* what happens (confirm) */
+.dc-plan-title
+{
+    margin: 20px 0 10px 2px;
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.dc-plan
+{
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: dc-plan;
+}
+
+/* the line joining the steps */
+.dc-plan::before
+{
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 12.5%;
+    right: 12.5%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--tone), color-mix(in srgb, var(--tone) 25%, #e2e8f0));
+    border-radius: 2px;
+}
+
+.dc-plan li
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+    counter-increment: dc-plan;
+}
+
+.dc-plan-dot
+{
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 6px;
+    border: 2px solid color-mix(in srgb, var(--tone) 40%, #ffffff);
+    border-radius: 50%;
+    background: #ffffff;
+    color: var(--tone);
+    font-size: 15px;
+    box-shadow: 0 0 0 5px #ffffff, 0 6px 16px -8px color-mix(in srgb, var(--tone) 70%, transparent);
+}
+
+.dc-plan-dot::after
+{
+    content: counter(dc-plan);
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--tone);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 18px;
+}
+
+.dc-plan b
+{
+    color: #0f172a;
+    font-size: 13.5px;
+}
+
+.dc-plan small
+{
+    max-width: 180px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.dc-safety
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 10px 14px;
+    border: 1px solid #a7f3d0;
+    border-radius: 10px;
+    background: #f0fdf6;
+    color: #065f46;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.dc-safety i
+{
+    color: #059669;
+    font-size: 15px;
+}
+
+@media (max-width: 760px)
+{
+    .dc-ticket
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dc-ticket-main
+    {
+        border-right: 0;
+        border-bottom: 1px dashed color-mix(in srgb, var(--tone) 35%, #cbd5e1);
+    }
+
+    .dc-ticket-main::before,
+    .dc-ticket-main::after
+    {
+        display: none;
+    }
+
+    .dc-plan
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 18px;
+    }
+
+    .dc-plan::before
+    {
+        display: none;
+    }
+}
+
 .dc-callout
 {
     display: flex;
@@ -989,6 +1268,12 @@
     margin-right: auto;
     color: #64748b;
     font-size: 12.5px;
+}
+
+.dc-foot-note i
+{
+    color: #94a3b8;
+    font-size: 11.5px;
 }
 
 .dc-btn

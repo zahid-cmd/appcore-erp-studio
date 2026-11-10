@@ -633,22 +633,35 @@
 
                 @if (popupMode === 'confirm' && preflight)
                 {
-                    <div class="dc-facts">
-                        <div class="dc-fact">
-                            <span>Release</span>
-                            <b>{{ item?.code }}</b>
+                    <!-- release ticket -->
+                    <div class="dc-ticket">
+                        <div class="dc-ticket-main">
+                            <span class="dc-ticket-label">Release</span>
+                            <b class="dc-ticket-code">{{ item?.code }}</b>
+                            <span class="dc-ticket-msg" [title]="preflight.commitMessage">{{ preflight.commitMessage }}</span>
                         </div>
-                        <div class="dc-fact">
-                            <span>Branch</span>
-                            <b>{{ preflight.branch }}</b>
-                        </div>
-                        <div class="dc-fact dc-fact-wide">
-                            <span>Commit</span>
-                            <b>{{ preflight.commitHash.substring(0, 7) }} &nbsp; {{ preflight.commitMessage }}</b>
-                        </div>
-                        <div class="dc-fact dc-fact-wide">
-                            <span>Server</span>
-                            <b>{{ server?.name }} &nbsp; {{ server?.appUrl }}</b>
+
+                        <div class="dc-ticket-meta">
+                            <div class="dc-meta">
+                                <i class="fas fa-code-branch"></i>
+                                <span>Branch</span>
+                                <b>{{ preflight.branch }}</b>
+                            </div>
+                            <div class="dc-meta">
+                                <i class="fas fa-code-commit"></i>
+                                <span>Commit</span>
+                                <b class="dc-mono">{{ preflight.commitHash.substring(0, 7) }}</b>
+                            </div>
+                            <div class="dc-meta">
+                                <i class="fas fa-server"></i>
+                                <span>Server</span>
+                                <b>{{ server?.name }}</b>
+                            </div>
+                            <div class="dc-meta">
+                                <i class="fas fa-globe"></i>
+                                <span>Site</span>
+                                <b [title]="server?.appUrl ?? ''">{{ server?.appUrl }}</b>
+                            </div>
                         </div>
                     </div>
 
@@ -663,13 +676,35 @@
                         </div>
                     }
 
-                    <div class="dc-callout">
-                        <i class="fas fa-circle-info"></i>
-                        <span>
-                            This PC builds the API and the UI (a few minutes). The server then backs up its
-                            database, installs the release and restarts the site (about 1 minute offline).
-                            If the new site does not start, the server switches back by itself.
-                        </span>
+                    <!-- what happens next -->
+                    <div class="dc-plan-title">What happens when you press Deploy</div>
+
+                    <ol class="dc-plan">
+                        <li>
+                            <span class="dc-plan-dot"><i class="fas fa-hammer"></i></span>
+                            <b>Build</b>
+                            <small>API and UI on this PC - a few minutes</small>
+                        </li>
+                        <li>
+                            <span class="dc-plan-dot"><i class="fas fa-database"></i></span>
+                            <b>Back up</b>
+                            <small>The server saves its database first</small>
+                        </li>
+                        <li>
+                            <span class="dc-plan-dot"><i class="fas fa-box-open"></i></span>
+                            <b>Install</b>
+                            <small>The new release is put in place</small>
+                        </li>
+                        <li>
+                            <span class="dc-plan-dot"><i class="fas fa-power-off"></i></span>
+                            <b>Restart</b>
+                            <small>The site is offline for about 1 minute</small>
+                        </li>
+                    </ol>
+
+                    <div class="dc-safety">
+                        <i class="fas fa-shield-halved"></i>
+                        <span>Safe roll-back : if the new site does not start, the server switches back to the old one by itself.</span>
                     </div>
                 }
 
@@ -765,7 +800,7 @@
 
                         @case ('confirm')
                         {
-                            <span class="dc-foot-note">Nothing changes on the server until you press Deploy.</span>
+                            <span class="dc-foot-note"><i class="fas fa-lock"></i> Nothing changes on the server until you press Deploy.</span>
 
                             <button type="button" class="dc-btn dc-btn-ghost" (click)="cancelPopup()">
                                 <i class="fas fa-xmark"></i> Cancel
