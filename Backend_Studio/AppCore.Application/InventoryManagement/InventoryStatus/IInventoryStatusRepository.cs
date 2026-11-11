@@ -19,12 +19,20 @@ public interface IInventoryStatusRepository
 {
     // canViewCostVat : also the cost incl. VAT ("View Cost incl.
     // VAT"; only with canViewCost)
+    //
+    // from / to : the period (null = the running calendar month).
+    // Opening = stock before "from" (plus Opening Stock entries in
+    // the period); Purchase / Sales = net quantities in the
+    // period; In Transit / On Hand / Total = stock at "to".
+    // Only products ever purchased (or opened) are listed.
     Task<InventoryStockListDto> GetStockAsync(
         string pageType,
         long branchId,
         long warehouseId,
         bool canViewCost,
-        bool canViewCostVat = false);
+        bool canViewCostVat = false,
+        DateOnly? from = null,
+        DateOnly? to = null);
 
     // Motor Bike Stock › Free Accessories : Accessories products
     // used as Additional / Promotional Accessories (ProductKind
@@ -32,7 +40,9 @@ public interface IInventoryStatusRepository
     Task<InventoryStockListDto> GetBikeAccessoriesStockAsync(
         long branchId,
         long warehouseId,
-        bool canViewCost);
+        bool canViewCost,
+        DateOnly? from = null,
+        DateOnly? to = null);
 
     // Stock card of one of them (null when it is not one)
     Task<InventoryStockCardDto?> GetBikeAccessoryCardAsync(

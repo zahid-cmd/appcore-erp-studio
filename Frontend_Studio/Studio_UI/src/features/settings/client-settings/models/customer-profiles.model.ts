@@ -116,6 +116,14 @@ export interface Customer
     BinNo:
         string;
 
+    // Corporate : the contact person (CAPITAL LETTERS) and the
+    // person's NID (optional, 10 / 13 / 17 digits)
+    ContactPersonName:
+        string;
+
+    ContactPersonNid:
+        string;
+
     // Location display name (from the server)
     LocationName?:
         string;
@@ -224,6 +232,12 @@ export interface CreateCustomer
 
     BinNo:
         string;
+
+    ContactPersonName:
+        string;
+
+    ContactPersonNid:
+        string;
 }
 
 
@@ -245,6 +259,9 @@ export interface CustomerPageQuery
 
     // Inbound / Outside (the tab)
     type:CustomerType;
+
+    // Inbound : true = Corporate, false = Individual, null = both
+    corporate?:boolean | null;
 
     locationId:number | null;
 

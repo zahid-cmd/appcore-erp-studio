@@ -34,6 +34,26 @@ public class SalesInvoicesMbConfiguration
         SalesInvoiceModel.ConfigureHeader(builder, "SalesInvoicesMb");
 
         builder.Property(x => x.SaleType).IsRequired().HasMaxLength(10);
+
+        // Registration on the invoice (RegistrationOnSale_Engine.sql)
+        builder.Property(x => x.RegistrationTypeName).IsRequired().HasMaxLength(150);
+
+        builder.Property(x => x.RegistrationAmount).HasPrecision(18, 2);
+
+        builder.Property(x => x.RegistrationTotal).HasPrecision(18, 2);
+
+        builder.Property(x => x.RegistrationCommission).HasPrecision(18, 2);
+
+        builder.Property(x => x.RegistrationStatus).IsRequired().HasMaxLength(20);
+
+        builder.Property(x => x.RegistrationReversalNo).IsRequired().HasMaxLength(30);
+
+        builder.Property(x => x.RegistrationReverseReason).IsRequired().HasMaxLength(500);
+
+        // Booking taken on the invoice (BookingsMB_Engine.sql)
+        builder.Property(x => x.BookingNo).IsRequired().HasMaxLength(40);
+
+        builder.Property(x => x.BookingAdvance).HasPrecision(18, 2);
     }
 
 
@@ -53,6 +73,11 @@ public class SalesInvoicesMbConfiguration
         builder.Property(x => x.DeliveryStatus).IsRequired().HasMaxLength(20);
 
         builder.Property(x => x.DeliveredDate).HasColumnType("date");
+
+        builder.Property(x => x.IsRegistered).IsRequired();
+
+        // SalesInvoicesMB_VatPayable.sql
+        builder.Property(x => x.VatPayable).HasPrecision(18, 2);
 
         builder.HasIndex(x => x.MotorBikeUnitId).HasDatabaseName("IX_SalesInvoicesMbLines_MotorBikeUnitId");
     }

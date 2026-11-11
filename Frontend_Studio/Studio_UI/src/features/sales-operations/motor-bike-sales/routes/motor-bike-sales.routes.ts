@@ -34,6 +34,26 @@ Routes =
             // SUBMENU ROUTE PLACEHOLDER
 
             //===========================================================
+            // Bike Deliveries (hand-wired : hand-written page, NEVER run
+            // Code Sync for it)
+            //===========================================================
+            {
+                path:'bike-deliveries',
+                data:
+                {
+                    breadcrumb:'Bike Deliveries'
+                },
+                loadChildren:() =>
+                    import(
+                        './bike-deliveries.routes'
+                    )
+                    .then(
+                        m =>
+                            m.BikeDeliveriesRoutes
+                    )
+            },
+
+            //===========================================================
             // Sales Invoices - MB (hand-wired : the shared Sales
             // Invoice pages)
             //===========================================================

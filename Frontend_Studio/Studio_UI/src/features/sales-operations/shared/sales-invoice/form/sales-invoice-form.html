@@ -256,6 +256,103 @@
 
 
             <!-- =============================================
+                 REVERSE REGISTRATION (inline panel; MB, posted)
+            ============================================== -->
+
+            @if (reverseOpen && invoice)
+            {
+                <div class="si-card si-cancel">
+
+                    <div class="si-card-header si-card-header-danger">
+
+                        <i class="fas fa-rotate-left"></i>
+
+                        <span>Reverse Registration · {{ invoice.InvoiceNo }}</span>
+
+                    </div>
+
+                    <div class="si-cancel-body">
+
+                        <p class="si-cancel-note">
+
+                            <i class="fas fa-triangle-exclamation"></i>
+
+                            A Journal Voucher dated today takes Tk {{ money(invoice.RegistrationTotal ?? 0) }} out of the registration ledgers and puts it back on the customer's account (refund or use it later). Its Registration Profiles are cancelled and the Customer Files go back to Registration By Customer. Refused once a profile was sent to BRTA.
+
+                        </p>
+
+                        <div class="si-cancel-row">
+
+                            <app-textbox
+
+                                class="si-cancel-reason"
+
+                                label="Reason"
+
+                                placeholder="Why is the registration reversed? (at least 5 characters)"
+
+                                textCase="none"
+
+                                [required]="true"
+
+                                [maxLength]="500"
+
+                                [value]="reverseReason"
+
+                                (valueChange)="onReverseReasonChange($event)"
+
+                                (enterPressed)="confirmReverse()">
+
+                            </app-textbox>
+
+                            <button
+
+                                type="button"
+
+                                class="si-btn si-btn-light"
+
+                                (click)="closeReverse()">
+
+                                <i class="fas fa-arrow-left"></i>
+
+                                Keep
+
+                            </button>
+
+                            <button
+
+                                type="button"
+
+                                class="si-btn si-btn-danger"
+
+                                (click)="confirmReverse()">
+
+                                <i class="fas fa-rotate-left"></i>
+
+                                Reverse Registration
+
+                            </button>
+
+                        </div>
+
+                        @if (reverseError)
+                        {
+                            <div class="si-field-error">
+
+                                <i class="fas fa-circle-exclamation"></i>
+
+                                {{ reverseError }}
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+            }
+
+
+            <!-- =============================================
                  CANCEL (inline panel; no pop-up)
             ============================================== -->
 
@@ -373,7 +470,7 @@
 
                             <span>Invoice Information</span>
 
-                            <!-- MB : Regular (one chassis) / Corporate
+                            <!-- MB : Individual (value Regular, one chassis) / Corporate
                                  (several; switch 0073 and its dates) -->
                             @if (showSaleType)
                             {
@@ -381,7 +478,7 @@
 
                                     class="si-sale-type"
 
-                                    [title]="corporateBlockText ? 'Corporate : ' + corporateBlockText : 'Regular : one chassis per invoice · Corporate : several chassis for a Corporate / Institution customer'">
+                                    [title]="corporateBlockText ? 'Corporate : ' + corporateBlockText : 'Individual : one chassis per invoice · Corporate : several chassis for a Corporate / Institution customer'">
 
                                     <app-control-segment
 
@@ -548,6 +645,22 @@
                             <i class="fa-regular fa-user"></i>
 
                             <span>Customer</span>
+
+                            <!-- Corporate : several chassis, one customer
+                                 file each -->
+                            @if (corporateNote)
+                            {
+                                <span
+
+                                    class="si-corp-note"
+
+                                    title="Corporate sale : several chassis on this invoice, one customer file each">
+
+                                    <i class="fas fa-building"></i>
+                                    Corporate · file per chassis
+
+                                </span>
+                            }
 
                             @if (customer && isEditable)
                             {
@@ -971,18 +1084,179 @@
                     </div>
 
 
+                    <!-- View : the bike of the clicked line (first by
+                         default), read only -->
+                    @if (viewBikeRow; as vr)
+                    {
+                        <div class="si-card si-add-card si-view-bike">
+
+                            <div class="si-card-header">
+
+                                <i [class]="'fa-solid ' + page.icon"></i>
+
+                                <span>Motor Bike</span>
+
+                                <span class="si-view-tag" title="Click a line in Items to show its bike">
+
+                                    <i class="fas fa-eye"></i>
+                                    Line {{ vr.index + 1 }}
+
+                                </span>
+
+                            </div>
+
+                            <div class="si-picked si-picked-bike appcore-scrollbar">
+
+                                <div class="si-pb-head">
+
+                                    <span class="si-picked-name">
+
+                                        <b>{{ vr.entry.ProductName }}</b>
+
+                                        <i>{{ vr.entry.ProductCode }}{{ vr.entry.ColorName ? ' · ' + vr.entry.ColorName : '' }}{{ vr.entry.ManufactureYear ? ' · ' + vr.entry.ManufactureYear : '' }}</i>
+
+                                    </span>
+
+                                    @let vw = warrantyOf(vr.entry.ProductId);
+                                    <span class="si-warranty" [class.si-warranty-none]="vw === null">
+
+                                        <i class="fas fa-shield-halved"></i>
+
+                                        <span class="si-warranty-tip" [class.si-wt-empty]="!vw">
+                                            @if (vw)
+                                            {
+                                                <span class="si-wt-head"><i class="fas fa-shield-halved"></i> {{ vw.PolicyName || 'Warranty' }} <em>{{ vw.PolicyCode }}</em></span>
+                                                <span class="si-wt-big">{{ warrantyText(vw) || 'No period set' }}</span>
+                                            }
+                                            @else
+                                            {
+                                                {{ vw === null ? 'No warranty policy in force for this bike.' : 'Loading the warranty...' }}
+                                            }
+                                        </span>
+
+                                    </span>
+
+                                    <span class="si-pb-tag">
+
+                                        <i class="fas fa-circle-check"></i>
+
+                                        CKD {{ vr.entry.CkdStatus || '-' }}{{ vr.priced?.DeliveryStatus ? ' · ' + vr.priced?.DeliveryStatus : '' }}
+
+                                    </span>
+
+                                </div>
+
+                                <div class="si-pb-body">
+
+                                    <div class="si-pb-nos">
+
+                                        <div class="si-pb-no">
+
+                                            <span>Chassis No</span>
+
+                                            <b>{{ vr.entry.ChassisNo }}</b>
+
+                                        </div>
+
+                                        <div class="si-pb-no">
+
+                                            <span>{{ vr.entry.IsElectric ? 'Motor No' : 'Engine No' }}</span>
+
+                                            <b>{{ vr.entry.EngineNo }}</b>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="si-pb-price">
+
+                                        <span>{{ vr.priced?.PriceEdited ? 'Price' : 'MRP' }}</span>
+
+                                        <b>{{ money(vr.priced?.PriceEdited ? vr.priced?.UnitPrice : (vr.priced?.Mrp || vr.entry.Mrp)) }}</b>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+
                     <!-- 3. ADD ITEMS : search (code / part no / name) or scan -->
 
                     @if (isEditable && isBikes)
                     {
                         <!-- MB : model -> colour -> chassis (one bike per line) -->
-                        <div class="si-card si-add-card" [class.si-add-locked]="!hasCustomer">
+                        <div class="si-card si-add-card" [class.si-add-locked]="!hasCustomer" [class.si-add-view]="bikeViewOnly">
 
                             <div class="si-card-header">
 
                                 <i [class]="'fa-solid ' + page.icon"></i>
 
                                 <span>Add Motor Bike</span>
+
+                                <!-- Single click on a line : read only view -->
+                                @if (bikeViewOnly)
+                                {
+                                    <span class="si-view-tag" title="Read only : double click the line, or Edit, to change it">
+
+                                        <i class="fas fa-eye"></i>
+                                        Line {{ bikeViewLine }}
+
+                                        <button type="button" class="si-view-edit" (click)="editBikeView()">Edit</button>
+
+                                    </span>
+                                }
+
+                                <!-- Booking (Booking Management) : the customer's
+                                     open bookings; the advance is paid already -->
+                                @if (canTakeBooking)
+                                {
+                                    <button
+
+                                        type="button"
+
+                                        class="si-shelf si-reg-head"
+
+                                        [class.is-set]="!!bookingId"
+
+                                        [title]="bookingId ? 'Booking ' + bookingNo + ' : advance ' + money(bookingAdvance) + ' (change it)' : 'Take one of the customer\'s open bookings'"
+
+                                        (click)="openBookingPicker()">
+
+                                        <i [class]="bookingId ? 'fas fa-circle-check' : 'fas fa-calendar-check'"></i>
+
+                                        Booking
+
+                                    </button>
+                                }
+
+                                <!-- Registration (same modal as the Summary's
+                                     Add) : after a bike is on the invoice -->
+                                @if (isEditable && canTakeRegistration)
+                                {
+                                    <button
+
+                                        type="button"
+
+                                        class="si-shelf si-reg-head"
+
+                                        [class.is-set]="registrationSent"
+
+                                        [disabled]="registrationBikes.length === 0"
+
+                                        [title]="registrationBikes.length === 0 ? 'Add the motor bike (chassis) first' : registrationSent ? 'Registration : ' + registrationText + ' (change it)' : 'Add the registration (Registration Configuration)'"
+
+                                        (click)="openRegistration()">
+
+                                        <i [class]="registrationSent ? 'fas fa-circle-check' : 'fas fa-id-card'"></i>
+
+                                        Registration
+
+                                    </button>
+                                }
 
                                 <!-- Motor Bike Shelf : the priced bikes as model
                                      cards, chassis picked after the model -->
@@ -1028,13 +1302,17 @@
 
                                     class="si-add"
 
-                                    [disabled]="!hasCustomer || !pickedBike || pickedOnInvoice"
+                                    [class.si-add-update]="bikeUpdating"
+
+                                    [title]="bikeUpdating ? 'Update line ' + bikeEditLineNo + ' with this chassis' : 'Add this chassis to the invoice'"
+
+                                    [disabled]="!hasCustomer || !pickedBike || (pickedOnInvoice && !bikeUpdating) || bikeViewOnly"
 
                                     (click)="addBike()">
 
-                                    <i class="fas fa-plus"></i>
+                                    <i [class]="bikeUpdating ? 'fas fa-rotate' : 'fas fa-plus'"></i>
 
-                                    Add
+                                    {{ bikeUpdating ? 'Update' : 'Add' }}
 
                                 </button>
 
@@ -1106,7 +1384,7 @@
                             {
                                 <!-- One bike : name, then chassis and engine in
                                      full (big), then year / CKD / MRP -->
-                                <div class="si-picked si-picked-bike" [class.si-picked-in]="pickedOnInvoice">
+                                <div class="si-picked si-picked-bike appcore-scrollbar" [class.si-picked-in]="pickedOnInvoice">
 
                                     <div class="si-pb-head">
 
@@ -1616,7 +1894,10 @@
 
                                     <col class="si-col-mrp">
 
-                                    <col class="si-col-disc">
+                                    @if (showCampaignColumn)
+                                    {
+                                        <col class="si-col-disc">
+                                    }
 
                                     @if (showSpecialColumn)
                                     {
@@ -1648,7 +1929,10 @@
 
                                         <th class="si-r">{{ canEditPrice ? 'MRP / Price' : 'MRP' }}</th>
 
-                                        <th class="si-r">Campaign / Member</th>
+                                        @if (showCampaignColumn)
+                                        {
+                                            <th class="si-r">Campaign / Member</th>
+                                        }
 
                                         @if (showSpecialColumn)
                                         {
@@ -1680,9 +1964,11 @@
 
                                             [class.si-row-bike]="isBikes && !!row.entry.MotorBikeUnitId"
 
-                                            [attr.title]="isBikes && row.entry.MotorBikeUnitId ? 'Double click : show this bike in the Add card' : null"
+                                            [attr.title]="isBikes && row.entry.MotorBikeUnitId ? 'Click : show this bike in the Add card (read only) · Double click : edit it there' : null"
 
-                                            (dblclick)="onRowDblClick(row)">
+                                            (click)="onRowClick(row, $event)"
+
+                                            (dblclick)="onRowDblClick(row, $event)">
 
                                             <td class="si-c si-sl">{{ row.index + 1 }}</td>
 
@@ -1779,17 +2065,28 @@
 
                                                         class="si-cell-input"
 
+                                                        [class.si-input-bad]="!!priceIssue(row)"
+
                                                         inputMode="decimal"
 
                                                         textCase="none"
 
-                                                        placeholder="Price"
+                                                        placeholder="Raise price"
+
+                                                        [title]="priceIssue(row) || priceEditHint"
+
+                                                        [disabled]="lineSpecialUsed || invoiceSpecialUsed || fractionalUsed"
 
                                                         [value]="row.entry.priceText"
 
                                                         (valueChange)="onLinePrice(row, $event)">
 
                                                     </app-textbox>
+
+                                                    @if (priceIssue(row))
+                                                    {
+                                                        <div class="si-sub si-text-rose">{{ priceIssue(row) }}</div>
+                                                    }
                                                 }
                                                 @else if (row.priced?.PriceEdited)
                                                 {
@@ -1798,20 +2095,23 @@
 
                                             </td>
 
-                                            <td class="si-r">
+                                            @if (showCampaignColumn)
+                                            {
+                                                <td class="si-r">
 
-                                                @if (row.priced && row.priced.CampaignMembershipAmount > 0)
-                                                {
-                                                    <div class="si-text-emerald">{{ money(row.priced.CampaignMembershipAmount) }}</div>
+                                                    @if (row.priced && row.priced.CampaignMembershipAmount > 0)
+                                                    {
+                                                        <div class="si-text-emerald">{{ money(row.priced.CampaignMembershipAmount) }}</div>
 
-                                                    <div class="si-sub">{{ row.priced.DiscountLabel || row.priced.DiscountSource }}</div>
-                                                }
-                                                @else
-                                                {
-                                                    <span class="si-muted">-</span>
-                                                }
+                                                        <div class="si-sub">{{ row.priced.DiscountLabel || row.priced.DiscountSource }}</div>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <span class="si-muted">-</span>
+                                                    }
 
-                                            </td>
+                                                </td>
+                                            }
 
                                             @if (showSpecialColumn)
                                             {
@@ -1819,25 +2119,55 @@
 
                                                     @if (canGiveSpecial)
                                                     {
-                                                        <app-textbox
+                                                        <!-- Per line % OR Tk (the small button switches) -->
+                                                        <div class="si-spec-cell">
 
-                                                            class="si-cell-input si-cell-pct"
+                                                            <app-textbox
 
-                                                            inputMode="decimal"
+                                                                class="si-cell-input si-cell-pct"
 
-                                                            textCase="none"
+                                                                [class.si-input-bad]="!!lineSpecialIssue(row)"
 
-                                                            placeholder="%"
+                                                                [title]="lineSpecialIssue(row)"
 
-                                                            suffixIcon="fas fa-percent"
+                                                                inputMode="decimal"
 
-                                                            [disabled]="invoiceSpecialUsed"
+                                                                textCase="none"
 
-                                                            [value]="row.entry.specialText"
+                                                                [placeholder]="row.entry.specialMode === 'Tk' ? 'Tk' : '%'"
 
-                                                            (valueChange)="onLineSpecial(row, $event)">
+                                                                [disabled]="invoiceSpecialUsed || priceEditUsed || fractionalUsed"
 
-                                                        </app-textbox>
+                                                                [value]="row.entry.specialText"
+
+                                                                (valueChange)="onLineSpecial(row, $event)">
+
+                                                            </app-textbox>
+
+                                                            <button
+
+                                                                type="button"
+
+                                                                class="si-spec-mode"
+
+                                                                [class.si-spec-tk]="row.entry.specialMode === 'Tk'"
+
+                                                                [title]="row.entry.specialMode === 'Tk' ? 'In Tk : click for %' : 'In % : click for Tk'"
+
+                                                                [disabled]="invoiceSpecialUsed || priceEditUsed || fractionalUsed"
+
+                                                                (click)="toggleLineSpecialMode(row)">
+
+                                                                {{ row.entry.specialMode === 'Tk' ? 'Tk' : '%' }}
+
+                                                            </button>
+
+                                                        </div>
+
+                                                        @if (lineSpecialIssue(row))
+                                                        {
+                                                            <div class="si-sub si-text-rose">{{ lineSpecialIssue(row) }}</div>
+                                                        }
                                                     }
 
                                                     @if (row.priced && row.priced.SpecialAmount > 0)
@@ -1918,7 +2248,7 @@
 
                                                 class="si-empty"
 
-                                                [attr.colspan]="(showSpecialColumn ? 9 : 8) + (isEditable ? 1 : 0)">
+                                                [attr.colspan]="7 + (showCampaignColumn ? 1 : 0) + (showSpecialColumn ? 1 : 0) + (isEditable ? 1 : 0)">
 
                                                 <i class="fa-regular fa-folder-open"></i>
 
@@ -2005,7 +2335,7 @@
 
                                             [value]="specialType"
 
-                                            [disabled]="lineSpecialUsed"
+                                            [disabled]="lineSpecialUsed || priceEditUsed || fractionalUsed"
 
                                             (valueChange)="onSpecialTypeChange($event)">
 
@@ -2017,6 +2347,10 @@
 
                                                 class="si-special-value"
 
+                                                [class.si-input-bad]="!!invoiceSpecialIssue"
+
+                                                [title]="invoiceSpecialIssue"
+
                                                 inputMode="decimal"
 
                                                 textCase="none"
@@ -2025,7 +2359,7 @@
 
                                                 [value]="specialValueText"
 
-                                                [disabled]="lineSpecialUsed"
+                                                [disabled]="lineSpecialUsed || priceEditUsed || fractionalUsed"
 
                                                 (valueChange)="onSpecialValueChange($event)">
 
@@ -2125,29 +2459,142 @@
 
                                 </div>
 
-                                <div class="si-sum-row">
+                                <!-- Discount rows only when the discount can be given
+                                     or was given (owner 2026-11-11) -->
+                                @if (showCampaignColumn)
+                                {
+                                    <div class="si-sum-row">
 
-                                    <span>{{ campaignMembershipLabel }}</span>
+                                        <span>{{ campaignMembershipLabel }}</span>
 
-                                    <b [class.si-text-emerald]="figures.CampaignMembership > 0">{{ figures.CampaignMembership > 0 ? '- ' : '' }}{{ money(figures.CampaignMembership) }}</b>
+                                        <b class="si-text-emerald">- {{ money(figures.CampaignMembership) }}</b>
 
-                                </div>
+                                    </div>
+                                }
 
-                                <div class="si-sum-row">
+                                @if (showSpecialColumn)
+                                {
+                                    <div class="si-sum-row">
 
-                                    <span>Special</span>
+                                        <span>Special</span>
 
-                                    <b [class.si-text-emerald]="figures.Special > 0">{{ figures.Special > 0 ? '- ' : '' }}{{ money(figures.Special) }}</b>
+                                        <b [class.si-text-emerald]="figures.Special > 0">{{ figures.Special > 0 ? '- ' : '' }}{{ money(figures.Special) }}</b>
 
-                                </div>
+                                    </div>
+                                }
 
+                                @if (showFractionalRow)
+                                {
                                 <div class="si-sum-row">
 
                                     <span>Fractional</span>
 
-                                    <b [class.si-text-emerald]="figures.Fractional > 0">{{ figures.Fractional > 0 ? '- ' : '' }}{{ money(figures.Fractional) }}</b>
+                                    <!-- Allow Fractional Discount ON : typed Tk (at
+                                         most the switch Value); locked while a
+                                         special discount / price edit is used -->
+                                    @if (canGiveFractional)
+                                    {
+                                        <app-textbox
+
+                                            class="si-frac-input"
+
+                                            [class.si-input-bad]="!!fractionalIssue"
+
+                                            inputMode="decimal"
+
+                                            textCase="none"
+
+                                            [placeholder]="fractionalPlaceholder"
+
+                                            [title]="fractionalIssue || (specialAnyUsed ? 'Locked : a special discount or price edit is used on this invoice' : 'Fractional discount (Tk)')"
+
+                                            [disabled]="specialAnyUsed"
+
+                                            [value]="fractionalText"
+
+                                            (valueChange)="onFractionalChange($event)">
+
+                                        </app-textbox>
+                                    }
+                                    @else
+                                    {
+                                        <b [class.si-text-emerald]="figures.Fractional > 0">{{ figures.Fractional > 0 ? '- ' : '' }}{{ money(figures.Fractional) }}</b>
+                                    }
 
                                 </div>
+                                }
+
+
+                                <!-- MB : registration (Registration button; in
+                                     the total, no VAT / discount) -->
+                                @if (isBikes && (canTakeRegistration || registrationTotal > 0 || registrationReversed))
+                                {
+                                    <div
+
+                                        class="si-sum-row si-sum-reg"
+
+                                        [class.si-sum-reg-off]="registrationReversed">
+
+                                        <span>
+
+                                            Registration
+
+                                            @if (registrationText)
+                                            {
+                                                <i class="si-sum-reg-text">{{ registrationText }}</i>
+                                            }
+
+                                            @if (registrationReversed)
+                                            {
+                                                <i class="si-sum-reg-text si-text-rose">Reversed · {{ invoice?.RegistrationReversalNo }}</i>
+                                            }
+
+                                        </span>
+
+                                        @if (isEditable && canTakeRegistration)
+                                        {
+                                            <button
+
+                                                type="button"
+
+                                                class="si-link si-reg-btn"
+
+                                                [disabled]="registrationBikes.length === 0"
+
+                                                [title]="registrationBikes.length === 0 ? 'Add the motor bike (chassis) first' : registrationSent ? 'Change the registration' : 'Add the registration (Registration Configuration)'"
+
+                                                (click)="openRegistration()">
+
+                                                <i class="fas fa-id-card"></i>
+
+                                                {{ registrationSent ? 'Edit' : 'Add' }}
+
+                                            </button>
+                                        }
+
+                                        @if (canReverseRegistration)
+                                        {
+                                            <button
+
+                                                type="button"
+
+                                                class="si-link si-reg-btn si-text-rose"
+
+                                                title="Reverse the registration (Journal Voucher)"
+
+                                                (click)="openReverse()">
+
+                                                <i class="fas fa-rotate-left"></i>
+
+                                                Reverse
+
+                                            </button>
+                                        }
+
+                                        <b>{{ registrationTotal > 0 ? '+ ' : '' }}{{ money(registrationTotal) }}</b>
+
+                                    </div>
+                                }
 
                                 <div class="si-sum-row si-sum-total">
 
@@ -2156,6 +2603,44 @@
                                     <b>{{ money(figures.InvoiceTotal) }}</b>
 
                                 </div>
+
+                                <!-- MB : booking advance (paid already by the
+                                     booking's Receipt Vouchers) -->
+                                @if (isBikes && (bookingAdvance > 0 || !!bookingId))
+                                {
+                                    <div class="si-sum-row si-sum-reg">
+
+                                        <span>
+
+                                            Booking Advance
+
+                                            <i class="si-sum-reg-text">{{ bookingNo }}</i>
+
+                                        </span>
+
+                                        @if (isEditable && bookingId)
+                                        {
+                                            <button
+
+                                                type="button"
+
+                                                class="si-link si-reg-btn si-text-rose"
+
+                                                title="Take the booking off this invoice"
+
+                                                (click)="removeBooking()">
+
+                                                <i class="fas fa-xmark"></i>
+
+                                                Remove
+
+                                            </button>
+                                        }
+
+                                        <b class="si-text-emerald">- {{ money(bookingAdvance) }}</b>
+
+                                    </div>
+                                }
 
                                 <div class="si-sum-row">
 
@@ -2249,6 +2734,470 @@
                   app-payment-desk (details of Check / MFS / POS)
          Footer : status note, Close, Okay
     ====================================================== -->
+
+    <!-- =====================================================
+         BOOKING (MB) : the customer's open bookings
+    ====================================================== -->
+
+    @if (bookingPickerOpen)
+    {
+        <div class="si-modal-backdrop">
+
+            <div
+
+                class="si-modal si-book-modal"
+
+                role="dialog"
+
+                aria-modal="true"
+
+                aria-labelledby="si-book-title">
+
+                <div class="si-modal-head">
+
+                    <span class="si-modal-icon">
+
+                        <i class="fas fa-calendar-check"></i>
+
+                    </span>
+
+                    <div class="si-modal-title">
+
+                        <strong id="si-book-title">Bookings of {{ customer?.DisplayName || customer?.Name }}</strong>
+
+                        <span>Open bookings · the advance is taken as paid; posting the invoice converts the booking</span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="si-modal-x"
+
+                        title="Close"
+
+                        aria-label="Close"
+
+                        (click)="closeBookingPicker()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="si-modal-body si-book-body appcore-scrollbar">
+
+                    @if (bookingLoading)
+                    {
+                        <div class="si-book-empty"><i class="fas fa-spinner fa-spin"></i> Loading bookings...</div>
+                    }
+                    @else if (bookingListError)
+                    {
+                        <div class="si-book-empty si-text-rose"><i class="fas fa-circle-exclamation"></i> {{ bookingListError }}</div>
+                    }
+                    @else
+                    {
+                        @for (b of bookingList; track b.BookingId)
+                        {
+                            <button
+
+                                type="button"
+
+                                class="si-book-row"
+
+                                [class.is-set]="b.BookingId === bookingId"
+
+                                (click)="pickBooking(b)">
+
+                                <span class="si-book-main">
+
+                                    <b>{{ b.BookingNo }}</b>
+
+                                    <span>{{ b.ModelName }}</span>
+
+                                </span>
+
+                                <span class="si-book-meta">
+
+                                    {{ bookingDateText(b.BookingDate) }}
+
+                                    @if (b.ValidUntil)
+                                    {
+                                        <span [class.si-text-rose]="b.IsExpired">· valid until {{ bookingDateText(b.ValidUntil) }}{{ b.IsExpired ? ' (expired)' : '' }}</span>
+                                    }
+
+                                </span>
+
+                                <b class="si-book-amount">{{ money(b.AdvanceAmount) }}</b>
+
+                            </button>
+                        }
+
+                        @if (bookingList.length === 0)
+                        {
+                            <div class="si-book-empty">
+
+                                <i class="fas fa-circle-info"></i>
+
+                                No open booking for this customer.
+
+                            </div>
+                        }
+                    }
+
+                </div>
+
+                <div class="si-modal-foot">
+
+                    <span class="si-modal-note">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        Checkout collects only the balance after the advance.
+
+                    </span>
+
+                    @if (bookingId)
+                    {
+                        <button
+
+                            type="button"
+
+                            class="si-btn si-btn-danger"
+
+                            (click)="removeBooking()">
+
+                            <i class="fa-regular fa-trash-can"></i>
+
+                            Remove
+
+                        </button>
+                    }
+
+                    <button
+
+                        type="button"
+
+                        class="si-btn si-btn-light"
+
+                        (click)="closeBookingPicker()">
+
+                        <i class="fas fa-xmark"></i>
+
+                        Close
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         REGISTRATION (MB) : type, amount on the min .. max bar,
+         Corporate : the chassis to register
+    ====================================================== -->
+
+    @if (registrationOpen)
+    {
+        <div class="si-modal-backdrop">
+
+            <div
+
+                class="si-modal si-reg-modal"
+
+                role="dialog"
+
+                aria-modal="true"
+
+                aria-labelledby="si-reg-title">
+
+                <div class="si-modal-head">
+
+                    <span class="si-modal-icon">
+
+                        <i class="fas fa-id-card"></i>
+
+                    </span>
+
+                    <div class="si-modal-title">
+
+                        <strong id="si-reg-title">Registration</strong>
+
+                        <span>
+
+                            Registration Configuration rates in force · {{ isCorporateSale ? 'tick the chassis to register' : 'the bike on this invoice' }}
+
+                        </span>
+
+                    </div>
+
+                    <button
+
+                        type="button"
+
+                        class="si-modal-x"
+
+                        title="Close"
+
+                        aria-label="Close"
+
+                        (click)="closeRegistration()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="si-modal-body si-reg-body">
+
+                    <!-- Left : type, hint, amount -->
+                    <div class="si-reg-col">
+
+                        <div class="si-reg-field">
+
+                            <label>Registration Type</label>
+
+                            <app-search-dropdown
+
+                                class="si-reg-type"
+
+                                placeholder="Choose the registration type"
+
+                                [items]="regTypeItems"
+
+                                [value]="regDraftTypeId"
+
+                                [required]="true"
+
+                                (valueChange)="onRegTypeChange($event)">
+
+                            </app-search-dropdown>
+
+                        </div>
+
+                        @if (bikePowers.length > 0)
+                        {
+                            <div class="si-reg-hint">
+
+                                <i class="fas fa-bolt"></i>
+
+                                {{ bikePowers.join(' / ') }} bike : its {{ bikePowers.join(' / ') }} registration types are listed.
+
+                            </div>
+                        }
+
+                        <div class="si-reg-field">
+
+                            <label>Amount per chassis (Tk)</label>
+
+                            <app-textbox
+
+                                [class.si-input-bad]="!!regDraftIssue && regDraftAmount > 0"
+
+                                inputMode="decimal"
+
+                                textCase="none"
+
+                                placeholder="Amount"
+
+                                [disabled]="!regOption?.HasRates"
+
+                                [value]="regDraftAmountText"
+
+                                (valueChange)="onRegAmountChange($event)"
+
+                                (enterPressed)="applyRegistration()">
+
+                            </app-textbox>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Right : min .. max bar, the line -->
+                    <div class="si-reg-col">
+
+                        <div class="si-reg-bar">
+
+                            @if (regOption && regOption.HasRates)
+                            {
+                                <div class="si-reg-bar-ends">
+
+                                    <span>Minimum <b>{{ money(regOption.Minimum) }}</b></span>
+
+                                    <span>Maximum <b>{{ money(regOption.Maximum) }}</b></span>
+
+                                </div>
+
+                                <input
+
+                                    type="range"
+
+                                    class="si-reg-range"
+
+                                    [min]="regOption.Minimum"
+
+                                    [max]="regOption.Maximum"
+
+                                    step="1"
+
+                                    [value]="regDraftAmount || regOption.Maximum"
+
+                                    [style.--si-reg-fill]="regBarPercent + '%'"
+
+                                    (input)="onRegSlide($event)">
+                            }
+                            @else
+                            {
+                                <div class="si-reg-bar-empty">
+
+                                    <i class="fas fa-circle-info"></i>
+
+                                    {{ regOption ? 'No fee / cost in force today for this type (Registration Configuration).' : 'Choose a registration type.' }}
+
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="si-reg-total">
+
+                            <span>Registration line</span>
+
+                            <b>{{ money(regDraftAmount) }} x {{ regDraftCount }} = {{ money(regDraftTotal) }}</b>
+
+                        </div>
+
+                    </div>
+
+                    @if (isCorporateSale)
+                    {
+                        <div class="si-reg-units si-reg-span">
+
+                            <div class="si-reg-units-head">
+
+                                <span>Chassis on this invoice <b>{{ regDraftUnitIds.length }} / {{ registrationBikes.length }}</b></span>
+
+                                <button
+
+                                    type="button"
+
+                                    class="si-link"
+
+                                    (click)="toggleAllRegUnits()">
+
+                                    {{ regDraftUnitIds.length === registrationBikes.length ? 'Untick all' : 'Tick all' }}
+
+                                </button>
+
+                            </div>
+
+                            <div class="si-reg-units-list appcore-scrollbar">
+
+                                @for (bike of registrationBikes; track bike.id)
+                                {
+                                    <label class="si-reg-unit">
+
+                                        <input
+
+                                            type="checkbox"
+
+                                            [checked]="isRegUnitTicked(bike.id)"
+
+                                            (change)="toggleRegUnit(bike.id)">
+
+                                        <b>{{ bike.chassis }}</b>
+
+                                        <span>{{ bike.name }}</span>
+
+                                    </label>
+                                }
+
+                                @if (registrationBikes.length === 0)
+                                {
+                                    <div class="si-reg-empty">No bike on the invoice yet.</div>
+                                }
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+                <div class="si-modal-foot">
+
+                    <span
+
+                        class="si-modal-note"
+
+                        [class.si-text-rose]="!!regError">
+
+                        <i [class]="regError ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                        {{ regError || 'Added to the invoice total · no VAT, no discount · posted to the registration ledgers.' }}
+
+                    </span>
+
+                    @if (registrationSent)
+                    {
+                        <button
+
+                            type="button"
+
+                            class="si-btn si-btn-danger"
+
+                            (click)="removeRegistration()">
+
+                            <i class="fa-regular fa-trash-can"></i>
+
+                            Remove
+
+                        </button>
+                    }
+
+                    <button
+
+                        type="button"
+
+                        class="si-btn si-btn-light"
+
+                        (click)="closeRegistration()">
+
+                        <i class="fas fa-xmark"></i>
+
+                        Close
+
+                    </button>
+
+                    <button
+
+                        type="button"
+
+                        class="si-btn si-btn-primary"
+
+                        (click)="applyRegistration()">
+
+                        <i class="fas fa-check"></i>
+
+                        {{ registrationSent ? 'Update' : 'Add' }}
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
 
     @if (checkoutOpen)
     {

@@ -1,0 +1,106 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Bike Deliveries"
+        subtitle="Sold bikes : PDI sheet, handover, delivery challan"
+        icon="fas fa-truck-ramp-box">
+
+        <div pageHeaderCenter>
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search invoice, customer, phone, chassis..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="refresh()"
+                [command2Visible]="false"
+                [command3Visible]="false"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="Activity history"
+                (rightCommandClick)="openHistory()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+        </app-control-tabs>
+
+        <span
+            pageToolbarRight
+            class="bdl-note"
+            [class.bdl-note-warn]="defaults.DeliveryWithoutPdi">
+            @if (defaults.DeliveryWithoutPdi)
+            {
+                <i class="fas fa-triangle-exclamation"></i>
+                Delivery without PDI is ON : the PDI sheet is optional
+            }
+            @else
+            {
+                <i class="fas fa-clipboard-check"></i>
+                The PDI sheet is required before a delivery
+            }
+        </span>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+            <app-list-table
+                [columns]="columns"
+                [rows]="rows"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                [actions]="listActions"
+                [rowActions]="rowActions"
+                (rowAction)="onRowAction($event)">
+            </app-list-table>
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        [title]="historyTitle"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+
+</div>

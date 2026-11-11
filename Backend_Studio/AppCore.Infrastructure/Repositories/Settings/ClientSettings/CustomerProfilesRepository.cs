@@ -220,6 +220,8 @@ public class CustomerProfilesRepository :
                         IsCorporate = x.IsCorporate,
                         TinNo = x.TinNo,
                         BinNo = x.BinNo,
+                        ContactPersonName = x.ContactPersonName,
+                        ContactPersonNid = x.ContactPersonNid,
                         Remarks = x.Remarks,
                         IsActive = x.IsActive,
                         IsDeleted = x.IsDeleted,
@@ -423,8 +425,8 @@ public class CustomerProfilesRepository :
 
         var groups =
             await query
-                .GroupBy(x => new { x.CustomerType, x.IsActive })
-                .Select(g => new { g.Key.CustomerType, g.Key.IsActive, Count = g.Count() })
+                .GroupBy(x => new { x.CustomerType, x.IsActive, x.IsCorporate })
+                .Select(g => new { g.Key.CustomerType, g.Key.IsActive, g.Key.IsCorporate, Count = g.Count() })
                 .ToListAsync();
 
         Dictionary<string, int> stripCounts =
@@ -433,6 +435,8 @@ public class CustomerProfilesRepository :
                 ["Total"] = groups.Sum(x => x.Count),
                 [InboundType] = groups.Where(x => x.CustomerType == InboundType).Sum(x => x.Count),
                 [OutsideType] = groups.Where(x => x.CustomerType == OutsideType).Sum(x => x.Count),
+                ["Individual"] = groups.Where(x => x.CustomerType == InboundType && !x.IsCorporate).Sum(x => x.Count),
+                ["Corporate"] = groups.Where(x => x.CustomerType == InboundType && x.IsCorporate).Sum(x => x.Count),
                 ["Active"] = groups.Where(x => x.IsActive).Sum(x => x.Count),
                 ["Inactive"] = groups.Where(x => !x.IsActive).Sum(x => x.Count)
             };
@@ -473,6 +477,16 @@ public class CustomerProfilesRepository :
 
             query =
                 query.Where(x => x.CustomerType == customerType);
+
+            // Inbound : Individual / Corporate tab
+            if (customerType == InboundType && request.Corporate.HasValue)
+            {
+                bool corporateTab =
+                    request.Corporate.Value;
+
+                query =
+                    query.Where(x => x.IsCorporate == corporateTab);
+            }
         }
 
         //-------------------------------------------------------
@@ -757,6 +771,10 @@ public class CustomerProfilesRepository :
 
         public string BinNo { get; init; } = string.Empty;
 
+        public string ContactPersonName { get; init; } = string.Empty;
+
+        public string ContactPersonNid { get; init; } = string.Empty;
+
         public string Remarks { get; init; } = string.Empty;
     }
 
@@ -889,6 +907,8 @@ public class CustomerProfilesRepository :
             IsCorporate = dto.IsCorporate,
             TinNo = dto.TinNo,
             BinNo = dto.BinNo,
+            ContactPersonName = dto.ContactPersonName,
+            ContactPersonNid = dto.ContactPersonNid,
             Remarks = dto.Remarks,
             IsActive = dto.IsActive
         };
@@ -939,6 +959,33 @@ public class CustomerProfilesRepository :
         {
             throw new InvalidOperationException(
                 "BIN No must be 9 or 13 digits (digits only).");
+        }
+
+        // Corporate : the contact person and the
+        // person's NID (both optional; the NID not unique)
+        string contactName =
+            corporate
+                ? Upper(CheckText(dto.ContactPersonName, "Contact Person", MaxNameLength, false))
+                : string.Empty;
+
+        string contactNid =
+            corporate
+                ? (dto.ContactPersonNid ?? string.Empty).Trim()
+                : string.Empty;
+
+        if
+        (
+            contactNid.Length > 0
+            &&
+            (
+                !Regex.IsMatch(contactNid, "^[0-9]+$")
+                ||
+                (contactNid.Length != 10 && contactNid.Length != 13 && contactNid.Length != 17)
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                "Contact Person NID must be 10, 13 or 17 digits (digits only).");
         }
 
         // CAPITAL LETTERS (the Display Name and the ledger name
@@ -1138,6 +1185,10 @@ public class CustomerProfilesRepository :
             TinNo = tin,
 
             BinNo = bin,
+
+            ContactPersonName = contactName,
+
+            ContactPersonNid = contactNid,
 
             Remarks =
                 (dto.Remarks ?? string.Empty).Trim()
@@ -1695,6 +1746,8 @@ public class CustomerProfilesRepository :
         entity.IsCorporate = input.IsCorporate;
         entity.TinNo = input.TinNo;
         entity.BinNo = input.BinNo;
+        entity.ContactPersonName = input.ContactPersonName;
+        entity.ContactPersonNid = input.ContactPersonNid;
         entity.Remarks = input.Remarks;
         entity.IsActive = isActive;
     }

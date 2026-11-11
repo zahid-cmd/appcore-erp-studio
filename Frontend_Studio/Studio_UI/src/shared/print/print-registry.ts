@@ -156,6 +156,20 @@ export const PRINT_SOURCES:
             import('../../features/sales-operations/motor-bike-sales/print/sales-invoices-mb.print')
                 .then(module => module.SALES_INVOICES_MB_PRINT),
 
+    // Sales Operations : Bike Deliveries (Delivery Challan / Gate
+    // Pass + PDI Sheet; the id is the delivery PublicId)
+    'bike-deliveries':
+        () =>
+            import('../../features/sales-operations/motor-bike-sales/print/bike-deliveries.print')
+                .then(module => module.BIKE_DELIVERIES_PRINT),
+
+    // Settings : PDI Templates (blank PDI sheet, Bike + Office
+    // copy; the id is the template PublicId)
+    'pdi-templates':
+        () =>
+            import('../../features/settings/service-settings/print/pdi-templates.print')
+                .then(module => module.PDI_TEMPLATES_PRINT),
+
     // Accounts & Finance : Auto Journal Registers (Journal
     // Register; the id is the page's filter token)
     'auto-journal-registers':

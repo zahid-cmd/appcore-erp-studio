@@ -1,0 +1,90 @@
+/* ============================================================
+   PDI Templates
+============================================================ */
+
+export interface PdiTemplates
+{
+    id:
+        number;
+
+    code:
+        string;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Create PDI Templates
+============================================================ */
+
+export interface CreatePdiTemplates
+{
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   Update PDI Templates
+============================================================ */
+
+export interface UpdatePdiTemplates
+{
+    id:
+        number;
+
+    name:
+        string;
+
+    sampleSearchDropdownId:
+        number | null;
+
+    sampleField:
+        string;
+
+    status:
+        string;
+
+    remarks:
+        string;
+}
+
+
+
+/* ============================================================
+   PDI Templates Defaults
+============================================================ */
+
+export interface PdiTemplatesDefaults
+{
+    code:
+        string;
+}

@@ -206,6 +206,7 @@ import
     SalesInvoiceCustomerSearchItem,
     SalesInvoiceProduct,
     SalesInvoiceQuote,
+    SalesInvoiceRegistrationOption,
     SalesInvoiceSaved,
     SalesInvoiceSpecialType,
     SalesInvoicePaymentRow,
@@ -217,6 +218,18 @@ import
     toAsciiText
 }
 from '../sales-invoice.model';
+
+import
+{
+    BookingsService
+}
+from '../../../booking-management/services/bookings.service';
+
+import
+{
+    OpenBooking
+}
+from '../../../booking-management/models/bookings.model';
 
 import
 {
@@ -308,6 +321,14 @@ interface EntryLine
     // Special % (0025 + activity); null = none
     SpecialPercent:
         number | null;
+
+    // Special Tk on the line (per line % OR Tk); null = none
+    SpecialTk?:
+        number | null;
+
+    // The line box's unit : % (default) or Tk
+    specialMode?:
+        '%' | 'Tk';
 
     // From the product search (until the quote answers)
     OnHand:
@@ -418,6 +439,11 @@ const MODE_LEDGER_TYPES:
 // Component
 //===============================================================
 
+// Last defaults per page and day (kept while the app is open)
+const SALES_INVOICE_DEFAULTS_CACHE =
+    new Map<string, SalesInvoiceDefaults>();
+
+
 @Component(
 {
     selector:'sales-invoice-form',
@@ -490,6 +516,9 @@ implements OnInit, OnDestroy
 
     private readonly salesInvoiceService =
         inject(SalesInvoiceService);
+
+    private readonly bookingsService =
+        inject(BookingsService);
 
     private readonly lookup =
         inject(AccountingLookupService);
@@ -860,6 +889,10 @@ implements OnInit, OnDestroy
         string =
         '';
 
+    // Fractional discount typed on the invoice Summary (Tk)
+    fractionalText =
+        '';
+
     readonly specialTypeItems:
         ControlSegmentItem[] =
     [
@@ -988,6 +1021,92 @@ implements OnInit, OnDestroy
     multiMode:
         boolean =
         false;
+
+    //===========================================================
+    // MB : registration on the invoice (2026-11-11). One type and
+    // amount per chassis; Corporate : the chassis ticked.
+    //===========================================================
+
+    registrationTypeId:
+        number | null =
+        null;
+
+    registrationAmount:
+        number =
+        0;
+
+    registrationUnitIds:
+        number[] =
+        [];
+
+    // The modal (a draft until Add / Update)
+    registrationOpen:
+        boolean =
+        false;
+
+    regDraftTypeId:
+        number | null =
+        null;
+
+    regDraftAmountText:
+        string =
+        '';
+
+    regDraftUnitIds:
+        number[] =
+        [];
+
+    regError:
+        string =
+        '';
+
+    //===========================================================
+    // MB : booking taken (Booking Management). Its advance is
+    // paid already (Receipt Vouchers to the customer's ledger);
+    // Post converts the booking, cancelling the invoice re-opens it.
+    //===========================================================
+
+    bookingId:
+        number | null =
+        null;
+
+    // The booking picked (shown until the quote has it)
+    bookingPick:
+        OpenBooking | null =
+        null;
+
+    // The customer the booking belongs to
+    private bookingCustomerId =
+        0;
+
+    bookingPickerOpen:
+        boolean =
+        false;
+
+    bookingLoading:
+        boolean =
+        false;
+
+    bookingList:
+        OpenBooking[] =
+        [];
+
+    bookingListError:
+        string =
+        '';
+
+    // Reverse Registration (posted; admin) : inline panel
+    reverseOpen:
+        boolean =
+        false;
+
+    reverseReason:
+        string =
+        '';
+
+    reverseError:
+        string =
+        '';
 
     //===========================================================
     // Cancel (inline panel, no pop-up)
@@ -1263,7 +1382,7 @@ implements OnInit, OnDestroy
             },
             {
                 icon: 'fa-regular fa-pen-to-square',
-                label: 'Price Edit',
+                label: 'Edit Price',
                 value: s.AllowPriceEdit ? percent(s.MaxPriceEditPercent) : 'Locked',
                 tone: s.AllowPriceEdit ? 'ok' : 'off'
             },
@@ -1337,6 +1456,27 @@ implements OnInit, OnDestroy
 
         this.refresh();
 
+        // Receipt accounts and voucher switches do not need the
+        // defaults : asked at the same time (the page opened slowly
+        // when every call waited for the one before)
+        this.loadPaymentSetup();
+
+        // The last defaults of this page (today) : the form opens at
+        // once with them, the fresh ones follow quietly
+        const cacheKey =
+            `${this.page.pageType}|${toIsoDate(new Date())}`;
+
+        const cached =
+            SALES_INVOICE_DEFAULTS_CACHE.get(cacheKey) ?? null;
+
+        if
+        (
+            cached
+        )
+        {
+            this.openNewWith(cached);
+        }
+
         this.salesInvoiceService
             .getDefaults()
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -1345,26 +1485,66 @@ implements OnInit, OnDestroy
                 next:
                     defaults =>
                     {
+                        SALES_INVOICE_DEFAULTS_CACHE.set(cacheKey, defaults);
+
+                        if
+                        (
+                            !cached
+                        )
+                        {
+                            this.openNewWith(defaults);
+
+                            return;
+                        }
+
+                        // Opened with the kept defaults : the fresh
+                        // options, switches and number preview. The
+                        // header is filled again only while nothing
+                        // was entered and the branch / warehouse
+                        // changed.
+                        const sameHeader =
+                            defaults.Branch?.BranchId === cached.Branch?.BranchId
+                            &&
+                            defaults.Warehouses.some(x => x.WarehouseId === this.warehouseId);
+
+                        const untouched =
+                            !this.hasChanges
+                            &&
+                            this.lines.length === 0
+                            &&
+                            !this.customer;
+
+                        if
+                        (
+                            !sameHeader
+                            &&
+                            untouched
+                        )
+                        {
+                            this.openNewWith(defaults);
+
+                            return;
+                        }
+
                         this.applyDefaults(
                             defaults,
-                            true
+                            false
                         );
 
-                        this.resetEntry();
-
-                        this.loading =
-                            false;
-
-                        this.setInitialState();
-
-                        this.loadPaymentSetup();
-
-                        this.pickReturnedCustomer();
+                        this.refresh();
                     },
 
                 error:
                     error =>
                     {
+                        if
+                        (
+                            cached
+                        )
+                        {
+                            return;
+                        }
+
                         this.loading =
                             false;
 
@@ -1374,6 +1554,28 @@ implements OnInit, OnDestroy
                         this.refresh();
                     }
             });
+    }
+
+    private openNewWith
+    (
+        defaults:
+            SalesInvoiceDefaults
+    ):
+        void
+    {
+        this.applyDefaults(
+            defaults,
+            true
+        );
+
+        this.resetEntry();
+
+        this.loading =
+            false;
+
+        this.setInitialState();
+
+        this.pickReturnedCustomer();
     }
 
     // Defaults : options, switches, flags; fill = also the header
@@ -1472,6 +1674,12 @@ implements OnInit, OnDestroy
         this.paymentTerm =
             'Cash';
 
+        // New invoice : the Fractional Discount switch's Default
+        // Value (also set by resetEntry; this covers the order
+        // where the defaults arrive after the reset)
+        this.fractionalText =
+            this.defaultFractionalText;
+
         this.emiAccountCode =
             '';
 
@@ -1537,6 +1745,28 @@ implements OnInit, OnDestroy
 
         this.specialValueText =
             '';
+
+        // Fractional Discount switch's Default Value (owner
+        // 2026-11-11); staff can change or clear it
+        this.fractionalText =
+            this.defaultFractionalText;
+
+        this.registrationTypeId =
+            null;
+
+        this.registrationAmount =
+            0;
+
+        this.registrationUnitIds =
+            [];
+
+        this.registrationOpen =
+            false;
+
+        this.clearBooking(false);
+
+        this.reverseOpen =
+            false;
 
         this.quote =
             null;
@@ -1763,7 +1993,9 @@ implements OnInit, OnDestroy
             invoice.EmiAccountName ?? '';
 
         // An item added : the customer card minimizes (more room)
-        if (this.customer && invoice.Lines.length > 0) { this.customerCollapsed = true; }
+        // View / edit : the customer card opens in full (it still
+        // minimizes itself when an item is added in edit mode)
+        this.customerCollapsed = false;
 
         this.lines =
             invoice.Lines.map
@@ -1791,6 +2023,65 @@ implements OnInit, OnDestroy
             invoice.InvoiceSpecialType !== 'None' && invoice.InvoiceSpecialValue > 0
                 ? String(invoice.InvoiceSpecialValue)
                 : '';
+
+        this.fractionalText =
+            invoice.FractionalDiscount > 0
+                ? String(invoice.FractionalDiscount)
+                : '';
+
+        // MB : registration (a reversed one is not taken again)
+        const registered =
+            invoice.RegistrationStatus === 'Active'
+            &&
+            !!invoice.RegistrationTypeId;
+
+        this.registrationTypeId =
+            registered
+                ? invoice.RegistrationTypeId ?? null
+                : null;
+
+        this.registrationAmount =
+            registered
+                ? invoice.RegistrationAmount ?? 0
+                : 0;
+
+        this.registrationUnitIds =
+            registered
+                ? invoice.Lines
+                    .filter(line => !!line.IsRegistered && !!line.MotorBikeUnitId)
+                    .map(line => line.MotorBikeUnitId as number)
+                : [];
+
+        this.registrationOpen =
+            false;
+
+        // MB : the booking taken (advance paid already)
+        this.bookingId =
+            invoice.BookingId ?? null;
+
+        this.bookingCustomerId =
+            invoice.BookingId ? invoice.CustomerId : 0;
+
+        this.bookingPick =
+            invoice.BookingId
+                ? {
+                    BookingId:invoice.BookingId,
+                    BookingNo:invoice.BookingNo ?? '',
+                    BookingDate:'',
+                    MotorBikeId:0,
+                    ModelName:'',
+                    AdvanceAmount:invoice.BookingAdvance ?? 0,
+                    IsExpired:false,
+                    ValidUntil:'',
+                    HeldByInvoiceNo:''
+                }
+                : null;
+
+        this.bookingPickerOpen =
+            false;
+
+        this.reverseOpen =
+            false;
 
         this.quote =
             null;
@@ -1832,6 +2123,11 @@ implements OnInit, OnDestroy
                 ? line.SpecialDiscountPercent
                 : null;
 
+        const specialTk =
+            line.SpecialDiscountTk > 0
+                ? line.SpecialDiscountTk
+                : null;
+
         return {
             ProductId:line.ProductId,
             ProductCode:line.ProductCode,
@@ -1842,11 +2138,13 @@ implements OnInit, OnDestroy
             Quantity:line.Quantity,
             UnitPrice:price,
             SpecialPercent:special,
+            SpecialTk:specialTk,
+            specialMode:specialTk != null ? 'Tk' : '%',
             OnHand:line.OnHand,
             Mrp:line.Mrp,
             qtyText:this.qtyString(line.Quantity),
             priceText:price != null ? String(price) : '',
-            specialText:special != null ? String(special) : '',
+            specialText:specialTk != null ? String(specialTk) : special != null ? String(special) : '',
             MotorBikeUnitId:line.MotorBikeUnitId ?? null,
             ChassisNo:line.ChassisNo ?? '',
             EngineNo:line.EngineNo ?? '',
@@ -2540,8 +2838,14 @@ implements OnInit, OnDestroy
             return;
         }
 
+        // MB : the tab comes back too (?saleType=Corporate)
+        const corporate =
+            this.isBikes && this.saleType === 'Corporate';
+
         const back =
-            this.router.url.split('?')[0];
+            this.router.url.split('?')[0]
+            +
+            (corporate ? '?saleType=Corporate' : '');
 
         const phone =
             isCustomerPhone(this.phoneText)
@@ -2562,7 +2866,14 @@ implements OnInit, OnDestroy
                         back,
 
                     phone:
-                        phone || null
+                        phone || null,
+
+                    // MB : the customer's category follows the tab
+                    // (Individual / Corporate) and is locked there
+                    category:
+                        this.isBikes
+                            ? (corporate ? 'Corporate' : 'Individual')
+                            : null
                 }
             }
         );
@@ -2588,9 +2899,20 @@ implements OnInit, OnDestroy
                 ''
             ).trim();
 
-        if (!phone)
+        // MB : back from a Corporate customer : the Corporate tab
+        const corporateBack =
+            this.isBikes
+            &&
+            this.route.snapshot.queryParamMap.get('saleType') === 'Corporate';
+
+        if (!phone && !corporateBack)
         {
             return;
+        }
+
+        if (corporateBack && this.isEditable && this.saleType !== 'Corporate')
+        {
+            this.onSaleTypeChange('Corporate');
         }
 
         void this.router.navigate(
@@ -2602,6 +2924,9 @@ implements OnInit, OnDestroy
                 queryParams:
                 {
                     customerPhone:
+                        null,
+
+                    saleType:
                         null
                 },
 
@@ -2613,7 +2938,7 @@ implements OnInit, OnDestroy
             }
         );
 
-        if (!isCustomerPhone(phone) || !this.isEditable)
+        if (!phone || !isCustomerPhone(phone) || !this.isEditable)
         {
             return;
         }
@@ -2768,6 +3093,16 @@ implements OnInit, OnDestroy
         this.customer =
             customer;
 
+        if
+        (
+            this.bookingId
+            &&
+            customer.CustomerId !== this.bookingCustomerId
+        )
+        {
+            this.clearBooking(false);
+        }
+
         this.customerMessage =
             customer.IsActive
                 ? ''
@@ -2814,6 +3149,8 @@ implements OnInit, OnDestroy
 
         this.canAddWalkIn =
             false;
+
+        this.clearBooking(false);
 
         this.closeWalkIn();
 
@@ -3970,6 +4307,19 @@ implements OnInit, OnDestroy
                                 null;
                         }
 
+                        // Edit : the first bike line shows in the Add
+                        // card, read only (click / double click others)
+                        if (this.isEditMode && !this.bikeUnitId)
+                        {
+                            const first =
+                                this.rows.find(x => !!x.entry.MotorBikeUnitId);
+
+                            if (first)
+                            {
+                                this.showRowInCard(first, true);
+                            }
+                        }
+
                         this.refresh();
                     },
 
@@ -4046,13 +4396,95 @@ implements OnInit, OnDestroy
 
     // Items : a double click on a bike line loads it into the Add
     // card (its chassis, engine and CKD in full)
-    onRowDblClick
+    // MB : single click shows the line's bike in the Add card,
+    // read only; double click opens it there for editing
+    bikeViewOnly =
+        false;
+
+    bikeViewLine =
+        0;
+
+    onRowClick
     (
         row:
-            any
+            any,
+        event?:
+            Event
     ):
         void
     {
+        // Typing a price / % or the delete button : not a pick
+        const target =
+            event?.target as HTMLElement | null;
+
+        if (target?.closest?.('input, textarea, button, a'))
+        {
+            return;
+        }
+
+        this.showRowInCard(row, true);
+    }
+
+    onRowDblClick
+    (
+        row:
+            any,
+        event?:
+            Event
+    ):
+        void
+    {
+        const target =
+            event?.target as HTMLElement | null;
+
+        if (target?.closest?.('input, textarea, button, a'))
+        {
+            return;
+        }
+
+        this.showRowInCard(row, false);
+    }
+
+    // View mode : the bike line shown on the left card (0-based)
+    viewBikeIndex =
+        0;
+
+    get viewBikeRow():
+        ItemRow | null
+    {
+        if (!this.isBikes || this.isEditable)
+        {
+            return null;
+        }
+
+        const bikes =
+            this.rows.filter(x => !!x.entry.MotorBikeUnitId);
+
+        return bikes.find(x => x.index === this.viewBikeIndex) ?? bikes[0] ?? null;
+    }
+
+    private showRowInCard
+    (
+        row:
+            any,
+        viewOnly:
+            boolean
+    ):
+        void
+    {
+        // View mode : the left card shows the clicked bike
+        if (!this.isEditable)
+        {
+            if (this.isBikes && row?.entry?.MotorBikeUnitId)
+            {
+                this.viewBikeIndex =
+                    row.index ?? 0;
+
+                this.refresh();
+            }
+
+            return;
+        }
         const id =
             row?.entry?.MotorBikeUnitId ?? 0;
 
@@ -4083,8 +4515,59 @@ implements OnInit, OnDestroy
         this.bikeUnitId =
             unit.MotorBikeUnitId;
 
+        this.bikeViewOnly =
+            viewOnly;
+
+        this.bikeViewLine =
+            (row?.index ?? 0) + 1;
+
+        // Double click : the line being edited (a new chassis picked
+        // turns Add into Update)
+        this.bikeEditUnitId =
+            viewOnly ? null : unit.MotorBikeUnitId;
+
         this.entryError =
             '';
+
+        this.refresh();
+    }
+
+    // The bike line opened for editing (double click / Edit)
+    bikeEditUnitId:
+        number | null =
+        null;
+
+    // Line no. (1-based) of the line being edited; 0 = none
+    get bikeEditLineNo():
+        number
+    {
+        return this.bikeEditUnitId
+            ? this.lines.findIndex(x => x.MotorBikeUnitId === this.bikeEditUnitId) + 1
+            : 0;
+    }
+
+    // Another chassis picked for the edited line : Add -> Update
+    get bikeUpdating():
+        boolean
+    {
+        const unit =
+            this.pickedBike;
+
+        return !this.bikeViewOnly
+            && this.bikeEditLineNo > 0
+            && !!unit
+            && unit.MotorBikeUnitId !== this.bikeEditUnitId;
+    }
+
+    // View only -> edit (the Edit link on the Add card)
+    editBikeView():
+        void
+    {
+        this.bikeViewOnly =
+            false;
+
+        this.bikeEditUnitId =
+            this.lines[this.bikeViewLine - 1]?.MotorBikeUnitId ?? null;
 
         this.refresh();
     }
@@ -4341,6 +4824,12 @@ implements OnInit, OnDestroy
         this.addCkdReasonOpen =
             false;
 
+        this.bikeViewOnly =
+            false;
+
+        this.bikeEditUnitId =
+            null;
+
         this.bikeModelId =
             null;
 
@@ -4388,6 +4877,15 @@ implements OnInit, OnDestroy
             return;
         }
 
+        // Update : the edited line takes the new chassis (its special
+        // discount kept; a raised price is cleared : the MRP may differ)
+        if (this.bikeUpdating)
+        {
+            this.updateBikeLine(unit);
+
+            return;
+        }
+
         const error =
             this.bikeProblem(unit);
 
@@ -4425,6 +4923,69 @@ implements OnInit, OnDestroy
         this.onChanged();
     }
 
+    private updateBikeLine
+    (
+        unit:
+            SalesInvoiceBikeUnit
+    ):
+        void
+    {
+        const index =
+            this.bikeEditLineNo - 1;
+
+        const old =
+            this.lines[index];
+
+        let error =
+            '';
+
+        if (!(unit.Mrp > 0))
+        {
+            error = `${unit.ProductCode} (chassis ${unit.ChassisNo}) has no MRP and cannot be sold.`;
+        }
+        else if (unit.OnInvoiceNo)
+        {
+            error = `Chassis ${unit.ChassisNo} is on invoice ${unit.OnInvoiceNo}.`;
+        }
+        else if (this.lines.some((x, i) => i !== index && x.MotorBikeUnitId === unit.MotorBikeUnitId))
+        {
+            error = `Chassis ${unit.ChassisNo} is on the invoice already.`;
+        }
+
+        if (error || !old)
+        {
+            this.entryError =
+                error || 'The line to update was not found.';
+
+            this.refresh();
+
+            return;
+        }
+
+        const fresh =
+            this.bikeLine(unit);
+
+        fresh.SpecialPercent = old.SpecialPercent;
+        fresh.SpecialTk = old.SpecialTk;
+        fresh.specialMode = old.specialMode;
+        fresh.specialText = old.specialText;
+
+        this.lines =
+            this.lines.map((x, i) => i === index ? fresh : x);
+
+        this.bikeEditUnitId =
+            unit.MotorBikeUnitId;
+
+        this.cancelAddCkd();
+
+        this.entryError =
+            '';
+
+        this.toast.success('Line Updated', `Line ${index + 1} : chassis ${unit.ChassisNo}.`);
+
+        this.onChanged();
+    }
+
     // Why a chassis cannot go on the invoice ('' = it can)
     private bikeProblem
     (
@@ -4450,7 +5011,7 @@ implements OnInit, OnDestroy
 
         if (this.saleType === 'Regular' && this.lines.length >= 1)
         {
-            return `Regular sale : one chassis per invoice. ${this.corporateAvailable ? 'Choose Corporate for several bikes.' : 'Remove the bike on the invoice first.'}`;
+            return `Individual sale : one chassis per invoice. ${this.corporateAvailable ? 'Choose Corporate for several bikes.' : 'Remove the bike on the invoice first.'}`;
         }
 
         return '';
@@ -4810,8 +5371,10 @@ implements OnInit, OnDestroy
         ControlSegmentItem[]
     {
         return [
-            { value:'Regular', text:'Regular' },
-            { value:'Corporate', text:'Corporate', disabled:this.saleType !== 'Corporate' && !this.corporateAvailable }
+            // A customer picked : the other tab is locked (owner
+            // 2026-11-11; Change the customer to switch)
+            { value:'Regular', text:'Individual', disabled:!!this.customer && this.saleType !== 'Regular' },
+            { value:'Corporate', text:'Corporate', disabled:(this.saleType !== 'Corporate' && !this.corporateAvailable) || (!!this.customer && this.saleType !== 'Corporate') }
         ];
     }
 
@@ -4824,17 +5387,27 @@ implements OnInit, OnDestroy
         {
             if (this.customer && !this.customer.IsCorporate)
             {
-                return `${this.customer.DisplayName} is not a Corporate / Institution customer : mark it in Customer Profiles, or choose Regular.`;
+                return `${this.customer.DisplayName} is not a Corporate / Institution customer : mark it in Customer Profiles, or choose Individual.`;
             }
 
+            // Fine : the note sits on the Customer header instead
             return this.corporateBlockText
                 ? this.corporateBlockText
-                : 'Corporate sale : several chassis on this invoice (one customer file each).';
+                : '';
         }
 
         return this.lines.length >= 1
-            ? 'Regular sale : one chassis per invoice.'
+            ? 'Individual sale : one chassis per invoice.'
             : '';
+    }
+
+    // Customer header tag : a Corporate invoice with no problem
+    get corporateNote():
+        boolean
+    {
+        return this.showSaleType
+            && this.saleType === 'Corporate'
+            && !this.saleTypeHintBad;
     }
 
     get saleTypeHintBad():
@@ -4868,6 +5441,16 @@ implements OnInit, OnDestroy
             return;
         }
 
+        // A customer is picked : the tab follows the customer
+        if (this.customer)
+        {
+            this.toast.warning('Sale Type', 'A customer is selected : change the customer first to switch Individual / Corporate.');
+
+            this.refresh();
+
+            return;
+        }
+
         if (next === 'Corporate' && !this.corporateAvailable)
         {
             this.toast.error('Corporate Sale', this.corporateBlockText);
@@ -4877,22 +5460,11 @@ implements OnInit, OnDestroy
             return;
         }
 
-        if (next === 'Corporate' && this.customer && !this.customer.IsCorporate)
-        {
-            this.toast.error(
-                'Corporate Sale',
-                `${this.customer.DisplayName} is not a Corporate / Institution customer (Customer Profiles).`);
-
-            this.refresh();
-
-            return;
-        }
-
         if (next === 'Regular' && this.lines.length > 1)
         {
             this.toast.error(
-                'Regular Sale',
-                `A regular sale has one chassis : remove ${this.lines.length - 1} of the ${this.lines.length} bikes first.`);
+                'Individual Sale',
+                `An individual sale has one chassis : remove ${this.lines.length - 1} of the ${this.lines.length} bikes first.`);
 
             this.refresh();
 
@@ -5032,7 +5604,7 @@ implements OnInit, OnDestroy
                 const error =
                     this.bikeProblem(unit)
                     ||
-                    (this.saleType === 'Regular' && added.length >= 1 ? 'Regular sale : one chassis per invoice.' : '');
+                    (this.saleType === 'Regular' && added.length >= 1 ? 'Individual sale : one chassis per invoice.' : '');
 
                 if (error)
                 {
@@ -5513,15 +6085,55 @@ implements OnInit, OnDestroy
         row.entry.specialText =
             text;
 
-        const percent =
-            roundMoney(parseMoney(text));
-
-        row.entry.SpecialPercent =
-            text.trim() && percent > 0
-                ? percent
-                : null;
+        this.applyLineSpecial(row.entry);
 
         this.onChanged();
+    }
+
+    // The line box in % or Tk (owner 2026-11-11 : per line % OR Tk)
+    toggleLineSpecialMode
+    (
+        row:
+            ItemRow
+    ):
+        void
+    {
+        if (!this.canGiveSpecial || this.invoiceSpecialUsed || this.priceEditUsed || this.fractionalUsed)
+        {
+            return;
+        }
+
+        row.entry.specialMode =
+            row.entry.specialMode === 'Tk' ? '%' : 'Tk';
+
+        this.applyLineSpecial(row.entry);
+
+        this.onChanged();
+    }
+
+    private applyLineSpecial
+    (
+        entry:
+            any
+    ):
+        void
+    {
+        const text =
+            String(entry.specialText ?? '');
+
+        const value =
+            roundMoney(parseMoney(text));
+
+        const given =
+            text.trim() && value > 0
+                ? value
+                : null;
+
+        entry.SpecialPercent =
+            entry.specialMode === 'Tk' ? null : given;
+
+        entry.SpecialTk =
+            entry.specialMode === 'Tk' ? given : null;
     }
 
     removeLine
@@ -5564,6 +6176,25 @@ implements OnInit, OnDestroy
             !!this.defaults?.CanGiveSpecialDiscount;
     }
 
+    // Campaign / Membership : only when one applies to a line (no
+    // campaign or membership = no column, no Summary row)
+    get showCampaignColumn():
+        boolean
+    {
+        return this.figures.CampaignMembership > 0
+            ||
+            this.rows.some(x => (x.priced?.CampaignMembershipAmount ?? 0) > 0);
+    }
+
+    // Fractional : the switch is ON, or the invoice has one
+    get showFractionalRow():
+        boolean
+    {
+        return this.canGiveFractional
+            ||
+            this.figures.Fractional > 0;
+    }
+
     get showSpecialColumn():
         boolean
     {
@@ -5572,11 +6203,89 @@ implements OnInit, OnDestroy
             this.figures.Special > 0;
     }
 
+    // One discount method per invoice (owner 2026-11-11) : price
+    // raise (Edit Price, above MRP only) OR line % OR invoice
+    // special OR fractional
+    get priceEditUsed():
+        boolean
+    {
+        return this.lines.some(x => x.UnitPrice != null && x.UnitPrice > 0);
+    }
+
+    // Allow Fractional Discount ON : the Tk box on the Summary
+    get canGiveFractional():
+        boolean
+    {
+        return this.isEditable
+            &&
+            !!this.switches?.AllowFractionalDiscount;
+    }
+
+    get fractionalValue():
+        number
+    {
+        const value =
+            roundMoney(parseMoney(this.fractionalText));
+
+        return value > 0 ? value : 0;
+    }
+
+    get fractionalUsed():
+        boolean
+    {
+        return this.fractionalValue > 0;
+    }
+
+    // Any special (price edit / line % / invoice special) :
+    // the fractional box is locked, and the other way round
+    get specialAnyUsed():
+        boolean
+    {
+        return this.priceEditUsed || this.lineSpecialUsed || this.invoiceSpecialUsed;
+    }
+
+    // The Default Value of the Fractional Discount switch (Tk) as
+    // the box text of a new invoice ('' = none)
+    get defaultFractionalText():
+        string
+    {
+        const value =
+            this.switches?.AllowFractionalDiscount
+                ? this.switches?.DefaultFractionalDiscount ?? null
+                : null;
+
+        // 0 is shown as 0 (owner 2026-11-11); no Default Value = empty
+        return value != null && value >= 0
+            ? value.toFixed(2)
+            : '';
+    }
+
+    // No hint in the box (owner 2026-11-11 : plain like the other
+    // fields); the limit is in the tooltip and the error message
+    get fractionalPlaceholder():
+        string
+    {
+        return '';
+    }
+
+    onFractionalChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        this.fractionalText =
+            String(value ?? '');
+
+        this.onChanged();
+    }
+
     // Line % or invoice special, never both
     get lineSpecialUsed():
         boolean
     {
-        return this.lines.some(x => (x.SpecialPercent ?? 0) > 0);
+        return this.lines.some(x => (x.SpecialPercent ?? 0) > 0 || (x.SpecialTk ?? 0) > 0);
     }
 
     get invoiceSpecialUsed():
@@ -5587,6 +6296,205 @@ implements OnInit, OnDestroy
             parseMoney(this.specialValueText) > 0;
     }
 
+    //===========================================================
+    // Rule checks on the page (owner 2026-11-11 : the box turns
+    // red; the server checks again on save)
+    //===========================================================
+
+    private typedNumber(text: string | null | undefined): number | null
+    {
+        const raw =
+            String(text ?? '').trim();
+
+        if (!raw)
+        {
+            return null;
+        }
+
+        const value =
+            parseMoney(raw);
+
+        return Number.isFinite(value) ? value : NaN;
+    }
+
+    // The highest MRP of the line (the chassis / the batches)
+    private lineMrp(row: ItemRow): number
+    {
+        return Math.max(row.priced?.Mrp ?? 0, row.entry.Mrp ?? 0);
+    }
+
+    // The line's base for a special discount (gross - campaign /
+    // membership)
+    private lineBase(row: ItemRow): number
+    {
+        return row.priced
+            ? row.priced.GrossAmount - row.priced.CampaignMembershipAmount
+            : (row.entry.Mrp ?? 0) * (row.entry.Quantity ?? 0);
+    }
+
+    priceIssue(row: ItemRow): string
+    {
+        const value =
+            this.typedNumber(row.entry.priceText);
+
+        if (value === null)
+        {
+            return '';
+        }
+
+        if (Number.isNaN(value) || value <= 0)
+        {
+            return 'Not a valid price.';
+        }
+
+        const mrp =
+            this.lineMrp(row);
+
+        if (mrp > 0 && value < mrp)
+        {
+            return `Only above the MRP (${formatMoney(mrp)}) : give a reduction as a Special Discount.`;
+        }
+
+        const max =
+            this.defaults?.MaxPriceEditPercent;
+
+        if (mrp > 0 && max != null && max > 0 && value > roundMoney(mrp * (1 + max / 100)))
+        {
+            return `At most ${this.percentText(max)}% above the MRP (${formatMoney(roundMoney(mrp * (1 + max / 100)))}).`;
+        }
+
+        return '';
+    }
+
+    lineSpecialIssue(row: ItemRow): string
+    {
+        const value =
+            this.typedNumber(row.entry.specialText);
+
+        if (value === null)
+        {
+            return '';
+        }
+
+        if (Number.isNaN(value) || value <= 0)
+        {
+            return 'Not a valid amount.';
+        }
+
+        const max =
+            this.defaults?.MaxDiscountPercent;
+
+        if (row.entry.specialMode === 'Tk')
+        {
+            const base =
+                this.lineBase(row);
+
+            if (base > 0 && value > base)
+            {
+                return `More than the line (${formatMoney(base)}).`;
+            }
+
+            if (base > 0 && max != null && max > 0 && value * 100 > max * base)
+            {
+                return `At most ${this.percentText(max)}% of the line (${formatMoney(roundMoney(base * max / 100))}).`;
+            }
+
+            return '';
+        }
+
+        if (value > 100)
+        {
+            return 'At most 100%.';
+        }
+
+        if (max != null && max > 0 && value > max)
+        {
+            return `At most ${this.percentText(max)}%.`;
+        }
+
+        return '';
+    }
+
+    get invoiceSpecialIssue(): string
+    {
+        if (this.specialType === 'None')
+        {
+            return '';
+        }
+
+        const value =
+            this.typedNumber(this.specialValueText);
+
+        if (value === null)
+        {
+            return '';
+        }
+
+        if (Number.isNaN(value) || value <= 0)
+        {
+            return 'Not a valid amount.';
+        }
+
+        const max =
+            this.defaults?.MaxDiscountPercent;
+
+        if (this.specialType === 'Percent')
+        {
+            if (value > 100)
+            {
+                return 'At most 100%.';
+            }
+
+            return max != null && max > 0 && value > max
+                ? `At most ${this.percentText(max)}%.`
+                : '';
+        }
+
+        const base =
+            this.figures.Gross - this.figures.CampaignMembership;
+
+        if (base > 0 && value > base)
+        {
+            return `More than the invoice (${formatMoney(base)}).`;
+        }
+
+        return base > 0 && max != null && max > 0 && value * 100 > max * base
+            ? `At most ${this.percentText(max)}% of the invoice (${formatMoney(roundMoney(base * max / 100))}).`
+            : '';
+    }
+
+    get fractionalIssue(): string
+    {
+        const value =
+            this.typedNumber(this.fractionalText);
+
+        if (value === null)
+        {
+            return '';
+        }
+
+        // 0 is fine (the Default Value may be 0)
+        if (Number.isNaN(value) || value < 0)
+        {
+            return 'Not a valid amount.';
+        }
+
+        const max =
+            this.switches?.MaxFractionalDiscount;
+
+        if (max != null && max > 0 && value > max)
+        {
+            return `At most ${formatMoney(max)} (System Configuration › Fractional Discount).`;
+        }
+
+        const net =
+            this.figures.Gross - this.figures.CampaignMembership - this.figures.Special;
+
+        return net > 0 && value >= net
+            ? `Must be less than the invoice (${formatMoney(net)}).`
+            : '';
+    }
+
     get priceEditHint():
         string
     {
@@ -5594,8 +6502,8 @@ implements OnInit, OnDestroy
             this.defaults?.MaxPriceEditPercent;
 
         return max != null && max > 0
-            ? `Price edit : at most ${this.percentText(max)}% below the MRP.`
-            : 'Price edit : not above the MRP.';
+            ? `Edit Price : only above the MRP, at most ${this.percentText(max)}% above (this invoice only).`
+            : 'Edit Price : only above the MRP (this invoice only).';
     }
 
     get specialHint():
@@ -5611,10 +6519,18 @@ implements OnInit, OnDestroy
 
         if
         (
+            this.priceEditUsed
+        )
+        {
+            return 'Price raised above the MRP on the lines (Edit Price); clear the prices to give a special or fractional discount.';
+        }
+
+        if
+        (
             this.lineSpecialUsed
         )
         {
-            return `Special discount per line (${cap}); clear the line % to give it on the invoice.`;
+            return `Special discount per line, % or Tk (${cap}); clear the lines to raise a price or use the invoice special / fractional.`;
         }
 
         if
@@ -5622,10 +6538,10 @@ implements OnInit, OnDestroy
             this.invoiceSpecialUsed
         )
         {
-            return `Special discount on the invoice (${cap}), spread over the lines by value.`;
+            return `Special discount on the invoice (${cap}), spread over the lines by value; clear it to use per line % / Tk, a price raise or a fractional discount.`;
         }
 
-        return `Special discount (${cap}) : per line %, or on the whole invoice (% or Tk).`;
+        return `One method per invoice (${cap}) : per line % or Tk, or on the whole invoice (% or Tk); or a price raise; or a fractional discount.`;
     }
 
     onSpecialTypeChange
@@ -6256,7 +7172,7 @@ implements OnInit, OnDestroy
             InvoiceTotal:quote.InvoiceTotal,
             VatInside:quote.TotalVatInside,
             Paid:paid,
-            Due:roundMoney(Math.max(0, quote.InvoiceTotal - paid))
+            Due:roundMoney(Math.max(0, quote.InvoiceTotal - this.bookingAdvance - paid))
         };
     }
 
@@ -6501,7 +7417,7 @@ implements OnInit, OnDestroy
         number
     {
         return roundMoney(
-            Math.max(0, this.figures.InvoiceTotal - this.deskTotal)
+            Math.max(0, this.figures.InvoiceTotal - this.bookingAdvance - this.deskTotal)
         );
     }
 
@@ -7078,11 +7994,13 @@ implements OnInit, OnDestroy
 
         if
         (
-            this.deskTotal > this.figures.InvoiceTotal
+            this.deskTotal > roundMoney(this.figures.InvoiceTotal - this.bookingAdvance)
         )
         {
             this.deskError =
-                `The payments (${formatMoney(this.deskTotal)}) are more than the invoice total (${formatMoney(this.figures.InvoiceTotal)}).`;
+                this.bookingAdvance > 0
+                    ? `The payments (${formatMoney(this.deskTotal)}) are more than the balance after the booking advance (${formatMoney(roundMoney(this.figures.InvoiceTotal - this.bookingAdvance))}).`
+                    : `The payments (${formatMoney(this.deskTotal)}) are more than the invoice total (${formatMoney(this.figures.InvoiceTotal)}).`;
 
             this.refresh();
 
@@ -7171,16 +8089,22 @@ implements OnInit, OnDestroy
                         Quantity:line.Quantity,
                         UnitPrice:this.canEditPrice || line.UnitPrice != null ? line.UnitPrice : null,
                         SpecialDiscountPercent:line.SpecialPercent,
+                        SpecialDiscountTk:line.SpecialTk ?? null,
                         MotorBikeUnitId:line.MotorBikeUnitId ?? null
                     })
                 ),
             InvoiceSpecialType:special > 0 ? this.specialType : 'None',
             InvoiceSpecialValue:special > 0 ? special : 0,
+            FractionalDiscount:this.canGiveFractional ? this.fractionalValue : 0,
             Payments:this.payments.map(row => this.paymentRow(row)),
             Narration:toAsciiText(this.narration).replace(/[\r\n]+/g, ' ').trim().substring(0, 500),
             SaleType:this.isBikes ? this.saleType : '',
             PaymentTerm:this.paymentTerm,
-            EmiAccountCode:this.paymentTerm === 'EMI' ? this.emiAccountCode : ''
+            EmiAccountCode:this.paymentTerm === 'EMI' ? this.emiAccountCode : '',
+            RegistrationTypeId:this.registrationSent ? this.registrationTypeId : null,
+            RegistrationAmount:this.registrationSent ? this.registrationAmount : 0,
+            RegistrationUnitIds:this.registrationSent ? this.registrationUnitsSent : [],
+            BookingId:this.isBikes ? this.bookingId : null
         };
     }
 
@@ -8155,6 +9079,863 @@ implements OnInit, OnDestroy
             },
             'Cancel Invoice',
             'Keep Invoice',
+            'danger'
+        );
+    }
+
+
+    //===========================================================
+    // MB : Booking (Booking Management) : the customer's open
+    // bookings; the one picked is paid already by its advance
+    //===========================================================
+
+    // The Booking button : MB, a customer (not walk-in), editable
+    get canTakeBooking():
+        boolean
+    {
+        return this.isBikes
+            &&
+            this.isEditable
+            &&
+            this.hasCustomer
+            &&
+            !this.customer?.IsWalkIn;
+    }
+
+    // The advance taken off the balance
+    get bookingAdvance():
+        number
+    {
+        if
+        (
+            !this.isEditable
+            &&
+            this.invoice
+        )
+        {
+            return this.invoice.BookingAdvance ?? 0;
+        }
+
+        if
+        (
+            !this.bookingId
+        )
+        {
+            return 0;
+        }
+
+        return this.quote?.BookingNo
+            ? this.quote.BookingAdvance ?? 0
+            : this.bookingPick?.AdvanceAmount ?? 0;
+    }
+
+    get bookingNo():
+        string
+    {
+        if
+        (
+            !this.isEditable
+            &&
+            this.invoice
+        )
+        {
+            return this.invoice.BookingNo ?? '';
+        }
+
+        return this.bookingId
+            ? this.quote?.BookingNo || this.bookingPick?.BookingNo || ''
+            : '';
+    }
+
+    openBookingPicker():
+        void
+    {
+        if
+        (
+            !this.canTakeBooking
+            ||
+            !this.customer
+        )
+        {
+            return;
+        }
+
+        this.bookingPickerOpen =
+            true;
+
+        this.bookingLoading =
+            true;
+
+        this.bookingListError =
+            '';
+
+        this.bookingList =
+            [];
+
+        this.refresh();
+
+        const customerId =
+            this.customer.CustomerId;
+
+        this.bookingsService
+            .getOpen(customerId)
+            .subscribe
+            ({
+                next:
+                    rows =>
+                    {
+                        if
+                        (
+                            this.customer?.CustomerId !== customerId
+                        )
+                        {
+                            return;
+                        }
+
+                        this.bookingLoading =
+                            false;
+
+                        // Held by another draft : not offered (this
+                        // invoice's own booking stays)
+                        const own =
+                            this.invoice?.InvoiceNo ?? '';
+
+                        this.bookingList =
+                            (rows ?? []).filter(x => !x.HeldByInvoiceNo || x.HeldByInvoiceNo === own);
+
+                        this.refresh();
+                    },
+                error:
+                    error =>
+                    {
+                        this.bookingLoading =
+                            false;
+
+                        this.bookingListError =
+                            this.errorText(error, 'The bookings could not be loaded.');
+
+                        this.refresh();
+                    }
+            });
+    }
+
+    closeBookingPicker():
+        void
+    {
+        this.bookingPickerOpen =
+            false;
+
+        this.refresh();
+    }
+
+    pickBooking
+    (
+        booking:
+            OpenBooking
+    ):
+        void
+    {
+        this.bookingId =
+            booking.BookingId;
+
+        this.bookingPick =
+            booking;
+
+        this.bookingCustomerId =
+            this.customer?.CustomerId ?? 0;
+
+        this.bookingPickerOpen =
+            false;
+
+        // No bike yet : the booked model goes to the entry (pick
+        // the chassis, then Add)
+        if
+        (
+            this.lines.length === 0
+            &&
+            !this.selectedProduct
+        )
+        {
+            const product =
+                this.productList.find(x => x.ProductId === booking.MotorBikeId);
+
+            if
+            (
+                product
+            )
+            {
+                this.selectProduct(product);
+            }
+        }
+
+        this.onChanged();
+    }
+
+    removeBooking():
+        void
+    {
+        this.clearBooking(true);
+    }
+
+    private clearBooking
+    (
+        changed:
+            boolean
+    ):
+        void
+    {
+        const had =
+            !!this.bookingId;
+
+        this.bookingId =
+            null;
+
+        this.bookingPick =
+            null;
+
+        this.bookingCustomerId =
+            0;
+
+        this.bookingPickerOpen =
+            false;
+
+        if
+        (
+            changed
+            &&
+            had
+        )
+        {
+            this.onChanged();
+        }
+    }
+
+    bookingDateText
+    (
+        value:
+            string
+    ):
+        string
+    {
+        if
+        (
+            !/^\d{4}-\d{2}-\d{2}/.test(value || '')
+        )
+        {
+            return value || '-';
+        }
+
+        const months =
+            ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        return `${value.substring(8, 10)}-${months[Number(value.substring(5, 7)) - 1]}-${value.substring(0, 4)}`;
+    }
+
+
+    //===========================================================
+    // MB : Registration (button in the Summary; modal)
+    //===========================================================
+
+    // Every active type (with or without rates today)
+    get allRegistrationOptions():
+        SalesInvoiceRegistrationOption[]
+    {
+        return this.defaults?.RegistrationOptions ?? [];
+    }
+
+    // Fuel / Electric of the bikes on the invoice (from the quote)
+    get bikePowers():
+        string[]
+    {
+        return this.quote?.BikePowers ?? [];
+    }
+
+    // The types of the bikes' power (Electric bike : the Electric
+    // types; a type with no power fits any bike)
+    get registrationOptions():
+        SalesInvoiceRegistrationOption[]
+    {
+        const powers =
+            this.bikePowers;
+
+        return this.allRegistrationOptions
+            .filter
+            (
+                x =>
+                    !x.VehiclePower
+                    ||
+                    powers.length === 0
+                    ||
+                    powers.every(p => p.toLowerCase() === x.VehiclePower.toLowerCase())
+            );
+    }
+
+    // The Registration button : MB, switch 0013 ON, an active type
+    get canTakeRegistration():
+        boolean
+    {
+        return this.isBikes
+            &&
+            !!this.defaults?.Switches?.AllowRegistration
+            &&
+            this.allRegistrationOptions.length > 0;
+    }
+
+    // The bikes (chassis) on the invoice
+    get registrationBikes():
+        { id:number; chassis:string; name:string }[]
+    {
+        return this.lines
+            .filter(line => !!line.MotorBikeUnitId)
+            .map
+            (
+                line =>
+                ({
+                    id:line.MotorBikeUnitId as number,
+                    chassis:line.ChassisNo || '',
+                    name:line.ProductName || ''
+                })
+            );
+    }
+
+    get isCorporateSale():
+        boolean
+    {
+        return this.isBikes
+            &&
+            this.saleType === 'Corporate';
+    }
+
+    // Sent with the invoice : a type, an amount and a bike
+    get registrationSent():
+        boolean
+    {
+        return this.isBikes
+            &&
+            !!this.registrationTypeId
+            &&
+            this.registrationAmount > 0
+            &&
+            this.registrationUnitsSent.length > 0;
+    }
+
+    // Regular : the chassis on it; Corporate : the ticked ones
+    // still on the invoice
+    get registrationUnitsSent():
+        number[]
+    {
+        const onInvoice =
+            this.registrationBikes.map(x => x.id);
+
+        return this.isCorporateSale
+            ? this.registrationUnitIds.filter(id => onInvoice.includes(id))
+            : onInvoice;
+    }
+
+    // Summary row : what is taken (edit : the quote; view : the
+    // saved invoice)
+    get registrationTotal():
+        number
+    {
+        if
+        (
+            !this.isEditable
+        )
+        {
+            return this.invoice?.RegistrationTotal ?? 0;
+        }
+
+        return this.quote?.RegistrationTotal ?? 0;
+    }
+
+    get registrationText():
+        string
+    {
+        const invoice =
+            this.invoice;
+
+        if
+        (
+            !this.isEditable
+            &&
+            invoice
+        )
+        {
+            return (invoice.RegistrationTotal ?? 0) > 0
+                ? `${invoice.RegistrationTypeName} · ${formatMoney(invoice.RegistrationAmount ?? 0)} x ${invoice.RegistrationCount}`
+                : '';
+        }
+
+        const option =
+            this.registrationOptions.find(x => x.RegistrationTypeId === this.registrationTypeId);
+
+        return this.registrationSent && option
+            ? `${option.Name} · ${formatMoney(this.registrationAmount)} x ${this.registrationUnitsSent.length}`
+            : '';
+    }
+
+    get registrationReversed():
+        boolean
+    {
+        return !this.isEditable
+            &&
+            this.invoice?.RegistrationStatus === 'Reversed';
+    }
+
+    get regTypeItems():
+        SelectItem[]
+    {
+        return this.registrationOptions
+            .map(x => ({ label:`${x.Name}${x.HasRates ? '' : '  (no rates today)'}`, value:x.RegistrationTypeId }));
+    }
+
+    get regOption():
+        SalesInvoiceRegistrationOption | null
+    {
+        return this.registrationOptions.find(x => x.RegistrationTypeId === this.regDraftTypeId) ?? null;
+    }
+
+    get regDraftAmount():
+        number
+    {
+        return roundMoney(parseMoney(this.regDraftAmountText));
+    }
+
+    // Where the amount sits on the min .. max bar (0..100)
+    get regBarPercent():
+        number
+    {
+        const option =
+            this.regOption;
+
+        if
+        (
+            !option
+            ||
+            option.Maximum <= option.Minimum
+        )
+        {
+            return 100;
+        }
+
+        return Math.max(0, Math.min(100, (this.regDraftAmount - option.Minimum) * 100 / (option.Maximum - option.Minimum)));
+    }
+
+    get regDraftCount():
+        number
+    {
+        return this.isCorporateSale
+            ? this.regDraftUnitIds.length
+            : this.registrationBikes.length;
+    }
+
+    get regDraftTotal():
+        number
+    {
+        return roundMoney(this.regDraftAmount * this.regDraftCount);
+    }
+
+    // The rule broken by the draft ('' = fine)
+    get regDraftIssue():
+        string
+    {
+        const option =
+            this.regOption;
+
+        if
+        (
+            !option
+        )
+        {
+            return 'Choose the registration type.';
+        }
+
+        if
+        (
+            !option.HasRates
+        )
+        {
+            return `${option.Name} has no fee / cost in force today : set them on Registration Configuration.`;
+        }
+
+        const amount =
+            this.regDraftAmount;
+
+        if
+        (
+            !(amount > 0)
+        )
+        {
+            return 'Type the amount per chassis.';
+        }
+
+        if
+        (
+            amount < option.Minimum
+            ||
+            amount > option.Maximum
+        )
+        {
+            return `The amount must be between ${formatMoney(option.Minimum)} and ${formatMoney(option.Maximum)}.`;
+        }
+
+        if
+        (
+            this.regDraftCount === 0
+        )
+        {
+            return this.isCorporateSale
+                ? 'Tick at least one chassis.'
+                : 'Add the bike (chassis) first.';
+        }
+
+        return '';
+    }
+
+    openRegistration():
+        void
+    {
+        if
+        (
+            !this.isEditable
+            ||
+            !this.canTakeRegistration
+            ||
+            this.registrationBikes.length === 0
+        )
+        {
+            return;
+        }
+
+        const rated =
+            this.registrationOptions.filter(x => x.HasRates);
+
+        const option =
+            this.registrationOptions.find(x => x.RegistrationTypeId === this.registrationTypeId)
+            ??
+            rated.find(x => x.IsDefault)
+            ??
+            rated[0]
+            ??
+            this.registrationOptions[0]
+            ??
+            null;
+
+        this.regDraftTypeId =
+            option?.RegistrationTypeId ?? null;
+
+        this.regDraftAmountText =
+            this.registrationTypeId && this.registrationAmount > 0
+                ? String(this.registrationAmount)
+                : option?.HasRates
+                    ? String(option.Maximum)
+                    : '';
+
+        this.regDraftUnitIds =
+            this.registrationTypeId
+                ? [...this.registrationUnitsSent]
+                : this.registrationBikes.map(x => x.id);
+
+        this.regError =
+            '';
+
+        this.registrationOpen =
+            true;
+
+        this.refresh();
+    }
+
+    closeRegistration():
+        void
+    {
+        this.registrationOpen =
+            false;
+
+        this.refresh();
+    }
+
+    onRegTypeChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.regDraftTypeId =
+            Number(value) || null;
+
+        const option =
+            this.regOption;
+
+        // A type picked : its Maximum Collection by default (no
+        // rates : no amount)
+        this.regDraftAmountText =
+            option?.HasRates
+                ? String(option.Maximum)
+                : '';
+
+        this.regError =
+            '';
+
+        this.refresh();
+    }
+
+    onRegAmountChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        this.regDraftAmountText =
+            String(value ?? '');
+
+        this.regError =
+            '';
+
+        this.refresh();
+    }
+
+    // The bar (range input) moves the amount
+    onRegSlide
+    (
+        event:
+            Event
+    ):
+        void
+    {
+        const value =
+            Number((event.target as HTMLInputElement)?.value);
+
+        if
+        (
+            Number.isFinite(value)
+        )
+        {
+            this.regDraftAmountText =
+                String(Math.round(value));
+        }
+
+        this.regError =
+            '';
+
+        this.refresh();
+    }
+
+    isRegUnitTicked
+    (
+        id:
+            number
+    ):
+        boolean
+    {
+        return this.regDraftUnitIds.includes(id);
+    }
+
+    toggleRegUnit
+    (
+        id:
+            number
+    ):
+        void
+    {
+        this.regDraftUnitIds =
+            this.regDraftUnitIds.includes(id)
+                ? this.regDraftUnitIds.filter(x => x !== id)
+                : [...this.regDraftUnitIds, id];
+
+        this.regError =
+            '';
+
+        this.refresh();
+    }
+
+    toggleAllRegUnits():
+        void
+    {
+        this.regDraftUnitIds =
+            this.regDraftUnitIds.length === this.registrationBikes.length
+                ? []
+                : this.registrationBikes.map(x => x.id);
+
+        this.refresh();
+    }
+
+    applyRegistration():
+        void
+    {
+        const issue =
+            this.regDraftIssue;
+
+        if
+        (
+            issue
+        )
+        {
+            this.regError =
+                issue;
+
+            this.refresh();
+
+            return;
+        }
+
+        this.registrationTypeId =
+            this.regDraftTypeId;
+
+        this.registrationAmount =
+            this.regDraftAmount;
+
+        this.registrationUnitIds =
+            this.isCorporateSale
+                ? [...this.regDraftUnitIds]
+                : this.registrationBikes.map(x => x.id);
+
+        this.registrationOpen =
+            false;
+
+        this.onChanged();
+    }
+
+    removeRegistration():
+        void
+    {
+        this.registrationTypeId =
+            null;
+
+        this.registrationAmount =
+            0;
+
+        this.registrationUnitIds =
+            [];
+
+        this.registrationOpen =
+            false;
+
+        this.onChanged();
+    }
+
+
+    //===========================================================
+    // MB : Reverse Registration (posted; "Reverse Registration")
+    //===========================================================
+
+    get canReverseRegistration():
+        boolean
+    {
+        const invoice =
+            this.invoice;
+
+        return !this.isEditable
+            &&
+            !!invoice
+            &&
+            invoice.Status === 'Posted'
+            &&
+            invoice.RegistrationStatus === 'Active'
+            &&
+            !!this.defaults?.CanReverseRegistration;
+    }
+
+    openReverse():
+        void
+    {
+        if
+        (
+            !this.canReverseRegistration
+        )
+        {
+            return;
+        }
+
+        this.reverseOpen =
+            true;
+
+        this.reverseReason =
+            '';
+
+        this.reverseError =
+            '';
+
+        this.refresh();
+    }
+
+    closeReverse():
+        void
+    {
+        this.reverseOpen =
+            false;
+
+        this.reverseError =
+            '';
+
+        this.refresh();
+    }
+
+    onReverseReasonChange
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        this.reverseReason =
+            String(value ?? '');
+
+        this.reverseError =
+            '';
+    }
+
+    confirmReverse():
+        void
+    {
+        const invoice =
+            this.invoice;
+
+        if
+        (
+            !invoice
+        )
+        {
+            return;
+        }
+
+        const reason =
+            toAsciiText(this.reverseReason).replace(/\s+/g, ' ').trim();
+
+        if
+        (
+            reason.length < 5
+        )
+        {
+            this.reverseError =
+                'Reason is required : at least 5 characters.';
+
+            this.refresh();
+
+            return;
+        }
+
+        this.confirmDialog.open(
+            'Reverse Registration',
+            `Reverse the registration on "${invoice.InvoiceNo}" (Tk ${formatMoney(invoice.RegistrationTotal ?? 0)})? A Journal Voucher moves it back to the customer's account and its Registration Profiles are cancelled.`,
+            () =>
+            {
+                this.reverseOpen =
+                    false;
+
+                setTimeout(
+                    () =>
+                        this.runAction(
+                            'Reversing Registration',
+                            'Registration reversed.',
+                            this.salesInvoiceService.reverseRegistration(invoice.PublicId ?? '', reason),
+                            `${invoice.InvoiceNo} : registration reversed.`
+                        )
+                );
+            },
+            'Reverse',
+            'Keep',
             'danger'
         );
     }

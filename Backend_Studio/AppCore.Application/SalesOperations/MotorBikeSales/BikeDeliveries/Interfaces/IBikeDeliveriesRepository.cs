@@ -1,11 +1,4 @@
 //===============================================================
-// Namespaces
-//===============================================================
-
-using AppCore.Application.Common.ActivityHistory.DTOs;
-
-
-//===============================================================
 // Namespace
 //===============================================================
 
@@ -13,98 +6,23 @@ namespace AppCore.Application.SalesOperations.MotorBikeSales;
 
 
 //===============================================================
-// IBikeDeliveriesRepository
+// Bike Deliveries repository (hand-written page, 2026-11-10)
 //===============================================================
 
 public interface IBikeDeliveriesRepository
 {
+    Task<BikeDeliveryDefaultsDto> GetDefaultsAsync();
 
-    //===========================================================
-    // Get All
-    //===========================================================
+    // tab : Pending / Delivered / Undone / All; branch : the login
+    // branch (null = every branch)
+    Task<BikeDeliveryListDto> GetListAsync(long? branchId, string tab, string search);
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.SalesOperations.MotorBikeSales.BikeDeliveries>>
-        GetAllAsync();
+    // A new delivery of one sold bike
+    Task<BikeDeliverySheetDto> GetSheetAsync(long salesInvoiceLineId, long? branchId);
 
+    Task<BikeDeliveryDto> GetAsync(Guid publicId);
 
+    Task<BikeDeliveryDto> CreateAsync(SaveBikeDeliveryDto dto, long? branchId, long userId);
 
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
-    Task<global::AppCore.Domain.Entities.SalesOperations.MotorBikeSales.BikeDeliveries?>
-        GetByIdAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.SalesOperations.MotorBikeSales.BikeDeliveries entity
-    );
-
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.SalesOperations.MotorBikeSales.BikeDeliveries entity
-    );
-
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
-
+    Task UndoAsync(Guid publicId, string reason, long userId);
 }

@@ -60,6 +60,30 @@
             pageToolbarRight
             class="is-filters">
 
+            <!-- Period of Opening / Purchase / Sales (running
+                 month on load); not on the Bikes tab -->
+            @if (!isBikesTab)
+            {
+                <div class="is-range">
+
+                    <app-datepicker
+                        class="is-date"
+                        [value]="fromDate"
+                        (valueChange)="onFromChange($event)">
+                    </app-datepicker>
+
+                    <span class="is-range-to">to</span>
+
+                    <app-datepicker
+                        class="is-date"
+                        [value]="toDate"
+                        [minDate]="fromDate"
+                        (valueChange)="onToChange($event)">
+                    </app-datepicker>
+
+                </div>
+            }
+
             @if (!isBikesTab)
             {
                 <app-search-dropdown

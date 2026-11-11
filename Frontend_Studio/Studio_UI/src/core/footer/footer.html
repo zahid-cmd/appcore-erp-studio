@@ -26,21 +26,34 @@
 
         <!-- SERVER -->
 
+        <!-- On the dev PC (developer users) a click opens the
+             Dev server panel : Build & Restart API / Restart only -->
+
         <span
             class="status-item server"
-            [class.online]="server().state === 'online'"
-            [class.degraded]="server().state === 'degraded'"
-            [class.offline]="server().state === 'offline'"
-            [title]="serverTitle()"
-            role="status">
+            [class.online]="server().state === 'online' && !devBusy() && !devFailed()"
+            [class.degraded]="server().state === 'degraded' || devBusy()"
+            [class.offline]="(server().state === 'offline' && !devBusy()) || devFailed()"
+            [class.dev-click]="devMode()"
+            [class.dev-busy]="devBusy()"
+            [title]="devMode() ? 'Dev server : build or restart the API' : serverTitle()"
+            [attr.role]="devMode() ? 'button' : 'status'"
+            [attr.tabindex]="devMode() ? 0 : null"
+            (click)="toggleDev($event)"
+            (keydown.enter)="toggleDev($any($event))">
 
             <span class="status-dot"></span>
 
             <b class="status-value">
-                {{ serverLabel() }}
+                {{ devLabel() || serverLabel() }}
             </b>
 
-            @if (server().state === 'online' && server().responseMs !== null)
+            @if (devMode())
+            {
+                <i class="fa-solid fa-screwdriver-wrench dev-hint"></i>
+            }
+
+            @if (!devLabel() && server().state === 'online' && server().responseMs !== null)
             {
                 <span class="status-muted">
                     · {{ server().responseMs }} ms
@@ -48,6 +61,137 @@
             }
 
         </span>
+
+
+
+        <!-- DEV SERVER PANEL (fixed : the footer clips) -->
+
+        @if (devOpen())
+        {
+            <div
+                #devPanel
+                class="dev-panel"
+                role="dialog"
+                aria-label="Dev server"
+                [style.left.px]="devPanelLeft()"
+                [style.bottom.px]="devPanelBottom()">
+
+                <div class="dev-head">
+                    <span class="dev-head-icon"><i class="fa-solid fa-server"></i></span>
+
+                    <span class="dev-head-text">
+                        <b>Dev server</b>
+                        <small>
+                            @if (devAgentDown())
+                            {
+                                Dev agent not running
+                            }
+                            @else
+                            {
+                                {{ devReloading() ? 'Reloading the page…' : (devStatus()?.step ?? 'Checking…') }}
+                            }
+                        </small>
+                    </span>
+
+                    <button type="button" class="dev-x" aria-label="Close" (click)="closeDev()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                @if (devAgentDown())
+                {
+                    <div class="dev-note dev-note-warn">
+                        <i class="fa-solid fa-plug-circle-xmark"></i>
+                        <span>
+                            Start the agent once : double-click
+                            <code>Backend_Studio\dev-agent\start-dev-agent.cmd</code>
+                            and keep its window open.
+                        </span>
+                    </div>
+                }
+                @else
+                {
+                    @if (devBusy())
+                    {
+                        <div class="dev-progress">
+                            <div class="dev-track"><div class="dev-fill"></div></div>
+                            <span class="dev-progress-text">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                {{ devReloading() ? 'Waiting for the API, then reloading' : (devStatus()?.step ?? 'Working') }}
+                            </span>
+                        </div>
+                    }
+
+                    @if (devFailed() && devStatus(); as s)
+                    {
+                        <div class="dev-note dev-note-bad">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            <span>
+                                @if (s.errorCount > 0)
+                                {
+                                    Build failed with {{ s.errorCount }} error{{ s.errorCount === 1 ? '' : 's' }}
+                                    @if (s.oldVersionRestarted) { : the last good version is running again. }
+                                }
+                                @else
+                                {
+                                    {{ s.step }}
+                                }
+                            </span>
+                        </div>
+
+                        @if (s.errors.length)
+                        {
+                            <ul class="dev-errors appcore-scrollbar">
+                                @for (e of s.errors; track $index)
+                                {
+                                    <li [title]="e.path + ' (' + e.line + ')'">
+                                        <span class="dev-err-loc">{{ e.file }}<em>:{{ e.line }}</em></span>
+                                        <span class="dev-err-code">{{ e.code }}</span>
+                                        <span class="dev-err-msg">{{ e.message }}</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+
+                    @if (!devBusy() && devStatus()?.state === 'running' && devStatus()?.buildMs)
+                    {
+                        <div class="dev-meta">
+                            Last build {{ devSeconds(devStatus()?.buildMs) }}
+                            @if (devStatus()?.warningCount) { · {{ devStatus()?.warningCount }} warnings }
+                        </div>
+                    }
+                }
+
+                @if (devMessage())
+                {
+                    <div class="dev-note dev-note-warn">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>{{ devMessage() }}</span>
+                    </div>
+                }
+
+                <div class="dev-actions">
+                    <button
+                        type="button"
+                        class="dev-btn dev-btn-primary"
+                        [disabled]="devBusy() || devAgentDown()"
+                        (click)="runDev('build-restart')">
+                        <i class="fa-solid fa-hammer"></i> Build &amp; Restart API
+                    </button>
+
+                    <button
+                        type="button"
+                        class="dev-btn"
+                        [disabled]="devBusy() || devAgentDown()"
+                        (click)="runDev('restart')">
+                        <i class="fa-solid fa-rotate-right"></i> Restart only
+                    </button>
+                </div>
+
+                <div class="dev-foot">After a good build the page reloads by itself.</div>
+            </div>
+        }
 
 
 
@@ -107,4 +251,4 @@
     </div>
 
 
-</div>
+</div>

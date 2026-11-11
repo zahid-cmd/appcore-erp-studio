@@ -187,7 +187,8 @@
                             class="dropdown-option"
 
                             *ngFor="
-                                let option of filteredItems
+                                let option of filteredItems;
+                                trackBy: trackOption
                             "
 
                             [class.selected]="

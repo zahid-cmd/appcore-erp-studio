@@ -61,6 +61,17 @@ export interface InventoryStockRow
     IsActive:
         boolean;
 
+    // The period (date range on the toolbar) : stock before it
+    // (+ Opening Stock entered in it), purchased and sold in it
+    OpeningQty:
+        number;
+
+    PurchaseQty:
+        number;
+
+    SalesQty:
+        number;
+
     InTransit:
         number;
 
@@ -146,6 +157,13 @@ export interface InventoryStockList
         number;
 
     AsOf:
+        string;
+
+    // The period (yyyy-MM-dd)
+    From:
+        string;
+
+    To:
         string;
 
     Rows:
@@ -478,9 +496,10 @@ export function stockMatches
         filter
     )
     {
-        // "All" hides products never stocked or emptied
+        // "All" : every product listed (the server lists only
+        // products ever purchased, zero stock included)
         case 'all':
-            return row.Total !== 0;
+            return true;
 
         case 'in-stock':
             return row.OnHand > 0;

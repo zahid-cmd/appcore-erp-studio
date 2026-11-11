@@ -6,9 +6,11 @@
 //   /print-viewer/sales-invoices-<type>/<id>?doc=sales-invoice
 //   /print-viewer/sales-invoices-<type>/<id>?doc=sales-invoice-thermal
 //
-// Three documents :
+// Four documents :
 //   sales-invoice          A4 Sales Invoice - Customer Copy (default)
 //   sales-invoice-office   A4 Sales Invoice - Office Copy
+//   money-receipt          A4 Money Receipt - Customer (Receipt
+//                          Voucher number)
 //   sales-invoice-thermal  80 mm receipt (sales-invoice-thermal.template)
 //
 // Printable : Approved, Posted; Cancelled with a CANCELLED
@@ -60,7 +62,8 @@ import
     SALES_INVOICE_DOCUMENT_CSS,
     salesInvoiceDocumentHtml,
     salesInvoiceDocumentSheet,
-    salesInvoiceTitle
+    salesInvoiceTitle,
+    salesMoneyReceiptHtml
 }
 from './sales-invoice.template';
 
@@ -162,7 +165,9 @@ export function salesInvoicePrintSource
                                 logo:kit.isOn(VOUCHER_SWITCH.PRINT_LOGO, true),
                                 legal:kit.isOn(VOUCHER_SWITCH.PRINT_BIN_TIN, true),
                                 stamp:kit.isOn(VOUCHER_SWITCH.PRINT_STAMP, true),
-                                customerPayments:!!page.switches.PRINT_CUSTOMER_PAYMENTS && kit.isOn(page.switches.PRINT_CUSTOMER_PAYMENTS, false)
+                                customerPayments:!!page.switches.PRINT_CUSTOMER_PAYMENTS && kit.isOn(page.switches.PRINT_CUSTOMER_PAYMENTS, false),
+                                showDiscount:!page.switches.PRINT_SHOW_DISCOUNT || kit.isOn(page.switches.PRINT_SHOW_DISCOUNT, true),
+                                showRegistration:!page.switches.PRINT_SHOW_REGISTRATION || kit.isOn(page.switches.PRINT_SHOW_REGISTRATION, true)
                             },
                             'customer'
                         ),
@@ -192,7 +197,9 @@ export function salesInvoicePrintSource
                                 logo:kit.isOn(VOUCHER_SWITCH.PRINT_LOGO, true),
                                 legal:kit.isOn(VOUCHER_SWITCH.PRINT_BIN_TIN, true),
                                 stamp:kit.isOn(VOUCHER_SWITCH.PRINT_STAMP, true),
-                                customerPayments:!!page.switches.PRINT_CUSTOMER_PAYMENTS && kit.isOn(page.switches.PRINT_CUSTOMER_PAYMENTS, false)
+                                customerPayments:!!page.switches.PRINT_CUSTOMER_PAYMENTS && kit.isOn(page.switches.PRINT_CUSTOMER_PAYMENTS, false),
+                                showDiscount:!page.switches.PRINT_SHOW_DISCOUNT || kit.isOn(page.switches.PRINT_SHOW_DISCOUNT, true),
+                                showRegistration:!page.switches.PRINT_SHOW_REGISTRATION || kit.isOn(page.switches.PRINT_SHOW_REGISTRATION, true)
                             },
                             'office'
                         ),
@@ -203,6 +210,33 @@ export function salesInvoicePrintSource
                 excel:
                     (data, kit) =>
                         salesInvoiceDocumentSheet(data, kit)
+            },
+
+            // Money Receipt : the money received, numbered with the
+            // Receipt Voucher; follows "Show Discount on Print"
+            {
+                key:'money-receipt',
+
+                title:'Money Receipt (A4) - Customer',
+
+                icon:'fas fa-hand-holding-dollar',
+
+                render:
+                    (data, kit) =>
+                        salesMoneyReceiptHtml(
+                            data,
+                            kit,
+                            {
+                                logo:kit.isOn(VOUCHER_SWITCH.PRINT_LOGO, true),
+                                legal:kit.isOn(VOUCHER_SWITCH.PRINT_BIN_TIN, true),
+                                stamp:kit.isOn(VOUCHER_SWITCH.PRINT_STAMP, true),
+                                showDiscount:!page.switches.PRINT_SHOW_DISCOUNT || kit.isOn(page.switches.PRINT_SHOW_DISCOUNT, true),
+                                showRegistration:!page.switches.PRINT_SHOW_REGISTRATION || kit.isOn(page.switches.PRINT_SHOW_REGISTRATION, true)
+                            }
+                        ),
+
+                css:
+                    SALES_INVOICE_DOCUMENT_CSS()
             },
 
             {
@@ -220,7 +254,9 @@ export function salesInvoicePrintSource
                             {
                                 legal:kit.isOn(VOUCHER_SWITCH.PRINT_BIN_TIN, true),
                                 stamp:kit.isOn(VOUCHER_SWITCH.PRINT_STAMP, true),
-                                customerPayments:!!page.switches.PRINT_CUSTOMER_PAYMENTS && kit.isOn(page.switches.PRINT_CUSTOMER_PAYMENTS, false)
+                                customerPayments:!!page.switches.PRINT_CUSTOMER_PAYMENTS && kit.isOn(page.switches.PRINT_CUSTOMER_PAYMENTS, false),
+                                showDiscount:!page.switches.PRINT_SHOW_DISCOUNT || kit.isOn(page.switches.PRINT_SHOW_DISCOUNT, true),
+                                showRegistration:!page.switches.PRINT_SHOW_REGISTRATION || kit.isOn(page.switches.PRINT_SHOW_REGISTRATION, true)
                             }
                         ),
 

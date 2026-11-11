@@ -956,7 +956,9 @@ implements OnInit, OnDestroy
             IsWalkIn:false,
             IsCorporate:false,
             TinNo:'',
-            BinNo:''
+            BinNo:'',
+            ContactPersonName:'',
+            ContactPersonNid:''
         };
     }
 
@@ -1050,6 +1052,31 @@ implements OnInit, OnDestroy
         return '';
     }
 
+    // ?category=Individual / Corporate (Sales Invoices - MB tab) :
+    // the Customer Category of a new Inbound customer, locked;
+    // null = free choice
+    get lockedCategory():
+        boolean | null
+    {
+        if (!this.isAddMode)
+        {
+            return null;
+        }
+
+        const category =
+            String(
+                this.route.snapshot.queryParamMap.get('category')
+                ??
+                ''
+            ).toLowerCase();
+
+        return category === 'corporate'
+            ? true
+            : category === 'individual'
+                ? false
+                : null;
+    }
+
     // ?type=Outside from the list's Add (default Inbound)
     private resolveAddType():
         CustomerType
@@ -1108,6 +1135,14 @@ implements OnInit, OnDestroy
 
                 this.refreshDisplayName();
             }
+        }
+
+        // ?category= from the Individual / Corporate tab of Sales
+        // Invoices - MB : preset and locked (Inbound only)
+        if (type === 'Inbound' && this.lockedCategory !== null)
+        {
+            this.entity.IsCorporate =
+                this.lockedCategory;
         }
 
         this.selectedTab =
@@ -1412,7 +1447,7 @@ implements OnInit, OnDestroy
     onUpperCaseChange
     (
         field:
-            'FatherName' | 'MotherName' | 'PresentAddress' | 'PermanentAddress' | 'RegistrationAddress'
+            'FatherName' | 'MotherName' | 'ContactPersonName' | 'PresentAddress' | 'PermanentAddress' | 'RegistrationAddress'
     ):
         void
     {
@@ -1720,6 +1755,38 @@ implements OnInit, OnDestroy
         return bin && bin.length !== 9 && bin.length !== 13
             ? `BIN No must be 9 or 13 digits (${bin.length} entered).`
             : '';
+    }
+
+    // Corporate : the contact person's NID (optional, not unique)
+    onContactNidChange
+    (
+        value:
+            any
+    ):
+        void
+    {
+        this.entity.ContactPersonNid =
+            String(value ?? '');
+
+        this.cdr.detectChanges();
+
+        this.entity.ContactPersonNid =
+            this.digitsOnly(value, 17);
+
+        this.onValueChange();
+    }
+
+    get contactNidWarning():
+        string
+    {
+        const nid =
+            this.entity.ContactPersonNid ?? '';
+
+        return nid
+            &&
+            ![10, 13, 17].includes(nid.length)
+                ? `Contact Person NID must be 10, 13 or 17 digits (${nid.length} entered).`
+                : '';
     }
 
     onNidChange
@@ -2329,7 +2396,7 @@ implements OnInit, OnDestroy
                 message:
                     'NID No is required for Inbound customers.',
                 page:
-                    2
+                    1
             },
             {
                 failed:
@@ -2341,7 +2408,19 @@ implements OnInit, OnDestroy
                 message:
                     this.nidWarning,
                 page:
-                    2
+                    1
+            },
+            {
+                failed:
+                    inbound
+                    &&
+                    this.entity.IsCorporate
+                    &&
+                    !!this.contactNidWarning,
+                message:
+                    this.contactNidWarning,
+                page:
+                    1
             },
             {
                 failed:
@@ -2550,7 +2629,13 @@ implements OnInit, OnDestroy
                 corporate ? this.entity.TinNo ?? '' : '',
 
             BinNo:
-                corporate ? this.entity.BinNo ?? '' : ''
+                corporate ? this.entity.BinNo ?? '' : '',
+
+            ContactPersonName:
+                corporate ? this.cleanText(this.entity.ContactPersonName) : '',
+
+            ContactPersonNid:
+                corporate ? this.entity.ContactPersonNid ?? '' : ''
         };
     }
 

@@ -44,6 +44,8 @@ public abstract class SalesInvoiceLine
     // Special : the line % typed, and the amount (line % or the
     // line's share of the invoice special discount)
     public decimal SpecialDiscountPercent { get; set; }
+    // The line Tk typed (owner 2026-11-11 : per line % OR Tk)
+    public decimal SpecialDiscountTk { get; set; }
     public decimal SpecialAmount { get; set; }
 
     public decimal NetAmount { get; set; }
@@ -96,6 +98,15 @@ public interface IMotorBikeSaleLine
     string DeliveryStatus { get; set; }
 
     DateOnly? DeliveredDate { get; set; }
+
+    // Registration taken on the invoice for this chassis
+    // (2026-11-11)
+    bool IsRegistered { get; set; }
+
+    // VAT on the dealer's value addition for this chassis : VAT
+    // inside the price - VAT inside the price card DP (2026-11-11);
+    // posted to VAT Payable - MB, paid on VAT Payment
+    decimal VatPayable { get; set; }
 }
 
 
@@ -109,4 +120,41 @@ public interface IMotorBikeSaleLine
 public interface IMotorBikeSaleHeader
 {
     string SaleType { get; set; }
+
+    // Registration on the invoice (2026-11-11) : one registration
+    // type and amount per chassis for the ticked chassis; the
+    // total is in the invoice total and posts to the registration
+    // ledgers. Status '' (none) / Active / Reversed (admin, by a
+    // Journal Voucher after posting).
+    long? RegistrationTypeId { get; set; }
+
+    string RegistrationTypeName { get; set; }
+
+    decimal RegistrationAmount { get; set; }
+
+    int RegistrationCount { get; set; }
+
+    decimal RegistrationTotal { get; set; }
+
+    decimal RegistrationCommission { get; set; }
+
+    string RegistrationStatus { get; set; }
+
+    long? RegistrationReversalId { get; set; }
+
+    string RegistrationReversalNo { get; set; }
+
+    long? RegistrationReversedBy { get; set; }
+
+    DateTime? RegistrationReversedDate { get; set; }
+
+    string RegistrationReverseReason { get; set; }
+
+    // Booking taken on the invoice (2026-11-11) : its advance is
+    // counted as paid; Post converts the booking
+    long? BookingId { get; set; }
+
+    string BookingNo { get; set; }
+
+    decimal BookingAdvance { get; set; }
 }

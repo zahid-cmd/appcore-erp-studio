@@ -129,7 +129,9 @@ public abstract class InventoryStatusControllerBase : ControllerBase
     [HttpGet]
     public Task<IActionResult> GetStock(
         [FromQuery] long branchId,
-        [FromQuery] long warehouseId)
+        [FromQuery] long warehouseId,
+        [FromQuery] string? from,
+        [FromQuery] string? to)
     {
         return Run(
             async () =>
@@ -138,9 +140,24 @@ public abstract class InventoryStatusControllerBase : ControllerBase
                         PageType,
                         branchId,
                         warehouseId,
-                        await CanViewCostAsync())),
+                        await CanViewCostAsync(),
+                        false,
+                        DateOf(from),
+                        DateOf(to))),
             "Failed to load the stock.");
     }
+
+
+    // yyyy-MM-dd → date (null when empty or not a date)
+    private static DateOnly? DateOf(string? text) =>
+        DateOnly.TryParseExact(
+            (text ?? string.Empty).Trim(),
+            "yyyy-MM-dd",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None,
+            out DateOnly date)
+            ? date
+            : null;
 
 
     //===========================================================
@@ -181,7 +198,9 @@ public abstract class InventoryStatusControllerBase : ControllerBase
     [HttpGet("bike-accessories")]
     public Task<IActionResult> GetBikeAccessories(
         [FromQuery] long branchId,
-        [FromQuery] long warehouseId)
+        [FromQuery] long warehouseId,
+        [FromQuery] string? from,
+        [FromQuery] string? to)
     {
         if (PageType != "MB")
         {
@@ -195,7 +214,9 @@ public abstract class InventoryStatusControllerBase : ControllerBase
                     await _repository.GetBikeAccessoriesStockAsync(
                         branchId,
                         warehouseId,
-                        await CanViewCostAsync())),
+                        await CanViewCostAsync(),
+                        DateOf(from),
+                        DateOf(to))),
             "Failed to load the free accessories.");
     }
 

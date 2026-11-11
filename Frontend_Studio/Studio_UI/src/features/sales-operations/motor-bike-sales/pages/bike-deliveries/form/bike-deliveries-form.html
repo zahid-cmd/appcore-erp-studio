@@ -1,0 +1,440 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-truck-ramp-box"
+        [title]="pageTitle"
+        [subtitle]="isView ? 'Saved delivery : PDI sheet, challan, warranty' : 'PDI sheet + handover : saving is final'">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="isView ? 'PDI Sheet' : 'Deliver'"
+            [command1Icon]="isView ? 'fas fa-clipboard-check' : 'fas fa-floppy-disk'"
+            (command1Click)="isView ? print('pdi-sheet') : onSave()"
+            [command1Visible]="isView ? !!delivery?.PdiTemplateCode : (!loading && !loadError && !blocked)"
+            command2Text="Challan"
+            command2Icon="fas fa-print"
+            (command2Click)="print('delivery-challan')"
+            [command2Visible]="isView && !!delivery"
+            command3Text="Undo"
+            command3Icon="fas fa-rotate-left"
+            (command3Click)="toggleUndo()"
+            [command3Visible]="canUndo"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBack()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- Own full-height canvas (no app-page-canvas) : fills the
+         screen below the header on every computer -->
+    <div class="bdf-body">
+
+            @if (loading)
+            {
+                <div class="bdf-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Loading...
+                </div>
+            }
+            @else if (loadError)
+            {
+                <div class="bdf-state bdf-state-error">
+                    <i class="fas fa-circle-exclamation"></i>
+                    {{ loadError }}
+                </div>
+            }
+            @else if (bike)
+            {
+                <!-- ===============================================
+                     LEFT : bike, handover, accessories, warranty
+                ================================================ -->
+
+                <div class="bdf-left appcore-scrollbar">
+
+                    @if (blocked)
+                    {
+                        <div class="bdf-banner bdf-banner-error">
+                            <i class="fas fa-ban"></i>
+                            <span>{{ blocked }}</span>
+                        </div>
+                    }
+
+                    @if (isView && delivery?.Status === 'Undone')
+                    {
+                        <div class="bdf-banner bdf-banner-error">
+                            <i class="fas fa-rotate-left"></i>
+                            <span>Undone {{ delivery?.UndoneDate }} : {{ delivery?.UndoReason }}</span>
+                        </div>
+                    }
+
+                    <!-- PDI : date + technician (the sheet is on the right) -->
+                    @if (sections.length > 0)
+                    {
+                        <section class="bdf-card">
+
+                            <header class="bdf-head">
+                                <i class="fas fa-user-gear"></i>
+                                <span>PDI</span>
+                                <span class="bdf-note">Technician : from HR Management later</span>
+                            </header>
+
+                            <div class="bdf-grid-2">
+                                <app-datepicker
+                                    label="PDI Date"
+                                    [required]="true"
+                                    [value]="pdiDateValue"
+                                    [minDate]="minDate"
+                                    [maxDate]="deliveryDateValue"
+                                    [disabled]="isView"
+                                    (valueChange)="onPdiDate($event)">
+                                </app-datepicker>
+
+                                <div class="bdf-field">
+                                    <label>Technician's Name <em>*</em></label>
+                                    <input class="bdf-input" maxlength="150" placeholder="Who did the PDI" [value]="technicianName" [disabled]="isView" (input)="onField('technicianName', $event)">
+                                </div>
+                            </div>
+
+                        </section>
+                    }
+
+                    <!-- BIKE & SALE -->
+                    <section class="bdf-card">
+
+                        <header class="bdf-head">
+                            <i class="fas fa-motorcycle"></i>
+                            <span>Bike &amp; Sale</span>
+                            @if (isView)
+                            {
+                                <span class="bdf-tag" [class.bdf-tag-bad]="delivery?.Status === 'Undone'">{{ delivery?.DeliveryNo }} · {{ delivery?.Status }}</span>
+                            }
+                        </header>
+
+                        <div class="bdf-bike">
+                            @if (bike.ImageUrl)
+                            {
+                                <img
+                                    class="bdf-bike-img"
+                                    [src]="bike.ImageUrl"
+                                    alt="">
+                            }
+                            <div class="bdf-bike-text">
+                                <b>{{ bike.ModelName || bike.ProductName }}</b>
+                                <span>{{ bike.BrandName }}{{ bike.ColorName ? ' · ' + bike.ColorName : '' }}{{ bike.ManufactureYear ? ' · ' + bike.ManufactureYear : '' }}</span>
+                                <span class="bdf-small">{{ bike.ProductCode }}</span>
+                            </div>
+                        </div>
+
+                        <div class="bdf-nos">
+                            <div><span>Chassis No</span><b>{{ bike.ChassisNo }}</b></div>
+                            <div><span>{{ noWord }}</span><b>{{ bike.EngineNo }}</b></div>
+                        </div>
+
+                        <div class="bdf-facts">
+                            <div><span>Invoice</span><b>{{ bike.SalesInvoiceNo }}</b><i>{{ shortDate(bike.InvoiceDate) }}</i></div>
+                            <div><span>Customer</span><b>{{ bike.CustomerName }}</b><i>{{ bike.CustomerCode }} · {{ bike.CustomerPhone }}</i></div>
+                            <div><span>Balance</span><b [class.bdf-due]="bike.DueAmount > 0">{{ money(bike.DueAmount) }}</b><i>{{ bike.PaymentTerm || 'Cash' }}</i></div>
+                        </div>
+
+                    </section>
+
+                    <!-- HANDOVER -->
+                    <section class="bdf-card">
+
+                        <header class="bdf-head">
+                            <i class="fas fa-handshake"></i>
+                            <span>Handover</span>
+                        </header>
+
+                        <div class="bdf-grid-2">
+                            <app-datepicker
+                                label="Delivery Date"
+                                [required]="true"
+                                [value]="deliveryDateValue"
+                                [minDate]="minDate"
+                                [maxDate]="maxDate"
+                                [disabled]="isView"
+                                (valueChange)="onDeliveryDate($event)">
+                            </app-datepicker>
+
+                            <div class="bdf-field">
+                                <label>Received by</label>
+                                <div class="bdf-seg">
+                                    <button type="button" [class.on]="receivedBy === 'Customer'" [disabled]="isView" (click)="setReceivedBy('Customer')">Customer</button>
+                                    <button type="button" [class.on]="receivedBy === 'Nominee'" [disabled]="isView" (click)="setReceivedBy('Nominee')">Nominee</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bdf-grid-2">
+                            <div class="bdf-field">
+                                <label>Receiver's Name @if (receivedBy === 'Nominee') { <em>*</em> }</label>
+                                <input class="bdf-input" maxlength="150" [value]="receiverName" [disabled]="isView || receivedBy === 'Customer'" (input)="onField('receiverName', $event)">
+                            </div>
+                            <div class="bdf-field">
+                                <label>Receiver's Phone @if (receivedBy === 'Nominee') { <em>*</em> }</label>
+                                <input class="bdf-input" inputmode="numeric" maxlength="11" placeholder="01XXXXXXXXX" [value]="receiverPhone" [disabled]="isView || receivedBy === 'Customer'" (input)="onField('receiverPhone', $event)">
+                            </div>
+                        </div>
+
+                        <div class="bdf-field">
+                            <label>Remarks</label>
+                            <input class="bdf-input" maxlength="1000" placeholder="Optional" [value]="remarks" [disabled]="isView" (input)="onField('remarks', $event)">
+                        </div>
+
+                    </section>
+
+                    <!-- ACCESSORIES WITH THE BIKE -->
+                    @if (accessories.length > 0)
+                    {
+                        <section class="bdf-card">
+
+                            <header class="bdf-head">
+                                <i class="fas fa-gift"></i>
+                                <span>Accessories with the Bike</span>
+                                <span class="bdf-note">On the Delivery Challan</span>
+                            </header>
+
+                            @if (additional.length > 0)
+                            {
+                                <div class="bdf-acc-kind">Additional</div>
+                                @for (a of additional; track $index)
+                                {
+                                    <div class="bdf-acc"><span>{{ a.AccessoryName }} <i>{{ a.ProductCode }}</i></span><b>{{ a.Quantity }} {{ a.Unit }}</b></div>
+                                }
+                            }
+
+                            @if (promotional.length > 0)
+                            {
+                                <div class="bdf-acc-kind bdf-acc-promo">Promotional</div>
+                                @for (a of promotional; track $index)
+                                {
+                                    <div class="bdf-acc"><span>{{ a.AccessoryName }} <i>{{ a.SchemeName }}</i></span><b>{{ a.Quantity }} {{ a.Unit }}</b></div>
+                                }
+                            }
+
+                        </section>
+                    }
+
+                    <!-- WARRANTY (saved) -->
+                    @if (isView)
+                    {
+                        <section class="bdf-card">
+                            <header class="bdf-head">
+                                <i class="fas fa-shield-halved"></i>
+                                <span>Sales Warranty</span>
+                            </header>
+                            @if (delivery?.Warranty; as w)
+                            {
+                                <div class="bdf-facts">
+                                    <div><span>Record</span><b>{{ w.Code }}</b><i>{{ w.Status }}</i></div>
+                                    <div><span>Policy</span><b>{{ w.PolicyName }}</b><i>{{ w.PolicyCode }}</i></div>
+                                    <div><span>Valid</span><b>{{ shortDate(w.StartDate) }} - {{ shortDate(w.ExpiryDate) }}</b><i>{{ w.KmLimit ? w.KmLimit + ' km' : 'No km limit' }}</i></div>
+                                </div>
+                                @for (p of w.Parts; track $index)
+                                {
+                                    <div class="bdf-acc"><span>{{ p.PartName }}</span><b>until {{ shortDate(p.ExpiryDate) }}{{ p.KmLimit ? ' / ' + p.KmLimit + ' km' : '' }}</b></div>
+                                }
+                            }
+                            @else
+                            {
+                                <div class="bdf-small">No warranty policy (Warranty Management) for this bike on the delivery date.</div>
+                            }
+                        </section>
+                    }
+
+                    <!-- UNDO (admin) -->
+                    @if (undoOpen)
+                    {
+                        <section class="bdf-card bdf-undo">
+                            <header class="bdf-head">
+                                <i class="fas fa-rotate-left"></i>
+                                <span>Undo Delivery</span>
+                            </header>
+                            <input class="bdf-input" maxlength="500" placeholder="Reason (required)" [value]="undoReason" (input)="onField('undoReason', $event)">
+                            <div class="bdf-actions">
+                                <button type="button" class="bdf-btn-light" (click)="toggleUndo()">Cancel</button>
+                                <button type="button" class="bdf-btn-danger" [disabled]="!undoReason.trim()" (click)="confirmUndo()">Undo</button>
+                            </div>
+                        </section>
+                    }
+
+                </div>
+
+                <!-- ===============================================
+                     RIGHT : PDI sheet
+                ================================================ -->
+
+                <section class="bdf-card bdf-sheet">
+
+                    <header class="bdf-head">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>PDI Sheet</span>
+                        @if (isView)
+                        {
+                            <span class="bdf-note">{{ delivery?.PdiTemplateCode ? delivery?.PdiTemplateCode + ' ' + delivery?.PdiTemplateName : 'Delivered without PDI' }}</span>
+                        }
+                        @else if (template)
+                        {
+                            <span class="bdf-note">{{ template.Code }} {{ template.Name }} · {{ filledCount }} / {{ itemCount }} filled{{ notOkCount ? ' · ' + notOkCount + ' Not OK' : '' }}</span>
+                        }
+                    </header>
+
+                    @if (!isView && template && !pdiRequired)
+                    {
+                        <div class="bdf-banner bdf-banner-warn">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>"Delivery without PDI" is ON : the sheet is optional. Once you start it, fill it in full.</span>
+                        </div>
+                    }
+
+                    @if (!isView && !template && !pdiRequired)
+                    {
+                        <div class="bdf-banner bdf-banner-warn">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>This model has no PDI template; it will be delivered without PDI ("Delivery without PDI" is ON).</span>
+                        </div>
+                    }
+
+                    @if (sections.length > 0)
+                    {
+                        <div class="bdf-sheet-body appcore-scrollbar">
+
+                            @for (section of sections; track $index; let s = $index)
+                            {
+                                <div class="bdf-sec">
+
+                                    <div class="bdf-sec-head">
+                                        <span class="bdf-no">{{ s + 1 }}</span>
+                                        <div class="bdf-sec-title">
+                                            <b class="bdf-bn">{{ section.titleBn || section.title }}</b>
+                                            @if (section.titleBn)
+                                            {
+                                                <small>{{ section.title }}</small>
+                                            }
+                                        </div>
+                                        @if (!isView)
+                                        {
+                                            <button
+                                                type="button"
+                                                class="bdf-check-all"
+                                                [class.on]="sectionChecked(section)"
+                                                [title]="sectionChecked(section) ? 'Clear the answer of every check point of this section' : 'Mark every unanswered check point of this section OK (readings stay)'"
+                                                (click)="toggleSection(section)">
+                                                <i [class]="sectionChecked(section) ? 'fas fa-square-check' : 'far fa-square'"></i>
+                                                {{ sectionChecked(section) ? 'Uncheck all' : 'Check all' }}
+                                            </button>
+                                        }
+                                    </div>
+
+                                    <table class="bdf-items">
+                                        <thead>
+                                            <tr>
+                                                <th class="bdf-c-no">#</th>
+                                                <th>Check point</th>
+                                                <th class="bdf-c-ans">Result</th>
+                                                <th>Remark</th>
+                                                @if (section.hasComments)
+                                                {
+                                                    <th>Technician</th>
+                                                    <th>QC In-charge</th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (item of section.items; track $index; let i = $index)
+                                            {
+                                                <tr [class.bdf-row-bad]="item.entry.Answer === 'Not OK'">
+                                                    <td class="bdf-c-no">{{ i + 1 }}</td>
+                                                    <td>
+                                                        <div class="bdf-item">
+                                                            <span class="bdf-bn">{{ item.textBn || item.text }}</span>
+                                                            @if (item.textBn)
+                                                            {
+                                                                <small>{{ item.text }}</small>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                    <td class="bdf-c-ans">
+                                                        @if (item.type === 'Check')
+                                                        {
+                                                            <div class="bdf-ans">
+                                                                @for (a of checkAnswers; track a)
+                                                                {
+                                                                    <button
+                                                                        type="button"
+                                                                        [class.on]="item.entry.Answer === a"
+                                                                        [class.ok]="a === 'OK'"
+                                                                        [class.bad]="a === 'Not OK'"
+                                                                        [disabled]="isView"
+                                                                        (click)="setAnswer(item, a)">{{ a }}</button>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        @else if (item.type === 'Reading')
+                                                        {
+                                                            <div class="bdf-reading">
+                                                                <input class="bdf-input" inputmode="decimal" [value]="item.entry.Answer" [disabled]="isView" (input)="onEntry(item, 'Answer', $event)">
+                                                                <span>{{ item.unit }}</span>
+                                                            </div>
+                                                        }
+                                                        @else
+                                                        {
+                                                            <input class="bdf-input" maxlength="200" [value]="item.entry.Answer" [disabled]="isView" (input)="onEntry(item, 'Answer', $event)">
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            class="bdf-input"
+                                                            maxlength="500"
+                                                            [placeholder]="item.entry.Answer === 'Not OK' ? 'Required : what is wrong' : ''"
+                                                            [class.bdf-need]="item.entry.Answer === 'Not OK' && !item.entry.Remark.trim()"
+                                                            [value]="item.entry.Remark"
+                                                            [disabled]="isView"
+                                                            (input)="onEntry(item, 'Remark', $event)">
+                                                    </td>
+                                                    @if (section.hasComments)
+                                                    {
+                                                        <td><input class="bdf-input" maxlength="500" [value]="item.entry.TechnicianComment" [disabled]="isView" (input)="onEntry(item, 'TechnicianComment', $event)"></td>
+                                                        <td><input class="bdf-input" maxlength="500" [value]="item.entry.QcComment" [disabled]="isView" (input)="onEntry(item, 'QcComment', $event)"></td>
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            }
+
+                            <div class="bdf-grid-2">
+                                <div class="bdf-field">
+                                    <label>Problems found at delivery</label>
+                                    <textarea class="bdf-input bdf-area" rows="3" maxlength="2000" [value]="problemsFound" [disabled]="isView" (input)="onField('problemsFound', $event)"></textarea>
+                                </div>
+                                <div class="bdf-field">
+                                    <label>PDI Remarks</label>
+                                    <textarea class="bdf-input bdf-area" rows="3" maxlength="1000" [value]="pdiRemarks" [disabled]="isView" (input)="onField('pdiRemarks', $event)"></textarea>
+                                </div>
+                            </div>
+
+                        </div>
+                    }
+                    @else if (isView)
+                    {
+                        <div class="bdf-state">This bike was delivered without the PDI sheet.</div>
+                    }
+
+                </section>
+            }
+
+    </div>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

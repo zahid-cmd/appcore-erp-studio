@@ -35,6 +35,10 @@ public class CustomerProfilesPageRequest
     // Inbound / Outside (the tab); empty = both
     public string? Type { get; set; }
 
+    // Inbound only : true = Corporate / Institution, false =
+    // Individual, empty = both (the Individual / Corporate tabs)
+    public bool? Corporate { get; set; }
+
     public long? LocationId { get; set; }
 
     // true = Active, false = Inactive, empty = all

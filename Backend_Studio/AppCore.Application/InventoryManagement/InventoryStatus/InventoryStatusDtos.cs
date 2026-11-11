@@ -40,6 +40,11 @@ public class InventoryStockListDto
     // yyyy-MM-dd (Bangladesh time)
     public string AsOf { get; set; } = string.Empty;
 
+    // The period (yyyy-MM-dd) of Opening / Purchase / Sales
+    public string From { get; set; } = string.Empty;
+
+    public string To { get; set; } = string.Empty;
+
     public List<InventoryStockRowDto> Rows { get; set; } = new();
 
     public List<InventoryStockOptionDto> Branches { get; set; } = new();
@@ -93,6 +98,16 @@ public class InventoryStockRowDto
     public int MaxStockLevel { get; set; }
 
     public bool IsActive { get; set; }
+
+    // Stock before the period (+ Opening Stock entered in it)
+    public decimal OpeningQty { get; set; }
+
+    // Purchased in the period (net of cancels, returns, short
+    // supply)
+    public decimal PurchaseQty { get; set; }
+
+    // Sold in the period (net of cancels, returns)
+    public decimal SalesQty { get; set; }
 
     public decimal InTransit { get; set; }
 

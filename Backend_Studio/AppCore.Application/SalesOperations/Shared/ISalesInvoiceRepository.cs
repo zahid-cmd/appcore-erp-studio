@@ -114,6 +114,13 @@ public interface ISalesInvoiceRepository
         CancelSalesInvoiceDto dto,
         long userId);
 
+    // MB : reverse the registration of a posted invoice (Journal
+    // Voucher; its Registration Profiles cancelled). Reason in dto.
+    Task ReverseRegistrationAsync(
+        long id,
+        CancelSalesInvoiceDto dto,
+        long userId);
+
     Task<bool> ExistsAsync(
         long id);
 

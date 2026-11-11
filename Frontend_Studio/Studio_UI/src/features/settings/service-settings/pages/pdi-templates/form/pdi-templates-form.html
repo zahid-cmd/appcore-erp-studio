@@ -1,0 +1,419 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-clipboard-check"
+        [title]="pageTitle"
+        subtitle="Pre-Delivery Inspection sheet : English and Bangla">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            command3Text="Print"
+            command3Icon="fas fa-print"
+            (command3Click)="onPrint()"
+            [command3Visible]="isViewMode && !!entity.PublicId"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="pdt-body appcore-scrollbar">
+
+            <div class="pdt-top">
+
+                <!-- TEMPLATE -->
+                <section class="pdt-card">
+
+                    <header class="pdt-card-head">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>Template</span>
+                    </header>
+
+                    <div class="pdt-grid-2">
+
+                        <app-textbox
+                            label="Code"
+                            [value]="entity.Code"
+                            placeholder="Auto generated"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-dropdown
+                            label="Status"
+                            [items]="statusItems"
+                            [value]="entity.IsActive"
+                            (valueChange)="onStatus($event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-dropdown>
+
+                    </div>
+
+                    <app-textbox
+                        label="Template Name"
+                        placeholder="e.g. REVOO Pre-Delivery Inspection"
+                        [value]="entity.Name"
+                        [maxLength]="150"
+                        textCase="none"
+                        (valueChange)="onText('Name', $event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-textbox>
+
+                    <label class="pdt-label">Template Name (Bangla)</label>
+                    <input
+                        class="pdt-input pdt-bn"
+                        lang="bn"
+                        placeholder="বাংলা নাম (optional)"
+                        [value]="entity.NameBn"
+                        [disabled]="isViewMode"
+                        (input)="onBn('NameBn', $event)">
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="entity.Remarks"
+                        [maxLength]="500"
+                        textCase="none"
+                        (valueChange)="onText('Remarks', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                </section>
+
+                <!-- SHEET HEADER / FOOTER -->
+                <section class="pdt-card">
+
+                    <header class="pdt-card-head">
+                        <i class="fas fa-file-lines"></i>
+                        <span>Printed Sheet</span>
+                    </header>
+
+                    <app-textbox
+                        label="Service Provider (top right of the sheet)"
+                        placeholder="Swiftech Service Limited"
+                        [value]="entity.ServiceProviderName"
+                        [maxLength]="150"
+                        textCase="none"
+                        (valueChange)="onText('ServiceProviderName', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Sheet Title"
+                        [value]="entity.SheetTitle"
+                        [maxLength]="150"
+                        textCase="none"
+                        (valueChange)="onText('SheetTitle', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <label class="pdt-label">Sheet Title (Bangla)</label>
+                    <input
+                        class="pdt-input pdt-bn"
+                        lang="bn"
+                        placeholder="প্রি-ডেলিভারি ইন্সপেকশন রিপোর্ট"
+                        [value]="entity.SheetTitleBn"
+                        [disabled]="isViewMode"
+                        (input)="onBn('SheetTitleBn', $event)">
+
+                    <app-textbox
+                        label="Footer Note"
+                        [value]="entity.FooterNote"
+                        [maxLength]="500"
+                        textCase="none"
+                        (valueChange)="onText('FooterNote', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <label class="pdt-label">Footer Note (Bangla)</label>
+                    <input
+                        class="pdt-input pdt-bn"
+                        lang="bn"
+                        [value]="entity.FooterNoteBn"
+                        [disabled]="isViewMode"
+                        (input)="onBn('FooterNoteBn', $event)">
+
+                </section>
+
+                <!-- BIKE MODELS -->
+                <section class="pdt-card">
+
+                    <header class="pdt-card-head">
+                        <i class="fas fa-motorcycle"></i>
+                        <span>Bike Models</span>
+                        <span class="pdt-head-note">{{ entity.Models.length }} model{{ entity.Models.length === 1 ? '' : 's' }}</span>
+                    </header>
+
+                    @if (!isViewMode)
+                    {
+                        @for (key of modelPickerKeys; track key)
+                        {
+                            <app-search-dropdown
+                                label="Add a model"
+                                [required]="true"
+                                [placeholder]="modelPickItems.length ? 'Select a bike model' : 'No more models to add'"
+                                [items]="modelPickItems"
+                                [value]="null"
+                                [disabled]="modelPickItems.length === 0"
+                                (valueChange)="onAddModel($event)">
+                            </app-search-dropdown>
+                        }
+
+                        <button
+                            type="button"
+                            class="pdt-link"
+                            [disabled]="modelPickItems.length === 0"
+                            (click)="addAllModels()">
+                            Add all free models
+                        </button>
+                    }
+
+                    <div class="pdt-chips">
+                        @for (model of entity.Models; track model.BikeModelId)
+                        {
+                            <span class="pdt-chip">
+                                {{ model.ModelName }}
+                                @if (model.BrandName)
+                                {
+                                    <small>{{ model.BrandName }}</small>
+                                }
+                                @if (!isViewMode)
+                                {
+                                    <button
+                                        type="button"
+                                        title="Remove"
+                                        (click)="removeModel(model.BikeModelId)">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+                                }
+                            </span>
+                        }
+                        @empty
+                        {
+                            <span class="pdt-empty">No bike models yet</span>
+                        }
+                    </div>
+
+                    @if (modelsElsewhere.length > 0)
+                    {
+                        <div class="pdt-hint">
+                            <i class="fas fa-circle-info"></i>
+                            <span>
+                                A model can be in one active template only. In other templates :
+                                @for (m of modelsElsewhere; track m.BikeModelId; let last = $last)
+                                {
+                                    {{ m.ModelName }} ({{ m.TemplateCode }}){{ last ? '' : ', ' }}
+                                }
+                            </span>
+                        </div>
+                    }
+
+                </section>
+
+            </div>
+
+            <!-- =================================================
+                 SHEET : sections and items
+            ================================================== -->
+
+            <section class="pdt-card pdt-sheet">
+
+                <header class="pdt-card-head">
+                    <i class="fas fa-list-check"></i>
+                    <span>Inspection Sheet</span>
+                    <span class="pdt-head-note">{{ entity.Sections.length }} section{{ entity.Sections.length === 1 ? '' : 's' }} · {{ itemCount }} item{{ itemCount === 1 ? '' : 's' }}</span>
+                    @if (!isViewMode)
+                    {
+                        <button
+                            type="button"
+                            class="pdt-btn"
+                            (click)="addSection()">
+                            <i class="fas fa-plus"></i>
+                            Section
+                        </button>
+                    }
+                </header>
+
+                @for (section of entity.Sections; track $index; let s = $index)
+                {
+                    <div class="pdt-section">
+
+                        <div class="pdt-section-head">
+
+                            <span class="pdt-no">{{ s + 1 }}</span>
+
+                            <input
+                                class="pdt-input"
+                                placeholder="Section title (English)"
+                                maxlength="150"
+                                [value]="section.Title"
+                                [disabled]="isViewMode"
+                                (input)="onSectionText(section, 'Title', $event)">
+
+                            <input
+                                class="pdt-input pdt-bn"
+                                lang="bn"
+                                placeholder="সেকশনের নাম (বাংলা)"
+                                [value]="section.TitleBn"
+                                [disabled]="isViewMode"
+                                (input)="onSectionText(section, 'TitleBn', $event)">
+
+                            <label
+                                class="pdt-check"
+                                title="Each item gets a Technician's comment and a QC In-charge's comment">
+                                <input
+                                    type="checkbox"
+                                    [checked]="section.HasComments"
+                                    [disabled]="isViewMode"
+                                    (change)="onSectionComments(section, $event)">
+                                Technician / QC comments
+                            </label>
+
+                            @if (!isViewMode)
+                            {
+                                <span class="pdt-tools">
+                                    <button type="button" title="Move up" [disabled]="s === 0" (click)="moveSection(s, -1)"><i class="fas fa-arrow-up"></i></button>
+                                    <button type="button" title="Move down" [disabled]="s === entity.Sections.length - 1" (click)="moveSection(s, 1)"><i class="fas fa-arrow-down"></i></button>
+                                    <button type="button" class="pdt-danger" title="Remove section" (click)="removeSection(s)"><i class="fas fa-trash-can"></i></button>
+                                </span>
+                            }
+
+                        </div>
+
+                        <table class="pdt-items">
+
+                            <thead>
+                                <tr>
+                                    <th class="pdt-c-no">#</th>
+                                    <th>Item (English)</th>
+                                    <th>Item (Bangla)</th>
+                                    <th class="pdt-c-type">Type</th>
+                                    <th class="pdt-c-unit">Unit</th>
+                                    <th class="pdt-c-req">Required</th>
+                                    @if (!isViewMode)
+                                    {
+                                        <th class="pdt-c-tools"></th>
+                                    }
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (item of section.Items; track $index; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="pdt-c-no">{{ i + 1 }}</td>
+                                        <td>
+                                            <input
+                                                class="pdt-input"
+                                                maxlength="200"
+                                                placeholder="e.g. Horn OK"
+                                                [value]="item.Text"
+                                                [disabled]="isViewMode"
+                                                (input)="onItemText(item, 'Text', $event)">
+                                        </td>
+                                        <td>
+                                            <input
+                                                class="pdt-input pdt-bn"
+                                                lang="bn"
+                                                placeholder="যেমন : হর্ন ঠিক আছে"
+                                                [value]="item.TextBn"
+                                                [disabled]="isViewMode"
+                                                (input)="onItemText(item, 'TextBn', $event)">
+                                        </td>
+                                        <td class="pdt-c-type">
+                                            <select
+                                                class="pdt-input"
+                                                [value]="item.ItemType"
+                                                [disabled]="isViewMode"
+                                                (change)="onItemType(item, $event)">
+                                                @for (t of itemTypes; track t.value)
+                                                {
+                                                    <option [value]="t.value" [selected]="t.value === item.ItemType">{{ t.label }}</option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td class="pdt-c-unit">
+                                            @if (item.ItemType === 'Reading')
+                                            {
+                                                <input
+                                                    class="pdt-input"
+                                                    maxlength="20"
+                                                    placeholder="PSI / V"
+                                                    [value]="item.Unit"
+                                                    [disabled]="isViewMode"
+                                                    (input)="onItemText(item, 'Unit', $event)">
+                                            }
+                                            @else
+                                            {
+                                                <span class="pdt-muted">-</span>
+                                            }
+                                        </td>
+                                        <td class="pdt-c-req">
+                                            <input
+                                                type="checkbox"
+                                                [checked]="item.IsRequired"
+                                                [disabled]="isViewMode"
+                                                (change)="onItemRequired(item, $event)">
+                                        </td>
+                                        @if (!isViewMode)
+                                        {
+                                            <td class="pdt-c-tools">
+                                                <span class="pdt-tools">
+                                                    <button type="button" title="Move up" [disabled]="i === 0" (click)="moveItem(section, i, -1)"><i class="fas fa-arrow-up"></i></button>
+                                                    <button type="button" title="Move down" [disabled]="i === section.Items.length - 1" (click)="moveItem(section, i, 1)"><i class="fas fa-arrow-down"></i></button>
+                                                    <button type="button" class="pdt-danger" title="Remove item" (click)="removeItem(section, i)"><i class="fas fa-xmark"></i></button>
+                                                </span>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+
+                        @if (!isViewMode)
+                        {
+                            <button
+                                type="button"
+                                class="pdt-link pdt-add-item"
+                                (click)="addItem(section)">
+                                <i class="fas fa-plus"></i>
+                                Add item
+                            </button>
+                        }
+
+                    </div>
+                }
+
+            </section>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

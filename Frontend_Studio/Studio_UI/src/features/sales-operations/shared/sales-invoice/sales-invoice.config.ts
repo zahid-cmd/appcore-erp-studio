@@ -92,6 +92,19 @@ export interface SalesInvoiceSwitchCodes
     PRINT_CUSTOMER_PAYMENTS:
         string;
 
+    // Print : Show Discount on Print (default ON). OFF = the
+    // customer copy, the thermal receipt and the Money Receipt
+    // show the full MRP (no discount column or lines); the office
+    // copy always shows the discounts
+    PRINT_SHOW_DISCOUNT:
+        string;
+
+    // Print : Show Registration on Print (MB 0083, default ON; ''
+    // on SP / AC). OFF = the Registration line is left off the
+    // customer copy, the thermal receipt and the Money Receipt
+    PRINT_SHOW_REGISTRATION:
+        string;
+
     // VAT Management : Sales VAT Applicable (Value = from date)
     SALES_VAT:
         string;
@@ -202,6 +215,8 @@ export const SI_SP_PAGE:
         SELL_AT_BATCH_MRP:'CFG-MOD-008-0032',
         ROUND_DOWN_WHOLE_TAKA:'CFG-MOD-008-0033',
         PRINT_CUSTOMER_PAYMENTS:'CFG-MOD-008-0034',
+        PRINT_SHOW_DISCOUNT:'CFG-MOD-008-0035',
+        PRINT_SHOW_REGISTRATION:'',
         SALES_VAT:'CFG-MOD-013-0002'
     }
 };
@@ -242,6 +257,8 @@ export const SI_AC_PAGE:
         SELL_AT_BATCH_MRP:'CFG-MOD-008-0052',
         ROUND_DOWN_WHOLE_TAKA:'CFG-MOD-008-0053',
         PRINT_CUSTOMER_PAYMENTS:'CFG-MOD-008-0054',
+        PRINT_SHOW_DISCOUNT:'CFG-MOD-008-0055',
+        PRINT_SHOW_REGISTRATION:'',
         SALES_VAT:'CFG-MOD-013-0004'
     }
 };
@@ -284,6 +301,8 @@ export const SI_MB_PAGE:
         SELL_AT_BATCH_MRP:'CFG-MOD-008-0017',
         ROUND_DOWN_WHOLE_TAKA:'CFG-MOD-008-0018',
         PRINT_CUSTOMER_PAYMENTS:'CFG-MOD-008-0019',
+        PRINT_SHOW_DISCOUNT:'CFG-MOD-008-0082',
+        PRINT_SHOW_REGISTRATION:'CFG-MOD-008-0083',
         SALES_VAT:''
     }
 };

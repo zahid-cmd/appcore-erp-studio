@@ -146,6 +146,70 @@ export function salesInvoiceQty
 
 
 //===============================================================
+// Discount hidden on print (switch "Show Discount on Print" OFF) :
+// the discounts are added back, so every line, the total and the
+// amount paid read at full MRP. Due stays as it is.
+//===============================================================
+
+export interface SalesInvoiceShown
+{
+    hide:boolean;
+    // Discounts added back (campaign, membership, special,
+    // fractional)
+    addBack:number;
+    // MB : the registration shown (0 = none or left off)
+    registration:number;
+    total:number;
+    paid:number;
+    line:(line: SalesInvoiceLine) => number;
+}
+
+export function salesInvoiceShown
+(
+    invoice:
+        SalesInvoice,
+    hide:
+        boolean,
+    // Switch "Show Registration on Print" OFF (MB) : the
+    // registration is left out of the total and the amount paid
+    hideRegistration:
+        boolean =
+        false
+):
+    SalesInvoiceShown
+{
+    const addBack =
+        hide
+            ? (Number(invoice.CampaignDiscount) || 0)
+              + (Number(invoice.MembershipDiscount) || 0)
+              + (Number(invoice.SpecialDiscount) || 0)
+              + (Number(invoice.FractionalDiscount) || 0)
+            : 0;
+
+    const paidAmount =
+        Number(invoice.PaidAmount) || 0;
+
+    const registration =
+        hideRegistration
+            ? Number(invoice.RegistrationTotal) || 0
+            : 0;
+
+    return {
+        hide,
+        addBack,
+        registration:hideRegistration ? 0 : Number(invoice.RegistrationTotal) || 0,
+        total:(Number(invoice.InvoiceTotal) || 0) + addBack - registration,
+        paid:paidAmount - Math.min(registration, paidAmount) + (hide && paidAmount > 0 ? addBack : 0),
+        line:
+            (line: SalesInvoiceLine) =>
+                hide
+                    ? (Number(line.LineTotal) || 0) + (Number(line.CampaignMembershipAmount) || 0) + (Number(line.SpecialAmount) || 0)
+                    : Number(line.LineTotal) || 0
+    };
+}
+
+
+//===============================================================
 // Shared pieces
 //===============================================================
 
@@ -218,6 +282,12 @@ export function salesInvoiceDocumentHtml
         stamp:boolean;
         // Switch "Print Payment Details on Customer Copy" (default OFF)
         customerPayments:boolean;
+        // Switch "Show Discount on Print" (default ON; the office
+        // copy always shows the discounts)
+        showDiscount?:boolean;
+        // MB : switch "Show Registration on Print" (default ON; the
+        // office copy always shows it)
+        showRegistration?:boolean;
     },
     // Customer copy : payment total and due (breakdown only when the
     // switch is ON, never the charges paid on top). Office copy :
@@ -243,6 +313,8 @@ function salesInvoiceCopyHtml
         legal:boolean;
         stamp:boolean;
         customerPayments:boolean;
+        showDiscount?:boolean;
+        showRegistration?:boolean;
     },
     copy:
         'customer' | 'office'
@@ -258,9 +330,17 @@ function salesInvoiceCopyHtml
     const office =
         copy === 'office';
 
-    // Customer copy : breakdown only when the switch is ON
+    // Discounts hidden : customer copy with the switch OFF
+    const shown =
+        salesInvoiceShown(
+            invoice,
+            !office && options.showDiscount === false,
+            !office && options.showRegistration === false);
+
+    // Customer copy : breakdown only when the switch is ON (never
+    // with the discounts hidden : the rows are the real amounts)
     const showBreakdown =
-        office || options.customerPayments;
+        office || (options.customerPayments && !shown.hide);
 
     const status =
         String(invoice.Status ?? '');
@@ -281,10 +361,10 @@ function salesInvoiceCopyHtml
         units.length === 1 ? units[0] : '';
 
     const showSpecial =
-        invoice.SpecialDiscount > 0;
+        !shown.hide && invoice.SpecialDiscount > 0;
 
     const showDisc =
-        invoice.CampaignMembershipDiscount > 0;
+        !shown.hide && invoice.CampaignMembershipDiscount > 0;
 
     // Columns : SL, item, qty, MRP, [disc], [special], line total
     const amountCols =
@@ -304,17 +384,33 @@ function salesInvoiceCopyHtml
 
                     return `<tr>
 <td class="vd-c vd-sl">${index + 1}</td>
-<td><div class="vd-main">${e(part.name)}</div><div class="vd-sub">${part.part ? `${e(part.part)} <span class="si-div">||</span> ` : ''}${e(line.ProductCode)}</div>${line.DiscountLabel && line.CampaignMembershipAmount > 0 ? `<div class="si-disc-label">${e(line.DiscountLabel)}</div>` : ''}</td>
+<td><div class="vd-main">${e(part.name)}</div><div class="vd-sub">${part.part ? `${e(part.part)} <span class="si-div">||</span> ` : ''}${e(line.ProductCode)}</div>${!shown.hide && line.DiscountLabel && line.CampaignMembershipAmount > 0 ? `<div class="si-disc-label">${e(line.DiscountLabel)}</div>` : ''}</td>
 <td class="vd-r">${e(salesInvoiceQty(line.Quantity))} <span class="si-unit">${e(line.Unit)}</span></td>
 <td class="vd-r">${e(line.MrpText || kit.money(line.Mrp))}${line.PriceEdited ? `<div class="si-small">@ ${kit.money(line.UnitPrice)}</div>` : mixed ? '<div class="si-small">batch MRPs</div>' : ''}</td>
 <td class="vd-r">${kit.money(line.GrossAmount)}</td>
 ${showDisc ? `<td class="vd-r">${line.CampaignMembershipAmount > 0 ? kit.money(-line.CampaignMembershipAmount) : '-'}</td>` : ''}
 ${showSpecial ? `<td class="vd-r">${line.SpecialAmount > 0 ? kit.money(-line.SpecialAmount) : '-'}</td>` : ''}
-<td class="vd-r si-total-col">${kit.money(line.LineTotal)}</td>
+<td class="vd-r si-total-col">${kit.money(shown.line(line))}</td>
 </tr>`;
                 }
             )
             .join('');
+
+    // MB : the Registration line (switch "Show Registration on
+    // Print"; the office copy always)
+    const registrationRow =
+        shown.registration > 0
+            ? `<tr>
+<td class="vd-c vd-sl">${lines.length + 1}</td>
+<td><div class="vd-main">Registration</div><div class="vd-sub">${e(invoice.RegistrationTypeName ?? '')}${invoice.RegistrationStatus === 'Reversed' ? ' <span class="si-div">||</span> reversed' : ''}</div></td>
+<td class="vd-r">${e(salesInvoiceQty(invoice.RegistrationCount ?? 0))} <span class="si-unit">Chassis</span></td>
+<td class="vd-r">${kit.money(invoice.RegistrationAmount ?? 0)}</td>
+<td class="vd-r">${kit.money(shown.registration)}</td>
+${showDisc ? '<td class="vd-r">-</td>' : ''}
+${showSpecial ? '<td class="vd-r">-</td>' : ''}
+<td class="vd-r si-total-col">${kit.money(shown.registration)}</td>
+</tr>`
+            : '';
 
     const fact =
         (label: string, value: string, sub: string = ''): string =>
@@ -344,11 +440,12 @@ ${showSpecial ? `<td class="vd-r">${line.SpecialAmount > 0 ? kit.money(-line.Spe
     const totals =
         [
             `<tr class="si-sum si-sum-first"><td></td><td class="vd-r">Gross (MRP)</td><td class="vd-r">${e(salesInvoiceQty(totalQuantity))}${totalUnit ? ` <span class="si-unit">${e(totalUnit)}</span>` : ''}</td><td colspan="${2 + amountCols}"></td><td class="vd-r">${kit.money(invoice.GrossAmount)}</td></tr>`,
-            invoice.CampaignDiscount > 0 ? sum('Less Campaign Discount', -invoice.CampaignDiscount) : '',
-            invoice.MembershipDiscount > 0 ? sum(`Less Membership Discount${invoice.MembershipCardName ? ` (${invoice.MembershipCardName})` : ''}`, -invoice.MembershipDiscount) : '',
-            invoice.SpecialDiscount > 0 ? sum(`Less Special Discount${invoice.InvoiceSpecialType === 'Percent' ? ` (${invoice.InvoiceSpecialValue}%)` : ''}`, -invoice.SpecialDiscount) : '',
-            invoice.FractionalDiscount > 0 ? sum('Less Fractional Discount', -invoice.FractionalDiscount) : '',
-            sum('Invoice Total', invoice.InvoiceTotal, 'vd-total')
+            !shown.hide && invoice.CampaignDiscount > 0 ? sum('Less Campaign Discount', -invoice.CampaignDiscount) : '',
+            !shown.hide && invoice.MembershipDiscount > 0 ? sum(`Less Membership Discount${invoice.MembershipCardName ? ` (${invoice.MembershipCardName})` : ''}`, -invoice.MembershipDiscount) : '',
+            !shown.hide && invoice.SpecialDiscount > 0 ? sum(`Less Special Discount${invoice.InvoiceSpecialType === 'Percent' ? ` (${invoice.InvoiceSpecialValue}%)` : ''}`, -invoice.SpecialDiscount) : '',
+            !shown.hide && invoice.FractionalDiscount > 0 ? sum('Less Fractional Discount', -invoice.FractionalDiscount) : '',
+            shown.registration > 0 ? sum('Add Registration', shown.registration) : '',
+            sum('Invoice Total', shown.total, 'vd-total')
         ]
         .join('');
 
@@ -366,7 +463,7 @@ ${showSpecial ? `<td class="vd-r">${line.SpecialAmount > 0 ? kit.money(-line.Spe
     const payFoot =
         `<div class="si-paybox-foot">
     ${invoice.DueAmount > 0 ? '<span class="si-paybox-note">Credit sale : the due is on the customer\'s account.</span>' : ''}
-    <span>Paid <b>${kit.money(invoice.PaidAmount)}</b></span>
+    <span>Paid <b>${kit.money(shown.paid)}</b></span>
     ${chargesOnTop > 0 ? `<span class="si-paybox-muted">Charges paid on top <b>${kit.money(chargesOnTop)}</b></span>` : ''}
     <span class="${invoice.DueAmount > 0 ? 'si-paybox-due' : ''}">${invoice.DueAmount > 0 ? 'Due' : 'Balance'} <b>${kit.money(invoice.DueAmount)}</b></span>
   </div>`;
@@ -393,7 +490,10 @@ ${showSpecial ? `<td class="vd-r">${line.SpecialAmount > 0 ? kit.money(-line.Spe
                 ? '<div class="si-fine">Approved, not yet posted : no stock moved, no journal and no receipt yet.</div>'
                 : '',
             invoice.VatApplicable
-                ? '<div class="si-fine">Prices include VAT.</div>'
+                ? `<div class="si-fine">Prices include VAT${shown.registration > 0 ? ' (registration : no VAT)' : ''}.</div>`
+                : '',
+            office && invoice.RegistrationStatus === 'Reversed'
+                ? `<div class="si-fine">Registration reversed by ${e(invoice.RegistrationReversalNo ?? '')} : ${e(invoice.RegistrationReverseReason ?? '')}</div>`
                 : '',
             invoice.JournalNo
                 ? `<div class="si-fine">Journal ${e(invoice.JournalNo)}</div>`
@@ -417,7 +517,7 @@ ${showSpecial ? `<td class="vd-r">${line.SpecialAmount > 0 ? kit.money(-line.Spe
                     invoice.InvoiceNo,
                     kit.date(invoice.InvoiceDate),
                     invoice.CustomerName,
-                    `Tk ${kit.money(invoice.InvoiceTotal)}`,
+                    `Tk ${kit.money(shown.total)}`,
                     status
                 ]
                 .filter(part => !!part)
@@ -433,13 +533,13 @@ ${head}
 <div class="pv-body">
 ${customerBlock}
 <div class="vd-amount">
-  <div class="vd-amount-total"><span>Invoice Total</span><b>Tk ${kit.money(invoice.InvoiceTotal)}</b></div>
-  <div class="vd-amount-words"><span>In Words</span><i>${e(kit.words(invoice.InvoiceTotal))}</i></div>
+  <div class="vd-amount-total"><span>Invoice Total</span><b>Tk ${kit.money(shown.total)}</b></div>
+  <div class="vd-amount-words"><span>In Words</span><i>${e(kit.words(shown.total))}</i></div>
 </div>
 <table class="pv-split vd-lines si-lines">
   <colgroup><col style="width:9mm"><col><col style="width:17mm"><col style="width:${lines.some(x => x.HasMixedMrp || x.MrpCount > 1) ? 36 : 22}mm"><col style="width:24mm">${showDisc ? '<col style="width:21mm">' : ''}${showSpecial ? '<col style="width:19mm">' : ''}<col style="width:27mm"></colgroup>
   <thead><tr><th class="vd-c">SL</th><th>${e(PRODUCT_HEADERS[invoice.PageType] ?? 'Item')}</th><th class="vd-r">Qty</th><th class="vd-r">MRP</th><th class="vd-r">Gross</th>${showDisc ? '<th class="vd-r">Camp./Member</th>' : ''}${showSpecial ? '<th class="vd-r">Special</th>' : ''}<th class="vd-r si-nowrap">Total (Tk)</th></tr></thead>
-  <tbody>${rows}</tbody>
+  <tbody>${rows}${registrationRow}</tbody>
   <tfoot>${totals}</tfoot>
 </table>
 ${paymentsBlock}
@@ -455,6 +555,160 @@ ${options.stamp ? `<div class="pv-printed">${e(invoice.BranchName ? invoice.Bran
 </div>
 </section>`;
 }
+
+//===============================================================
+// MONEY RECEIPT (A4, customer) : the money received on the
+// invoice, numbered with its Receipt Voucher (the Receipt
+// Voucher print itself stays as it is). With "Show Discount on
+// Print" OFF the amount reads at full MRP (discounts added back),
+// like the customer copy of the invoice.
+//===============================================================
+
+export function salesMoneyReceiptHtml
+(
+    data:
+        SalesInvoicePrintData,
+    kit:
+        PrintKit,
+    options:
+    {
+        logo:boolean;
+        legal:boolean;
+        stamp:boolean;
+        showDiscount?:boolean;
+        showRegistration?:boolean;
+    }
+):
+    string
+{
+    const e =
+        kit.escape;
+
+    const invoice =
+        data.invoice;
+
+    const status =
+        String(invoice.Status ?? '');
+
+    const shown =
+        salesInvoiceShown(invoice, options.showDiscount === false, options.showRegistration === false);
+
+    const payments =
+        invoice.Payments ?? [];
+
+    const received =
+        !!invoice.ReceiptVoucherNo && (Number(invoice.PaidAmount) || 0) > 0;
+
+    const receiptDate =
+        invoice.PostedDate || invoice.InvoiceDate;
+
+    const fact =
+        (label: string, value: string, sub: string = ''): string =>
+            `<div class="si-fact"><span>${e(label)}</span><b>${e(value || '-')}</b>${sub ? `<i>${e(sub)}</i>` : ''}</div>`;
+
+    const customerBlock =
+        `<div class="si-cus">
+  <div class="si-cus-head">Received From</div>
+  <div class="si-cus-row">
+    ${fact('Name', invoice.CustomerName, invoice.CustomerCode)}
+    ${fact('Phone', invoice.CustomerPhone)}
+    ${fact('Type', invoice.CustomerTag || invoice.CustomerType)}
+    ${fact('Address', invoice.CustomerAddress)}
+  </div>
+</div>`;
+
+    const items =
+        [
+            ...new Set((invoice.Lines ?? []).map(line => salesInvoicePart(line).name).filter(x => !!x)),
+            ...(shown.registration > 0 ? ['Registration'] : [])
+        ]
+            .join(', ');
+
+    // Discounts hidden : one row with the modes (the real rows
+    // carry the amounts actually paid)
+    const rows =
+        !received
+            ? ''
+            : shown.hide
+                ? `<tr><td class="si-pay-sl">1</td><td class="si-pay-mode">${e([...new Set(payments.map(x => x.Mode).filter(x => !!x))].join(' / ') || '-')}</td><td><b>Against Invoice ${e(invoice.InvoiceNo)}</b></td><td class="si-pay-det"></td><td class="vd-r si-pay-amt">${kit.money(shown.paid)}</td></tr>`
+                : payments
+                    .map((row, index) => `<tr><td class="si-pay-sl">${index + 1}</td><td class="si-pay-mode">${e(row.Mode)}</td><td><b>${e(row.LedgerName)}</b><i>${e(row.LedgerCode)}</i></td><td class="si-pay-det">${e(paymentDetails(row, kit, false))}</td><td class="vd-r si-pay-amt">${kit.money(row.Amount)}</td></tr>`)
+                    .join('');
+
+    const paymentsBlock =
+        received
+            ? `<div class="si-paybox">
+  <div class="si-paybox-head"><span>Payment</span><span class="si-paybox-ref">Invoice ${e(invoice.InvoiceNo)} · ${e(kit.date(invoice.InvoiceDate))}</span></div>
+  <table class="si-paytab">
+    <colgroup><col style="width:6mm"><col style="width:13mm"><col><col style="width:52mm"><col style="width:26mm"></colgroup>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="si-paybox-foot">
+    ${invoice.DueAmount > 0 ? '<span class="si-paybox-note">Credit sale : the due is on the customer\'s account.</span>' : ''}
+    <span>Received <b>${kit.money(shown.paid)}</b></span>
+    ${invoice.DueAmount > 0 ? `<span class="si-paybox-due">Due <b>${kit.money(invoice.DueAmount)}</b></span>` : ''}
+  </div>
+</div>`
+            : '<div class="vd-note vd-danger">No money has been received on this invoice yet : there is no Money Receipt.</div>';
+
+    const head =
+        kit.voucherHead(
+        {
+            copy:'Customer Copy',
+            title:'Money Receipt',
+            numberLabel:'Receipt No',
+            number:invoice.ReceiptVoucherNo || '-',
+            meta:
+            [
+                { label:'Receipt Date', value:kit.date(receiptDate) },
+                { label:'Branch', value:invoice.BranchName },
+                { label:'Invoice No', value:invoice.InvoiceNo },
+                { label:'Financial Year', value:salesInvoiceYear(invoice.InvoiceNo) },
+                { label:'Sales Person', value:invoice.SalesPersonName || '-' }
+            ],
+            status,
+            qr:
+                received
+                    ? [
+                        kit.company?.CompanyName || 'AppCore ERP',
+                        'Money Receipt',
+                        invoice.ReceiptVoucherNo,
+                        kit.date(receiptDate),
+                        invoice.CustomerName,
+                        `Tk ${kit.money(shown.paid)}`
+                    ]
+                    .filter(part => !!part)
+                    .join(' | ')
+                    : '',
+            logo:options.logo,
+            legal:options.legal
+        });
+
+    return `<section class="pv-flow" data-watermark="${status === 'Cancelled' ? 'CANCELLED' : ''}">
+<div class="pv-run-head">
+${head}
+</div>
+<div class="pv-body">
+${customerBlock}
+${received
+        ? `<div class="vd-amount">
+  <div class="vd-amount-total"><span>Amount Received</span><b>Tk ${kit.money(shown.paid)}</b></div>
+  <div class="vd-amount-words"><span>In Words</span><i>${e(kit.words(shown.paid))}</i></div>
+</div>
+<div class="si-mr-text">Received with thanks from <b>${e(invoice.CustomerName || invoice.CustomerCode)}</b> the sum of <b>Tk ${kit.money(shown.paid)}</b> against Sales Invoice <b>${e(invoice.InvoiceNo)}</b>${items ? ` for <b>${e(items)}</b>` : ''}.</div>`
+        : ''}
+${paymentsBlock}
+${status === 'Cancelled' && invoice.CancelReason ? `<div class="vd-note vd-danger">Invoice cancelled on ${e(kit.date(invoice.CancelledDate))} : ${e(invoice.CancelReason)}</div>` : ''}
+<div class="vd-after">
+${kit.signatures(['Customer', 'Received By', 'Authorised By'])}
+</div>
+</div>
+<div class="pv-end">
+${options.stamp ? `<div class="pv-printed">${e(invoice.BranchName ? invoice.BranchName + ' · ' : '')}Printed ${e(kit.now())}</div>` : ''}
+</div>
+</section>`;
+}
+
 
 // Check No / MFS transaction / card + last 4 / charge
 export function paymentDetails
@@ -584,6 +838,10 @@ export function SALES_INVOICE_DOCUMENT_CSS():
 .si-paybox-head + .si-paybox-foot { border-top: 0; }
 .si-paid-line { display: flex; flex-wrap: wrap; gap: 1.2mm 6mm; margin: 4mm 0 0; font-size: 8pt; color: #475569; }
 .si-paid-line b { color: #0f172a; }
+
+/* Money Receipt */
+.si-mr-text { margin: 0 0 3.2mm; font-size: 8.4pt; line-height: 1.5; color: #334155; }
+.si-mr-text b { color: #0f172a; }
 
 /* Fine print */
 .si-fine { margin-top: 2mm; font-size: 7.4pt; color: #64748b; }

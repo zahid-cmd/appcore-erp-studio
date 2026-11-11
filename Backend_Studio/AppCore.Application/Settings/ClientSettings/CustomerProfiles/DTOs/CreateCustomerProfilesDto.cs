@@ -231,6 +231,23 @@ public class CreateCustomerProfilesDto
     } = string.Empty;
 
 
+    // Corporate only : the company's contact person (CAPITAL
+    // LETTERS) and that person's NID (optional, 10 / 13 / 17
+    // digits, not unique)
+    public string ContactPersonName
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
+    public string ContactPersonNid
+    {
+        get;
+        set;
+    } = string.Empty;
+
+
 
     //===========================================================
     // Remarks & Status

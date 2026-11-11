@@ -39,4 +39,10 @@ public class SalesInvoicesMbLines
     public string DeliveryStatus { get; set; } = "Pending";
 
     public DateOnly? DeliveredDate { get; set; }
+
+    // Registration taken on the invoice for this chassis
+    public bool IsRegistered { get; set; }
+
+    // VAT payable of this chassis (VAT Payable - MB, 2026-11-11)
+    public decimal VatPayable { get; set; }
 }

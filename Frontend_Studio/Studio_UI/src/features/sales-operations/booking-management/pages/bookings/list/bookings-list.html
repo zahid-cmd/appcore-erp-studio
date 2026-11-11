@@ -1,0 +1,1387 @@
+<div class="app-list-page bk-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+
+        title="Bookings"
+
+        subtitle="Motor bike bookings : advance, conversion to sale, cancellation"
+
+        icon="fas fa-calendar-check">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [value]="searchText"
+
+                placeholder="Search booking no, customer, phone, model, invoice..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Add"
+
+                command1Icon="fas fa-plus"
+
+                command1Permission="add"
+
+                command1Title="New booking"
+
+                (command1Click)="openNew()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                [command3Visible]="false">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+
+    <!-- =====================================================
+         BODY : list | view panel
+    ====================================================== -->
+
+    <div
+
+        class="bk-body"
+
+        [class.bk-open]="!!viewRow">
+
+
+        <div class="bk-main">
+
+            <app-page-toolbar>
+
+                <app-control-tabs
+
+                    pageToolbarLeft
+
+                    [tabs]="tabs"
+
+                    [selectedTab]="tab"
+
+                    (selectedTabChange)="onTabChange($event)">
+
+                </app-control-tabs>
+
+
+                <div
+
+                    pageToolbarRight
+
+                    class="bk-toolbar-right">
+
+                    @if (tab === 'bookings')
+                    {
+                        <div class="bk-filter">
+
+                            <app-dropdown
+
+                                [items]="statusItems"
+
+                                [value]="statusFilter"
+
+                                (valueChange)="onStatusChange($event)">
+
+                            </app-dropdown>
+
+                        </div>
+                    }
+
+                    @if (branchItems.length > 2)
+                    {
+                        <div class="bk-filter">
+
+                            <app-dropdown
+
+                                [items]="branchItems"
+
+                                [value]="branchFilter"
+
+                                (valueChange)="onBranchChange($event)">
+
+                            </app-dropdown>
+
+                        </div>
+                    }
+
+                </div>
+
+            </app-page-toolbar>
+
+
+            <app-page-canvas
+
+                [config]="canvasConfig">
+
+                <div canvasBody>
+
+                    <app-list-table
+
+                        [columns]="columns"
+
+                        [rows]="pagedRows"
+
+                        [serialOffset]="(currentPage - 1) * pageSize"
+
+                        [loading]="loading"
+
+                        [error]="loadFailed"
+
+                        [actions]="tab === 'collections' ? noTableActions : tableActions"
+
+                        [rowActions]="rowActions"
+
+                        (rowAction)="onRowAction($event)"
+
+                        (view)="view($event)"
+
+                        (sortChange)="onSort($event)">
+
+                    </app-list-table>
+
+                </div>
+
+
+                <app-pagination
+
+                    canvasFooter
+
+                    [totalRecords]="totalRecords"
+
+                    [currentPage]="currentPage"
+
+                    [pageSize]="pageSize"
+
+                    (pageChange)="onPageChange($event)"
+
+                    (pageSizeChange)="onPageSizeChange($event)">
+
+                </app-pagination>
+
+            </app-page-canvas>
+
+
+            <div class="ics-summary">
+
+                @if (tab === 'bookings')
+                {
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Open</span>
+                        <b class="ics-summary-value">{{ countOf('Open') }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Expired</span>
+                        <b class="ics-summary-value ics-bad">{{ countOf('Expired') }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Advance held</span>
+                        <b class="ics-summary-value">{{ money(openAdvance) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Converted</span>
+                        <b class="ics-summary-value ics-ok">{{ countOf('Converted') }}</b>
+                    </span>
+                }
+
+                @if (tab === 'collections')
+                {
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Collections</span>
+                        <b class="ics-summary-value">{{ filteredRows.length }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Amount</span>
+                        <b class="ics-summary-value ics-ok">{{ money(sumOf('Amount')) }}</b>
+                    </span>
+                }
+
+                @if (tab === 'cancellations')
+                {
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Cancelled</span>
+                        <b class="ics-summary-value">{{ filteredRows.length }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">Forfeited</span>
+                        <b class="ics-summary-value ics-ok">{{ money(sumOf('ForfeitAmount')) }}</b>
+                    </span>
+
+                    <span class="ics-summary-item">
+                        <span class="ics-summary-label">To refund</span>
+                        <b class="ics-summary-value ics-bad">{{ money(sumOf('RefundAmount')) }}</b>
+                    </span>
+                }
+
+                <span class="ics-summary-note">
+
+                    @if (tab === 'cancellations')
+                    {
+                        Refund by Payment Voucher from the customer's ledger
+                    }
+                    @else
+                    {
+                        Minimum {{ switches.MinimumAmount ? money(switches.MinimumAmount) : 'none' }}
+                        · Valid {{ switches.ValidityDays ? switches.ValidityDays + ' days' : 'no expiry' }}
+                    }
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =================================================
+             VIEW PANEL
+        ================================================== -->
+
+        <aside
+
+            class="bk-panel"
+
+            [attr.aria-hidden]="!viewRow">
+
+            @if (viewRow)
+            {
+                <div class="bk-panel-card">
+
+                    <div class="bk-panel-head">
+
+                        <div class="bk-panel-title">
+
+                            <span class="bk-panel-icon">
+
+                                <i class="fas fa-calendar-check"></i>
+
+                            </span>
+
+                            <div class="bk-panel-text">
+
+                                <span class="bk-panel-name">{{ viewRow.BookingNo }}</span>
+
+                                <span class="bk-panel-sub">{{ viewRow.DateText }} · {{ viewRow.BranchName }}</span>
+
+                            </div>
+
+                        </div>
+
+                        <span
+
+                            class="bk-badge"
+
+                            [attr.data-status]="viewRow.StatusText">
+
+                            {{ viewRow.StatusText }}
+
+                        </span>
+
+                        <button
+
+                            type="button"
+
+                            class="bk-panel-x"
+
+                            title="Close"
+
+                            aria-label="Close"
+
+                            (click)="closeView()">
+
+                            <i class="fas fa-xmark"></i>
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="bk-panel-body appcore-scrollbar">
+
+                        <dl class="bk-facts">
+
+                            <dt>Customer</dt>
+                            <dd>{{ viewRow.CustomerName }} <small>{{ viewRow.CustomerCode }}{{ viewRow.CustomerPhone ? ' · ' + viewRow.CustomerPhone : '' }}</small></dd>
+
+                            <dt>Model</dt>
+                            <dd>{{ viewRow.ModelName }}</dd>
+
+                            <dt>Advance</dt>
+                            <dd><b>{{ money(viewRow.AdvanceAmount) }}</b> <small>({{ viewRow.CollectionCount }} collection{{ viewRow.CollectionCount === 1 ? '' : 's' }})</small></dd>
+
+                            <dt>Valid Until</dt>
+                            <dd [class.bk-bad]="viewRow.IsExpired">{{ viewRow.ValidText }}</dd>
+
+                            <dt>Expected</dt>
+                            <dd>{{ dateText(viewRow.ExpectedDate) }}</dd>
+
+                            <dt>Sales Person</dt>
+                            <dd>{{ viewRow.SalesPersonName || '-' }}</dd>
+
+                            @if (viewRow.Remarks)
+                            {
+                                <dt>Remarks</dt>
+                                <dd>{{ viewRow.Remarks }}</dd>
+                            }
+
+                            @if (viewRow.SalesInvoiceNo)
+                            {
+                                <dt>Sold by</dt>
+                                <dd>{{ viewRow.SalesInvoiceNo }} <small>{{ dateText(viewRow.ConvertedDate) }}</small></dd>
+                            }
+
+                            @if (viewRow.HeldByInvoiceNo)
+                            {
+                                <dt>On invoice</dt>
+                                <dd class="bk-warn">{{ viewRow.HeldByInvoiceNo }} <small>(not posted yet)</small></dd>
+                            }
+
+                            @if (viewRow.Status === 'Cancelled')
+                            {
+                                <dt>Cancelled</dt>
+                                <dd>{{ viewRow.CancelledText }} <small>{{ viewRow.CancelReason }}</small></dd>
+
+                                <dt>Forfeit</dt>
+                                <dd>{{ money(viewRow.ForfeitAmount) }} <small>{{ viewRow.ForfeitVoucherNo }}</small></dd>
+
+                                <dt>To refund</dt>
+                                <dd class="bk-bad">{{ money(viewRow.RefundAmount) }} <small>by Payment Voucher</small></dd>
+                            }
+
+                        </dl>
+
+
+                        <div class="bk-section-title">
+
+                            <i class="fas fa-receipt"></i>
+
+                            Collections
+
+                        </div>
+
+                        <table class="bk-mini">
+
+                            <thead>
+
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Receipt Voucher</th>
+                                    <th class="bk-r">Amount</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                @for (c of viewCollections; track c.BookingCollectionId)
+                                {
+                                    <tr>
+                                        <td>{{ c.DateText }}</td>
+                                        <td>{{ c.ReceiptVoucherNo }}</td>
+                                        <td class="bk-r">{{ c.AmountText }}</td>
+                                    </tr>
+                                }
+
+                                @if (viewCollections.length === 0)
+                                {
+                                    <tr>
+                                        <td colspan="3" class="bk-empty">No collection.</td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    @if (viewRow.Status === 'Open')
+                    {
+                        <div class="bk-panel-foot">
+
+                            @if (!viewRow.HeldByInvoiceNo)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    class="bkm-btn bkm-btn-primary bkm-btn-sm"
+
+                                    (click)="onRowAction({ key:'collect', row:viewRow })">
+
+                                    <i class="fas fa-cash-register"></i>
+
+                                    Collect
+
+                                </button>
+                            }
+
+                            <button
+
+                                type="button"
+
+                                class="bkm-btn bkm-btn-light bkm-btn-sm"
+
+                                (click)="onRowAction({ key:'edit', row:viewRow })">
+
+                                <i class="fas fa-pen"></i>
+
+                                Edit
+
+                            </button>
+
+                            @if (canCancel && !viewRow.HeldByInvoiceNo)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    class="bkm-btn bkm-btn-danger bkm-btn-sm"
+
+                                    (click)="onRowAction({ key:'cancel', row:viewRow })">
+
+                                    <i class="fas fa-ban"></i>
+
+                                    Cancel
+
+                                </button>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </aside>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         NEW BOOKING / COLLECT : PAYMENT DESK MODAL
+    ====================================================== -->
+
+    @if (deskOpen)
+    {
+        <div class="bkm-backdrop">
+
+            <div
+
+                class="bkm-modal"
+
+                role="dialog"
+
+                aria-modal="true"
+
+                aria-labelledby="bkm-title">
+
+
+                <!-- Header -->
+
+                <div class="bkm-head">
+
+                    <span class="bkm-icon">
+
+                        <i [class]="deskKind === 'new' ? 'fas fa-calendar-plus' : 'fas fa-cash-register'"></i>
+
+                    </span>
+
+                    <div class="bkm-title">
+
+                        @if (deskKind === 'new')
+                        {
+                            <strong id="bkm-title">New Booking</strong>
+
+                            <span>{{ branchName }} · {{ dateText(today) }}</span>
+                        }
+                        @else
+                        {
+                            <strong id="bkm-title">Collect {{ deskBooking?.BookingNo }}</strong>
+
+                            <span>{{ deskBooking?.CustomerName }} · {{ deskBooking?.ModelName }} · advance so far {{ money(deskBooking?.AdvanceAmount ?? 0) }}</span>
+                        }
+
+                        <span>
+
+                            To collect <b>{{ money(targetAmount) }}</b>
+
+                            · Received <b class="bkm-emerald">{{ money(deskTotal) }}</b>
+
+                            · Balance <b [class.bkm-rose]="deskRemaining > 0">{{ money(deskRemaining) }}</b>
+
+                        </span>
+
+                    </div>
+
+                    @if (deskRowCount > 0)
+                    {
+                        <div
+
+                            class="bkm-progress"
+
+                            [class.bkm-progress-done]="deskAllVerified">
+
+                            <span class="bkm-progress-text">
+
+                                <i [class]="deskAllVerified ? 'fa-regular fa-circle-check' : 'fas fa-list-check'"></i>
+
+                                {{ deskVerifiedCount }} / {{ deskRowCount }} verified
+
+                            </span>
+
+                            <span class="bkm-track">
+
+                                <span
+
+                                    class="bkm-bar"
+
+                                    [style.width.%]="deskProgress">
+
+                                </span>
+
+                            </span>
+
+                        </div>
+                    }
+
+                    <button
+
+                        type="button"
+
+                        class="bkm-x"
+
+                        title="Close"
+
+                        aria-label="Close"
+
+                        (click)="onDeskClose()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Body -->
+
+                <div class="bkm-body">
+
+                    <!-- Booking details -->
+
+                    <div
+
+                        class="bkm-details-grid"
+
+                        [class.bkm-details-grid-collect]="deskKind === 'collect'">
+
+                        @if (deskKind === 'new')
+                        {
+                            <div class="bkm-customer">
+
+                                @if (newCustomer)
+                                {
+                                    <span class="bkm-field-label">Customer</span>
+
+                                    <div class="bkm-chosen">
+
+                                        <i class="fas fa-user"></i>
+
+                                        <span>
+
+                                            <b>{{ newCustomer.CustomerName }}</b>
+
+                                            <small>{{ newCustomer.CustomerCode }}{{ newCustomer.Phone1 ? ' · ' + newCustomer.Phone1 : '' }}</small>
+
+                                        </span>
+
+                                        <button
+
+                                            type="button"
+
+                                            title="Change customer"
+
+                                            aria-label="Change customer"
+
+                                            (click)="clearCustomer()">
+
+                                            <i class="fas fa-xmark"></i>
+
+                                        </button>
+
+                                    </div>
+                                }
+                                @else
+                                {
+                                    <app-textbox
+
+                                        label="Customer"
+
+                                        placeholder="Type 3+ letters : name, code, phone"
+
+                                        textCase="none"
+
+                                        prefixIcon="fas fa-magnifying-glass"
+
+                                        [value]="customerQuery"
+
+                                        (valueChange)="onCustomerQuery($event)">
+
+                                    </app-textbox>
+
+                                    @if (customerSearching || customerResults.length > 0 || customerQuery.trim().length >= 3)
+                                    {
+                                        <div class="bkm-results appcore-scrollbar">
+
+                                            @if (customerSearching)
+                                            {
+                                                <div class="bkm-result-note"><i class="fas fa-spinner fa-spin"></i> Searching...</div>
+                                            }
+                                            @else
+                                            {
+                                                @for (c of customerResults; track c.CustomerId)
+                                                {
+                                                    <button
+
+                                                        type="button"
+
+                                                        class="bkm-result"
+
+                                                        [disabled]="c.IsWalkIn"
+
+                                                        [title]="c.IsWalkIn ? 'Walk-in customers cannot book' : 'Pick this customer'"
+
+                                                        (click)="pickCustomer(c)">
+
+                                                        <b>{{ c.CustomerName }}</b>
+
+                                                        <small>{{ c.CustomerCode }}{{ c.Phone1 ? ' · ' + c.Phone1 : '' }}{{ c.IsWalkIn ? ' · walk-in' : '' }}</small>
+
+                                                    </button>
+                                                }
+
+                                                @if (customerResults.length === 0)
+                                                {
+                                                    <div class="bkm-result-note">No customer found. Add the customer on Customers first.</div>
+                                                }
+                                            }
+
+                                        </div>
+                                    }
+                                }
+
+                            </div>
+
+                            <app-search-dropdown
+
+                                label="Model & Colour"
+
+                                placeholder="Select model"
+
+                                [items]="modelItems"
+
+                                [value]="newModelId"
+
+                                (valueChange)="onNewModel($event)">
+
+                            </app-search-dropdown>
+
+                            <app-datepicker
+
+                                label="Expected Delivery"
+
+                                [value]="newExpected"
+
+                                [minDate]="todayDate"
+
+                                (valueChange)="onNewExpected($event)">
+
+                            </app-datepicker>
+
+                            <app-textbox
+
+                                label="Sales Person"
+
+                                placeholder="Name"
+
+                                [value]="newSalesPerson"
+
+                                (valueChange)="onNewSalesPerson($event)">
+
+                            </app-textbox>
+                        }
+
+                        <app-textbox
+
+                            label="Amount to Collect"
+
+                            placeholder="0.00"
+
+                            inputMode="decimal"
+
+                            textCase="none"
+
+                            [value]="targetText"
+
+                            (valueChange)="onTargetChange($event)">
+
+                        </app-textbox>
+
+                        <app-textbox
+
+                            label="Remarks"
+
+                            placeholder="Optional"
+
+                            textCase="none"
+
+                            [value]="newRemarks"
+
+                            (valueChange)="onNewRemarks($event)">
+
+                        </app-textbox>
+
+                    </div>
+
+
+                    <!-- Payment entry -->
+
+                    <div class="bkm-entry">
+
+                        <app-dropdown
+
+                            label="Receipt Mode"
+
+                            placeholder="Select mode"
+
+                            [items]="deskModeItems"
+
+                            [value]="deskMode"
+
+                            (valueChange)="onDeskModeChange($event)">
+
+                        </app-dropdown>
+
+                        <app-search-dropdown
+
+                            label="Account"
+
+                            [placeholder]="deskLedgerPlaceholder"
+
+                            [items]="deskLedgerItems"
+
+                            [value]="deskLedgerCode || null"
+
+                            [disabled]="!deskMode || deskLedgerItems.length === 0"
+
+                            (valueChange)="onDeskLedgerChange($event)">
+
+                        </app-search-dropdown>
+
+                        <app-textbox
+
+                            label="Amount"
+
+                            placeholder="0.00"
+
+                            inputMode="decimal"
+
+                            textCase="none"
+
+                            [value]="deskAmountText"
+
+                            (valueChange)="onDeskAmountChange($event)"
+
+                            (enterPressed)="addDeskRow()">
+
+                        </app-textbox>
+
+                        <button
+
+                            type="button"
+
+                            class="bkm-add"
+
+                            [disabled]="deskRemaining <= 0 || progress.busy"
+
+                            (click)="addDeskRow()">
+
+                            <i class="fas fa-plus"></i>
+
+                            Add
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- Receipt rows -->
+
+                    <div class="bkm-scroll appcore-scrollbar">
+
+                        <table class="bkm-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th class="bkm-c bkm-col-sl">SL</th>
+
+                                    <th class="bkm-col-mode">Mode</th>
+
+                                    <th>Account</th>
+
+                                    <th class="bkm-r bkm-col-money">Amount</th>
+
+                                    <th class="bkm-r bkm-col-money">Charge</th>
+
+                                    <th class="bkm-col-state">State</th>
+
+                                    <th class="bkm-c bkm-col-action"></th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                @for (row of deskRows; track $index; let i = $index)
+                                {
+                                    <tr>
+
+                                        <td class="bkm-c bkm-sl">{{ i + 1 }}</td>
+
+                                        <td>{{ row.Mode }}</td>
+
+                                        <td>
+
+                                            <div class="bkm-part">{{ row.LedgerName }}</div>
+
+                                            <div class="bkm-sub">{{ row.LedgerCode }}</div>
+
+                                        </td>
+
+                                        <td class="bkm-r">{{ money(row.Amount) }}</td>
+
+                                        <td class="bkm-r">
+
+                                            @if (row.ChargeAmount > 0)
+                                            {
+                                                {{ money(row.ChargeAmount) }}
+
+                                                <div class="bkm-sub">{{ row.ChargeBorneBy === 'Customer' ? 'customer, on top' : 'company' }}</div>
+                                            }
+                                            @else
+                                            {
+                                                <span class="bkm-muted">-</span>
+                                            }
+
+                                        </td>
+
+                                        <td>
+
+                                            <span
+
+                                                [class.bkm-emerald]="deskRowReady(row)"
+
+                                                [class.bkm-amber]="!deskRowReady(row)">
+
+                                                <i [class]="deskRowReady(row) ? 'fa-regular fa-circle-check' : 'fas fa-pen'"></i>
+
+                                                {{ deskRowState(row) }}
+
+                                            </span>
+
+                                        </td>
+
+                                        <td class="bkm-c">
+
+                                            <button
+
+                                                type="button"
+
+                                                class="bkm-remove"
+
+                                                title="Remove payment"
+
+                                                aria-label="Remove payment"
+
+                                                [disabled]="progress.busy"
+
+                                                (click)="removeDeskRow(i)">
+
+                                                <i class="fa-regular fa-trash-can"></i>
+
+                                            </button>
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                                @if (deskRows.length === 0)
+                                {
+                                    <tr>
+
+                                        <td
+
+                                            class="bkm-empty"
+
+                                            colspan="7">
+
+                                            No payment yet.
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    @if (deskNeedsDetails)
+                    {
+                        <div class="bkm-details appcore-scrollbar">
+
+                            <app-payment-desk
+
+                                kind="receipt"
+
+                                [readonly]="progress.busy"
+
+                                [lines]="deskInput"
+
+                                (linesChange)="onDeskChange($event)"
+
+                                (validChange)="onDeskValidChange($event)">
+
+                            </app-payment-desk>
+
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- Footer -->
+
+                <div
+
+                    class="bkm-foot"
+
+                    [class.bkm-foot-confirm]="deskConfirmClose">
+
+                    @if (deskConfirmClose)
+                    {
+                        <span class="bkm-note bkm-amber">
+
+                            <i class="fas fa-triangle-exclamation"></i>
+
+                            Discard the payment entered?
+
+                        </span>
+
+                        <button
+
+                            type="button"
+
+                            class="bkm-btn bkm-btn-light"
+
+                            (click)="onDeskKeepEditing()">
+
+                            <i class="fas fa-pen"></i>
+
+                            Keep Editing
+
+                        </button>
+
+                        <button
+
+                            type="button"
+
+                            class="bkm-btn bkm-btn-danger"
+
+                            (click)="onDeskDiscard()">
+
+                            <i class="fa-regular fa-trash-can"></i>
+
+                            Discard
+
+                        </button>
+                    }
+                    @else
+                    {
+                        <span
+
+                            class="bkm-note"
+
+                            [class.bkm-rose]="!!deskError"
+
+                            [class.bkm-emerald]="!deskError && canSubmit">
+
+                            <i [class]="deskError ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                            {{ deskError || deskFooterNote }}
+
+                        </span>
+
+                        <button
+
+                            type="button"
+
+                            class="bkm-btn bkm-btn-light"
+
+                            [disabled]="progress.busy"
+
+                            (click)="onDeskClose()">
+
+                            <i class="fas fa-xmark"></i>
+
+                            Close
+
+                        </button>
+
+                        <button
+
+                            type="button"
+
+                            class="bkm-btn bkm-btn-primary"
+
+                            [disabled]="!canSubmit"
+
+                            (click)="submitDesk()">
+
+                            <i [class]="deskKind === 'new' ? 'fas fa-floppy-disk' : 'fas fa-cash-register'"></i>
+
+                            {{ deskKind === 'new' ? 'Save Booking' : 'Collect' }}
+
+                        </button>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+
+    <!-- =====================================================
+         EDIT MODAL
+    ====================================================== -->
+
+    @if (editRow)
+    {
+        <div class="bkm-backdrop">
+
+            <div
+
+                class="bkm-modal bkm-modal-sm"
+
+                role="dialog"
+
+                aria-modal="true">
+
+                <div class="bkm-head">
+
+                    <span class="bkm-icon"><i class="fas fa-pen"></i></span>
+
+                    <div class="bkm-title">
+
+                        <strong>Edit {{ editRow.BookingNo }}</strong>
+
+                        <span>{{ editRow.CustomerName }} · advance {{ money(editRow.AdvanceAmount) }}</span>
+
+                    </div>
+
+                    <button type="button" class="bkm-x" title="Close" aria-label="Close" (click)="closeEdit()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="bkm-body bkm-body-form">
+
+                    <div class="bkm-form-grid">
+
+                        <app-search-dropdown
+
+                            class="bkm-wide"
+
+                            label="Model & Colour"
+
+                            placeholder="Select model"
+
+                            [items]="modelItems"
+
+                            [value]="editModelId"
+
+                            (valueChange)="onEditModel($event)">
+
+                        </app-search-dropdown>
+
+                        <app-datepicker
+
+                            label="Expected Delivery"
+
+                            [value]="editExpected"
+
+                            (valueChange)="onEditExpected($event)">
+
+                        </app-datepicker>
+
+                        <app-textbox
+
+                            label="Sales Person"
+
+                            [value]="editSalesPerson"
+
+                            (valueChange)="onEditSalesPerson($event)">
+
+                        </app-textbox>
+
+                        <app-textbox
+
+                            class="bkm-wide"
+
+                            label="Remarks"
+
+                            textCase="none"
+
+                            [value]="editRemarks"
+
+                            (valueChange)="onEditRemarks($event)">
+
+                        </app-textbox>
+
+                    </div>
+
+                </div>
+
+                <div class="bkm-foot">
+
+                    <span class="bkm-note" [class.bkm-rose]="!!editError">
+
+                        <i [class]="editError ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                        {{ editError || 'The advance does not change here : use Collect.' }}
+
+                    </span>
+
+                    <button type="button" class="bkm-btn bkm-btn-light" [disabled]="progress.busy" (click)="closeEdit()">
+
+                        <i class="fas fa-xmark"></i>
+
+                        Close
+
+                    </button>
+
+                    <button type="button" class="bkm-btn bkm-btn-primary" [disabled]="progress.busy" (click)="saveEdit()">
+
+                        <i class="fas fa-floppy-disk"></i>
+
+                        Update
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+
+    <!-- =====================================================
+         CANCEL MODAL
+    ====================================================== -->
+
+    @if (cancelRow)
+    {
+        <div class="bkm-backdrop">
+
+            <div
+
+                class="bkm-modal bkm-modal-sm"
+
+                role="dialog"
+
+                aria-modal="true">
+
+                <div class="bkm-head bkm-head-danger">
+
+                    <span class="bkm-icon"><i class="fas fa-ban"></i></span>
+
+                    <div class="bkm-title">
+
+                        <strong>Cancel {{ cancelRow.BookingNo }}</strong>
+
+                        <span>{{ cancelRow.CustomerName }} · {{ cancelRow.ModelName }} · advance {{ money(cancelRow.AdvanceAmount) }}</span>
+
+                    </div>
+
+                    <button type="button" class="bkm-x" title="Close" aria-label="Close" (click)="closeCancel()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="bkm-body bkm-body-form">
+
+                    <div class="bkm-form-grid">
+
+                        <app-textbox
+
+                            class="bkm-wide"
+
+                            label="Reason"
+
+                            placeholder="Why is the booking cancelled? (5+ characters)"
+
+                            textCase="none"
+
+                            [required]="true"
+
+                            [value]="cancelReason"
+
+                            (valueChange)="onCancelReason($event)">
+
+                        </app-textbox>
+
+                        <app-textbox
+
+                            label="Forfeit (income)"
+
+                            placeholder="0.00"
+
+                            inputMode="decimal"
+
+                            textCase="none"
+
+                            [readonly]="!switches.RefundOnCancel"
+
+                            [value]="forfeitText"
+
+                            (valueChange)="onForfeit($event)">
+
+                        </app-textbox>
+
+                        <div class="bkm-refund">
+
+                            <span class="bkm-field-label">To refund</span>
+
+                            <b [class.bkm-rose]="refundAmount > 0">{{ money(switches.RefundOnCancel ? refundAmount : 0) }}</b>
+
+                        </div>
+
+                    </div>
+
+                    <p class="bkm-explain">
+
+                        <i class="fas fa-circle-info"></i>
+
+                        @if (switches.RefundOnCancel)
+                        {
+                            The forfeit is posted by Journal Voucher (customer's ledger → Booking Forfeit income).
+                            The rest stays on the customer's ledger : refund it by Payment Voucher.
+                        }
+                        @else
+                        {
+                            Refund on Cancel is OFF : the whole advance is forfeited (Journal Voucher to Booking Forfeit income).
+                        }
+
+                    </p>
+
+                </div>
+
+                <div class="bkm-foot">
+
+                    <span class="bkm-note" [class.bkm-rose]="!!cancelError">
+
+                        <i [class]="cancelError ? 'fas fa-circle-exclamation' : 'fas fa-triangle-exclamation'"></i>
+
+                        {{ cancelError || 'This cannot be undone.' }}
+
+                    </span>
+
+                    <button type="button" class="bkm-btn bkm-btn-light" [disabled]="progress.busy" (click)="closeCancel()">
+
+                        <i class="fas fa-xmark"></i>
+
+                        Close
+
+                    </button>
+
+                    <button type="button" class="bkm-btn bkm-btn-danger" [disabled]="progress.busy" (click)="confirmCancel()">
+
+                        <i class="fas fa-ban"></i>
+
+                        Cancel Booking
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

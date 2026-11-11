@@ -40,14 +40,16 @@ public class SalesInvoicesMbRepository
         IVatApplicabilityService vatApplicability,
         IVoucherPostingService postingService,
         IReceiptVoucherRepository receiptVouchers,
-        ICustomerProfilesRepository customers)
+        ICustomerProfilesRepository customers,
+        IJournalVoucherRepository journalVouchers)
         : base(
             context,
             numberService,
             vatApplicability,
             postingService,
             receiptVouchers,
-            customers)
+            customers,
+            journalVouchers)
     {
     }
 }

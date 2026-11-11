@@ -126,6 +126,9 @@ export interface SalesInvoiceLine
     // The line % typed
     SpecialDiscountPercent:
         number;
+    // The line Tk typed (per line % OR Tk)
+    SpecialDiscountTk:
+        number;
     // Line % or its share of the invoice special
     SpecialAmount:
         number;
@@ -184,6 +187,9 @@ export interface SalesInvoiceLine
         string;
     DeliveredDate?:
         string;
+    // MB : registration taken for this chassis
+    IsRegistered?:
+        boolean;
 }
 
 
@@ -379,9 +385,17 @@ export interface SalesInvoiceSwitches
     // 0032
     SellAtBatchMrp:
         boolean;
-    // 0033
-    RoundDownWholeTaka:
+    // Allow Fractional Discount (MB 0018 / SP 0033 / AC 0053) :
+    // Tk typed on the invoice, at most MaxFractionalDiscount
+    AllowFractionalDiscount:
         boolean;
+    // null = no limit
+    MaxFractionalDiscount:
+        number | null;
+    // The switch's Default Value (Tk) : filled in on a new
+    // invoice; null = none
+    DefaultFractionalDiscount?:
+        number | null;
     // MB 0073 Allow Corporate Sale, window 0074 / 0075
     // (yyyy-MM-dd; '' = open)
     AllowCorporateSale:
@@ -390,6 +404,38 @@ export interface SalesInvoiceSwitches
         string;
     CorporateSaleUntil:
         string;
+    // MB 0013 Registration Fees on Invoice (the Registration button)
+    AllowRegistration:
+        boolean;
+}
+
+
+//===============================================================
+// MB : a registration type usable on the invoice date
+// (Registration Configuration : current fee and cost)
+//===============================================================
+
+export interface SalesInvoiceRegistrationOption
+{
+    RegistrationTypeId:
+        number;
+    Code:
+        string;
+    Name:
+        string;
+    // Fuel / Electric ('' = any)
+    VehiclePower:
+        string;
+    IsDefault:
+        boolean;
+    // false : no current fee / cost today (listed, cannot be taken)
+    HasRates:
+        boolean;
+    // Collection per chassis
+    Minimum:
+        number;
+    Maximum:
+        number;
 }
 
 
@@ -521,6 +567,12 @@ export interface SalesInvoiceDefaults
         number | null;
     MaxDiscountPercent:
         number | null;
+    // MB : registration types usable on the date, and the "Reverse
+    // Registration" permission
+    RegistrationOptions?:
+        SalesInvoiceRegistrationOption[];
+    CanReverseRegistration?:
+        boolean;
 }
 
 
@@ -576,6 +628,23 @@ export interface SalesInvoiceQuote
         string[];
     CanSave:
         boolean;
+    // MB : Fuel / Electric of the bikes on the invoice
+    BikePowers?:
+        string[];
+    // MB : registration priced (in InvoiceTotal)
+    RegistrationTypeName?:
+        string;
+    RegistrationAmount?:
+        number;
+    RegistrationCount?:
+        number;
+    RegistrationTotal?:
+        number;
+    // MB : booking taken (its advance is paid already)
+    BookingNo?:
+        string;
+    BookingAdvance?:
+        number;
 }
 
 
@@ -779,6 +848,35 @@ export interface SalesInvoice
     // Payment Desk rows saved (= the Receipt Voucher debit rows)
     Payments:
         VoucherDebitLine[];
+    // MB : registration on the invoice (status '' = none, Active,
+    // Reversed)
+    RegistrationTypeId?:
+        number | null;
+    RegistrationTypeName?:
+        string;
+    RegistrationAmount?:
+        number;
+    RegistrationCount?:
+        number;
+    RegistrationTotal?:
+        number;
+    RegistrationCommission?:
+        number;
+    RegistrationStatus?:
+        string;
+    RegistrationReversalNo?:
+        string;
+    RegistrationReversedDate?:
+        string;
+    RegistrationReverseReason?:
+        string;
+    // MB : booking converted by the invoice (advance paid already)
+    BookingId?:
+        number | null;
+    BookingNo?:
+        string;
+    BookingAdvance?:
+        number;
 }
 
 
@@ -799,6 +897,9 @@ export interface CreateSalesInvoiceLine
         number | null;
     // null = none
     SpecialDiscountPercent:
+        number | null;
+    // Tk on the line (per line % OR Tk); null = none
+    SpecialDiscountTk?:
         number | null;
     // MB : the bike (chassis) sold; quantity 1
     MotorBikeUnitId?:
@@ -884,6 +985,9 @@ export interface CreateSalesInvoice
     // % or Tk
     InvoiceSpecialValue:
         number;
+    // Fractional discount typed on the invoice (Tk)
+    FractionalDiscount:
+        number;
     Payments:
         SalesInvoicePaymentRow[];
     // Single line, at most 500
@@ -897,6 +1001,17 @@ export interface CreateSalesInvoice
         string;
     EmiAccountCode?:
         string;
+    // MB : registration (null = none); amount per chassis; the
+    // chassis registered (MotorBikeUnitId)
+    RegistrationTypeId?:
+        number | null;
+    RegistrationAmount?:
+        number;
+    RegistrationUnitIds?:
+        number[];
+    // MB : the customer's open booking taken (null = none)
+    BookingId?:
+        number | null;
 }
 
 export interface UpdateSalesInvoice

@@ -334,6 +334,7 @@ export abstract class SalesInvoiceService
             CampaignMembershipPercent:this.num(item, 'CampaignMembershipPercent'),
             CampaignMembershipAmount:this.num(item, 'CampaignMembershipAmount'),
             SpecialDiscountPercent:this.num(item, 'SpecialDiscountPercent'),
+            SpecialDiscountTk:this.num(item, 'SpecialDiscountTk'),
             SpecialAmount:this.num(item, 'SpecialAmount'),
             NetAmount:this.num(item, 'NetAmount'),
             FractionalShare:this.num(item, 'FractionalShare'),
@@ -359,7 +360,8 @@ export abstract class SalesInvoiceService
             ManufactureYear:this.num(item, 'ManufactureYear') || null,
             CkdStatus:this.text(item, 'CkdStatus'),
             DeliveryStatus:this.text(item, 'DeliveryStatus'),
-            DeliveredDate:this.text(item, 'DeliveredDate')
+            DeliveredDate:this.text(item, 'DeliveredDate'),
+            IsRegistered:this.bool(item, 'IsRegistered', false)
         };
     }
 
@@ -508,7 +510,20 @@ export abstract class SalesInvoiceService
             CancelledByName:this.text(item, 'CancelledByName'),
             CancelledDate:this.text(item, 'CancelledDate'),
             Lines:this.list(item, 'Lines').map(x => this.normalizeLine(x)),
-            Payments:this.list(item, 'Payments').map(x => this.normalizePayment(x))
+            Payments:this.list(item, 'Payments').map(x => this.normalizePayment(x)),
+            RegistrationTypeId:this.optionalId(item, 'RegistrationTypeId'),
+            RegistrationTypeName:this.text(item, 'RegistrationTypeName'),
+            RegistrationAmount:this.num(item, 'RegistrationAmount'),
+            RegistrationCount:this.num(item, 'RegistrationCount'),
+            RegistrationTotal:this.num(item, 'RegistrationTotal'),
+            RegistrationCommission:this.num(item, 'RegistrationCommission'),
+            RegistrationStatus:this.text(item, 'RegistrationStatus'),
+            RegistrationReversalNo:this.text(item, 'RegistrationReversalNo'),
+            RegistrationReversedDate:this.text(item, 'RegistrationReversedDate'),
+            RegistrationReverseReason:this.text(item, 'RegistrationReverseReason'),
+            BookingId:this.optionalId(item, 'BookingId'),
+            BookingNo:this.text(item, 'BookingNo'),
+            BookingAdvance:this.num(item, 'BookingAdvance')
         };
     }
 
@@ -567,10 +582,13 @@ export abstract class SalesInvoiceService
             PrintAfterPosting:this.bool(item, 'PrintAfterPosting', true),
             AllowWalkInCustomers:this.bool(item, 'AllowWalkInCustomers', true),
             SellAtBatchMrp:this.bool(item, 'SellAtBatchMrp', true),
-            RoundDownWholeTaka:this.bool(item, 'RoundDownWholeTaka', true),
+            AllowFractionalDiscount:this.bool(item, 'AllowFractionalDiscount', true),
+            MaxFractionalDiscount:this.optionalNum(item, 'MaxFractionalDiscount'),
+            DefaultFractionalDiscount:this.optionalNum(item, 'DefaultFractionalDiscount'),
             AllowCorporateSale:this.bool(item, 'AllowCorporateSale', false),
             CorporateSaleFrom:this.text(item, 'CorporateSaleFrom').substring(0, 10),
-            CorporateSaleUntil:this.text(item, 'CorporateSaleUntil').substring(0, 10)
+            CorporateSaleUntil:this.text(item, 'CorporateSaleUntil').substring(0, 10),
+            AllowRegistration:this.bool(item, 'AllowRegistration', false)
         };
     }
 
@@ -651,7 +669,23 @@ export abstract class SalesInvoiceService
             VatApplicableSince:this.date(item, 'VatApplicableSince'),
             // Top level first; the switch block as a fallback
             MaxPriceEditPercent:this.optionalNum(item, 'MaxPriceEditPercent') ?? switches.MaxPriceEditPercent,
-            MaxDiscountPercent:this.optionalNum(item, 'MaxDiscountPercent') ?? switches.MaxDiscountPercent
+            MaxDiscountPercent:this.optionalNum(item, 'MaxDiscountPercent') ?? switches.MaxDiscountPercent,
+            RegistrationOptions:
+                this.list(item, 'RegistrationOptions').map
+                (
+                    row =>
+                    ({
+                        RegistrationTypeId:this.num(row, 'RegistrationTypeId'),
+                        Code:this.text(row, 'Code'),
+                        Name:this.text(row, 'Name'),
+                        VehiclePower:this.text(row, 'VehiclePower'),
+                        IsDefault:this.bool(row, 'IsDefault'),
+                        HasRates:this.bool(row, 'HasRates', true),
+                        Minimum:this.num(row, 'Minimum'),
+                        Maximum:this.num(row, 'Maximum')
+                    })
+                ),
+            CanReverseRegistration:this.bool(item, 'CanReverseRegistration')
         };
     }
 
@@ -750,7 +784,14 @@ export abstract class SalesInvoiceService
             CreditLimit:this.num(item, 'CreditLimit'),
             Warnings:this.strings(item, 'Warnings'),
             Errors:errors,
-            CanSave:this.bool(item, 'CanSave', errors.length === 0)
+            CanSave:this.bool(item, 'CanSave', errors.length === 0),
+            BikePowers:this.list(item, 'BikePowers').map(x => String(x ?? '')),
+            RegistrationTypeName:this.text(item, 'RegistrationTypeName'),
+            RegistrationAmount:this.num(item, 'RegistrationAmount'),
+            RegistrationCount:this.num(item, 'RegistrationCount'),
+            RegistrationTotal:this.num(item, 'RegistrationTotal'),
+            BookingNo:this.text(item, 'BookingNo'),
+            BookingAdvance:this.num(item, 'BookingAdvance')
         };
     }
 
@@ -1314,6 +1355,20 @@ export abstract class SalesInvoiceService
         Observable<void>
     {
         return this.http.put<void>(`${this.apiUrl}/${publicId}/cancel`, { Reason:reason });
+    }
+
+
+    // MB : reverse the registration of a posted invoice (admin)
+    reverseRegistration
+    (
+        publicId:
+            string,
+        reason:
+            string
+    ):
+        Observable<void>
+    {
+        return this.http.put<void>(`${this.apiUrl}/${publicId}/reverse-registration`, { Reason:reason });
     }
 
 

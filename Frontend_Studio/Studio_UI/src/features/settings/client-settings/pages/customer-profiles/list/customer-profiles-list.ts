@@ -244,8 +244,12 @@ implements OnInit, OnDestroy
         ControlTab[] =
     [
         {
-            id:'inbound',
-            label:'Inbound Customers'
+            id:'individual',
+            label:'Individual Customers - Inbound'
+        },
+        {
+            id:'corporate',
+            label:'Corporate Customers - Inbound'
         },
         {
             id:'outside',
@@ -253,10 +257,11 @@ implements OnInit, OnDestroy
         }
     ];
 
-    // inbound : bought a bike from us; outside : services only
+    // individual / corporate : Inbound (bought a bike from us),
+    // by Customer Category; outside : services only
     selectedTab:
         string =
-        'inbound';
+        'individual';
 
     //===========================================================
     // Data
@@ -809,6 +814,11 @@ implements OnInit, OnDestroy
                     ? 'Outside'
                     : 'Inbound',
 
+            corporate:
+                this.selectedTab === 'outside'
+                    ? null
+                    : this.selectedTab === 'corporate',
+
             locationId:
                 this.selectedLocationId,
 
@@ -937,7 +947,8 @@ implements OnInit, OnDestroy
         this.summaryItems =
         [
             { label:'Total',    value:value('Total'),    tone:'' },
-            { label:'Inbound',  value:value('Inbound'),  tone:'' },
+            { label:'Individual', value:value('Individual'), tone:'' },
+            { label:'Corporate', value:value('Corporate'), tone:'' },
             { label:'Outside',  value:value('Outside'),  tone:'' },
             { label:'Active',   value:value('Active'),   tone:'ok' },
             { label:'Inactive', value:value('Inactive'), tone:'bad' }
@@ -1148,7 +1159,7 @@ implements OnInit, OnDestroy
             '';
 
         this.selectedTab =
-            'inbound';
+            'individual';
 
         this.selectedStatus =
             null;
@@ -1219,7 +1230,16 @@ implements OnInit, OnDestroy
                     type:
                         this.selectedTab === 'outside'
                             ? 'Outside'
-                            : 'Inbound'
+                            : 'Inbound',
+
+                    // Inbound tabs : the Customer Category follows
+                    // the tab (locked on the form)
+                    category:
+                        this.selectedTab === 'outside'
+                            ? null
+                            : this.selectedTab === 'corporate'
+                                ? 'Corporate'
+                                : 'Individual'
                 }
             }
         );

@@ -27,6 +27,7 @@ import
     SalesInvoicePrintData,
     salesInvoicePart,
     salesInvoiceQty,
+    salesInvoiceShown,
     salesInvoiceTitle
 }
 from './sales-invoice.template';
@@ -69,6 +70,7 @@ function paperHeight
         + (invoice.MembershipDiscount > 0 ? 1 : 0)
         + (invoice.SpecialDiscount > 0 ? 1 : 0)
         + (invoice.FractionalDiscount > 0 ? 1 : 0)
+        + ((invoice.RegistrationTotal ?? 0) > 0 ? 1 : 0)
         + 2
         + (invoice.Payments ?? []).length;
 
@@ -99,6 +101,11 @@ export function salesInvoiceThermalHtml
         // Switch "Print Payment Details on Customer Copy" : the
         // receipt is the customer's, so OFF = one Paid line
         customerPayments:boolean;
+        // Switch "Show Discount on Print" (default ON) : OFF = full
+        // MRP, no discount rows
+        showDiscount?:boolean;
+        // MB : switch "Show Registration on Print" (default ON)
+        showRegistration?:boolean;
     }
 ):
     string
@@ -114,6 +121,10 @@ export function salesInvoiceThermalHtml
 
     const status =
         String(invoice.Status ?? '');
+
+    // Discounts hidden (switch "Show Discount on Print" OFF)
+    const shown =
+        salesInvoiceShown(invoice, options.showDiscount === false, options.showRegistration === false);
 
     const lines =
         invoice.Lines ?? [];
@@ -157,10 +168,10 @@ export function salesInvoiceThermalHtml
                     return `<div class="sit-item">
   <div class="sit-item-name">${index + 1}. ${e(part.name)}</div>
   <div class="sit-item-code">${e(part.part ? `${part.part} || ${line.ProductCode}` : line.ProductCode)}</div>
-  <div class="sit-row"><span>${e(salesInvoiceQty(line.Quantity))} ${e(line.Unit)} x ${mixed ? '' : kit.money(price)}</span><b>${kit.money(line.GrossAmount)}</b></div>
+  <div class="sit-row"><span>${e(salesInvoiceQty(line.Quantity))} ${e(line.Unit)} x ${mixed ? '' : kit.money(price)}</span><b>${kit.money(shown.hide ? shown.line(line) : line.GrossAmount)}</b></div>
   ${mixed ? `<div class="sit-item-code">${e(line.MrpText)}</div>` : ''}
-  ${line.CampaignMembershipAmount > 0 ? `<div class="sit-row sit-minus"><span>${e(line.DiscountLabel || line.DiscountSource)}</span><b>-${kit.money(line.CampaignMembershipAmount)}</b></div>` : ''}
-  ${line.SpecialAmount > 0 ? `<div class="sit-row sit-minus"><span>Special${line.SpecialDiscountPercent > 0 ? ` ${line.SpecialDiscountPercent}%` : ''}</span><b>-${kit.money(line.SpecialAmount)}</b></div>` : ''}
+  ${!shown.hide && line.CampaignMembershipAmount > 0 ? `<div class="sit-row sit-minus"><span>${e(line.DiscountLabel || line.DiscountSource)}</span><b>-${kit.money(line.CampaignMembershipAmount)}</b></div>` : ''}
+  ${!shown.hide && line.SpecialAmount > 0 ? `<div class="sit-row sit-minus"><span>Special${line.SpecialDiscountPercent > 0 ? ` ${line.SpecialDiscountPercent}%` : ''}</span><b>-${kit.money(line.SpecialAmount)}</b></div>` : ''}
 </div>`;
                 }
             )
@@ -168,18 +179,19 @@ export function salesInvoiceThermalHtml
 
     const totals =
         [
-            row('Gross (MRP)', kit.money(invoice.GrossAmount)),
-            invoice.CampaignDiscount > 0 ? row('Campaign Discount', `-${kit.money(invoice.CampaignDiscount)}`) : '',
-            invoice.MembershipDiscount > 0 ? row(`Membership${invoice.MembershipCardName ? ` (${invoice.MembershipCardName})` : ''}`, `-${kit.money(invoice.MembershipDiscount)}`) : '',
-            invoice.SpecialDiscount > 0 ? row('Special Discount', `-${kit.money(invoice.SpecialDiscount)}`) : '',
-            invoice.FractionalDiscount > 0 ? row('Fractional', `-${kit.money(invoice.FractionalDiscount)}`) : '',
-            row('TOTAL', `Tk ${kit.money(invoice.InvoiceTotal)}`, 'sit-total')
+            shown.hide ? '' : row('Gross (MRP)', kit.money(invoice.GrossAmount)),
+            shown.hide ? '' : invoice.CampaignDiscount > 0 ? row('Campaign Discount', `-${kit.money(invoice.CampaignDiscount)}`) : '',
+            shown.hide ? '' : invoice.MembershipDiscount > 0 ? row(`Membership${invoice.MembershipCardName ? ` (${invoice.MembershipCardName})` : ''}`, `-${kit.money(invoice.MembershipDiscount)}`) : '',
+            shown.hide ? '' : invoice.SpecialDiscount > 0 ? row('Special Discount', `-${kit.money(invoice.SpecialDiscount)}`) : '',
+            shown.hide ? '' : invoice.FractionalDiscount > 0 ? row('Fractional', `-${kit.money(invoice.FractionalDiscount)}`) : '',
+            shown.registration > 0 ? row(`Registration x ${salesInvoiceQty(invoice.RegistrationCount ?? 0)}`, kit.money(shown.registration)) : '',
+            row('TOTAL', `Tk ${kit.money(shown.total)}`, 'sit-total')
         ]
         .join('');
 
     const paid =
         [
-            ...(options.customerPayments ? payments : []).map
+            ...(options.customerPayments && !shown.hide ? payments : []).map
             (
                 pay =>
                     row(
@@ -187,7 +199,7 @@ export function salesInvoiceThermalHtml
                         kit.money(pay.Amount)
                     )
             ),
-            (!options.customerPayments || payments.length === 0) && invoice.PaidAmount > 0 ? row('Paid', kit.money(invoice.PaidAmount)) : '',
+            (!options.customerPayments || shown.hide || payments.length === 0) && invoice.PaidAmount > 0 ? row('Paid', kit.money(shown.paid)) : '',
             invoice.DueAmount > 0
                 ? row('Due (on account)', kit.money(invoice.DueAmount), 'sit-due')
                 : row('Change', kit.money(0))
@@ -218,7 +230,7 @@ ${status === 'Cancelled' ? '<div class="sit-cancelled">CANCELLED</div>' : ''}
 ${lineRows}
 <div class="sit-rule"></div>
 ${totals}
-<div class="sit-words">${e(kit.words(invoice.InvoiceTotal))}</div>
+<div class="sit-words">${e(kit.words(shown.total))}</div>
 <div class="sit-rule"></div>
 ${paid}
 ${invoice.ReceiptVoucherNo ? `<div class="sit-small sit-center">Receipt ${e(invoice.ReceiptVoucherNo)}</div>` : ''}

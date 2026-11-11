@@ -241,6 +241,32 @@ Routes =
 
                 // AUTO-END : SUB-003-004-001
 
+            // AUTO-BEGIN : SUB-003-004-009
+
+                //===========================================================
+                // PDI Templates
+                //===========================================================
+
+                {
+                    path:'pdi-templates',
+
+                    data:
+                    {
+                        breadcrumb:'PDI Templates'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './pdi-templates.routes'
+                        )
+                        .then(
+                            m =>
+                                m.PdiTemplatesRoutes
+                        )
+                },
+
+                // AUTO-END : SUB-003-004-009
+
         ]
 
     }

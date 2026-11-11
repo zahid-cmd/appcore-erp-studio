@@ -47,6 +47,11 @@ public class CreateSalesInvoiceDto
     // Percent : the %; Amount : Tk
     public decimal InvoiceSpecialValue { get; set; }
 
+    // Fractional discount typed on the invoice (Tk; Allow
+    // Fractional Discount ON, at most its Value). Not together
+    // with a special discount / price edit (owner 2026-11-11)
+    public decimal FractionalDiscount { get; set; }
+
     // Payment Desk rows (the Receipt Voucher debit rows)
     public List<ReceiptVoucherDebitDto> Payments { get; set; } = new();
 
@@ -63,6 +68,20 @@ public class CreateSalesInvoiceDto
     public string PaymentTerm { get; set; } = string.Empty;
 
     public string EmiAccountCode { get; set; } = string.Empty;
+
+    // MB : registration on the invoice (null = none). Amount per
+    // chassis (between the type's minimum and maximum); the
+    // chassis registered (MotorBikeUnitId; Regular : its one
+    // chassis, sent or not)
+    public long? RegistrationTypeId { get; set; }
+
+    public decimal RegistrationAmount { get; set; }
+
+    public List<long> RegistrationUnitIds { get; set; } = new();
+
+    // MB : the booking taken on the invoice (Bookings; its advance
+    // counts as paid)
+    public long? BookingId { get; set; }
 }
 
 
@@ -83,6 +102,10 @@ public class CreateSalesInvoiceLineDto
     // Line special discount % (switch Allow Discount + activity
     // "Give Special Discount"); null / 0 = none
     public decimal? SpecialDiscountPercent { get; set; }
+
+    // Line special discount in Tk (owner 2026-11-11 : per line %
+    // OR Tk, not both); null / 0 = none
+    public decimal? SpecialDiscountTk { get; set; }
 
     // Sales Invoices - MB : the bike (chassis) sold; quantity 1
     public long? MotorBikeUnitId { get; set; }
@@ -274,6 +297,9 @@ public class SalesInvoiceLineDto
     // Line % typed (0 when the invoice special discount is used)
     public decimal SpecialDiscountPercent { get; set; }
 
+    // Line Tk typed
+    public decimal SpecialDiscountTk { get; set; }
+
     public decimal SpecialAmount { get; set; }
 
     // Gross - campaign / membership - special
@@ -338,6 +364,9 @@ public class SalesInvoiceLineDto
     public string DeliveryStatus { get; set; } = string.Empty;
 
     public string DeliveredDate { get; set; } = string.Empty;
+
+    // MB : registration taken for this chassis
+    public bool IsRegistered { get; set; }
 }
 
 
@@ -514,7 +543,16 @@ public class SalesInvoiceSwitchesDto
 
     public bool SellAtBatchMrp { get; set; }
 
-    public bool RoundDownWholeTaka { get; set; }
+    // Allow Fractional Discount (MB 0018 / SP 0033 / AC 0053) :
+    // the Tk typed on the invoice, at most the Value
+    public bool AllowFractionalDiscount { get; set; }
+
+    // null = no limit
+    public decimal? MaxFractionalDiscount { get; set; }
+
+    // The switch's Default Value (Tk), filled in on a new invoice;
+    // null = none (2026-11-11)
+    public decimal? DefaultFractionalDiscount { get; set; }
 
     // MB : 0073 Allow Corporate Sale, with its window (0074 From /
     // 0075 Until, yyyy-MM-dd; '' = open)
@@ -523,6 +561,37 @@ public class SalesInvoiceSwitchesDto
     public string CorporateSaleFrom { get; set; } = string.Empty;
 
     public string CorporateSaleUntil { get; set; } = string.Empty;
+
+    // MB : 0013 Registration Fees on Invoice (the Registration
+    // button)
+    public bool AllowRegistration { get; set; }
+}
+
+
+//===============================================================
+// MB : a registration type usable on the invoice date
+//===============================================================
+
+public class SalesInvoiceRegistrationOptionDto
+{
+    public long RegistrationTypeId { get; set; }
+
+    public string Code { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
+
+    // Fuel / Electric ('' = any)
+    public string VehiclePower { get; set; } = string.Empty;
+
+    public bool IsDefault { get; set; }
+
+    // false : no current fee / cost (listed, cannot be taken)
+    public bool HasRates { get; set; }
+
+    // Collection per chassis
+    public decimal Minimum { get; set; }
+
+    public decimal Maximum { get; set; }
 }
 
 
@@ -690,6 +759,12 @@ public class SalesInvoiceDefaultsDto
     public decimal? MaxPriceEditPercent { get; set; }
 
     public decimal? MaxDiscountPercent { get; set; }
+
+    // MB : registration types usable today (Registration
+    // Configuration), and the "Reverse Registration" permission
+    public List<SalesInvoiceRegistrationOptionDto> RegistrationOptions { get; set; } = new();
+
+    public bool CanReverseRegistration { get; set; }
 }
 
 
@@ -743,6 +818,24 @@ public class SalesInvoiceQuoteDto
     public List<string> Errors { get; set; } = new();
 
     public bool CanSave { get; set; }
+
+    // MB : Fuel / Electric of the bikes on the invoice (the
+    // registration types offered follow them)
+    public List<string> BikePowers { get; set; } = new();
+
+    // MB : registration priced (in the invoice total)
+    public string RegistrationTypeName { get; set; } = string.Empty;
+
+    public decimal RegistrationAmount { get; set; }
+
+    public int RegistrationCount { get; set; }
+
+    public decimal RegistrationTotal { get; set; }
+
+    // MB : the booking taken (its advance counts as paid)
+    public string BookingNo { get; set; } = string.Empty;
+
+    public decimal BookingAdvance { get; set; }
 }
 
 
@@ -895,6 +988,36 @@ public class SalesInvoiceDto
     // The Payment Desk rows saved (CheckStatus / ClearedVoucherNo
     // from the Receipt Voucher once posted)
     public List<ReceiptVoucherDebitDto> Payments { get; set; } = new();
+
+    // MB : registration on the invoice ('' status = none)
+    public long? RegistrationTypeId { get; set; }
+
+    public string RegistrationTypeName { get; set; } = string.Empty;
+
+    public decimal RegistrationAmount { get; set; }
+
+    public int RegistrationCount { get; set; }
+
+    public decimal RegistrationTotal { get; set; }
+
+    public decimal RegistrationCommission { get; set; }
+
+    // '' / Active / Reversed
+    public string RegistrationStatus { get; set; } = string.Empty;
+
+    public string RegistrationReversalNo { get; set; } = string.Empty;
+
+    public DateTime? RegistrationReversedDate { get; set; }
+
+    public string RegistrationReverseReason { get; set; } = string.Empty;
+
+    // MB : the booking taken on the invoice (its advance counts as
+    // paid)
+    public long? BookingId { get; set; }
+
+    public string BookingNo { get; set; } = string.Empty;
+
+    public decimal BookingAdvance { get; set; }
 }
 
 

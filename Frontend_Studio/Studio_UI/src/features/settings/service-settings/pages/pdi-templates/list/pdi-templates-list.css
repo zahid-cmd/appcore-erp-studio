@@ -1,0 +1,19 @@
+@import '../../../../../../shared/styles/app-list-page.css';
+
+/* PDI Templates list */
+
+.pdt-count
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pdt-count i
+{
+    color: #1e3a8a;
+}

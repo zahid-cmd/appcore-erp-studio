@@ -282,9 +282,22 @@ export class ControlTabsComponent implements AfterViewInit, OnChanges, OnDestroy
         }
 
         const fit =
-            Math.floor((width - moreWidth - gap + gap) / (tabWidth + gap));
+            Math.max(1, Math.floor((width - moreWidth) / (tabWidth + gap)));
 
-        this.visibleCount.set(Math.max(1, Math.min(count - 1, fit)));
+        // More only helps when it holds 2 tabs or more : for a
+        // single hidden tab the More button takes the same room as
+        // the tab itself, so all of them stay in the row (2 tabs
+        // never collapse). Small rounding (4px) is not an overflow.
+        if (count - fit < 2 || count * tabWidth + (count - 1) * gap <= width + 4)
+        {
+            this.visibleCount.set(count);
+
+            this.menuOpen.set(false);
+
+            return;
+        }
+
+        this.visibleCount.set(fit);
     }
 
 

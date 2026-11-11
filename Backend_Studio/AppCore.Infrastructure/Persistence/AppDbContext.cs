@@ -1548,6 +1548,17 @@ public class AppDbContext
 
     // AUTO-END : MotorBikeSpecifications
 
+    // AUTO-BEGIN : PdiTemplates
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.PdiTemplates>
+    PdiTemplatess
+    {
+    get;
+    set;
+    } = null!;
+
+    // AUTO-END : PdiTemplates
+
     // AUTO-END : AUTO REGISTER DBSETS
 
 
@@ -2013,6 +2024,33 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Bookings (motor bikes) and their collections (MANUAL :
+    // BookingsMB_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.BookingManagement.Bookings>
+    BookingRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.BookingManagement.BookingCollections>
+    BookingCollectionRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Registration Profiles : one per chassis the dealer registers
+    // (MANUAL : RegistrationOnSale_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.RegistrationManagement.RegistrationProcessing.RegistrationProfiles>
+    RegistrationProfileRows
+    {
+    get;
+    set;
+    } = null!;
+
     // Warranty Configuration : warranty parts, policies,
     // coverages (MANUAL : hand-written page)
 
@@ -2032,6 +2070,57 @@ public class AppDbContext
 
     public DbSet<AppCore.Domain.Entities.WarrantyManagement.WarrantyControl.WarrantyCoverages>
     WarrantyCoverageRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Sales Warranty Records : made when a bike is delivered
+    // (MANUAL : BikeDeliveries_Pdi_Engine.sql)
+
+    public DbSet<AppCore.Domain.Entities.WarrantyManagement.WarrantyControl.SalesWarrantyRecords>
+    SalesWarrantyRecordRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.WarrantyManagement.WarrantyControl.SalesWarrantyRecordParts>
+    SalesWarrantyRecordPartRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // PDI Templates : models, sections, items (MANUAL : the head
+    // PdiTemplates is in the sync's AUTO block)
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.PdiTemplateModels>
+    PdiTemplateModelRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.PdiTemplateSections>
+    PdiTemplateSectionRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.Settings.ServiceSettings.PdiTemplateItems>
+    PdiTemplateItemRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Bike Deliveries : the PDI sheet as filled (MANUAL : the head
+    // BikeDeliveries is in the sync's AUTO block)
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.MotorBikeSales.BikeDeliveryAnswers>
+    BikeDeliveryAnswerRows
     {
     get;
     set;

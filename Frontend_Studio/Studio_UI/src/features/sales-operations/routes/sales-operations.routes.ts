@@ -108,4 +108,28 @@ export const salesOperationsRoutes:
 
     // AUTO-END : MNU-008-002
 
-];
+
+    //===========================================================
+    // Booking Management (hand-written : one Bookings page;
+    // NO Code Synchronization)
+    //===========================================================
+
+    {
+        path:'booking-management',
+
+        data:
+        {
+            breadcrumb:'Booking Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../booking-management/routes/booking-management.routes'
+            )
+            .then(
+                m =>
+                    m.bookingManagementRoutes
+            )
+    },
+
+];

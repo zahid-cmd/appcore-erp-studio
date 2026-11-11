@@ -2,6 +2,7 @@
 // Namespaces
 //===============================================================
 
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -102,6 +103,12 @@ using StockAllocationsEntity =
 using VatRegisterEntity =
     AppCore.Domain.Platform.Inventory.VatRegister;
 
+using RegistrationOnInvoice =
+    AppCore.Infrastructure.Platform.Sales.RegistrationOnInvoice;
+
+using BookingsEntity =
+    AppCore.Domain.Entities.SalesOperations.BookingManagement.Bookings;
+
 
 //===============================================================
 // Namespace
@@ -124,16 +131,22 @@ namespace AppCore.Infrastructure.Repositories.SalesOperations.Shared;
 //               unallocated : costed at the newest batch's cost,
 //               no stock movement for that part.
 //   Price     : Sell at Batch MRP ON = each batch at its own MRP;
-//               OFF = the lowest MRP of the batches taken. Allow
-//               Price Edit : one price for the line, not above the
-//               lowest MRP, at most Value % below it.
+//               OFF = the lowest MRP of the batches taken. Edit
+//               Price (owner 2026-11-11) : one price for the line,
+//               this invoice only, ONLY ABOVE the MRP (the highest
+//               batch MRP of the line), at most Value % above it;
+//               the raised price is the sale (gross, VAT inside).
+//               A reduction is given only as a Special Discount.
 //   Discounts : 1. campaign OR membership, the better one
 //                  (campaigns not built yet : FindCampaignAsync)
-//               2. special (Allow Discount + activity "Give Special
+//               2. special (Special Discount + activity "Give Special
 //                  Discount") : line % or invoice % / Tk spread by
 //                  value (the last line takes the remainder)
-//               3. fractional (Round Down to Whole Taka) : the
-//                  paisa of the total, always down
+//               3. fractional (Fractional Discount ON) : Tk
+//                  typed on the invoice, at most the switch Value;
+//                  never with 2. or a price edit
+//               One method per invoice : price raise OR line % OR
+//               invoice special OR fractional (owner 2026-11-11)
 //   VAT       : discounts do not reduce VAT (Case A, VAT final at
 //               source) : VatInside = gross x r / (100 + r) per
 //               batch, BaseVat = the VAT paid at source of the
@@ -157,7 +170,14 @@ namespace AppCore.Infrastructure.Repositories.SalesOperations.Shared;
 //              Cr VAT Current Account   base VAT
 //              Cr Price Increase Income / Dr Price Reduction
 //                 Expense               VAT inside - base VAT
-//                 (MB : VAT Reimbursement - MB, VAT-REIMB-MB)
+//              MB (2026-11-11) : the VAT is split three ways
+//                 Cr VAT Payable - MB (VAT-PAYABLE-MB)
+//                    = VAT inside the MRP - VAT inside the card DP
+//                    (the price card's "VAT Payable"; paid later
+//                    on VAT Payment by A-Challan, per chassis)
+//                 Dr / Cr VAT Reimbursement - MB (VAT-REIMB-MB)
+//                    = what is left : VAT inside - base VAT -
+//                    VAT payable (normally Dr 6.3 VAT - VAT in DP)
 //              Dr COGS / Cr Inventory   FIFO cost
 //              + Price Adjustment release lines
 //            stock out of the batches (movement Sale, allocation,
@@ -222,6 +242,10 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     // (ProductPricingMotorBikes_Engine.sql)
     private const string PurposeVatReimbursementMb = "VAT-REIMB-MB";
 
+    // Posting Setup purpose : VAT Payable - Motor Bikes, the VAT on
+    // the dealer's value addition per chassis (SalesInvoicesMB_VatPayable.sql)
+    private const string PurposeVatPayableMb = "VAT-PAYABLE-MB";
+
     private const string MoveSaleCancel = "SaleCancel";
 
     // Customer types / tags
@@ -270,12 +294,21 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     // MB : Delivery on Sale (ON = handed over when posted)
     private const string SwitchDeliveryOnSale = "CFG-MOD-008-0011";
 
-    // MB : Corporate sale (several chassis) and its date window
+    // Bike Deliveries : ON = a bike may be delivered without the
+    // PDI sheet; Delivery on Sale works only while this is ON
+    private const string SwitchDeliveryWithoutPdi = "CFG-MOD-008-0081";
+
+    // Delivery on Sale : the bike lines of the invoice being
+    // posted, recorded on Bike Deliveries after the post is saved
+    private readonly List<TLine> _onSaleLines = new();
+
+    // MB : Corporate sale (several chassis). No date window (owner
+    // 2026-11-11 : the From / Until switches 0074 / 0075 removed)
     private const string SwitchCorporateSale = "CFG-MOD-008-0073";
 
-    private const string SwitchCorporateFrom = "CFG-MOD-008-0074";
-
-    private const string SwitchCorporateUntil = "CFG-MOD-008-0075";
+    // MB : Registration Fees on Invoice (the Registration button;
+    // 2026-11-11 registration on the invoice)
+    private const string SwitchRegistrationOnInvoice = "CFG-MOD-008-0013";
 
     private const string SaleRegular = "Regular";
 
@@ -448,6 +481,10 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     // Payments become a Receipt Voucher (same rules and posting)
     private readonly IReceiptVoucherRepository _receiptVouchers;
 
+    // MB : the registration reversal Journal Voucher (null on SP /
+    // AC)
+    private readonly IJournalVoucherRepository? _journalVouchers;
+
     // Add Customer (walk-in) : created exactly as Customer Profiles
     private readonly ICustomerProfilesRepository _customers;
 
@@ -462,9 +499,12 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         IVatApplicabilityService vatApplicability,
         IVoucherPostingService postingService,
         IReceiptVoucherRepository receiptVouchers,
-        ICustomerProfilesRepository customers)
+        ICustomerProfilesRepository customers,
+        IJournalVoucherRepository? journalVouchers = null)
     {
         _context = context;
+
+        _journalVouchers = journalVouchers;
 
         _numberService = numberService;
 
@@ -516,10 +556,20 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         public bool SellAtBatchMrp { get; set; } = true;
 
+        // Allow Fractional Discount : typed Tk, at most the Value
         public bool RoundDown { get; set; } = true;
+
+        public decimal? MaxFractional { get; set; }
+
+        // Fractional Discount switch's Default Value (Tk) : filled in
+        // on a new invoice (null = none; never above the Value)
+        public decimal? DefaultFractional { get; set; }
 
         // MB only
         public bool AllowCorporate { get; set; }
+
+        // MB : 0013 Registration Fees on Invoice
+        public bool AllowRegistration { get; set; }
 
         public DateOnly? CorporateFrom { get; set; }
 
@@ -690,6 +740,9 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         public decimal SpecialPercentTyped { get; set; }
 
+        // Line special in Tk (per line % OR Tk)
+        public decimal SpecialTkTyped { get; set; }
+
         public decimal SpecialAmount { get; set; }
 
         public decimal Net { get; set; }
@@ -703,6 +756,12 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         public decimal VatInside { get; set; }
 
         public decimal BaseVat { get; set; }
+
+        // MB : VAT inside the price card DP of the bike and the VAT
+        // payable = VAT inside - that (never below 0)
+        public decimal VatInDp { get; set; }
+
+        public decimal VatPayable { get; set; }
 
         public decimal Cost { get; set; }
 
@@ -743,6 +802,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         public decimal SpecialValue { get; set; }
 
+
         public string Narration { get; set; } = string.Empty;
 
         // MB : Regular / Corporate
@@ -782,6 +842,16 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         public decimal Paid { get; set; }
 
         public decimal Due { get; set; }
+
+        // MB : registration on the invoice (in InvoiceTotal)
+        public RegistrationOnInvoice.Chosen? Registration { get; set; }
+
+        // MB : the booking taken (its advance counts as paid)
+        public long? BookingId { get; set; }
+
+        public string BookingNo { get; set; } = string.Empty;
+
+        public decimal BookingAdvance { get; set; }
 
         public List<string> Warnings { get; set; } = new();
 
@@ -1074,8 +1144,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 Page.SwitchSellAtBatchMrp,
                 Page.SwitchRoundDownWholeTaka,
                 Page.PageType == "MB" ? SwitchCorporateSale : null,
-                Page.PageType == "MB" ? SwitchCorporateFrom : null,
-                Page.PageType == "MB" ? SwitchCorporateUntil : null
+                Page.PageType == "MB" ? SwitchRegistrationOnInvoice : null
             }
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(x => x!)
@@ -1086,7 +1155,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 .Set<SystemConfigurationsEntity>()
                 .AsNoTracking()
                 .Where(x => codes.Contains(x.ConfigurationCode) && !x.IsDeleted)
-                .Select(x => new { x.ConfigurationCode, x.IsEnabled, x.Value })
+                .Select(x => new { x.ConfigurationCode, x.IsEnabled, x.Value, x.DefaultValue })
                 .ToListAsync();
 
         Dictionary<string, (bool IsOn, string Value)> found =
@@ -1096,6 +1165,29 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     g => g.Key,
                     g => (g.First().IsEnabled, g.First().Value ?? string.Empty),
                     StringComparer.OrdinalIgnoreCase);
+
+        // Default Value Tk of a switch that is ON (empty = none;
+        // 0 is a value : the box shows 0)
+        decimal? TkDefault(string? code)
+        {
+            if (string.IsNullOrWhiteSpace(code) || !found.TryGetValue(code, out var row) || !row.IsOn)
+            {
+                return null;
+            }
+
+            string text =
+                rows.First(x => string.Equals(x.ConfigurationCode, code, StringComparison.OrdinalIgnoreCase))
+                    .DefaultValue ?? string.Empty;
+
+            return decimal.TryParse(
+                       text.Trim(),
+                       NumberStyles.Number,
+                       CultureInfo.InvariantCulture,
+                       out decimal tk)
+                   && tk >= 0
+                ? decimal.Round(tk, 2, MidpointRounding.AwayFromZero)
+                : null;
+        }
 
         // ON / OFF; a switch not on the page or not found = default
         bool On(string? code, bool fallback)
@@ -1123,6 +1215,25 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 : null;
         }
 
+        // Value Tk of a switch that is ON (empty / unreadable = no
+        // limit)
+        decimal? TkLimit(string? code)
+        {
+            if (string.IsNullOrWhiteSpace(code) || !found.TryGetValue(code, out var row) || !row.IsOn)
+            {
+                return null;
+            }
+
+            return decimal.TryParse(
+                       row.Value.Trim(),
+                       NumberStyles.Number,
+                       CultureInfo.InvariantCulture,
+                       out decimal tk)
+                   && tk > 0
+                ? tk
+                : null;
+        }
+
         int? Days(string? code)
         {
             if (string.IsNullOrWhiteSpace(code) || !found.TryGetValue(code, out var row) || !row.IsOn)
@@ -1137,20 +1248,6 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         bool credit =
             On(Page.SwitchAllowCreditSale, false);
-
-        // A date switch : its value when it is ON (yyyy-MM-dd)
-        DateOnly? DateOf(string code)
-        {
-            return found.TryGetValue(code, out var row)
-                   && row.IsOn
-                   && DateOnly.TryParse(
-                       row.Value.Trim().Length >= 10 ? row.Value.Trim()[..10] : row.Value.Trim(),
-                       CultureInfo.InvariantCulture,
-                       DateTimeStyles.None,
-                       out DateOnly day)
-                ? day
-                : null;
-        }
 
         bool corporate =
             Page.PageType == "MB" && On(SwitchCorporateSale, false);
@@ -1173,9 +1270,15 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             AllowWalkIn = On(Page.SwitchAllowWalkIn, true),
             SellAtBatchMrp = On(Page.SwitchSellAtBatchMrp, true),
             RoundDown = On(Page.SwitchRoundDownWholeTaka, true),
+            MaxFractional = TkLimit(Page.SwitchRoundDownWholeTaka),
+            DefaultFractional = TkDefault(Page.SwitchRoundDownWholeTaka) is decimal fractionalDefault
+                ? Math.Min(fractionalDefault, TkLimit(Page.SwitchRoundDownWholeTaka) ?? fractionalDefault)
+                : null,
             AllowCorporate = corporate,
-            CorporateFrom = corporate ? DateOf(SwitchCorporateFrom) : null,
-            CorporateUntil = corporate ? DateOf(SwitchCorporateUntil) : null
+            AllowRegistration = Page.PageType == "MB" && On(SwitchRegistrationOnInvoice, true),
+            // No date window any more (kept empty for the page)
+            CorporateFrom = null,
+            CorporateUntil = null
         };
     }
 
@@ -1202,10 +1305,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             PrintAfterPosting = x.PrintAfterPosting,
             AllowWalkInCustomers = x.AllowWalkIn,
             SellAtBatchMrp = x.SellAtBatchMrp,
-            RoundDownWholeTaka = x.RoundDown,
+            AllowFractionalDiscount = x.RoundDown,
+            MaxFractionalDiscount = x.RoundDown ? x.MaxFractional : null,
+            DefaultFractionalDiscount = x.RoundDown ? x.DefaultFractional : null,
             AllowCorporateSale = x.AllowCorporate,
             CorporateSaleFrom = x.CorporateFrom.HasValue ? DateText(x.CorporateFrom.Value) : string.Empty,
-            CorporateSaleUntil = x.CorporateUntil.HasValue ? DateText(x.CorporateUntil.Value) : string.Empty
+            CorporateSaleUntil = x.CorporateUntil.HasValue ? DateText(x.CorporateUntil.Value) : string.Empty,
+            AllowRegistration = x.AllowRegistration
         };
     }
 
@@ -1891,12 +1997,6 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             )
             .ToDictionaryAsync(x => x.MotorBikeId);
 
-        Dictionary<long, long> batches =
-            await BatchesOfBikesAsync(units);
-
-        List<long> batchIds =
-            batches.Values.Distinct().ToList();
-
         // The selling MRP : the price card's on the invoice date (a
         // new invoice : today) - Product Pricing - Motor Bikes
         DateOnly priceDate =
@@ -1912,10 +2012,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         HashSet<long> electricIds =
             await ElectricBikesAsync(units.Select(x => x.ProductId));
 
-        List<OpenBikeRow> open =
+        // Bikes on another open invoice (one lookup per bike, not a
+        // scan of the list per bike)
+        Dictionary<long, string> open =
             (await OpenBikesAsync(units.Select(x => x.MotorBikeUnitId).ToList()))
                 .Where(x => x.SalesInvoiceId != invoiceId)
-                .ToList();
+                .GroupBy(x => x.MotorBikeUnitId)
+                .ToDictionary(g => g.Key, g => g.First().InvoiceNo);
 
         return units
             .Where(x => products.TryGetValue(x.ProductId, out var p) && p.IsActive)
@@ -1947,7 +2050,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         CkdStatus = x.CkdStatus == "Yes" ? "Yes" : "No",
                         StockInDate = x.StockInDate.HasValue ? DateText(x.StockInDate.Value) : string.Empty,
                         Mrp = mrp,
-                        OnInvoiceNo = open.FirstOrDefault(o => o.MotorBikeUnitId == x.MotorBikeUnitId)?.InvoiceNo ?? string.Empty,
+                        OnInvoiceNo = open.GetValueOrDefault(x.MotorBikeUnitId) ?? string.Empty,
                         ImagePath = p.ImagePath ?? string.Empty
                     };
                 }
@@ -2010,8 +2113,21 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 .Where(x => ids.Contains(x.MotorBikeUnitId) && !x.IsDeleted)
                 .ToListAsync();
 
+        // Delivery on Sale works only while "Delivery without PDI"
+        // is ON (otherwise the PDI sheet is filled on Bike
+        // Deliveries)
         bool deliver =
-            await SwitchOnAsync(SwitchDeliveryOnSale, false);
+            await SwitchOnAsync(SwitchDeliveryOnSale, false)
+            &&
+            await SwitchOnAsync(SwitchDeliveryWithoutPdi, false);
+
+        _onSaleLines.Clear();
+
+        if (deliver)
+        {
+            _onSaleLines.AddRange(
+                lines.Where(x => x is IMotorBikeSaleLine b && (b.MotorBikeUnitId ?? 0) > 0));
+        }
 
         foreach (IMotorBikeSaleLine line in bikeLines)
         {
@@ -2090,6 +2206,36 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         {
             line.DeliveryStatus = DeliveryCancelled;
         }
+
+        // Its Registration Profiles cancelled (refused once one was
+        // sent to BRTA)
+        await RegistrationOnInvoice.CancelForInvoiceAsync(
+            _context,
+            entity.SalesInvoiceId,
+            entity.InvoiceNo,
+            $"Sales invoice {entity.InvoiceNo} cancelled.",
+            userId,
+            now);
+
+        // Its booking is open again
+        await ReopenBookingAsync(entity, userId, now);
+
+        // Its Customer Files cancelled (refused when one has moved
+        // on : name transfer, Ready / Delivered, fees)
+        await AppCore.Infrastructure.Platform.Sales.CustomerFileWriter.CancelForInvoiceAsync(
+            _context,
+            entity.SalesInvoiceId,
+            entity.InvoiceNo,
+            userId,
+            now);
+
+        // Its Bike Deliveries undone, their warranties void
+        await AppCore.Infrastructure.Platform.Sales.BikeDeliveryWriter.UndoForInvoiceAsync(
+            _context,
+            entity.SalesInvoiceId,
+            entity.InvoiceNo,
+            userId,
+            now);
     }
 
 
@@ -3005,14 +3151,6 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 {
                     result.Errors.Add("Corporate sales are not allowed (System Configuration › Allow Corporate Sale is OFF).");
                 }
-                else if (!savedDate && switches.CorporateFrom.HasValue && date < switches.CorporateFrom.Value)
-                {
-                    result.Errors.Add($"Corporate sales start on {DateText(switches.CorporateFrom.Value)} (System Configuration › Corporate Sale From).");
-                }
-                else if (!savedDate && switches.CorporateUntil.HasValue && date > switches.CorporateUntil.Value)
-                {
-                    result.Errors.Add($"Corporate sales ended on {DateText(switches.CorporateUntil.Value)} (System Configuration › Corporate Sale Until).");
-                }
 
                 if (result.Customer != null && !(result.Customer.IsCorporate && result.Customer.CustomerType == CustomerInbound))
                 {
@@ -3082,7 +3220,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         Product = product,
                         Bike = bike,
                         Quantity = 1m,
-                        SpecialPercentTyped = row.SpecialDiscountPercent ?? 0m
+                        SpecialPercentTyped = row.SpecialDiscountPercent ?? 0m,
+                        SpecialTkTyped = row.SpecialDiscountTk ?? 0m
                     });
 
                 continue;
@@ -3110,7 +3249,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     LineNo = lineNo,
                     Product = product,
                     Quantity = row.Quantity,
-                    SpecialPercentTyped = row.SpecialDiscountPercent ?? 0m
+                    SpecialPercentTyped = row.SpecialDiscountPercent ?? 0m,
+                    SpecialTkTyped = row.SpecialDiscountTk ?? 0m
                 });
         }
 
@@ -3333,22 +3473,31 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
             if (typed > 0m && line.Slices.Any(x => x.Price != typed))
             {
+                // Edit Price raises only (owner 2026-11-11) : above
+                // the highest MRP of the line's batches
+                decimal highest =
+                    line.Slices.Max(x => x.Mrp);
+
                 if (!switches.AllowPriceEdit)
                 {
-                    result.Errors.Add($"{label} : the price cannot be changed (System Configuration › Allow Price Edit is OFF).");
+                    result.Errors.Add($"{label} : the price cannot be changed (System Configuration › Edit Price is OFF).");
                 }
                 else if (!IsMoney(typed))
                 {
                     result.Errors.Add($"{label} : the price can have at most 2 decimals.");
                 }
-                else if (typed > lowest)
+                else if (typed < highest)
                 {
-                    result.Errors.Add($"{label} : the price cannot be above the MRP ({Amount(lowest)}).");
+                    result.Errors.Add($"{label} : Edit Price can only raise the price above the MRP ({Amount(highest)}); give a reduction as a Special Discount.");
+                }
+                else if (typed == highest)
+                {
+                    // the MRP itself : no edit
                 }
                 else if (switches.MaxPriceEditPercent.HasValue
-                         && typed < Money(lowest * (1m - switches.MaxPriceEditPercent.Value / 100m)))
+                         && typed > Money(highest * (1m + switches.MaxPriceEditPercent.Value / 100m)))
                 {
-                    result.Errors.Add($"{label} : the price can be at most {switches.MaxPriceEditPercent.Value:0.##}% below the MRP (lowest {Amount(Money(lowest * (1m - switches.MaxPriceEditPercent.Value / 100m)))}).");
+                    result.Errors.Add($"{label} : the price can be at most {switches.MaxPriceEditPercent.Value:0.##}% above the MRP (highest {Amount(Money(highest * (1m + switches.MaxPriceEditPercent.Value / 100m)))}).");
                 }
                 else
                 {
@@ -3369,6 +3518,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
             line.Gross =
                 line.Slices.Sum(x => x.Gross);
+
 
             line.UnitPrice =
                 line.PriceEdited
@@ -3479,7 +3629,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         result.SpecialValue = specialValue;
 
         bool lineSpecial =
-            result.Lines.Any(x => x.SpecialPercentTyped != 0m);
+            result.Lines.Any(x => x.SpecialPercentTyped != 0m || x.SpecialTkTyped != 0m);
 
         bool anySpecial =
             lineSpecial || specialType != SpecialNone;
@@ -3491,7 +3641,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         {
             if (!switches.AllowDiscount)
             {
-                result.Errors.Add("A special discount cannot be given (System Configuration › Allow Discount is OFF).");
+                result.Errors.Add("A special discount cannot be given (System Configuration › Special Discount is OFF).");
             }
 
             if (!options.CanSpecial)
@@ -3503,6 +3653,17 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             {
                 result.Errors.Add("Use either line special discounts or the invoice special discount, not both.");
             }
+        }
+
+        // One method for the whole invoice (owner 2026-11-11) :
+        // a price raise (Edit Price) OR line % OR the invoice
+        // special (OR the fractional discount, checked below)
+        bool priceEdit =
+            result.Lines.Any(x => x.PriceEdited);
+
+        if (priceEdit && anySpecial)
+        {
+            result.Errors.Add("Use one method for the invoice : a price raise (Edit Price), the line special %, or the invoice special discount, not two together.");
         }
 
         List<decimal> bases =
@@ -3520,6 +3681,40 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
                 decimal percent =
                     line.SpecialPercentTyped;
+
+                decimal tk =
+                    line.SpecialTkTyped;
+
+                if (percent != 0m && tk != 0m)
+                {
+                    result.Errors.Add($"Line {line.LineNo} : give the special discount in % or in Tk, not both.");
+
+                    continue;
+                }
+
+                // Tk on the line (owner 2026-11-11)
+                if (tk != 0m)
+                {
+                    if (tk < 0m || !IsMoney(tk))
+                    {
+                        result.Errors.Add($"Line {line.LineNo} : special discount Tk must be more than 0 with at most 2 decimals.");
+                    }
+                    else if (tk > bases[i])
+                    {
+                        result.Errors.Add($"Line {line.LineNo} : special discount ({Amount(tk)}) cannot be more than the line ({Amount(bases[i])}).");
+                    }
+                    else if (maxSpecial.HasValue && bases[i] > 0m && tk * 100m > maxSpecial.Value * bases[i])
+                    {
+                        result.Errors.Add($"Line {line.LineNo} : special discount is {Money(tk * 100m / bases[i]):0.##}% of the line; at most {maxSpecial.Value:0.##}% is allowed.");
+                    }
+                    else
+                    {
+                        line.SpecialAmount =
+                            tk;
+                    }
+
+                    continue;
+                }
 
                 if (percent == 0m)
                 {
@@ -3604,6 +3799,17 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     .Distinct()
                     .ToList());
 
+        // MB : the card DP of each bike on the invoice date (the card
+        // that gives the selling MRP) for the VAT payable
+        Dictionary<long, decimal> cardDps =
+            Page.PageType == "MB" && result.VatApplicable
+                ? (await MotorBikeCardPrices.MrpAsync(
+                        _context,
+                        result.InvoiceDate,
+                        result.Lines.Select(x => x.Product.ProductId).Distinct().ToList()))
+                    .ToDictionary(x => x.Key, x => x.Value.Dp)
+                : new Dictionary<long, decimal>();
+
         foreach (PricedLine line in result.Lines)
         {
             string label =
@@ -3627,6 +3833,29 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
                 line.VatRate =
                     decimal.Round(line.Slices.Max(x => x.VatRate), 2, MidpointRounding.AwayFromZero);
+
+                // MB : VAT payable = VAT inside the price - VAT inside
+                // the card DP (the price card's "VAT Payable")
+                if (Page.PageType == "MB")
+                {
+                    decimal dp =
+                        cardDps.GetValueOrDefault(line.Product.ProductId);
+
+                    line.VatInDp =
+                        dp > 0m && line.VatRate > 0m
+                            ? Money(line.Quantity * dp * line.VatRate / (100m + line.VatRate))
+                            : 0m;
+
+                    line.VatPayable =
+                        dp > 0m
+                            ? Math.Max(line.VatInside - line.VatInDp, 0m)
+                            : 0m;
+
+                    if (!(dp > 0m) && line.VatInside > 0m)
+                    {
+                        result.Errors.Add($"{label} : no DP on the price card for the invoice date, the VAT payable cannot be worked out (Product Pricing - Motor Bikes).");
+                    }
+                }
             }
 
             foreach (Slice slice in line.Slices)
@@ -3690,20 +3919,55 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         }
 
         //=======================================================
-        // Discount 3 : fractional (whole taka, always down)
+        // Discount 3 : fractional (owner 2026-11-11) : the Tk typed
+        // on the invoice (Allow Fractional Discount ON, at most its
+        // Value), spread over the lines by value. Never together
+        // with a special discount or a price edit.
         //=======================================================
 
         decimal totalNet =
             result.Lines.Sum(x => x.Net);
 
-        decimal invoiceTotal =
-            switches.RoundDown && totalNet > 0m
-                ? decimal.Floor(totalNet)
-                : totalNet;
+        decimal fractional =
+            dto.FractionalDiscount;
+
+        if (fractional != 0m)
+        {
+            if (!switches.RoundDown)
+            {
+                result.Errors.Add("A fractional discount cannot be given (System Configuration › Fractional Discount is OFF).");
+
+                fractional = 0m;
+            }
+            else if (fractional < 0m || !IsMoney(fractional))
+            {
+                result.Errors.Add("Fractional discount must be more than 0 with at most 2 decimals.");
+
+                fractional = 0m;
+            }
+            else if (switches.MaxFractional.HasValue && fractional > switches.MaxFractional.Value)
+            {
+                result.Errors.Add($"Fractional discount can be at most {Amount(switches.MaxFractional.Value)} (System Configuration › Fractional Discount).");
+
+                fractional = 0m;
+            }
+            else if (fractional >= totalNet)
+            {
+                result.Errors.Add($"Fractional discount ({Amount(fractional)}) must be less than the invoice ({Amount(totalNet)}).");
+
+                fractional = 0m;
+            }
+            else if (anySpecial || priceEdit)
+            {
+                result.Errors.Add("A fractional discount cannot be given together with a special discount or a price raise : use one of them.");
+
+                fractional = 0m;
+            }
+        }
 
         List<decimal> fractions =
             Spread(
-                totalNet - invoiceTotal,
+                fractional,
                 result.Lines.Select(x => x.Net).ToList(),
                 true);
 
@@ -3728,6 +3992,30 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         result.SpecialDiscount = result.Lines.Sum(x => x.SpecialAmount);
         result.FractionalDiscount = result.Lines.Sum(x => x.FractionalShare);
         result.InvoiceTotal = result.Lines.Sum(x => x.LineTotal);
+
+        // MB : registration on the invoice (Registration
+        // Configuration on the invoice date) : added to the total;
+        // no VAT, no discount
+        if (Page.PageType == "MB")
+        {
+            result.Registration =
+                await RegistrationOnInvoice.ChooseAsync(
+                    _context,
+                    dto.RegistrationTypeId,
+                    dto.RegistrationAmount,
+                    dto.RegistrationUnitIds,
+                    result.Lines
+                        .Where(x => x.Bike != null)
+                        .Select(x => (x.Bike!.MotorBikeUnitId, x.Product.ProductId))
+                        .ToList(),
+                    result.SaleType == SaleCorporate,
+                    switches.AllowRegistration,
+                    date,
+                    result.Errors);
+
+            result.InvoiceTotal += result.Registration?.Total ?? 0m;
+        }
+
         result.VatInside = result.Lines.Sum(x => x.VatInside);
         result.BaseVat = result.Lines.Sum(x => x.BaseVat);
         result.Cost = result.Lines.Sum(x => x.Cost);
@@ -3820,12 +4108,26 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         result.Paid =
             result.Payments.Sum(x => x.Amount);
 
-        result.Due =
-            result.InvoiceTotal - result.Paid;
-
-        if (result.Paid > result.InvoiceTotal)
+        // MB : a booking's advance (already on the customer's ledger)
+        // counts as paid
+        if (Page.PageType == "MB" && dto.BookingId is > 0)
         {
-            result.Errors.Add($"Paid ({Amount(result.Paid)}) is more than the invoice total ({Amount(result.InvoiceTotal)}); no change is given.");
+            await PriceBookingAsync(dto.BookingId.Value, result, options);
+        }
+
+        result.Due =
+            result.InvoiceTotal - result.Paid - result.BookingAdvance;
+
+        if (result.BookingAdvance > result.InvoiceTotal)
+        {
+            result.Errors.Add($"The booking advance ({Amount(result.BookingAdvance)}) is more than the invoice total ({Amount(result.InvoiceTotal)}) : refund the difference from the booking first, or add to the invoice.");
+        }
+        else if (result.Paid > result.InvoiceTotal - result.BookingAdvance)
+        {
+            result.Errors.Add(
+                result.BookingAdvance > 0m
+                    ? $"Paid ({Amount(result.Paid)}) is more than the balance after the booking advance ({Amount(result.InvoiceTotal - result.BookingAdvance)}); no change is given."
+                    : $"Paid ({Amount(result.Paid)}) is more than the invoice total ({Amount(result.InvoiceTotal)}); no change is given.");
         }
 
         // The Receipt Voucher rules for each row (accounts, modes,
@@ -4053,6 +4355,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             CampaignMembershipPercent = x.CmPercent,
             CampaignMembershipAmount = x.CmAmount,
             SpecialDiscountPercent = x.SpecialPercentTyped,
+            SpecialDiscountTk = x.SpecialTkTyped,
             SpecialAmount = x.SpecialAmount,
             NetAmount = x.Net,
             FractionalShare = x.FractionalShare,
@@ -4134,6 +4437,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             CampaignMembershipPercent = x.CampaignMembershipPercent,
             CampaignMembershipAmount = x.CampaignMembershipAmount,
             SpecialDiscountPercent = x.SpecialDiscountPercent,
+            SpecialDiscountTk = x.SpecialDiscountTk,
             SpecialAmount = x.SpecialAmount,
             NetAmount = x.NetAmount,
             FractionalShare = x.FractionalShare,
@@ -4164,7 +4468,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             DeliveredDate =
                 (x as IMotorBikeSaleLine)?.DeliveredDate is DateOnly delivered
                     ? DateText(delivered)
-                    : string.Empty
+                    : string.Empty,
+            IsRegistered = (x as IMotorBikeSaleLine)?.IsRegistered ?? false
         };
     }
 
@@ -4426,6 +4731,24 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             }
         }
 
+        // MB : registration on the invoice
+        if (x is IMotorBikeSaleHeader bike)
+        {
+            dto.RegistrationTypeId = bike.RegistrationTypeId;
+            dto.RegistrationTypeName = bike.RegistrationTypeName ?? string.Empty;
+            dto.RegistrationAmount = bike.RegistrationAmount;
+            dto.RegistrationCount = bike.RegistrationCount;
+            dto.RegistrationTotal = bike.RegistrationTotal;
+            dto.RegistrationCommission = bike.RegistrationCommission;
+            dto.RegistrationStatus = bike.RegistrationStatus ?? string.Empty;
+            dto.RegistrationReversalNo = bike.RegistrationReversalNo ?? string.Empty;
+            dto.RegistrationReversedDate = bike.RegistrationReversedDate;
+            dto.RegistrationReverseReason = bike.RegistrationReverseReason ?? string.Empty;
+            dto.BookingId = bike.BookingId;
+            dto.BookingNo = bike.BookingNo ?? string.Empty;
+            dto.BookingAdvance = bike.BookingAdvance;
+        }
+
         return dto;
     }
 
@@ -4475,6 +4798,56 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     // persons, switches, VAT
     //===========================================================
 
+    //===========================================================
+    // Defaults cache (2026-11-11 : the Add page waited 16 s for
+    // the defaults). Lists that rarely change (warehouses, stock
+    // holders, sales persons, categories, VAT, registration types,
+    // business lines) are kept 60 s per database; the switches,
+    // the user's branch and the number preview stay live.
+    //===========================================================
+
+    private static readonly ConcurrentDictionary<string, (DateTime At, object Value)>
+        DefaultsCache =
+            new();
+
+    private static readonly TimeSpan DefaultsCacheFor =
+        TimeSpan.FromSeconds(60);
+
+    private async Task<T>
+        CachedAsync<T>
+        (
+            string key,
+            Func<Task<T>> load
+        )
+    {
+        var connection =
+            _context.Database.GetDbConnection();
+
+        string fullKey =
+            $"{connection.DataSource}/{connection.Database}|{Page.PageType}|{key}";
+
+        if
+        (
+            DefaultsCache.TryGetValue(fullKey, out var hit)
+            &&
+            DateTime.UtcNow - hit.At < DefaultsCacheFor
+            &&
+            hit.Value is T value
+        )
+        {
+            return value;
+        }
+
+        T fresh =
+            await load();
+
+        DefaultsCache[fullKey] =
+            (DateTime.UtcNow, fresh!);
+
+        return fresh;
+    }
+
+
     public async Task<SalesInvoiceDefaultsDto>
         GetDefaultsAsync
         (
@@ -4502,6 +4875,29 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 MaxDiscountPercent = switches.AllowDiscount ? switches.MaxDiscountPercent : null,
                 DefaultSalesPersonId = userId
             };
+
+        // MB : registration types usable on the invoice date
+        if (page.PageType == "MB" && switches.AllowRegistration)
+        {
+            result.RegistrationOptions =
+                (await CachedAsync($"reg|{invoiceDate:yyyy-MM-dd}", () => RegistrationOnInvoice.OptionsAsync(_context, invoiceDate, true)))
+                    .Select
+                    (
+                        x =>
+                            new SalesInvoiceRegistrationOptionDto
+                            {
+                                RegistrationTypeId = x.RegistrationTypeId,
+                                Code = x.Code,
+                                Name = x.Name,
+                                VehiclePower = x.VehiclePower,
+                                IsDefault = x.IsDefault,
+                                HasRates = x.HasRates,
+                                Minimum = x.Minimum,
+                                Maximum = x.Maximum
+                            }
+                    )
+                    .ToList();
+        }
 
         // Branch Assignment : a user not allotted to the branch
         // gets no branch at all (nothing loads, everything blocked)
@@ -4548,9 +4944,11 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         result.BranchRunsLine =
             branch != null
             &&
-            await BranchRunsLineAsync(
-                branchId,
-                businessLine);
+            await CachedAsync(
+                $"line|{branchId}|{businessLine}|{BusinessLineAccess.Today():yyyy-MM-dd}",
+                () => BranchRunsLineAsync(
+                    branchId,
+                    businessLine));
 
         if (!result.UserAllottedToBranch)
         {
@@ -4567,9 +4965,11 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         HashSet<long> allowedWarehouseIds =
             result.BranchRunsLine
-                ? await BusinessLineAccess.AllowedWarehouseIdsAsync(
-                    _context,
-                    businessLine)
+                ? await CachedAsync(
+                    $"allowed|{businessLine}|{BusinessLineAccess.Today():yyyy-MM-dd}",
+                    () => BusinessLineAccess.AllowedWarehouseIdsAsync(
+                        _context,
+                        businessLine))
                 : new HashSet<long>();
 
         //=======================================================
@@ -4580,11 +4980,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         List<WarehousesEntity> warehouses =
             (
-                await _context
-                    .Set<WarehousesEntity>()
-                    .AsNoTracking()
-                    .Where(x => !x.IsDeleted && x.IsActive && x.BranchId == branchId)
-                    .ToListAsync()
+                await CachedAsync(
+                    $"warehouses|{branchId}",
+                    () => _context
+                        .Set<WarehousesEntity>()
+                        .AsNoTracking()
+                        .Where(x => !x.IsDeleted && x.IsActive && x.BranchId == branchId)
+                        .ToListAsync())
             )
             .Where(x => allowedWarehouseIds.Contains(x.WarehouseId))
             .ToList();
@@ -4595,8 +4997,46 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         List<long?> nullableIds =
             warehouseIds.Select(x => (long?)x).ToList();
 
+        // Motor bikes : the bikes (chassis) in stock show which
+        // warehouses hold stock (one small indexed table instead of
+        // adding up every stock movement : the page opened slowly)
+        if (page.PageType == "MB")
+        {
+            return await DefaultsTailAsync(
+                result,
+                page,
+                branchId,
+                invoiceDate,
+                warehouses,
+                await CachedAsync(
+                    $"stock|MB|{branchId}|{string.Join(",", warehouseIds)}",
+                    async () =>
+                (
+                    await _context
+                        .Set<MotorBikeUnitsEntity>()
+                        .AsNoTracking()
+                        .Where
+                        (
+                            x =>
+                                !x.IsDeleted
+                                &&
+                                x.Status == UnitInStock
+                                &&
+                                x.WarehouseId != null
+                                &&
+                                warehouseIds.Contains(x.WarehouseId.Value)
+                        )
+                        .Select(x => x.WarehouseId!.Value)
+                        .Distinct()
+                        .ToListAsync()
+                )
+                .ToHashSet()));
+        }
+
         var held =
-            await
+            await CachedAsync(
+                $"stock|{page.PageType}|{branchId}|{string.Join(",", warehouseIds)}",
+                () =>
             (
                 from m in _context.Set<StockMovementsEntity>().AsNoTracking()
 
@@ -4621,13 +5061,37 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     Quantity = g.Sum(x => x.QuantityIn - x.QuantityOut)
                 }
             )
-            .ToListAsync();
+            .ToListAsync());
 
         HashSet<long> withStock =
             held
                 .Where(x => x.WarehouseId.HasValue && x.Quantity > 0)
                 .Select(x => x.WarehouseId!.Value)
                 .ToHashSet();
+
+        return await DefaultsTailAsync(
+            result,
+            page,
+            branchId,
+            invoiceDate,
+            warehouses,
+            withStock);
+    }
+
+
+    // Defaults after the stock check : warehouses (those holding
+    // stock first), sales persons, categories, VAT, number preview
+    private async Task<SalesInvoiceDefaultsDto>
+        DefaultsTailAsync
+        (
+            SalesInvoiceDefaultsDto result,
+            SalesInvoicePage page,
+            long branchId,
+            DateOnly invoiceDate,
+            List<WarehousesEntity> warehouses,
+            HashSet<long> withStock
+        )
+    {
 
         result.Warehouses =
             warehouses
@@ -4663,12 +5127,14 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         result.SalesPersons =
             (
-                await _context
-                    .Set<UserProfileEntity>()
-                    .AsNoTracking()
-                    .Where(x => !x.IsDeleted && x.IsActive)
-                    .Select(x => new { x.UserProfileId, x.DisplayName, x.FullName, x.UserName })
-                    .ToListAsync()
+                await CachedAsync(
+                    "persons",
+                    () => _context
+                        .Set<UserProfileEntity>()
+                        .AsNoTracking()
+                        .Where(x => !x.IsDeleted && x.IsActive)
+                        .Select(x => new { x.UserProfileId, x.DisplayName, x.FullName, x.UserName })
+                        .ToListAsync())
             )
             .Select
             (
@@ -4701,9 +5167,11 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         //=======================================================
 
         VatApplicabilityDto applicability =
-            await _vatApplicability.GetAsync(
-                page.VatLine,
-                invoiceDate);
+            await CachedAsync(
+                $"vat|{page.VatLine}|{invoiceDate:yyyy-MM-dd}",
+                () => _vatApplicability.GetAsync(
+                    page.VatLine,
+                    invoiceDate));
 
         result.VatApplicable =
             applicability.SalesVatApplicable;
@@ -4753,6 +5221,33 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
 
     private async Task LoadCategoriesAsync
+    (
+        SalesInvoiceDefaultsDto result
+    )
+    {
+        var cached =
+            await CachedAsync(
+                $"categories|{Page.PageType}",
+                async () =>
+                {
+                    SalesInvoiceDefaultsDto lists =
+                        new();
+
+                    await LoadCategoriesFreshAsync(
+                        lists);
+
+                    return (lists.Categories, lists.SubCategories);
+                });
+
+        result.Categories =
+            cached.Categories;
+
+        result.SubCategories =
+            cached.SubCategories;
+    }
+
+
+    private async Task LoadCategoriesFreshAsync
     (
         SalesInvoiceDefaultsDto result
     )
@@ -5288,8 +5783,21 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     UserId = userId
                 });
 
+        // MB : Fuel / Electric of the bikes (the registration types
+        // offered follow them)
+        List<string> bikePowers =
+            Page.PageType == "MB"
+                ? (await RegistrationOnInvoice.PowersAsync(
+                        _context,
+                        priced.Lines.Where(l => l.Bike != null).Select(l => l.Product.ProductId)))
+                    .Values
+                    .Distinct()
+                    .ToList()
+                : new List<string>();
+
         return new SalesInvoiceQuoteDto
         {
+            BikePowers = bikePowers,
             Lines = priced.Lines.Select(l => ToLineDto(l)).ToList(),
             TotalQuantity = priced.TotalQuantity,
             GrossAmount = priced.Gross,
@@ -5310,7 +5818,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             CreditLimit = priced.Customer?.CreditLimit ?? 0m,
             Warnings = priced.Warnings,
             Errors = priced.Errors,
-            CanSave = priced.Errors.Count == 0
+            CanSave = priced.Errors.Count == 0,
+            RegistrationTypeName = priced.Registration?.Type.Name ?? string.Empty,
+            RegistrationAmount = priced.Registration?.Amount ?? 0m,
+            RegistrationCount = priced.Registration?.Count ?? 0,
+            RegistrationTotal = priced.Registration?.Total ?? 0m,
+            BookingNo = priced.BookingNo,
+            BookingAdvance = priced.BookingAdvance
         };
     }
 
@@ -5378,6 +5892,23 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         if (entity is IMotorBikeSaleHeader bikeHeader)
         {
             bikeHeader.SaleType = string.IsNullOrEmpty(priced.SaleType) ? SaleRegular : priced.SaleType;
+
+            // Registration (a draft / approved invoice : priced again)
+            RegistrationOnInvoice.Chosen? registration =
+                priced.Registration;
+
+            bikeHeader.RegistrationTypeId = registration?.Type.RegistrationTypeId;
+            bikeHeader.RegistrationTypeName = Limit(registration?.Type.Name, 150);
+            bikeHeader.RegistrationAmount = registration?.Amount ?? 0m;
+            bikeHeader.RegistrationCount = registration?.Count ?? 0;
+            bikeHeader.RegistrationTotal = registration?.Total ?? 0m;
+            bikeHeader.RegistrationCommission = registration?.Commission ?? 0m;
+            bikeHeader.RegistrationStatus = registration != null ? RegistrationOnInvoice.StatusActive : string.Empty;
+
+            // Booking (its advance counts as paid)
+            bikeHeader.BookingId = priced.BookingId;
+            bikeHeader.BookingNo = Limit(priced.BookingNo, 40);
+            bikeHeader.BookingAdvance = priced.BookingAdvance;
         }
     }
 
@@ -5407,6 +5938,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         entity.CampaignMembershipPercent = x.CmPercent;
         entity.CampaignMembershipAmount = x.CmAmount;
         entity.SpecialDiscountPercent = x.SpecialPercentTyped;
+        entity.SpecialDiscountTk = x.SpecialTkTyped;
         entity.SpecialAmount = x.SpecialAmount;
         entity.NetAmount = x.Net;
         entity.FractionalShare = x.FractionalShare;
@@ -5428,6 +5960,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             bike.ColorName = Limit(x.Bike.ColorName, 50);
             bike.ManufactureYear = x.Bike.ManufactureYear;
             bike.CkdStatus = x.Bike.CkdStatus == "Yes" ? "Yes" : "No";
+            bike.VatPayable = x.VatPayable;
 
             if (string.IsNullOrWhiteSpace(bike.DeliveryStatus))
             {
@@ -5475,6 +6008,15 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
             ApplyLine(line, priceLine);
 
+            // MB : the chassis registered on the invoice
+            if (line is IMotorBikeSaleLine bikeLine)
+            {
+                bikeLine.IsRegistered =
+                    priced.Registration != null
+                    && bikeLine.MotorBikeUnitId.HasValue
+                    && priced.Registration.UnitIds.Contains(bikeLine.MotorBikeUnitId.Value);
+            }
+
             lines.Add(line);
         }
 
@@ -5521,12 +6063,14 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                                 Quantity = x.Quantity,
                                 UnitPrice = x.PriceEdited ? x.UnitPrice : null,
                                 SpecialDiscountPercent = x.SpecialDiscountPercent != 0m ? x.SpecialDiscountPercent : null,
+                                SpecialDiscountTk = x.SpecialDiscountTk != 0m ? x.SpecialDiscountTk : null,
                                 MotorBikeUnitId = (x as IMotorBikeSaleLine)?.MotorBikeUnitId
                             }
                     )
                     .ToList(),
             InvoiceSpecialType = entity.InvoiceSpecialType,
             InvoiceSpecialValue = entity.InvoiceSpecialValue,
+            FractionalDiscount = entity.FractionalDiscount,
             Payments =
                 payments
                     .OrderBy(x => x.LineNo)
@@ -5535,7 +6079,19 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             Narration = entity.Narration,
             SaleType = (entity as IMotorBikeSaleHeader)?.SaleType ?? string.Empty,
             PaymentTerm = entity.PaymentTerm,
-            EmiAccountCode = entity.EmiAccountCode
+            EmiAccountCode = entity.EmiAccountCode,
+            RegistrationTypeId =
+                entity is IMotorBikeSaleHeader { RegistrationStatus: RegistrationOnInvoice.StatusActive } registered
+                    ? registered.RegistrationTypeId
+                    : null,
+            RegistrationAmount = (entity as IMotorBikeSaleHeader)?.RegistrationAmount ?? 0m,
+            RegistrationUnitIds =
+                lines
+                    .OfType<IMotorBikeSaleLine>()
+                    .Where(x => x.IsRegistered && x.MotorBikeUnitId.HasValue)
+                    .Select(x => x.MotorBikeUnitId!.Value)
+                    .ToList(),
+            BookingId = (entity as IMotorBikeSaleHeader)?.BookingId
         };
     }
 
@@ -6353,11 +6909,17 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     : $"{sales.Count()} lines");
         }
 
+        // MB : the VAT payable comes out of the difference first
+        decimal vatPayable =
+            Page.PageType == "MB"
+                ? priced.Lines.Sum(x => x.VatPayable)
+                : 0m;
+
         decimal increase =
-            priced.Lines.Sum(x => Math.Max(x.VatInside - x.BaseVat, 0m));
+            priced.Lines.Sum(x => Math.Max(x.VatInside - x.BaseVat - x.VatPayable, 0m));
 
         decimal reduction =
-            priced.Lines.Sum(x => Math.Max(x.BaseVat - x.VatInside, 0m));
+            priced.Lines.Sum(x => Math.Max(x.BaseVat + x.VatPayable - x.VatInside, 0m));
 
         string vatLedger =
             string.Empty;
@@ -6371,6 +6933,18 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 vatLedger,
                 priced.BaseVat,
                 $"VAT (paid at source)");
+        }
+
+        // Motor Bikes (2026-11-11) : the VAT on the dealer's value
+        // addition, owed per chassis, paid on VAT Payment (A-Challan)
+        if (vatPayable > 0m)
+        {
+            Credit(
+                PostingLedgerCodes.Get(_context, PurposeVatPayableMb),
+                vatPayable,
+                priced.Lines.Count(x => x.VatPayable > 0m) == 1
+                    ? $"VAT payable : {priced.Lines.First(x => x.VatPayable > 0m).Bike?.ChassisNo ?? priced.Lines.First(x => x.VatPayable > 0m).Product.ProductName}"
+                    : $"VAT payable : {priced.Lines.Count(x => x.VatPayable > 0m)} chassis");
         }
 
         // Motor Bikes (Product Pricing - Motor Bikes, 2026-11-10) : the
@@ -6393,7 +6967,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     : PostingLedgerCodes.Get(_context, PostingPurposes.PriceIncreaseIncome),
                 increase,
                 reimburse
-                    ? $"VAT reimbursement : VAT inside the MRP above the 6.3 VAT"
+                    ? $"VAT reimbursement : VAT inside the MRP above the 6.3 VAT and the VAT payable"
                     : $"VAT inside the price above the VAT paid at source");
         }
 
@@ -6405,8 +6979,31 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     : PostingLedgerCodes.Get(_context, PostingPurposes.PriceReductionExpense),
                 reduction,
                 reimburse
-                    ? $"VAT reimbursement : 6.3 VAT above the VAT inside the MRP"
+                    ? $"VAT reimbursement : 6.3 VAT above the VAT inside the card DP"
                     : $"VAT paid at source above the VAT inside the price");
+        }
+
+        //=======================================================
+        // MB : registration (2026-11-11) : the commission share to
+        // the Registration Commission Account, the rest to the
+        // Registration Fees Collection Account (ledgers by code)
+        //=======================================================
+
+        if (entity is IMotorBikeSaleHeader { RegistrationStatus: RegistrationOnInvoice.StatusActive } registration
+            && registration.RegistrationTotal > 0m)
+        {
+            decimal commission =
+                Math.Min(registration.RegistrationCommission, registration.RegistrationTotal);
+
+            Credit(
+                RegistrationOnInvoice.LedgerCollection,
+                registration.RegistrationTotal - commission,
+                $"Registration fees : {registration.RegistrationTypeName} x {registration.RegistrationCount}");
+
+            Credit(
+                RegistrationOnInvoice.LedgerCommission,
+                commission,
+                $"Registration commission : {registration.RegistrationTypeName} x {registration.RegistrationCount}");
         }
 
         //=======================================================
@@ -6668,6 +7265,241 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 : string.Empty);
 
         await _context.SaveChangesAsync();
+
+        // Delivery on Sale : each bike recorded on Bike Deliveries
+        // (no PDI) with its sales warranty
+        if (_onSaleLines.Count > 0)
+        {
+            HashSet<long> electric =
+                await ElectricBikesAsync(_onSaleLines.Select(x => x.ProductId));
+
+            foreach (TLine line in _onSaleLines)
+            {
+                await AppCore.Infrastructure.Platform.Sales.BikeDeliveryWriter.RecordOnSaleAsync(
+                    _context,
+                    entity,
+                    line,
+                    (IMotorBikeSaleLine)line,
+                    electric.Contains(line.ProductId),
+                    userId,
+                    now);
+            }
+
+            _onSaleLines.Clear();
+
+            await _context.SaveChangesAsync();
+        }
+
+        // MB : one Customer File per chassis (owner 2026-11-11 :
+        // every posted sale, dues or not)
+        if (Page.PageType == "MB")
+        {
+            await AppCore.Infrastructure.Platform.Sales.CustomerFileWriter.CreateForInvoiceAsync(
+                _context,
+                entity,
+                lines,
+                userId,
+                now);
+
+            await _context.SaveChangesAsync();
+
+            // Registration on the invoice : one Registration Profile
+            // per registered chassis; its file Registration By Dealer
+            await RegistrationOnInvoice.CreateProfilesAsync(
+                _context,
+                entity,
+                lines,
+                userId,
+                now);
+
+            await _context.SaveChangesAsync();
+
+            // The booking taken is converted (sold)
+            await ConvertBookingAsync(entity, userId, now);
+        }
+    }
+
+
+    //===========================================================
+    // MB : Bookings (2026-11-11)
+    //   Price   : the booking must be Open, the invoice customer's,
+    //             not on another draft / approved invoice; its
+    //             advance (on the customer's ledger already) counts
+    //             as paid. Expired or another model : a warning.
+    //   Post    : the booking becomes Converted.
+    //   Cancel  : (posted invoice) the booking is Open again.
+    //===========================================================
+
+    private async Task
+        PriceBookingAsync
+        (
+            long bookingId,
+            PricedInvoice result,
+            PriceOptions options
+        )
+    {
+        BookingsEntity? booking =
+            await _context
+                .Set<BookingsEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.BookingId == bookingId && !x.IsDeleted);
+
+        if (booking == null)
+        {
+            result.Errors.Add("Booking : not found (pick it again).");
+
+            return;
+        }
+
+        if (booking.Status != "Open")
+        {
+            result.Errors.Add($"Booking {booking.BookingNo} is {booking.Status}.");
+
+            return;
+        }
+
+        if (result.Customer != null && result.Customer.CustomerId != booking.CustomerId)
+        {
+            result.Errors.Add($"Booking {booking.BookingNo} belongs to {booking.CustomerName} ({booking.CustomerCode}), not to this customer.");
+
+            return;
+        }
+
+        string current =
+            (options.InvoiceNo ?? string.Empty).Trim();
+
+        string? other =
+            await _context
+                .Set<AppCore.Domain.Entities.SalesOperations.MotorBikeSales.SalesInvoicesMb>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted
+                            && x.BookingId == bookingId
+                            && (x.Status == StatusDraft || x.Status == StatusApproved)
+                            && x.InvoiceNo != current)
+                .Select(x => x.InvoiceNo)
+                .FirstOrDefaultAsync();
+
+        if (!string.IsNullOrEmpty(other))
+        {
+            result.Errors.Add($"Booking {booking.BookingNo} is already on Sales Invoice {other}.");
+
+            return;
+        }
+
+        if (booking.ValidUntil.HasValue && booking.ValidUntil.Value < BusinessToday())
+        {
+            result.Warnings.Add($"Booking {booking.BookingNo} expired on {booking.ValidUntil.Value:dd-MMM-yyyy}.");
+        }
+
+        if (!result.Lines.Any(x => x.Bike != null && x.Product.ProductId == booking.MotorBikeId))
+        {
+            result.Warnings.Add($"Booking {booking.BookingNo} is for {booking.ModelName} : no such bike on the invoice yet.");
+        }
+
+        result.BookingId = booking.BookingId;
+        result.BookingNo = booking.BookingNo;
+        result.BookingAdvance = booking.AdvanceAmount;
+    }
+
+
+    private async Task
+        ConvertBookingAsync
+        (
+            THeader entity,
+            long userId,
+            DateTime now
+        )
+    {
+        if (entity is not IMotorBikeSaleHeader { BookingId: > 0 } header)
+        {
+            return;
+        }
+
+        BookingsEntity booking =
+            await _context
+                .Set<BookingsEntity>()
+                .FirstOrDefaultAsync(x => x.BookingId == header.BookingId!.Value && !x.IsDeleted)
+            ?? throw new InvalidOperationException($"Booking {header.BookingNo} was not found.");
+
+        if (booking.Status != "Open")
+        {
+            throw new InvalidOperationException($"Booking {booking.BookingNo} is {booking.Status} : take it off the invoice first.");
+        }
+
+        if (booking.AdvanceAmount != header.BookingAdvance)
+        {
+            throw new InvalidOperationException(
+                $"Booking {booking.BookingNo} advance changed ({booking.AdvanceAmount:N2}, invoice {header.BookingAdvance:N2}) : open the invoice and save it again.");
+        }
+
+        booking.Status = "Converted";
+        booking.SalesInvoiceId = entity.SalesInvoiceId;
+        booking.SalesInvoiceNo = Limit(entity.InvoiceNo, 50);
+        booking.ConvertedDate = entity.InvoiceDate;
+        booking.ModifiedBy = userId;
+        booking.ModifiedDate = now;
+
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module = "Sales Operations",
+                EntityName = "Booking",
+                EntityId = booking.BookingId,
+                ActivityType = "Update",
+                ActivityTitle = "Booking Converted",
+                ActivityDescription = $"{booking.BookingNo} sold on Sales Invoice - MB {entity.InvoiceNo} (advance {booking.AdvanceAmount:N2} taken as paid).",
+                PerformedBy = userId,
+                PerformedByName = "System",
+                PerformedDate = now
+            });
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    private async Task
+        ReopenBookingAsync
+        (
+            THeader entity,
+            long userId,
+            DateTime now
+        )
+    {
+        if (entity is not IMotorBikeSaleHeader { BookingId: > 0 } header)
+        {
+            return;
+        }
+
+        BookingsEntity? booking =
+            await _context
+                .Set<BookingsEntity>()
+                .FirstOrDefaultAsync(x => x.BookingId == header.BookingId!.Value && !x.IsDeleted);
+
+        if (booking == null || booking.Status != "Converted" || booking.SalesInvoiceId != entity.SalesInvoiceId)
+        {
+            return;
+        }
+
+        booking.Status = "Open";
+        booking.SalesInvoiceId = null;
+        booking.SalesInvoiceNo = string.Empty;
+        booking.ConvertedDate = null;
+        booking.ModifiedBy = userId;
+        booking.ModifiedDate = now;
+
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module = "Sales Operations",
+                EntityName = "Booking",
+                EntityId = booking.BookingId,
+                ActivityType = "Update",
+                ActivityTitle = "Booking Re-opened",
+                ActivityDescription = $"{booking.BookingNo} open again : Sales Invoice - MB {entity.InvoiceNo} was cancelled.",
+                PerformedBy = userId,
+                PerformedByName = "System",
+                PerformedDate = now
+            });
     }
 
 
@@ -6757,6 +7589,28 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         today,
                         reason,
                         userId);
+
+                    // MB : a registration reversed earlier : its
+                    // Journal Voucher is cancelled too (else the
+                    // registration would be reversed twice)
+                    if (entity is IMotorBikeSaleHeader { RegistrationStatus: RegistrationOnInvoice.StatusReversed } reversedHeader
+                        && reversedHeader.RegistrationReversalId.HasValue)
+                    {
+                        if (_journalVouchers == null)
+                        {
+                            throw new InvalidOperationException(
+                                "Journal Vouchers are not available here : the registration reversal cannot be cancelled.");
+                        }
+
+                        await _journalVouchers.CancelAsync(
+                            reversedHeader.RegistrationReversalId.Value,
+                            new CancelJournalVoucherDto
+                            {
+                                CancelDate = string.Empty,
+                                Reason = Limit($"Sales invoice {entity.InvoiceNo} cancelled : {reason}", 500)
+                            },
+                            userId);
+                    }
 
                     //===================================================
                     // Receipt Voucher : cancelled (its own checks : a
@@ -6909,6 +7763,173 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 entity.CancelledDate = now;
 
                 AddHistory(entity, "Cancel", "Cancelled", userId, now, $"Reason : {reason}");
+
+                await _context.SaveChangesAsync();
+            });
+    }
+
+
+    //===========================================================
+    // Reverse Registration (MB, posted; admin activity "Reverse
+    // Registration"). Journal Voucher dated today :
+    //   Dr Registration Fees Collection Account (total - commission)
+    //   Dr Registration Commission Account      (commission)
+    //   Cr the customer's receivable             (total)
+    // The customer's balance is refunded / used later as usual.
+    // Its Registration Profiles are Cancelled (refused once one
+    // was sent to BRTA) and its Customer Files go back to
+    // Registration By Customer. The invoice keeps its figures.
+    //===========================================================
+
+    public async Task
+        ReverseRegistrationAsync
+        (
+            long id,
+            CancelSalesInvoiceDto dto,
+            long userId
+        )
+    {
+        if (Page.PageType != "MB")
+        {
+            throw new InvalidOperationException(
+                "Registration is taken only on Sales Invoices - MB.");
+        }
+
+        string reason =
+            OneLine(dto?.Reason, 500);
+
+        if (reason.Length < 5)
+        {
+            throw new InvalidOperationException(
+                "A reason (at least 5 characters) is required to reverse the registration.");
+        }
+
+        if (_journalVouchers == null)
+        {
+            throw new InvalidOperationException(
+                "Journal Vouchers are not available here : the registration cannot be reversed.");
+        }
+
+        await InTransactionAsync(
+            async () =>
+            {
+                THeader entity =
+                    await LoadAsync(id);
+
+                RequireStatus(entity, "reversed (registration)", StatusPosted);
+
+                if (entity is not IMotorBikeSaleHeader bike
+                    || bike.RegistrationStatus != RegistrationOnInvoice.StatusActive
+                    || bike.RegistrationTotal <= 0m)
+                {
+                    throw new InvalidOperationException(
+                        $"Sales invoice {entity.InvoiceNo} has no registration to reverse.");
+                }
+
+                string receivable =
+                    (entity.ReceivableLedgerCode ?? string.Empty).Trim();
+
+                if (receivable.Length == 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Customer '{entity.CustomerName}' has no receivable ledger (Customer Profiles).");
+                }
+
+                DateTime now =
+                    DateTime.UtcNow;
+
+                DateOnly today =
+                    BusinessToday();
+
+                // Profiles first : a profile sent to BRTA stops it
+                await RegistrationOnInvoice.CancelForInvoiceAsync(
+                    _context,
+                    entity.SalesInvoiceId,
+                    entity.InvoiceNo,
+                    $"Registration reversed : {reason}",
+                    userId,
+                    now);
+
+                decimal total =
+                    bike.RegistrationTotal;
+
+                decimal commission =
+                    Math.Min(bike.RegistrationCommission, total);
+
+                string note =
+                    Limit($"{entity.InvoiceNo} registration reversed ({bike.RegistrationTypeName} x {bike.RegistrationCount})", 250);
+
+                List<JournalVoucherLineDto> rows =
+                    new();
+
+                if (total - commission > 0m)
+                {
+                    rows.Add(
+                        new JournalVoucherLineDto
+                        {
+                            Side = "Debit",
+                            GroupNo = 1,
+                            LedgerType = "General Ledger",
+                            LedgerCode = RegistrationOnInvoice.LedgerCollection,
+                            Amount = total - commission,
+                            ShortNotes = note
+                        });
+                }
+
+                if (commission > 0m)
+                {
+                    rows.Add(
+                        new JournalVoucherLineDto
+                        {
+                            Side = "Debit",
+                            GroupNo = 1,
+                            LedgerType = "General Ledger",
+                            LedgerCode = RegistrationOnInvoice.LedgerCommission,
+                            Amount = commission,
+                            ShortNotes = note
+                        });
+                }
+
+                rows.Add(
+                    new JournalVoucherLineDto
+                    {
+                        Side = "Credit",
+                        GroupNo = 1,
+                        LedgerType = "Customer",
+                        LedgerCode = receivable,
+                        Amount = total,
+                        ShortNotes = note
+                    });
+
+                JournalVoucherSavedDto voucher =
+                    await _journalVouchers.CreatePostedAsync(
+                        new CreateJournalVoucherDto
+                        {
+                            VoucherDate = DateText(today),
+                            BranchId = entity.BranchId,
+                            Narration = Limit($"Registration reversed on Sales Invoice - MB {entity.InvoiceNo} ({entity.CustomerName}) | {reason}", 500),
+                            Lines = rows
+                        },
+                        entity.InvoiceNo,
+                        userId);
+
+                bike.RegistrationStatus = RegistrationOnInvoice.StatusReversed;
+                bike.RegistrationReversalId = voucher.JournalVoucherId;
+                bike.RegistrationReversalNo = Limit(voucher.VoucherNo, 30);
+                bike.RegistrationReversedBy = userId;
+                bike.RegistrationReversedDate = now;
+                bike.RegistrationReverseReason = reason;
+
+                entity.ModifiedBy = userId;
+                entity.ModifiedDate = now;
+
+                AddHistory(
+                    entity,
+                    "Update",
+                    "Registration Reversed",
+                    userId,
+                    now,
+                    $"Registration {bike.RegistrationTypeName} x {bike.RegistrationCount} ({total:N2}) reversed by Journal Voucher {voucher.VoucherNo}. Reason : {reason}");
 
                 await _context.SaveChangesAsync();
             });

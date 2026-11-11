@@ -221,6 +221,12 @@ export class CustomerProfilesService
             BinNo:
                 text('BinNo'),
 
+            ContactPersonName:
+                text('ContactPersonName'),
+
+            ContactPersonNid:
+                text('ContactPersonNid'),
+
             LocationName:
                 text('LocationName')
         };

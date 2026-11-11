@@ -1,0 +1,25 @@
+@import '../../../../../../shared/styles/app-list-page.css';
+
+/* Bike Deliveries list : PDI rule note in the toolbar */
+
+.bdl-note
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #334155;
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.bdl-note i
+{
+    color: #1e3a8a;
+}
+
+.bdl-note.bdl-note-warn,
+.bdl-note.bdl-note-warn i
+{
+    color: #b45309;
+}

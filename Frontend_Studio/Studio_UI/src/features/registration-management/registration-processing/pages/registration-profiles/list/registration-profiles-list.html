@@ -1,0 +1,221 @@
+<div class="app-list-page rp-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Registration Profiles"
+        subtitle="Registration Processing : one profile per chassis the dealer registers (from Sales Invoices - MB)"
+        icon="fa-solid fa-folder-tree">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search profile, customer, chassis, invoice, file..."
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="refresh()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : status tabs | branch
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            class="rp-tabs"
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+
+        </app-control-tabs>
+
+        <div
+            pageToolbarRight
+            class="rp-filters">
+
+            <app-search-dropdown
+                class="rp-filter"
+                placeholder="All Branches"
+                [items]="branchItems"
+                labelField="label"
+                valueField="value"
+                [value]="$any(branchId)"
+                (valueChange)="onBranchChange($event)">
+
+            </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+
+            <app-list-table
+                [columns]="columns"
+                [rows]="pagedRows"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                [actions]="{ view:true, edit:false, delete:false }"
+                (view)="openView($event)"
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         VIEW (right panel)
+    ====================================================== -->
+
+    @if (viewRow)
+    {
+        <div
+            class="rp-backdrop"
+            (click)="closeView()">
+        </div>
+
+        <aside class="rp-panel">
+
+            <div class="rp-panel-head">
+
+                <span class="rp-panel-icon"><i class="fa-solid fa-folder-tree"></i></span>
+
+                <div class="rp-panel-title">
+                    <strong>{{ viewRow.ProfileNo }}</strong>
+                    <span>{{ dateText(viewRow.ProfileDate) }} · {{ viewRow.BranchName }}</span>
+                </div>
+
+                <span
+                    class="rp-pill"
+                    [class.rp-pill-off]="viewRow.Status === 'Cancelled'"
+                    [class.rp-pill-late]="viewRow.Overdue">
+                    {{ viewRow.StatusText }}
+                </span>
+
+                <button
+                    type="button"
+                    class="rp-x"
+                    title="Close"
+                    (click)="closeView()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+
+            </div>
+
+            <div class="rp-panel-body appcore-scrollbar">
+
+                <section class="rp-sec">
+                    <h4>Customer</h4>
+                    <div class="rp-grid">
+                        <div><span>Name</span><b>{{ viewRow.CustomerName || '-' }}</b></div>
+                        <div><span>Code</span><b>{{ viewRow.CustomerCode || '-' }}</b></div>
+                        <div><span>Phone</span><b>{{ viewRow.CustomerPhone || '-' }}</b></div>
+                        <div><span>Salesman</span><b>{{ viewRow.SalesmanName || '-' }}</b></div>
+                    </div>
+                </section>
+
+                <section class="rp-sec">
+                    <h4>Bike</h4>
+                    <div class="rp-grid">
+                        <div class="rp-wide"><span>Model</span><b>{{ viewRow.ModelName || '-' }}</b></div>
+                        <div><span>Chassis No</span><b>{{ viewRow.ChassisNo || '-' }}</b></div>
+                        <div><span>{{ viewRow.VehiclePower === 'Electric' ? 'Motor No' : 'Engine No' }}</span><b>{{ viewRow.EngineNo || '-' }}</b></div>
+                        <div><span>Colour</span><b>{{ viewRow.ColorName || '-' }}</b></div>
+                        <div><span>Power</span><b>{{ viewRow.VehiclePower || '-' }}</b></div>
+                    </div>
+                </section>
+
+                <section class="rp-sec">
+                    <h4>Sale</h4>
+                    <div class="rp-grid">
+                        <div><span>Sales Invoice</span><b>{{ viewRow.SalesInvoiceNo || '-' }}</b></div>
+                        <div><span>Invoice Date</span><b>{{ dateText(viewRow.SalesInvoiceDate) }}</b></div>
+                        <div class="rp-wide"><span>Customer File</span><b>{{ viewRow.CustomerFileNo || '-' }}</b></div>
+                    </div>
+                </section>
+
+                <section class="rp-sec">
+                    <h4>Registration</h4>
+                    <div class="rp-grid">
+                        <div class="rp-wide"><span>Type</span><b>{{ viewRow.RegistrationTypeName }}</b></div>
+                        <div><span>Validity</span><b>{{ viewRow.ValidityYears }} years</b></div>
+                        <div><span>Mode</span><b>{{ viewRow.RegistrationMode || '-' }}</b></div>
+                    </div>
+
+                    <table class="rp-money">
+                        <tbody>
+                            <tr><td>Charged to the customer</td><td>{{ money(viewRow.Amount) }}</td></tr>
+                            <tr><td>Collected</td><td [class.rp-due]="viewRow.CollectedAmount < viewRow.Amount">{{ money(viewRow.CollectedAmount) }}</td></tr>
+                            <tr class="rp-sub"><td>BRTA Registration Fees</td><td>{{ money(viewRow.BrtaFees) }}</td></tr>
+                            <tr class="rp-sub"><td>Submission Charges</td><td>{{ money(viewRow.SubmissionCharges) }}</td></tr>
+                            <tr class="rp-sub"><td>BRTA Tips</td><td>{{ money(viewRow.BrtaTips) }}</td></tr>
+                            <tr class="rp-sub"><td>Registration Commission</td><td>{{ money(viewRow.RegistrationCommission) }}</td></tr>
+                            <tr><td>Total Cost</td><td>{{ money(viewRow.TotalCost) }}</td></tr>
+                            <tr class="rp-total"><td>Surplus</td><td>{{ money(viewRow.Surplus) }}</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="rp-sec">
+                    <h4>Status</h4>
+                    <div class="rp-grid">
+                        <div><span>Status</span><b>{{ viewRow.StatusText }}</b></div>
+                        <div><span>Since</span><b>{{ dateText(viewRow.StatusDate) }} ({{ viewRow.DaysInStatus }} days)</b></div>
+                        @if (viewRow.CancelReason)
+                        {
+                            <div class="rp-wide"><span>Reason</span><b>{{ viewRow.CancelReason }}</b></div>
+                        }
+                    </div>
+                    <p class="rp-note">
+                        <i class="fas fa-circle-info"></i>
+                        Collection, BRTA payment and the next stages are done on the Registration pages (coming next).
+                    </p>
+                </section>
+
+            </div>
+
+        </aside>
+    }
+
+    <app-toast></app-toast>
+
+</div>

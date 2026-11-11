@@ -169,6 +169,16 @@ export class SearchDropdownComponent
         );
     }
 
+    // Rows kept by value : a page that rebuilds its items on every
+    // change detection (a getter) no longer re-creates the rows,
+    // so the first click selects (it needed a double click)
+    trackOption =
+        (
+            index: number,
+            option: any
+        ): any =>
+            option?.[this.valueField] ?? index;
+
     /* =====================================================
        SELECTED LABEL
     ====================================================== */

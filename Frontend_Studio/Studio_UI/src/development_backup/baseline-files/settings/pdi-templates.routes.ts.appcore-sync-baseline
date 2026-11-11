@@ -1,0 +1,125 @@
+//===============================================================
+// Imports
+//===============================================================
+
+import
+{
+    Routes
+}
+from '@angular/router';
+
+
+//===============================================================
+// Submenu Routes
+//===============================================================
+
+export const PdiTemplatesRoutes:
+Routes =
+[
+
+
+    //===========================================================
+    // Default
+    //===========================================================
+
+    {
+        path:'',
+
+        redirectTo:'list',
+
+        pathMatch:'full'
+    },
+
+
+    //===========================================================
+    // List
+    //===========================================================
+
+    {
+        path:'list',
+
+        data:
+        {
+            breadcrumb:'PDI Templates'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/pdi-templates/list/pdi-templates-list'
+            )
+            .then(
+                m =>
+                    m.PdiTemplatesList
+            )
+    },
+
+
+    //===========================================================
+    // Add
+    //===========================================================
+
+    {
+        path:'add',
+
+        data:
+        {
+            breadcrumb:'Add PDI Templates'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/pdi-templates/form/pdi-templates-form'
+            )
+            .then(
+                m =>
+                    m.PdiTemplatesForm
+            )
+    },
+
+
+    //===========================================================
+    // Edit
+    //===========================================================
+
+    {
+        path:'edit/:id',
+
+        data:
+        {
+            breadcrumb:'Edit PDI Templates'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/pdi-templates/form/pdi-templates-form'
+            )
+            .then(
+                m =>
+                    m.PdiTemplatesForm
+            )
+    },
+
+
+    //===========================================================
+    // View
+    //===========================================================
+
+    {
+        path:'view/:id',
+
+        data:
+        {
+            breadcrumb:'View PDI Templates'
+        },
+
+        loadComponent:() =>
+            import(
+                '../pages/pdi-templates/form/pdi-templates-form'
+            )
+            .then(
+                m =>
+                    m.PdiTemplatesForm
+            )
+    }
+
+];

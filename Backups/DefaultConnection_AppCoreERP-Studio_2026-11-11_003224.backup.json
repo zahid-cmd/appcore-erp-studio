@@ -1,0 +1,15 @@
+{
+  "FileName": "DefaultConnection_AppCoreERP-Studio_2026-11-11_003224.backup",
+  "ConnectionName": "DefaultConnection",
+  "Host": "100.117.11.97",
+  "Database": "AppCoreERP_Studio",
+  "SizeBytes": 64975706,
+  "Kind": "Nightly",
+  "Note": "Nightly",
+  "TakenBy": "System (Nightly Backup)",
+  "TakenDate": "2026-11-11T00:32:43.5429872+06:00",
+  "ToolsVersion": "18.3",
+  "TakenOn": "MY-ZBOOK",
+  "OnThisPc": true,
+  "OnOtherPc": false
+}

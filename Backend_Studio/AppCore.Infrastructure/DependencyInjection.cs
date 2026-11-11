@@ -924,6 +924,29 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Bookings Repository (manual, hand-written page) : Sales
+        // Operations > Booking Management > Bookings.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.SalesOperations.BookingManagement.IBookingsRepository,
+            AppCore.Infrastructure.Repositories.SalesOperations.BookingManagement.BookingsRepository
+        >();
+
+        //=======================================================
+        // Registration Profiles Repository (manual, hand-written
+        // page) : Registration Management > Registration
+        // Processing > Registration Profiles.
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.RegistrationManagement.RegistrationProcessing.IRegistrationProfilesRepository,
+            AppCore.Infrastructure.Repositories.RegistrationManagement.RegistrationProcessing.RegistrationProfilesRepository
+        >();
+
+        //=======================================================
         // CKD Documents Status Repository (manual, hand-written
         // page) : Inventory Management > Inventory Status.
         //=======================================================
@@ -981,6 +1004,16 @@ public static class DependencyInjection
         //=======================================================
 
         // AUTO-BEGIN : AUTO REGISTER SERVICES
+
+        // AUTO-BEGIN : PdiTemplates
+
+        services.AddScoped
+        <
+            IPdiTemplatesRepository,
+            PdiTemplatesRepository
+        >();
+
+        // AUTO-END : PdiTemplates
 
         // AUTO-BEGIN : MotorBikeSpecifications
 

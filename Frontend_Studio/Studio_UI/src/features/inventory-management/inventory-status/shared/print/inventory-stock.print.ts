@@ -90,6 +90,9 @@ export interface StockPrintRequest
     filterLabel:string;
     category:string;
     search:string;
+    // The period of the list (yyyy-MM-dd)
+    from?:string;
+    to?:string;
 }
 
 const STORAGE_PREFIX =
@@ -202,7 +205,7 @@ export function inventoryStockPrintSource
                     tabLabel:page.tabs[0]?.label ?? '',
                     kind:page.tabs[0]?.kind ?? '',
                     filter:'all',
-                    filterLabel:'Stocked',
+                    filterLabel:'All',
                     category:'',
                     search:''
                 };
@@ -246,7 +249,7 @@ export function inventoryStockPrintSource
 
             const stock =
                 await firstValueFrom(
-                    service.getStock(page.apiPath, request.branchId, request.warehouseId)
+                    service.getStock(page.apiPath, request.branchId, request.warehouseId, request.from ?? '', request.to ?? '')
                 );
 
             return {
@@ -444,7 +447,7 @@ function stockHead
             ['Branch', request.branchName || 'All Branches'],
             ...(data.bikesTab ? [] : [['Warehouse', request.warehouseName || 'All Warehouses']]),
             ...(request.tabLabel && data.page.tabs.length > 1 ? [['View', request.tabLabel]] : []),
-            ...(!data.bikesTab ? [['Showing', request.filterLabel || 'Stocked']] : []),
+            ...(!data.bikesTab ? [['Showing', request.filterLabel || 'All']] : []),
             ...(request.category ? [['Category', request.category]] : []),
             ...(request.search ? [['Search', request.search]] : [])
         ]
@@ -1035,7 +1038,7 @@ function stockPositionSheet
             [{ v:kit.company?.CompanyName ?? '', s:'title' }],
             [bold(`${data.page.title.toUpperCase()} - STOCK POSITION`)],
             [bold('Branch'), data.request.branchName, null, bold('Warehouse'), data.request.warehouseName],
-            [bold('Showing'), data.request.filterLabel || 'Stocked', null, bold('As of'), data.asOf ? kit.date(data.asOf) : ''],
+            [bold('Showing'), data.request.filterLabel || 'All', null, bold('As of'), data.asOf ? kit.date(data.asOf) : ''],
             [],
             header,
             ...data.rows.map

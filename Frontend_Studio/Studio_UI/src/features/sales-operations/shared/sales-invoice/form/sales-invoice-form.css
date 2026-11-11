@@ -441,6 +441,92 @@
     color: var(--si-rose);
 }
 
+/* Summary : the fractional discount box (Tk) */
+.si-frac-input
+{
+    width: 110px;
+    text-align: right;
+}
+
+/* the amount right aligned, like the other money boxes */
+:host ::ng-deep .si-frac-input .textbox input
+{
+    text-align: right;
+}
+
+.si-add.si-add-update
+{
+    background: #b45309;
+    border-color: #b45309;
+}
+
+/* A rule broken (discount / price boxes) : red */
+:host ::ng-deep .si-input-bad .textbox
+{
+    border-color: #e11d48 !important;
+    background: #fff1f2 !important;
+    box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.12) !important;
+}
+
+:host ::ng-deep .si-input-bad .textbox input
+{
+    color: #be123c !important;
+}
+
+.si-spec-cell
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.si-spec-mode
+{
+    min-width: 30px;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid #cdd9ee;
+    border-radius: 6px;
+    background: #f3f7ff;
+    color: var(--si-navy);
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.si-spec-mode.si-spec-tk
+{
+    border-color: #a7d8c4;
+    background: #f0fdf7;
+    color: #047857;
+}
+
+.si-spec-mode:disabled
+{
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.si-corp-note
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border: 1px solid #c7d7f5;
+    border-radius: 999px;
+    background: #f3f7ff;
+    color: var(--si-navy);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.si-corp-note > i
+{
+    font-size: 10px;
+}
+
 .si-head-meta
 {
     margin-left: auto;
@@ -2971,6 +3057,44 @@
 }
 
 /* Add card before the customer is picked : dimmed, not clickable */
+.si-add-card.si-add-view .si-fields
+{
+    pointer-events: none;
+}
+
+.si-view-tag
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 4px 1px 8px;
+    border: 1px solid #c7d7f5;
+    border-radius: 999px;
+    background: #f3f7ff;
+    color: var(--si-navy);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.si-view-tag > i
+{
+    font-size: 10px;
+}
+
+.si-view-edit
+{
+    padding: 0 7px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--si-blue);
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 16px;
+    cursor: pointer;
+}
+
 .si-add-card.si-add-locked .si-fields
 {
     opacity: .5;
@@ -3018,4 +3142,448 @@
     background: #1d4ed8;
     border-color: #1d4ed8;
     color: #ffffff;
+}
+
+/*---------------------------------------------------------------
+  Fit every screen (2026-11-10) : on desktop widths the two
+  columns are held to the page height. Nothing pushes the page
+  into a scroll : the picked bike (left) and the item rows (right)
+  give up height and scroll inside themselves. Sizes follow the
+  screen height so a shorter / larger-scaled screen stays whole.
+  Below 1100px the columns stack and the body scrolls as before.
+---------------------------------------------------------------*/
+
+@media (min-width: 1101px)
+{
+    .si-grid
+    {
+        grid-template-rows: minmax(0, 1fr);
+    }
+
+    .si-col
+    {
+        min-height: 0;
+    }
+
+    .si-col > .si-card
+    {
+        flex-shrink: 0;
+    }
+
+    .si-col-left > .si-card.si-add-card:last-child,
+    .si-col-right > .si-card:first-child
+    {
+        flex: 1 1 0;
+        min-height: 0;
+    }
+
+    /* The picked bike : shrinks with the screen, scrolls if it must */
+    .si-add-card > .si-picked.si-picked-bike
+    {
+        flex: 1 1 0;
+        min-height: 72px;
+        overflow-y: auto;
+        gap: clamp(4px, 0.8vh, 8px);
+        padding: clamp(6px, 0.9vh, 10px) 14px;
+    }
+
+    .si-add-card > .si-picked.si-picked-bike .si-pb-nos
+    {
+        gap: clamp(4px, 0.8vh, 8px);
+    }
+
+    .si-add-card > .si-picked.si-picked-bike .si-pb-no
+    {
+        padding: clamp(3px, 0.6vh, 6px) 10px;
+    }
+
+    .si-add-card > .si-picked.si-picked-bike .si-pb-no > b
+    {
+        font-size: clamp(14px, 1.8vh, 19px);
+    }
+
+    .si-add-card > .si-picked.si-picked-bike .si-pb-price > b
+    {
+        font-size: clamp(18px, 2.4vh, 26px);
+    }
+}
+
+/* Short screens (or Windows scaling 125% / 150%) : tighter cards */
+@media (min-width: 1101px) and (max-height: 900px)
+{
+    .si-body
+    {
+        gap: 8px;
+    }
+
+    .si-grid,
+    .si-col
+    {
+        gap: 8px;
+    }
+
+    .si-add-card > .si-picked.si-picked-bike
+    {
+        margin-bottom: 8px;
+    }
+}
+
+
+/* =====================================================
+   REGISTRATION (MB) : Summary row + modal
+   ===================================================== */
+
+.si-sum-reg
+{
+    align-items: center;
+}
+
+.si-sum-reg > span
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.si-sum-reg-text
+{
+    font-size: 10.5px;
+    font-style: normal;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.si-sum-reg-off > b
+{
+    text-decoration: line-through;
+    color: #94a3b8;
+}
+
+.si-reg-btn
+{
+    margin-left: auto;
+    margin-right: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.si-reg-modal
+{
+    max-width: 860px;
+    max-height: none;
+}
+
+/* Landscape : two columns, no stretching */
+.si-reg-body
+{
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 14px 22px;
+    overflow: visible;
+    padding: 16px 22px 18px;
+    --textbox-height: 36px;
+}
+
+.si-reg-col
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.si-reg-span
+{
+    grid-column: 1 / -1;
+}
+
+.si-reg-field
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.si-reg-field > label
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.si-reg-type
+{
+    display: block;
+    width: 100%;
+    --dropdown-width: 100%;
+}
+
+.si-reg-bar-empty
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 34px;
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.si-reg-bar
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.si-reg-bar-ends
+{
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.si-reg-bar-ends b
+{
+    color: #0f172a;
+}
+
+.si-reg-range
+{
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: linear-gradient(90deg, #1d4ed8 0, #1d4ed8 var(--si-reg-fill, 0%), #dbe3ef var(--si-reg-fill, 0%), #dbe3ef 100%);
+    outline: none;
+    cursor: pointer;
+}
+
+.si-reg-range::-webkit-slider-thumb
+{
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: #1d4ed8;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
+}
+
+.si-reg-range::-moz-range-thumb
+{
+    width: 14px;
+    height: 14px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: #1d4ed8;
+}
+
+.si-reg-units
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.si-reg-units-head
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.si-reg-units-list
+{
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.si-reg-unit
+{
+    display: grid;
+    grid-template-columns: 18px 150px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.si-reg-unit:last-child
+{
+    border-bottom: 0;
+}
+
+.si-reg-unit span
+{
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.si-reg-empty
+{
+    padding: 10px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.si-reg-total
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #eff6ff;
+    font-size: 12px;
+    color: #1e3a8a;
+}
+
+.si-reg-hint
+{
+    margin-top: -4px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.si-reg-modal .si-modal-note
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.si-reg-btn:disabled
+{
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Registration button in the Add Motor Bike header (before Shelf) */
+.si-reg-head + .si-shelf
+{
+    margin-left: 8px;
+}
+
+.si-reg-head.is-set
+{
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.si-reg-head.is-set:hover:not(:disabled)
+{
+    border-color: #4ade80;
+    background: #dcfce7;
+}
+
+
+/* =====================================================
+   BOOKING (MB) : picker of the customer's open bookings
+===================================================== */
+
+.si-book-modal
+{
+    max-width: 640px;
+}
+
+.si-book-body
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.si-book-row
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        'main amount'
+        'meta amount';
+    align-items: center;
+    gap: 2px 14px;
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e3e9f3;
+    border-radius: 10px;
+    background: #ffffff;
+    text-align: left;
+    cursor: pointer;
+}
+
+.si-book-row:hover
+{
+    border-color: #93c5fd;
+    background: #f8fbff;
+}
+
+.si-book-row.is-set
+{
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.si-book-main
+{
+    grid-area: main;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+    color: #1e293b;
+    font-size: 13.5px;
+}
+
+.si-book-main span
+{
+    overflow: hidden;
+    color: #475569;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.si-book-meta
+{
+    grid-area: meta;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.si-book-amount
+{
+    grid-area: amount;
+    color: #047857;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+}
+
+.si-book-empty
+{
+    padding: 18px 6px;
+    color: #64748b;
+    font-size: 13px;
+    text-align: center;
 }

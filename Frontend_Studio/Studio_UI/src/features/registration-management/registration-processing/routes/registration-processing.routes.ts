@@ -33,8 +33,32 @@ Routes =
 
             // SUBMENU ROUTE PLACEHOLDER
 
+            //===========================================================
+            // Registration Profiles (was Registration Files)
+            // Hand-written : one list page, NO Code Sync.
+            // Keep this block outside the AUTO markers.
+            //===========================================================
+
+            {
+                path:'registration-profiles',
+
+                data:
+                {
+                    breadcrumb:'Registration Profiles'
+                },
+
+                loadChildren:() =>
+                    import(
+                        './registration-profiles.routes'
+                    )
+                    .then(
+                        m =>
+                            m.RegistrationProfilesRoutes
+                    )
+            },
+
         ]
 
     }
 
-];
+];

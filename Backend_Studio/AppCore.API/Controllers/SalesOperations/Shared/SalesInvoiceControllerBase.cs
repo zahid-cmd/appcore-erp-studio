@@ -58,6 +58,10 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
     private const string ActivityEmi =
         "EMI Sale";
 
+    // MB : reverse the registration of a posted invoice (admin)
+    private const string ActivityReverseRegistration =
+        "Reverse Registration";
+
     private readonly ISalesInvoiceRepository _repository;
 
     private readonly IActivityHistoryRepository _activityHistoryRepository;
@@ -319,6 +323,7 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
                 defaults.CanPrint = await HasAsync("Print");
                 defaults.CanCreditSale = await HasAsync(ActivityCredit);
                 defaults.CanEmiSale = await HasAsync(ActivityEmi);
+                defaults.CanReverseRegistration = PageType == "MB" && await HasAsync(ActivityReverseRegistration);
 
                 return Ok(defaults);
             },
@@ -848,6 +853,47 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
                 return NoContent();
             },
             "Failed to cancel the sales invoice.");
+    }
+
+
+    //===========================================================
+    // MB : Reverse Registration (posted invoice; reason)
+    //===========================================================
+
+    [HttpPut("{publicId:guid}/reverse-registration")]
+    public async Task<IActionResult> ReverseRegistration(
+        Guid publicId,
+        CancelSalesInvoiceDto dto)
+    {
+        long? foundId =
+            await _repository.GetIdByPublicIdAsync(publicId);
+
+        if (foundId == null)
+        {
+            return NotFound("Sales invoice not found.");
+        }
+
+        long id =
+            foundId.Value;
+
+        long userId = UserId;
+
+        IActionResult? denied =
+            await DenyForInvoiceAsync(id, ActivityReverseRegistration);
+
+        if (denied != null)
+        {
+            return denied;
+        }
+
+        return await Run(
+            async () =>
+            {
+                await _repository.ReverseRegistrationAsync(id, dto, userId);
+
+                return NoContent();
+            },
+            "Failed to reverse the registration.");
     }
 
 

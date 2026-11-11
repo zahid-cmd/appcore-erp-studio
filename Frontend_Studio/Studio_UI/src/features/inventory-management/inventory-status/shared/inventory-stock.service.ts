@@ -92,7 +92,12 @@ export class InventoryStockService
         branchId:
             number,
         warehouseId:
-            number
+            number,
+        // yyyy-MM-dd ('' = the running calendar month)
+        from:
+            string = '',
+        to:
+            string = ''
     ):
         Observable<InventoryStockList>
     {
@@ -103,7 +108,9 @@ export class InventoryStockService
                     params:
                     {
                         branchId:String(branchId || 0),
-                        warehouseId:String(warehouseId || 0)
+                        warehouseId:String(warehouseId || 0),
+                        from:from || '',
+                        to:to || ''
                     }
                 }
             )
@@ -117,6 +124,8 @@ export class InventoryStockService
                         BranchId:num(pick(x, 'BranchId')),
                         WarehouseId:num(pick(x, 'WarehouseId')),
                         AsOf:text(pick(x, 'AsOf')),
+                        From:text(pick(x, 'From')),
+                        To:text(pick(x, 'To')),
                         Rows:list(pick(x, 'Rows')).map(toRow),
                         Branches:list(pick(x, 'Branches')).map
                         (
@@ -381,6 +390,9 @@ function toRow
         RedLevel:num(pick(x, 'RedLevel')),
         MaxStockLevel:num(pick(x, 'MaxStockLevel')),
         IsActive:!!pick(x, 'IsActive'),
+        OpeningQty:num(pick(x, 'OpeningQty')),
+        PurchaseQty:num(pick(x, 'PurchaseQty')),
+        SalesQty:num(pick(x, 'SalesQty')),
         InTransit:num(pick(x, 'InTransit')),
         OnHand:num(pick(x, 'OnHand')),
         Total:num(pick(x, 'Total')),

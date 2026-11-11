@@ -232,6 +232,8 @@ public static class SalesInvoiceModel
                .HasPrecision(18, 2);
         builder.Property(x => x.SpecialDiscountPercent)
                .HasPrecision(7, 2);
+        builder.Property(x => x.SpecialDiscountTk)
+               .HasPrecision(18, 2);
         builder.Property(x => x.SpecialAmount)
                .HasPrecision(18, 2);
         builder.Property(x => x.NetAmount)

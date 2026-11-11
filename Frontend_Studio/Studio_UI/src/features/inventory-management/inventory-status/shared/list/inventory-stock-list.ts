@@ -120,6 +120,12 @@ from '../../../../../shared/components/controls/search-dropdown/search-dropdown'
 
 import
 {
+    DatepickerComponent
+}
+from '../../../../../shared/components/controls/datepicker/datepicker';
+
+import
+{
     ToastService
 }
 from '../../../../../shared/components/utilities/toast/toast.service';
@@ -209,6 +215,9 @@ type StockRow =
     InventoryStockRow
     &
     {
+        OpeningText:string;
+        PurchaseText:string;
+        SalesText:string;
         InTransitText:string;
         OnHandText:string;
         TotalText:string;
@@ -285,6 +294,7 @@ interface PlacesView
         ListTableComponent,
         PaginationComponent,
         SearchDropdownComponent,
+        DatepickerComponent,
         ToastComponent,
         HistoryDrawerComponent,
         InventoryStockCardComponent
@@ -453,6 +463,16 @@ implements OnInit
     asOf:
         string =
         '';
+
+    // Period of Opening / Purchase / Sales : the running
+    // calendar month on load
+    fromDate:
+        Date =
+        monthStart();
+
+    toDate:
+        Date =
+        monthEnd();
 
     loading:
         boolean =
@@ -780,6 +800,9 @@ implements OnInit
                 return {
                     grand,
                     ItemName:`${label} · ${rows.length} ${word}${rows.length === 1 ? '' : 's'}`,
+                    OpeningText:formatQuantity(sum(x => x.OpeningQty)),
+                    PurchaseText:formatQuantity(sum(x => x.PurchaseQty)),
+                    SalesText:formatQuantity(sum(x => x.SalesQty)),
                     InTransitText:formatQuantity(sum(x => x.InTransit)),
                     OnHandText:formatQuantity(sum(x => x.OnHand)),
                     TotalText:formatQuantity(sum(x => x.Total)),
@@ -856,7 +879,9 @@ implements OnInit
                 .getStock(
                     this.page.apiPath,
                     this.branchId,
-                    this.warehouseId
+                    this.warehouseId,
+                    isoDate(this.fromDate),
+                    isoDate(this.toDate)
                 )
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe
@@ -1565,6 +1590,9 @@ implements OnInit
     {
         return {
             ...row,
+            OpeningText:row.OpeningQty ? formatQuantity(row.OpeningQty) : '–',
+            PurchaseText:row.PurchaseQty ? formatQuantity(row.PurchaseQty) : '–',
+            SalesText:row.SalesQty ? formatQuantity(row.SalesQty) : '–',
             InTransitText:row.InTransit ? formatQuantity(row.InTransit) : '–',
             OnHandText:formatQuantity(row.OnHand),
             TotalText:formatQuantity(row.Total),
@@ -1607,6 +1635,10 @@ implements OnInit
         const quantities:
             ListTableColumn[] =
         [
+            // The period (date range) : opening, purchased, sold
+            { header:'Opening', field:'OpeningText', width:'85px', align:'right', sortable:true },
+            { header:'Purchase', field:'PurchaseText', width:'85px', align:'right', sortable:true },
+            { header:'Sales', field:'SalesText', width:'75px', align:'right', sortable:true },
             { header:'In Transit', field:'InTransitText', width:'95px', align:'right', sortable:true },
             { header:'On Hand', field:'OnHandText', width:'90px', align:'right', sortable:true, link:true, linkTitle:PLACES_TITLE },
             { header:'Total', field:'TotalText', width:'75px', align:'right', sortable:true, link:true, linkTitle:PLACES_TITLE },
@@ -1618,7 +1650,7 @@ implements OnInit
             page.pageType === 'MB'
                 ? [
                     { header:'Code', field:'ProductCode', width:'145px', align:'center', sortable:true },
-                    { header:'Model', field:'ItemName', width:'320px', align:'left', sortable:true },
+                    { header:'Model', field:'ItemName', width:'250px', align:'left', sortable:true },
                     // A motorcycle painted in the bike's colour (the name on hover)
                     { header:'Colour', field:'ColorName', width:'80px', align:'center', sortable:true, dotField:'ColorHex', dotIcon:'fas fa-motorcycle' }
                 ]
@@ -1806,7 +1838,7 @@ implements OnInit
         [
             {
                 id:'all',
-                label:'Stocked',
+                label:'All',
                 icon:'fas fa-boxes-stacked',
                 tone:'navy',
                 value:`${stocked.length} ${word}${stocked.length === 1 ? '' : 's'}`,
@@ -1926,6 +1958,55 @@ implements OnInit
         }
 
         this.applyFilters();
+    }
+
+    // Date range : a new period reloads the list
+    onFromChange
+    (
+        date:
+            Date
+    ):
+        void
+    {
+        if (!date)
+        {
+            return;
+        }
+
+        this.fromDate =
+            date;
+
+        if (this.fromDate > this.toDate)
+        {
+            this.toDate =
+                date;
+        }
+
+        this.load();
+    }
+
+    onToChange
+    (
+        date:
+            Date
+    ):
+        void
+    {
+        if (!date)
+        {
+            return;
+        }
+
+        this.toDate =
+            date;
+
+        if (this.toDate < this.fromDate)
+        {
+            this.fromDate =
+                date;
+        }
+
+        this.load();
     }
 
     onSearch
@@ -2061,6 +2142,9 @@ implements OnInit
         const raw:
             Record<string, string> =
         {
+            OpeningText:'OpeningQty',
+            PurchaseText:'PurchaseQty',
+            SalesText:'SalesQty',
             InTransitText:'InTransit',
             OnHandText:'OnHand',
             TotalText:'Total',
@@ -2169,7 +2253,9 @@ implements OnInit
                 .getStock(
                     this.accessoriesApiPath,
                     this.branchId,
-                    this.warehouseId
+                    this.warehouseId,
+                    isoDate(this.fromDate),
+                    isoDate(this.toDate)
                 )
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe
@@ -2239,7 +2325,9 @@ implements OnInit
                     filter:this.filter,
                     filterLabel:this.cards.find(x => x.id === this.filter)?.label ?? '',
                     category:this.selectedCategory,
-                    search:this.searchText
+                    search:this.searchText,
+                    from:isoDate(this.fromDate),
+                    to:isoDate(this.toDate)
                 }
             );
 
@@ -2273,6 +2361,47 @@ implements OnInit
             );
         }
     }
+}
+
+
+//===============================================================
+// The running calendar month; Date → yyyy-MM-dd (local)
+//===============================================================
+
+function monthStart():
+    Date
+{
+    const today =
+        new Date();
+
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+}
+
+function monthEnd():
+    Date
+{
+    const today =
+        new Date();
+
+    return new Date(today.getFullYear(), today.getMonth() + 1, 0);
+}
+
+function isoDate
+(
+    date:
+        Date
+):
+    string
+{
+    if (!date || isNaN(date.getTime()))
+    {
+        return '';
+    }
+
+    const pad =
+        (n: number) => String(n).padStart(2, '0');
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 

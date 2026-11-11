@@ -139,6 +139,16 @@ public class InventoryStatusRepository
 
     private const string KindAccessories = "Accessories";
 
+    // Movement types of the period figures
+    private static readonly string[] PurchaseMoves =
+        { "Purchase", "PurchaseCancel", "PurchaseReturn", "ShortSupply" };
+
+    private static readonly string[] SalesMoves =
+        { "Sale", "SaleCancel", "SaleReturn" };
+
+    private static readonly string[] OpeningMoves =
+        { "Opening", "OpeningCancel" };
+
     private const string UnitPending = "Pending";
 
     private const string UnitSold = "Sold";
@@ -276,11 +286,28 @@ public class InventoryStatusRepository
             long branchId,
             long warehouseId,
             bool canViewCost,
-            bool canViewCostVat = false
+            bool canViewCostVat = false,
+            DateOnly? from = null,
+            DateOnly? to = null
         )
     {
         string page =
             PageOf(pageType);
+
+        // The period : the running calendar month by default
+        DateOnly today =
+            Today();
+
+        DateOnly start =
+            from ?? new DateOnly(today.Year, today.Month, 1);
+
+        DateOnly end =
+            to ?? new DateOnly(start.Year, start.Month, 1).AddMonths(1).AddDays(-1);
+
+        if (end < start)
+        {
+            (start, end) = (end, start);
+        }
 
         // One cost on these pages : always incl. VAT (owner,
         // 2026-11-06); the separate incl. VAT figures are not used
@@ -295,7 +322,9 @@ public class InventoryStatusRepository
                 CanViewCostVat = canViewCostVat,
                 BranchId = Math.Max(0, branchId),
                 WarehouseId = Math.Max(0, warehouseId),
-                AsOf = DateText(Today())
+                AsOf = DateText(end < today ? end : today),
+                From = DateText(start),
+                To = DateText(end)
             };
 
         result.Branches =
@@ -338,14 +367,56 @@ public class InventoryStatusRepository
         List<ProductInfo> products =
             await ProductsAsync(page, null);
 
+        // Stock at the end of the period
         List<Holding> holdings =
-            await HoldingsAsync(page, null, result.BranchId, result.WarehouseId);
+            await HoldingsAsync(page, null, result.BranchId, result.WarehouseId, end);
 
         Dictionary<long, decimal> costs =
             await BatchCostsAsync(holdings);
 
         Dictionary<long, decimal> vats =
             new();
+
+        //=======================================================
+        // Period figures per product : Opening (before the
+        // period, + Opening Stock entered in it), Purchase and
+        // Sales (net, in the period); Bought = ever purchased or
+        // opened (net of cancels)
+        //=======================================================
+
+        var flows =
+            (
+                await MovementsQuery(page, null, result.BranchId, result.WarehouseId)
+                    .Where(x => x.DocumentDate <= end)
+                    .GroupBy(x => x.ProductId)
+                    .Select
+                    (
+                        g =>
+                            new
+                            {
+                                ProductId = g.Key,
+                                Opening = g.Sum(x =>
+                                    x.DocumentDate < start || OpeningMoves.Contains(x.MovementType)
+                                        ? x.QuantityIn - x.QuantityOut
+                                        : 0m),
+                                Purchase = g.Sum(x =>
+                                    x.DocumentDate >= start && PurchaseMoves.Contains(x.MovementType)
+                                        ? x.QuantityIn - x.QuantityOut
+                                        : 0m),
+                                Sales = g.Sum(x =>
+                                    x.DocumentDate >= start && SalesMoves.Contains(x.MovementType)
+                                        ? x.QuantityOut - x.QuantityIn
+                                        : 0m),
+                                Bought = g.Sum(x =>
+                                    x.MovementType == "Purchase" || x.MovementType == "PurchaseCancel" || OpeningMoves.Contains(x.MovementType)
+                                        ? x.QuantityIn - x.QuantityOut
+                                        : 0m),
+                                Moved = g.Count(x => x.DocumentDate >= start)
+                            }
+                    )
+                    .ToListAsync()
+            )
+            .ToDictionary(x => x.ProductId);
 
         Labels labels =
             await LabelsAsync();
@@ -361,15 +432,43 @@ public class InventoryStatusRepository
                 .Select
                 (
                     product =>
-                        RowOf(
-                            product,
-                            byProduct[product.ProductId],
-                            costs,
-                            labels,
-                            locations,
-                            canViewCost,
-                            canViewCostVat ? vats : null)
+                    {
+                        InventoryStockRowDto row =
+                            RowOf(
+                                product,
+                                byProduct[product.ProductId],
+                                costs,
+                                labels,
+                                locations,
+                                canViewCost,
+                                canViewCostVat ? vats : null);
+
+                        bool listed =
+                            row.Total != 0;
+
+                        if (flows.TryGetValue(product.ProductId, out var flow))
+                        {
+                            row.OpeningQty = flow.Opening;
+
+                            row.PurchaseQty = flow.Purchase;
+
+                            row.SalesQty = flow.Sales;
+
+                            // Purchased (or opened) at some time, or
+                            // moved in the period (e.g. a transfer)
+                            listed =
+                                listed
+                                ||
+                                flow.Bought > 0
+                                ||
+                                flow.Moved > 0;
+                        }
+
+                        return listed ? row : null;
+                    }
                 )
+                .Where(x => x != null)
+                .Select(x => x!)
                 .OrderBy(x => x.ProductCode)
                 .ToList();
 
@@ -412,7 +511,9 @@ public class InventoryStatusRepository
         (
             long branchId,
             long warehouseId,
-            bool canViewCost
+            bool canViewCost,
+            DateOnly? from = null,
+            DateOnly? to = null
         )
     {
         InventoryStockListDto result =
@@ -420,7 +521,10 @@ public class InventoryStatusRepository
                 PageAccessories,
                 branchId,
                 warehouseId,
-                canViewCost);
+                canViewCost,
+                false,
+                from,
+                to);
 
         HashSet<long> ids =
             await BikeAccessoryIdsAsync();
@@ -986,11 +1090,24 @@ public class InventoryStatusRepository
             string page,
             long? productId,
             long branchId,
-            long warehouseId
+            long warehouseId,
+            DateOnly? upTo = null
         )
     {
+        IQueryable<StockMovementsEntity> query =
+            MovementsQuery(page, productId, branchId, warehouseId);
+
+        // Stock at a date : its movements up to that date
+        if (upTo.HasValue)
+        {
+            DateOnly last =
+                upTo.Value;
+
+            query = query.Where(x => x.DocumentDate <= last);
+        }
+
         return
-            await MovementsQuery(page, productId, branchId, warehouseId)
+            await query
                 .GroupBy
                 (
                     x =>

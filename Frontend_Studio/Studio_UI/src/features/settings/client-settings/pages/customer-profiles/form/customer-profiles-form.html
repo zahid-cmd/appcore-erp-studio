@@ -621,7 +621,7 @@
 
                         (valueChange)="onCategoryChange($event)"
 
-                        [disabled]="isViewMode || isSaving"
+                        [disabled]="isViewMode || isSaving || lockedCategory !== null"
 
                         [required]="true">
 
@@ -632,15 +632,17 @@
 
                 <!-- =============================================
                      SECTION 02
-                     PERSONAL DETAILS (Individual) /
-                     TAX DETAILS (Corporate / Institution)
+                     PERSONAL DETAILS (Individual : parents, NID,
+                     date of birth) /
+                     CORPORATE INFORMATION (Corporate / Institution :
+                     TIN, BIN, contact person and the person's NID)
                 ============================================== -->
 
                 @if (entity.IsCorporate)
                 {
                     <app-form-section
 
-                        title="Tax Details"
+                        title="Corporate Information"
 
                         icon="fas fa-building">
 
@@ -694,6 +696,49 @@
                             </div>
                         }
 
+
+                        <!-- Contact person of the company (optional) -->
+
+                        <app-textbox
+
+                            label="Contact Person"
+
+                            placeholder="Optional, e.g. Karim Ahmed"
+
+                            [(value)]="entity.ContactPersonName"
+
+                            (valueChange)="onUpperCaseChange('ContactPersonName')"
+
+                            [disabled]="isViewMode || isSaving">
+
+                        </app-textbox>
+
+
+                        <!-- The contact person's NID : optional, 10 / 13
+                             / 17 digits, not unique -->
+
+                        <app-textbox
+
+                            label="Contact Person NID"
+
+                            placeholder="Optional, 10, 13 or 17 digits"
+
+                            [value]="entity.ContactPersonNid"
+
+                            (valueChange)="onContactNidChange($event)"
+
+                            [disabled]="isViewMode || isSaving">
+
+                        </app-textbox>
+
+                        @if (!isViewMode && contactNidWarning)
+                        {
+                            <div class="cus-warning">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                {{ contactNidWarning }}
+                            </div>
+                        }
+
                     </app-form-section>
                 }
                 @else
@@ -733,6 +778,35 @@
                         [disabled]="isViewMode || isSaving">
 
                     </app-textbox>
+
+
+                    <!-- NID : 10 / 13 / 17 digits, unique among Inbound
+                         (Individual; a corporate customer has its
+                         contact person's NID instead) -->
+
+                    <app-textbox
+
+                        label="NID No"
+
+                        placeholder="10, 13 or 17 digits"
+
+                        [value]="entity.NidNo"
+
+                        (valueChange)="onNidChange($event)"
+
+                        [disabled]="isViewMode || isSaving"
+
+                        [required]="true">
+
+                    </app-textbox>
+
+                    @if (!isViewMode && nidWarning)
+                    {
+                        <div class="cus-warning">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            {{ nidWarning }}
+                        </div>
+                    }
 
 
                     <div class="cus-date-field">
@@ -876,45 +950,14 @@
 
                 <!-- =============================================
                      SECTION 05
-                     IDENTITY & PRESENT ADDRESS
+                     DRIVING LICENSE & PRESENT ADDRESS
                 ============================================== -->
 
                 <app-form-section
 
-                    title="Identity & Present Address"
+                    title="Driving License & Present Address"
 
                     icon="fas fa-fingerprint">
-
-
-                    <!-- NID : 10 / 13 / 17 digits, unique among Inbound
-                         (not for Corporate / Institution) -->
-
-                    @if (!entity.IsCorporate)
-                    {
-                        <app-textbox
-
-                            label="NID No"
-
-                            placeholder="10, 13 or 17 digits"
-
-                            [value]="entity.NidNo"
-
-                            (valueChange)="onNidChange($event)"
-
-                            [disabled]="isViewMode || isSaving"
-
-                            [required]="true">
-
-                        </app-textbox>
-
-                        @if (!isViewMode && nidWarning)
-                        {
-                            <div class="cus-warning">
-                                <i class="fas fa-triangle-exclamation"></i>
-                                {{ nidWarning }}
-                            </div>
-                        }
-                    }
 
 
                     <app-textbox
