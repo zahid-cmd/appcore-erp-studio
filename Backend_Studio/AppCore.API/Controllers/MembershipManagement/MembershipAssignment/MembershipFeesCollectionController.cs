@@ -4,9 +4,10 @@
 
 using Microsoft.AspNetCore.Mvc;
 
+using AppCore.Application.Common.ActivityHistory.Interfaces;
+using AppCore.Application.Platform.EffectiveAccess.Interfaces;
 using AppCore.Application.MembershipManagement.MembershipAssignment;
-
-using AppCore.Domain.Entities.MembershipManagement.MembershipAssignment;
+using AppCore.Api.Extensions;
 
 
 //===============================================================
@@ -17,322 +18,144 @@ namespace AppCore.Api.Controllers.MembershipManagement.MembershipAssignment;
 
 
 //===============================================================
-// MembershipFeesCollectionController
+// Membership Fees Collection (hand-written page, 2026-11-11; NO
+// Code Sync)
+//
+//   GET  ''                      to collect + collections
+//   GET  history/{feeId}         one collection's history
+//   POST collect                 Payment Desk -> Receipt Voucher
+//                                (activity Add)
+//   PUT  {publicId}/cancel       cancel an unused collection
+//                                (activity Cancel)
+//   PUT  {publicId}/refund       refund a cancelled, unused
+//                                membership to the customer's
+//                                ledger (activity Refund)
 //===============================================================
 
 [ApiController]
-
 [Route("api/membership-management/membership-assignment/membership-fees-collection")]
-
 public class MembershipFeesCollectionController
     : ControllerBase
 {
-    //===========================================================
-    // Repository
-    //===========================================================
+    private const string PageRoute =
+        "/membership-management/%/membership-fees-collection";
+
 
     private readonly IMembershipFeesCollectionRepository _repository;
 
+    private readonly IActivityHistoryRepository _activityHistoryRepository;
 
-    //===========================================================
-    // Constructor
-    //===========================================================
+    private readonly IEffectiveAccessRepository _effectiveAccess;
 
-    public MembershipFeesCollectionController
-    (
-        IMembershipFeesCollectionRepository repository
-    )
+    private readonly ILogger<MembershipFeesCollectionController> _logger;
+
+
+    private long UserId => this.CurrentUserId();
+
+    private long BranchId => this.CurrentBranchId() ?? 0;
+
+
+    public MembershipFeesCollectionController(
+        IMembershipFeesCollectionRepository repository,
+        IActivityHistoryRepository activityHistoryRepository,
+        IEffectiveAccessRepository effectiveAccess,
+        ILogger<MembershipFeesCollectionController> logger)
     {
-        _repository =
-            repository;
+        _repository = repository;
+        _activityHistoryRepository = activityHistoryRepository;
+        _effectiveAccess = effectiveAccess;
+        _logger = logger;
     }
 
 
-    //===========================================================
-    // Get All
-    //===========================================================
+    private ObjectResult Fail(int statusCode, string message) =>
+        StatusCode(statusCode, new { message });
+
+
+    private async Task<IActionResult> Run
+    (
+        string? activity,
+        Func<Task<IActionResult>> action,
+        string failure
+    )
+    {
+        if (activity != null && !await _effectiveAccess.HasActivityAsync(UserId, PageRoute, activity))
+        {
+            return Fail(StatusCodes.Status403Forbidden, $"You do not have the \"{activity}\" permission on Membership Fees Collection.");
+        }
+
+        try
+        {
+            return await action();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return Fail(StatusCodes.Status404NotFound, ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Fail(StatusCodes.Status403Forbidden, ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Fail(StatusCodes.Status400BadRequest, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            // Usually the table is missing : run MembershipFees_Engine.sql
+            _logger.LogError(ex, "{Failure}", failure);
+
+            return Fail(StatusCodes.Status500InternalServerError, $"{failure} {ex.GetBaseException().Message}");
+        }
+    }
+
 
     [HttpGet]
-
-    public async Task<IActionResult> GetAll()
+    public Task<IActionResult> GetAll()
     {
-        var entities =
-            await _repository
-                .GetAllAsync();
-
-
-        return Ok(
-            entities
-        );
+        return Run(
+            null,
+            async () => Ok(await _repository.GetAllAsync(BranchId)),
+            "The membership fees could not be loaded.");
     }
 
 
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
-    [HttpGet("{publicId:guid}")]
-
-    public async Task<IActionResult> GetById
-    (
-        Guid publicId
-    )
+    [HttpGet("history/{id:long}")]
+    public Task<IActionResult> GetHistory(long id)
     {
-        long? foundId =
-            await _repository.GetIdByPublicIdAsync(publicId);
-
-        if (foundId == null)
-        {
-            return NotFound();
-        }
-
-        long id =
-            foundId.Value;
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        return Ok(
-            entity
-        );
+        return Run(
+            null,
+            async () => Ok(await _activityHistoryRepository.GetHistoryAsync("Membership Management", "Membership Fee", id)),
+            "The history could not be loaded.");
     }
 
 
-    //===========================================================
-    // Create
-    //===========================================================
-
-    [HttpPost]
-
-    public async Task<IActionResult> Create
-    (
-        [FromBody]
-        CreateMembershipFeesCollectionDto dto
-    )
+    [HttpPost("collect")]
+    public Task<IActionResult> Collect([FromBody] CollectMembershipFeeDto? dto)
     {
-        var entity =
-            new MembershipFeesCollection
-            {
-                Name =
-                    dto.Name,
-
-                SampleSearchDropdownId =
-                    dto.SampleSearchDropdownId,
-
-                SampleField =
-                    dto.SampleField,
-
-                Status =
-                    dto.Status,
-
-                Remarks =
-                    dto.Remarks
-            };
-
-
-        var id =
-            await _repository
-                .CreateAsync(
-                    entity
-                );
-
-
-        return Ok(
-            id
-        );
+        return Run(
+            "Add",
+            async () => Ok(await _repository.CollectAsync(dto ?? new CollectMembershipFeeDto(), BranchId, UserId)),
+            "The fee could not be collected.");
     }
 
 
-    //===========================================================
-    // Update
-    //===========================================================
-
-    [HttpPut("{id:long}")]
-
-    public async Task<IActionResult> Update
-    (
-        long id,
-
-        [FromBody]
-        UpdateMembershipFeesCollectionDto dto
-    )
+    [HttpPut("{publicId:guid}/cancel")]
+    public Task<IActionResult> Cancel(Guid publicId, [FromBody] MembershipFeeReasonDto? dto)
     {
-        if
-        (
-            id != dto.Id
-        )
-        {
-            return BadRequest();
-        }
-
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        entity.Name =
-            dto.Name;
-
-
-        entity.SampleSearchDropdownId =
-            dto.SampleSearchDropdownId;
-
-
-        entity.SampleField =
-            dto.SampleField;
-
-
-        entity.Status =
-            dto.Status;
-
-
-        entity.Remarks =
-            dto.Remarks;
-
-
-        await _repository
-            .UpdateAsync(
-                entity
-            );
-
-
-        return NoContent();
+        return Run(
+            "Cancel",
+            async () => Ok(await _repository.CancelCollectionAsync(publicId, dto ?? new MembershipFeeReasonDto(), UserId)),
+            "The collection could not be cancelled.");
     }
 
 
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    [HttpDelete("{publicId:guid}")]
-
-    public async Task<IActionResult> Delete
-    (
-        Guid publicId
-    )
+    [HttpPut("{publicId:guid}/refund")]
+    public Task<IActionResult> Refund(Guid publicId, [FromBody] MembershipFeeReasonDto? dto)
     {
-        long? foundId =
-            await _repository.GetIdByPublicIdAsync(publicId);
-
-        if (foundId == null)
-        {
-            return NotFound();
-        }
-
-        long id =
-            foundId.Value;
-
-        var entity =
-            await _repository
-                .GetByIdAsync(
-                    id
-                );
-
-
-        if
-        (
-            entity is null
-        )
-        {
-            return NotFound();
-        }
-
-
-        await _repository
-            .DeleteAsync(
-                id
-            );
-
-
-        return NoContent();
-    }
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    [HttpPut("{id:long}/restore")]
-
-    public async Task<IActionResult> Restore
-    (
-        long id
-    )
-    {
-        await _repository
-            .RestoreAsync(
-                id
-            );
-
-
-        return NoContent();
-    }
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    [HttpGet("history")]
-
-    public async Task<IActionResult> GetHistory()
-    {
-        var history =
-            await _repository
-                .GetHistoryAsync();
-
-
-        return Ok(
-            history
-        );
-    }
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    [HttpGet("{id:long}/history")]
-
-    public async Task<IActionResult> GetEntityHistory
-    (
-        long id
-    )
-    {
-        var history =
-            await _repository
-                .GetEntityHistoryAsync(
-                    id
-                );
-
-
-        return Ok(
-            history
-        );
+        return Run(
+            "Refund",
+            async () => Ok(await _repository.RefundAsync(publicId, dto ?? new MembershipFeeReasonDto(), BranchId, UserId)),
+            "The fee could not be refunded.");
     }
 }

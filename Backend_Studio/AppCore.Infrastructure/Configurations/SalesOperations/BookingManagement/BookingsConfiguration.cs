@@ -16,7 +16,7 @@ namespace AppCore.Infrastructure.Configurations.SalesOperations.BookingManagemen
 
 //===============================================================
 // Bookings / Booking Collections : EF configuration (tables made
-// by BookingsMB_Engine.sql; hand-written page). No database
+// by Bookings_Engine.sql; hand-written pages). No database
 // defaults for booleans / numbers : EF would skip a 'false' / 0.
 //===============================================================
 
@@ -34,6 +34,8 @@ public class BookingsConfiguration
         builder.Property(x => x.PublicId).HasDefaultValueSql("uuidv7()").ValueGeneratedOnAdd();
 
         builder.HasIndex(x => x.PublicId).IsUnique().HasDatabaseName("UX_Bookings_PublicId");
+
+        builder.Property(x => x.ProductType).IsRequired().HasMaxLength(2);
 
         builder.Property(x => x.BookingNo).IsRequired().HasMaxLength(40);
 
@@ -100,5 +102,33 @@ public class BookingCollectionsConfiguration
         builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
 
         builder.HasIndex(x => x.BookingId).HasDatabaseName("IX_BookingCollections_Booking");
+    }
+}
+
+
+public class BookingLinesConfiguration
+    : IEntityTypeConfiguration<BookingLines>
+{
+    public void Configure(EntityTypeBuilder<BookingLines> builder)
+    {
+        builder.ToTable("BookingLines");
+
+        builder.HasKey(x => x.BookingLineId);
+
+        builder.Property(x => x.BookingLineId).ValueGeneratedOnAdd();
+
+        builder.Property(x => x.ProductCode).IsRequired().HasMaxLength(50);
+
+        builder.Property(x => x.PartNumber).IsRequired().HasMaxLength(50);
+
+        builder.Property(x => x.ProductName).IsRequired().HasMaxLength(250);
+
+        builder.Property(x => x.Unit).IsRequired().HasMaxLength(20);
+
+        builder.Property(x => x.Quantity).HasPrecision(18, 2);
+
+        builder.Property(x => x.Remarks).IsRequired().HasMaxLength(250);
+
+        builder.HasIndex(x => x.BookingId).HasDatabaseName("IX_BookingLines_Booking");
     }
 }

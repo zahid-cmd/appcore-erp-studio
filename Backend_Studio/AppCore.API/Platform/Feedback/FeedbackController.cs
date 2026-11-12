@@ -23,6 +23,7 @@ using AppCore.Application.Platform.CurrentUser;
 using AppCore.Domain.Entities.Settings.GeneralSettings;
 using AppCore.Domain.Platform.Feedbacks;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Api.Platform.Tenancy;
 
 namespace AppCore.Api.Controllers.Platform;
 
@@ -457,7 +458,7 @@ public class FeedbackController : ControllerBase
         }
 
         string webRoot =
-            _environment.WebRootPath
+            TenantWebRoot.Of(HttpContext, _environment)
             ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
 
         string folder =

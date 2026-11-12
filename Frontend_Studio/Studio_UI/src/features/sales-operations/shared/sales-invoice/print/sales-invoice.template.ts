@@ -463,6 +463,7 @@ ${showSpecial ? '<td class="vd-r">-</td>' : ''}
     const payFoot =
         `<div class="si-paybox-foot">
     ${invoice.DueAmount > 0 ? '<span class="si-paybox-note">Credit sale : the due is on the customer\'s account.</span>' : ''}
+    ${(invoice.BookingAdvance ?? 0) > 0 ? `<span>Booking advance${invoice.BookingNo ? ` (${e(invoice.BookingNo)})` : ''} <b>${kit.money(invoice.BookingAdvance ?? 0)}</b></span>` : ''}
     <span>Paid <b>${kit.money(shown.paid)}</b></span>
     ${chargesOnTop > 0 ? `<span class="si-paybox-muted">Charges paid on top <b>${kit.money(chargesOnTop)}</b></span>` : ''}
     <span class="${invoice.DueAmount > 0 ? 'si-paybox-due' : ''}">${invoice.DueAmount > 0 ? 'Due' : 'Balance'} <b>${kit.money(invoice.DueAmount)}</b></span>
@@ -645,6 +646,7 @@ export function salesMoneyReceiptHtml
   </table>
   <div class="si-paybox-foot">
     ${invoice.DueAmount > 0 ? '<span class="si-paybox-note">Credit sale : the due is on the customer\'s account.</span>' : ''}
+    ${(invoice.BookingAdvance ?? 0) > 0 ? `<span>Booking advance${invoice.BookingNo ? ` (${e(invoice.BookingNo)})` : ''} <b>${kit.money(invoice.BookingAdvance ?? 0)}</b></span>` : ''}
     <span>Received <b>${kit.money(shown.paid)}</b></span>
     ${invoice.DueAmount > 0 ? `<span class="si-paybox-due">Due <b>${kit.money(invoice.DueAmount)}</b></span>` : ''}
   </div>
@@ -917,6 +919,9 @@ export function salesInvoiceDocumentSheet
         [null, label('Special'), null, null, null, null, null, null, null, bold(-invoice.SpecialDiscount)],
         [null, label('Fractional'), null, null, null, null, null, null, null, bold(-invoice.FractionalDiscount)],
         [null, label('Invoice Total'), null, null, null, null, null, null, null, bold(invoice.InvoiceTotal)],
+        ...((invoice.BookingAdvance ?? 0) > 0
+            ? [[null, label(`Booking Advance${invoice.BookingNo ? ' (' + invoice.BookingNo + ')' : ''}`), null, null, null, null, null, null, null, bold(invoice.BookingAdvance ?? 0)] as ExcelCell[]]
+            : []),
         [null, label('Paid'), null, null, null, null, null, null, null, bold(invoice.PaidAmount)],
         [null, label('Due'), null, null, null, null, null, null, null, bold(invoice.DueAmount)],
         [],

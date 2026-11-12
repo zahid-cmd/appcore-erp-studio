@@ -1,6 +1,10 @@
 //===============================================================
-// Bookings (Sales Operations > Booking Management > Bookings;
-// one page, NO Code Synchronization)
+// Bookings - MB / SP / AC (Sales Operations > Booking Management;
+// one component for the three pages : route data bookingType;
+// NO Code Synchronization)
+//
+// MB : customer + model and colour. SP / AC : customer + items
+// with quantity (item search by name / code / part number).
 //
 // Three tabs :
 //   Bookings                 the bookings (status filter : Open /
@@ -49,11 +53,20 @@ from '@angular/common/http';
 
 import
 {
+    ActivatedRoute
+}
+from '@angular/router';
+
+import
+{
     Booking,
     BookingCollection,
     BookingCustomer,
+    BookingLine,
     BookingModel,
-    BookingSwitches
+    BookingProduct,
+    BookingSwitches,
+    BookingType
 }
 from '../../../models/bookings.model';
 
@@ -307,6 +320,27 @@ export class BookingsList
     private readonly service =
         inject(BookingsService);
 
+    // MB / SP / AC (route data; one page each)
+    readonly type: BookingType =
+        ((((inject(ActivatedRoute).snapshot as any).data ?? {})['bookingType'] as BookingType) || 'MB');
+
+    readonly isBikes =
+        this.type === 'MB';
+
+    readonly pageTitle =
+        `Bookings - ${this.type}`;
+
+    readonly pageSubtitle =
+        this.type === 'MB'
+            ? 'Motor bike bookings : advance, conversion to sale, cancellation'
+            : this.type === 'SP'
+                ? 'Spare parts / lubricant bookings : items, advance, conversion to sale, cancellation'
+                : 'Accessories bookings : items, advance, conversion to sale, cancellation';
+
+    // Column / field label of what is booked
+    readonly itemLabel =
+        this.isBikes ? 'Model' : 'Items';
+
     private readonly toast =
         inject(ToastService);
 
@@ -408,7 +442,7 @@ export class BookingsList
         { header:'Date', field:'DateText', width:'100px', align:'center', sortable:true },
         { header:'Customer', field:'CustomerName', width:'190px', align:'left', sortable:true },
         { header:'Phone', field:'CustomerPhone', width:'115px', align:'left', sortable:true, priority:3 },
-        { header:'Model', field:'ModelName', width:'210px', align:'left', sortable:true },
+        { header:this.itemLabel, field:'ModelName', width:'210px', align:'left', sortable:true },
         { header:'Advance', field:'AdvanceText', width:'105px', align:'right', sortable:true },
         { header:'Valid Until', field:'ValidText', width:'100px', align:'center', sortable:true, priority:2 },
         { header:'Invoice', field:'InvoiceText', width:'190px', align:'left', sortable:true, priority:2 },
@@ -422,7 +456,7 @@ export class BookingsList
         { header:'Date', field:'DateText', width:'100px', align:'center', sortable:true },
         { header:'Booking No', field:'BookingNo', width:'200px', align:'left', sortable:true },
         { header:'Customer', field:'CustomerName', width:'200px', align:'left', sortable:true },
-        { header:'Model', field:'ModelName', width:'220px', align:'left', sortable:true },
+        { header:this.itemLabel, field:'ModelName', width:'220px', align:'left', sortable:true },
         { header:'Amount', field:'AmountText', width:'110px', align:'right', sortable:true },
         { header:'Receipt Voucher', field:'ReceiptVoucherNo', width:'190px', align:'left', sortable:true },
         { header:'Remarks', field:'Remarks', width:'200px', align:'left', priority:3 }
@@ -434,7 +468,7 @@ export class BookingsList
         { header:'Booking No', field:'BookingNo', width:'200px', align:'left', sortable:true },
         { header:'Cancelled', field:'CancelledText', width:'100px', align:'center', sortable:true },
         { header:'Customer', field:'CustomerName', width:'190px', align:'left', sortable:true },
-        { header:'Model', field:'ModelName', width:'190px', align:'left', sortable:true, priority:2 },
+        { header:this.itemLabel, field:'ModelName', width:'190px', align:'left', sortable:true, priority:2 },
         { header:'Advance', field:'AdvanceText', width:'100px', align:'right', sortable:true },
         { header:'Forfeit', field:'ForfeitText', width:'100px', align:'right', sortable:true },
         { header:'To Refund', field:'RefundText', width:'100px', align:'right', sortable:true },
@@ -606,7 +640,7 @@ export class BookingsList
         this.cdr.detectChanges();
 
         this.service
-            .getPage()
+            .getPage(this.type)
             .subscribe
             ({
                 next:
@@ -689,19 +723,14 @@ export class BookingsList
             });
     }
 
+    // Tab labels without counts (owner 2026-11-11)
     private buildTabs(): void
     {
-        const open =
-            this.bookingRows.filter(x => x.Status === 'Open').length;
-
-        const cancelled =
-            this.bookingRows.filter(x => x.Status === 'Cancelled').length;
-
         this.tabs =
         [
-            { id:'bookings', label:`Bookings (${open} open)` },
-            { id:'collections', label:`Collections (${this.collectionRows.length})` },
-            { id:'cancellations', label:`Cancellations & Refunds (${cancelled})` }
+            { id:'bookings', label:'Bookings' },
+            { id:'collections', label:'Collections' },
+            { id:'cancellations', label:'Cancellations & Refunds' }
         ];
     }
 
@@ -944,7 +973,7 @@ export class BookingsList
     private showHistory(row: Booking): void
     {
         this.service
-            .getHistory(row.BookingId)
+            .getHistory(this.type, row.BookingId)
             .subscribe
             ({
                 next:
@@ -1051,6 +1080,7 @@ export class BookingsList
         this.customerQuery = '';
         this.customerResults = [];
         this.newModelId = null;
+        this.resetItems([]);
         this.newExpected = this.daysFromToday(7);
         this.newSalesPerson = '';
         this.newRemarks = '';
@@ -1315,9 +1345,19 @@ export class BookingsList
                 return 'Pick the customer.';
             }
 
-            if (!this.newModelId)
+            if (this.isBikes && !this.newModelId)
             {
                 return 'Choose the model and colour.';
+            }
+
+            if (!this.isBikes)
+            {
+                const issue = this.linesIssue;
+
+                if (issue)
+                {
+                    return issue;
+                }
             }
         }
 
@@ -1678,16 +1718,19 @@ export class BookingsList
         const call$ =
             this.deskKind === 'new'
                 ? this.service.create(
+                    this.type,
                     {
                         Date:this.today,
                         CustomerId:this.newCustomer!.CustomerId,
-                        MotorBikeId:this.newModelId!,
+                        MotorBikeId:this.isBikes ? this.newModelId! : 0,
+                        Lines:this.isBikes ? [] : this.cleanLines(),
                         ExpectedDate:this.isoDate(this.newExpected),
                         SalesPersonName:this.newSalesPerson.trim(),
                         Remarks:this.newRemarks.trim(),
                         Debits:debits
                     })
                 : this.service.collect(
+                    this.type,
                     booking!.PublicId,
                     {
                         Date:this.today,
@@ -1728,6 +1771,179 @@ export class BookingsList
 
 
     //===========================================================
+    // SP / AC : items (New Booking and Edit share one list; only
+    // one of the two is open at a time)
+    //===========================================================
+
+    itemLines: BookingLine[] = [];
+
+    // Quantities as typed (one per line)
+    itemQtyTexts: string[] = [];
+
+    itemQuery = '';
+
+    itemResults: BookingProduct[] = [];
+
+    itemSearching = false;
+
+    private itemTimer: any = null;
+
+    private itemSeq = 0;
+
+    private resetItems(lines: BookingLine[]): void
+    {
+        this.itemLines = (lines ?? []).map(x => ({ ...x }));
+        this.itemQtyTexts = this.itemLines.map(x => String(x.Quantity));
+        this.itemQuery = '';
+        this.itemResults = [];
+        this.itemSearching = false;
+    }
+
+    // The rule the items break ('' = fine)
+    get linesIssue(): string
+    {
+        if (this.itemLines.length === 0)
+        {
+            return 'Add at least one item.';
+        }
+
+        const bad =
+            this.itemLines.findIndex((_, i) => !(parseMoney(this.itemQtyTexts[i] ?? '') > 0));
+
+        return bad >= 0
+            ? `${this.itemLines[bad].ProductName} : type a quantity above 0.`
+            : '';
+    }
+
+    // The lines with the typed quantities
+    cleanLines(): BookingLine[]
+    {
+        return this.itemLines.map
+        (
+            (x, i) =>
+            ({
+                ...x,
+                Quantity:roundMoney(parseMoney(this.itemQtyTexts[i] ?? '')),
+                Remarks:(x.Remarks ?? '').trim()
+            })
+        );
+    }
+
+    get itemCount(): number
+    {
+        return this.itemLines.length;
+    }
+
+    get itemQtyTotal(): number
+    {
+        return roundMoney(this.itemQtyTexts.reduce((sum, q) => sum + (parseMoney(q) || 0), 0));
+    }
+
+    onItemQuery(value: string | number): void
+    {
+        this.itemQuery = String(value ?? '');
+
+        if (this.itemTimer)
+        {
+            clearTimeout(this.itemTimer);
+        }
+
+        const term = this.itemQuery.trim();
+
+        if (term.length < 2)
+        {
+            this.itemSeq++;
+            this.itemResults = [];
+            this.itemSearching = false;
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+        this.itemTimer =
+            setTimeout(
+                () =>
+                {
+                    const seq = ++this.itemSeq;
+
+                    this.itemSearching = true;
+
+                    this.cdr.detectChanges();
+
+                    this.service
+                        .searchProducts(this.type, term)
+                        .subscribe
+                        ({
+                            next:
+                                rows =>
+                                {
+                                    if (seq !== this.itemSeq)
+                                    {
+                                        return;
+                                    }
+
+                                    this.itemSearching = false;
+                                    this.itemResults = rows ?? [];
+                                    this.cdr.detectChanges();
+                                },
+                            error:
+                                () =>
+                                {
+                                    this.itemSearching = false;
+                                    this.itemResults = [];
+                                    this.cdr.detectChanges();
+                                }
+                        });
+                },
+                300);
+
+        this.cdr.detectChanges();
+    }
+
+    // Picked : a new line (qty 1), or one more of a line already there
+    pickItem(item: BookingProduct): void
+    {
+        const at = this.itemLines.findIndex(x => x.ProductId === item.ProductId);
+
+        if (at >= 0)
+        {
+            this.itemQtyTexts = this.itemQtyTexts.map((q, i) => i === at ? String(roundMoney((parseMoney(q) || 0) + 1)) : q);
+        }
+        else
+        {
+            this.itemLines = [...this.itemLines, { ...item, Quantity:1, Remarks:'' }];
+            this.itemQtyTexts = [...this.itemQtyTexts, '1'];
+        }
+
+        this.itemQuery = '';
+        this.itemResults = [];
+        this.deskError = '';
+        this.editError = '';
+        this.cdr.detectChanges();
+    }
+
+    onItemQty(index: number, value: string | number): void
+    {
+        this.itemQtyTexts = this.itemQtyTexts.map((q, i) => i === index ? String(value ?? '') : q);
+        this.deskError = '';
+        this.editError = '';
+        this.cdr.detectChanges();
+    }
+
+    removeItem(index: number): void
+    {
+        this.itemLines = this.itemLines.filter((_, i) => i !== index);
+        this.itemQtyTexts = this.itemQtyTexts.filter((_, i) => i !== index);
+        this.cdr.detectChanges();
+    }
+
+    qtyText(value: number): string
+    {
+        return String(roundMoney(Number(value) || 0));
+    }
+
+
+    //===========================================================
     // EDIT (open booking : model, expected date, notes)
     //===========================================================
 
@@ -1747,6 +1963,7 @@ export class BookingsList
     {
         this.editRow = row;
         this.editModelId = row.MotorBikeId;
+        this.resetItems(row.Lines);
         this.editExpected = this.toDate(row.ExpectedDate) ?? this.daysFromToday(7);
         this.editSalesPerson = row.SalesPersonName;
         this.editRemarks = row.Remarks;
@@ -1779,9 +1996,18 @@ export class BookingsList
             return;
         }
 
-        if (!this.editModelId)
+        if (this.isBikes && !this.editModelId)
         {
             this.editError = 'Choose the model and colour.';
+
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+        if (!this.isBikes && this.linesIssue)
+        {
+            this.editError = this.linesIssue;
 
             this.cdr.detectChanges();
 
@@ -1794,9 +2020,11 @@ export class BookingsList
                 `Please wait while ${row.BookingNo} is updated...`,
                 'Booking updated.',
                 this.service.update(
+                    this.type,
                     row.PublicId,
                     {
-                        MotorBikeId:this.editModelId,
+                        MotorBikeId:this.isBikes ? this.editModelId! : 0,
+                        Lines:this.isBikes ? [] : this.cleanLines(),
                         ExpectedDate:this.isoDate(this.editExpected),
                         SalesPersonName:this.editSalesPerson.trim(),
                         Remarks:this.editRemarks.trim()
@@ -1908,7 +2136,7 @@ export class BookingsList
                 'Cancelling Booking',
                 `Please wait while ${row.BookingNo} is cancelled...`,
                 'Booking cancelled.',
-                this.service.cancel(row.PublicId, reason, forfeit))
+                this.service.cancel(this.type, row.PublicId, reason, forfeit))
             .subscribe
             ({
                 next:

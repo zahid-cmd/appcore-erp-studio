@@ -511,7 +511,8 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
 
     [HttpPost("quote")]
     public async Task<IActionResult> Quote(
-        CreateSalesInvoiceDto dto)
+        CreateSalesInvoiceDto dto,
+        [FromQuery] bool quotation = false)
     {
         long userId = UserId;
 
@@ -521,7 +522,7 @@ public abstract class SalesInvoiceControllerBase : ControllerBase
             await HasAsync(ActivitySpecial);
 
         return await Run(
-            async () => Ok(await _repository.QuoteAsync(dto, canSpecial, userId)),
+            async () => Ok(await _repository.QuoteAsync(dto, canSpecial, userId, quotation)),
             "Failed to price the sales invoice.");
     }
 

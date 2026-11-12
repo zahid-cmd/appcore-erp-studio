@@ -1,8 +1,36 @@
 @import '../../../../../../shared/styles/app-list-page.css';
 
+/*===============================================================
+  Membership Fees Collection : the shared list page styles, status
+  tabs + a count, the summary line, the reason modal and the
+  Payment Desk modal (as Customer Files)
+===============================================================*/
 
-/* Summary line below the canvas : plain text, no chips,
-   light blue gradient */
+.mf-list-count
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.mf-list-count i
+{
+    color: #1e3a8a;
+}
+
+.mf-ok
+{
+    color: #047857;
+}
+
+.mf-bad
+{
+    color: #be123c;
+}
 
 .ics-summary
 {
@@ -63,9 +91,867 @@
     color: #be123c;
 }
 
+.ics-summary-value.ics-warn
+{
+    color: #b45309;
+}
+
 .ics-summary-note
 {
     margin-left: auto;
     color: #64748b;
     font-size: 13px;
+}
+
+
+.mf-list-due
+{
+    color: #be123c;
+    font-weight: 600;
+}
+
+.mf-explain
+{
+    margin: 0 0 10px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.mf-backdrop
+{
+    position:fixed;
+
+    inset:0;
+
+    z-index:1200;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:16px;
+
+    background:rgba(15, 23, 42, .45);
+}
+
+.mf-modal
+{
+    display:flex;
+
+    flex-direction:column;
+
+    width:100%;
+
+    max-width:560px;
+
+    border-radius:14px;
+
+    background:#ffffff;
+
+    box-shadow:0 30px 60px -20px rgba(15, 23, 42, .45);
+
+    overflow:hidden;
+}
+
+.mf-modal-head
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    padding:14px 18px;
+
+    background:linear-gradient(120deg, #fecdd3 0%, #ffe4e6 45%, #f1f5f9 100%);
+
+    color:#9f1239;
+}
+
+.mf-modal-head > div
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    flex-direction:column;
+
+    color:#0f172a;
+}
+
+.mf-modal-head span
+{
+    color:#475569;
+
+    font-size:12.5px;
+}
+
+.mf-x
+{
+    border:0;
+
+    background:transparent;
+
+    color:#64748b;
+
+    font-size:16px;
+
+    cursor:pointer;
+}
+
+.mf-modal-body
+{
+    padding:16px 18px;
+}
+
+.mf-modal-foot
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:12px 18px;
+
+    border-top:1px solid #eef2f7;
+}
+
+.mf-note
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    align-items:center;
+
+    gap:6px;
+
+    color:#64748b;
+
+    font-size:12.5px;
+}
+
+.mf-btn
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    height:34px;
+
+    padding:0 14px;
+
+    border:1px solid transparent;
+
+    border-radius:8px;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    cursor:pointer;
+}
+
+.mf-btn:disabled
+{
+    opacity:.6;
+
+    cursor:not-allowed;
+}
+
+.mf-btn-light
+{
+    border-color:#d6e0ef;
+
+    background:#ffffff;
+
+    color:#334155;
+}
+
+.mf-btn-danger
+{
+    background:#be123c;
+
+    color:#ffffff;
+}
+
+.mf-btn-primary
+{
+    background:#1e3a8a;
+
+    color:#ffffff;
+}
+
+
+/* =====================================================================
+   COLLECT : Payment Desk modal (same look as the Sales Invoice
+   checkout; mfm- = membership fee money)
+===================================================================== */
+
+.mfm-backdrop
+{
+    --si-navy: #1e3a8a;
+    --si-blue: #2563eb;
+    --si-text: #1e293b;
+    --si-text-2: #334155;
+    --si-muted: #475569;
+    --si-faint: #64748b;
+    --si-border: #e3e9f3;
+    --si-hair: #eef2f7;
+    --si-emerald: #047857;
+    --si-rose: #be123c;
+    --si-amber: #b45309;
+}
+
+.mfm-emerald
+{
+    color: var(--si-emerald) !important;
+}
+
+.mfm-rose
+{
+    color: var(--si-rose) !important;
+}
+
+.mfm-amber
+{
+    color: var(--si-amber) !important;
+}
+
+.mfm-muted
+{
+    color: #94a3b8;
+}
+
+.mfm-col-sl
+{
+    width: 46px;
+}
+
+.mfm-col-mode
+{
+    width: 90px;
+}
+
+.mfm-col-money
+{
+    width: 120px;
+}
+
+.mfm-col-state
+{
+    width: 150px;
+}
+
+.mfm-col-action
+{
+    width: 52px;
+}
+
+.mfm-entry app-search-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+    flex: none;
+}
+
+.mfm-btn
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.mfm-btn:disabled
+{
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.mfm-btn-sm
+{
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13.5px;
+}
+
+.mfm-btn-light
+{
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: var(--si-text-2);
+}
+
+.mfm-btn-light:hover:not(:disabled)
+{
+    background: #f1f5f9;
+}
+
+.mfm-btn-primary
+{
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.55);
+}
+
+.mfm-btn-primary:hover:not(:disabled)
+{
+    transform: translateY(-1px);
+}
+
+.mfm-btn-danger
+{
+    background: linear-gradient(135deg, #9f1239, #e11d48);
+    color: #ffffff;
+    box-shadow: 0 4px 12px -4px rgba(225, 29, 72, 0.5);
+}
+
+.mfm-btn-danger:hover
+
+.mfm-remove
+{
+    width: 30px;
+    height: 30px;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--si-rose);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.mfm-remove:hover
+{
+    border-color: #fecdd3;
+    background: #fff1f2;
+}
+
+
+.mfm-table
+{
+    width: 100%;
+    min-width: 820px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 15.5px;
+    color: var(--si-text);
+}
+
+.mfm-table th,
+.mfm-table td
+{
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    vertical-align: top;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mfm-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f6f8fc;
+    color: var(--si-muted);
+    font-size: 14px;
+    font-weight: 600;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.mfm-table .mfm-r
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    text-overflow: clip;
+}
+
+.mfm-table .mfm-c
+{
+    text-align: center;
+}
+
+.mfm-sl
+{
+    color: var(--si-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.mfm-part
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+    color: var(--si-text);
+}
+
+.mfm-sub
+{
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--si-faint);
+}
+
+
+.mfm-empty
+{
+    padding: 26px 12px !important;
+    text-align: center !important;
+    color: var(--si-faint);
+    font-size: 15px;
+}
+
+.mfm-empty i
+{
+    margin-right: 6px;
+}
+
+
+/* Below the top bar (the page sits in a lower stacking layer, so
+   the top bar would cover the head of the modal) */
+.mfm-backdrop
+{
+    position: fixed;
+    inset: var(--topbar-height, 64px) 0 0 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+    animation: mfm-fade-in 0.2s ease-out;
+}
+
+.mfm-modal
+{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 1240px;
+    max-height: calc(100vh - var(--topbar-height, 64px) - 40px);
+    overflow: hidden;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
+    box-shadow:
+        0 30px 70px -24px rgba(15, 23, 42, 0.55),
+        0 2px 8px rgba(15, 23, 42, 0.08);
+    animation: mfm-modal-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.mfm-head
+{
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #c9d7ee;
+    background: linear-gradient(120deg, #bcd2ff 0%, #d5e3ff 45%, #e2e8f0 100%);
+}
+
+.mfm-head::before
+{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1e3a8a, #3b82f6 55%, #94a3b8);
+}
+
+.mfm-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #ffffff;
+    font-size: 20px;
+    box-shadow: 0 6px 14px -6px rgba(37, 99, 235, 0.7);
+}
+
+.mfm-title
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.mfm-title strong
+{
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--si-text);
+}
+
+.mfm-title span
+{
+    font-size: 14.5px;
+    color: var(--si-muted);
+}
+
+.mfm-title span b
+{
+    color: var(--si-text);
+    font-variant-numeric: tabular-nums;
+}
+
+.mfm-progress
+{
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 190px;
+}
+
+.mfm-progress-text
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--si-navy);
+}
+
+.mfm-track
+{
+    display: block;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.35);
+    overflow: hidden;
+}
+
+.mfm-bar
+{
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #2563eb, #60a5fa);
+    transition: width 0.4s ease;
+}
+
+.mfm-progress-done .mfm-progress-text
+{
+    color: var(--si-emerald);
+}
+
+.mfm-progress-done .mfm-bar
+{
+    background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+.mfm-x
+{
+    flex: 0 0 auto;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--si-muted);
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
+}
+
+.mfm-progress + .mfm-x
+{
+    margin-left: 0;
+}
+
+.mfm-x:hover
+{
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: var(--si-rose);
+    transform: rotate(90deg);
+}
+
+.mfm-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    /* The body itself never scrolls : the receipt rows and the
+       details scroll inside their own areas */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 22px;
+}
+
+.mfm-entry
+{
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) 180px auto;
+    align-items: end;
+    gap: 6px 14px;
+}
+
+.mfm-add
+{
+    margin: 0 0 6px;
+    height: 36px;
+}
+
+/* Field labels/height inside the modal : compact */
+.mfm-entry
+{
+    --textbox-height: 36px;
+}
+
+.mfm-body > .mfm-note2
+{
+    padding: 0;
+    margin-top: -8px;
+}
+
+/* Head + three rows; more rows scroll under the sticky head */
+.mfm-scroll
+{
+    flex: 0 0 auto;
+    height: 158px;
+    overflow: auto;
+    border: 1px solid var(--si-hair);
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.mfm-table
+{
+    min-width: 640px;
+    font-size: 14.5px;
+}
+
+.mfm-table th,
+.mfm-table td
+{
+    padding: 6px 10px;
+}
+
+.mfm-table th
+{
+    height: 32px;
+    font-size: 13.5px;
+}
+
+.mfm-table td .mfm-sub,
+.mfm-table td small
+{
+    font-size: 12px;
+}
+
+/* Details (rows, totals, row details) take the rest and scroll
+   inside when a row needs more fields */
+.mfm-details
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Payment Desk (shared) : tighter spacing inside this modal */
+.mfm-details ::ng-deep .pd,
+.mfm-details ::ng-deep .pd-right
+{
+    gap: 8px;
+}
+
+.mfm-details ::ng-deep .pd-rows-card
+{
+    min-height: 0;
+}
+
+.mfm-details ::ng-deep .pd-card-header
+{
+    min-height: 34px;
+}
+
+.mfm-details ::ng-deep .pd-summary-item
+{
+    padding: 5px 12px;
+}
+
+.mfm-details ::ng-deep .pd-words
+{
+    height: 34px;
+}
+
+.mfm-details ::ng-deep .pd-grid
+{
+    gap: 6px 16px;
+    padding: 8px 14px 10px;
+}
+
+.mfm-details ::ng-deep .pd-fixed
+{
+    margin: 8px 14px 0;
+    padding: 6px 12px;
+}
+
+.mfm-details ::ng-deep .pd-verify-bar
+{
+    height: 46px;
+    margin: 2px 14px 10px;
+    padding: 6px 12px;
+}
+
+.mfm-details ::ng-deep .pd-row
+{
+    padding: 7px 12px;
+}
+
+.mfm-details app-payment-desk
+{
+    display: block;
+}
+
+.mfm-foot
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: linear-gradient(120deg, #f8fafc 0%, #f1f5fb 55%, #eef2f7 100%);
+}
+
+.mfm-foot-confirm
+{
+    background: linear-gradient(120deg, #fffaf3 0%, #fff1e2 100%);
+}
+
+.mfm-note
+{
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--si-muted);
+}
+
+@media (max-width: 860px)
+{
+    .mfm-entry
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .mfm-head
+    {
+        flex-wrap: wrap;
+    }
+
+    .mfm-progress
+    {
+        order: 3;
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+
+@keyframes mfm-fade-in
+{
+    from
+    {
+        opacity: 0;
+    }
+
+    to
+    {
+        opacity: 1;
+    }
+}
+
+@keyframes mfm-modal-in
+{
+    from
+    {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+
+    to
+    {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+
+
+/* + Add inside the modal (after the base rules) */
+.mfm-add
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 84px;
+    height: 36px;
+    margin: 0 0 6px;
+    padding: 0 16px;
+    border: 1px solid #1d4ed8;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7);
+}
+
+.mfm-add:disabled
+{
+    border-color: #cbd5e1;
+    background: #e2e8f0;
+    color: var(--si-faint);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.mfm-title span + span
+{
+    font-size: 13.5px;
 }

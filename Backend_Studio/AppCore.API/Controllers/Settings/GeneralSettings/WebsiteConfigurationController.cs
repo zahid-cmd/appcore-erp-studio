@@ -9,6 +9,7 @@ using AppCore.Api.Extensions;
 using AppCore.Application.Common.ActivityHistory.DTOs;
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Application.Settings.GeneralSettings.WebsiteConfiguration.DTOs;
+using AppCore.Api.Platform.Tenancy;
 
 
 //===============================================================
@@ -165,9 +166,9 @@ public class WebsiteConfigurationController : ControllerBase
         }
 
         string webRoot =
-            string.IsNullOrWhiteSpace(_environment.WebRootPath)
+            string.IsNullOrWhiteSpace(TenantWebRoot.Of(HttpContext, _environment))
                 ? Path.Combine(_environment.ContentRootPath, "wwwroot")
-                : _environment.WebRootPath;
+                : TenantWebRoot.Of(HttpContext, _environment);
 
         string folder =
             Path.Combine(webRoot, "uploads", ImageFolder);

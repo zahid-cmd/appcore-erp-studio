@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 
 using AppCore.Application.Platform.Authentication.DTOs;
 using AppCore.Application.Platform.Authentication.Interfaces;
+using AppCore.Application.Platform.Tenancy;
 using AppCore.Domain.Entities.SecurityPermission.UserManagement;
 using AppCore.Domain.Platform.Authentication;
 
@@ -39,6 +40,11 @@ public class AuthenticationService : IAuthenticationService
     private readonly IConfiguration
         _configuration;
 
+    // Tenancy : the company of this request (its code goes into the
+    // login token, so the token works on that company's address only)
+    private readonly ITenantContext
+        _tenant;
+
 
     //===========================================================
     // Constructor
@@ -46,8 +52,12 @@ public class AuthenticationService : IAuthenticationService
 
     public AuthenticationService(
         IAuthenticationRepository authenticationRepository,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ITenantContext tenant)
     {
+        _tenant =
+            tenant;
+
         _authenticationRepository =
             authenticationRepository;
 
@@ -1741,6 +1751,15 @@ public class AuthenticationService : IAuthenticationService
                     branchId.ToString())
             };
 
+        // Tenancy:Mode = Host : the token belongs to this company only
+        if (_tenant.Tenant is TenantInfo tenantInfo)
+        {
+            claims.Add(
+                new Claim(
+                    TenantClaims.Tenant,
+                    tenantInfo.TenantCode));
+        }
+
 
         //===========================================================
         // Token
@@ -1804,7 +1823,7 @@ public class AuthenticationService : IAuthenticationService
 
         // Wing + business lines are extra information : a failure
         // there never hides the branches
-        Dictionary<long, (string WingName, List<string> Lines)> details;
+        Dictionary<long, (string WingCode, string WingName, List<string> Lines)> details;
 
         try
         {
@@ -1823,13 +1842,14 @@ public class AuthenticationService : IAuthenticationService
                 .Select(
                     b =>
                     {
-                        details.TryGetValue(b.BranchId, out (string WingName, List<string> Lines) d);
+                        details.TryGetValue(b.BranchId, out (string WingCode, string WingName, List<string> Lines) d);
 
                         return new SwitchBranchOptionDto
                         {
                             BranchId = b.BranchId,
                             BranchCode = b.BranchCode,
                             BranchName = b.BranchName,
+                            WingCode = d.WingCode ?? string.Empty,
                             WingName = d.WingName ?? string.Empty,
                             BusinessLines = d.Lines ?? new List<string>(),
                             IsCurrent = b.BranchId == currentBranchId

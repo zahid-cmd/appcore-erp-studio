@@ -12,10 +12,65 @@ from '@angular/router';
 //===============================================================
 // Booking Management Routes (hand-written, NO Code Sync)
 //
-// One submenu : Bookings (tabs Bookings / Collections /
-// Cancellations & Refunds). Booking Collections and Booking
-// Cancellations & Refunds were removed (BookingsMB_Engine.sql).
+// One page per product type, the same component (route data
+// bookingType) :
+//   Bookings - MB  bookings-mb
+//   Bookings - SP  bookings-sp
+//   Bookings - AC  bookings-ac
+// Each has the tabs Bookings / Collections / Cancellations &
+// Refunds (Bookings_Engine.sql). The old "bookings" link opens
+// Bookings - MB.
 //===============================================================
+
+const bookingsPage =
+(
+    path:
+        string,
+    type:
+        'MB' | 'SP' | 'AC',
+    title:
+        string
+) =>
+({
+    path,
+
+    data:
+    {
+        breadcrumb:title
+    },
+
+    children:
+    [
+        {
+            path:'',
+
+            redirectTo:'list',
+
+            pathMatch:'full' as const
+        },
+
+        {
+            path:'list',
+
+            data:
+            {
+                breadcrumb:title,
+
+                bookingType:type
+            },
+
+            loadComponent:() =>
+                import(
+                    '../pages/bookings/list/bookings-list'
+                )
+                .then(
+                    m =>
+                        m.BookingsList
+                )
+        }
+    ]
+});
+
 
 export const bookingManagementRoutes:
 Routes =
@@ -23,7 +78,7 @@ Routes =
     {
         path:'',
 
-        redirectTo:'bookings',
+        redirectTo:'bookings-mb',
 
         pathMatch:'full'
     },
@@ -31,38 +86,14 @@ Routes =
     {
         path:'bookings',
 
-        data:
-        {
-            breadcrumb:'Bookings'
-        },
+        redirectTo:'bookings-mb',
 
-        children:
-        [
-            {
-                path:'',
+        pathMatch:'prefix'
+    },
 
-                redirectTo:'list',
+    bookingsPage('bookings-mb', 'MB', 'Bookings - MB'),
 
-                pathMatch:'full'
-            },
+    bookingsPage('bookings-sp', 'SP', 'Bookings - SP'),
 
-            {
-                path:'list',
-
-                data:
-                {
-                    breadcrumb:'Bookings'
-                },
-
-                loadComponent:() =>
-                    import(
-                        '../pages/bookings/list/bookings-list'
-                    )
-                    .then(
-                        m =>
-                            m.BookingsList
-                    )
-            }
-        ]
-    }
+    bookingsPage('bookings-ac', 'AC', 'Bookings - AC')
 ];

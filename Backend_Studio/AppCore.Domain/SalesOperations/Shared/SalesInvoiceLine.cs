@@ -69,6 +69,16 @@ public abstract class SalesInvoiceLine
     public string PlannedAllocations { get; set; } = string.Empty;
 
     public decimal ReturnedQuantity { get; set; }
+
+    // Business Promotions (2026-11-12) : the offer whose discount
+    // the line took (campaign) and the ledger it was posted to
+    // (Company : CAMPAIGN-DISCOUNT-<type>; Distributor : the
+    // brand's Offer Adjustment ledger, reimbursable)
+    public long? PromotionalOfferId { get; set; }
+
+    public string PromotionalOfferNo { get; set; } = string.Empty;
+
+    public string CampaignLedgerCode { get; set; } = string.Empty;
 }
 
 
@@ -149,12 +159,4 @@ public interface IMotorBikeSaleHeader
     DateTime? RegistrationReversedDate { get; set; }
 
     string RegistrationReverseReason { get; set; }
-
-    // Booking taken on the invoice (2026-11-11) : its advance is
-    // counted as paid; Post converts the booking
-    long? BookingId { get; set; }
-
-    string BookingNo { get; set; }
-
-    decimal BookingAdvance { get; set; }
 }

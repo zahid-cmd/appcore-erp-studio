@@ -132,4 +132,29 @@ export const salesOperationsRoutes:
             )
     },
 
+
+    //===========================================================
+    // Business Promotions (hand-written : Promotional Offers -
+    // Sales Center / Service Center / Accessory Shop; NO Code
+    // Synchronization)
+    //===========================================================
+
+    {
+        path:'business-promotions',
+
+        data:
+        {
+            breadcrumb:'Business Promotions'
+        },
+
+        loadChildren:() =>
+            import(
+                '../business-promotions/routes/business-promotions.routes'
+            )
+            .then(
+                m =>
+                    m.businessPromotionsRoutes
+            )
+    },
+
 ];

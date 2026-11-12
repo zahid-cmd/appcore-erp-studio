@@ -33,7 +33,10 @@ import
     Booking,
     BookingCollection,
     BookingCustomer,
+    BookingLine,
+    BookingProduct,
     BookingSaved,
+    BookingType,
     BookingsPage,
     CreateBooking,
     OpenBooking,
@@ -67,9 +70,22 @@ const day =
         text(x, name).substring(0, 10);
 
 
+const toLine =
+    (r: any): BookingLine =>
+    ({
+        ProductId:num(r, 'ProductId'),
+        ProductCode:text(r, 'ProductCode'),
+        PartNumber:text(r, 'PartNumber'),
+        ProductName:text(r, 'ProductName'),
+        Unit:text(r, 'Unit'),
+        Quantity:num(r, 'Quantity'),
+        Remarks:text(r, 'Remarks')
+    });
+
+
 //===============================================================
-// Bookings service
-//   api/sales-operations/booking-management/bookings
+// Bookings service (every call names the type MB / SP / AC)
+//   api/sales-operations/booking-management/bookings/{mb|sp|ac}
 //   Customer search : the Sales Invoice - MB lookup
 //===============================================================
 
@@ -83,18 +99,32 @@ export class BookingsService
     private readonly http =
         inject(HttpClient);
 
-    private readonly apiUrl =
+    private readonly baseUrl =
         `${environment.apiUrl}/sales-operations/booking-management/bookings`;
+
+    private url
+    (
+        type:
+            BookingType
+    ):
+        string
+    {
+        return `${this.baseUrl}/${type.toLowerCase()}`;
+    }
 
     private readonly invoiceUrl =
         `${environment.apiUrl}/sales-operations/motor-bike-sales/sales-invoices-mb`;
 
 
-    getPage():
+    getPage
+    (
+        type:
+            BookingType
+    ):
         Observable<BookingsPage>
     {
         return this.http
-            .get<any>(this.apiUrl)
+            .get<any>(this.url(type))
             .pipe(
                 map
                 (
@@ -104,6 +134,7 @@ export class BookingsService
                             pick(x, 'Switches') ?? {};
 
                         return {
+                            ProductType:((text(x, 'ProductType') || type) as BookingType),
                             Today:day(x, 'Today'),
                             BranchId:num(x, 'BranchId'),
                             BranchName:text(x, 'BranchName'),
@@ -162,18 +193,53 @@ export class BookingsService
             );
     }
 
+    // SP / AC : items by name / code / part number (2+ letters)
+    searchProducts
+    (
+        type:
+            BookingType,
+        term:
+            string
+    ):
+        Observable<BookingProduct[]>
+    {
+        return this.http
+            .get<any[]>(`${this.url(type)}/products`, { params:{ term } })
+            .pipe(
+                map
+                (
+                    rows =>
+                        (rows ?? []).map
+                        (
+                            r =>
+                            ({
+                                ProductId:num(r, 'ProductId'),
+                                ProductCode:text(r, 'ProductCode'),
+                                PartNumber:text(r, 'PartNumber'),
+                                ProductName:text(r, 'ProductName'),
+                                Unit:text(r, 'Unit')
+                            })
+                        )
+                )
+            );
+    }
+
     create
     (
+        type:
+            BookingType,
         model:
             CreateBooking
     ):
         Observable<BookingSaved>
     {
-        return this.http.post<any>(this.apiUrl, model).pipe(map(x => toSaved(x)));
+        return this.http.post<any>(this.url(type), model).pipe(map(x => toSaved(x)));
     }
 
     update
     (
+        type:
+            BookingType,
         publicId:
             string,
         model:
@@ -181,11 +247,13 @@ export class BookingsService
     ):
         Observable<void>
     {
-        return this.http.put<void>(`${this.apiUrl}/${publicId}`, model);
+        return this.http.put<void>(`${this.url(type)}/${publicId}`, model);
     }
 
     collect
     (
+        type:
+            BookingType,
         publicId:
             string,
         model:
@@ -193,11 +261,13 @@ export class BookingsService
     ):
         Observable<BookingSaved>
     {
-        return this.http.post<any>(`${this.apiUrl}/${publicId}/collect`, model).pipe(map(x => toSaved(x)));
+        return this.http.post<any>(`${this.url(type)}/${publicId}/collect`, model).pipe(map(x => toSaved(x)));
     }
 
     cancel
     (
+        type:
+            BookingType,
         publicId:
             string,
         reason:
@@ -208,30 +278,34 @@ export class BookingsService
         Observable<BookingSaved>
     {
         return this.http
-            .put<any>(`${this.apiUrl}/${publicId}/cancel`, { Reason:reason, ForfeitAmount:forfeitAmount })
+            .put<any>(`${this.url(type)}/${publicId}/cancel`, { Reason:reason, ForfeitAmount:forfeitAmount })
             .pipe(map(x => toSaved(x)));
     }
 
     getHistory
     (
+        type:
+            BookingType,
         bookingId:
             number
     ):
         Observable<any[]>
     {
-        return this.http.get<any[]>(`${this.apiUrl}/history/${bookingId}`);
+        return this.http.get<any[]>(`${this.url(type)}/history/${bookingId}`);
     }
 
-    // Open bookings of a customer (Sales Invoice - MB)
+    // Open bookings of a customer (Sales Invoice of the type)
     getOpen
     (
+        type:
+            BookingType,
         customerId:
             number
     ):
         Observable<OpenBooking[]>
     {
         return this.http
-            .get<any[]>(`${this.apiUrl}/open`, { params:{ customerId:String(customerId) } })
+            .get<any[]>(`${this.url(type)}/open`, { params:{ customerId:String(customerId) } })
             .pipe(
                 map
                 (
@@ -245,6 +319,7 @@ export class BookingsService
                                 BookingDate:day(r, 'BookingDate'),
                                 MotorBikeId:num(r, 'MotorBikeId'),
                                 ModelName:text(r, 'ModelName'),
+                                Lines:list(r, 'Lines').map(l => toLine(l)),
                                 AdvanceAmount:num(r, 'AdvanceAmount'),
                                 IsExpired:!!pick(r, 'IsExpired'),
                                 ValidUntil:day(r, 'ValidUntil'),
@@ -277,6 +352,7 @@ function toBooking
         CustomerPhone:text(r, 'CustomerPhone'),
         MotorBikeId:num(r, 'MotorBikeId'),
         ModelName:text(r, 'ModelName'),
+        Lines:list(r, 'Lines').map(l => toLine(l)),
         ValidUntil:day(r, 'ValidUntil'),
         ExpectedDate:day(r, 'ExpectedDate'),
         SalesPersonName:text(r, 'SalesPersonName'),

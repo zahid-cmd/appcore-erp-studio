@@ -11,7 +11,9 @@ using Microsoft.IdentityModel.Tokens;
 
 using AppCore.Api.BackgroundJobs;
 using AppCore.Api.Platform.Chat;
+using AppCore.Api.Platform.Tenancy;
 using AppCore.Api.Platform.Uploads;
+using AppCore.Api.Platform.WorkBranch;
 using AppCore.Api.Security;
 using AppCore.Application;
 using AppCore.Application.Platform.CurrentUser;
@@ -81,6 +83,21 @@ builder.Services.AddSwaggerGen();
 //===============================================================
 
 builder.Services.AddApplication();
+
+
+//===============================================================
+// Tenancy (one service, many client companies)
+//===============================================================
+//
+// Tenancy:Mode = Off (default) : one database, as always.
+// Tenancy:Mode = Host : the web address picks the company and its
+// database (AppCore_Control). See Platform/Tenancy.
+//
+//===============================================================
+
+builder.Services.AddTenancy(
+    builder.Configuration
+);
 
 
 //===============================================================
@@ -320,6 +337,19 @@ app.UseForwardedHeaders();
 
 
 //===============================================================
+// Tenancy : which company is this request for? (Mode Host only)
+//===============================================================
+//
+// Before everything else that reads data. An unknown or inactive
+// address gets a "not active" page here, so nothing below ever
+// runs without a company.
+//
+//===============================================================
+
+app.UseTenantResolution();
+
+
+//===============================================================
 // Swagger Middleware
 //===============================================================
 
@@ -435,6 +465,10 @@ if (hasUi)
     );
 }
 
+// Tenancy (Mode Host) : /uploads/... -> this company's folder
+// (wwwroot/tenants/<CODE>/uploads); /tenants/... never served
+app.UseTenantUploads();
+
 app.UseStaticFiles();
 
 
@@ -473,6 +507,13 @@ app.UseAuthentication();
 
 
 //===============================================================
+// Tenancy : a login token works on its own company's address only
+//===============================================================
+
+app.UseTenantTokenCheck();
+
+
+//===============================================================
 // Rate Limiting
 //===============================================================
 //
@@ -489,6 +530,15 @@ app.UseRateLimiter();
 //===============================================================
 
 app.UseAuthorization();
+
+
+//===============================================================
+// Working branch (2026-11-13) : the branch a Motor Bikes / Spare
+// Parts / Accessories page works in (X-Work-Branch), checked
+// against the user's Branch Assignment
+//===============================================================
+
+app.UseWorkBranch();
 
 
 //===============================================================

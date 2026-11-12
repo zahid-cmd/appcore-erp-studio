@@ -1,1 +1,4 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+:host
+{
+    display: contents;
+}

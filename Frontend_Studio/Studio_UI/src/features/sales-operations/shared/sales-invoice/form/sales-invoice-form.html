@@ -498,30 +498,51 @@
                             }
 
                             <!-- Payment term : Cash / Credit / EMI (a closed
-                                 tab is greyed out; the reason on hover) -->
-                            <div
+                                 tab is greyed out; the reason on hover).
+                                 Not on a quotation. -->
+                            @if (!isQuotation)
+                            {
+                                <div
 
-                                class="si-term"
+                                    class="si-term"
 
-                                [class.si-term-alone]="!showSaleType"
+                                    [class.si-term-alone]="!showSaleType"
 
-                                [title]="termTitle">
+                                    [title]="termTitle">
 
-                                <app-control-segment
+                                    <app-control-segment
 
-                                    name="si-term"
+                                        name="si-term"
 
-                                    [items]="termItems"
+                                        [items]="termItems"
 
-                                    [value]="paymentTerm"
+                                        [value]="paymentTerm"
 
-                                    [disabled]="isReadonly"
+                                        [disabled]="isReadonly"
 
-                                    (valueChange)="onTermChange($event)">
+                                        (valueChange)="onTermChange($event)">
 
-                                </app-control-segment>
+                                    </app-control-segment>
 
-                            </div>
+                                </div>
+                            }
+                            @else
+                            {
+                                <div class="si-quote-valid">
+
+                                    <i class="fas fa-hourglass-half"></i>
+
+                                    @if (quotationRow?.ValidUntil)
+                                    {
+                                        Valid until <b [class.si-text-rose]="quotationRow?.IsExpired">{{ quotationRow?.ValidUntil }}</b>
+                                    }
+                                    @else
+                                    {
+                                        Quotation : no stock taken, no payment
+                                    }
+
+                                </div>
+                            }
 
                         </div>
 
@@ -569,7 +590,7 @@
 
                                 class="si-invoice-no"
 
-                                label="Invoice No"
+                                [label]="isQuotation ? 'Quotation No' : 'Invoice No'"
 
                                 placeholder="Assigned on save"
 
@@ -929,6 +950,85 @@
                                         </div>
 
                                     </div>
+
+                                </div>
+                            }
+                            @else if (isQuotation)
+                            {
+                                <!-- Quotation : a prospect (no profile) when no
+                                     customer is picked -->
+                                <div class="si-prospect">
+
+                                    <div class="si-prospect-title">
+
+                                        <i class="fa-regular fa-id-badge"></i>
+
+                                        Prospect
+
+                                        <span>{{ isEditable ? 'or search a customer above' : '' }}</span>
+
+                                    </div>
+
+                                    @if (isEditable)
+                                    {
+                                        <div class="si-prospect-grid">
+
+                                            <app-textbox
+
+                                                label="Name"
+
+                                                placeholder="Prospect's name"
+
+                                                [required]="true"
+
+                                                [value]="prospectName"
+
+                                                (valueChange)="onProspectName($event)">
+
+                                            </app-textbox>
+
+                                            <app-textbox
+
+                                                label="Phone"
+
+                                                placeholder="01XXXXXXXXX"
+
+                                                inputMode="tel"
+
+                                                [required]="true"
+
+                                                [value]="prospectPhone"
+
+                                                (valueChange)="onProspectPhone($event)">
+
+                                            </app-textbox>
+
+                                            <app-textbox
+
+                                                class="si-prospect-wide"
+
+                                                label="Address"
+
+                                                placeholder="Optional"
+
+                                                [value]="prospectAddress"
+
+                                                (valueChange)="onProspectAddress($event)">
+
+                                            </app-textbox>
+
+                                        </div>
+                                    }
+                                    @else
+                                    {
+                                        <div class="si-prospect-view">
+
+                                            <b>{{ prospectName || '-' }}</b>
+
+                                            <span>{{ prospectPhone }}{{ prospectAddress ? ' · ' + prospectAddress : '' }}</span>
+
+                                        </div>
+                                    }
 
                                 </div>
                             }
@@ -1568,6 +1668,29 @@
                                     <i [class]="'fa-solid ' + page.icon"></i>
 
                                     <span>Add Items</span>
+
+                                    <!-- Booking (Bookings - SP / AC) : the customer's
+                                         open bookings; their items come on the invoice -->
+                                    @if (canTakeBooking)
+                                    {
+                                        <button
+
+                                            type="button"
+
+                                            class="si-add-clear si-book-head"
+
+                                            [class.is-set]="!!bookingId"
+
+                                            [title]="bookingId ? 'Booking ' + bookingNo + ' : advance ' + money(bookingAdvance) + ' (change it)' : 'Take one of the customer\'s open bookings'"
+
+                                            (click)="openBookingPicker()">
+
+                                            <i [class]="bookingId ? 'fas fa-circle-check' : 'fas fa-calendar-check'"></i>
+
+                                            Booking
+
+                                        </button>
+                                    }
 
                                     <button
 
@@ -2375,9 +2498,9 @@
 
                                     class="si-narration"
 
-                                    placeholder="Narration (required)"
+                                    [placeholder]="isQuotation ? 'Note to the customer (optional)' : 'Narration (required)'"
 
-                                    [required]="true"
+                                    [required]="!isQuotation"
 
                                     [rows]="3"
 
@@ -2390,6 +2513,28 @@
                                     (valueChange)="onNarrationChange($event)">
 
                                 </app-textarea>
+
+                                <!-- Quotation : terms printed under the lines -->
+                                @if (isQuotation)
+                                {
+                                    <app-textarea
+
+                                        class="si-narration"
+
+                                        placeholder="Terms : delivery time, payment, validity... (printed)"
+
+                                        [rows]="2"
+
+                                        [maxLength]="1000"
+
+                                        [value]="quotationTerms"
+
+                                        [readonly]="isReadonly"
+
+                                        (valueChange)="onQuotationTerms($event)">
+
+                                    </app-textarea>
+                                }
 
                                 @if (!isEditable && invoice)
                                 {
@@ -2598,7 +2743,7 @@
 
                                 <div class="si-sum-row si-sum-total">
 
-                                    <span>Invoice Total</span>
+                                    <span>{{ isQuotation ? 'Quotation Total' : 'Invoice Total' }}</span>
 
                                     <b>{{ money(figures.InvoiceTotal) }}</b>
 
@@ -2606,7 +2751,7 @@
 
                                 <!-- MB : booking advance (paid already by the
                                      booking's Receipt Vouchers) -->
-                                @if (isBikes && (bookingAdvance > 0 || !!bookingId))
+                                @if (bookingAdvance > 0 || !!bookingId)
                                 {
                                     <div class="si-sum-row si-sum-reg">
 
@@ -2642,6 +2787,43 @@
                                     </div>
                                 }
 
+                                <!-- Invoice made from a quotation -->
+                                @if (!isQuotation && quotationLinkNo)
+                                {
+                                    <div class="si-sum-row si-sum-reg">
+
+                                        <span>
+
+                                            From Quotation
+
+                                            <i class="si-sum-reg-text">{{ quotationLinkNo }}</i>
+
+                                        </span>
+
+                                        @if (isEditable)
+                                        {
+                                            <button
+
+                                                type="button"
+
+                                                class="si-link si-reg-btn si-text-rose"
+
+                                                title="Keep the lines, drop the link to the quotation"
+
+                                                (click)="removeQuotationLink()">
+
+                                                <i class="fas fa-link-slash"></i>
+
+                                                Unlink
+
+                                            </button>
+                                        }
+
+                                    </div>
+                                }
+
+                                @if (!isQuotation)
+                                {
                                 <div class="si-sum-row">
 
                                     <span>
@@ -2681,6 +2863,7 @@
                                     <b>{{ money(figures.Due) }}</b>
 
                                 </div>
+                                }
 
                                 <!-- Outside the invoice : charges the customer pays on
                                      top (posted to the charges recovery ledger) -->

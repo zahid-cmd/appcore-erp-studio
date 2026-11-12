@@ -1,0 +1,1233 @@
+/*===============================================================
+  Promotional Offer Form : operational page layout (same look as
+  the Purchase Order / Sales Invoice pages)
+===============================================================*/
+
+/* Shared controls two sizes larger (voucher pages) */
+@import '../../../../../shared/styles/voucher-page.css';
+
+
+/*---------------------------------------------------------------
+  Fixed page height : the coverage rows scroll inside
+---------------------------------------------------------------*/
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.app-form-page > app-page-header
+{
+    flex: 0 0 auto;
+}
+
+/* Toast / confirm / progress are fixed overlays : their hosts take
+   no page height */
+:host > app-toast,
+:host > app-confirm-dialog,
+:host > app-progress-dialog
+{
+    position: absolute;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+.po-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* Room for the cards' floating shadow */
+    padding: 2px 6px 8px;
+}
+
+.po-body > .po-grid
+{
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.po-loading
+{
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+}
+
+
+/*---------------------------------------------------------------
+  Header center : floating ribbon (Offer No | Business | status)
+---------------------------------------------------------------*/
+
+.po-center
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+}
+
+.po-ribbon
+{
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid #dbe4f3;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+    box-shadow:
+        0 10px 24px -12px rgba(30, 58, 138, 0.35),
+        0 2px 6px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+    white-space: nowrap;
+}
+
+.po-ribbon-sep
+{
+    width: 1px;
+    align-self: stretch;
+    margin: 4px 6px;
+    background: #e2e8f0;
+}
+
+.po-chip
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 10px 2px 4px;
+    border-radius: 999px;
+}
+
+.po-chip-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    font-size: 14px;
+}
+
+.po-chip-icon-no
+{
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.po-chip-icon-line
+{
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.po-chip-text
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.po-chip-label
+{
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.po-chip-text strong
+{
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.po-state
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 0 4px;
+}
+
+.po-status
+{
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e0e7ff;
+    color: #1e3a8a;
+}
+
+.po-status[data-status="Active"]
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.po-status[data-status="Closed"]
+{
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.po-status[data-status="Cancelled"]
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.po-unsaved
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #b45309;
+}
+
+.po-unsaved i
+{
+    font-size: 7px;
+}
+
+
+/*---------------------------------------------------------------
+  Banners
+---------------------------------------------------------------*/
+
+.po-banner
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1e40af;
+    font-size: 14px;
+}
+
+.po-banner-warn
+{
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.po-banner-error
+{
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+
+/*---------------------------------------------------------------
+  Two columns, 50 / 50
+---------------------------------------------------------------*/
+
+.po-grid
+{
+    display: grid;
+    /* Same widths as the sales pages : left ~36%, never under
+       440px; the Coverage table takes the rest */
+    grid-template-columns: minmax(440px, 9fr) minmax(0, 16fr);
+    gap: 10px 18px;
+    align-items: stretch;
+    min-height: 0;
+}
+
+.po-col
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Left : the last card (terms) takes what the others leave */
+.po-col-left
+{
+    overflow: auto;
+}
+
+.po-col-left > .po-terms-card
+{
+    flex: 1 1 auto;
+    min-height: 130px;
+}
+
+
+/*---------------------------------------------------------------
+  Card
+---------------------------------------------------------------*/
+
+.po-card
+{
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 10px 24px -16px rgba(30, 58, 138, 0.28);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.po-card:hover
+{
+    border-color: #d6e0ef;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.05),
+        0 14px 30px -16px rgba(30, 58, 138, 0.34);
+}
+
+.po-card-header
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 3px 20px;
+    border-bottom: 1px solid #e6ecf5;
+    background: linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #1e293b;
+}
+
+.po-card-header > i
+{
+    color: #2563eb;
+}
+
+.po-count
+{
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.po-locked .po-fields
+{
+    opacity: 0.7;
+}
+
+
+/* + Add (header right; same look as the Purchase Order + Add) */
+.po-add
+{
+    margin-left: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 84px;
+    height: 30px;
+    padding: 0 16px;
+    border: 1px solid #1d4ed8;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7);
+    transition: filter 0.15s ease;
+}
+
+.po-add:hover:not(:disabled)
+{
+    filter: brightness(1.06);
+}
+
+.po-add:disabled
+{
+    border-color: #cbd5e1;
+    background: #e2e8f0;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.po-add.po-add-after
+{
+    margin-left: 0;
+}
+
+/* Cancel edit (X) : before Update */
+.po-cancel-edit
+{
+    margin-left: auto;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+}
+
+.po-cancel-edit:hover
+{
+    background: #f1f5f9;
+}
+
+/* Clear every coverage row (after the count) */
+.po-clear
+{
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #fecaca;
+    border-radius: 7px;
+    background: #fff1f2;
+    color: #be123c;
+    cursor: pointer;
+}
+
+
+/*---------------------------------------------------------------
+  Field grid (inside a card) : every row the same height
+---------------------------------------------------------------*/
+
+.po-fields
+{
+    display: grid;
+    gap: 10px 12px;
+    grid-auto-rows: 58px;
+    align-items: start;
+    padding: 10px 16px 12px;
+}
+
+.po-grid-2
+{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.po-span-all
+{
+    grid-column: 1 / -1;
+}
+
+.po-fields app-textbox,
+.po-fields app-datepicker,
+.po-fields app-dropdown
+{
+    min-width: 0;
+}
+
+/* Dropdowns fill their grid cell (default is a fixed 360px) */
+.po-fields app-search-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+    flex: none;
+}
+
+:host ::ng-deep .po-fields .textbox-container,
+:host ::ng-deep .po-fields .datepicker-container,
+:host ::ng-deep .po-fields .dropdown-container
+{
+    margin-bottom: 0;
+}
+
+:host ::ng-deep .po-fields .textbox-label,
+:host ::ng-deep .po-fields .datepicker-label,
+:host ::ng-deep .po-fields .dropdown-label
+{
+    height: 20px;
+    min-height: 20px;
+    margin-bottom: 6px;
+    line-height: 20px;
+    white-space: nowrap;
+}
+
+:host ::ng-deep .po-fields app-textbox
+{
+    --textbox-height: 32px;
+}
+
+:host ::ng-deep .po-fields app-datepicker
+{
+    --datepicker-height: 32px;
+}
+
+:host ::ng-deep .po-fields app-search-dropdown
+{
+    --dropdown-height: 32px;
+}
+
+:host ::ng-deep .po-fields app-search-dropdown .dropdown-placeholder
+{
+    font-size: 14px;
+}
+
+/* Notes under the fields */
+.po-hint
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0 16px 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.po-hint i
+{
+    margin-top: 2px;
+    color: #64748b;
+}
+
+.po-hint-bad
+{
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.po-hint-bad i
+{
+    color: #b91c1c;
+}
+
+/* Selected branches */
+.po-branch-picks
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: 0 16px 12px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+/* Terms : the textarea fills its card */
+.po-terms
+{
+    flex: 1 1 auto;
+    display: flex;
+    padding: 10px 16px 12px;
+    min-height: 0;
+}
+
+.po-terms app-textarea
+{
+    display: block;
+    width: 100%;
+    --textarea-width: 100%;
+}
+
+
+/*---------------------------------------------------------------
+  Coverage table (fills the right column; rows scroll)
+---------------------------------------------------------------*/
+
+.po-summary-slot
+{
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 240px;
+}
+
+.po-summary
+{
+    position: absolute;
+    inset: 0;
+}
+
+.po-table-scroll
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.po-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 14.5px;
+}
+
+.po-col-sl
+{
+    width: 52px;
+}
+
+.po-col-cover
+{
+    width: 150px;
+}
+
+.po-col-disc
+{
+    width: 140px;
+}
+
+.po-col-kind
+{
+    width: 120px;
+}
+
+.po-col-num
+{
+    width: 86px;
+}
+
+.po-col-action
+{
+    width: 84px;
+}
+
+.po-table th,
+.po-table td
+{
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.po-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f6f8fc;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.po-sl
+{
+    text-align: center !important;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+}
+
+.po-num
+{
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.po-action
+{
+    text-align: center !important;
+    text-overflow: clip !important;
+}
+
+.po-own
+{
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.po-empty
+{
+    padding: 22px 12px !important;
+    text-align: center !important;
+    color: #94a3b8;
+    white-space: normal !important;
+}
+
+.po-cover-tag
+{
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.po-cover-tag[data-type="Product"]
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.po-cover-tag[data-type="Category"]
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.po-cover-tag[data-type="Excluded"]
+{
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.po-cover-tag[data-type="All"]
+{
+    background: #e2e8f0;
+    color: #334155;
+}
+
+/* Double-click to edit */
+.po-row-editable
+{
+    cursor: pointer;
+}
+
+.po-row-editable:hover td
+{
+    background: #f8fafc;
+}
+
+.po-row-editing td,
+.po-row-editable.po-row-editing:hover td
+{
+    background: #fffbeb;
+}
+
+.po-row-editing td:first-child
+{
+    box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+.po-remove
+{
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+.po-remove:disabled
+{
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+
+/*---------------------------------------------------------------
+  Prizes (inside the Benefit card)
+---------------------------------------------------------------*/
+
+.po-prizes
+{
+    max-height: 230px;
+    margin: 0 16px 12px;
+    overflow: auto;
+    border: 1px solid #eef2f7;
+    border-radius: 10px;
+}
+
+.po-table-small
+{
+    font-size: 13.5px;
+}
+
+.po-table-small th
+{
+    font-size: 13px;
+}
+
+.po-table-small td
+{
+    padding: 5px 8px;
+}
+
+.po-input
+{
+    box-sizing: border-box;
+    width: 100%;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 13px;
+    color: #1f2937;
+    outline: none;
+}
+
+.po-input:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.po-input:disabled
+{
+    background: #f9fafb;
+    color: #4b5563;
+}
+
+.po-input-num
+{
+    text-align: right;
+}
+
+
+/*---------------------------------------------------------------
+  Narrow screens : one column, the page scrolls
+---------------------------------------------------------------*/
+
+@media (max-width: 1100px)
+{
+    .po-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .po-col-left
+    {
+        overflow: visible;
+    }
+
+    .po-summary-slot
+    {
+        min-height: 0;
+    }
+
+    .po-summary
+    {
+        position: static;
+        max-height: 520px;
+    }
+}
+
+
+/*---------------------------------------------------------------
+  Exceptions
+---------------------------------------------------------------*/
+
+.po-exception
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    margin: 0 16px 10px;
+    padding: 8px 12px;
+    border: 1px dashed #e2e8f0;
+    border-radius: 8px;
+    background: #fafbfd;
+}
+
+.po-exception-on
+{
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.po-exception-note
+{
+    font-size: 12.5px;
+    color: #94a3b8;
+}
+
+.po-row-excluded td
+{
+    color: #64748b;
+}
+
+.po-row-excluded .po-row-name
+{
+    text-decoration: line-through;
+    text-decoration-color: #fca5a5;
+}
+
+.po-excluded
+{
+    color: #b91c1c !important;
+    font-weight: 600;
+}
+
+
+/*---------------------------------------------------------------
+  Row exceptions + model rows opened to their bikes
+---------------------------------------------------------------*/
+
+.po-action
+{
+    white-space: nowrap;
+}
+
+.po-action button + button
+{
+    margin-left: 6px;
+}
+
+/* Exclude / put back (ban icon) */
+.po-exclude
+{
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #b45309;
+    cursor: pointer;
+}
+
+.po-exclude:hover:not(:disabled)
+{
+    filter: brightness(0.96);
+}
+
+.po-exclude.po-exclude-on
+{
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.po-exclude:disabled
+{
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* Model name : click to open its bikes */
+.po-expand
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.po-expand > i
+{
+    flex: 0 0 auto;
+    width: 12px;
+    font-size: 11px;
+    color: #64748b;
+    transition: transform 0.15s ease;
+}
+
+.po-row-open .po-expand > i
+{
+    transform: rotate(90deg);
+    color: #1d4ed8;
+}
+
+.po-expand:hover .po-row-name
+{
+    color: #1d4ed8;
+}
+
+.po-row-name
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.po-bike-count
+{
+    flex: 0 0 auto;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.po-except-count
+{
+    flex: 0 0 auto;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.po-row-open td
+{
+    background: #f8faff;
+}
+
+/* The bikes under an opened model */
+.po-sub-row td
+{
+    padding-top: 6px;
+    padding-bottom: 6px;
+    background: #fbfcfe;
+    font-size: 13px;
+}
+
+.po-sub-row td:first-child
+{
+    box-shadow: inset 3px 0 0 #c7d2fe;
+}
+
+.po-sub-name
+{
+    padding-left: 30px !important;
+    position: relative;
+}
+
+.po-sub-name::before
+{
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    width: 8px;
+    border-top: 1px solid #cbd5e1;
+}
+
+.po-inherit
+{
+    color: #94a3b8;
+}
+
+/* Exception tick in Add Coverage */
+.po-exception-pick
+{
+    padding: 8px 12px;
+    border: 1px dashed #e2e8f0;
+    border-radius: 8px;
+    background: #fafbfd;
+}
+
+.po-add.po-add-exclude:not(:disabled)
+{
+    border-color: #b91c1c;
+    background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+    box-shadow: 0 6px 14px -8px rgba(220, 38, 38, 0.7);
+}
+
+.po-hint-exception
+{
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.po-hint-exception i
+{
+    color: #b91c1c;
+}
+
+/*---------------------------------------------------------------
+  Service Campaign : eligible model rows, small Add
+---------------------------------------------------------------*/
+
+.po-cover-tag[data-type="Model"]
+{
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.po-add.po-add-small
+{
+    min-width: 64px;
+    padding: 0 12px;
+}
+
+/* Service Campaign : 1 Bikes / 2 Parts + Next / Back (top right of
+   the table card) */
+.po-steps
+{
+    margin-left: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.po-steps .po-add
+{
+    margin-left: 6px;
+}
+
+.po-step
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.po-step-no
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.po-step.po-step-on
+{
+    border-color: #c7d2fe;
+    background: #eef2ff;
+    color: #1d4ed8;
+}
+
+.po-step.po-step-on .po-step-no
+{
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+/* One-line card header / note (Service Campaign) */
+.po-header-line > span
+{
+    white-space: nowrap;
+}
+
+.po-hint.po-hint-line
+{
+    align-items: center;
+}
+
+.po-hint.po-hint-line > span
+{
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.po-hint.po-hint-line i
+{
+    margin-top: 0;
+}
+
+/* Service Campaign : Spare Part / Lubricant chip on parts rows */
+.po-type-chip
+{
+    margin-left: 8px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.po-type-chip[data-type="Lubricant"]
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Service Campaign Parts screen : Add Coverage fills the left
+   column down to the table's bottom (no Terms card there) */
+.po-col-left > .po-card-fill
+{
+    flex: 1 1 auto;
+}
+
+/* Terms & Conditions : one line on top of the right section; the
+   card header holds the icon, the title and the textbox in a row */
+.po-terms-line > .po-card-header
+{
+    min-height: 52px;
+    padding: 6px 16px 6px 20px;
+    border-bottom: none;
+}
+
+.po-terms-label
+{
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.po-terms-input
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+/* Left section : slightly smaller input text (owner 2026-11-13 03:03);
+   dropdown / date values match the textboxes */
+:host ::ng-deep .po-col-left input.textbox,
+:host ::ng-deep .po-col-left .textbox input,
+:host ::ng-deep .po-col-left .dropdown-selected-text,
+:host ::ng-deep .po-col-left .dropdown-placeholder,
+:host ::ng-deep .po-col-left .datepicker-value,
+:host ::ng-deep .po-col-left .datepicker-placeholder
+{
+    font-size: 14px !important;
+}

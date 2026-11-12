@@ -93,6 +93,30 @@ public static class VoucherTypes
 
     public const string SalesInvoiceMotorBikes = "SIMB";
 
+    // Bookings (numbers only; the advance is a Receipt Voucher of
+    // its own) : Motor Bikes / Spare Parts & Lubricants /
+    // Accessories
+    public const string BookingMotorBikes = "BKMB";
+
+    public const string BookingSpareParts = "BKSP";
+
+    public const string BookingAccessories = "BKAC";
+
+    // Sales Quotations (numbers only, never posted)
+    public const string QuotationMotorBikes = "SQMB";
+
+    public const string QuotationSpareParts = "SQSP";
+
+    public const string QuotationAccessories = "SQAC";
+
+    // Sales Returns (posted under the return number; also the
+    // DocumentType of their stock movements and VAT register rows)
+    public const string SalesReturnMotorBikes = "SRMB";
+
+    public const string SalesReturnSpareParts = "SRSP";
+
+    public const string SalesReturnAccessories = "SRAC";
+
 
     public static readonly string[] All =
     {
@@ -118,7 +142,16 @@ public static class VoucherTypes
         ProductTransfer,
         SalesInvoiceSpareParts,
         SalesInvoiceAccessories,
-        SalesInvoiceMotorBikes
+        SalesInvoiceMotorBikes,
+        BookingMotorBikes,
+        BookingSpareParts,
+        BookingAccessories,
+        QuotationMotorBikes,
+        QuotationSpareParts,
+        QuotationAccessories,
+        SalesReturnMotorBikes,
+        SalesReturnSpareParts,
+        SalesReturnAccessories
     };
 
 

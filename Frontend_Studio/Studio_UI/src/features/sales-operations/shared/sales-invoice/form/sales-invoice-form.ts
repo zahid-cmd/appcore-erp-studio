@@ -52,7 +52,9 @@ from '@angular/common/http';
 
 import
 {
-    Observable
+    Observable,
+    forkJoin,
+    of
 }
 from 'rxjs';
 
@@ -212,6 +214,8 @@ import
     SalesInvoicePaymentRow,
     CreateSalesInvoice,
     UpdateSalesInvoice,
+    SalesQuotation,
+    SaveSalesQuotation,
     SalesInvoiceListNotice,
     SalesInvoiceNoticeTone,
     isCustomerPhone,
@@ -224,6 +228,12 @@ import
     BookingsService
 }
 from '../../../booking-management/services/bookings.service';
+
+import
+{
+    SalesQuotationService
+}
+from '../sales-quotation.service';
 
 import
 {
@@ -253,7 +263,7 @@ type FormMode =
     'add' | 'edit' | 'view';
 
 type FormCommand =
-    '' | 'save' | 'checkout' | 'clear' | 'edit' | 'approve' | 'post' | 'return' | 'cancel' | 'print' | 'thermal';
+    '' | 'save' | 'checkout' | 'clear' | 'edit' | 'approve' | 'post' | 'return' | 'cancel' | 'print' | 'thermal' | 'convert';
 
 interface CommandSlot
 {
@@ -516,6 +526,63 @@ implements OnInit, OnDestroy
 
     private readonly salesInvoiceService =
         inject(SalesInvoiceService);
+
+    private readonly quotationService =
+        inject(SalesQuotationService);
+
+
+    //===========================================================
+    // Sales Quotations (2026-11-11) : this page in quotation mode
+    // (page config isQuotation) : a customer or a prospect, lines
+    // priced on the day (no stock; MB : models with a quantity),
+    // no payment, no posting. Convert opens the invoice page with
+    // ?quotation=<id>; the invoice keeps the link.
+    //===========================================================
+
+    get isQuotation():
+        boolean
+    {
+        return !!this.page.isQuotation;
+    }
+
+    // Quotation mode : the quotation loaded (edit / view)
+    quotationRow:
+        SalesQuotation | null =
+        null;
+
+    // Quotation mode : a prospect (no customer picked)
+    prospectName:
+        string =
+        '';
+
+    prospectPhone:
+        string =
+        '';
+
+    prospectAddress:
+        string =
+        '';
+
+    quotationTerms:
+        string =
+        '';
+
+    // Invoice made from a quotation (Convert to Invoice)
+    quotationLinkId:
+        number | null =
+        null;
+
+    quotationLinkNo:
+        string =
+        '';
+
+    onProspectName(value: string | number): void { this.prospectName = String(value ?? ''); this.onChanged(); }
+
+    onProspectPhone(value: string | number): void { this.prospectPhone = String(value ?? ''); this.onChanged(); }
+
+    onProspectAddress(value: string | number): void { this.prospectAddress = String(value ?? ''); this.onChanged(); }
+
+    onQuotationTerms(value: string | number): void { this.quotationTerms = String(value ?? ''); this.onChanged(); }
 
     private readonly bookingsService =
         inject(BookingsService);
@@ -1221,6 +1288,16 @@ implements OnInit, OnDestroy
             this.routePublicId =
                 id;
 
+            if
+            (
+                this.isQuotation
+            )
+            {
+                this.loadQuotation();
+
+                return;
+            }
+
             this.loadEntity();
 
             return;
@@ -1307,6 +1384,30 @@ implements OnInit, OnDestroy
     get isEditable():
         boolean
     {
+        if
+        (
+            this.isQuotation
+        )
+        {
+            return !this.loading
+                &&
+                !this.loadError
+                &&
+                !this.branchBlocked
+                &&
+                (
+                    this.isAddMode
+                    ||
+                    (
+                        this.isEditMode
+                        &&
+                        this.quotationRow?.Status === 'Open'
+                        &&
+                        !this.quotationRow?.HeldByInvoiceNo
+                    )
+                );
+        }
+
         return !this.loading
             &&
             !this.loadError
@@ -1333,6 +1434,16 @@ implements OnInit, OnDestroy
     get status():
         string
     {
+        if
+        (
+            this.isQuotation
+        )
+        {
+            return this.quotationRow?.Status
+                ??
+                'Open';
+        }
+
         return this.invoice?.Status
             ??
             'Draft';
@@ -1576,6 +1687,8 @@ implements OnInit, OnDestroy
         this.setInitialState();
 
         this.pickReturnedCustomer();
+
+        this.takeQuotationFromRoute();
     }
 
     // Defaults : options, switches, flags; fill = also the header
@@ -1713,6 +1826,13 @@ implements OnInit, OnDestroy
     {
         this.invoice =
             null;
+
+        this.prospectName = '';
+        this.prospectPhone = '';
+        this.prospectAddress = '';
+        this.quotationTerms = '';
+        this.quotationLinkId = null;
+        this.quotationLinkNo = '';
 
         this.narration =
             '';
@@ -2070,6 +2190,7 @@ implements OnInit, OnDestroy
                     BookingDate:'',
                     MotorBikeId:0,
                     ModelName:'',
+                    Lines:[],
                     AdvanceAmount:invoice.BookingAdvance ?? 0,
                     IsExpired:false,
                     ValidUntil:'',
@@ -2079,6 +2200,12 @@ implements OnInit, OnDestroy
 
         this.bookingPickerOpen =
             false;
+
+        this.quotationLinkId =
+            invoice.QuotationId ?? null;
+
+        this.quotationLinkNo =
+            invoice.QuotationNo ?? '';
 
         this.reverseOpen =
             false;
@@ -2308,6 +2435,16 @@ implements OnInit, OnDestroy
     get invoiceNoText():
         string
     {
+        if
+        (
+            this.isQuotation
+        )
+        {
+            return this.quotationRow?.QuotationNo
+                ||
+                `${this.page.prefix}-... (on save)`;
+        }
+
         return this.invoice?.InvoiceNo
             ||
             this.defaults?.NextNumberPreview
@@ -4072,8 +4209,9 @@ implements OnInit, OnDestroy
         this.searchText =
             product.ProductName || product.ProductCode;
 
+        // Quotation : the server prices it (card MRP / price index)
         this.entryError =
-            product.Mrp > 0
+            product.Mrp > 0 || this.isQuotation
                 ? ''
                 : `${product.ProductCode} has no MRP and cannot be sold.`;
 
@@ -4224,10 +4362,14 @@ implements OnInit, OnDestroy
     // oldest first
     //===========================================================
 
+    // MB chassis flow (a quotation quotes models with a quantity :
+    // the item entry of SP / AC)
     get isBikes():
         boolean
     {
-        return this.page.pageType === 'MB';
+        return this.page.pageType === 'MB'
+            &&
+            !this.page.isQuotation;
     }
 
     bikeUnits:
@@ -5863,6 +6005,8 @@ implements OnInit, OnDestroy
         if
         (
             !(product.Mrp > 0)
+            &&
+            !this.isQuotation
         )
         {
             this.entryError =
@@ -5877,7 +6021,9 @@ implements OnInit, OnDestroy
             roundMoney(parseMoney(this.qtyText));
 
         const issue =
-            this.quantityIssue(quantity, this.qtyText);
+            this.quantityIssue(quantity, this.qtyText)
+            ||
+            (this.isQuotation && this.page.pageType === 'MB' && quantity !== Math.trunc(quantity) ? 'Bikes are whole numbers.' : '');
 
         if
         (
@@ -5898,9 +6044,12 @@ implements OnInit, OnDestroy
         const total =
             roundMoney((existing?.Quantity ?? 0) + quantity);
 
-        // Stock (0027 OFF : no more than on hand; server checks too)
+        // Stock (0027 OFF : no more than on hand; server checks too).
+        // A quotation needs no stock.
         if
         (
+            !this.isQuotation
+            &&
             !this.switches?.AllowSaleWithoutStock
             &&
             total > product.OnHand
@@ -6906,7 +7055,7 @@ implements OnInit, OnDestroy
 
         this.quoteSubscription =
             this.salesInvoiceService
-                .quote(this.buildPayload())
+                .quote(this.buildPayload(), this.isQuotation)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe
                 ({
@@ -8104,7 +8253,8 @@ implements OnInit, OnDestroy
             RegistrationTypeId:this.registrationSent ? this.registrationTypeId : null,
             RegistrationAmount:this.registrationSent ? this.registrationAmount : 0,
             RegistrationUnitIds:this.registrationSent ? this.registrationUnitsSent : [],
-            BookingId:this.isBikes ? this.bookingId : null
+            BookingId:this.isQuotation ? null : this.bookingId,
+            QuotationId:this.isQuotation ? null : this.quotationLinkId
         };
     }
 
@@ -8119,7 +8269,8 @@ implements OnInit, OnDestroy
         return JSON.stringify(
         {
             payload:this.buildPayload(),
-            phone:this.phoneText
+            phone:this.phoneText,
+            prospect:this.isQuotation ? [this.prospectName, this.prospectPhone, this.prospectAddress, this.quotationTerms] : null
         });
     }
 
@@ -8261,6 +8412,47 @@ implements OnInit, OnDestroy
         )
         {
             return [];
+        }
+
+        if
+        (
+            this.isQuotation
+        )
+        {
+            const convert:
+                CommandSlot =
+            {
+                command:'convert',
+                text:'Convert',
+                icon:'fas fa-file-invoice',
+                activity:''
+            };
+
+            if
+            (
+                this.isAddMode
+                ||
+                this.isEditable
+            )
+            {
+                return [save, clear];
+            }
+
+            const row =
+                this.quotationRow;
+
+            if
+            (
+                row?.Status === 'Open'
+            )
+            {
+                return [
+                    print,
+                    ...(row.HeldByInvoiceNo ? [] : [convert, edit])
+                ];
+            }
+
+            return row ? [print] : [];
         }
 
         if
@@ -8450,7 +8642,11 @@ implements OnInit, OnDestroy
                 break;
 
             case 'print':
-                this.openPrint(this.page.a4DocKey);
+                this.openPrint(this.page.a4DocKey, this.isQuotation ? this.quotationRow?.PublicId ?? '' : this.invoice?.PublicId ?? '');
+                break;
+
+            case 'convert':
+                this.convertQuotation();
                 break;
 
             case 'thermal':
@@ -8467,6 +8663,14 @@ implements OnInit, OnDestroy
     private saveIssue():
         string
     {
+        if
+        (
+            this.isQuotation
+        )
+        {
+            return this.quotationSaveIssue();
+        }
+
         if
         (
             this.periodError
@@ -8600,6 +8804,16 @@ implements OnInit, OnDestroy
                 issue;
 
             this.refresh();
+
+            return;
+        }
+
+        if
+        (
+            this.isQuotation
+        )
+        {
+            this.saveQuotation();
 
             return;
         }
@@ -9085,6 +9299,523 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
+    // Sales Quotations : load / save / convert
+    //===========================================================
+
+    // Quotation page (edit / view) : the quotation, then the
+    // defaults of today (prices are the day's)
+    private loadQuotation():
+        void
+    {
+        this.loading =
+            true;
+
+        this.loadError =
+            '';
+
+        this.refresh();
+
+        this.quotationService
+            .getById(this.page.quotationApiPath, this.routePublicId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    quotation =>
+                    {
+                        this.quotationRow =
+                            quotation;
+
+                        this.entityId =
+                            quotation.SalesQuotationId;
+
+                        // Only an open quotation with no invoice is
+                        // edited; others open in View
+                        if
+                        (
+                            this.isEditMode
+                            &&
+                            (quotation.Status !== 'Open' || !!quotation.HeldByInvoiceNo)
+                        )
+                        {
+                            this.mode =
+                                'view';
+                        }
+
+                        this.salesInvoiceService
+                            .getDefaults()
+                            .pipe(takeUntilDestroyed(this.destroyRef))
+                            .subscribe
+                            ({
+                                next:
+                                    defaults =>
+                                    {
+                                        this.applyDefaults(
+                                            defaults,
+                                            true
+                                        );
+
+                                        this.fillFromQuotation(
+                                            quotation,
+                                            false
+                                        );
+                                    },
+                                error:
+                                    () =>
+                                    {
+                                        this.fillFromQuotation(
+                                            quotation,
+                                            false
+                                        );
+                                    }
+                            });
+                    },
+                error:
+                    error =>
+                    {
+                        this.loading =
+                            false;
+
+                        this.loadError =
+                            error instanceof HttpErrorResponse && error.status === 404
+                                ? 'Sales quotation not found.'
+                                : this.errorText(error, 'The sales quotation could not be loaded.');
+
+                        this.refresh();
+                    }
+            });
+    }
+
+    // The quotation's customer / prospect, lines and discounts
+    // into the page. forInvoice : Convert to Invoice (MB : the
+    // models are listed, the chassis are picked by hand)
+    private fillFromQuotation
+    (
+        quotation:
+            SalesQuotation,
+        forInvoice:
+            boolean
+    ):
+        void
+    {
+        if
+        (
+            quotation.WarehouseId
+            &&
+            this.warehouseItems.some(x => x.value === quotation.WarehouseId)
+            &&
+            quotation.WarehouseId !== this.warehouseId
+        )
+        {
+            this.warehouseId =
+                quotation.WarehouseId;
+
+            this.loadProductList();
+        }
+
+        if
+        (
+            quotation.SalesPersonId
+            &&
+            this.salesPersonItems.some(x => x.value === quotation.SalesPersonId)
+        )
+        {
+            this.salesPersonId =
+                quotation.SalesPersonId;
+        }
+
+        this.narration =
+            quotation.Narration
+            ||
+            (forInvoice ? `Sale against quotation ${quotation.QuotationNo}` : '');
+
+        this.quotationTerms =
+            forInvoice ? '' : quotation.Terms;
+
+        // Customer (looked up again : today's card) or prospect
+        if
+        (
+            quotation.CustomerId
+            ||
+            forInvoice
+        )
+        {
+            this.prospectName = '';
+            this.prospectPhone = '';
+            this.prospectAddress = '';
+
+            if
+            (
+                isCustomerPhone(quotation.CustomerPhone)
+            )
+            {
+                this.phoneText =
+                    quotation.CustomerPhone;
+
+                this.lookedUpPhone =
+                    '';
+
+                this.findCustomer();
+            }
+        }
+        else
+        {
+            this.customer = null;
+            this.prospectName = quotation.CustomerName;
+            this.prospectPhone = quotation.CustomerPhone;
+            this.prospectAddress = quotation.CustomerAddress;
+        }
+
+        // MB invoice : chassis are picked by hand
+        const takeLines =
+            !(forInvoice && this.isBikes);
+
+        this.lines =
+            takeLines
+                ? quotation.Lines.map
+                (
+                    line =>
+                    ({
+                        ProductId:line.ProductId,
+                        ProductCode:line.ProductCode,
+                        PartNumber:line.PartNumber,
+                        ProductName:line.ProductName,
+                        ProductType:quotation.ProductType,
+                        Unit:line.Unit,
+                        Quantity:line.Quantity,
+                        UnitPrice:line.TypedPrice,
+                        SpecialPercent:line.TypedSpecialPercent,
+                        SpecialTk:line.TypedSpecialTk,
+                        specialMode:line.TypedSpecialTk != null ? 'Tk' as const : '%' as const,
+                        OnHand:0,
+                        Mrp:line.Mrp,
+                        qtyText:this.qtyString(line.Quantity),
+                        priceText:line.TypedPrice != null ? String(line.TypedPrice) : '',
+                        specialText:
+                            line.TypedSpecialTk != null
+                                ? String(line.TypedSpecialTk)
+                                : line.TypedSpecialPercent != null
+                                    ? String(line.TypedSpecialPercent)
+                                    : '',
+                        MotorBikeUnitId:null,
+                        ChassisNo:'',
+                        EngineNo:'',
+                        IsElectric:false,
+                        ColorName:'',
+                        ManufactureYear:null,
+                        CkdStatus:''
+                    })
+                )
+                : [];
+
+        this.specialType =
+            quotation.InvoiceSpecialType;
+
+        this.specialValueText =
+            quotation.InvoiceSpecialType !== 'None' && quotation.InvoiceSpecialValue > 0
+                ? String(quotation.InvoiceSpecialValue)
+                : '';
+
+        this.fractionalText =
+            quotation.FractionalDiscount > 0
+                ? String(quotation.FractionalDiscount)
+                : '';
+
+        if
+        (
+            this.page.pageType === 'MB'
+            &&
+            quotation.SaleType === 'Corporate'
+        )
+        {
+            this.saleType =
+                'Corporate';
+        }
+
+        this.quote =
+            null;
+
+        this.rebuildRows();
+
+        this.loading =
+            false;
+
+        this.setInitialState();
+
+        if
+        (
+            this.isEditable
+        )
+        {
+            this.runQuote();
+        }
+
+        this.refresh();
+    }
+
+    // Quotation : what keeps it from saving ('' = fine)
+    private quotationSaveIssue():
+        string
+    {
+        if
+        (
+            !this.warehouseId
+        )
+        {
+            return 'Warehouse is required.';
+        }
+
+        if
+        (
+            !this.customer
+            ||
+            !(this.customer.CustomerId > 0)
+        )
+        {
+            if
+            (
+                this.prospectName.trim().length < 2
+            )
+            {
+                return 'Pick the customer, or type the prospect\'s name.';
+            }
+
+            if
+            (
+                !isCustomerPhone(this.prospectPhone.trim())
+            )
+            {
+                return 'Type the prospect\'s phone : 11 digits starting 01.';
+            }
+        }
+
+        if
+        (
+            this.lines.length === 0
+        )
+        {
+            return `Add at least one ${this.page.itemLower}.`;
+        }
+
+        const badQty =
+            this.rows.find(row => !!this.lineQtyIssue(row));
+
+        if
+        (
+            badQty
+        )
+        {
+            return `Line ${badQty.index + 1} : ${this.lineQtyIssue(badQty)}`;
+        }
+
+        if
+        (
+            this.quoteFailed
+        )
+        {
+            return this.quoteFailed;
+        }
+
+        if
+        (
+            this.quote
+            &&
+            !this.quoteDirty
+            &&
+            !this.quoteBusy
+            &&
+            !this.quote.CanSave
+        )
+        {
+            return this.quote.Errors[0]
+                ||
+                'The quotation cannot be saved yet : see the messages under the items.';
+        }
+
+        return '';
+    }
+
+    private saveQuotation():
+        void
+    {
+        const body:
+            SaveSalesQuotation =
+            {
+                ...this.buildPayload(),
+                Payments:[],
+                PaymentTerm:'',
+                EmiAccountCode:'',
+                RegistrationTypeId:null,
+                RegistrationAmount:0,
+                RegistrationUnitIds:[],
+                BookingId:null,
+                QuotationId:null,
+                ProspectName:this.customer ? '' : toAsciiText(this.prospectName).trim(),
+                ProspectPhone:this.customer ? '' : this.prospectPhone.trim(),
+                ProspectAddress:this.customer ? '' : toAsciiText(this.prospectAddress).trim(),
+                Terms:toAsciiText(this.quotationTerms).replace(/[\r\n]+/g, ' ').trim().substring(0, 1000)
+            };
+
+        const editing =
+            this.isEditMode && !!this.quotationRow;
+
+        const call$ =
+            editing
+                ? this.quotationService.update(this.page.quotationApiPath, this.quotationRow!.PublicId, body)
+                : this.quotationService.create(this.page.quotationApiPath, body);
+
+        this.actionError =
+            '';
+
+        this.progress
+            .run(
+                editing ? 'Updating Sales Quotation' : 'Saving Sales Quotation',
+                'Please wait while the quotation is being saved...',
+                'Sales quotation saved.',
+                call$
+            )
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    saved =>
+                    {
+                        this.hasChanges =
+                            false;
+
+                        this.goToList(
+                            `${saved.QuotationNo || 'The quotation'} ${editing ? 'updated' : 'saved'}.`,
+                            'ok',
+                            saved.PublicId);
+                    },
+                error:
+                    error =>
+                    {
+                        this.actionError =
+                            this.errorText(error, 'Failed to save the sales quotation.');
+
+                        this.refresh();
+
+                        this.runQuote();
+                    }
+            });
+    }
+
+    // Convert : the invoice page of the type, filled from the
+    // quotation (?quotation=<id>)
+    convertQuotation():
+        void
+    {
+        const row =
+            this.quotationRow;
+
+        if
+        (
+            !row
+        )
+        {
+            return;
+        }
+
+        void this.router.navigate(
+            ['/' + this.page.invoiceRoute, 'add'],
+            { queryParams:{ quotation:row.PublicId } }
+        );
+    }
+
+    // Invoice page, Add with ?quotation=<id> : filled from it
+    private takeQuotationFromRoute():
+        void
+    {
+        const id =
+            String(this.route.snapshot.queryParamMap.get('quotation') ?? '').trim();
+
+        if
+        (
+            this.isQuotation
+            ||
+            !id
+        )
+        {
+            return;
+        }
+
+        this.quotationService
+            .getById(this.page.quotationApiPath, id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    quotation =>
+                    {
+                        if
+                        (
+                            quotation.Status !== 'Open'
+                        )
+                        {
+                            this.toast.warning(
+                                this.page.fullTitle,
+                                `Quotation ${quotation.QuotationNo} is ${quotation.Status} : it cannot be converted.`);
+
+                            return;
+                        }
+
+                        this.quotationLinkId =
+                            quotation.SalesQuotationId;
+
+                        this.quotationLinkNo =
+                            quotation.QuotationNo;
+
+                        this.fillFromQuotation(
+                            quotation,
+                            true
+                        );
+
+                        if
+                        (
+                            !quotation.CustomerId
+                        )
+                        {
+                            this.toast.info(
+                                `Quotation ${quotation.QuotationNo}`,
+                                `${quotation.CustomerName} is a prospect : add the customer (phone ${quotation.CustomerPhone}), then save the invoice.`);
+                        }
+
+                        if
+                        (
+                            this.isBikes
+                        )
+                        {
+                            this.toast.info(
+                                `Quotation ${quotation.QuotationNo}`,
+                                `Pick the chassis for : ${quotation.Lines.map(x => `${x.ProductName} x ${this.qtyString(x.Quantity)}`).join(', ')}.`);
+                        }
+                    },
+                error:
+                    error =>
+                    {
+                        this.toast.error(
+                            this.page.fullTitle,
+                            this.errorText(error, 'The quotation could not be loaded.'));
+                    }
+            });
+    }
+
+    // Quotation removed from the invoice (the link only)
+    removeQuotationLink():
+        void
+    {
+        this.quotationLinkId =
+            null;
+
+        this.quotationLinkNo =
+            '';
+
+        this.onChanged();
+    }
+
+
+    //===========================================================
     // MB : Booking (Booking Management) : the customer's open
     // bookings; the one picked is paid already by its advance
     //===========================================================
@@ -9093,7 +9824,7 @@ implements OnInit, OnDestroy
     get canTakeBooking():
         boolean
     {
-        return this.isBikes
+        return !this.isQuotation
             &&
             this.isEditable
             &&
@@ -9178,7 +9909,7 @@ implements OnInit, OnDestroy
             this.customer.CustomerId;
 
         this.bookingsService
-            .getOpen(customerId)
+            .getOpen(this.page.pageType, customerId)
             .subscribe
             ({
                 next:
@@ -9247,6 +9978,19 @@ implements OnInit, OnDestroy
         this.bookingPickerOpen =
             false;
 
+        // SP / AC : the booked items go on the invoice
+        if
+        (
+            !this.isBikes
+        )
+        {
+            this.addBookedItems(booking);
+
+            this.onChanged();
+
+            return;
+        }
+
         // No bike yet : the booked model goes to the entry (pick
         // the chassis, then Add)
         if
@@ -9275,6 +10019,190 @@ implements OnInit, OnDestroy
         void
     {
         this.clearBooking(true);
+    }
+
+    // SP / AC : each booked item on the invoice at the booked
+    // quantity (a line already there is raised to it). Items with
+    // no MRP are left out; with Sale Without Stock OFF a short item
+    // gets only what is on hand. Prices are the MRP of today (no
+    // price lock).
+    private addBookedItems
+    (
+        booking:
+            OpenBooking
+    ):
+        void
+    {
+        const warehouseId =
+            this.warehouseId;
+
+        if
+        (
+            !warehouseId
+            ||
+            booking.Lines.length === 0
+        )
+        {
+            return;
+        }
+
+        const lookups:
+            Observable<SalesInvoiceProduct[]>[] =
+            booking.Lines.map
+            (
+                item =>
+                {
+                    const known =
+                        this.productList.find(x => x.ProductId === item.ProductId);
+
+                    return known
+                        ? of([known])
+                        : this.salesInvoiceService.searchProducts(
+                            warehouseId,
+                            item.PartNumber || item.ProductCode || item.ProductName);
+                }
+            );
+
+        forkJoin(lookups)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    results =>
+                    {
+                        if
+                        (
+                            this.bookingId !== booking.BookingId
+                        )
+                        {
+                            return;
+                        }
+
+                        const notes:
+                            string[] =
+                            [];
+
+                        booking.Lines.forEach
+                        (
+                            (item, index) =>
+                            {
+                                const product =
+                                    (results[index] ?? []).find((x: SalesInvoiceProduct) => x.ProductId === item.ProductId);
+
+                                if
+                                (
+                                    !product
+                                    ||
+                                    !(product.Mrp > 0)
+                                )
+                                {
+                                    notes.push(`${item.ProductName} : ${product ? 'no MRP' : 'not found here'}`);
+
+                                    return;
+                                }
+
+                                const existing =
+                                    this.lines.find(x => x.ProductId === product.ProductId);
+
+                                const already =
+                                    existing?.Quantity ?? 0;
+
+                                let target =
+                                    roundMoney(Math.max(already, item.Quantity));
+
+                                if
+                                (
+                                    !this.switches?.AllowSaleWithoutStock
+                                    &&
+                                    target > product.OnHand
+                                )
+                                {
+                                    notes.push(`${item.ProductName} : ${this.qtyString(product.OnHand)} of ${this.qtyString(item.Quantity)} on hand`);
+
+                                    target =
+                                        roundMoney(Math.max(already, product.OnHand));
+                                }
+
+                                if
+                                (
+                                    !(target > already)
+                                )
+                                {
+                                    return;
+                                }
+
+                                if
+                                (
+                                    existing
+                                )
+                                {
+                                    existing.Quantity =
+                                        target;
+
+                                    existing.qtyText =
+                                        this.qtyString(target);
+
+                                    existing.OnHand =
+                                        product.OnHand;
+
+                                    return;
+                                }
+
+                                this.lines =
+                                [
+                                    ...this.lines,
+                                    {
+                                        ProductId:product.ProductId,
+                                        ProductCode:product.ProductCode,
+                                        PartNumber:product.PartNumber,
+                                        ProductName:product.ProductName || [product.PartNumber, product.PartName].filter(x => !!x).join(' - '),
+                                        ProductType:product.ProductType,
+                                        Unit:product.Unit,
+                                        Quantity:target,
+                                        UnitPrice:null,
+                                        SpecialPercent:null,
+                                        OnHand:product.OnHand,
+                                        Mrp:product.Mrp,
+                                        qtyText:this.qtyString(target),
+                                        priceText:'',
+                                        specialText:''
+                                    }
+                                ];
+                            }
+                        );
+
+                        if
+                        (
+                            this.lines.length > 0
+                            &&
+                            this.customer
+                        )
+                        {
+                            this.customerCollapsed =
+                                true;
+                        }
+
+                        if
+                        (
+                            notes.length > 0
+                        )
+                        {
+                            this.toast.warning(
+                                `Booking ${booking.BookingNo}`,
+                                `Not all items added : ${notes.join('; ')}.`);
+                        }
+
+                        this.onChanged();
+                    },
+
+                error:
+                    error =>
+                    {
+                        this.toast.error(
+                            `Booking ${booking.BookingNo}`,
+                            this.errorText(error, 'The booked items could not be added : add them by hand.'));
+                    }
+            });
     }
 
     private clearBooking

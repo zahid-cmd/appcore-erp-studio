@@ -1,24 +1,20 @@
-<div class="app-list-page">
-
-    <!-- =====================================================
-         PAGE HEADER
-    ====================================================== -->
+<div class="app-list-page mf-list">
 
     <app-page-header
 
         title="Membership Fees Collection"
 
-        subtitle="Manage membershipfeescollections"
+        subtitle="Collect through the Payment Desk : the membership turns Active; cancel or refund only while unused"
 
-        icon="fas fa-list">
+        icon="fas fa-id-card">
 
         <div pageHeaderCenter>
 
             <app-search-box
 
-                [(value)]="searchText"
+                [value]="searchText"
 
-                placeholder="Search membershipfeescollections..."
+                placeholder="Search membership, customer, phone, chassis, voucher..."
 
                 (valueChange)="onSearch($event)">
 
@@ -26,16 +22,17 @@
 
         </div>
 
-
         <div pageHeaderRight>
 
             <app-command-center
 
-                command1Text="Add"
+                command1Text="Enroll"
 
-                command1Icon="fas fa-plus"
+                command1Icon="fas fa-user-plus"
 
-                (command1Click)="add()"
+                command1Title="Enroll a member (Membership Status)"
+
+                (command1Click)="goToStatus()"
 
                 command2Text="Refresh"
 
@@ -43,15 +40,7 @@
 
                 (command2Click)="refresh()"
 
-                command3Text="Restore"
-
-                command3Icon="fas fa-trash-arrow-up"
-
-                (command3Click)="restore()"
-
-                rightCommandIcon="fas fa-clock-rotate-left"
-
-                (rightCommandClick)="openHistory()">
+                [command3Visible]="false">
 
             </app-command-center>
 
@@ -59,11 +48,6 @@
 
     </app-page-header>
 
-
-
-    <!-- =====================================================
-         PAGE TOOLBAR
-    ====================================================== -->
 
     <app-page-toolbar>
 
@@ -73,49 +57,35 @@
 
             [tabs]="tabs"
 
-            [(selectedTab)]="selectedTab">
+            [(selectedTab)]="selectedTab"
+
+            (selectedTabChange)="onTabChange($event)">
 
         </app-control-tabs>
 
-
-        <!-- =================================================
-             STATUS FILTER
-        ================================================== -->
-
-        <app-dropdown
+        <span
 
             pageToolbarRight
 
-            placeholder="All Status"
+            class="mf-list-count">
 
-            [items]="statusItems"
+            <i class="fa-regular fa-file-lines"></i>
 
-            labelField="text"
+            {{ totalRecords }} row{{ totalRecords === 1 ? '' : 's' }}
 
-            valueField="value"
+            @if (countOf('To Collect') > 0)
+            {
+                <span class="mf-list-due">· To collect Tk {{ money(totalOf('To Collect')) }}</span>
+            }
 
-            [(value)]="selectedStatus"
-
-            (valueChange)="onStatusFilterChange($event)">
-
-        </app-dropdown>
+        </span>
 
     </app-page-toolbar>
 
 
-
-    <!-- =====================================================
-         PAGE CANVAS
-    ====================================================== -->
-
     <app-page-canvas
 
         [config]="canvasConfig">
-
-
-        <!-- =================================================
-             LIST TABLE
-        ================================================== -->
 
         <div canvasBody>
 
@@ -123,7 +93,7 @@
 
                 [columns]="columns"
 
-                [rows]="pagedMembershipFeesCollections"
+                [rows]="pagedRows"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
 
@@ -131,11 +101,11 @@
 
                 [error]="loadFailed"
 
-                (view)="view($event)"
+                [actions]="tableActions"
 
-                (edit)="edit($event)"
+                [rowActions]="rowActions"
 
-                (delete)="delete($event)"
+                (rowAction)="onRowAction($event)"
 
                 (sortChange)="onSort($event)">
 
@@ -143,17 +113,11 @@
 
         </div>
 
-
-
-        <!-- =================================================
-             PAGINATION
-        ================================================== -->
-
         <app-pagination
 
             canvasFooter
 
-            [totalRecords]="filteredMembershipFeesCollections.length"
+            [totalRecords]="totalRecords"
 
             [currentPage]="currentPage"
 
@@ -167,43 +131,557 @@
 
     </app-page-canvas>
 
-    <!-- =====================================================
-         SUMMARY (all records)
-    ====================================================== -->
 
-    @if (summaryTotal > 0)
+    <div class="ics-summary">
+
+        <span class="ics-summary-item">
+            <span class="ics-summary-label">To collect</span>
+            <b class="ics-summary-value ics-bad">{{ countOf('To Collect') }} · {{ money(totalOf('To Collect')) }}</b>
+        </span>
+
+        <span class="ics-summary-item">
+            <span class="ics-summary-label">Collected</span>
+            <b class="ics-summary-value ics-ok">{{ countOf('Paid') }} · {{ money(totalOf('Paid')) }}</b>
+        </span>
+
+        <span class="ics-summary-item">
+            <span class="ics-summary-label">Refunded</span>
+            <b class="ics-summary-value">{{ countOf('Refunded') }} · {{ money(totalOf('Refunded')) }}</b>
+        </span>
+
+        <span class="ics-summary-note">Refunds go to the customer's ledger; cash out by a Payment Voucher</span>
+
+    </div>
+
+
+    @if (reasonRow)
     {
-        <div class="ics-summary">
+        <div class="mf-backdrop">
 
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
+            <div
 
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
+                class="mf-modal"
 
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
-            </span>
+                role="dialog"
 
-            <span class="ics-summary-note">
-                All records
-            </span>
+                aria-modal="true">
+
+                <div class="mf-modal-head">
+
+                    <i [class]="reasonKind === 'refund' ? 'fas fa-hand-holding-dollar' : 'fas fa-ban'"></i>
+
+                    <div>
+
+                        <strong>{{ reasonKind === 'refund' ? 'Refund' : 'Cancel collection' }} {{ reasonRow.FeeNo }}</strong>
+
+                        <span>{{ reasonRow.MembershipNo }} · {{ reasonRow.CustomerText }} · Tk {{ money(reasonRow.Amount) }}</span>
+
+                    </div>
+
+                    <button type="button" class="mf-x" title="Close" aria-label="Close" (click)="closeReason()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="mf-modal-body">
+
+                    <p class="mf-explain">
+                        @if (reasonKind === 'refund')
+                        {
+                            The whole fee (Tk {{ money(reasonRow.Amount) }}) is credited to the customer's ledger by a Journal Voucher (Dr Membership Fees - {{ reasonRow.CardName }} / Cr the customer). Pay it out later by a Payment Voucher if needed.
+                        }
+                        @else
+                        {
+                            Receipt Voucher {{ reasonRow.ReceiptVoucherNo }} is cancelled and {{ reasonRow.MembershipNo }} goes back to Pending (to collect again).
+                        }
+                    </p>
+
+                    <app-textbox
+
+                        label="Reason"
+
+                        placeholder="Why? (5+ characters)"
+
+                        textCase="none"
+
+                        [required]="true"
+
+                        [value]="reasonText"
+
+                        (valueChange)="onReasonText($event)">
+
+                    </app-textbox>
+
+                </div>
+
+                <div class="mf-modal-foot">
+
+                    <span class="mf-note" [class.mf-bad]="!!reasonError">
+
+                        <i [class]="reasonError ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                        {{ reasonError || 'Allowed only while no free service was taken and no member discount was given.' }}
+
+                    </span>
+
+                    <button type="button" class="mf-btn mf-btn-light" [disabled]="progress.busy" (click)="closeReason()">Close</button>
+
+                    <button
+
+                        type="button"
+
+                        class="mf-btn"
+
+                        [class.mf-btn-danger]="reasonKind === 'cancel'"
+
+                        [class.mf-btn-primary]="reasonKind === 'refund'"
+
+                        [disabled]="progress.busy"
+
+                        (click)="confirmReason()">
+
+                        <i [class]="reasonKind === 'refund' ? 'fas fa-hand-holding-dollar' : 'fas fa-ban'"></i>
+
+                        {{ reasonKind === 'refund' ? 'Refund' : 'Cancel Collection' }}
+
+                    </button>
+
+                </div>
+
+            </div>
 
         </div>
     }
 
 
+    @if (collectOpen && collectRow)
+    {
+        <div class="mfm-backdrop">
+
+            <div
+
+                class="mfm-modal"
+
+                role="dialog"
+
+                aria-modal="true"
+
+                aria-labelledby="mfm-title">
 
 
+                <!-- Header -->
 
-    <!-- =====================================================
-         HISTORY
-    ====================================================== -->
+                <div class="mfm-head">
+
+                    <span class="mfm-icon">
+
+                        <i class="fas fa-cash-register"></i>
+
+                    </span>
+
+                    <div class="mfm-title">
+
+                        <strong id="mfm-title">Collect {{ collectRow.MembershipNo }}</strong>
+
+                        <span>
+
+                            {{ collectRow.CardName }} card · {{ collectRow.CustomerText }} · {{ collectRow.ChassisNo }}
+
+                        </span>
+
+                        <span>
+
+                            Fee <b>{{ money(collectAmount) }}</b>
+
+                            · Received <b class="mfm-emerald">{{ money(deskTotal) }}</b>
+
+                            · Balance <b [class.mfm-rose]="deskRemaining > 0">{{ money(deskRemaining) }}</b>
+
+
+                        </span>
+
+                    </div>
+
+                    @if (deskRowCount > 0)
+                    {
+                        <div
+
+                            class="mfm-progress"
+
+                            [class.mfm-progress-done]="deskAllVerified">
+
+                            <span class="mfm-progress-text">
+
+                                <i [class]="deskAllVerified ? 'fa-regular fa-circle-check' : 'fas fa-list-check'"></i>
+
+                                {{ deskVerifiedCount }} / {{ deskRowCount }} verified
+
+                            </span>
+
+                            <span class="mfm-track">
+
+                                <span
+
+                                    class="mfm-bar"
+
+                                    [style.width.%]="deskProgress">
+
+                                </span>
+
+                            </span>
+
+                        </div>
+                    }
+
+                    <button
+
+                        type="button"
+
+                        class="mfm-x"
+
+                        title="Close"
+
+                        aria-label="Close"
+
+                        (click)="onDeskClose()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Body -->
+
+                <div class="mfm-body">
+
+                    <div class="mfm-entry">
+
+                        <app-dropdown
+
+                            label="Receipt Mode"
+
+                            placeholder="Select mode"
+
+                            [items]="deskModeItems"
+
+                            [value]="deskMode"
+
+                            (valueChange)="onDeskModeChange($event)">
+
+                        </app-dropdown>
+
+                        <app-search-dropdown
+
+                            label="Account"
+
+                            [placeholder]="deskLedgerPlaceholder"
+
+                            [items]="deskLedgerItems"
+
+                            [value]="deskLedgerCode || null"
+
+                            [disabled]="!deskMode || deskLedgerItems.length === 0"
+
+                            (valueChange)="onDeskLedgerChange($event)">
+
+                        </app-search-dropdown>
+
+                        <app-textbox
+
+                            label="Amount"
+
+                            placeholder="0.00"
+
+                            inputMode="decimal"
+
+                            textCase="none"
+
+                            [value]="deskAmountText"
+
+                            (valueChange)="onDeskAmountChange($event)"
+
+                            (enterPressed)="addDeskRow()">
+
+                        </app-textbox>
+
+                        <button
+
+                            type="button"
+
+                            class="mfm-add"
+
+                            [disabled]="deskRemaining <= 0 || progress.busy"
+
+                            (click)="addDeskRow()">
+
+                            <i class="fas fa-plus"></i>
+
+                            Add
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- Receipt rows : three rows, scrolls inside -->
+
+                    <div class="mfm-scroll appcore-scrollbar">
+
+                        <table class="mfm-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th class="mfm-c mfm-col-sl">SL</th>
+
+                                    <th class="mfm-col-mode">Mode</th>
+
+                                    <th>Account</th>
+
+                                    <th class="mfm-r mfm-col-money">Amount</th>
+
+                                    <th class="mfm-r mfm-col-money">Charge</th>
+
+                                    <th class="mfm-col-state">State</th>
+
+                                    <th class="mfm-c mfm-col-action"></th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                @for (row of deskRows; track $index; let i = $index)
+                                {
+                                    <tr>
+
+                                        <td class="mfm-c mfm-sl">{{ i + 1 }}</td>
+
+                                        <td>{{ row.Mode }}</td>
+
+                                        <td>
+
+                                            <div class="mfm-part">{{ row.LedgerName }}</div>
+
+                                            <div class="mfm-sub">{{ row.LedgerCode }}</div>
+
+                                        </td>
+
+                                        <td class="mfm-r">{{ money(row.Amount) }}</td>
+
+                                        <td class="mfm-r">
+
+                                            @if (row.ChargeAmount > 0)
+                                            {
+                                                {{ money(row.ChargeAmount) }}
+
+                                                <div class="mfm-sub">{{ row.ChargeBorneBy === 'Customer' ? 'customer, on top' : 'company' }}</div>
+                                            }
+                                            @else
+                                            {
+                                                <span class="mfm-muted">-</span>
+                                            }
+
+                                        </td>
+
+                                        <td>
+
+                                            <span
+
+                                                [class.mfm-emerald]="deskRowReady(row)"
+
+                                                [class.mfm-amber]="!deskRowReady(row)">
+
+                                                <i [class]="deskRowReady(row) ? 'fa-regular fa-circle-check' : 'fas fa-pen'"></i>
+
+                                                {{ deskRowState(row) }}
+
+                                            </span>
+
+                                        </td>
+
+                                        <td class="mfm-c">
+
+                                            <button
+
+                                                type="button"
+
+                                                class="mfm-remove"
+
+                                                title="Remove payment"
+
+                                                aria-label="Remove payment"
+
+                                                [disabled]="progress.busy"
+
+                                                (click)="removeDeskRow(i)">
+
+                                                <i class="fa-regular fa-trash-can"></i>
+
+                                            </button>
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                                @if (deskRows.length === 0)
+                                {
+                                    <tr>
+
+                                        <td
+
+                                            class="mfm-empty"
+
+                                            colspan="7">
+
+                                            No payment yet.
+
+                                        </td>
+
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    @if (deskNeedsDetails)
+                    {
+                        <div class="mfm-details appcore-scrollbar">
+
+                            <app-payment-desk
+
+                                kind="receipt"
+
+                                [readonly]="progress.busy"
+
+                                [lines]="deskInput"
+
+                                (linesChange)="onDeskChange($event)"
+
+                                (validChange)="onDeskValidChange($event)">
+
+                            </app-payment-desk>
+
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- Footer -->
+
+                <div
+
+                    class="mfm-foot"
+
+                    [class.mfm-foot-confirm]="deskConfirmClose">
+
+                    @if (deskConfirmClose)
+                    {
+                        <span class="mfm-note mfm-amber">
+
+                            <i class="fas fa-triangle-exclamation"></i>
+
+                            Discard the payment entered?
+
+                        </span>
+
+                        <button
+
+                            type="button"
+
+                            class="mfm-btn mfm-btn-light"
+
+                            (click)="onDeskKeepEditing()">
+
+                            <i class="fas fa-pen"></i>
+
+                            Keep Editing
+
+                        </button>
+
+                        <button
+
+                            type="button"
+
+                            class="mfm-btn mfm-btn-danger"
+
+                            (click)="onDeskDiscard()">
+
+                            <i class="fa-regular fa-trash-can"></i>
+
+                            Discard
+
+                        </button>
+                    }
+                    @else
+                    {
+                        <span
+
+                            class="mfm-note"
+
+                            [class.mfm-rose]="!!deskError"
+
+                            [class.mfm-emerald]="!deskError && canCollect">
+
+                            <i [class]="deskError ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                            {{ deskError || deskFooterNote }}
+
+                        </span>
+
+                        <button
+
+                            type="button"
+
+                            class="mfm-btn mfm-btn-light"
+
+                            [disabled]="progress.busy"
+
+                            (click)="onDeskClose()">
+
+                            <i class="fas fa-xmark"></i>
+
+                            Close
+
+                        </button>
+
+                        <button
+
+                            type="button"
+
+                            class="mfm-btn mfm-btn-primary"
+
+                            [disabled]="!canCollect"
+
+                            (click)="collect()">
+
+                            <i class="fas fa-cash-register"></i>
+
+                            Collect
+
+                        </button>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
 
     <app-history-drawer
 
@@ -217,14 +695,10 @@
 
     </app-history-drawer>
 
-
-
-    <!-- =====================================================
-         UTILITIES
-    ====================================================== -->
-
     <app-toast></app-toast>
 
     <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
 
 </div>

@@ -102,6 +102,12 @@ from '../../../../../core/authentication/authentication-storage.service';
 
 import
 {
+    WorkBranchService
+}
+from '../../../../../core/authentication/work-branch.service';
+
+import
+{
     Receiving,
     ReceivingPageConfig,
     formatReceivingDate,
@@ -176,6 +182,11 @@ export class ReceivingList
 
     private readonly authStorage =
         inject(AuthenticationStorageService);
+
+    // Line page : the branch of the page's business line
+    // (2026-11-13; top-bar pick)
+    private readonly workBranch =
+        inject(WorkBranchService);
 
     private readonly cdr =
         inject(ChangeDetectorRef);
@@ -303,7 +314,8 @@ export class ReceivingList
         const user =
             this.authStorage.getUser() as any;
 
-        return Number(user?.branchId) || 0;
+        // The page's working branch, else the login branch
+        return this.workBranch.branchIdOr(Number(user?.branchId) || 0);
     }
 
     load():

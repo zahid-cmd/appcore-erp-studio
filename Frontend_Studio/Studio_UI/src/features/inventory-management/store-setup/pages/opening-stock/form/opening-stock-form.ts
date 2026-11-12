@@ -132,6 +132,12 @@ from '../../../../../../core/authentication/authentication-storage.service';
 
 import
 {
+    WorkBranchService
+}
+from '../../../../../../core/authentication/work-branch.service';
+
+import
+{
     CreateOpeningStock,
     OPENING_STOCK_PRINT_KEY,
     OPENING_STOCK_ROUTE,
@@ -388,6 +394,11 @@ export class OpeningStockForm
 
     private readonly authStorage =
         inject(AuthenticationStorageService);
+
+    // Line page : the branch of the page's business line
+    // (2026-11-13; top-bar pick)
+    private readonly workBranch =
+        inject(WorkBranchService);
 
     // Progress dialog around save / post / delete / cancel
     private readonly progress =
@@ -931,7 +942,7 @@ export class OpeningStockForm
             )
             {
                 const own =
-                    Number((this.authStorage.getUser() as any)?.branchId) || 0;
+                    this.workBranch.branchIdOr(Number((this.authStorage.getUser() as any)?.branchId) || 0);
 
                 this.branchId =
                     (defaults.Branches.find(x => x.Id === own) ?? defaults.Branches[0])?.Id ?? 0;

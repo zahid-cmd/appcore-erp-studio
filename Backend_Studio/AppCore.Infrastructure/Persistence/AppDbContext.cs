@@ -1018,6 +1018,17 @@ public class AppDbContext
     // AUTO-END : MembershipStatus
 
 
+    // Membership Fees Collection (MANUAL : table MembershipFees,
+    // MembershipFees_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipFeesCollection>
+    MembershipFeeRows
+    {
+    get;
+    set;
+    } = null!;
+
+
 
 
     // AUTO-BEGIN : EmiAccounts
@@ -2024,8 +2035,8 @@ public class AppDbContext
     set;
     } = null!;
 
-    // Bookings (motor bikes) and their collections (MANUAL :
-    // BookingsMB_Engine.sql, hand-written page)
+    // Bookings (MB / SP / AC), their collections and items (MANUAL :
+    // Bookings_Engine.sql, hand-written pages)
 
     public DbSet<AppCore.Domain.Entities.SalesOperations.BookingManagement.Bookings>
     BookingRows
@@ -2036,6 +2047,71 @@ public class AppDbContext
 
     public DbSet<AppCore.Domain.Entities.SalesOperations.BookingManagement.BookingCollections>
     BookingCollectionRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.BookingManagement.BookingLines>
+    BookingLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Sales Quotations - MB / SP / AC and their lines (MANUAL :
+    // SalesQuotations_Engine.sql, hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.Shared.SalesQuotations>
+    SalesQuotationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.Shared.SalesQuotationLines>
+    SalesQuotationLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Business Promotions : Promotional Offers, targets, prizes
+    // (MANUAL : PromotionalOffers_Engine.sql, hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.Shared.PromotionalOffers>
+    PromotionalOfferRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.Shared.PromotionalOfferTargets>
+    PromotionalOfferTargetRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.Shared.PromotionalOfferPrizes>
+    PromotionalOfferPrizeRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Sales Returns - MB / SP / AC and their lines (MANUAL :
+    // SalesReturns_Engine.sql, hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.Shared.SalesReturns>
+    SalesReturnRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.SalesOperations.Shared.SalesReturnLines>
+    SalesReturnLineRows
     {
     get;
     set;

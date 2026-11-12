@@ -156,6 +156,38 @@ export const PRINT_SOURCES:
             import('../../features/sales-operations/motor-bike-sales/print/sales-invoices-mb.print')
                 .then(module => module.SALES_INVOICES_MB_PRINT),
 
+    // Sales Operations : Sales Quotations - MB / SP / AC (A4)
+    'sales-quotations-mb':
+        () =>
+            import('../../features/sales-operations/shared/sales-invoice/print/sales-quotation.print')
+                .then(module => module.SALES_QUOTATIONS_MB_PRINT),
+
+    'sales-quotations-sp':
+        () =>
+            import('../../features/sales-operations/shared/sales-invoice/print/sales-quotation.print')
+                .then(module => module.SALES_QUOTATIONS_SP_PRINT),
+
+    'sales-quotations-ac':
+        () =>
+            import('../../features/sales-operations/shared/sales-invoice/print/sales-quotation.print')
+                .then(module => module.SALES_QUOTATIONS_AC_PRINT),
+
+    // Sales Returns - MB / SP / AC (the credit note)
+    'sales-returns-mb':
+        () =>
+            import('../../features/sales-operations/shared/sales-return/print/sales-return.print')
+                .then(module => module.SALES_RETURNS_MB_PRINT),
+
+    'sales-returns-sp':
+        () =>
+            import('../../features/sales-operations/shared/sales-return/print/sales-return.print')
+                .then(module => module.SALES_RETURNS_SP_PRINT),
+
+    'sales-returns-ac':
+        () =>
+            import('../../features/sales-operations/shared/sales-return/print/sales-return.print')
+                .then(module => module.SALES_RETURNS_AC_PRINT),
+
     // Sales Operations : Bike Deliveries (Delivery Challan / Gate
     // Pass + PDI Sheet; the id is the delivery PublicId)
     'bike-deliveries':

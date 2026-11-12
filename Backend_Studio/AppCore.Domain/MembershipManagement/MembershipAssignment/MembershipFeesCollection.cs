@@ -6,165 +6,81 @@ namespace AppCore.Domain.Entities.MembershipManagement.MembershipAssignment;
 
 
 //===============================================================
-// MembershipFeesCollection
+// Membership Fees Collection (hand-written, 2026-11-11; table
+// "MembershipFees" made by MembershipFees_Engine.sql; NO Code
+// Sync). One row = one collection of a membership fee :
+//   Paid      : Receipt Voucher posted, membership Active
+//   Cancelled : collection cancelled (unused), membership Pending
+//   Refunded  : membership cancelled unused, the fee credited to
+//               the customer's ledger by a Journal Voucher
 //===============================================================
 
 public class MembershipFeesCollection
 {
-    // The id used in links and API calls (uuid v7)
-    public Guid PublicId
-    {
-        get;
-        set;
-    } = Guid.CreateVersion7();
+    public long MembershipFeeId { get; set; }
 
-    //===========================================================
-    // Primary Key
-    //===========================================================
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
 
-    public long Id
-    {
-        get;
-        set;
-    }
+    // MFC-000001
+    public string FeeNo { get; set; } = string.Empty;
 
+    // Enrollment (Renewal / Upgrade later)
+    public string FeeType { get; set; } = "Enrollment";
 
-    //===========================================================
-    // Code
-    //===========================================================
+    public long MembershipId { get; set; }
 
-    public string Code
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string MembershipNo { get; set; } = string.Empty;
 
+    public long MembershipCardId { get; set; }
 
-    //===========================================================
-    // Name
-    //===========================================================
+    public string CardName { get; set; } = string.Empty;
 
-    public string Name
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string FeeLedgerCode { get; set; } = string.Empty;
 
+    public long CustomerId { get; set; }
 
-    //===========================================================
-    // Sample Search Dropdown
-    //===========================================================
+    public string CustomerCode { get; set; } = string.Empty;
 
-    public long? SampleSearchDropdownId
-    {
-        get;
-        set;
-    }
+    public string CustomerName { get; set; } = string.Empty;
 
+    public string ChassisNo { get; set; } = string.Empty;
 
-    //===========================================================
-    // Sample Field
-    //===========================================================
+    public decimal Amount { get; set; }
 
-    public string SampleField
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public DateOnly CollectedDate { get; set; }
 
+    public long BranchId { get; set; }
 
-    //===========================================================
-    // Status
-    //===========================================================
+    public string Narration { get; set; } = string.Empty;
 
-    public bool Status
-    {
-        get;
-        set;
-    }
+    public long? ReceiptVoucherId { get; set; }
 
+    public string ReceiptVoucherNo { get; set; } = string.Empty;
 
-    //===========================================================
-    // Remarks
-    //===========================================================
+    // Paid / Cancelled / Refunded
+    public string Status { get; set; } = "Paid";
 
-    public string Remarks
-    {
-        get;
-        set;
-    }
-    =
-        string.Empty;
+    public string CancelReason { get; set; } = string.Empty;
 
+    public long? CancelledBy { get; set; }
 
-    //===========================================================
-    // Active
-    //===========================================================
+    public DateTime? CancelledDate { get; set; }
 
-    public bool IsActive
-    {
-        get;
-        set;
-    }
+    public DateOnly? RefundDate { get; set; }
 
+    public string RefundReason { get; set; } = string.Empty;
 
-    //===========================================================
-    // Deleted
-    //===========================================================
+    public long? RefundJournalVoucherId { get; set; }
 
-    public bool IsDeleted
-    {
-        get;
-        set;
-    }
+    public string RefundJournalVoucherNo { get; set; } = string.Empty;
 
+    public long? RefundedBy { get; set; }
 
-    //===========================================================
-    // Created By
-    //===========================================================
+    public long CreatedBy { get; set; }
 
-    public long CreatedBy
-    {
-        get;
-        set;
-    }
+    public DateTime CreatedDate { get; set; }
 
+    public long? ModifiedBy { get; set; }
 
-    //===========================================================
-    // Created Date
-    //===========================================================
-
-    public DateTime CreatedDate
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified By
-    //===========================================================
-
-    public long? ModifiedBy
-    {
-        get;
-        set;
-    }
-
-
-    //===========================================================
-    // Modified Date
-    //===========================================================
-
-    public DateTime? ModifiedDate
-    {
-        get;
-        set;
-    }
+    public DateTime? ModifiedDate { get; set; }
 }

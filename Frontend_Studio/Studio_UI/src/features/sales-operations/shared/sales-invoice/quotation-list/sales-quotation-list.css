@@ -1,0 +1,266 @@
+@import '../../../../../shared/styles/app-list-page.css';
+
+/*===============================================================
+  Same layout as Sales Invoices : the shared list page styles,
+  status tabs + a count in the toolbar, the summary line below
+===============================================================*/
+
+.sq-list-count
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.sq-list-count i
+{
+    color: #1e3a8a;
+}
+
+.sq-ok
+{
+    color: #047857;
+}
+
+.sq-bad
+{
+    color: #be123c;
+}
+
+.ics-summary
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 0;
+    min-height: 50px;
+    padding: 12px 22px;
+    box-sizing: border-box;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
+    font-size: 14.5px;
+}
+
+.ics-summary-item
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 20px;
+}
+
+.ics-summary-item:first-child
+{
+    padding-left: 0;
+}
+
+.ics-summary-item + .ics-summary-item
+{
+    border-left: 1px solid #c9daf5;
+}
+
+.ics-summary-label
+{
+    color: #475569;
+    font-weight: 500;
+}
+
+.ics-summary-value
+{
+    color: #1e293b;
+    font-size: 15.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.ics-summary-value.ics-ok
+{
+    color: #047857;
+}
+
+.ics-summary-value.ics-bad
+{
+    color: #be123c;
+}
+
+.ics-summary-value.ics-warn
+{
+    color: #b45309;
+}
+
+.ics-summary-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.sq-backdrop
+{
+    position:fixed;
+
+    inset:0;
+
+    z-index:1200;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:16px;
+
+    background:rgba(15, 23, 42, .45);
+}
+
+.sq-modal
+{
+    display:flex;
+
+    flex-direction:column;
+
+    width:100%;
+
+    max-width:560px;
+
+    border-radius:14px;
+
+    background:#ffffff;
+
+    box-shadow:0 30px 60px -20px rgba(15, 23, 42, .45);
+
+    overflow:hidden;
+}
+
+.sq-modal-head
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    padding:14px 18px;
+
+    background:linear-gradient(120deg, #fecdd3 0%, #ffe4e6 45%, #f1f5f9 100%);
+
+    color:#9f1239;
+}
+
+.sq-modal-head > div
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    flex-direction:column;
+
+    color:#0f172a;
+}
+
+.sq-modal-head span
+{
+    color:#475569;
+
+    font-size:12.5px;
+}
+
+.sq-x
+{
+    border:0;
+
+    background:transparent;
+
+    color:#64748b;
+
+    font-size:16px;
+
+    cursor:pointer;
+}
+
+.sq-modal-body
+{
+    padding:16px 18px;
+}
+
+.sq-modal-foot
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:12px 18px;
+
+    border-top:1px solid #eef2f7;
+}
+
+.sq-note
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    align-items:center;
+
+    gap:6px;
+
+    color:#64748b;
+
+    font-size:12.5px;
+}
+
+.sq-btn
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    height:34px;
+
+    padding:0 14px;
+
+    border:1px solid transparent;
+
+    border-radius:8px;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    cursor:pointer;
+}
+
+.sq-btn:disabled
+{
+    opacity:.6;
+
+    cursor:not-allowed;
+}
+
+.sq-btn-light
+{
+    border-color:#d6e0ef;
+
+    background:#ffffff;
+
+    color:#334155;
+}
+
+.sq-btn-danger
+{
+    background:#be123c;
+
+    color:#ffffff;
+}

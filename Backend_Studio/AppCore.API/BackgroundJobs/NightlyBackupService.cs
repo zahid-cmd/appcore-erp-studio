@@ -2,6 +2,8 @@
 // Namespaces
 //===============================================================
 
+using AppCore.Application.Platform.Tenancy;
+using AppCore.Infrastructure.Platform.Tenancy;
 using AppCore.Application.Platform.DataManagement;
 
 //===============================================================
@@ -39,10 +41,16 @@ public class NightlyBackupService : BackgroundService
 
     private readonly ILogger<NightlyBackupService> _logger;
 
+    // Tenancy : the work runs once per client company
+    private readonly TenantScopes _tenants;
+
     public NightlyBackupService(
         IServiceScopeFactory scopeFactory,
-        ILogger<NightlyBackupService> logger)
+        ILogger<NightlyBackupService> logger,
+        TenantScopes tenants)
     {
+        _tenants = tenants;
+
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -79,20 +87,23 @@ public class NightlyBackupService : BackgroundService
     {
         try
         {
-            // A fresh scope (own DbContext) for every check
-            using IServiceScope scope =
-                _scopeFactory.CreateScope();
-
-            IDataManagementService service =
-                scope.ServiceProvider.GetRequiredService<IDataManagementService>();
-
-            bool ran =
-                await service.RunScheduledIfDueAsync(stoppingToken);
-
-            if (ran)
+            // A fresh scope (own DbContext) for every check, once per
+            // company (Tenancy : TenantScopes)
+            await _tenants.ForEachAsync("Nightly backup", async sp =>
             {
-                _logger.LogInformation("Nightly backup : a scheduled backup ran (see Reset History).");
-            }
+                IDataManagementService service =
+                    sp.GetRequiredService<IDataManagementService>();
+
+                bool ran =
+                    await service.RunScheduledIfDueAsync(stoppingToken);
+
+                if (ran)
+                {
+                    _logger.LogInformation(
+                        "Nightly backup {Tenant}: a scheduled backup ran (see Reset History).",
+                        sp.GetRequiredService<ITenantContext>().Tenant?.TenantCode ?? string.Empty);
+                }
+            }, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

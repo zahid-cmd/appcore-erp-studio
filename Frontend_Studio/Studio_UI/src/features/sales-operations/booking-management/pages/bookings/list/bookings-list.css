@@ -1998,3 +1998,95 @@
         grid-column:auto !important;
     }
 }
+
+
+/* =====================================================================
+   BOOKINGS - SP / AC : items
+===================================================================== */
+
+.bk-item-line
+{
+    display:flex;
+
+    justify-content:space-between;
+
+    gap:10px;
+
+    padding:2px 0;
+}
+
+.bk-item-line small
+{
+    margin-left:4px;
+}
+
+.bk-item-line b
+{
+    white-space:nowrap;
+
+    font-variant-numeric:tabular-nums;
+}
+
+.bkm-items
+{
+    max-height:190px;
+
+    overflow-y:auto;
+
+    margin-top:8px;
+
+    border:1px solid #e3e9f3;
+
+    border-radius:10px;
+}
+
+.bkm-items .bkm-table
+{
+    margin:0;
+}
+
+.bkm-col-qty
+{
+    width:150px;
+}
+
+td.bkm-col-qty
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    --textbox-height:30px;
+}
+
+td.bkm-col-qty app-textbox
+{
+    display:block;
+
+    width:90px;
+}
+
+.bkm-unit
+{
+    color:#64748b;
+
+    font-size:12px;
+}
+
+.bkm-items-foot
+{
+    padding:4px 2px 0;
+
+    color:#475569;
+
+    font-size:12px;
+
+    text-align:right;
+}
+
+.bkm-amber
+{
+    color:#b45309;
+}

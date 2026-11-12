@@ -1,0 +1,657 @@
+/* ==========================================================
+   Console sign-in : aurora showcase + sign-in card
+=========================================================== */
+
+.lg
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(420px, 1fr);
+    min-height: 100vh;
+}
+
+/* ---------------- showcase ---------------- */
+
+.lg-show
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 40px clamp(28px, 6vw, 88px);
+    background: linear-gradient(160deg, #1a1c21 0%, #0e0f12 55%, #060607 100%);
+    color: #cfd0d4;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.lg-orb
+{
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.75;
+    animation: lg-drift 18s ease-in-out infinite alternate;
+}
+
+.lg-orb.o1
+{
+    top: -12%;
+    left: -10%;
+    width: 520px;
+    height: 520px;
+    background: radial-gradient(circle, rgba(196, 100, 45, 0.75), transparent 65%);
+}
+
+.lg-orb.o2
+{
+    right: -14%;
+    bottom: -18%;
+    width: 560px;
+    height: 560px;
+    background: radial-gradient(circle, rgba(80, 92, 115, 0.45), transparent 65%);
+    animation-duration: 22s;
+    animation-direction: alternate-reverse;
+}
+
+.lg-orb.o3
+{
+    top: 38%;
+    left: 46%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(214, 181, 122, 0.30), transparent 65%);
+    animation-duration: 26s;
+}
+
+.lg-grid
+{
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 40% 45%, #000 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 70% 60% at 40% 45%, #000 20%, transparent 75%);
+}
+
+.lg-brand
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lg-logo-full
+{
+    display: block;
+    width: auto;
+    height: 44px;
+}
+
+.lg-brand-text
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.lg-brand-text b
+{
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.lg-brand-text small
+{
+    color: #d6b57a;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+.lg-hero
+{
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-width: 600px;
+}
+
+.lg-pill
+{
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 9px;
+    padding: 6px 14px 6px 10px;
+    border: 1px solid rgba(214, 181, 122, 0.30);
+    border-radius: 999px;
+    background: rgba(214, 181, 122, 0.08);
+    color: #e3c995;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    backdrop-filter: blur(6px);
+}
+
+.lg-pill i
+{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #d6b57a;
+    box-shadow: 0 0 0 4px rgba(214, 181, 122, 0.18);
+    animation: lg-pulse 2.2s infinite;
+}
+
+.lg-hero h1
+{
+    margin: 0;
+    background: linear-gradient(120deg, #ffffff 0%, #fbe9dc 45%, #f3c9a5 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: clamp(54px, 7vw, 96px);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+}
+
+.lg-hero h1 span
+{
+    background: none;
+    -webkit-text-fill-color: #d6b57a;
+    color: #d6b57a;
+}
+
+.lg-hero p
+{
+    max-width: 480px;
+    margin: 0;
+    color: #a8abb2;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.lg-products
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    max-width: 520px;
+    margin-top: 10px;
+}
+
+.lg-product
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 15px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+    backdrop-filter: blur(10px);
+    transition: transform 0.25s, border-color 0.25s;
+}
+
+.lg-product:hover
+{
+    border-color: rgba(169, 157, 255, 0.35);
+    transform: translateY(-2px);
+}
+
+.lg-product i
+{
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #8a8d94;
+    font-size: 15px;
+}
+
+.lg-product.live i
+{
+    background: linear-gradient(135deg, #d8834a, #7a3410);
+    color: #fff;
+    box-shadow: 0 8px 20px -10px rgba(196, 100, 45, 0.95);
+}
+
+.lg-product b
+{
+    display: block;
+    color: #eef0fa;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.lg-product small
+{
+    color: #7d8189;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.lg-product.live small
+{
+    color: #6fe3b0;
+}
+
+.lg-trust
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    color: #7d8189;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.lg-trust i
+{
+    margin-right: 6px;
+    color: #e9a06a;
+}
+
+/* ---------------- sign-in side ---------------- */
+
+.lg-side
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: 40px 24px;
+    background:
+        radial-gradient(600px 300px at 50% 0%, var(--ac-accent-ring), transparent 70%),
+        var(--ac-bg);
+}
+
+.lg-theme
+{
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--ac-border);
+    border-radius: 12px;
+    background: var(--ac-card);
+    color: var(--ac-text-2);
+    cursor: pointer;
+    transition: color 0.15s, transform 0.2s;
+}
+
+.lg-theme:hover
+{
+    color: var(--ac-accent);
+    transform: rotate(-12deg);
+}
+
+.lg-card
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: min(420px, 100%);
+    padding: 34px 32px 28px;
+    border: 1px solid var(--ac-border);
+    border-radius: 22px;
+    background: var(--ac-card);
+    box-shadow: var(--ac-shadow-lg);
+    animation: ac-rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.lg-card::before
+{
+    position: absolute;
+    top: 0;
+    left: 32px;
+    right: 32px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: var(--ac-brand);
+    content: '';
+}
+
+.lg-card.shake
+{
+    animation: lg-shake 0.42s;
+}
+
+.lg-card-logo
+{
+    display: block;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 4px;
+    border-radius: 14px;
+    box-shadow: 0 14px 30px -14px rgba(17, 19, 23, 0.7);
+}
+
+.lg-eyebrow
+{
+    margin-bottom: -10px;
+    color: var(--ac-gold);
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.lg-card h2
+{
+    color: var(--ac-text);
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.lg-lead
+{
+    margin: -10px 0 4px;
+    color: var(--ac-muted);
+}
+
+.lg-field
+{
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.lg-field label
+{
+    color: var(--ac-text-2);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.lg-box
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 46px;
+    padding: 0 6px 0 14px;
+    border: 1px solid var(--ac-border);
+    border-radius: 13px;
+    background: var(--ac-card-2);
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.lg-box:focus-within
+{
+    border-color: var(--ac-accent);
+    background: var(--ac-card);
+    box-shadow: 0 0 0 4px var(--ac-accent-ring);
+}
+
+.lg-box > i
+{
+    width: 16px;
+    color: var(--ac-faint);
+    text-align: center;
+    transition: color 0.15s;
+}
+
+.lg-box:focus-within > i
+{
+    color: var(--ac-accent);
+}
+
+.lg-box input
+{
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--ac-text);
+    font: inherit;
+    font-size: 14px;
+}
+
+.lg-box input::placeholder
+{
+    color: var(--ac-faint);
+}
+
+.lg-eye
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--ac-faint);
+    cursor: pointer;
+}
+
+.lg-eye:hover
+{
+    background: var(--ac-hover);
+    color: var(--ac-text);
+}
+
+.lg-caps
+{
+    color: var(--ac-amber);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.lg-remember
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ac-text-2);
+    font-size: 12.5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.lg-remember input
+{
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.lg-check
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--ac-border);
+    border-radius: 6px;
+    background: var(--ac-card);
+    color: transparent;
+    font-size: 10px;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.lg-remember input:checked + .lg-check
+{
+    border-color: transparent;
+    background: var(--ac-gradient);
+    color: #fff;
+}
+
+.lg-remember input:focus-visible + .lg-check
+{
+    box-shadow: 0 0 0 3px var(--ac-accent-ring);
+}
+
+.lg-submit
+{
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 48px;
+    margin-top: 2px;
+    border: 0;
+    border-radius: 13px;
+    background: var(--ac-gradient);
+    color: #fff;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 14px 28px -14px rgba(20, 16, 12, 0.95);
+    transition: transform 0.15s, filter 0.15s, opacity 0.15s;
+}
+
+.lg-submit::after
+{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -60%;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+    transform: skewX(-20deg);
+    content: '';
+}
+
+.lg-submit:hover:not(:disabled)
+{
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+.lg-submit:hover:not(:disabled)::after
+{
+    left: 130%;
+    transition: left 0.7s;
+}
+
+.lg-submit:hover:not(:disabled) i.fa-arrow-right
+{
+    transform: translateX(3px);
+}
+
+.lg-submit i
+{
+    transition: transform 0.2s;
+}
+
+.lg-submit:disabled
+{
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.lg-note
+{
+    display: flex;
+    gap: 8px;
+    margin: 4px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--ac-border-2);
+    color: var(--ac-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.lg-note i
+{
+    margin-top: 2px;
+    color: var(--ac-accent);
+}
+
+.lg-foot
+{
+    color: var(--ac-faint);
+    font-size: 11.5px;
+}
+
+/* ---------------- motion ---------------- */
+
+@keyframes lg-drift
+{
+    from { transform: translate(0, 0) scale(1); }
+    to   { transform: translate(40px, 30px) scale(1.12); }
+}
+
+@keyframes lg-pulse
+{
+    0%, 100% { box-shadow: 0 0 0 4px rgba(214, 181, 122, 0.18); }
+    50%      { box-shadow: 0 0 0 7px rgba(214, 181, 122, 0.05); }
+}
+
+@keyframes lg-shake
+{
+    0%, 100% { transform: translateX(0); }
+    20%      { transform: translateX(-8px); }
+    40%      { transform: translateX(7px); }
+    60%      { transform: translateX(-5px); }
+    80%      { transform: translateX(3px); }
+}
+
+/* ---------------- small screens ---------------- */
+
+@media (max-width: 960px)
+{
+    .lg
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lg-show
+    {
+        gap: 22px;
+        padding: 28px 20px;
+    }
+
+    .lg-hero h1
+    {
+        font-size: 56px;
+    }
+
+    .lg-products,
+    .lg-trust
+    {
+        display: none;
+    }
+
+    .lg-side
+    {
+        padding: 32px 16px;
+    }
+
+    .lg-card
+    {
+        padding: 28px 22px 22px;
+    }
+}

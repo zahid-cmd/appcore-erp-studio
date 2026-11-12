@@ -171,7 +171,8 @@ public static class CustomerFileWriter
     }
 
 
-    // Cancel of a posted MB invoice : its files cancelled
+    // Cancel of a posted MB invoice : its files cancelled.
+    // chassisNo (Sales Returns - MB) : only that chassis's file.
     public static async Task
         CancelForInvoiceAsync
         (
@@ -179,15 +180,21 @@ public static class CustomerFileWriter
             long salesInvoiceId,
             string invoiceNo,
             long userId,
-            DateTime now
+            DateTime now,
+            string? chassisNo = null
         )
     {
+        string chassis = (chassisNo ?? string.Empty).Trim();
+
+        bool returning = chassisNo != null;
+
         List<CustomerFiles> files =
             await context.Set<CustomerFiles>()
                 .Where(x => !x.IsDeleted
                             && x.Source == CustomerFileSources.Invoice
                             && x.SalesInvoiceId == salesInvoiceId
-                            && x.Status != CustomerFileStatuses.Cancelled)
+                            && x.Status != CustomerFileStatuses.Cancelled
+                            && (!returning || x.ChassisNo == chassis))
                 .ToListAsync();
 
         if (files.Count == 0)
@@ -206,7 +213,7 @@ public static class CustomerFileWriter
             if (file.TransferCount > 0 || file.Status != CustomerFileStatuses.Open)
             {
                 throw new InvalidOperationException(
-                    $"The customer file {file.CustomerFileNo} has moved on ({(file.TransferCount > 0 ? "name transferred" : file.Status)}) : the invoice cannot be cancelled.");
+                    $"The customer file {file.CustomerFileNo} has moved on ({(file.TransferCount > 0 ? "name transferred" : file.Status)}) : the {(returning ? "bike cannot be returned" : "invoice cannot be cancelled")}.");
             }
         }
 
@@ -223,7 +230,9 @@ public static class CustomerFileWriter
             file.ModifiedDate = now;
 
             AddHistory(context, file.CustomerFileId, "Cancel", "Invoice File Cancelled",
-                $"{file.CustomerFileNo} : Sales Invoice - MB {invoiceNo} was cancelled.",
+                returning
+                    ? $"{file.CustomerFileNo} : chassis {file.ChassisNo} returned on Sales Invoice - MB {invoiceNo} (Sales Returns - MB)."
+                    : $"{file.CustomerFileNo} : Sales Invoice - MB {invoiceNo} was cancelled.",
                 userId, now);
         }
     }

@@ -49,11 +49,6 @@ public class SalesInvoicesMbConfiguration
         builder.Property(x => x.RegistrationReversalNo).IsRequired().HasMaxLength(30);
 
         builder.Property(x => x.RegistrationReverseReason).IsRequired().HasMaxLength(500);
-
-        // Booking taken on the invoice (BookingsMB_Engine.sql)
-        builder.Property(x => x.BookingNo).IsRequired().HasMaxLength(40);
-
-        builder.Property(x => x.BookingAdvance).HasPrecision(18, 2);
     }
 
 

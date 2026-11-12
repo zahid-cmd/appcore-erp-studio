@@ -2,7 +2,12 @@
 // Topbar Context
 // --------------------------------------------------------------
 // Branch chip : from the stored login (branch chosen at login);
-//               opens Switch Branch when the user may switch
+//               opens Switch Branch when the user may switch.
+//               On a Motor Bikes / Spare Parts / Accessories page
+//               (2026-11-13) it shows the page's working branch
+//               (Showroom / Service Center / Accessory Shop) and,
+//               with two or more, lists them : a pick reloads the
+//               page in that branch (WorkBranchService).
 // FY chip     : GET api/platform/shell/context
 // (The company logo moved to the topbar header.)
 //===============================================================
@@ -34,6 +39,13 @@ import
     BranchSwitchService
 }
 from '../../../../core/authentication/branch-switch.service';
+
+import
+{
+    WORK_LINE_LABEL,
+    WorkBranchService
+}
+from '../../../../core/authentication/work-branch.service';
 
 
 
@@ -74,6 +86,24 @@ implements
 
     readonly branchSwitch =
         inject(BranchSwitchService);
+
+    // Line pages : the branch of the page's business line
+    readonly workBranch =
+        inject(WorkBranchService);
+
+    // The working-branch list is open
+    readonly workMenuOpen =
+        signal<boolean>(false);
+
+    // "Showroom" / "Service Center" / "Accessory Shop"
+    readonly workLabel =
+        computed(
+            () =>
+            {
+                const line = this.workBranch.line();
+
+                return line ? WORK_LINE_LABEL[line] : '';
+            });
 
 
     //===========================================================
@@ -158,6 +188,39 @@ implements
         );
 
         this.shellService.loadContext();
+
+        this.workBranch.start();
+    }
+
+
+    //===========================================================
+    // Working branch chip (line pages) : open the list / pick
+    //===========================================================
+
+    onWorkClick():
+        void
+    {
+        if (this.workBranch.canPick())
+        {
+            this.workMenuOpen.update(x => !x);
+        }
+    }
+
+    onWorkPick
+    (
+        branchId: number
+    ):
+        void
+    {
+        this.workMenuOpen.set(false);
+
+        this.workBranch.choose(branchId);
+    }
+
+    onWorkClose():
+        void
+    {
+        this.workMenuOpen.set(false);
     }
 
 

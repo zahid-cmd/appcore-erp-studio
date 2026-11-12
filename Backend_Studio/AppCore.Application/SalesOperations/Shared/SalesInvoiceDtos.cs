@@ -82,6 +82,9 @@ public class CreateSalesInvoiceDto
     // MB : the booking taken on the invoice (Bookings; its advance
     // counts as paid)
     public long? BookingId { get; set; }
+
+    // The Sales Quotation it is made from (Convert to Invoice)
+    public long? QuotationId { get; set; }
 }
 
 
@@ -1018,6 +1021,11 @@ public class SalesInvoiceDto
     public string BookingNo { get; set; } = string.Empty;
 
     public decimal BookingAdvance { get; set; }
+
+    // The Sales Quotation it was made from
+    public long? QuotationId { get; set; }
+
+    public string QuotationNo { get; set; } = string.Empty;
 }
 
 

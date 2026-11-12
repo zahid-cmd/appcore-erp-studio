@@ -10,16 +10,55 @@ from '../../../../shared/components/accounting/accounting.models';
 
 
 //===============================================================
-// Bookings (Sales Operations > Booking Management > Bookings)
+// Bookings (Sales Operations > Booking Management > Bookings -
+// MB / SP / AC; one page per type)
 //
-// A booking holds the customer, model and colour; its advance is
-// collected by Receipt Vouchers to the customer's own ledger and
-// taken as paid by the Sales Invoice - MB. Open -> Converted /
-// Cancelled; Expired = Open past Valid Until (shown only).
+// MB : the customer, model and colour. SP / AC : the items with
+// quantity. The advance is collected by Receipt Vouchers to the
+// customer's own ledger and taken as paid by the Sales Invoice of
+// the same type. Open -> Converted / Cancelled; Expired = Open
+// past Valid Until (shown only). No price lock.
 //===============================================================
 
 export type BookingStatus =
     'Open' | 'Converted' | 'Cancelled';
+
+export type BookingType =
+    'MB' | 'SP' | 'AC';
+
+// SP / AC : one item booked
+export interface BookingLine
+{
+    ProductId:
+        number;
+    ProductCode:
+        string;
+    PartNumber:
+        string;
+    ProductName:
+        string;
+    Unit:
+        string;
+    Quantity:
+        number;
+    Remarks:
+        string;
+}
+
+// SP / AC : a product found by the item search
+export interface BookingProduct
+{
+    ProductId:
+        number;
+    ProductCode:
+        string;
+    PartNumber:
+        string;
+    ProductName:
+        string;
+    Unit:
+        string;
+}
 
 export interface Booking
 {
@@ -46,8 +85,12 @@ export interface Booking
         string;
     MotorBikeId:
         number;
+    // MB : the model; SP / AC : a summary of the items
     ModelName:
         string;
+    // SP / AC
+    Lines:
+        BookingLine[];
     ValidUntil:
         string;
     ExpectedDate:
@@ -134,6 +177,8 @@ export interface BookingSwitches
 
 export interface BookingsPage
 {
+    ProductType:
+        BookingType;
     Today:
         string;
     BranchId:
@@ -174,8 +219,12 @@ export interface CreateBooking
         string;
     CustomerId:
         number;
+    // MB
     MotorBikeId:
         number;
+    // SP / AC
+    Lines:
+        BookingLine[];
     ExpectedDate:
         string;
     SalesPersonName:
@@ -190,6 +239,8 @@ export interface UpdateBooking
 {
     MotorBikeId:
         number;
+    Lines:
+        BookingLine[];
     ExpectedDate:
         string;
     SalesPersonName:
@@ -210,7 +261,7 @@ export interface BookingSaved
         string;
 }
 
-// Open bookings of a customer (Sales Invoice - MB)
+// Open bookings of a customer (Sales Invoice of the type)
 export interface OpenBooking
 {
     BookingId:
@@ -223,6 +274,9 @@ export interface OpenBooking
         number;
     ModelName:
         string;
+    // SP / AC : the items
+    Lines:
+        BookingLine[];
     AdvanceAmount:
         number;
     IsExpired:

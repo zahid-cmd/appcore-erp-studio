@@ -82,6 +82,18 @@ public abstract class SalesInvoiceHeader
     public string EmiAccountCode { get; set; } = string.Empty;
     public string EmiAccountName { get; set; } = string.Empty;
 
+    // Booking taken on the invoice (Bookings - MB / SP / AC of the
+    // same type; Bookings_Engine.sql) : its advance is counted as
+    // paid; Post converts the booking, Cancel re-opens it
+    public long? BookingId { get; set; }
+    public string BookingNo { get; set; } = string.Empty;
+    public decimal BookingAdvance { get; set; }
+
+    // The Sales Quotation it was made from (SalesQuotations_Engine
+    // .sql) : Post converts the quotation, Cancel re-opens it
+    public long? QuotationId { get; set; }
+    public string QuotationNo { get; set; } = string.Empty;
+
     // Draft / Approved / Posted / Cancelled
     public string Status { get; set; } = string.Empty;
     // Journal number (= the invoice number once posted)

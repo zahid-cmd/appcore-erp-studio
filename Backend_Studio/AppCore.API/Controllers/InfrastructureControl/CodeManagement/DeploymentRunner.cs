@@ -859,6 +859,15 @@ public static class DeploymentRunner
                 Directory.Delete(uploads, true);
             }
 
+            // Tenancy : each company's pictures (wwwroot/tenants/<CODE>)
+            // also come from its own StoredFiles on the server
+            var tenantUploads = Path.Combine(wwwroot, "tenants");
+
+            if (Directory.Exists(tenantUploads))
+            {
+                Directory.Delete(tenantUploads, true);
+            }
+
             CopyFolder(uiBrowser, wwwroot);
 
             // version.json : read by every open page (footer,

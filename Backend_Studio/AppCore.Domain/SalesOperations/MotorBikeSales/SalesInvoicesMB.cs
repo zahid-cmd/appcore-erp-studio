@@ -52,11 +52,4 @@ public class SalesInvoicesMb
     public DateTime? RegistrationReversedDate { get; set; }
 
     public string RegistrationReverseReason { get; set; } = string.Empty;
-
-    // Booking taken on the invoice (BookingsMB_Engine.sql)
-    public long? BookingId { get; set; }
-
-    public string BookingNo { get; set; } = string.Empty;
-
-    public decimal BookingAdvance { get; set; }
 }

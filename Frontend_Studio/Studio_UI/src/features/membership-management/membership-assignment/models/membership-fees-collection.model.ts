@@ -1,94 +1,74 @@
-/* ============================================================
-   Membership Fees Collection
-============================================================ */
+//===============================================================
+// Membership Fees Collection : models (hand-written page; API
+// api/membership-management/membership-assignment/
+// membership-fees-collection)
+//
+// Kind ToCollect : a Pending membership with a fee (no fee row
+//                  yet; collect it)
+// Kind Fee       : a collection : Paid / Cancelled / Refunded
+//===============================================================
 
-export interface MembershipFeesCollection
+export type MembershipFeeStatus =
+    'To Collect' | 'Paid' | 'Cancelled' | 'Refunded';
+
+
+export interface MembershipFeeRow
 {
-    // The id used in links and API calls (uuid v7)
-    publicId?:
-        string;
-
-    id:
-        number;
-
-    code:
-        string;
-
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
+    Kind:'ToCollect' | 'Fee';
+    MembershipFeeId:number;
+    PublicId:string;
+    FeeNo:string;
+    FeeType:string;
+    MembershipId:number;
+    MembershipNo:string;
+    MembershipStatus:string;
+    CardName:string;
+    CustomerId:number;
+    CustomerCode:string;
+    CustomerName:string;
+    CustomerPhone:string;
+    ChassisNo:string;
+    StartDate:string;
+    ExpiryDate:string;
+    Amount:number;
+    Date:string;
+    BranchName:string;
+    ReceiptVoucherNo:string;
+    RefundJournalVoucherNo:string;
+    RefundDate:string;
+    Status:MembershipFeeStatus;
+    Reason:string;
+    Used:boolean;
+    UsedText:string;
+    CanCancel:boolean;
+    CanRefund:boolean;
+    Note:string;
 }
 
 
-
-/* ============================================================
-   Create Membership Fees Collection
-============================================================ */
-
-export interface CreateMembershipFeesCollection
+export interface MembershipFeesPage
 {
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
+    Today:string;
+    BranchId:number;
+    BranchName:string;
+    Rows:MembershipFeeRow[];
 }
 
 
-
-/* ============================================================
-   Update Membership Fees Collection
-============================================================ */
-
-export interface UpdateMembershipFeesCollection
+export interface CollectMembershipFee
 {
-    id:
-        number;
-
-    name:
-        string;
-
-    sampleSearchDropdownId:
-        number | null;
-
-    sampleField:
-        string;
-
-    status:
-        string;
-
-    remarks:
-        string;
+    MembershipId:number;
+    Date:string;
+    Narration:string;
+    Debits:any[];
 }
 
 
-
-/* ============================================================
-   Membership Fees Collection Defaults
-============================================================ */
-
-export interface MembershipFeesCollectionDefaults
+export interface MembershipFeeResult
 {
-    code:
-        string;
+    PublicId:string;
+    FeeNo:string;
+    MembershipNo:string;
+    Amount:number;
+    VoucherNo:string;
 }

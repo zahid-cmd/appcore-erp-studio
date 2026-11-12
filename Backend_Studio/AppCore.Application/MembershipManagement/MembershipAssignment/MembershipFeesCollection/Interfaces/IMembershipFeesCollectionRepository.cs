@@ -1,11 +1,4 @@
 //===============================================================
-// Namespaces
-//===============================================================
-
-using AppCore.Application.Common.ActivityHistory.DTOs;
-
-
-//===============================================================
 // Namespace
 //===============================================================
 
@@ -13,102 +6,32 @@ namespace AppCore.Application.MembershipManagement.MembershipAssignment;
 
 
 //===============================================================
-// IMembershipFeesCollectionRepository
+// Membership Fees Collection repository (hand-written page)
 //===============================================================
 
 public interface IMembershipFeesCollectionRepository
 {
+    // To collect (Pending memberships with a fee) + collections
+    Task<MembershipFeesPageDto> GetAllAsync(
+        long branchId);
 
-    //===========================================================
-    // Get All
-    //===========================================================
+    // Payment Desk : Receipt Voucher, the membership Active
+    Task<MembershipFeeResultDto> CollectAsync(
+        CollectMembershipFeeDto dto,
+        long branchId,
+        long userId);
 
-    Task<IReadOnlyList<global::AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipFeesCollection>>
-        GetAllAsync();
+    // Unused only : Receipt Voucher cancelled, membership Pending
+    Task<MembershipFeeResultDto> CancelCollectionAsync(
+        Guid publicId,
+        MembershipFeeReasonDto dto,
+        long userId);
 
-
-
-    //===========================================================
-    // Get By Id
-    //===========================================================
-
-    Task<global::AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipFeesCollection?>
-        GetByIdAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Create
-    //===========================================================
-
-    Task<long>
-        CreateAsync
-    (
-        global::AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipFeesCollection entity
-    );
-
-
-
-    //===========================================================
-    // Update
-    //===========================================================
-
-    Task
-        UpdateAsync
-    (
-        global::AppCore.Domain.Entities.MembershipManagement.MembershipAssignment.MembershipFeesCollection entity
-    );
-
-
-
-    //===========================================================
-    // Delete
-    //===========================================================
-
-    Task
-        DeleteAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Restore
-    //===========================================================
-
-    Task
-        RestoreAsync
-    (
-        long id
-    );
-
-
-
-    //===========================================================
-    // Get History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetHistoryAsync();
-
-
-
-    //===========================================================
-    // Get Entity History
-    //===========================================================
-
-    Task<IReadOnlyList<ActivityHistoryDto>>
-        GetEntityHistoryAsync
-    (
-        long id
-    );
-
-
-    // Public Id -> internal id (live rows only; null = not found)
-    Task<long?> GetIdByPublicIdAsync(
-        Guid publicId);
+    // Cancelled membership, unused : Journal Voucher crediting
+    // the customer with the whole fee
+    Task<MembershipFeeResultDto> RefundAsync(
+        Guid publicId,
+        MembershipFeeReasonDto dto,
+        long branchId,
+        long userId);
 }

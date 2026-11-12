@@ -68,6 +68,8 @@ export interface SwitchBranchOption
     branchId:number;
     branchCode:string;
     branchName:string;
+    // WNG-<company>-01 / -02 / -03 (working-branch rule)
+    wingCode:string;
     wingName:string;
     businessLines:string[];
     isCurrent:boolean;
@@ -352,6 +354,7 @@ export class BranchSwitchService
                             branchId:Number(pick(b, 'branchId') ?? 0),
                             branchCode:String(pick(b, 'branchCode') ?? ''),
                             branchName:String(pick(b, 'branchName') ?? ''),
+                            wingCode:String(pick(b, 'wingCode') ?? ''),
                             wingName:String(pick(b, 'wingName') ?? ''),
                             businessLines:((pick(b, 'businessLines') ?? []) as any[]).map(x => String(x)),
                             isCurrent:!!pick(b, 'isCurrent')

@@ -55,6 +55,9 @@ using MembershipCardsEntity =
 using BrandManagementEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.BrandManagement;
 
+using PromotionalOffersEntity =
+    AppCore.Domain.Entities.SalesOperations.Shared.PromotionalOffers;
+
 using AppCore.Infrastructure.Persistence;
 
 
@@ -210,7 +213,11 @@ public class AutoAccountsRepository : IAutoAccountsRepository
         // and EMI Claim Receivable (SUB-002-002-009)
         db => db.Set<BrandManagementEntity>().AsNoTracking().Select(x => x.OfferAdjustmentLedgerCode),
 
-        db => db.Set<BrandManagementEntity>().AsNoTracking().Select(x => x.EmiClaimLedgerCode)
+        db => db.Set<BrandManagementEntity>().AsNoTracking().Select(x => x.EmiClaimLedgerCode),
+
+        // Promotional Offers : the offer's own ledger (2026-11-13;
+        // Campaign Discount sub group or SUB-002-002-008)
+        db => db.Set<PromotionalOffersEntity>().AsNoTracking().Select(x => x.LedgerCode)
     };
 
 

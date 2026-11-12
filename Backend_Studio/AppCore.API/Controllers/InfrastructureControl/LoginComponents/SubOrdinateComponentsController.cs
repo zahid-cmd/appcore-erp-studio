@@ -10,6 +10,7 @@ using AppCore.Application.InfrastructureControl.LoginComponents;
 using AppCore.Application.InfrastructureControl.LoginComponents.SubOrdinateComponents.DTOs;
 
 using AppCore.Domain.Entities.InfrastructureControl.LoginComponents;
+using AppCore.Api.Platform.Tenancy;
 
 
 //===============================================================
@@ -1465,7 +1466,7 @@ public class SubOrdinateComponentsController
         //=======================================================
 
         string webRootPath =
-            _environment.WebRootPath;
+            TenantWebRoot.Of(HttpContext, _environment);
 
 
         if
@@ -1639,7 +1640,7 @@ public class SubOrdinateComponentsController
         //=======================================================
 
         string webRootPath =
-            _environment.WebRootPath;
+            TenantWebRoot.Of(HttpContext, _environment);
 
 
         if

@@ -125,8 +125,9 @@ public interface IAuthenticationRepository
     Task<UserProfile?> GetUserProfileByIdAsync(
         long userProfileId);
 
-    // Wing name and business lines in force today per branch
-    Task<Dictionary<long, (string WingName, List<string> Lines)>>
+    // Wing code, wing name and business lines in force today per
+    // branch
+    Task<Dictionary<long, (string WingCode, string WingName, List<string> Lines)>>
         GetBranchSwitchDetailsAsync(
             IEnumerable<long> branchIds);
 

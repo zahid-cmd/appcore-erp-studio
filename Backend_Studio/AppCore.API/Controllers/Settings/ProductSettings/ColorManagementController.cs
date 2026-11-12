@@ -11,6 +11,7 @@ using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.Settings.ProductSettings;
 using AppCore.Application.Settings.ProductSettings.ColorManagement.DTOs;
+using AppCore.Api.Platform.Tenancy;
 
 
 //===============================================================
@@ -229,7 +230,7 @@ public class ColorManagementController : ControllerBase
         //===========================================================
 
         string webRootPath =
-            _environment.WebRootPath;
+            TenantWebRoot.Of(HttpContext, _environment);
 
 
         if (string.IsNullOrWhiteSpace(webRootPath))

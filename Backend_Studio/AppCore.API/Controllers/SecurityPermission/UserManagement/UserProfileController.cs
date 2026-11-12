@@ -11,6 +11,7 @@ using AppCore.Application.Common.ActivityHistory.Interfaces;
 using AppCore.Application.SecurityPermission.UserManagement;
 using AppCore.Application.Common.Paging;
 using AppCore.Application.SecurityPermission.UserManagement.UserProfile.DTOs;
+using AppCore.Api.Platform.Tenancy;
 
 
 //===============================================================
@@ -216,7 +217,7 @@ public class UserProfileController : ControllerBase
         //=======================================================
 
         string webRootPath =
-            _environment.WebRootPath
+            TenantWebRoot.Of(HttpContext, _environment)
             ??
             Path.Combine(
                 _environment.ContentRootPath,
@@ -434,7 +435,7 @@ public class UserProfileController : ControllerBase
         //=======================================================
 
         string webRootPath =
-            _environment.WebRootPath
+            TenantWebRoot.Of(HttpContext, _environment)
             ??
             Path.Combine(
                 _environment.ContentRootPath,
@@ -726,7 +727,7 @@ public class UserProfileController : ControllerBase
         //=======================================================
 
         string webRootPath =
-            _environment.WebRootPath
+            TenantWebRoot.Of(HttpContext, _environment)
             ??
             Path.Combine(
                 _environment.ContentRootPath,
@@ -1077,7 +1078,7 @@ public class UserProfileController : ControllerBase
             //=======================================================
 
             string webRootPath =
-                _environment.WebRootPath
+                TenantWebRoot.Of(HttpContext, _environment)
                 ??
                 Path.Combine(
                     _environment.ContentRootPath,

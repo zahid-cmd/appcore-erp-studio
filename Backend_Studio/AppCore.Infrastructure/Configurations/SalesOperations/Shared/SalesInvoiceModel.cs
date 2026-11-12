@@ -152,6 +152,16 @@ public static class SalesInvoiceModel
         builder.Property(x => x.EmiAccountName)
                .IsRequired()
                .HasMaxLength(250);
+        // Booking taken on the invoice (Bookings_Engine.sql)
+        builder.Property(x => x.BookingNo)
+               .IsRequired()
+               .HasMaxLength(40);
+        builder.Property(x => x.BookingAdvance)
+               .HasPrecision(18, 2);
+        // Quotation it was made from (SalesQuotations_Engine.sql)
+        builder.Property(x => x.QuotationNo)
+               .IsRequired()
+               .HasMaxLength(40);
         builder.Property(x => x.Status)
                .IsRequired()
                .HasMaxLength(20);
@@ -258,6 +268,12 @@ public static class SalesInvoiceModel
                .IsRequired();
         builder.Property(x => x.ReturnedQuantity)
                .HasPrecision(18, 2);
+        builder.Property(x => x.PromotionalOfferNo)
+               .IsRequired()
+               .HasMaxLength(20);
+        builder.Property(x => x.CampaignLedgerCode)
+               .IsRequired()
+               .HasMaxLength(30);
     }
 
 

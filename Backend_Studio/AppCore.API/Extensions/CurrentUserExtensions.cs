@@ -47,7 +47,9 @@ namespace AppCore.Api.Extensions;
 //
 //     long   userId   = this.CurrentUserId();
 //     string userName = this.CurrentUserName();
-//     long?  branchId = this.CurrentBranchId();
+//     long?  branchId = this.CurrentBranchId();   (working branch
+//                                                   of a line page,
+//                                                   else login)
 //
 //===============================================================
 
@@ -79,6 +81,19 @@ public static class CurrentUserExtensions
 
     private const string BranchIdClaim =
         "branchId";
+
+    //===========================================================
+    // Working branch (2026-11-13) : a line page (Motor Bikes /
+    // Spare Parts / Accessories) sends X-Work-Branch; the
+    // middleware checks the user is assigned to it and keeps it
+    // here for the request
+    //===========================================================
+
+    public const string WorkBranchHeader =
+        "X-Work-Branch";
+
+    public const string WorkBranchItemKey =
+        "AppCore.WorkBranchId";
 
 
     //===========================================================
@@ -235,7 +250,41 @@ public static class CurrentUserExtensions
     public static long? CurrentBranchId(
         this ControllerBase controller)
     {
+        // The page's working branch (X-Work-Branch, checked by
+        // WorkBranchMiddleware) wins over the login branch
+        if (controller.HttpContext?.Items[WorkBranchItemKey] is long workBranchId &&
+            workBranchId > 0)
+        {
+            return workBranchId;
+        }
+
         return controller.User.GetBranchId();
+    }
+
+    //===========================================================
+    // Controller : Login branch (the token's, ignoring the page's
+    // working branch)
+    //===========================================================
+
+    public static long? LoginBranchId(
+        this ControllerBase controller)
+    {
+        return controller.User.GetBranchId();
+    }
+
+    //===========================================================
+    // Controller : the page's working branch when the request
+    // carries one, else the branch the page sent
+    //===========================================================
+
+    public static long WorkBranchOr(
+        this ControllerBase controller,
+        long sentBranchId)
+    {
+        return controller.HttpContext?.Items[WorkBranchItemKey] is long workBranchId &&
+               workBranchId > 0
+            ? workBranchId
+            : sentBranchId;
     }
 
 
@@ -260,4 +309,4 @@ public static class CurrentUserExtensions
 
         return null;
     }
-}
+}

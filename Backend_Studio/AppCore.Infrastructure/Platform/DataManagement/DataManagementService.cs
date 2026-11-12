@@ -40,6 +40,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using AppCore.Application.Platform.DataManagement;
+using AppCore.Application.Platform.Tenancy;
 using AppCore.Infrastructure.Persistence;
 
 namespace AppCore.Infrastructure.Platform.DataManagement;
@@ -111,14 +112,21 @@ public class DataManagementService
 
     private readonly IConfiguration _configuration;
 
+    // Tenancy:Mode = Host : this company only (its database, its
+    // settings file, its backup folder; never another company's or
+    // the Control database)
+    private readonly ITenantContext _tenant;
+
     public DataManagementService
     (
         AppDbContext context,
-        IConfiguration configuration
+        IConfiguration configuration,
+        ITenantContext tenant
     )
     {
         _context = context;
         _configuration = configuration;
+        _tenant = tenant;
     }
 
 
@@ -3006,6 +3014,19 @@ public class DataManagementService
 
     private List<NamedConnection> ReadConnections()
     {
+        // one company per request : only its own database
+        if (_tenant.Tenant is TenantInfo company)
+        {
+            return
+            [
+                new NamedConnection
+                {
+                    Name = AppConnectionName,
+                    Builder = new NpgsqlConnectionStringBuilder(company.ConnectionString)
+                }
+            ];
+        }
+
         var list =
             new List<NamedConnection>();
 
@@ -3362,15 +3383,20 @@ public class DataManagementService
     // Settings / folders / files
     //===========================================================
 
-    private static string SettingsFilePath()
+    private string SettingsFilePath()
     {
-        return Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "AppCoreERP",
-            "data-management.json");
+        string root =
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                "AppCoreERP");
+
+        // one settings file per company (Tenancy:Mode = Host)
+        return _tenant.Tenant is TenantInfo company
+            ? Path.Combine(root, "tenants", company.TenantCode, "data-management.json")
+            : Path.Combine(root, "data-management.json");
     }
 
-    private static DataSettingsDto LoadSettings()
+    private DataSettingsDto LoadSettings()
     {
         try
         {
@@ -3400,6 +3426,12 @@ public class DataManagementService
                     Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
                     "AppCoreERP",
                     "Backups");
+
+        // one backup folder per company (Tenancy:Mode = Host)
+        if (_tenant.Tenant is TenantInfo company)
+        {
+            defaultFolder = Path.Combine(defaultFolder, company.TenantCode);
+        }
 
         return new DataSettingsDto
         {

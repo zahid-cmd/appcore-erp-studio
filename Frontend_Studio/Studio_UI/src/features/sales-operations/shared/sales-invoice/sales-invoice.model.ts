@@ -877,6 +877,11 @@ export interface SalesInvoice
         string;
     BookingAdvance?:
         number;
+    // The Sales Quotation it was made from
+    QuotationId?:
+        number | null;
+    QuotationNo?:
+        string;
 }
 
 
@@ -1011,6 +1016,9 @@ export interface CreateSalesInvoice
         number[];
     // MB : the customer's open booking taken (null = none)
     BookingId?:
+        number | null;
+    // The Sales Quotation it is made from (Convert to Invoice)
+    QuotationId?:
         number | null;
 }
 
@@ -1222,4 +1230,191 @@ export interface SalesInvoiceWarranty
         string;
     Parts:
         SalesInvoiceWarrantyPart[];
+}
+
+
+//===============================================================
+// Sales Quotations - MB / SP / AC (the invoice page in quotation
+// mode)
+//===============================================================
+
+export interface SaveSalesQuotation
+    extends CreateSalesInvoice
+{
+    // A prospect when CustomerId is 0
+    ProspectName:
+        string;
+    ProspectPhone:
+        string;
+    ProspectAddress:
+        string;
+    Terms:
+        string;
+}
+
+export interface SalesQuotationLine
+{
+    LineNo:
+        number;
+    ProductId:
+        number;
+    ProductCode:
+        string;
+    PartNumber:
+        string;
+    ProductName:
+        string;
+    Unit:
+        string;
+    Quantity:
+        number;
+    TypedPrice:
+        number | null;
+    TypedSpecialPercent:
+        number | null;
+    TypedSpecialTk:
+        number | null;
+    Mrp:
+        number;
+    UnitPrice:
+        number;
+    GrossAmount:
+        number;
+    DiscountLabel:
+        string;
+    DiscountAmount:
+        number;
+    NetAmount:
+        number;
+    VatInside:
+        number;
+}
+
+export interface SalesQuotation
+{
+    SalesQuotationId:
+        number;
+    PublicId:
+        string;
+    ProductType:
+        SalesInvoicePageType;
+    QuotationNo:
+        string;
+    // yyyy-MM-dd
+    QuotationDate:
+        string;
+    ValidUntil:
+        string;
+    IsExpired:
+        boolean;
+    BranchId:
+        number;
+    BranchName:
+        string;
+    WarehouseId:
+        number;
+    SalesPersonId:
+        number | null;
+    SalesPersonName:
+        string;
+    CustomerId:
+        number | null;
+    IsProspect:
+        boolean;
+    CustomerCode:
+        string;
+    CustomerName:
+        string;
+    CustomerPhone:
+        string;
+    CustomerAddress:
+        string;
+    SaleType:
+        string;
+    InvoiceSpecialType:
+        'None' | 'Percent' | 'Amount';
+    InvoiceSpecialValue:
+        number;
+    FractionalDiscount:
+        number;
+    TotalQuantity:
+        number;
+    GrossAmount:
+        number;
+    DiscountAmount:
+        number;
+    QuotationTotal:
+        number;
+    TotalVatInside:
+        number;
+    Narration:
+        string;
+    Terms:
+        string;
+    // Open / Converted / Cancelled
+    Status:
+        string;
+    SalesInvoiceNo:
+        string;
+    ConvertedDate:
+        string;
+    // A draft / approved invoice made from it
+    HeldByInvoiceNo:
+        string;
+    CancelReason:
+        string;
+    CreatedByName:
+        string;
+    CreatedDate:
+        string;
+    Lines:
+        SalesQuotationLine[];
+}
+
+export interface SalesQuotationListItem
+{
+    SalesQuotationId:
+        number;
+    PublicId:
+        string;
+    QuotationNo:
+        string;
+    QuotationDate:
+        string;
+    ValidUntil:
+        string;
+    IsExpired:
+        boolean;
+    BranchId:
+        number;
+    BranchName:
+        string;
+    IsProspect:
+        boolean;
+    CustomerName:
+        string;
+    CustomerPhone:
+        string;
+    ItemsText:
+        string;
+    TotalQuantity:
+        number;
+    QuotationTotal:
+        number;
+    SalesPersonName:
+        string;
+    Status:
+        string;
+    SalesInvoiceNo:
+        string;
+    HeldByInvoiceNo:
+        string;
+}
+
+export interface SalesQuotationSaved
+{
+    PublicId:
+        string;
+    QuotationNo:
+        string;
 }

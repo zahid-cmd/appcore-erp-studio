@@ -1,0 +1,1189 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         SECTION 01 : PAGE HEADER
+         Center : ribbon (Offer No | status · unsaved)
+         Right  : Add / Edit : Save or Update, Clear
+                  View Draft : Activate
+                  + back to list
+    ====================================================== -->
+
+    <app-page-header
+
+        [icon]="page.icon"
+
+        [title]="page.title"
+
+        [subtitle]="page.subtitle">
+
+        <div
+
+            pageHeaderCenter
+
+            class="po-center">
+
+            <div class="po-ribbon">
+
+                <div class="po-chip">
+
+                    <span class="po-chip-icon po-chip-icon-no">
+                        <i class="fas fa-tag"></i>
+                    </span>
+
+                    <span class="po-chip-text">
+                        <span class="po-chip-label">Offer No</span>
+                        <strong>{{ offerNoDisplay || offerNoPlaceholder }}</strong>
+                    </span>
+
+                </div>
+
+                <span class="po-ribbon-sep"></span>
+
+                <div class="po-chip">
+
+                    <span class="po-chip-icon po-chip-icon-line">
+                        <i class="fas fa-code-branch"></i>
+                    </span>
+
+                    <span class="po-chip-text">
+                        <span class="po-chip-label">Business</span>
+                        <strong>{{ lineText }}</strong>
+                    </span>
+
+                </div>
+
+                <span class="po-ribbon-sep"></span>
+
+                <div class="po-state">
+
+                    <span
+
+                        class="po-status"
+
+                        [attr.data-status]="saved?.Status ?? 'New'">
+
+                        {{ saved ? statusDisplay : 'New Draft' }}
+
+                    </span>
+
+                    @if (hasChanges)
+                    {
+                        <span class="po-unsaved">
+                            <i class="fas fa-circle"></i>
+                            Unsaved
+                        </span>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <app-command-center
+
+            pageHeaderRight
+
+            [command1Text]="isViewMode ? 'Activate' : saveButtonText"
+
+            [command1Icon]="isViewMode ? 'fas fa-circle-play' : saveButtonIcon"
+
+            [command1Permission]="isViewMode ? '' : (isEditMode ? 'update' : 'add')"
+
+            [command1Activity]="isViewMode ? 'Approve' : ''"
+
+            [command1Visible]="!loading && !loadError && (!isViewMode || saved?.Status === 'Draft')"
+
+            [command1Title]="isViewMode ? 'Activate : invoices of the period apply it' : (status === 'Active' ? 'Active offer : name, end date, branches and terms only' : 'Saved as Draft; activate it when ready')"
+
+            (command1Click)="isViewMode ? onActivate() : onSave()"
+
+            command2Text="Clear"
+
+            command2Icon="fas fa-broom"
+
+            (command2Click)="onClear()"
+
+            [command2Visible]="!isViewMode && !loading && !loadError"
+
+            [command3Visible]="false"
+
+            rightCommandIcon="fas fa-arrow-left"
+
+            (rightCommandClick)="onBackToList()">
+
+        </app-command-center>
+
+    </app-page-header>
+
+
+    <!-- =====================================================
+         SECTION 02 : BODY (50 / 50)
+    ====================================================== -->
+
+    <div class="po-body">
+
+        @if (loading)
+        {
+            <div class="po-loading">
+
+                <app-orbit-loader
+
+                    title="Loading Offer"
+
+                    message="Please wait while the offer is being loaded."
+
+                    size="medium"
+
+                    [showMessage]="true"
+
+                    [overlay]="false">
+
+                </app-orbit-loader>
+
+            </div>
+        }
+        @else if (loadError)
+        {
+            <div class="po-banner po-banner-error">
+
+                <i class="fas fa-circle-exclamation"></i>
+
+                <span>{{ loadError }}</span>
+
+            </div>
+        }
+        @else
+        {
+            @if (!isViewMode && status === 'Active')
+            {
+                <div class="po-banner po-banner-info">
+
+                    <i class="fas fa-circle-info"></i>
+
+                    <span>This offer is active : only its name, end date, branches and terms can change. Cancel it and make a new one for anything else.</span>
+
+                </div>
+            }
+
+            @if (saved?.StatusReason)
+            {
+                <div class="po-banner po-banner-warn">
+
+                    <i class="fas fa-triangle-exclamation"></i>
+
+                    <span>{{ saved?.Status }} : {{ saved?.StatusReason }}</span>
+
+                </div>
+            }
+
+            <div class="po-grid">
+
+                <!-- =================================================
+                     LEFT : the offer (static data)
+                ================================================== -->
+
+                <div class="po-col po-col-left">
+
+                    <!-- 1. OFFER INFORMATION (name, type, brand, who pays,
+                         period, branches) -->
+
+                    <div class="po-card">
+
+                        <div class="po-card-header">
+
+                            <i class="fas fa-tags"></i>
+
+                            <span>Offer Information</span>
+
+                            <span class="po-count">Only {{ lineText }} branches</span>
+
+                        </div>
+
+                        <div class="po-fields po-grid-2">
+
+                            <app-textbox
+
+                                class="po-span-all"
+
+                                label="Offer Name"
+
+                                placeholder="e.g. Eid Bonanza - Apache RTR 160"
+
+                                textCase="none"
+
+                                [maxLength]="150"
+
+                                [value]="offerName"
+
+                                (valueChange)="onOfferName($event)"
+
+                                [disabled]="!canEditBasic"
+
+                                [required]="true">
+
+                            </app-textbox>
+
+                            <app-dropdown
+
+                                label="Offer Type"
+
+                                [items]="offerTypeItems"
+
+                                [value]="offerType"
+
+                                (valueChange)="onOfferTypeChange($event)"
+
+                                [disabled]="!canEditAll"
+
+                                [required]="true">
+
+                            </app-dropdown>
+
+                            <app-search-dropdown
+
+                                label="Brand"
+
+                                placeholder="All Brands (company offer)"
+
+                                [items]="brandItems"
+
+                                [value]="$any(brandId)"
+
+                                (valueChange)="onBrandChange($event)"
+
+                                [disabled]="!canEditAll">
+
+                            </app-search-dropdown>
+
+                            <!-- Company : own cost; Distributor : reimbursable
+                                 (the offer's ledger is created on save) -->
+                            <app-dropdown
+
+                                label="Funded By"
+
+                                [items]="fundedByItems"
+
+                                [value]="fundedBy"
+
+                                (valueChange)="onFundedByChange($event)"
+
+                                [disabled]="!canEditAll"
+
+                                [required]="true">
+
+                            </app-dropdown>
+
+                            <!-- Business Configuration : a choice only when the
+                                 line runs at several branches -->
+                            @if (!branchChoice)
+                            {
+                                <app-textbox
+
+                                    label="Branch"
+
+                                    [value]="singleBranchDisplay"
+
+                                    [readonly]="true">
+
+                                </app-textbox>
+                            }
+                            @else
+                            {
+                                <app-dropdown
+
+                                    label="Branches"
+
+                                    [items]="branchScopeItems"
+
+                                    [value]="branchScope"
+
+                                    (valueChange)="onBranchScopeChange($event)"
+
+                                    [disabled]="!canEditBasic"
+
+                                    [required]="true">
+
+                                </app-dropdown>
+                            }
+
+                            <app-datepicker
+
+                                label="Start Date"
+
+                                placeholder="Select date"
+
+                                [required]="true"
+
+                                [value]="$any(startDate)"
+
+                                (valueChange)="onStartDateChange($event)"
+
+                                [disabled]="!canEditAll">
+
+                            </app-datepicker>
+
+                            <app-datepicker
+
+                                label="End Date"
+
+                                placeholder="Select date"
+
+                                [required]="true"
+
+                                [minDate]="startDate"
+
+                                [value]="$any(endDate)"
+
+                                (valueChange)="onEndDateChange($event)"
+
+                                [disabled]="!canEditBasic">
+
+                            </app-datepicker>
+
+                        </div>
+
+                        @if (branchChoice && branchScope === 'selected')
+                        {
+                            <div class="po-branch-picks">
+
+                                @for (branch of lineBranches; track branch.Id)
+                                {
+                                    <app-checkbox
+
+                                        [label]="branch.Name"
+
+                                        [value]="branchChecked(branch.Id)"
+
+                                        [disabled]="!canEditBasic"
+
+                                        (valueChange)="onBranchToggle(branch.Id, $event)">
+
+                                    </app-checkbox>
+                                }
+
+                            </div>
+                        }
+
+                    </div>
+
+
+                    <!-- 2. BENEFIT : Free Service / prizes only (discounts
+                         are entered per coverage row, right) -->
+
+                    @if (hasBenefitCard)
+                    {
+                    <div class="po-card">
+
+                        <div class="po-card-header">
+
+                            <i class="fas fa-gift"></i>
+
+                            <span>Benefit</span>
+
+                            @if (hasPrizes && canEditAll)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    class="po-add"
+
+                                    (click)="addPrize()">
+
+                                    <i class="fas fa-plus"></i>
+
+                                    Prize
+
+                                </button>
+                            }
+
+                        </div>
+
+                        @if (isFreeService)
+                        {
+                            <div class="po-fields po-grid-2">
+
+                                <app-textbox
+
+                                    label="Free Services"
+
+                                    placeholder="1 to 50"
+
+                                    inputMode="numeric"
+
+                                    [value]="freeServiceText"
+
+                                    (valueChange)="onFreeServiceText($event)"
+
+                                    [disabled]="!canEditAll"
+
+                                    [required]="true">
+
+                                </app-textbox>
+
+                                <app-textbox
+
+                                    label="Claim Within (days)"
+
+                                    placeholder="0 = the offer period"
+
+                                    inputMode="numeric"
+
+                                    [value]="claimDaysText"
+
+                                    (valueChange)="onClaimDaysText($event)"
+
+                                    [disabled]="!canEditAll">
+
+                                </app-textbox>
+
+                            </div>
+                        }
+
+                        @if (hasPrizes)
+                        {
+                            <div class="po-hint">
+
+                                <i class="fas fa-circle-info"></i>
+
+                                {{ offerType === 'SMS Offer' ? 'The brand replies to the SMS; staff record the prize on the invoice.' : 'A physical card; staff record the prize on the invoice.' }}
+
+                            </div>
+
+                            <div class="po-prizes appcore-scrollbar">
+
+                                <table class="po-table po-table-small">
+
+                                    <colgroup>
+                                        <col class="po-col-sl">
+                                        <col>
+                                        <col class="po-col-kind">
+                                        <col class="po-col-num">
+                                        <col class="po-col-num">
+                                        @if (saved)
+                                        {
+                                            <col class="po-col-num">
+                                        }
+                                        <col class="po-col-action">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="po-sl">SL</th>
+                                            <th>Prize</th>
+                                            <th>Kind</th>
+                                            <th class="po-num">Value</th>
+                                            <th class="po-num">Qty</th>
+                                            @if (saved)
+                                            {
+                                                <th class="po-num">Left</th>
+                                            }
+                                            <th class="po-action"></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @for (prize of prizes; track $index; let i = $index)
+                                        {
+                                            <tr>
+                                                <td class="po-sl">{{ i + 1 }}</td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        class="po-input"
+                                                        maxlength="150"
+                                                        placeholder="e.g. Helmet, Tk 2,000 cash"
+                                                        [value]="prize.PrizeName"
+                                                        [disabled]="!canEditAll"
+                                                        (input)="onPrizeText(prize, 'PrizeName', $event)">
+                                                </td>
+                                                <td>
+                                                    <app-search-dropdown
+                                                        [inline]="true"
+                                                        placeholder="Kind"
+                                                        [items]="prizeKindItems"
+                                                        [value]="prize.PrizeKind"
+                                                        (valueChange)="onPrizeKind(prize, $event)"
+                                                        [disabled]="!canEditAll">
+                                                    </app-search-dropdown>
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        inputmode="decimal"
+                                                        class="po-input po-input-num"
+                                                        placeholder="0"
+                                                        [value]="prize.ValueText"
+                                                        [disabled]="!canEditAll"
+                                                        (input)="onPrizeText(prize, 'ValueText', $event)">
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        inputmode="numeric"
+                                                        class="po-input po-input-num"
+                                                        placeholder="∞"
+                                                        [value]="prize.QuantityText"
+                                                        [disabled]="!canEditAll"
+                                                        (input)="onPrizeText(prize, 'QuantityText', $event)">
+                                                </td>
+                                                @if (saved)
+                                                {
+                                                    <td class="po-num">{{ prizeLeft(prize) }}</td>
+                                                }
+                                                <td class="po-action">
+                                                    @if (canEditAll)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="po-remove"
+                                                            title="Remove"
+                                                            [attr.aria-label]="'Remove prize ' + (i + 1)"
+                                                            (click)="removePrize(i)">
+                                                            <i class="fas fa-xmark"></i>
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                        @empty
+                                        {
+                                            <tr>
+                                                <td
+                                                    class="po-empty"
+                                                    colspan="7">
+                                                    No prizes yet : press + Prize.
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        }
+
+                    </div>
+                    }
+
+
+                    <!-- SCREEN 1 BIKES (Service Campaign) : free service +
+                         eligible models (no model = every customer; All
+                         Models = one row per model) -->
+                    @if (isServiceCampaign && scStep === 1)
+                    {
+                        <div
+
+                            class="po-card po-card-fill"
+
+                            [class.po-locked]="!canEditAll">
+
+                            <div class="po-card-header po-header-line">
+
+                                <i class="fas fa-motorcycle"></i>
+
+                                <span>Eligible Models</span>
+
+                                <span class="po-count">{{ eligibleText }}</span>
+
+                                <button
+
+                                    type="button"
+
+                                    class="po-add po-add-small"
+
+                                    [disabled]="!canEditAll"
+
+                                    (click)="onAddModel()">
+
+                                    <i class="fas fa-plus"></i>
+
+                                    Add
+
+                                </button>
+
+                            </div>
+
+                            <!-- The free service is fixed : one per bike, labour
+                                 / service charge only (owner 2026-11-13 02:24) -->
+                            <div class="po-fields">
+
+                                <app-search-dropdown
+
+                                    label="Model"
+
+                                    placeholder="Every customer (no model)"
+
+                                    [items]="eligModelItems"
+
+                                    [value]="$any(eligModelId)"
+
+                                    (valueChange)="onEligModel($event)"
+
+                                    [disabled]="!canEditAll">
+
+                                </app-search-dropdown>
+
+                            </div>
+
+                            <div class="po-hint po-hint-line" title="One free service per bike (labour / service charge only), taken only within the offer dates; it never uses a membership or scheduled free service. No model = every customer.">
+
+                                <i class="fas fa-circle-info"></i>
+
+                                <span>1 free service per bike, within the offer dates · no model = every customer</span>
+
+                            </div>
+
+                        </div>
+                    }
+
+
+                    <!-- ADD COVERAGE (Add / Update in the header) : Model +
+                         Motor Bike (the bikes of the model); Service Campaign
+                         screen 2 : Category + Sub Category + Part -->
+                    @if (!isServiceCampaign || scStep === 2)
+                    {
+
+                    <div
+
+                        class="po-card"
+
+                        [class.po-card-fill]="true"
+
+                        [class.po-locked]="!canEditAll">
+
+                        <div class="po-card-header">
+
+                            <i [class]="isEditingLine ? 'fas fa-pen-to-square' : page.icon"></i>
+
+                            <span>{{ isEditingLine ? 'Edit Coverage Row ' + (editingIndex + 1) : 'Add Coverage' }}</span>
+
+                            @if (isEditingLine)
+                            {
+                                <button
+
+                                    type="button"
+
+                                    class="po-cancel-edit"
+
+                                    title="Cancel edit"
+
+                                    aria-label="Cancel edit"
+
+                                    (click)="cancelEdit()">
+
+                                    <i class="fas fa-xmark"></i>
+
+                                </button>
+                            }
+
+                            <button
+
+                                type="button"
+
+                                class="po-add"
+
+                                [class.po-add-after]="isEditingLine"
+
+                                [class.po-add-exclude]="pickExcluded"
+
+                                [disabled]="!canEditAll || itemLocked"
+
+                                (click)="onAddLine()">
+
+                                <i [class]="isEditingLine ? 'fas fa-check' : pickExcluded ? 'fas fa-ban' : 'fas fa-plus'"></i>
+
+                                {{ isEditingLine ? 'Update' : pickExcluded ? 'Exclude' : 'Add' }}
+
+                            </button>
+
+                        </div>
+
+                        <div class="po-fields po-grid-2">
+
+                            @if (isServiceCampaign)
+                            {
+                                <!-- Spare Parts / Lubricants : rows stay apart
+                                     (lubricants are rarely discounted) -->
+                                <app-dropdown
+
+                                    class="po-span-all"
+
+                                    label="Product Type"
+
+                                    [items]="scTypeItems"
+
+                                    [value]="scTypeId"
+
+                                    (valueChange)="onScType($event)"
+
+                                    [disabled]="!canEditAll">
+
+                                </app-dropdown>
+
+                                <app-search-dropdown
+
+                                    label="Category"
+
+                                    placeholder="All Categories"
+
+                                    [items]="scCategoryItems"
+
+                                    [value]="$any(scCategoryId)"
+
+                                    (valueChange)="onScCategory($event)"
+
+                                    [disabled]="!canEditAll">
+
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+
+                                    label="Sub Category"
+
+                                    placeholder="All Sub Categories"
+
+                                    [items]="scSubItems"
+
+                                    [value]="$any(scSubId)"
+
+                                    (valueChange)="onScSub($event)"
+
+                                    [disabled]="!canEditAll">
+
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+
+                                    class="po-span-all"
+
+                                    [label]="childLevel.singular"
+
+                                    [placeholder]="'All ' + childLevel.plural"
+
+                                    [items]="scPartItems"
+
+                                    [value]="$any(scPartId)"
+
+                                    (valueChange)="onScPart($event)"
+
+                                    [disabled]="!canEditAll">
+
+                                </app-search-dropdown>
+                            }
+                            @else
+                            {
+                            <!-- Models : "All Models" first -->
+                            <app-search-dropdown
+
+                                [class.po-span-all]="!hasChildLevel"
+
+                                [label]="parentLevel.singular"
+
+                                [placeholder]="'Select ' + parentLevel.singular.toLowerCase()"
+
+                                [items]="modelItems"
+
+                                [value]="$any(pickModelId)"
+
+                                (valueChange)="onPickModel($event)"
+
+                                [disabled]="!canEditAll || itemLocked"
+
+                                [required]="true">
+
+                            </app-search-dropdown>
+
+                            <!-- Motor Bikes of the chosen model : "All Motor
+                                 Bikes" = the model as a whole -->
+                            @if (hasChildLevel)
+                            {
+                                <app-search-dropdown
+
+                                    [label]="childLevel.singular"
+
+                                    [placeholder]="'All ' + childLevel.plural"
+
+                                    [items]="bikeItems"
+
+                                    [value]="$any(pickBikeId)"
+
+                                    (valueChange)="onPickBike($event)"
+
+                                    [disabled]="!canEditAll || itemLocked || pickModelId === null">
+
+                                </app-search-dropdown>
+                            }
+                            }
+
+                            @if (isDiscount)
+                            {
+                                <app-dropdown
+
+                                    label="Discount Type"
+
+                                    [items]="discountTypeItems"
+
+                                    [value]="pickDiscountType"
+
+                                    (valueChange)="onPickDiscountType($event)"
+
+                                    [disabled]="!canEditAll || pickExcluded"
+
+                                    [required]="true">
+
+                                </app-dropdown>
+
+                                <app-textbox
+
+                                    [label]="pickDiscountType === 'Percent' ? 'Discount %' : 'Discount Tk (per unit)'"
+
+                                    placeholder="0"
+
+                                    inputMode="decimal"
+
+                                    [value]="pickDiscountText"
+
+                                    (valueChange)="onPickDiscountText($event)"
+
+                                    [disabled]="!canEditAll || pickExcluded"
+
+                                    [required]="true">
+
+                                </app-textbox>
+                            }
+
+                            <!-- Exception : leave the picked model / bike
+                                 out of the offer (after All is added too) -->
+                            @if (!isEditingLine && coverage.length)
+                            {
+                                <div class="po-span-all po-exception-pick">
+
+                                    <app-checkbox
+
+                                        [label]="isServiceCampaign ? 'Exception : leave the picked category / sub category / part out of the parts discount' : 'Exception : leave the picked ' + parentLevel.singular.toLowerCase() + (hasChildLevel ? ' / ' + childLevel.singular.toLowerCase() : '') + ' out of the offer'"
+
+                                        [value]="pickExcluded"
+
+                                        [disabled]="!canEditAll"
+
+                                        (valueChange)="onPickExcluded($event)">
+
+                                    </app-checkbox>
+
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="po-hint" [class.po-hint-line]="isServiceCampaign" [class.po-hint-exception]="pickExcluded" [title]="coverageHint">
+
+                            <i class="fas fa-circle-info"></i>
+
+                            <span>{{ coverageHint }}</span>
+
+                        </div>
+
+                    </div>
+                    }
+
+
+
+                </div>
+
+
+                <!-- =================================================
+                     RIGHT : what the offer covers
+                ================================================== -->
+
+                <div class="po-col po-col-right">
+
+                    <!-- TERMS & CONDITIONS : one line on top of the right
+                         section, all three pages (owner 2026-11-13 02:56);
+                         Service Campaign : on both screens (03:07) -->
+                    @if (true)
+                    {
+                        <div class="po-card po-terms-line">
+
+                            <div class="po-card-header">
+
+                            <i class="fas fa-align-left"></i>
+
+                            <span class="po-terms-label">Terms &amp; Conditions</span>
+
+                            <app-textbox
+
+                                class="po-terms-input"
+
+                                placeholder="e.g. One offer per invoice; not with exchange offers; while stocks last."
+
+                                textCase="none"
+
+                                [maxLength]="1000"
+
+                                [value]="terms"
+
+                                (valueChange)="onTerms($any($event))"
+
+                                [disabled]="!canEditBasic">
+
+                            </app-textbox>
+
+                            </div>
+
+                        </div>
+                    }
+
+                    <!-- COVERAGE (fills the rest; rows scroll) -->
+
+                    <div class="po-summary-slot">
+
+                        <div class="po-card po-summary">
+
+                            <div class="po-card-header">
+
+                                <i [class]="isServiceCampaign ? (scStep === 1 ? 'fas fa-motorcycle' : 'fas fa-gears') : 'fas fa-list-check'"></i>
+
+                                <span>{{ tableTitle }}</span>
+
+                                <span class="po-count">{{ tableCount }}</span>
+
+                                @if (canEditAll && tableRows.length)
+                                {
+                                    <button
+
+                                        type="button"
+
+                                        class="po-clear"
+
+                                        title="Remove every row"
+
+                                        (click)="clearCoverage()">
+
+                                        <i class="fas fa-trash-can"></i>
+
+                                    </button>
+                                }
+
+                                <!-- Service Campaign : 1 Bikes -> Next -> 2 Parts -->
+                                @if (isServiceCampaign)
+                                {
+                                    <div class="po-steps">
+
+                                        <button
+                                            type="button"
+                                            class="po-step"
+                                            [class.po-step-on]="scStep === 1"
+                                            (click)="onScStep(1)">
+                                            <span class="po-step-no">1</span>
+                                            Bikes
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="po-step"
+                                            [class.po-step-on]="scStep === 2"
+                                            (click)="onScStep(2)">
+                                            <span class="po-step-no">2</span>
+                                            Parts
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="po-add"
+                                            (click)="onScStep(scStep === 1 ? 2 : 1)">
+                                            @if (scStep === 1)
+                                            {
+                                                Next
+                                                <i class="fas fa-arrow-right"></i>
+                                            }
+                                            @else
+                                            {
+                                                <i class="fas fa-arrow-left"></i>
+                                                Back
+                                            }
+                                        </button>
+
+                                    </div>
+                                }
+
+                            </div>
+
+                            <div class="po-table-scroll appcore-scrollbar">
+
+                                <table class="po-table">
+
+                                    <colgroup>
+                                        <col class="po-col-sl">
+                                        <col class="po-col-cover">
+                                        <col>
+                                        <col class="po-col-disc">
+                                        <col class="po-col-action">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="po-sl">SL</th>
+                                            <th>Coverage</th>
+                                            <th>Item</th>
+                                            <th class="po-num">Discount</th>
+                                            <th class="po-action">Action</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @for (item of tableRows; track item.index; let sl = $index)
+                                        {
+                                            <tr
+                                                [class.po-row-editable]="canEditAll"
+                                                [class.po-row-editing]="editingIndex === item.index"
+                                                [class.po-row-excluded]="item.row.IsExcluded"
+                                                [class.po-row-open]="isExpanded(item.row)"
+                                                [title]="canEditAll ? 'Double-click to edit' : ''"
+                                                (dblclick)="editLine(item.index)">
+                                                <td class="po-sl">{{ sl + 1 }}</td>
+                                                <td>
+                                                    <span
+
+                                                        class="po-cover-tag"
+
+                                                        [attr.data-type]="item.row.IsExcluded ? 'Excluded' : item.row.TargetType">
+
+                                                        {{ item.row.IsExcluded ? 'Exception' : coverPlural(item.row) }}
+
+                                                    </span>
+                                                </td>
+                                                <td [title]="rowName(item.row)">
+                                                    @if (hasBikes(item.row))
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="po-expand"
+                                                            [title]="isExpanded(item.row) ? 'Hide the ' + childLevel.plural.toLowerCase() : 'Show the ' + childLevel.plural.toLowerCase()"
+                                                            [attr.aria-expanded]="isExpanded(item.row)"
+                                                            (click)="toggleExpand(item.row, $event)"
+                                                            (dblclick)="$event.stopPropagation()">
+                                                            <i class="fas fa-chevron-right"></i>
+                                                            <span class="po-row-name">{{ rowName(item.row) }}</span>
+                                                            <span class="po-bike-count">{{ bikesOf(item.row.TargetId).length }}</span>
+                                                            @if (exceptionsOf(item.row))
+                                                            {
+                                                                <span class="po-except-count">{{ exceptionsOf(item.row) }} excluded</span>
+                                                            }
+                                                        </button>
+                                                    }
+                                                    @else
+                                                    {
+                                                        <span class="po-row-name">{{ rowName(item.row) }}</span>
+                                                    }
+                                                    @if (isServiceCampaign && rowPartType(item.row))
+                                                    {
+                                                        <span class="po-type-chip" [attr.data-type]="rowPartType(item.row)">{{ rowPartType(item.row) }}</span>
+                                                    }
+                                                </td>
+                                                <td class="po-num" [class.po-own]="!item.row.IsExcluded" [class.po-excluded]="item.row.IsExcluded">{{ rowDiscount(item.row) }}</td>
+                                                <td class="po-action">
+                                                    @if (canEditAll)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="po-exclude"
+                                                            [class.po-exclude-on]="item.row.IsExcluded"
+                                                            [title]="item.row.IsExcluded ? 'Put back on the offer' : 'Exception : leave out of the offer'"
+                                                            [attr.aria-label]="(item.row.IsExcluded ? 'Put back ' : 'Exclude ') + rowName(item.row)"
+                                                            [disabled]="editingIndex === item.index"
+                                                            (click)="toggleRowExcluded(item.index, $event)"
+                                                            (dblclick)="$event.stopPropagation()">
+                                                            <i [class]="item.row.IsExcluded ? 'fas fa-rotate-left' : 'fas fa-ban'"></i>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="po-remove"
+                                                            title="Remove"
+                                                            [attr.aria-label]="'Remove ' + rowName(item.row)"
+                                                            [disabled]="editingIndex === item.index"
+                                                            (click)="removeLine(item.index, $event)"
+                                                            (dblclick)="$event.stopPropagation()">
+                                                            <i class="fas fa-xmark"></i>
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+
+                                            <!-- The model's bikes : each can be left out -->
+                                            @if (isExpanded(item.row) && hasBikes(item.row))
+                                            {
+                                                @for (bike of bikesOf(item.row.TargetId); track bike.Id)
+                                                {
+                                                    <tr
+                                                        class="po-sub-row"
+                                                        [class.po-row-excluded]="bikeExcluded(item.row, bike.Id)">
+                                                        <td class="po-sl"></td>
+                                                        <td>
+                                                            @if (bikeExcluded(item.row, bike.Id) && !item.row.IsExcluded)
+                                                            {
+                                                                <span class="po-cover-tag" data-type="Excluded">Exception</span>
+                                                            }
+                                                        </td>
+                                                        <td class="po-sub-name" [title]="bike.Name">
+                                                            <span class="po-row-name">{{ bike.Name }}</span>
+                                                        </td>
+                                                        <td class="po-num" [class.po-inherit]="!bikeExcluded(item.row, bike.Id)" [class.po-excluded]="bikeExcluded(item.row, bike.Id)">{{ bikeDiscount(item.row, bike.Id) }}</td>
+                                                        <td class="po-action">
+                                                            @if (canEditAll && !item.row.IsExcluded)
+                                                            {
+                                                                <button
+                                                                    type="button"
+                                                                    class="po-exclude"
+                                                                    [class.po-exclude-on]="bikeExcluded(item.row, bike.Id)"
+                                                                    [title]="bikeExcluded(item.row, bike.Id) ? 'Put back on the offer' : 'Exception : leave out of the offer'"
+                                                                    [attr.aria-label]="(bikeExcluded(item.row, bike.Id) ? 'Put back ' : 'Exclude ') + bike.Name"
+                                                                    (click)="toggleBike(item.row, bike, $event)">
+                                                                    <i [class]="bikeExcluded(item.row, bike.Id) ? 'fas fa-rotate-left' : 'fas fa-ban'"></i>
+                                                                </button>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        }
+                                        @empty
+                                        {
+                                            <tr>
+                                                <td
+                                                    class="po-empty"
+                                                    colspan="5">
+                                                    {{ tableEmptyText }}
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     SECTION 03 : UTILITIES
+====================================================== -->
+
+<app-toast></app-toast>
+
+<app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

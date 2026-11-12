@@ -2,6 +2,8 @@
 // Namespaces
 //===============================================================
 
+using AppCore.Application.Platform.Tenancy;
+using AppCore.Infrastructure.Platform.Tenancy;
 using AppCore.Application.AccountsFinance.AccountsReconciliation;
 using AppCore.Infrastructure.Configurations.AccountsFinance.AccountsReconciliation;
 
@@ -48,6 +50,9 @@ public class MfsAutoSettlementService : BackgroundService
 
     private readonly ILogger<MfsAutoSettlementService> _logger;
 
+    // Tenancy : the work runs once per client company
+    private readonly TenantScopes _tenants;
+
 
     //===========================================================
     // Constructor
@@ -55,8 +60,11 @@ public class MfsAutoSettlementService : BackgroundService
 
     public MfsAutoSettlementService(
         IServiceScopeFactory scopeFactory,
-        ILogger<MfsAutoSettlementService> logger)
+        ILogger<MfsAutoSettlementService> logger,
+        TenantScopes tenants)
     {
+        _tenants = tenants;
+
         _scopeFactory = scopeFactory;
 
         _logger = logger;
@@ -99,19 +107,21 @@ public class MfsAutoSettlementService : BackgroundService
     {
         try
         {
-            // A fresh scope (own DbContext) for every run
-            using IServiceScope scope =
-                _scopeFactory.CreateScope();
+            // A fresh scope (own DbContext) for every run, once per
+            // company (Tenancy : TenantScopes)
+            await _tenants.ForEachAsync("MFS Auto Settlement", async sp =>
+            {
+                IMfsReconciliationsRepository repository =
+                    sp.GetRequiredService<IMfsReconciliationsRepository>();
 
-            IMfsReconciliationsRepository repository =
-                scope.ServiceProvider.GetRequiredService<IMfsReconciliationsRepository>();
+                MfsAutoSettlementResultDto result =
+                    await repository.RunAutoSettlementAsync(stoppingToken);
 
-            MfsAutoSettlementResultDto result =
-                await repository.RunAutoSettlementAsync(stoppingToken);
-
-            _logger.LogInformation(
-                "MFS Auto Settlement : {Message}",
-                result.Message);
+                _logger.LogInformation(
+                    "MFS Auto Settlement {Tenant}: {Message}",
+                    sp.GetRequiredService<ITenantContext>().Tenant?.TenantCode ?? string.Empty,
+                    result.Message);
+            }, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

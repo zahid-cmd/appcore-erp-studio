@@ -85,6 +85,29 @@ Routes =
 
                 // AUTO-END : SUB-008-003-001
 
+            //===========================================================
+            // Sales Returns - SP (hand-wired : the shared Sales Return
+            // pages; NEVER Code Sync)
+            //===========================================================
+
+            {
+                path:'sales-returns-sp',
+
+                data:
+                {
+                    breadcrumb:'Sales Returns - SP'
+                },
+
+                loadChildren:() =>
+                    import(
+                        './sales-returns-sp.routes'
+                    )
+                    .then(
+                        m =>
+                            m.SalesReturnsSpRoutes
+                    )
+            },
+
         ]
 
     }

@@ -2,6 +2,8 @@
 // Namespaces
 //===============================================================
 
+using AppCore.Application.Platform.Tenancy;
+using AppCore.Infrastructure.Platform.Tenancy;
 using AppCore.Application.AccountsFinance.AccountsReconciliation;
 using AppCore.Infrastructure.Configurations.AccountsFinance.AccountsReconciliation;
 
@@ -48,6 +50,9 @@ public class PosAutoSettlementService : BackgroundService
 
     private readonly ILogger<PosAutoSettlementService> _logger;
 
+    // Tenancy : the work runs once per client company
+    private readonly TenantScopes _tenants;
+
 
     //===========================================================
     // Constructor
@@ -55,8 +60,11 @@ public class PosAutoSettlementService : BackgroundService
 
     public PosAutoSettlementService(
         IServiceScopeFactory scopeFactory,
-        ILogger<PosAutoSettlementService> logger)
+        ILogger<PosAutoSettlementService> logger,
+        TenantScopes tenants)
     {
+        _tenants = tenants;
+
         _scopeFactory = scopeFactory;
 
         _logger = logger;
@@ -99,19 +107,21 @@ public class PosAutoSettlementService : BackgroundService
     {
         try
         {
-            // A fresh scope (own DbContext) for every run
-            using IServiceScope scope =
-                _scopeFactory.CreateScope();
+            // A fresh scope (own DbContext) for every run, once per
+            // company (Tenancy : TenantScopes)
+            await _tenants.ForEachAsync("POS Auto Settlement", async sp =>
+            {
+                IPosReconciliationsRepository repository =
+                    sp.GetRequiredService<IPosReconciliationsRepository>();
 
-            IPosReconciliationsRepository repository =
-                scope.ServiceProvider.GetRequiredService<IPosReconciliationsRepository>();
+                PosAutoSettlementResultDto result =
+                    await repository.RunAutoSettlementAsync(stoppingToken);
 
-            PosAutoSettlementResultDto result =
-                await repository.RunAutoSettlementAsync(stoppingToken);
-
-            _logger.LogInformation(
-                "POS Auto Settlement : {Message}",
-                result.Message);
+                _logger.LogInformation(
+                    "POS Auto Settlement {Tenant}: {Message}",
+                    sp.GetRequiredService<ITenantContext>().Tenant?.TenantCode ?? string.Empty,
+                    result.Message);
+            }, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

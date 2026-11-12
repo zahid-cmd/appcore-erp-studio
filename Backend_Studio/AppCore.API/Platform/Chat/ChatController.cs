@@ -24,9 +24,11 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.Platform.CurrentUser;
+using AppCore.Application.Platform.Tenancy;
 using AppCore.Domain.Entities.SecurityPermission.UserManagement;
 using AppCore.Domain.Platform.Chat;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Api.Platform.Tenancy;
 
 namespace AppCore.Api.Platform.Chat;
 
@@ -137,15 +139,21 @@ public class ChatController : ControllerBase
 
     private readonly ChatPresence _presence;
 
+    // Tenancy : user ids repeat across companies, so groups and
+    // "who is online" are kept per company
+    private readonly ITenantContext _tenant;
+
     public ChatController
     (
         AppDbContext context,
         ICurrentUserService currentUser,
         IWebHostEnvironment environment,
         IHubContext<ChatHub> hub,
-        ChatPresence presence
+        ChatPresence presence,
+        ITenantContext tenant
     )
     {
+        _tenant = tenant;
         _context = context;
         _currentUser = currentUser;
         _environment = environment;
@@ -154,6 +162,8 @@ public class ChatController : ControllerBase
     }
 
     private long Me => _currentUser.UserId;
+
+    private string? Company => _tenant.Tenant?.TenantCode;
 
 
     //===========================================================
@@ -166,7 +176,7 @@ public class ChatController : ControllerBase
         List<ChatUserDto> users =
             (await ActiveUsers().ToListAsync())
                 .Where(x => x.UserId != Me)
-                .Select(x => { x.Online = _presence.IsOnline(x.UserId); return x; })
+                .Select(x => { x.Online = _presence.IsOnline(Company, x.UserId); return x; })
                 .OrderByDescending(x => x.Online)
                 .ThenBy(x => x.Name)
                 .ToList();
@@ -578,7 +588,7 @@ public class ChatController : ControllerBase
         // message; everybody gets the message itself
         foreach (long userId in members)
         {
-            await _hub.Clients.Group(ChatHub.UserGroup(userId))
+            await _hub.Clients.Group(ChatHub.UserGroup(Company, userId))
                 .SendAsync("chatMessage", new { conversationId = conversation.PublicId, message = result });
         }
 
@@ -610,7 +620,7 @@ public class ChatController : ControllerBase
 
         foreach (long userId in await MemberIdsAsync(conversation.ChatConversationId))
         {
-            await _hub.Clients.Group(ChatHub.UserGroup(userId))
+            await _hub.Clients.Group(ChatHub.UserGroup(Company, userId))
                 .SendAsync("chatRead", new { conversationId = conversation.PublicId, userId = Me, lastReadMessageId = last });
         }
 
@@ -643,7 +653,7 @@ public class ChatController : ControllerBase
 
         foreach (long userId in await MemberIdsAsync(message.ChatConversationId))
         {
-            await _hub.Clients.Group(ChatHub.UserGroup(userId))
+            await _hub.Clients.Group(ChatHub.UserGroup(Company, userId))
                 .SendAsync("chatMessageDeleted", new { conversationId, messageId });
         }
 
@@ -736,7 +746,7 @@ public class ChatController : ControllerBase
 
             if (dto is not null)
             {
-                await _hub.Clients.Group(ChatHub.UserGroup(userId))
+                await _hub.Clients.Group(ChatHub.UserGroup(Company, userId))
                     .SendAsync("chatConversation", new { conversation = dto });
             }
         }
@@ -855,7 +865,7 @@ public class ChatController : ControllerBase
                 IsMember = mine.LeftDate == null,
                 Members = current
                     .Select(x => users.TryGetValue(x.UserProfileId, out ChatUserDto? m)
-                        ? new ChatUserDto { UserId = m.UserId, Name = m.Name, PhotoPath = m.PhotoPath, Online = _presence.IsOnline(m.UserId) }
+                        ? new ChatUserDto { UserId = m.UserId, Name = m.Name, PhotoPath = m.PhotoPath, Online = _presence.IsOnline(Company, m.UserId) }
                         : new ChatUserDto { UserId = x.UserProfileId, Name = "User" })
                     .ToList(),
                 LastMessage = last is null ? null : ToDto(last, names),
@@ -954,7 +964,7 @@ public class ChatController : ControllerBase
         }
 
         string webRoot =
-            _environment.WebRootPath
+            TenantWebRoot.Of(HttpContext, _environment)
             ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
 
         string folder =

@@ -164,6 +164,12 @@ import
 }
 from '../../../../../core/authentication/authentication-storage.service';
 
+import
+{
+    WorkBranchService
+}
+from '../../../../../core/authentication/work-branch.service';
+
 //===============================================================
 // Accounting helpers
 //===============================================================
@@ -540,6 +546,11 @@ implements OnInit, OnDestroy
 
     private readonly authenticationStorage =
         inject(AuthenticationStorageService);
+
+    // Line page : the branch of the page's business line
+    // (2026-11-13; top-bar pick)
+    private readonly workBranch =
+        inject(WorkBranchService);
 
     private readonly confirmDialog =
         inject(ConfirmDialogService);
@@ -1527,11 +1538,13 @@ implements OnInit, OnDestroy
         const user =
             this.authenticationStorage.getUser();
 
+        // The page's working branch (Showroom / Service Center /
+        // Accessory Shop pick), else the login branch
         this.loginBranchId =
-            Number(user?.branchId) || 0;
+            this.workBranch.branchIdOr(Number(user?.branchId) || 0);
 
         this.loginBranchName =
-            (user?.branchName ?? '').trim();
+            this.workBranch.branchNameOr((user?.branchName ?? '').trim());
     }
 
     // The order's own branch once saved, else the login branch

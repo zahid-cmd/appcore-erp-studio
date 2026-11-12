@@ -4,6 +4,8 @@
 
 using Microsoft.Extensions.Caching.Memory;
 
+using AppCore.Application.Platform.Tenancy;
+
 
 //===============================================================
 // Namespace
@@ -46,12 +48,19 @@ public sealed class LoginAttemptGuard
 
     private readonly RateLimitSettings _limits;
 
+    // Tenancy : the same Login ID ("admin") exists in every
+    // company, so failures are counted per company
+    private readonly IHttpContextAccessor _http;
+
 
     public LoginAttemptGuard(
         IMemoryCache cache,
-        ApiSecurityOptions options)
+        ApiSecurityOptions options,
+        IHttpContextAccessor http)
     {
         _cache = cache;
+
+        _http = http;
 
         _limits = options.RateLimits;
     }
@@ -182,14 +191,17 @@ public sealed class LoginAttemptGuard
     }
 
 
-    private static string Key(
+    private string Key(
         string? userName)
     {
         string clean =
             (userName ?? string.Empty).Trim();
 
+        string company =
+            _http.HttpContext?.RequestServices.GetService<ITenantContext>()?.Tenant?.TenantCode ?? string.Empty;
+
         return clean.Length == 0 || clean.Length > 100
             ? string.Empty
-            : "login-failures:" + clean.ToUpperInvariant();
+            : "login-failures:" + company + ":" + clean.ToUpperInvariant();
     }
 }

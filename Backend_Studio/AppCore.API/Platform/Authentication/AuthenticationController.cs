@@ -10,6 +10,7 @@ using AppCore.Api.Security;
 
 using AppCore.Application.Platform.Authentication.DTOs;
 using AppCore.Application.Platform.Authentication.Interfaces;
+using AppCore.Api.Platform.Tenancy;
 
 
 //===============================================================
@@ -348,7 +349,7 @@ public class AuthenticationController
         }
 
         string webRootPath =
-            _environment.WebRootPath
+            TenantWebRoot.Of(HttpContext, _environment)
             ??
             Path.Combine(
                 _environment.ContentRootPath,

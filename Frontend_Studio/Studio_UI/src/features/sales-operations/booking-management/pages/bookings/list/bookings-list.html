@@ -6,9 +6,9 @@
 
     <app-page-header
 
-        title="Bookings"
+        [title]="pageTitle"
 
-        subtitle="Motor bike bookings : advance, conversion to sale, cancellation"
+        [subtitle]="pageSubtitle"
 
         icon="fas fa-calendar-check">
 
@@ -328,8 +328,23 @@
                             <dt>Customer</dt>
                             <dd>{{ viewRow.CustomerName }} <small>{{ viewRow.CustomerCode }}{{ viewRow.CustomerPhone ? ' · ' + viewRow.CustomerPhone : '' }}</small></dd>
 
-                            <dt>Model</dt>
-                            <dd>{{ viewRow.ModelName }}</dd>
+                            <dt>{{ itemLabel }}</dt>
+                            @if (isBikes)
+                            {
+                                <dd>{{ viewRow.ModelName }}</dd>
+                            }
+                            @else
+                            {
+                                <dd>
+                                    @for (l of viewRow.Lines; track $index)
+                                    {
+                                        <div class="bk-item-line">
+                                            <span>{{ l.ProductName }} <small>{{ l.PartNumber || l.ProductCode }}</small></span>
+                                            <b>{{ qtyText(l.Quantity) }} {{ l.Unit }}</b>
+                                        </div>
+                                    }
+                                </dd>
+                            }
 
                             <dt>Advance</dt>
                             <dd><b>{{ money(viewRow.AdvanceAmount) }}</b> <small>({{ viewRow.CollectionCount }} collection{{ viewRow.CollectionCount === 1 ? '' : 's' }})</small></dd>
@@ -700,19 +715,26 @@
 
                             </div>
 
-                            <app-search-dropdown
+                            @if (isBikes)
+                            {
+                                <app-search-dropdown
 
-                                label="Model & Colour"
+                                    label="Model & Colour"
 
-                                placeholder="Select model"
+                                    placeholder="Select model"
 
-                                [items]="modelItems"
+                                    [items]="modelItems"
 
-                                [value]="newModelId"
+                                    [value]="newModelId"
 
-                                (valueChange)="onNewModel($event)">
+                                    (valueChange)="onNewModel($event)">
 
-                            </app-search-dropdown>
+                                </app-search-dropdown>
+                            }
+                            @else
+                            {
+                                <ng-container [ngTemplateOutlet]="itemSearch"></ng-container>
+                            }
 
                             <app-datepicker
 
@@ -771,6 +793,11 @@
 
                     </div>
 
+
+                    @if (deskKind === 'new' && !isBikes)
+                    {
+                        <ng-container [ngTemplateOutlet]="itemTable"></ng-container>
+                    }
 
                     <!-- Payment entry -->
 
@@ -1138,21 +1165,39 @@
 
                     <div class="bkm-form-grid">
 
-                        <app-search-dropdown
+                        @if (isBikes)
+                        {
+                            <app-search-dropdown
 
-                            class="bkm-wide"
+                                class="bkm-wide"
 
-                            label="Model & Colour"
+                                label="Model & Colour"
 
-                            placeholder="Select model"
+                                placeholder="Select model"
 
-                            [items]="modelItems"
+                                [items]="modelItems"
 
-                            [value]="editModelId"
+                                [value]="editModelId"
 
-                            (valueChange)="onEditModel($event)">
+                                (valueChange)="onEditModel($event)">
 
-                        </app-search-dropdown>
+                            </app-search-dropdown>
+                        }
+                        @else
+                        {
+                            <div class="bkm-wide">
+
+                                <ng-container [ngTemplateOutlet]="itemSearch"></ng-container>
+
+                                @if (editRow.HeldByInvoiceNo)
+                                {
+                                    <p class="bkm-explain bkm-amber"><i class="fas fa-lock"></i> On Sales Invoice {{ editRow.HeldByInvoiceNo }} : the items cannot change.</p>
+                                }
+
+                                <ng-container [ngTemplateOutlet]="itemTable"></ng-container>
+
+                            </div>
+                        }
 
                         <app-datepicker
 
@@ -1363,6 +1408,182 @@
 
         </div>
     }
+
+
+    <!-- =====================================================
+         SP / AC : item search and the items (New / Edit)
+    ====================================================== -->
+
+    <ng-template #itemSearch>
+
+        <div class="bkm-customer">
+
+            <app-textbox
+
+                label="Add Item"
+
+                placeholder="Type 2+ letters : name, code, part no"
+
+                textCase="none"
+
+                prefixIcon="fas fa-magnifying-glass"
+
+                [value]="itemQuery"
+
+                (valueChange)="onItemQuery($event)">
+
+            </app-textbox>
+
+            @if (itemSearching || itemResults.length > 0 || itemQuery.trim().length >= 2)
+            {
+                <div class="bkm-results appcore-scrollbar">
+
+                    @if (itemSearching)
+                    {
+                        <div class="bkm-result-note"><i class="fas fa-spinner fa-spin"></i> Searching...</div>
+                    }
+                    @else
+                    {
+                        @for (p of itemResults; track p.ProductId)
+                        {
+                            <button
+
+                                type="button"
+
+                                class="bkm-result"
+
+                                title="Add this item"
+
+                                (click)="pickItem(p)">
+
+                                <b>{{ p.ProductName }}</b>
+
+                                <small>{{ p.PartNumber ? p.PartNumber + ' · ' : '' }}{{ p.ProductCode }}{{ p.Unit ? ' · ' + p.Unit : '' }}</small>
+
+                            </button>
+                        }
+
+                        @if (itemResults.length === 0)
+                        {
+                            <div class="bkm-result-note">No active item found.</div>
+                        }
+                    }
+
+                </div>
+            }
+
+        </div>
+
+    </ng-template>
+
+
+    <ng-template #itemTable>
+
+        <div class="bkm-items appcore-scrollbar">
+
+            <table class="bkm-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th class="bkm-c bkm-col-sl">SL</th>
+
+                        <th>Item</th>
+
+                        <th class="bkm-col-qty">Qty</th>
+
+                        <th class="bkm-c bkm-col-action"></th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @for (l of itemLines; track l.ProductId; let i = $index)
+                    {
+                        <tr>
+
+                            <td class="bkm-c bkm-sl">{{ i + 1 }}</td>
+
+                            <td>
+
+                                <div class="bkm-part">{{ l.ProductName }}</div>
+
+                                <div class="bkm-sub">{{ l.PartNumber ? l.PartNumber + ' · ' : '' }}{{ l.ProductCode }}</div>
+
+                            </td>
+
+                            <td class="bkm-col-qty">
+
+                                <app-textbox
+
+                                    placeholder="0"
+
+                                    inputMode="decimal"
+
+                                    textCase="none"
+
+                                    [value]="itemQtyTexts[i]"
+
+                                    (valueChange)="onItemQty(i, $event)">
+
+                                </app-textbox>
+
+                                @if (l.Unit)
+                                {
+                                    <span class="bkm-unit">{{ l.Unit }}</span>
+                                }
+
+                            </td>
+
+                            <td class="bkm-c">
+
+                                <button
+
+                                    type="button"
+
+                                    class="bkm-remove"
+
+                                    title="Remove item"
+
+                                    aria-label="Remove item"
+
+                                    [disabled]="progress.busy"
+
+                                    (click)="removeItem(i)">
+
+                                    <i class="fa-regular fa-trash-can"></i>
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                    @if (itemLines.length === 0)
+                    {
+                        <tr>
+
+                            <td class="bkm-empty" colspan="4">No item yet : search above and pick.</td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        @if (itemLines.length > 0)
+        {
+            <div class="bkm-items-foot">{{ itemCount }} item{{ itemCount === 1 ? '' : 's' }} · qty {{ qtyText(itemQtyTotal) }}</div>
+        }
+
+    </ng-template>
 
 
     <app-history-drawer

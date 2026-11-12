@@ -9,6 +9,10 @@ using System.Threading.Channels;
 using Microsoft.EntityFrameworkCore;
 using AppCore.Infrastructure.Persistence;
 
+using AppCore.Api.Platform.Tenancy;
+using AppCore.Application.Platform.Tenancy;
+using AppCore.Infrastructure.Platform.Tenancy;
+
 
 //===============================================================
 // Namespace
@@ -94,25 +98,61 @@ public sealed class UploadsMirror : BackgroundService
         DateTime.MinValue;
 
 
-    // wwwroot/uploads of this API
-    public string Root { get; }
+    // wwwroot/uploads of this API (Tenancy Mode Off)
+    private readonly string _defaultRoot;
+
+    // Tenancy Mode Host : the company being mirrored right now
+    // (its folder wwwroot/tenants/<CODE>/uploads and its database)
+    private readonly AsyncLocal<(string Root, TenantInfo Tenant)?> _company = new();
+
+    private readonly string _webRoot;
+
+    private readonly TenancyOptions _tenancy;
+
+    private readonly TenantResolver _resolver;
+
+    public string Root => _company.Value?.Root ?? _defaultRoot;
 
 
     public UploadsMirror(
         IWebHostEnvironment environment,
         IServiceScopeFactory scopeFactory,
-        ILogger<UploadsMirror> logger)
+        ILogger<UploadsMirror> logger,
+        TenancyOptions tenancy,
+        TenantResolver resolver)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _tenancy = tenancy;
+        _resolver = resolver;
 
-        Root =
+        _webRoot = TenantWebRoot.Base(environment);
+
+        _defaultRoot =
             Path.Combine(
-                environment.WebRootPath
-                ?? Path.Combine(environment.ContentRootPath, "wwwroot"),
+                _webRoot,
                 "uploads");
 
-        Directory.CreateDirectory(Root);
+        Directory.CreateDirectory(_defaultRoot);
+    }
+
+    // run work with one company's folder and database
+    private async Task<T> ForCompanyAsync<T>(TenantInfo tenant, Func<Task<T>> work)
+    {
+        string root = Path.Combine(TenantWebRoot.ForCompany(_webRoot, tenant.TenantCode), "uploads");
+
+        Directory.CreateDirectory(root);
+
+        _company.Value = (root, tenant);
+
+        try
+        {
+            return await work();
+        }
+        finally
+        {
+            _company.Value = null;
+        }
     }
 
 
@@ -123,14 +163,28 @@ public sealed class UploadsMirror : BackgroundService
     protected override async Task ExecuteAsync(
         CancellationToken stoppingToken)
     {
-        StartWatcher();
+        // Tenancy Mode Host : no file watcher (one per company would
+        // be needed); every company is synced every 30 seconds
+        bool host = _tenancy.IsHostMode;
+
+        if (!host)
+        {
+            StartWatcher();
+        }
 
         Task changes =
-            ProcessChangesAsync(stoppingToken);
+            host ? Task.CompletedTask : ProcessChangesAsync(stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await SyncAllAsync(stoppingToken);
+            if (host)
+            {
+                await SyncCompaniesAsync(stoppingToken);
+            }
+            else
+            {
+                await SyncAllAsync(stoppingToken);
+            }
 
             try
             {
@@ -362,6 +416,41 @@ public sealed class UploadsMirror : BackgroundService
     }
 
 
+    private async Task SyncCompaniesAsync(CancellationToken stoppingToken)
+    {
+        List<TenantInfo> companies;
+
+        try
+        {
+            companies = await _resolver.ListOpenAsync(stoppingToken);
+        }
+        catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(ex, "Uploads mirror : could not read the companies from AppCore_Control.");
+            return;
+        }
+
+        foreach (TenantInfo company in companies)
+        {
+            await ForCompanyAsync(company, async () =>
+            {
+                await SyncAllAsync(stoppingToken);
+                return true;
+            });
+        }
+    }
+
+    // Tenancy Mode Host : the fallback for one company's request
+    public Task<bool> EnsureLocalAsync(
+        TenantInfo? tenant,
+        string requestPath,
+        CancellationToken cancellationToken)
+    {
+        return tenant is null
+            ? EnsureLocalAsync(requestPath, cancellationToken)
+            : ForCompanyAsync(tenant, () => EnsureLocalAsync(requestPath, cancellationToken));
+    }
+
     //===========================================================
     // One file for a request (UploadsFallbackMiddleware) :
     // true when it is on disk now
@@ -468,6 +557,12 @@ public sealed class UploadsMirror : BackgroundService
 
         try
         {
+            // Tenancy Mode Host : this company's database
+            if (_company.Value is { } company)
+            {
+                scope.ServiceProvider.GetRequiredService<TenantContext>().Set(company.Tenant);
+            }
+
             AppDbContext context =
                 scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -858,12 +953,15 @@ public sealed class UploadsFallbackMiddleware
 
     public async Task InvokeAsync(
         HttpContext context,
-        UploadsMirror mirror)
+        UploadsMirror mirror,
+        ITenantContext tenant)
     {
         if ((HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))
             && context.Request.Path.StartsWithSegments("/uploads"))
         {
+            // Tenancy Mode Host : this company's folder and database
             await mirror.EnsureLocalAsync(
+                tenant.Tenant,
                 context.Request.Path.Value ?? string.Empty,
                 context.RequestAborted);
         }

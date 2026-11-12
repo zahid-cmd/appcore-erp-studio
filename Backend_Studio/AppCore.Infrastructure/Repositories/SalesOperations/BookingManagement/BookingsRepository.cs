@@ -3,14 +3,18 @@
 //===============================================================
 
 using System.Globalization;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+
 using AppCore.Application.AccountsFinance.VoucherManagement;
 using AppCore.Application.Platform.Accounting;
 using AppCore.Application.SalesOperations.BookingManagement;
 using AppCore.Domain.Common;
+using AppCore.Domain.Entities.SalesOperations.AccessoriesSales;
 using AppCore.Domain.Entities.SalesOperations.BookingManagement;
 using AppCore.Domain.Entities.SalesOperations.MotorBikeSales;
+using AppCore.Domain.Entities.SalesOperations.SparePartsLubricantSales;
 using AppCore.Domain.Entities.Settings.ClientSettings;
 using AppCore.Domain.Entities.Settings.GeneralSettings;
 using AppCore.Domain.Entities.Settings.ProductSettings;
@@ -26,25 +30,28 @@ namespace AppCore.Infrastructure.Repositories.SalesOperations.BookingManagement;
 
 
 //===============================================================
-// Bookings repository (motor bikes; BookingsMB_Engine.sql)
+// Bookings repository (MB / SP / AC; Bookings_Engine.sql)
 //
-//   Create  : booking (BKMB number) + its first collection : one
-//             Receipt Voucher, Dr the Payment Desk rows / Cr the
-//             customer's own ledger (advance).
+//   One page per type : Bookings - MB / SP / AC. Every call names
+//   the type; a booking of another type is "not found".
+//   MB      : customer + model and colour.
+//   SP / AC : customer + items with quantity (BookingLines).
+//   Create  : booking (BKMB / BKSP / BKAC number) + its first
+//             collection : one Receipt Voucher, Dr the Payment
+//             Desk rows / Cr the customer's own ledger (advance).
 //   Collect : more advance on an open booking (same voucher).
 //   Cancel  : reason; forfeit (Refund on Cancel OFF : all) by a
-//             Journal Voucher Dr customer / Cr BOOKING-FORFEIT-MB;
-//             the rest stays on the customer's ledger (refund by
-//             Payment Voucher).
-//   Sales Invoice - MB : takes the advance as paid; Post converts
-//   the booking, cancelling the invoice re-opens it (sales engine).
+//             Journal Voucher Dr customer / Cr BOOKING-FORFEIT-
+//             <type>; the rest stays on the customer's ledger
+//             (refund by Payment Voucher).
+//   Sales Invoice of the type : takes the advance as paid; Post
+//   converts the booking, cancelling the invoice re-opens it
+//   (sales engine).
 //===============================================================
 
 public class BookingsRepository
     : IBookingsRepository
 {
-    private const string Prefix = "BKMB";
-
     private const string StatusOpen = "Open";
 
     private const string StatusConverted = "Converted";
@@ -55,20 +62,43 @@ public class BookingsRepository
 
     private const string LedgerTypeGeneral = "General Ledger";
 
-    private const string PurposeForfeit = "BOOKING-FORFEIT-MB";
-
     private const string HistoryModule = "Sales Operations";
 
     private const string HistoryEntity = "Booking";
 
-    // Switches (Bookings page)
-    private const string SwitchMinimum = "CFG-MOD-008-0091";
 
-    private const string SwitchValidity = "CFG-MOD-008-0092";
+    // Per type : number prefix, forfeit purpose, switches
+    private sealed record TypeInfo
+    (
+        string Code,
+        string Name,
+        string Prefix,
+        string PurposeForfeit,
+        string SwitchMinimum,
+        string SwitchValidity,
+        string SwitchRefund,
+        string SwitchForfeit,
+        decimal DefaultMinimum
+    );
 
-    private const string SwitchRefund = "CFG-MOD-008-0093";
+    private static readonly Dictionary<string, TypeInfo> Types =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["MB"] = new("MB", "Motor Bikes", "BKMB", "BOOKING-FORFEIT-MB",
+                         "CFG-MOD-008-0091", "CFG-MOD-008-0092", "CFG-MOD-008-0093", "CFG-MOD-008-0094", 1000m),
+            ["SP"] = new("SP", "Spare Parts", "BKSP", "BOOKING-FORFEIT-SP",
+                         "CFG-MOD-008-0095", "CFG-MOD-008-0096", "CFG-MOD-008-0097", "CFG-MOD-008-0098", 500m),
+            ["AC"] = new("AC", "Accessories", "BKAC", "BOOKING-FORFEIT-AC",
+                         "CFG-MOD-008-0099", "CFG-MOD-008-0100", "CFG-MOD-008-0101", "CFG-MOD-008-0102", 500m)
+        };
 
-    private const string SwitchForfeit = "CFG-MOD-008-0094";
+    private static TypeInfo TypeOf(string? productType)
+    {
+        return Types.TryGetValue((productType ?? string.Empty).Trim(), out TypeInfo? info)
+            ? info
+            : throw new InvalidOperationException("Booking type must be MB, SP or AC.");
+    }
+
 
     private readonly AppDbContext _context;
 
@@ -86,11 +116,8 @@ public class BookingsRepository
         IJournalVoucherRepository journalVouchers)
     {
         _context = context;
-
         _numberService = numberService;
-
         _receiptVouchers = receiptVouchers;
-
         _journalVouchers = journalVouchers;
     }
 
@@ -100,6 +127,9 @@ public class BookingsRepository
 
     private DbSet<BookingCollections> CollectionRows =>
         _context.Set<BookingCollections>();
+
+    private DbSet<BookingLines> LineRows =>
+        _context.Set<BookingLines>();
 
 
     //===========================================================
@@ -115,6 +145,9 @@ public class BookingsRepository
 
     private static string Money(decimal value) =>
         value.ToString("N2", CultureInfo.InvariantCulture);
+
+    private static string Qty(decimal value) =>
+        value.ToString("0.##", CultureInfo.InvariantCulture);
 
     private static string Limit(string? value, int max)
     {
@@ -195,12 +228,12 @@ public class BookingsRepository
 
 
     //===========================================================
-    // Switches
+    // Switches (of the type's page)
     //===========================================================
 
-    private async Task<BookingSwitchesDto> SwitchesAsync()
+    private async Task<BookingSwitchesDto> SwitchesAsync(TypeInfo type)
     {
-        string[] codes = { SwitchMinimum, SwitchValidity, SwitchRefund, SwitchForfeit };
+        string[] codes = { type.SwitchMinimum, type.SwitchValidity, type.SwitchRefund, type.SwitchForfeit };
 
         var rows =
             await _context.Set<SystemConfigurations>()
@@ -224,18 +257,18 @@ public class BookingsRepository
         }
 
         // A missing switch behaves as its default
-        bool refundRow = rows.Any(x => x.ConfigurationCode == SwitchRefund);
+        bool refundRow = rows.Any(x => x.ConfigurationCode == type.SwitchRefund);
 
-        decimal? minimum = rows.Any(x => x.ConfigurationCode == SwitchMinimum) ? Number(SwitchMinimum) : 1000m;
+        decimal? minimum = rows.Any(x => x.ConfigurationCode == type.SwitchMinimum) ? Number(type.SwitchMinimum) : type.DefaultMinimum;
 
-        decimal? validity = rows.Any(x => x.ConfigurationCode == SwitchValidity) ? Number(SwitchValidity) : 30m;
+        decimal? validity = rows.Any(x => x.ConfigurationCode == type.SwitchValidity) ? Number(type.SwitchValidity) : 30m;
 
         return new BookingSwitchesDto
         {
             MinimumAmount = minimum.HasValue && minimum.Value > 0 ? minimum : null,
             ValidityDays = validity.HasValue && validity.Value >= 1 ? (int)Math.Min(validity.Value, 3650m) : null,
-            RefundOnCancel = !refundRow || rows.First(x => x.ConfigurationCode == SwitchRefund).IsEnabled,
-            ForfeitPercent = Math.Clamp(Number(SwitchForfeit) ?? 0m, 0m, 100m)
+            RefundOnCancel = !refundRow || rows.First(x => x.ConfigurationCode == type.SwitchRefund).IsEnabled,
+            ForfeitPercent = Math.Clamp(Number(type.SwitchForfeit) ?? 0m, 0m, 100m)
         };
     }
 
@@ -244,12 +277,14 @@ public class BookingsRepository
     // Page
     //===========================================================
 
-    public async Task<BookingsPageDto> GetPageAsync(long branchId)
+    public async Task<BookingsPageDto> GetPageAsync(string productType, long branchId)
     {
+        TypeInfo type = TypeOf(productType);
+
         List<Bookings> bookings =
             await BookingRows
                 .AsNoTracking()
-                .Where(x => !x.IsDeleted)
+                .Where(x => !x.IsDeleted && x.ProductType == type.Code)
                 .OrderByDescending(x => x.BookingDate)
                 .ThenByDescending(x => x.BookingId)
                 .ToListAsync();
@@ -264,7 +299,9 @@ public class BookingsRepository
                 .ThenByDescending(x => x.BookingCollectionId)
                 .ToListAsync();
 
-        Dictionary<long, string> held = await HeldByAsync(ids);
+        Dictionary<long, List<BookingLineDto>> lines = await LinesOfAsync(type, ids);
+
+        Dictionary<long, string> held = await HeldByAsync(type, ids);
 
         List<long> branchIds =
             bookings.Select(x => x.BranchId).Append(branchId).Distinct().ToList();
@@ -275,9 +312,6 @@ public class BookingsRepository
                 .Where(x => branchIds.Contains(x.BranchId))
                 .ToDictionaryAsync(x => x.BranchId, x => x.BranchName);
 
-        List<string> voucherNos =
-            collections.Select(x => x.ReceiptVoucherNo).Where(x => x.Length > 0).Distinct().ToList();
-
         DateOnly today = Today;
 
         Dictionary<long, Bookings> byId = bookings.ToDictionary(x => x.BookingId);
@@ -285,18 +319,23 @@ public class BookingsRepository
         BookingsPageDto result =
             new()
             {
+                ProductType = type.Code,
                 Today = DateText(today),
                 BranchId = branchId,
                 BranchName = branches.GetValueOrDefault(branchId, string.Empty),
-                Switches = await SwitchesAsync(),
-                Models =
-                    await _context.Set<MotorBikes>()
-                        .AsNoTracking()
-                        .Where(x => !x.IsDeleted && x.IsActive)
-                        .OrderBy(x => x.ProductName)
-                        .Select(x => new BookingModelDto { MotorBikeId = x.MotorBikeId, ProductCode = x.ProductCode, ProductName = x.ProductName })
-                        .ToListAsync()
+                Switches = await SwitchesAsync(type)
             };
+
+        if (type.Code == "MB")
+        {
+            result.Models =
+                await _context.Set<MotorBikes>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted && x.IsActive)
+                    .OrderBy(x => x.ProductName)
+                    .Select(x => new BookingModelDto { MotorBikeId = x.MotorBikeId, ProductCode = x.ProductCode, ProductName = x.ProductName })
+                    .ToListAsync();
+        }
 
         foreach (Bookings x in bookings)
         {
@@ -305,6 +344,7 @@ public class BookingsRepository
                 {
                     BookingId = x.BookingId,
                     PublicId = x.PublicId,
+                    ProductType = x.ProductType,
                     BookingNo = x.BookingNo,
                     BookingDate = DateText(x.BookingDate),
                     BranchId = x.BranchId,
@@ -315,6 +355,7 @@ public class BookingsRepository
                     CustomerPhone = x.CustomerPhone,
                     MotorBikeId = x.MotorBikeId,
                     ModelName = x.ModelName,
+                    Lines = lines.GetValueOrDefault(x.BookingId) ?? new List<BookingLineDto>(),
                     ValidUntil = DateText(x.ValidUntil),
                     ExpectedDate = DateText(x.ExpectedDate),
                     SalesPersonName = x.SalesPersonName,
@@ -359,23 +400,81 @@ public class BookingsRepository
     }
 
 
-    // Bookings held by a draft / approved Sales Invoice - MB
-    private async Task<Dictionary<long, string>> HeldByAsync(List<long> bookingIds)
+    // SP / AC : the items of the bookings
+    private async Task<Dictionary<long, List<BookingLineDto>>> LinesOfAsync(TypeInfo type, List<long> bookingIds)
+    {
+        if (type.Code == "MB" || bookingIds.Count == 0)
+        {
+            return new Dictionary<long, List<BookingLineDto>>();
+        }
+
+        List<BookingLines> rows =
+            await LineRows
+                .AsNoTracking()
+                .Where(x => bookingIds.Contains(x.BookingId))
+                .OrderBy(x => x.BookingId)
+                .ThenBy(x => x.LineNo)
+                .ToListAsync();
+
+        return rows
+            .GroupBy(x => x.BookingId)
+            .ToDictionary
+            (
+                g => g.Key,
+                g => g.Select
+                     (
+                         x =>
+                             new BookingLineDto
+                             {
+                                 ProductId = x.ProductId,
+                                 ProductCode = x.ProductCode,
+                                 PartNumber = x.PartNumber,
+                                 ProductName = x.ProductName,
+                                 Unit = x.Unit,
+                                 Quantity = x.Quantity,
+                                 Remarks = x.Remarks
+                             }
+                     )
+                     .ToList()
+            );
+    }
+
+
+    // Bookings held by a draft / approved Sales Invoice of the type
+    private async Task<Dictionary<long, string>> HeldByAsync(TypeInfo type, List<long> bookingIds)
     {
         if (bookingIds.Count == 0)
         {
             return new Dictionary<long, string>();
         }
 
-        var rows =
-            await _context.Set<SalesInvoicesMb>()
-                .AsNoTracking()
-                .Where(x => !x.IsDeleted
-                            && x.BookingId.HasValue
-                            && bookingIds.Contains(x.BookingId.Value)
-                            && (x.Status == "Draft" || x.Status == "Approved"))
-                .Select(x => new { BookingId = x.BookingId!.Value, x.InvoiceNo })
-                .ToListAsync();
+        List<(long BookingId, string InvoiceNo)> rows =
+            type.Code switch
+            {
+                "SP" => (await _context.Set<SalesInvoicesSp>()
+                            .AsNoTracking()
+                            .Where(x => !x.IsDeleted && x.BookingId.HasValue && bookingIds.Contains(x.BookingId.Value)
+                                        && (x.Status == "Draft" || x.Status == "Approved"))
+                            .Select(x => new { BookingId = x.BookingId!.Value, x.InvoiceNo })
+                            .ToListAsync())
+                        .Select(x => (x.BookingId, x.InvoiceNo)).ToList(),
+
+                "AC" => (await _context.Set<SalesInvoicesAc>()
+                            .AsNoTracking()
+                            .Where(x => !x.IsDeleted && x.BookingId.HasValue && bookingIds.Contains(x.BookingId.Value)
+                                        && (x.Status == "Draft" || x.Status == "Approved"))
+                            .Select(x => new { BookingId = x.BookingId!.Value, x.InvoiceNo })
+                            .ToListAsync())
+                        .Select(x => (x.BookingId, x.InvoiceNo)).ToList(),
+
+                _ => (await _context.Set<SalesInvoicesMb>()
+                            .AsNoTracking()
+                            .Where(x => !x.IsDeleted && x.BookingId.HasValue && bookingIds.Contains(x.BookingId.Value)
+                                        && (x.Status == "Draft" || x.Status == "Approved"))
+                            .Select(x => new { BookingId = x.BookingId!.Value, x.InvoiceNo })
+                            .ToListAsync())
+                        .Select(x => (x.BookingId, x.InvoiceNo)).ToList()
+            };
 
         return rows
             .GroupBy(x => x.BookingId)
@@ -383,9 +482,9 @@ public class BookingsRepository
     }
 
 
-    private async Task<Bookings> FindAsync(Guid publicId)
+    private async Task<Bookings> FindAsync(TypeInfo type, Guid publicId)
     {
-        return await BookingRows.FirstOrDefaultAsync(x => x.PublicId == publicId && !x.IsDeleted)
+        return await BookingRows.FirstOrDefaultAsync(x => x.PublicId == publicId && !x.IsDeleted && x.ProductType == type.Code)
                ?? throw new KeyNotFoundException("Booking not found (refresh the page).");
     }
 
@@ -408,6 +507,177 @@ public class BookingsRepository
         }
 
         return bike;
+    }
+
+
+    //===========================================================
+    // SP / AC : products (item search, checks)
+    //===========================================================
+
+    private IQueryable<BookingProductDto> Products(TypeInfo type, bool activeOnly)
+    {
+        if (type.Code == "AC")
+        {
+            return _context.Set<Accessories>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && (!activeOnly || x.IsActive))
+                .Select(x => new BookingProductDto
+                {
+                    ProductId = x.AccessoryId,
+                    ProductCode = x.ProductCode,
+                    PartNumber = x.PartNumber,
+                    ProductName = x.AccessoryName,
+                    Unit = x.Unit
+                });
+        }
+
+        return _context.Set<SpareParts>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && (!activeOnly || x.IsActive))
+            .Select(x => new BookingProductDto
+            {
+                ProductId = x.SparePartId,
+                ProductCode = x.ProductCode,
+                PartNumber = x.PartNumber,
+                ProductName = x.PartName,
+                Unit = x.Unit
+            });
+    }
+
+
+    public async Task<List<BookingProductDto>> SearchProductsAsync(string productType, string term)
+    {
+        TypeInfo type = TypeOf(productType);
+
+        if (type.Code == "MB")
+        {
+            return new List<BookingProductDto>();
+        }
+
+        string text = (term ?? string.Empty).Trim().ToLower();
+
+        if (text.Length < 2)
+        {
+            return new List<BookingProductDto>();
+        }
+
+        return await Products(type, true)
+            .Where(x => x.ProductName.ToLower().Contains(text)
+                        || x.ProductCode.ToLower().Contains(text)
+                        || x.PartNumber.ToLower().Contains(text))
+            .OrderBy(x => x.ProductName)
+            .Take(30)
+            .ToListAsync();
+    }
+
+
+    // The items asked for : products of the type (active), whole
+    // quantities > 0, one row per product (quantities added up)
+    private async Task<List<BookingLineDto>> CheckLinesAsync(TypeInfo type, List<BookingLineDto>? lines)
+    {
+        List<BookingLineDto> asked =
+            (lines ?? new())
+                .Where(x => x != null && x.ProductId > 0)
+                .ToList();
+
+        if (asked.Count == 0)
+        {
+            throw new InvalidOperationException("Add at least one item.");
+        }
+
+        if (asked.Any(x => !(x.Quantity > 0m)))
+        {
+            throw new InvalidOperationException("Every item needs a quantity above 0.");
+        }
+
+        List<long> productIds = asked.Select(x => x.ProductId).Distinct().ToList();
+
+        Dictionary<long, BookingProductDto> products =
+            await Products(type, false)
+                .Where(x => productIds.Contains(x.ProductId))
+                .ToDictionaryAsync(x => x.ProductId);
+
+        List<long> active =
+            await Products(type, true)
+                .Where(x => productIds.Contains(x.ProductId))
+                .Select(x => x.ProductId)
+                .ToListAsync();
+
+        List<BookingLineDto> result = new();
+
+        foreach (var group in asked.GroupBy(x => x.ProductId))
+        {
+            if (!products.TryGetValue(group.Key, out BookingProductDto? product))
+            {
+                throw new InvalidOperationException($"An item ({group.Key}) is not a {type.Name.ToLower()} product : pick it again.");
+            }
+
+            if (!active.Contains(group.Key))
+            {
+                throw new InvalidOperationException($"{product.ProductName} is inactive.");
+            }
+
+            result.Add(
+                new BookingLineDto
+                {
+                    ProductId = product.ProductId,
+                    ProductCode = product.ProductCode,
+                    PartNumber = product.PartNumber,
+                    ProductName = product.ProductName,
+                    Unit = product.Unit,
+                    Quantity = Math.Round(group.Sum(x => x.Quantity), 2),
+                    Remarks = Limit(string.Join("; ", group.Select(x => (x.Remarks ?? string.Empty).Trim()).Where(x => x.Length > 0)), 250)
+                });
+        }
+
+        if (result.Count > 100)
+        {
+            throw new InvalidOperationException("A booking holds at most 100 items.");
+        }
+
+        return result;
+    }
+
+
+    // "Brake Shoe x 2, Chain Kit x 1 (+3 more)"
+    private static string Summary(List<BookingLineDto> lines)
+    {
+        string text =
+            string.Join(", ", lines.Take(2).Select(x => $"{x.ProductName} x {Qty(x.Quantity)}"));
+
+        return Limit(lines.Count > 2 ? $"{text} (+{lines.Count - 2} more)" : text, 250);
+    }
+
+
+    private async Task SaveLinesAsync(Bookings booking, List<BookingLineDto> lines, long userId, DateTime now)
+    {
+        List<BookingLines> old =
+            await LineRows
+                .Where(x => x.BookingId == booking.BookingId)
+                .ToListAsync();
+
+        LineRows.RemoveRange(old);
+
+        int lineNo = 1;
+
+        foreach (BookingLineDto x in lines)
+        {
+            LineRows.Add(
+                new BookingLines
+                {
+                    BookingId = booking.BookingId,
+                    LineNo = lineNo++,
+                    ProductId = x.ProductId,
+                    ProductCode = Limit(x.ProductCode, 50),
+                    PartNumber = Limit(x.PartNumber, 50),
+                    ProductName = Limit(x.ProductName, 250),
+                    Unit = Limit(x.Unit, 20),
+                    Quantity = x.Quantity,
+                    Remarks = Limit(x.Remarks, 250),
+                    CreatedBy = userId,
+                    CreatedDate = now
+                });
+        }
     }
 
 
@@ -477,8 +747,10 @@ public class BookingsRepository
     // Create : booking + its first collection
     //===========================================================
 
-    public async Task<BookingSavedDto> CreateAsync(CreateBookingDto dto, long branchId, long userId)
+    public async Task<BookingSavedDto> CreateAsync(string productType, CreateBookingDto dto, long branchId, long userId)
     {
+        TypeInfo type = TypeOf(productType);
+
         if (dto == null)
         {
             throw new InvalidOperationException("Nothing to save.");
@@ -515,9 +787,21 @@ public class BookingsRepository
                 $"{customer.CustomerName} is a walk-in customer : complete the Customer Profile first (a booking needs a named customer).");
         }
 
-        MotorBikes model = await FindModelAsync(dto.MotorBikeId);
+        // MB : the model; SP / AC : the items
+        MotorBikes? model = null;
 
-        BookingSwitchesDto switches = await SwitchesAsync();
+        List<BookingLineDto> lines = new();
+
+        if (type.Code == "MB")
+        {
+            model = await FindModelAsync(dto.MotorBikeId);
+        }
+        else
+        {
+            lines = await CheckLinesAsync(type, dto.Lines);
+        }
+
+        BookingSwitchesDto switches = await SwitchesAsync(type);
 
         decimal amount = Math.Round((dto.Debits ?? new()).Sum(x => x.Amount), 2);
 
@@ -532,13 +816,14 @@ public class BookingsRepository
         await InTransactionAsync(
             async () =>
             {
-                VoucherNumberDto number = await _numberService.NextAsync(Prefix, branchId, date);
+                VoucherNumberDto number = await _numberService.NextAsync(type.Prefix, branchId, date);
 
                 DateTime now = DateTime.UtcNow;
 
                 Bookings booking =
                     new()
                     {
+                        ProductType = type.Code,
                         BookingNo = number.VoucherNo,
                         BookingDate = date,
                         BranchId = branchId,
@@ -546,8 +831,8 @@ public class BookingsRepository
                         CustomerCode = Limit(customer.CustomerCode, 20),
                         CustomerName = Limit(customer.CustomerName, 200),
                         CustomerPhone = Limit(customer.Phone1, 20),
-                        MotorBikeId = model.MotorBikeId,
-                        ModelName = Limit(model.ProductName, 250),
+                        MotorBikeId = model?.MotorBikeId ?? 0,
+                        ModelName = model != null ? Limit(model.ProductName, 250) : Summary(lines),
                         ValidUntil = switches.ValidityDays.HasValue ? date.AddDays(switches.ValidityDays.Value) : null,
                         ExpectedDate = expected,
                         SalesPersonName = Limit(dto.SalesPersonName, 150),
@@ -561,6 +846,11 @@ public class BookingsRepository
                 BookingRows.Add(booking);
 
                 await _context.SaveChangesAsync();
+
+                if (lines.Count > 0)
+                {
+                    await SaveLinesAsync(booking, lines, userId, now);
+                }
 
                 ReceiptVoucherSavedDto receipt =
                     await ReceiveAsync(booking, customer, dto.Debits, date, branchId, Limit(dto.Remarks, 200), userId);
@@ -601,28 +891,23 @@ public class BookingsRepository
 
 
     //===========================================================
-    // Update (open booking : model, dates, notes)
+    // Update (open booking : model / items, dates, notes)
     //===========================================================
 
-    public async Task UpdateAsync(Guid publicId, UpdateBookingDto dto, long userId)
+    public async Task UpdateAsync(string productType, Guid publicId, UpdateBookingDto dto, long userId)
     {
-        Bookings booking = await FindAsync(publicId);
+        TypeInfo type = TypeOf(productType);
+
+        Bookings booking = await FindAsync(type, publicId);
 
         if (booking.Status != StatusOpen)
         {
             throw new InvalidOperationException($"{booking.BookingNo} is {booking.Status} : it cannot be changed.");
         }
 
-        string held = (await HeldByAsync(new List<long> { booking.BookingId })).GetValueOrDefault(booking.BookingId, string.Empty);
+        string held = (await HeldByAsync(type, new List<long> { booking.BookingId })).GetValueOrDefault(booking.BookingId, string.Empty);
 
-        MotorBikes model = await FindModelAsync(dto.MotorBikeId);
-
-        if (held.Length > 0 && model.MotorBikeId != booking.MotorBikeId)
-        {
-            throw new InvalidOperationException($"{booking.BookingNo} is on Sales Invoice {held} : the model cannot be changed.");
-        }
-
-        DateOnly? expected = OptionalDate(dto.ExpectedDate, "Expected Date");
+        DateOnly? expected = OptionalDate(dto?.ExpectedDate, "Expected Date");
 
         if (expected.HasValue && expected.Value < booking.BookingDate)
         {
@@ -631,21 +916,66 @@ public class BookingsRepository
 
         string before = booking.ModelName;
 
-        booking.MotorBikeId = model.MotorBikeId;
-        booking.ModelName = Limit(model.ProductName, 250);
-        booking.ExpectedDate = expected;
-        booking.SalesPersonName = Limit(dto.SalesPersonName, 150);
-        booking.Remarks = Limit(dto.Remarks, 500);
-        booking.ModifiedBy = userId;
-        booking.ModifiedDate = DateTime.UtcNow;
+        DateTime now = DateTime.UtcNow;
 
-        AddHistory(booking.BookingId, "Update", "Booking Updated",
-            before == booking.ModelName
-                ? $"{booking.BookingNo} : details updated."
-                : $"{booking.BookingNo} : model {before} -> {booking.ModelName}.",
-            userId);
+        await InTransactionAsync(
+            async () =>
+            {
+                if (type.Code == "MB")
+                {
+                    MotorBikes model = await FindModelAsync(dto?.MotorBikeId ?? 0);
 
-        await _context.SaveChangesAsync();
+                    if (held.Length > 0 && model.MotorBikeId != booking.MotorBikeId)
+                    {
+                        throw new InvalidOperationException($"{booking.BookingNo} is on Sales Invoice {held} : the model cannot be changed.");
+                    }
+
+                    booking.MotorBikeId = model.MotorBikeId;
+                    booking.ModelName = Limit(model.ProductName, 250);
+                }
+                else
+                {
+                    List<BookingLineDto> lines = await CheckLinesAsync(type, dto?.Lines);
+
+                    string summary = Summary(lines);
+
+                    if (held.Length > 0)
+                    {
+                        // The invoice holding it may not see the items change
+                        List<BookingLineDto> current =
+                            (await LinesOfAsync(type, new List<long> { booking.BookingId }))
+                                .GetValueOrDefault(booking.BookingId) ?? new List<BookingLineDto>();
+
+                        string Key(IEnumerable<BookingLineDto> rows) =>
+                            string.Join("|", rows.OrderBy(x => x.ProductId).Select(x => $"{x.ProductId}:{x.Quantity:0.##}"));
+
+                        if (Key(current) != Key(lines))
+                        {
+                            throw new InvalidOperationException($"{booking.BookingNo} is on Sales Invoice {held} : the items cannot be changed.");
+                        }
+                    }
+                    else
+                    {
+                        await SaveLinesAsync(booking, lines, userId, now);
+                    }
+
+                    booking.ModelName = summary;
+                }
+
+                booking.ExpectedDate = expected;
+                booking.SalesPersonName = Limit(dto?.SalesPersonName, 150);
+                booking.Remarks = Limit(dto?.Remarks, 500);
+                booking.ModifiedBy = userId;
+                booking.ModifiedDate = now;
+
+                AddHistory(booking.BookingId, "Update", "Booking Updated",
+                    before == booking.ModelName
+                        ? $"{booking.BookingNo} : details updated."
+                        : $"{booking.BookingNo} : {before} -> {booking.ModelName}.",
+                    userId);
+
+                await _context.SaveChangesAsync();
+            });
     }
 
 
@@ -653,16 +983,18 @@ public class BookingsRepository
     // Collect more advance
     //===========================================================
 
-    public async Task<BookingSavedDto> CollectAsync(Guid publicId, CollectBookingDto dto, long branchId, long userId)
+    public async Task<BookingSavedDto> CollectAsync(string productType, Guid publicId, CollectBookingDto dto, long branchId, long userId)
     {
-        Bookings booking = await FindAsync(publicId);
+        TypeInfo type = TypeOf(productType);
+
+        Bookings booking = await FindAsync(type, publicId);
 
         if (booking.Status != StatusOpen)
         {
             throw new InvalidOperationException($"{booking.BookingNo} is {booking.Status} : no more collection.");
         }
 
-        string held = (await HeldByAsync(new List<long> { booking.BookingId })).GetValueOrDefault(booking.BookingId, string.Empty);
+        string held = (await HeldByAsync(type, new List<long> { booking.BookingId })).GetValueOrDefault(booking.BookingId, string.Empty);
 
         if (held.Length > 0)
         {
@@ -735,9 +1067,11 @@ public class BookingsRepository
     // Cancel : forfeit by Journal Voucher, the rest to refund
     //===========================================================
 
-    public async Task<BookingSavedDto> CancelAsync(Guid publicId, CancelBookingDto dto, long branchId, long userId)
+    public async Task<BookingSavedDto> CancelAsync(string productType, Guid publicId, CancelBookingDto dto, long branchId, long userId)
     {
-        Bookings booking = await FindAsync(publicId);
+        TypeInfo type = TypeOf(productType);
+
+        Bookings booking = await FindAsync(type, publicId);
 
         if (booking.Status != StatusOpen)
         {
@@ -751,7 +1085,7 @@ public class BookingsRepository
             throw new InvalidOperationException("A reason (at least 5 characters) is required to cancel the booking.");
         }
 
-        string held = (await HeldByAsync(new List<long> { booking.BookingId })).GetValueOrDefault(booking.BookingId, string.Empty);
+        string held = (await HeldByAsync(type, new List<long> { booking.BookingId })).GetValueOrDefault(booking.BookingId, string.Empty);
 
         if (held.Length > 0)
         {
@@ -759,7 +1093,7 @@ public class BookingsRepository
                 $"{booking.BookingNo} is on Sales Invoice {held} : remove it from the invoice (or delete the draft) first.");
         }
 
-        BookingSwitchesDto switches = await SwitchesAsync();
+        BookingSwitchesDto switches = await SwitchesAsync(type);
 
         decimal advance = booking.AdvanceAmount;
 
@@ -782,7 +1116,7 @@ public class BookingsRepository
 
                 if (forfeit > 0m)
                 {
-                    string income = PostingLedgerCodes.Get(_context, PurposeForfeit);
+                    string income = PostingLedgerCodes.Get(_context, type.PurposeForfeit);
 
                     CustomerProfiles customer =
                         await _context.Set<CustomerProfiles>()
@@ -844,19 +1178,25 @@ public class BookingsRepository
 
 
     //===========================================================
-    // Open bookings of a customer (Sales Invoice - MB)
+    // Open bookings of a customer (Sales Invoice of the type)
     //===========================================================
 
-    public async Task<List<OpenBookingDto>> GetOpenForCustomerAsync(long customerId)
+    public async Task<List<OpenBookingDto>> GetOpenForCustomerAsync(string productType, long customerId)
     {
+        TypeInfo type = TypeOf(productType);
+
         List<Bookings> rows =
             await BookingRows
                 .AsNoTracking()
-                .Where(x => !x.IsDeleted && x.CustomerId == customerId && x.Status == StatusOpen)
+                .Where(x => !x.IsDeleted && x.CustomerId == customerId && x.Status == StatusOpen && x.ProductType == type.Code)
                 .OrderBy(x => x.BookingDate)
                 .ToListAsync();
 
-        Dictionary<long, string> held = await HeldByAsync(rows.Select(x => x.BookingId).ToList());
+        List<long> ids = rows.Select(x => x.BookingId).ToList();
+
+        Dictionary<long, string> held = await HeldByAsync(type, ids);
+
+        Dictionary<long, List<BookingLineDto>> lines = await LinesOfAsync(type, ids);
 
         DateOnly today = Today;
 
@@ -871,6 +1211,7 @@ public class BookingsRepository
                         BookingDate = DateText(x.BookingDate),
                         MotorBikeId = x.MotorBikeId,
                         ModelName = x.ModelName,
+                        Lines = lines.GetValueOrDefault(x.BookingId) ?? new List<BookingLineDto>(),
                         AdvanceAmount = x.AdvanceAmount,
                         IsExpired = x.ValidUntil.HasValue && x.ValidUntil.Value < today,
                         ValidUntil = DateText(x.ValidUntil),

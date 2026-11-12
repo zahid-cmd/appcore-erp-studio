@@ -617,12 +617,21 @@ public static class DependencyInjection
             connectionBuilder.ConnectionString;
 
 
+        //-------------------------------------------------------
+        // Tenancy (AppCore.API\Platform\Tenancy) : in Tenancy:Mode
+        // = Host the request's company brings its own connection
+        // string; otherwise (Mode Off, or a background job) the
+        // one database above. The options are built per scope, so
+        // every request opens the right company's database.
+        //-------------------------------------------------------
         services.AddDbContext<AppDbContext>
         (
             (serviceProvider, options) =>
                 options
                     .UseNpgsql
                     (
+                        serviceProvider.GetService<AppCore.Application.Platform.Tenancy.ITenantContext>()?.Tenant?.ConnectionString
+                        ??
                         connectionString
                     )
                     .AddInterceptors
@@ -932,6 +941,12 @@ public static class DependencyInjection
         <
             AppCore.Application.SalesOperations.BookingManagement.IBookingsRepository,
             AppCore.Infrastructure.Repositories.SalesOperations.BookingManagement.BookingsRepository
+        >();
+
+        // Sales Quotations - MB / SP / AC (hand-written; MANUAL)
+        services.AddScoped<
+            AppCore.Application.SalesOperations.Shared.ISalesQuotationsRepository,
+            AppCore.Infrastructure.Repositories.Shared.SalesQuotationsRepository
         >();
 
         //=======================================================
@@ -1521,6 +1536,24 @@ public static class DependencyInjection
         >();
 
         // AUTO-END : MembershipStatus
+
+        // Business Promotions : Promotional Offers (MANUAL : hand-
+        // written pages, PromotionalOffers_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.SalesOperations.Shared.IPromotionalOffersRepository,
+            AppCore.Infrastructure.Repositories.SalesOperations.Shared.PromotionalOffersRepository
+        >();
+
+        // Membership Fees Collection (MANUAL : hand-written page,
+        // MembershipFees_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            IMembershipFeesCollectionRepository,
+            MembershipFeesCollectionRepository
+        >();
 
         // AUTO-BEGIN : MembershipPolicies
 

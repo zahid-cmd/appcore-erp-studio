@@ -582,7 +582,8 @@ public static class RegistrationOnInvoice
     //===========================================================
     // Cancel : the invoice's profiles Cancelled (refused once one
     // was submitted to BRTA); their files back to Registration By
-    // Customer
+    // Customer. motorBikeUnitId (Sales Returns - MB) : only that
+    // chassis's profile and file.
     //===========================================================
 
     public static async Task
@@ -593,14 +594,16 @@ public static class RegistrationOnInvoice
             string invoiceNo,
             string reason,
             long userId,
-            DateTime now
+            DateTime now,
+            long? motorBikeUnitId = null
         )
     {
         List<RegistrationProfiles> profiles =
             await context.Set<RegistrationProfiles>()
                 .Where(x => !x.IsDeleted
                             && x.SalesInvoiceId == salesInvoiceId
-                            && x.Status != RegistrationStages.Cancelled)
+                            && x.Status != RegistrationStages.Cancelled
+                            && (motorBikeUnitId == null || x.MotorBikeUnitId == motorBikeUnitId))
                 .ToListAsync();
 
         RegistrationProfiles? moved =
@@ -631,11 +634,18 @@ public static class RegistrationOnInvoice
                 userId, now);
         }
 
+        List<long> profileFileIds =
+            profiles
+                .Where(x => x.CustomerFileId.HasValue)
+                .Select(x => x.CustomerFileId!.Value)
+                .ToList();
+
         List<CustomerFiles> files =
             await context.Set<CustomerFiles>()
                 .Where(x => !x.IsDeleted
                             && x.SalesInvoiceId == salesInvoiceId
-                            && x.RegistrationBy == ByDealer)
+                            && x.RegistrationBy == ByDealer
+                            && (motorBikeUnitId == null || profileFileIds.Contains(x.CustomerFileId)))
                 .ToListAsync();
 
         foreach (CustomerFiles file in files)

@@ -13,14 +13,51 @@ namespace AppCore.Application.SalesOperations.BookingManagement;
 
 
 //===============================================================
-// Bookings (motor bikes) : page data
+// Bookings (MB / SP / AC) : page data
 //===============================================================
+
+// SP / AC : one item booked (quantity; no price)
+public class BookingLineDto
+{
+    public long ProductId { get; set; }
+
+    public string ProductCode { get; set; } = string.Empty;
+
+    public string PartNumber { get; set; } = string.Empty;
+
+    public string ProductName { get; set; } = string.Empty;
+
+    public string Unit { get; set; } = string.Empty;
+
+    public decimal Quantity { get; set; }
+
+    public string Remarks { get; set; } = string.Empty;
+}
+
+
+// SP / AC : a product found by the item search
+public class BookingProductDto
+{
+    public long ProductId { get; set; }
+
+    public string ProductCode { get; set; } = string.Empty;
+
+    public string PartNumber { get; set; } = string.Empty;
+
+    public string ProductName { get; set; } = string.Empty;
+
+    public string Unit { get; set; } = string.Empty;
+}
+
 
 public class BookingRowDto
 {
     public long BookingId { get; set; }
 
     public Guid PublicId { get; set; }
+
+    // MB / SP / AC
+    public string ProductType { get; set; } = string.Empty;
 
     public string BookingNo { get; set; } = string.Empty;
 
@@ -39,9 +76,14 @@ public class BookingRowDto
 
     public string CustomerPhone { get; set; } = string.Empty;
 
+    // MB : model + colour
     public long MotorBikeId { get; set; }
 
+    // MB : the model; SP / AC : a summary of the items
     public string ModelName { get; set; } = string.Empty;
+
+    // SP / AC : the items
+    public List<BookingLineDto> Lines { get; set; } = new();
 
     public string ValidUntil { get; set; } = string.Empty;
 
@@ -108,6 +150,7 @@ public class BookingCollectionRowDto
 }
 
 
+// MB : a model + colour to book
 public class BookingModelDto
 {
     public long MotorBikeId { get; set; }
@@ -118,7 +161,8 @@ public class BookingModelDto
 }
 
 
-// Booking switches (CFG-MOD-008-0091 .. 0094)
+// Booking switches of the page (MB 0091-0094, SP 0095-0098,
+// AC 0099-0102)
 public class BookingSwitchesDto
 {
     // null = no minimum
@@ -136,6 +180,9 @@ public class BookingSwitchesDto
 
 public class BookingsPageDto
 {
+    // MB / SP / AC
+    public string ProductType { get; set; } = string.Empty;
+
     public string Today { get; set; } = string.Empty;
 
     public long BranchId { get; set; }
@@ -150,6 +197,7 @@ public class BookingsPageDto
 
     public List<BookingCollectionRowDto> Collections { get; set; } = new();
 
+    // MB only
     public List<BookingModelDto> Models { get; set; } = new();
 }
 
@@ -166,7 +214,11 @@ public class CreateBookingDto
 
     public long CustomerId { get; set; }
 
+    // MB
     public long MotorBikeId { get; set; }
+
+    // SP / AC
+    public List<BookingLineDto> Lines { get; set; } = new();
 
     public string ExpectedDate { get; set; } = string.Empty;
 
@@ -178,10 +230,14 @@ public class CreateBookingDto
 }
 
 
-// Details of an open booking (model, dates, notes)
+// Details of an open booking (model / items, dates, notes)
 public class UpdateBookingDto
 {
+    // MB
     public long MotorBikeId { get; set; }
+
+    // SP / AC
+    public List<BookingLineDto> Lines { get; set; } = new();
 
     public string ExpectedDate { get; set; } = string.Empty;
 
@@ -227,7 +283,8 @@ public class BookingSavedDto
 }
 
 
-// Open bookings of a customer (the Sales Invoice - MB picks one)
+// Open bookings of a customer (the Sales Invoice of the same type
+// picks one)
 public class OpenBookingDto
 {
     public long BookingId { get; set; }
@@ -239,6 +296,9 @@ public class OpenBookingDto
     public long MotorBikeId { get; set; }
 
     public string ModelName { get; set; } = string.Empty;
+
+    // SP / AC : the items (the invoice puts them in its entry)
+    public List<BookingLineDto> Lines { get; set; } = new();
 
     public decimal AdvanceAmount { get; set; }
 

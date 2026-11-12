@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Api.Extensions;
+using AppCore.Application.Platform.Tenancy;
 using AppCore.Domain.Platform.Chat;
 using AppCore.Infrastructure.Persistence;
 
@@ -43,23 +44,57 @@ public class ChatHub : Hub
         _context = context;
     }
 
-    public static string UserGroup(long userId)
+    // Tenancy : user ids repeat across companies, so every group
+    // carries the company ("MOTOZONE:u:5"); Mode Off : "u:5"
+    public static string UserGroup(string? company, long userId)
     {
-        return $"u:{userId}";
+        return string.IsNullOrEmpty(company)
+            ? $"u:{userId}"
+            : $"{company}:u:{userId}";
     }
+
+    private static string CompanyGroup(string company)
+    {
+        return $"{company}:all";
+    }
+
+    // The connection's own web request went through the tenant
+    // middleware : its ITenantContext knows the company. The hub's
+    // own scope does not, so the database and the company come
+    // from that request.
+    private ITenantContext? RequestTenant =>
+        Context.GetHttpContext()?.RequestServices.GetService<ITenantContext>();
+
+    private string? Company => RequestTenant?.Tenant?.TenantCode;
+
+    private AppDbContext? Db =>
+        RequestTenant is { Enabled: true } t
+            ? (t.Tenant is null ? null : Context.GetHttpContext()!.RequestServices.GetRequiredService<AppDbContext>())
+            : _context;
+
+    // presence goes to the company only (Mode Off : everybody)
+    private IClientProxy PresenceTarget(string? company) =>
+        string.IsNullOrEmpty(company) ? Clients.All : Clients.Group(CompanyGroup(company));
 
     public override async Task OnConnectedAsync()
     {
         long userId =
             Context.User.GetUserId();
 
+        string? company = Company;
+
         if (userId > 0)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, UserGroup(userId));
+            await Groups.AddToGroupAsync(Context.ConnectionId, UserGroup(company, userId));
 
-            if (_presence.Connect(userId))
+            if (!string.IsNullOrEmpty(company))
             {
-                await Clients.All.SendAsync("chatPresence", new { userId, online = true });
+                await Groups.AddToGroupAsync(Context.ConnectionId, CompanyGroup(company));
+            }
+
+            if (_presence.Connect(company, userId))
+            {
+                await PresenceTarget(company).SendAsync("chatPresence", new { userId, online = true });
             }
         }
 
@@ -71,9 +106,11 @@ public class ChatHub : Hub
         long userId =
             Context.User.GetUserId();
 
-        if (userId > 0 && _presence.Disconnect(userId))
+        string? company = Company;
+
+        if (userId > 0 && _presence.Disconnect(company, userId))
         {
-            await Clients.All.SendAsync("chatPresence", new { userId, online = false });
+            await PresenceTarget(company).SendAsync("chatPresence", new { userId, online = false });
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -85,13 +122,17 @@ public class ChatHub : Hub
         long userId =
             Context.User.GetUserId();
 
-        if (userId <= 0)
+        AppDbContext? db = Db;
+
+        if (userId <= 0 || db is null)
         {
             return;
         }
 
+        string? company = Company;
+
         long? id =
-            await _context.Set<ChatConversation>()
+            await db.Set<ChatConversation>()
                 .AsNoTracking()
                 .Where(x => x.PublicId == conversationId && !x.IsDeleted)
                 .Select(x => (long?)x.ChatConversationId)
@@ -103,7 +144,7 @@ public class ChatHub : Hub
         }
 
         List<long> members =
-            await _context.Set<ChatMember>()
+            await db.Set<ChatMember>()
                 .AsNoTracking()
                 .Where(x => x.ChatConversationId == id.Value && x.LeftDate == null)
                 .Select(x => x.UserProfileId)
@@ -119,7 +160,7 @@ public class ChatHub : Hub
 
         foreach (long member in members.Where(x => x != userId))
         {
-            await Clients.Group(UserGroup(member))
+            await Clients.Group(UserGroup(company, member))
                 .SendAsync("chatTyping", new { conversationId, userId, name });
         }
     }
@@ -132,24 +173,30 @@ public class ChatHub : Hub
 
 public class ChatPresence
 {
-    private readonly ConcurrentDictionary<long, int> _connections =
+    // key "COMPANY|userId" (Mode Off : "|userId")
+    private readonly ConcurrentDictionary<string, int> _connections =
         new();
 
+    private static string Key(string? company, long userId) =>
+        $"{company}|{userId}";
+
     // true = the user just came online
-    public bool Connect(long userId)
+    public bool Connect(string? company, long userId)
     {
-        return _connections.AddOrUpdate(userId, 1, (_, n) => n + 1) == 1;
+        return _connections.AddOrUpdate(Key(company, userId), 1, (_, n) => n + 1) == 1;
     }
 
     // true = the user just went offline
-    public bool Disconnect(long userId)
+    public bool Disconnect(string? company, long userId)
     {
+        string key = Key(company, userId);
+
         int left =
-            _connections.AddOrUpdate(userId, 0, (_, n) => Math.Max(0, n - 1));
+            _connections.AddOrUpdate(key, 0, (_, n) => Math.Max(0, n - 1));
 
         if (left == 0)
         {
-            _connections.TryRemove(new KeyValuePair<long, int>(userId, 0));
+            _connections.TryRemove(new KeyValuePair<string, int>(key, 0));
 
             return true;
         }
@@ -157,8 +204,8 @@ public class ChatPresence
         return false;
     }
 
-    public bool IsOnline(long userId)
+    public bool IsOnline(string? company, long userId)
     {
-        return _connections.TryGetValue(userId, out int n) && n > 0;
+        return _connections.TryGetValue(Key(company, userId), out int n) && n > 0;
     }
 }

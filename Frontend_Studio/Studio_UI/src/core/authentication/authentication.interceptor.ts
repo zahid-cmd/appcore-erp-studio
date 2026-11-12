@@ -11,6 +11,9 @@
       Login, register and forgot-password requests are not
       redirected, so their own error messages still show.
 
+   4. A Motor Bikes / Spare Parts / Accessories page adds
+      X-Work-Branch : the branch it works in (WorkBranchService;
+      the server checks the user's Branch Assignment).
    3. When the API answers 429 (too many requests, see the API's
       rate limits) a warning toast says how long to wait, at most
       one every 5 seconds. Login pages show the message
@@ -48,6 +51,12 @@ import
     AuthenticationStorageService
 }
 from './authentication-storage.service';
+
+import
+{
+    storedWorkBranchId
+}
+from './work-branch.service';
 
 import
 {
@@ -119,14 +128,43 @@ export const authenticationInterceptor:
         // Add token
         //=======================================================
 
+        // Working branch (2026-11-13) : a Motor Bikes / Spare Parts
+        // / Accessories page works in its line's branch (top-bar
+        // pick); not for api/platform calls (login branch)
+        const headers:
+            Record<string, string> =
+            {
+                Authorization:
+                    `Bearer ${token}`
+            };
+
+        if
+        (
+            !/\/platform\//i.test(request.url)
+        )
+        {
+            const workBranchId =
+                storedWorkBranchId
+                (
+                    typeof window !== 'undefined' ? window.location.pathname : '',
+                    Number((authenticationStorageService.getUser() as any)?.userProfileId ?? 0)
+                );
+
+            if
+            (
+                workBranchId > 0
+            )
+            {
+                headers['X-Work-Branch'] =
+                    String(workBranchId);
+            }
+        }
+
         const authenticatedRequest =
             request.clone
             ({
                 setHeaders:
-                {
-                    Authorization:
-                        `Bearer ${token}`
-                }
+                    headers
             });
 
         return next

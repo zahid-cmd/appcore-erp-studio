@@ -16,223 +16,61 @@ namespace AppCore.Infrastructure.Configurations.MembershipManagement.MembershipA
 
 
 //===============================================================
-// MembershipFeesCollectionConfiguration
+// Membership Fees Collection : EF configuration (table
+// "MembershipFees", MembershipFees_Engine.sql; hand-written page)
 //===============================================================
 
 public class MembershipFeesCollectionConfiguration
     : IEntityTypeConfiguration<MembershipFeesCollection>
 {
-
-    //===========================================================
-    // Configure
-    //===========================================================
-
-    public void Configure
-    (
-        EntityTypeBuilder<MembershipFeesCollection> builder
-    )
+    public void Configure(EntityTypeBuilder<MembershipFeesCollection> builder)
     {
+        builder.ToTable("MembershipFees");
 
-        //=======================================================
-        // Table
-        //=======================================================
+        builder.HasKey(x => x.MembershipFeeId);
 
-        builder.ToTable(
-            "MembershipFeesCollection"
-        );
+        builder.Property(x => x.MembershipFeeId).ValueGeneratedOnAdd();
 
+        builder.Property(x => x.PublicId).HasDefaultValueSql("uuidv7()").ValueGeneratedOnAdd();
 
-        //=======================================================
-        // Primary Key
-        //=======================================================
+        builder.HasIndex(x => x.PublicId).IsUnique().HasDatabaseName("UX_MembershipFees_PublicId");
 
-        builder.HasKey(
-            x => x.Id
-        );
+        builder.Property(x => x.FeeNo).IsRequired().HasMaxLength(20);
 
+        builder.HasIndex(x => x.FeeNo).IsUnique().HasDatabaseName("UX_MembershipFees_No");
 
-        // Public Id (links and API calls; uuid v7)
+        builder.Property(x => x.FeeType).IsRequired().HasMaxLength(20);
 
-        builder.Property(x => x.PublicId)
+        builder.Property(x => x.MembershipNo).IsRequired().HasMaxLength(30);
 
-               .IsRequired()
+        builder.Property(x => x.CardName).IsRequired().HasMaxLength(100);
 
-               .HasDefaultValueSql("uuidv7()");
+        builder.Property(x => x.FeeLedgerCode).IsRequired().HasMaxLength(30);
 
+        builder.Property(x => x.CustomerCode).IsRequired().HasMaxLength(20);
 
-        builder.HasIndex(x => x.PublicId)
+        builder.Property(x => x.CustomerName).IsRequired().HasMaxLength(200);
 
-               .IsUnique()
+        builder.Property(x => x.ChassisNo).IsRequired().HasMaxLength(50);
 
-               .HasDatabaseName("UX_MembershipFeesCollection_PublicId");
+        builder.Property(x => x.Amount).HasPrecision(18, 2);
 
+        builder.Property(x => x.CollectedDate).IsRequired().HasColumnType("date");
 
-        builder.Property(
-            x => x.Id
-        )
-        .HasColumnName(
-            "id"
-        );
+        builder.Property(x => x.Narration).IsRequired().HasMaxLength(500);
 
+        builder.Property(x => x.ReceiptVoucherNo).IsRequired().HasMaxLength(50);
 
-        //=======================================================
-        // Code
-        //=======================================================
+        builder.Property(x => x.Status).IsRequired().HasMaxLength(20);
 
-        builder.Property(
-            x => x.Code
-        )
-        .HasColumnName(
-            "code"
-        )
-        .IsRequired()
-        .HasMaxLength(50);
+        builder.Property(x => x.CancelReason).IsRequired().HasMaxLength(500);
 
+        builder.Property(x => x.RefundDate).HasColumnType("date");
 
-        //=======================================================
-        // Name
-        //=======================================================
+        builder.Property(x => x.RefundReason).IsRequired().HasMaxLength(500);
 
-        builder.Property(
-            x => x.Name
-        )
-        .HasColumnName(
-            "name"
-        )
-        .IsRequired()
-        .HasMaxLength(200);
+        builder.Property(x => x.RefundJournalVoucherNo).IsRequired().HasMaxLength(50);
 
-
-        //=======================================================
-        // Sample Search Dropdown
-        //=======================================================
-
-        builder.Property(
-            x => x.SampleSearchDropdownId
-        )
-        .HasColumnName(
-            "sampleSearchDropdownId"
-        )
-        .IsRequired(false);
-
-
-        //=======================================================
-        // Sample Field
-        //=======================================================
-
-        builder.Property(
-            x => x.SampleField
-        )
-        .HasColumnName(
-            "sampleField"
-        )
-        .IsRequired()
-        .HasMaxLength(500);
-
-
-        //=======================================================
-        // Status
-        //=======================================================
-
-        builder.Property(
-            x => x.Status
-        )
-        .HasColumnName(
-            "status"
-        )
-        .IsRequired();
-
-
-        //=======================================================
-        // Remarks
-        //=======================================================
-
-        builder.Property(
-            x => x.Remarks
-        )
-        .HasColumnName(
-            "remarks"
-        )
-        .IsRequired()
-        .HasMaxLength(1000);
-
-
-        //=======================================================
-        // Active
-        //=======================================================
-
-        builder.Property(
-            x => x.IsActive
-        )
-        .HasColumnName(
-            "isActive"
-        )
-        .IsRequired();
-
-
-        //=======================================================
-        // Deleted
-        //=======================================================
-
-        builder.Property(
-            x => x.IsDeleted
-        )
-        .HasColumnName(
-            "isDeleted"
-        )
-        .IsRequired();
-
-
-        //=======================================================
-        // Created By
-        //=======================================================
-
-        builder.Property(
-            x => x.CreatedBy
-        )
-        .HasColumnName(
-            "createdBy"
-        )
-        .IsRequired();
-
-
-        //=======================================================
-        // Created Date
-        //=======================================================
-
-        builder.Property(
-            x => x.CreatedDate
-        )
-        .HasColumnName(
-            "createdDate"
-        )
-        .IsRequired();
-
-
-        //=======================================================
-        // Modified By
-        //=======================================================
-
-        builder.Property(
-            x => x.ModifiedBy
-        )
-        .HasColumnName(
-            "modifiedBy"
-        )
-        .IsRequired(false);
-
-
-        //=======================================================
-        // Modified Date
-        //=======================================================
-
-        builder.Property(
-            x => x.ModifiedDate
-        )
-        .HasColumnName(
-            "modifiedDate"
-        )
-        .IsRequired(false);
+        builder.HasIndex(x => new { x.MembershipId, x.Status }).HasDatabaseName("IX_MembershipFees_Membership");
     }
-
 }

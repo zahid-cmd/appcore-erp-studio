@@ -1,0 +1,259 @@
+<div class="app-list-page sr-page">
+
+    <app-page-header
+
+        [title]="page.title"
+
+        subtitle="Returns : one posted invoice per return, credit to the customer's ledger, stock back"
+
+        icon="fas fa-arrow-rotate-left">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+
+                [value]="searchText"
+
+                placeholder="Search return no, invoice, customer, phone, items..."
+
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+
+                command1Text="Add"
+
+                command1Icon="fas fa-plus"
+
+                command1Permission="add"
+
+                command1Title="New return : find the invoice first"
+
+                (command1Click)="add()"
+
+                command2Text="Refresh"
+
+                command2Icon="fas fa-rotate-right"
+
+                (command2Click)="refresh()"
+
+                [command3Visible]="false">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+
+            pageToolbarLeft
+
+            [tabs]="tabs"
+
+            [(selectedTab)]="statusFilter"
+
+            (selectedTabChange)="onTabChange($event)">
+
+        </app-control-tabs>
+
+        <span
+
+            pageToolbarRight
+
+            class="sr-list-count">
+
+            <i class="fa-regular fa-file-lines"></i>
+
+            {{ totalRecords }} return{{ totalRecords === 1 ? '' : 's' }}
+
+        </span>
+
+    </app-page-toolbar>
+
+
+    <app-page-canvas
+
+        [config]="canvasConfig">
+
+        <div canvasBody>
+
+            <app-list-table
+
+                [columns]="columns"
+
+                [rows]="pagedRows"
+
+                [serialOffset]="(currentPage - 1) * pageSize"
+
+                [loading]="loading"
+
+                [error]="loadFailed"
+
+                [actions]="tableActions"
+
+                [rowActions]="rowActions"
+
+                (rowAction)="onRowAction($event)"
+
+                (view)="view($event)"
+
+                (sortChange)="onSort($event)">
+
+            </app-list-table>
+
+        </div>
+
+        <app-pagination
+
+            canvasFooter
+
+            [totalRecords]="totalRecords"
+
+            [currentPage]="currentPage"
+
+            [pageSize]="pageSize"
+
+            (pageChange)="onPageChange($event)"
+
+            (pageSizeChange)="onPageSizeChange($event)">
+
+        </app-pagination>
+
+    </app-page-canvas>
+
+
+    <div class="ics-summary">
+
+        <span class="ics-summary-item">
+            <span class="ics-summary-label">Draft</span>
+            <b class="ics-summary-value">{{ countOf('Draft') }}</b>
+        </span>
+
+        <span class="ics-summary-item">
+            <span class="ics-summary-label">Approved</span>
+            <b class="ics-summary-value ics-warn">{{ countOf('Approved') }}</b>
+        </span>
+
+        <span class="ics-summary-item">
+            <span class="ics-summary-label">Posted</span>
+            <b class="ics-summary-value ics-ok">{{ countOf('Posted') }}</b>
+        </span>
+
+        <span class="ics-summary-item">
+            <span class="ics-summary-label">Credited (posted)</span>
+            <b class="ics-summary-value">{{ money(postedTotal) }}</b>
+        </span>
+
+        <span class="ics-summary-note">Always credited to the customer's ledger; a refund is a Payment Voucher</span>
+
+    </div>
+
+
+    @if (cancelRow)
+    {
+        <div class="sr-backdrop">
+
+            <div
+
+                class="sr-modal"
+
+                role="dialog"
+
+                aria-modal="true">
+
+                <div class="sr-modal-head">
+
+                    <i class="fas fa-ban"></i>
+
+                    <div>
+
+                        <strong>Cancel {{ cancelRow.ReturnNo }}</strong>
+
+                        <span>{{ cancelRow.CustomerName }} · {{ money(cancelRow.ReturnTotal) }}</span>
+
+                    </div>
+
+                    <button type="button" class="sr-x" title="Close" aria-label="Close" (click)="closeCancel()">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </button>
+
+                </div>
+
+                <div class="sr-modal-body">
+
+                    <app-textbox
+
+                        label="Reason"
+
+                        placeholder="Why is the return cancelled? (5+ characters)"
+
+                        textCase="none"
+
+                        [required]="true"
+
+                        [value]="cancelReason"
+
+                        (valueChange)="onCancelReason($event)">
+
+                    </app-textbox>
+
+                </div>
+
+                <div class="sr-modal-foot">
+
+                    <span class="sr-note" [class.sr-bad]="!!cancelError">
+
+                        <i [class]="cancelError ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                        {{ cancelError || 'Nothing was posted; the return stays on the list as Cancelled.' }}
+
+                    </span>
+
+                    <button type="button" class="sr-btn sr-btn-light" [disabled]="progress.busy" (click)="closeCancel()">Close</button>
+
+                    <button type="button" class="sr-btn sr-btn-danger" [disabled]="progress.busy" (click)="confirmCancel()">
+
+                        <i class="fas fa-ban"></i>
+
+                        Cancel Return
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+    <app-history-drawer
+
+        [opened]="historyOpened"
+
+        [title]="historyTitle"
+
+        [items]="historyItems"
+
+        (closed)="closeHistory()">
+
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

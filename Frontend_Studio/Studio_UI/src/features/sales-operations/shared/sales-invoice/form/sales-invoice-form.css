@@ -3587,3 +3587,82 @@
     font-size: 13px;
     text-align: center;
 }
+
+
+/* Booking button (SP / AC : Add Items header) */
+.si-add-clear.si-book-head.is-set
+{
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #047857;
+}
+
+
+/* =====================================================
+   SALES QUOTATION mode : prospect, validity
+===================================================== */
+
+.si-prospect
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px dashed #c7d2fe;
+    border-radius: 10px;
+    background: #f8faff;
+}
+
+.si-prospect-title
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.si-prospect-title span
+{
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.si-prospect-grid
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px 12px;
+}
+
+.si-prospect-grid > *
+{
+    display: block;
+    min-width: 0;
+}
+
+.si-prospect-wide
+{
+    grid-column: 1 / -1;
+}
+
+.si-prospect-view
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    color: #334155;
+    font-size: 13px;
+}
+
+.si-quote-valid
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    color: #475569;
+    font-size: 12.5px;
+}

@@ -71,7 +71,8 @@ const state =
 
 let apiChild = null;
 let uiChild = null;
-let uiState = 'off';       // off | starting | running | external | stopped | missing
+let uiState = 'off';
+const uiTail = [];         // last ng serve lines (why it stopped)       // off | starting | running | external | stopped | missing
 let busy = false;
 const log = [];
 
@@ -204,6 +205,22 @@ async function buildApi()
     return code === 0 && list.length === 0;
 }
 
+// EF Core writes several "dbug" lines for every query (connection
+// created / opened / disposed). On a remote database that is
+// thousands of lines a minute : the window can't keep up and the
+// API waits for it, so every page gets slow. Only warnings and
+// errors from EF Core here (settings files are not touched).
+function apiEnv()
+{
+    return {
+        ...process.env,
+        'Logging__LogLevel__Microsoft.EntityFrameworkCore': 'Warning',
+        'Logging__Console__LogLevel__Microsoft.EntityFrameworkCore': 'Warning',
+        'Logging__LogLevel__Microsoft.AspNetCore': 'Warning',
+        'Logging__Console__LogLevel__Microsoft.AspNetCore': 'Warning'
+    };
+}
+
 function startApi()
 {
     return new Promise(resolve =>
@@ -211,7 +228,7 @@ function startApi()
         let ready = false;
 
         const child =
-            spawn('dotnet', ['run', '--no-build'], { cwd: API_DIR, windowsHide: true });
+            spawn('dotnet', ['run', '--no-build'], { cwd: API_DIR, windowsHide: true, env: apiEnv() });
 
         apiChild = child;
 
@@ -359,12 +376,20 @@ async function job(action)
 // UI (ng serve) and browser : only with --all
 //---------------------------------------------------------------
 
-function portOpen(port)
+// localhost may be 127.0.0.1 or ::1 (ng serve uses either)
+async function portOpen(port)
+{
+    return await portOpenOn('127.0.0.1', port)
+        ||
+        await portOpenOn('::1', port);
+}
+
+function portOpenOn(host, port)
 {
     return new Promise(resolve =>
     {
         const socket =
-            require('net').connect({ host: '127.0.0.1', port });
+            require('net').connect({ host, port });
 
         socket.setTimeout(800);
         socket.once('connect', () => { socket.destroy(); resolve(true); });
@@ -446,8 +471,18 @@ async function startUi()
     {
         let ready = false;
 
+        // NG_CLI_ANALYTICS / CI : ng never stops to ask a question
+        // (nobody can answer it here and it quits)
         const child =
-            spawn('cmd', ['/c', 'npx', 'ng', 'serve', '--port', String(UI_PORT)], { cwd: UI_DIR, windowsHide: true });
+            spawn(
+                'cmd',
+                ['/c', 'npx', 'ng', 'serve', '--port', String(UI_PORT)],
+                {
+                    cwd: UI_DIR,
+                    windowsHide: true,
+                    stdio: ['ignore', 'pipe', 'pipe'],
+                    env: { ...process.env, NG_CLI_ANALYTICS: 'false', NG_FORCE_TTY: 'false' }
+                });
 
         uiChild = child;
 
@@ -461,6 +496,13 @@ async function startUi()
                 }
 
                 process.stdout.write('[ui]  ' + line + '\n');
+
+                uiTail.push(line);
+
+                if (uiTail.length > 15)
+                {
+                    uiTail.shift();
+                }
 
                 if (!ready && /Local:|compiled successfully|bundle generation complete/i.test(line))
                 {
@@ -476,7 +518,7 @@ async function startUi()
         child.stdout.on('data', feed);
         child.stderr.on('data', feed);
 
-        child.on('close', code =>
+        child.on('close', async code =>
         {
             if (uiChild === child)
             {
@@ -484,11 +526,31 @@ async function startUi()
 
                 uiState = 'stopped';
 
-                console.log('[' + stamp() + '] the UI stopped (exit code ' + code + ')');
+                console.log('\n[' + stamp() + '] the UI (ng serve) stopped (exit code ' + code + '). Its last lines :');
+
+                for (const line of uiTail)
+                {
+                    console.log('      ' + line);
+                }
+
+                console.log('');
             }
 
             if (!ready)
             {
+                // another ng serve (VS Code, a second window) already
+                // serves the port : use it
+                if (await portOpen(UI_PORT))
+                {
+                    uiState = 'external';
+
+                    console.log('[' + stamp() + '] UI already running on ' + UI_URL + ' : using it');
+
+                    resolve(true);
+
+                    return;
+                }
+
                 resolve(false);
             }
         });
@@ -514,13 +576,24 @@ async function startAll()
         await new Promise(r => setTimeout(r, 1000));
     }
 
-    if (uiUp)
+    // the browser opens whenever the UI answers (also when ng serve
+    // was started elsewhere)
+    const uiAnswers =
+        uiUp || await portOpen(UI_PORT);
+
+    if (uiAnswers)
     {
         openBrowser();
     }
 
     console.log('\n[' + stamp() + '] Ready : API ' + state.state + ', UI ' + uiState
-        + (uiUp ? ' -> ' + UI_URL : '') + '\n');
+        + (uiAnswers ? ' -> ' + UI_URL + ' (opened in Chrome)' : '') + '\n');
+
+    if (!uiAnswers)
+    {
+        console.log('The UI did not start, so the browser was not opened. The [ui] lines above say why.');
+        console.log('Start it by hand : cd /d "' + UI_DIR + '" && npx ng serve --port ' + UI_PORT + '\n');
+    }
 }
 
 

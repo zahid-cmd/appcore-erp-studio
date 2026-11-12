@@ -1,0 +1,5 @@
+/* The shared form fills the page : this wrapper adds no box */
+:host
+{
+    display: contents;
+}

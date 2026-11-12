@@ -798,7 +798,7 @@ public class AuthenticationRepository
     }
 
 
-    public async Task<Dictionary<long, (string WingName, List<string> Lines)>>
+    public async Task<Dictionary<long, (string WingCode, string WingName, List<string> Lines)>>
         GetBranchSwitchDetailsAsync(
             IEnumerable<long> branchIds)
     {
@@ -816,6 +816,7 @@ public class AuthenticationRepository
                     select new
                     {
                         branch.BranchId,
+                        WingCode = wing == null ? string.Empty : wing.WingCode,
                         WingName = wing == null ? string.Empty : wing.WingName
                     }
                 )
@@ -831,6 +832,7 @@ public class AuthenticationRepository
             x => x.BranchId,
             x =>
             (
+                x.WingCode ?? string.Empty,
                 x.WingName ?? string.Empty,
                 lines.TryGetValue(x.BranchId, out HashSet<string>? set)
                     ? AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess.Lines

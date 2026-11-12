@@ -11,6 +11,12 @@
 //   POST /agent/rollback          switch back to a release
 //   GET  /agent/jobs/{id}         live progress of a job
 //
+// Two applications (?app=, form field "app"; default erp) :
+//   erp     : AppCore ERP     C:\AppCore\            service AppCoreERP
+//   console : AppCore Console + website
+//             C:\AppCore\console-app\ service AppCoreConsole
+//   Each has its own releases / current / shared / backups.
+//
 // Every call needs the header  X-Agent-Token: <token>
 //
 // Folders (BaseFolder, default C:\AppCore):
@@ -62,7 +68,7 @@ builder.Services.Configure<FormOptions>(
     form => form.MultipartBodyLengthLimit = MaxPackageBytes);
 
 builder.Services.AddSingleton(settings);
-builder.Services.AddSingleton<Deployer>();
+builder.Services.AddSingleton(new Deployers(settings));
 
 var app =
     builder.Build();
@@ -112,22 +118,28 @@ app.Use(async (context, next) =>
 
 app.MapGet(
     "/agent/health",
-    (Deployer deployer) => Results.Ok(deployer.Health()));
+    (string? app, Deployers deployers) =>
+        deployers.Get(app) is { } deployer
+            ? Results.Ok(deployer.Health())
+            : Results.BadRequest(new { message = Deployers.UnknownApp }));
 
 app.MapGet(
     "/agent/releases",
-    (Deployer deployer) => Results.Ok(deployer.Releases()));
+    (string? app, Deployers deployers) =>
+        deployers.Get(app) is { } deployer
+            ? Results.Ok(deployer.Releases())
+            : Results.BadRequest(new { message = Deployers.UnknownApp }));
 
 app.MapGet(
     "/agent/jobs/{id}",
-    (string id, Deployer deployer) =>
-        deployer.GetJob(id) is { } job
+    (string id, Deployers deployers) =>
+        deployers.FindJob(id) is { } job
             ? Results.Ok(job.Snapshot())
             : Results.NotFound(new { message = "Job not found." }));
 
 app.MapPost(
     "/agent/deployments",
-    async (HttpRequest request, Deployer deployer) =>
+    async (HttpRequest request, Deployers deployers) =>
     {
         if (!request.HasFormContentType)
         {
@@ -136,6 +148,14 @@ app.MapPost(
 
         var form =
             await request.ReadFormAsync();
+
+        var appName =
+            form["app"].ToString().Trim() is { Length: > 0 } fromForm ? fromForm : request.Query["app"].ToString();
+
+        if (deployers.Get(appName) is not { } deployer)
+        {
+            return Results.BadRequest(new { message = Deployers.UnknownApp });
+        }
 
         var package =
             form.Files["package"];
@@ -155,7 +175,7 @@ app.MapPost(
 
         if (deployer.IsBusy)
         {
-            return Results.Conflict(new { message = "Another deployment or rollback is running on this server." });
+            return Results.Conflict(new { message = "Another deployment or rollback is running for this application." });
         }
 
         if (deployer.ReleaseExists(release))
@@ -178,8 +198,13 @@ app.MapPost(
 
 app.MapPost(
     "/agent/rollback",
-    (RollbackRequest body, Deployer deployer) =>
+    (string? app, RollbackRequest body, Deployers deployers) =>
     {
+        if (deployers.Get(body.App ?? app) is not { } deployer)
+        {
+            return Results.BadRequest(new { message = Deployers.UnknownApp });
+        }
+
         if (!Deployer.ValidReleaseName(body.Release) || !deployer.ReleaseExists(body.Release))
         {
             return Results.BadRequest(new { message = "That release does not exist on this server." });
@@ -187,7 +212,7 @@ app.MapPost(
 
         if (deployer.IsBusy)
         {
-            return Results.Conflict(new { message = "Another deployment or rollback is running on this server." });
+            return Results.Conflict(new { message = "Another deployment or rollback is running for this application." });
         }
 
         var job =
@@ -252,6 +277,119 @@ public sealed class AgentSettings
     public string PgDumpPath { get; set; } = @"C:\Program Files\PostgreSQL\18\bin\pg_dump.exe";
 
     public DatabaseSettings Database { get; set; } = new();
+
+    // AppCore Console + website (optional section "Agent:Console";
+    // every value has a default, so nothing has to be added)
+    public ConsoleAppSettings Console { get; set; } = new();
+}
+
+public sealed class ConsoleAppSettings
+{
+    public bool Enabled { get; set; } = true;
+
+    public string BaseFolder { get; set; } = @"C:\AppCore\console-app";
+
+    public string ServiceName { get; set; } = "AppCoreConsole";
+
+    public string AppExe { get; set; } = "AppCore.Console.API.exe";
+
+    public string AppUrls { get; set; } = "http://localhost:8090";
+
+    public string HealthUrl { get; set; } = "http://localhost:8090/api/health";
+
+    public bool BackupBeforeDeploy { get; set; } = true;
+
+    // AppCore_Control; host / port / login are taken from Agent:Database
+    public string DatabaseName { get; set; } = "AppCore_Control";
+
+    // the folder of the first (manual) install : its appsettings.json
+    // is copied into shared\ on the first deployment
+    public string SeedSharedFrom { get; set; } = @"C:\AppCore\console";
+}
+
+//===============================================================
+// One deployable application on this server
+//===============================================================
+
+public sealed class AppProfile
+{
+    public string Key { get; init; } = "erp";
+
+    public string DisplayName { get; init; } = "AppCore ERP";
+
+    public string BaseFolder { get; init; } = @"C:\AppCore";
+
+    public string ServiceName { get; init; } = "AppCoreERP";
+
+    public string AppExe { get; init; } = "AppCore.API.exe";
+
+    public string AppUrls { get; init; } = "http://0.0.0.0:8080";
+
+    public string HealthUrl { get; init; } = "http://localhost:8080/";
+
+    public bool BackupBeforeDeploy { get; init; } = true;
+
+    public DatabaseSettings Database { get; init; } = new();
+
+    public string? SeedSharedFrom { get; init; }
+}
+
+//===============================================================
+// The deployers of this server (one per application)
+//===============================================================
+
+public sealed class Deployers
+{
+    public const string UnknownApp = "Unknown application : use app=erp or app=console.";
+
+    private readonly Dictionary<string, Deployer> _all = new(StringComparer.OrdinalIgnoreCase);
+
+    public Deployers(AgentSettings s)
+    {
+        _all["erp"] = new Deployer(s, new AppProfile
+        {
+            Key = "erp",
+            DisplayName = "AppCore ERP",
+            BaseFolder = s.BaseFolder,
+            ServiceName = s.ServiceName,
+            AppExe = s.AppExe,
+            AppUrls = s.AppUrls,
+            HealthUrl = s.HealthUrl,
+            BackupBeforeDeploy = s.BackupBeforeDeploy,
+            Database = s.Database
+        });
+
+        if (s.Console.Enabled)
+        {
+            _all["console"] = new Deployer(s, new AppProfile
+            {
+                Key = "console",
+                DisplayName = "AppCore Console",
+                BaseFolder = s.Console.BaseFolder,
+                ServiceName = s.Console.ServiceName,
+                AppExe = s.Console.AppExe,
+                AppUrls = s.Console.AppUrls,
+                HealthUrl = s.Console.HealthUrl,
+                BackupBeforeDeploy = s.Console.BackupBeforeDeploy,
+                Database = new DatabaseSettings
+                {
+                    Host = s.Database.Host,
+                    Port = s.Database.Port,
+                    Name = s.Console.DatabaseName,
+                    Username = s.Database.Username,
+                    Password = s.Database.Password
+                },
+                SeedSharedFrom = s.Console.SeedSharedFrom
+            });
+        }
+    }
+
+    // empty = erp (the Deployment Center of the ERP sends no app)
+    public Deployer? Get(string? app) =>
+        _all.TryGetValue(string.IsNullOrWhiteSpace(app) ? "erp" : app.Trim(), out var d) ? d : null;
+
+    public AgentJob? FindJob(string id) =>
+        _all.Values.Select(d => d.GetJob(id)).FirstOrDefault(j => j is not null);
 }
 
 public sealed class DatabaseSettings
@@ -267,7 +405,7 @@ public sealed class DatabaseSettings
     public string Password { get; set; } = string.Empty;
 }
 
-public sealed record RollbackRequest(string Release, string? By);
+public sealed record RollbackRequest(string Release, string? By, string? App = null);
 
 
 //===============================================================
@@ -393,13 +531,17 @@ public sealed class Deployer
 
     private readonly AgentSettings _settings;
 
+    // the application this deployer installs (erp / console)
+    private readonly AppProfile _app;
+
     private readonly ConcurrentDictionary<string, AgentJob> _jobs = new();
 
     private int _busy;
 
-    public Deployer(AgentSettings settings)
+    public Deployer(AgentSettings settings, AppProfile app)
     {
         _settings = settings;
+        _app = app;
 
         foreach (var folder in new[] { ReleasesFolder, SharedFolder, BackupsFolder, IncomingFolder, LogsFolder })
         {
@@ -411,17 +553,17 @@ public sealed class Deployer
     // Folders
     //-----------------------------------------------------------
 
-    private string ReleasesFolder => Path.Combine(_settings.BaseFolder, "releases");
+    private string ReleasesFolder => Path.Combine(_app.BaseFolder, "releases");
 
-    private string CurrentLink => Path.Combine(_settings.BaseFolder, "current");
+    private string CurrentLink => Path.Combine(_app.BaseFolder, "current");
 
-    private string SharedFolder => Path.Combine(_settings.BaseFolder, "shared");
+    private string SharedFolder => Path.Combine(_app.BaseFolder, "shared");
 
-    private string BackupsFolder => Path.Combine(_settings.BaseFolder, "backups");
+    private string BackupsFolder => Path.Combine(_app.BaseFolder, "backups");
 
-    private string IncomingFolder => Path.Combine(_settings.BaseFolder, "incoming");
+    private string IncomingFolder => Path.Combine(_app.BaseFolder, "incoming");
 
-    private string LogsFolder => Path.Combine(_settings.BaseFolder, "logs");
+    private string LogsFolder => Path.Combine(_app.BaseFolder, "logs");
 
     public bool IsBusy => Volatile.Read(ref _busy) == 1;
 
@@ -444,7 +586,7 @@ public sealed class Deployer
 
         try
         {
-            var drive = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(_settings.BaseFolder))!);
+            var drive = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(_app.BaseFolder))!);
             freeGb = Math.Round(drive.AvailableFreeSpace / 1024d / 1024 / 1024, 1);
         }
         catch
@@ -455,16 +597,18 @@ public sealed class Deployer
         return new
         {
             agentVersion = typeof(Deployer).Assembly.GetName().Version?.ToString(3) ?? "1.0.0",
+            app = _app.Key,
+            appName = _app.DisplayName,
             machine = Environment.MachineName,
             serverTime = DateTime.Now,
             diskFreeGb = freeGb,
-            baseFolder = _settings.BaseFolder,
-            serviceName = _settings.ServiceName,
+            baseFolder = _app.BaseFolder,
+            serviceName = _app.ServiceName,
             serviceStatus = ServiceStatus(),
-            appUrls = _settings.AppUrls,
+            appUrls = _app.AppUrls,
             currentRelease = CurrentRelease() ?? string.Empty,
             keepReleases = _settings.KeepReleases,
-            backupBeforeDeploy = _settings.BackupBeforeDeploy,
+            backupBeforeDeploy = _app.BackupBeforeDeploy,
             pgDumpFound = File.Exists(_settings.PgDumpPath),
             busy = IsBusy
         };
@@ -591,7 +735,7 @@ public sealed class Deployer
         try
         {
             // 1. Database backup : before anything changes
-            if (_settings.BackupBeforeDeploy)
+            if (_app.BackupBeforeDeploy)
             {
                 job.Progress(5, "Backing up the database");
 
@@ -610,14 +754,16 @@ public sealed class Deployer
 
             ZipFile.ExtractToDirectory(zipPath, temp);
 
-            if (!File.Exists(Path.Combine(temp, _settings.AppExe)))
+            if (!File.Exists(Path.Combine(temp, _app.AppExe)))
             {
                 throw new InvalidOperationException(
-                    $"The package has no {_settings.AppExe} at its top level.");
+                    $"The package has no {_app.AppExe} at its top level.");
             }
 
             // 3. Server-only files (live settings) into the release
             job.Progress(45, "Adding the server settings");
+
+            SeedShared(job);
 
             CopyFolder(SharedFolder, temp);
 
@@ -690,6 +836,31 @@ public sealed class Deployer
             {
                 try { Directory.Delete(temp, true); } catch { }
             }
+        }
+    }
+
+    // First deployment of an application that was installed by
+    // hand : its live appsettings.json becomes the shared settings
+    private void SeedShared(AgentJob job)
+    {
+        if (string.IsNullOrWhiteSpace(_app.SeedSharedFrom)
+            || Directory.EnumerateFiles(SharedFolder).Any())
+        {
+            return;
+        }
+
+        var from = Path.Combine(_app.SeedSharedFrom, "appsettings.json");
+
+        if (File.Exists(from))
+        {
+            File.Copy(from, Path.Combine(SharedFolder, "appsettings.json"));
+
+            job.Log($"Server settings taken from {from}.");
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                $"{SharedFolder} has no server settings (appsettings.json) and {from} was not found.");
         }
     }
 
@@ -774,7 +945,7 @@ public sealed class Deployer
 
     private string ServiceStatus()
     {
-        var result = RunAsync("sc.exe", new[] { "query", _settings.ServiceName }, null, TimeSpan.FromSeconds(15))
+        var result = RunAsync("sc.exe", new[] { "query", _app.ServiceName }, null, TimeSpan.FromSeconds(15))
             .GetAwaiter().GetResult();
 
         if (result.ExitCode != 0)
@@ -795,21 +966,37 @@ public sealed class Deployer
 
     private async Task EnsureServiceAsync(AgentJob job)
     {
+        var exe = Path.Combine(CurrentLink, _app.AppExe);
+
+        var binPath =
+            $"\"{exe}\" --urls {_app.AppUrls} --environment Production --contentRoot \"{CurrentLink}\"";
+
         if (ServiceStatus() != "Not installed")
         {
+            // installed by hand earlier (e.g. the Console from
+            // C:\AppCore\console) : point it at "current" once
+            var qc = await RunAsync("sc.exe", new[] { "qc", _app.ServiceName }, null, TimeSpan.FromSeconds(15));
+
+            if (!qc.Output.Contains(CurrentLink + "\\", StringComparison.OrdinalIgnoreCase))
+            {
+                job.Log($"Pointing the Windows service {_app.ServiceName} at {CurrentLink}.");
+
+                var config = await RunAsync("sc.exe", new[] { "config", _app.ServiceName, "binPath=", binPath }, null, TimeSpan.FromSeconds(30));
+
+                if (config.ExitCode != 0)
+                {
+                    throw new InvalidOperationException("Could not update the Windows service: " + config.Output);
+                }
+            }
+
             return;
         }
 
-        job.Log($"Creating the Windows service {_settings.ServiceName} (first deployment).");
-
-        var exe = Path.Combine(CurrentLink, _settings.AppExe);
-
-        var binPath =
-            $"\"{exe}\" --urls {_settings.AppUrls} --environment Production --contentRoot \"{CurrentLink}\"";
+        job.Log($"Creating the Windows service {_app.ServiceName} (first deployment).");
 
         var create = await RunAsync(
             "sc.exe",
-            new[] { "create", _settings.ServiceName, "binPath=", binPath, "start=", "auto", "DisplayName=", "AppCore ERP" },
+            new[] { "create", _app.ServiceName, "binPath=", binPath, "start=", "auto", "DisplayName=", _app.DisplayName },
             null,
             TimeSpan.FromSeconds(30));
 
@@ -820,7 +1007,7 @@ public sealed class Deployer
 
         await RunAsync(
             "sc.exe",
-            new[] { "failure", _settings.ServiceName, "reset=", "86400", "actions=", "restart/5000/restart/10000/restart/30000" },
+            new[] { "failure", _app.ServiceName, "reset=", "86400", "actions=", "restart/5000/restart/10000/restart/30000" },
             null,
             TimeSpan.FromSeconds(30));
     }
@@ -832,7 +1019,7 @@ public sealed class Deployer
             return;
         }
 
-        await RunAsync("sc.exe", new[] { "stop", _settings.ServiceName }, null, TimeSpan.FromSeconds(30));
+        await RunAsync("sc.exe", new[] { "stop", _app.ServiceName }, null, TimeSpan.FromSeconds(30));
 
         await WaitForStateAsync("stopped", TimeSpan.FromSeconds(60));
 
@@ -842,7 +1029,7 @@ public sealed class Deployer
 
     private async Task StartServiceAsync()
     {
-        var start = await RunAsync("sc.exe", new[] { "start", _settings.ServiceName }, null, TimeSpan.FromSeconds(30));
+        var start = await RunAsync("sc.exe", new[] { "start", _app.ServiceName }, null, TimeSpan.FromSeconds(30));
 
         if (start.ExitCode != 0 && !start.Output.Contains("1056"))
         {
@@ -868,7 +1055,7 @@ public sealed class Deployer
         }
 
         throw new InvalidOperationException(
-            $"The Windows service {_settings.ServiceName} did not reach '{state}' within {timeout.TotalSeconds:0} seconds.");
+            $"The Windows service {_app.ServiceName} did not reach '{state}' within {timeout.TotalSeconds:0} seconds.");
     }
 
     //-----------------------------------------------------------
@@ -885,7 +1072,7 @@ public sealed class Deployer
         {
             try
             {
-                using var response = await http.GetAsync(_settings.HealthUrl);
+                using var response = await http.GetAsync(_app.HealthUrl);
 
                 if ((int)response.StatusCode < 500)
                 {
@@ -918,7 +1105,7 @@ public sealed class Deployer
                 $"pg_dump was not found at {_settings.PgDumpPath}. Fix Agent:PgDumpPath in the agent settings.");
         }
 
-        var db = _settings.Database;
+        var db = _app.Database;
 
         var file =
             Path.Combine(

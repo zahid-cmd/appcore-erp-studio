@@ -1,0 +1,617 @@
+<div class="sr-page">
+
+    <app-page-header
+
+        [title]="headerTitle"
+
+        [subtitle]="headerSubtitle"
+
+        icon="fas fa-arrow-rotate-left">
+
+        <div pageHeaderRight>
+
+            @if (isView)
+            {
+                <app-command-center
+
+                    [command1Text]="saved?.Status === 'Draft' ? 'Approve' : 'Post'"
+
+                    command1Icon="fas fa-circle-check"
+
+                    [command1Activity]="saved?.Status === 'Draft' ? 'Approve' : 'Post'"
+
+                    [command1Visible]="saved?.Status === 'Draft' ? postOnApproval : saved?.Status === 'Approved'"
+
+                    [command1Title]="saved?.Status === 'Draft' ? 'Approve the return' : 'Post : credit the customer, stock back'"
+
+                    (command1Click)="step(saved?.Status === 'Draft' ? 'approve' : 'post')"
+
+                    [command2Text]="saved?.Status === 'Draft' ? 'Edit' : 'To Draft'"
+
+                    [command2Icon]="saved?.Status === 'Draft' ? 'fas fa-pen' : 'fas fa-rotate-left'"
+
+                    [command2Permission]="saved?.Status === 'Draft' ? 'update' : ''"
+
+                    [command2Activity]="saved?.Status === 'Draft' ? '' : 'Return'"
+
+                    [command2Visible]="saved?.Status === 'Draft' || saved?.Status === 'Approved'"
+
+                    (command2Click)="saved?.Status === 'Draft' ? edit() : step('draft')"
+
+                    command3Text="Print"
+
+                    command3Icon="fas fa-print"
+
+                    command3Activity="Print"
+
+                    [command3Visible]="!!saved"
+
+                    (command3Click)="print()"
+
+                    command4Text="Back"
+
+                    command4Icon="fas fa-arrow-left"
+
+                    (command4Click)="goToList()"
+
+                    [command5Visible]="false">
+
+                </app-command-center>
+            }
+            @else
+            {
+                <app-command-center
+
+                    [command1Text]="saveText"
+
+                    [command1Icon]="saveText === 'Post Return' ? 'fas fa-paper-plane' : 'fas fa-floppy-disk'"
+
+                    [command1Permission]="mode === 'edit' ? 'update' : 'add'"
+
+                    [command1Visible]="!!invoice"
+
+                    [command1Title]="saveText === 'Post Return' ? 'Post the return at once (System Configuration : Post on Approval is OFF)' : 'Save as Draft (approve and post later)'"
+
+                    (command1Click)="save()"
+
+                    [command2Text]="mode === 'add' ? 'Change Invoice' : 'Clear'"
+
+                    [command2Icon]="mode === 'add' ? 'fas fa-magnifying-glass' : 'fas fa-eraser'"
+
+                    [command2Visible]="!!invoice"
+
+                    (command2Click)="mode === 'add' ? changeInvoice() : clear()"
+
+                    command3Text="Back"
+
+                    command3Icon="fas fa-arrow-left"
+
+                    (command3Click)="goToList()"
+
+                    [command4Visible]="false"
+
+                    [command5Visible]="false">
+
+                </app-command-center>
+            }
+
+        </div>
+
+    </app-page-header>
+
+
+    <div class="sr-body appcore-scrollbar">
+
+        @if (loading)
+        {
+            <div class="sr-empty">
+                <i class="fas fa-circle-notch fa-spin"></i>
+                Loading...
+            </div>
+        }
+
+
+        <!-- ===================================================
+             Step 1 : find the invoice
+        ==================================================== -->
+
+        @if (mode === 'add' && !invoice && !loading)
+        {
+            <div class="sr-card">
+
+                <div class="sr-card-head">
+
+                    <span class="sr-step">1</span>
+
+                    <div>
+                        <strong>Find the invoice</strong>
+                        <span>Posted {{ page.items }} invoices{{ switches?.BranchName ? ' of ' + switches?.BranchName : '' }} with something left to return{{ switches?.ReturnWindowDays ? ' · Return Window ' + switches?.ReturnWindowDays + ' days' : '' }}</span>
+                    </div>
+
+                    <div class="sr-search">
+
+                        <app-search-box
+
+                            [value]="searchText"
+
+                            [placeholder]="isMb ? 'Invoice no, customer, phone, chassis or engine no...' : 'Invoice no, customer name, code or phone...'"
+
+                            [autofocus]="true"
+
+                            (valueChange)="onSearch($event)">
+
+                        </app-search-box>
+
+                    </div>
+
+                </div>
+
+                <div class="sr-table-wrap appcore-scrollbar">
+
+                    <table class="sr-table">
+
+                        <thead>
+                            <tr>
+                                <th class="sr-c">#</th>
+                                <th>Invoice No</th>
+                                <th class="sr-c">Date</th>
+                                <th>Customer</th>
+                                <th class="sr-hide-sm">Phone</th>
+                                <th class="sr-hide-sm">{{ isMb ? 'Bikes' : 'Items' }}</th>
+                                <th class="sr-r">Total (Tk)</th>
+                                <th class="sr-r">Returnable</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @for (row of invoices; track row.PublicId; let i = $index)
+                            {
+                                <tr
+
+                                    class="sr-pick"
+
+                                    [class.sr-muted]="row.OutsideWindow"
+
+                                    [title]="row.OutsideWindow ? 'Past the Return Window (' + row.AgeDays + ' days old)' : 'Return from this invoice'"
+
+                                    (click)="pickInvoice(row.PublicId)">
+
+                                    <td class="sr-c">{{ i + 1 }}</td>
+                                    <td><b>{{ row.InvoiceNo }}</b></td>
+                                    <td class="sr-c">{{ dateText(row.InvoiceDate) }}<i class="sr-sub">{{ row.AgeDays }} d</i></td>
+                                    <td>{{ row.CustomerName }}<i class="sr-sub">{{ row.CustomerCode }}</i></td>
+                                    <td class="sr-hide-sm">{{ row.CustomerPhone }}</td>
+                                    <td class="sr-hide-sm sr-items">{{ row.ItemsText }}</td>
+                                    <td class="sr-r">{{ money(row.InvoiceTotal) }}</td>
+                                    <td class="sr-r">{{ qtyText(row.ReturnableQuantity) }} / {{ qtyText(row.SoldQuantity) }}</td>
+                                    <td class="sr-c">
+                                        @if (row.OutsideWindow)
+                                        {
+                                            <span class="sr-tag sr-tag-bad">Window passed</span>
+                                        }
+                                        @else
+                                        {
+                                            <i class="fas fa-chevron-right sr-go"></i>
+                                        }
+                                    </td>
+
+                                </tr>
+                            }
+                            @empty
+                            {
+                                <tr>
+                                    <td colspan="9" class="sr-empty">
+                                        @if (searching)
+                                        {
+                                            <i class="fas fa-circle-notch fa-spin"></i> Searching...
+                                        }
+                                        @else
+                                        {
+                                            <i class="fas fa-circle-info"></i>
+                                            {{ searchText ? 'No posted invoice matches "' + searchText + '" (or everything on it was returned).' : 'No posted invoice with something left to return.' }}
+                                        }
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="sr-note">
+                    <i class="fas fa-circle-info"></i>
+                    One return takes the lines of one invoice only. Goods from another invoice need a return of their own.
+                </div>
+
+            </div>
+        }
+
+
+        <!-- ===================================================
+             Step 2 : the invoice and the quantities
+        ==================================================== -->
+
+        @if (invoice && !isView && !loading)
+        {
+            <div class="sr-card">
+
+                <div class="sr-facts">
+
+                    <div class="sr-fact"><span>Invoice</span><b>{{ invoice.InvoiceNo }}</b><i>{{ dateText(invoice.InvoiceDate) }} · {{ invoice.AgeDays }} days</i></div>
+                    <div class="sr-fact"><span>Customer</span><b>{{ invoice.CustomerName }}</b><i>{{ invoice.CustomerCode }} · {{ invoice.CustomerPhone }}</i></div>
+                    <div class="sr-fact"><span>Branch / Warehouse</span><b>{{ invoice.BranchName }}</b><i>{{ invoice.WarehouseName || '-' }}</i></div>
+                    <div class="sr-fact"><span>Invoice Total</span><b>{{ money(invoice.InvoiceTotal) }}</b><i>{{ invoice.PaymentTerm || '-' }} · due {{ money(invoice.DueAmount) }}</i></div>
+
+                </div>
+
+                @if (invoice.Blocked)
+                {
+                    <div class="sr-banner sr-banner-bad">
+                        <i class="fas fa-ban"></i>
+                        {{ invoice.Blocked }}
+                    </div>
+                }
+
+            </div>
+
+
+            <div class="sr-card">
+
+                <div class="sr-card-head">
+
+                    <span class="sr-step">2</span>
+
+                    <div>
+                        <strong>{{ isMb ? 'Tick the bikes returned' : 'Quantities returned' }}</strong>
+                        <span>{{ isMb ? 'A bike is returned whole; refused once its registration was sent to BRTA' : 'At most what was sold less what was returned (or is on another return)' }}</span>
+                    </div>
+
+                </div>
+
+                <div class="sr-table-wrap appcore-scrollbar">
+
+                    <table class="sr-table">
+
+                        <thead>
+                            <tr>
+                                <th class="sr-c">#</th>
+                                <th>{{ page.item }}</th>
+                                <th class="sr-r">Sold</th>
+                                <th class="sr-r sr-hide-sm">Returned</th>
+                                <th class="sr-r">Left</th>
+                                <th class="sr-r sr-hide-sm">Net / Unit</th>
+                                <th class="sr-c">{{ isMb ? 'Return' : 'Return Qty' }}</th>
+                                <th class="sr-r">Credit (Tk)</th>
+                                <th>Line Reason</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @for (entry of entries; track entry.line.SalesInvoiceLineId; let i = $index)
+                            {
+                                <tr [class.sr-muted]="isLocked(entry)" [class.sr-chosen]="entry.qty > 0">
+
+                                    <td class="sr-c">{{ i + 1 }}</td>
+
+                                    <td>
+                                        <div class="sr-main">{{ entry.line.ProductName }}</div>
+                                        <div class="sr-sub">
+                                            @if (entry.line.ChassisNo)
+                                            {
+                                                Chassis {{ entry.line.ChassisNo }} · Engine {{ entry.line.EngineNo }}{{ entry.line.ColorName ? ' · ' + entry.line.ColorName : '' }}
+                                            }
+                                            @else
+                                            {
+                                                {{ entry.line.ProductCode }}{{ entry.line.Unit ? ' · ' + entry.line.Unit : '' }}
+                                            }
+                                            @if (entry.line.DiscountAmount > 0)
+                                            {
+                                                · discount {{ money(entry.line.DiscountAmount) }}
+                                            }
+                                            @if (isMb && entry.line.RegistrationRefund > 0)
+                                            {
+                                                · registration {{ money(entry.line.RegistrationRefund) }} refunded
+                                            }
+                                        </div>
+                                        @if (entry.line.Blocked)
+                                        {
+                                            <div class="sr-sub sr-bad"><i class="fas fa-ban"></i> {{ entry.line.Blocked }}</div>
+                                        }
+                                        @else if (entry.line.PendingQuantity > 0)
+                                        {
+                                            <div class="sr-sub sr-warn">{{ qtyText(entry.line.PendingQuantity) }} on another return not posted yet</div>
+                                        }
+                                    </td>
+
+                                    <td class="sr-r">{{ qtyText(entry.line.SoldQuantity) }}</td>
+                                    <td class="sr-r sr-hide-sm">{{ qtyText(entry.line.ReturnedQuantity) }}</td>
+                                    <td class="sr-r">{{ qtyText(canReturn(entry)) }}</td>
+                                    <td class="sr-r sr-hide-sm">{{ money(entry.line.NetPerUnit) }}</td>
+
+                                    <td class="sr-c">
+                                        @if (isMb)
+                                        {
+                                            <input
+
+                                                type="checkbox"
+
+                                                class="sr-check"
+
+                                                [checked]="entry.qty > 0"
+
+                                                [disabled]="isLocked(entry)"
+
+                                                (change)="onBike(entry, $any($event.target).checked)">
+                                        }
+                                        @else
+                                        {
+                                            <div class="sr-qty">
+
+                                                <input
+
+                                                    type="number"
+
+                                                    min="0"
+
+                                                    step="any"
+
+                                                    [max]="canReturn(entry)"
+
+                                                    [value]="entry.qty || ''"
+
+                                                    placeholder="0"
+
+                                                    [disabled]="isLocked(entry)"
+
+                                                    (change)="onQty(entry, $any($event.target).value)">
+
+                                                <button
+
+                                                    type="button"
+
+                                                    class="sr-all"
+
+                                                    title="Return all that is left"
+
+                                                    [disabled]="isLocked(entry)"
+
+                                                    (click)="returnAll(entry)">
+
+                                                    All
+
+                                                </button>
+
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <td class="sr-r"><b>{{ entry.qty > 0 ? money(lineCredit(entry)) : '-' }}</b></td>
+
+                                    <td>
+                                        <input
+
+                                            type="text"
+
+                                            class="sr-reason"
+
+                                            maxlength="300"
+
+                                            placeholder="Optional"
+
+                                            [value]="entry.reason"
+
+                                            [disabled]="isLocked(entry) || entry.qty <= 0"
+
+                                            (input)="onLineReason(entry, $any($event.target).value)">
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <div class="sr-card sr-bottom">
+
+                <div class="sr-fields">
+
+                    <app-textbox
+
+                        label="Reason"
+
+                        placeholder="Why are the goods returned? (5+ characters)"
+
+                        textCase="none"
+
+                        [required]="true"
+
+                        [maxLength]="500"
+
+                        [value]="reason"
+
+                        (valueChange)="onReason($event)">
+
+                    </app-textbox>
+
+                    <app-textbox
+
+                        label="Narration"
+
+                        placeholder="Optional note"
+
+                        textCase="none"
+
+                        [maxLength]="500"
+
+                        [value]="narration"
+
+                        (valueChange)="onNarration($event)">
+
+                    </app-textbox>
+
+                </div>
+
+                <div class="sr-totals">
+
+                    <div><span>Units</span><b>{{ qtyText(totalQty) }}</b></div>
+                    <div><span>Goods (net of discounts)</span><b>{{ money(itemsCredit) }}</b></div>
+
+                    @if (isMb)
+                    {
+                        <div><span>Registration refunded</span><b>{{ money(registrationRefund) }}</b></div>
+                    }
+
+                    <div class="sr-grand"><span>Credit to the customer</span><b>Tk {{ money(totalCredit) }}</b></div>
+
+                </div>
+
+            </div>
+
+
+            <div class="sr-note" [class.sr-bad]="!!formError">
+
+                <i [class]="formError ? 'fas fa-circle-exclamation' : 'fas fa-circle-info'"></i>
+
+                {{ formError || noteText }}
+
+            </div>
+        }
+
+
+        <!-- ===================================================
+             View
+        ==================================================== -->
+
+        @if (isView && saved && !loading)
+        {
+            <div class="sr-card">
+
+                <div class="sr-facts">
+
+                    <div class="sr-fact"><span>Return</span><b>{{ saved.ReturnNo }}</b><i>{{ dateText(saved.ReturnDate) }}</i></div>
+                    <div class="sr-fact"><span>Status</span><b [class]="'sr-status sr-status-' + saved.Status.toLowerCase()">{{ saved.Status }}</b><i>{{ saved.PostedByName ? 'Posted by ' + saved.PostedByName : (saved.ApprovedByName ? 'Approved by ' + saved.ApprovedByName : 'By ' + saved.CreatedByName) }}</i></div>
+                    <div class="sr-fact"><span>Invoice</span><b>{{ saved.SalesInvoiceNo }}</b><i>{{ dateText(saved.SalesInvoiceDate) }}</i></div>
+                    <div class="sr-fact"><span>Customer</span><b>{{ saved.CustomerName }}</b><i>{{ saved.CustomerCode }} · {{ saved.CustomerPhone }}</i></div>
+                    <div class="sr-fact"><span>Branch / Warehouse</span><b>{{ saved.BranchName }}</b><i>{{ saved.WarehouseName || '-' }}</i></div>
+
+                </div>
+
+                @if (saved.Status === 'Cancelled' && saved.CancelReason)
+                {
+                    <div class="sr-banner sr-banner-bad">
+                        <i class="fas fa-ban"></i>
+                        Cancelled : {{ saved.CancelReason }}
+                    </div>
+                }
+
+            </div>
+
+
+            <div class="sr-card">
+
+                <div class="sr-table-wrap appcore-scrollbar">
+
+                    <table class="sr-table">
+
+                        <thead>
+                            <tr>
+                                <th class="sr-c">#</th>
+                                <th>{{ page.item }}</th>
+                                <th class="sr-r">Qty</th>
+                                <th class="sr-r sr-hide-sm">Gross</th>
+                                <th class="sr-r sr-hide-sm">Discount</th>
+                                <th class="sr-r">Credit (Tk)</th>
+                                <th class="sr-r sr-hide-sm">VAT Inside</th>
+                                <th class="sr-hide-sm">Reason</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @for (line of saved.Lines; track line.SalesReturnLineId; let i = $index)
+                            {
+                                <tr>
+                                    <td class="sr-c">{{ i + 1 }}</td>
+                                    <td>
+                                        <div class="sr-main">{{ line.ProductName }}</div>
+                                        <div class="sr-sub">{{ line.ChassisNo ? 'Chassis ' + line.ChassisNo + ' · Engine ' + line.EngineNo : line.ProductCode }} · sold {{ qtyText(line.SoldQuantity) }}{{ line.RegistrationRefund > 0 ? ' · registration ' + money(line.RegistrationRefund) + ' refunded' : '' }}</div>
+                                    </td>
+                                    <td class="sr-r">{{ qtyText(line.Quantity) }}</td>
+                                    <td class="sr-r sr-hide-sm">{{ money(line.GrossAmount) }}</td>
+                                    <td class="sr-r sr-hide-sm">{{ line.DiscountAmount > 0 ? money(-line.DiscountAmount) : '-' }}</td>
+                                    <td class="sr-r"><b>{{ money(line.LineTotal) }}</b></td>
+                                    <td class="sr-r sr-hide-sm">{{ money(line.VatInside) }}</td>
+                                    <td class="sr-hide-sm">{{ line.Reason || '-' }}</td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <div class="sr-card sr-bottom">
+
+                <div class="sr-fields">
+
+                    <div class="sr-fact"><span>Reason</span><b>{{ saved.Reason || '-' }}</b></div>
+
+                    @if (saved.Narration)
+                    {
+                        <div class="sr-fact"><span>Narration</span><b>{{ saved.Narration }}</b></div>
+                    }
+
+                </div>
+
+                <div class="sr-totals">
+
+                    <div><span>Units</span><b>{{ qtyText(saved.TotalQuantity) }}</b></div>
+                    <div><span>Gross</span><b>{{ money(saved.GrossAmount) }}</b></div>
+
+                    @if (saved.DiscountAmount > 0)
+                    {
+                        <div><span>Less discounts</span><b>{{ money(-saved.DiscountAmount) }}</b></div>
+                    }
+
+                    @if (saved.RegistrationRefund > 0)
+                    {
+                        <div><span>Registration refunded</span><b>{{ money(saved.RegistrationRefund) }}</b></div>
+                    }
+
+                    <div class="sr-grand"><span>{{ saved.Status === 'Posted' ? 'Credited to the customer' : 'Credit to the customer' }}</span><b>Tk {{ money(saved.ReturnTotal) }}</b></div>
+
+                    @if (saved.Status === 'Posted')
+                    {
+                        <div><span>Cost back to stock</span><b>{{ money(saved.CostAmount) }}</b></div>
+                    }
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

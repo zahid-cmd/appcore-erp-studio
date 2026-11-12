@@ -174,6 +174,30 @@ export interface SalesInvoicePageConfig
 
     switches:
         SalesInvoiceSwitchCodes;
+
+    // Sales Quotations (2026-11-11) : the same page in quotation
+    // mode (no payment, no stock, no posting; MB : models with a
+    // quantity). apiPath stays the invoice API (defaults,
+    // products, customers, prices); quotationApiPath saves.
+    isQuotation?:
+        boolean;
+
+    // The quotation API of the type (both page kinds : the
+    // invoice loads a quotation to convert it)
+    quotationApiPath:
+        string;
+
+    // Routes (no leading slash) : the invoice page and the
+    // quotation page of the type
+    invoiceRoute:
+        string;
+
+    quotationRoute:
+        string;
+
+    // Quotation Validity switch of the type
+    quotationValiditySwitch:
+        string;
 }
 
 
@@ -191,6 +215,10 @@ export const SI_SP_PAGE:
     listTitle:'Sales Invoices - Spare Parts & Lubricants',
     prefix:'SISP',
     apiPath:'sales-operations/spare-parts-lubricant-sales/sales-invoices-sp',
+    quotationApiPath:'sales-operations/spare-parts-lubricant-sales/sales-quotations-sp',
+    invoiceRoute:'sales-operations/spare-parts-lubricant-sales/sales-invoices-sp',
+    quotationRoute:'sales-operations/spare-parts-lubricant-sales/sales-quotations-sp',
+    quotationValiditySwitch:'CFG-MOD-008-0104',
     printKey:'sales-invoices-sp',
     a4DocKey:'sales-invoice',
     thermalDocKey:'sales-invoice-thermal',
@@ -233,6 +261,10 @@ export const SI_AC_PAGE:
     listTitle:'Sales Invoices - Accessories',
     prefix:'SIAC',
     apiPath:'sales-operations/accessories-sales/sales-invoices-ac',
+    quotationApiPath:'sales-operations/accessories-sales/sales-quotations-ac',
+    invoiceRoute:'sales-operations/accessories-sales/sales-invoices-ac',
+    quotationRoute:'sales-operations/accessories-sales/sales-quotations-ac',
+    quotationValiditySwitch:'CFG-MOD-008-0105',
     printKey:'sales-invoices-ac',
     a4DocKey:'sales-invoice',
     thermalDocKey:'sales-invoice-thermal',
@@ -277,6 +309,10 @@ export const SI_MB_PAGE:
     listTitle:'Sales Invoices - Motor Bikes',
     prefix:'SIMB',
     apiPath:'sales-operations/motor-bike-sales/sales-invoices-mb',
+    quotationApiPath:'sales-operations/motor-bike-sales/sales-quotations-mb',
+    invoiceRoute:'sales-operations/motor-bike-sales/sales-invoices-mb',
+    quotationRoute:'sales-operations/motor-bike-sales/sales-quotations-mb',
+    quotationValiditySwitch:'CFG-MOD-008-0103',
     printKey:'sales-invoices-mb',
     a4DocKey:'sales-invoice',
     thermalDocKey:'sales-invoice-thermal',
@@ -311,6 +347,67 @@ export const SI_MB_PAGE:
 //===============================================================
 // DI : the page's form / list read these
 //===============================================================
+
+//===============================================================
+// Sales Quotations - SP / AC / MB : the invoice config of the type
+// in quotation mode (print key sales-quotations-<type>)
+//===============================================================
+
+function quotationPage
+(
+    invoice:
+        SalesInvoicePageConfig,
+    names:
+        { title:string; fullTitle:string; docTitle:string; listTitle:string; prefix:string }
+):
+    SalesInvoicePageConfig
+{
+    return {
+        ...invoice,
+        ...names,
+        isQuotation:true,
+        printKey:invoice.printKey.replace('sales-invoices', 'sales-quotations'),
+        a4DocKey:'sales-quotation',
+        thermalDocKey:''
+    };
+}
+
+export const SQ_SP_PAGE:
+    SalesInvoicePageConfig =
+    quotationPage(
+        SI_SP_PAGE,
+        {
+            title:'Sales Quotations - SP',
+            fullTitle:'Sales Quotation - Spare Parts & Lubricants',
+            docTitle:'Sales Quotation - SP',
+            listTitle:'Sales Quotations - Spare Parts & Lubricants',
+            prefix:'SQSP'
+        });
+
+export const SQ_AC_PAGE:
+    SalesInvoicePageConfig =
+    quotationPage(
+        SI_AC_PAGE,
+        {
+            title:'Sales Quotations - AC',
+            fullTitle:'Sales Quotation - Accessories',
+            docTitle:'Sales Quotation - AC',
+            listTitle:'Sales Quotations - Accessories',
+            prefix:'SQAC'
+        });
+
+export const SQ_MB_PAGE:
+    SalesInvoicePageConfig =
+    quotationPage(
+        SI_MB_PAGE,
+        {
+            title:'Sales Quotations - MB',
+            fullTitle:'Sales Quotation - Motor Bikes',
+            docTitle:'Sales Quotation - MB',
+            listTitle:'Sales Quotations - Motor Bikes',
+            prefix:'SQMB'
+        });
+
 
 export const SALES_INVOICE_PAGE =
     new InjectionToken<SalesInvoicePageConfig>('SALES_INVOICE_PAGE');

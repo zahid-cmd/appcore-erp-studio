@@ -473,7 +473,8 @@ public static class BikeDeliveryWriter
 
     //===========================================================
     // Invoice cancelled : its deliveries undone, warranties void
-    // (caller saves)
+    // (caller saves). salesInvoiceLineId (Sales Returns - MB) : only
+    // that line's delivery, with the return as the reason.
     //===========================================================
 
     public static async Task
@@ -483,17 +484,24 @@ public static class BikeDeliveryWriter
             long salesInvoiceId,
             string invoiceNo,
             long userId,
-            DateTime now
+            DateTime now,
+            long? salesInvoiceLineId = null,
+            string? reasonText = null
         )
     {
         List<BikeDeliveries> deliveries =
             await context
                 .Set<BikeDeliveries>()
-                .Where(x => x.SalesInvoiceId == salesInvoiceId && x.Status == StatusDelivered && !x.IsDeleted)
+                .Where(x => x.SalesInvoiceId == salesInvoiceId
+                            && x.Status == StatusDelivered
+                            && !x.IsDeleted
+                            && (salesInvoiceLineId == null || x.SalesInvoiceLineId == salesInvoiceLineId))
                 .ToListAsync();
 
         string reason =
-            $"Sales invoice {invoiceNo} cancelled.";
+            string.IsNullOrWhiteSpace(reasonText)
+                ? $"Sales invoice {invoiceNo} cancelled."
+                : (reasonText.Length > 500 ? reasonText.Substring(0, 500) : reasonText);
 
         foreach (BikeDeliveries delivery in deliveries)
         {

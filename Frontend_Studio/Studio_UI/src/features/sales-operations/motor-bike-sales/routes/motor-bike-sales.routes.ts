@@ -54,6 +54,52 @@ Routes =
             },
 
             //===========================================================
+            // Sales Quotations - MB (hand-wired : the shared Sales
+            // Invoice page in quotation mode; NEVER Code Sync)
+            //===========================================================
+            {
+                path:'sales-quotations-mb',
+
+                data:
+                {
+                    breadcrumb:'Sales Quotations - MB'
+                },
+
+                loadChildren:() =>
+                    import(
+                        './sales-quotations-mb.routes'
+                    )
+                    .then(
+                        m =>
+                            m.SalesQuotationsMbRoutes
+                    )
+            },
+
+            //===========================================================
+            // Sales Returns - MB (hand-wired : the shared Sales Return
+            // pages; NEVER Code Sync)
+            //===========================================================
+
+            {
+                path:'sales-returns-mb',
+
+                data:
+                {
+                    breadcrumb:'Sales Returns - MB'
+                },
+
+                loadChildren:() =>
+                    import(
+                        './sales-returns-mb.routes'
+                    )
+                    .then(
+                        m =>
+                            m.SalesReturnsMbRoutes
+                    )
+            },
+
+
+            //===========================================================
             // Sales Invoices - MB (hand-wired : the shared Sales
             // Invoice pages)
             //===========================================================
@@ -80,4 +126,4 @@ Routes =
 
     }
 
-];
+];

@@ -74,10 +74,14 @@ public interface ISalesInvoiceRepository
         SalesInvoiceWalkInDto dto,
         long userId);
 
+    // quotation true : priced for a Sales Quotation (customer
+    // optional, no stock needed, MB models without chassis, no
+    // payment / term rules)
     Task<SalesInvoiceQuoteDto> QuoteAsync(
         CreateSalesInvoiceDto dto,
         bool canGiveSpecialDiscount,
-        long userId);
+        long userId,
+        bool quotation = false);
 
     Task<SalesInvoiceSavedDto> CreateAsync(
         CreateSalesInvoiceDto dto,
@@ -137,4 +141,61 @@ public interface ISalesInvoiceRepository
     // Public Id -> internal id (live rows; null = not found)
     Task<long?> GetIdByPublicIdAsync(
         Guid publicId);
+
+
+    //===========================================================
+    // Sales Returns (one posted invoice per return;
+    // SalesInvoiceRepositoryBase.Returns.cs)
+    //===========================================================
+
+    Task<SalesReturnSwitchesDto> GetReturnSwitchesAsync(
+        long? branchId);
+
+    // Posted invoices of the page (the login branch) with
+    // something left to return
+    Task<List<SalesReturnInvoiceItemDto>> FindReturnInvoicesAsync(
+        string? search,
+        long? branchId);
+
+    // One invoice with what can still be returned (except : the
+    // return being edited)
+    Task<SalesReturnInvoiceDto> GetReturnInvoiceAsync(
+        Guid invoicePublicId,
+        Guid? exceptReturnPublicId);
+
+    Task<List<SalesReturnListItemDto>> GetReturnsAsync();
+
+    Task<SalesReturnDto?> GetReturnAsync(
+        Guid publicId);
+
+    // Draft (Post on Approval OFF : posted at once)
+    Task<SalesReturnSavedDto> CreateReturnAsync(
+        SaveSalesReturnDto dto,
+        long userId);
+
+    Task<SalesReturnSavedDto> UpdateReturnAsync(
+        Guid publicId,
+        SaveSalesReturnDto dto,
+        long userId);
+
+    Task ApproveReturnAsync(
+        Guid publicId,
+        long userId);
+
+    Task ReturnToDraftReturnAsync(
+        Guid publicId,
+        long userId);
+
+    Task<SalesReturnSavedDto> PostReturnAsync(
+        Guid publicId,
+        long userId);
+
+    Task CancelReturnAsync(
+        Guid publicId,
+        CancelSalesReturnDto dto,
+        long userId);
+
+    Task DeleteReturnAsync(
+        Guid publicId,
+        long userId);
 }

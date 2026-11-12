@@ -28,6 +28,11 @@ public class SwitchBranchOptionDto
 
     public string BranchName { get; set; } = string.Empty;
 
+    // WNG-<company>-01 Sales Center / -02 Service Center / -03
+    // Accessory Shop : the kind of branch for the working-branch
+    // rule (2026-11-13)
+    public string WingCode { get; set; } = string.Empty;
+
     public string WingName { get; set; } = string.Empty;
 
     // Motor Bikes / Spare Parts / Accessories / Services the branch

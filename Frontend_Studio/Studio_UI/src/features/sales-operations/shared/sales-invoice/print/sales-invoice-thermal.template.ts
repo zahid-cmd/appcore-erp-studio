@@ -191,6 +191,10 @@ export function salesInvoiceThermalHtml
 
     const paid =
         [
+            // MB : the booking's advance (paid before, by the booking)
+            (invoice.BookingAdvance ?? 0) > 0
+                ? row(`Booking advance${invoice.BookingNo ? ` ${invoice.BookingNo}` : ''}`, kit.money(invoice.BookingAdvance ?? 0))
+                : '',
             ...(options.customerPayments && !shown.hide ? payments : []).map
             (
                 pay =>

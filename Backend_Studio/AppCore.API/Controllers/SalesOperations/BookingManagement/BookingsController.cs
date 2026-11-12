@@ -3,6 +3,7 @@
 //===============================================================
 
 using Microsoft.AspNetCore.Mvc;
+
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 using AppCore.Application.Platform.EffectiveAccess.Interfaces;
 using AppCore.Application.SalesOperations.BookingManagement;
@@ -17,30 +18,30 @@ namespace AppCore.Api.Controllers.SalesOperations.BookingManagement;
 
 
 //===============================================================
-// Bookings Controller (motor bikes; hand-written page, NO Code
-// Sync). Tabs : Bookings / Collections / Cancellations & Refunds.
+// Bookings Controller (MB / SP / AC; hand-written pages, NO Code
+// Sync). One page per type : Bookings - MB / SP / AC. Tabs :
+// Bookings / Collections / Cancellations & Refunds.
 //
-//   GET    ''                          page data (bookings,
+//   {type} = mb / sp / ac
+//   GET    {type}                      page data (bookings,
 //                                      collections, switches,
-//                                      models)
-//   GET    open?customerId=            open bookings of a customer
-//                                      (Sales Invoice - MB)
-//   GET    history/{bookingId}         one booking's history
-//   POST   ''                          new booking + first
+//                                      models (MB))
+//   GET    {type}/products?term=       SP / AC : item search
+//   GET    {type}/open?customerId=     open bookings of a customer
+//                                      (Sales Invoice of the type)
+//   GET    {type}/history/{bookingId}  one booking's history
+//   POST   {type}                      new booking + first
 //                                      collection (Receipt Voucher)
-//   PUT    {publicId}                  details of an open booking
-//   POST   {publicId}/collect          more advance
-//   PUT    {publicId}/cancel           cancel ("Cancel Booking")
+//   PUT    {type}/{publicId}           details of an open booking
+//   POST   {type}/{publicId}/collect   more advance
+//   PUT    {type}/{publicId}/cancel    cancel ("Cancel Booking")
 //===============================================================
 
 [ApiController]
-[Route("api/sales-operations/booking-management/bookings")]
+[Route("api/sales-operations/booking-management/bookings/{type}")]
 public class BookingsController
     : ControllerBase
 {
-    private const string PageRoute =
-        "/sales-operations/%/bookings";
-
     private const string ActivityCancel =
         "Cancel Booking";
 
@@ -51,6 +52,7 @@ public class BookingsController
     private readonly IEffectiveAccessRepository _effectiveAccess;
 
     private readonly ILogger<BookingsController> _logger;
+
 
     private long UserId => this.CurrentUserId();
 
@@ -70,19 +72,40 @@ public class BookingsController
     }
 
 
+    // mb -> MB ('' when not MB / SP / AC)
+    private static string TypeCode(string? type)
+    {
+        string code = (type ?? string.Empty).Trim().ToUpperInvariant();
+
+        return code is "MB" or "SP" or "AC" ? code : string.Empty;
+    }
+
+    // The page of the type (permissions)
+    private static string PageRoute(string code) =>
+        $"/sales-operations/%/bookings-{code.ToLowerInvariant()}";
+
+
     private ObjectResult Fail(int statusCode, string message) =>
         StatusCode(statusCode, new { message });
 
 
     private async Task<IActionResult> Run
     (
-        Func<Task<IActionResult>> action,
+        string? type,
+        Func<string, Task<IActionResult>> action,
         string failure
     )
     {
+        string code = TypeCode(type);
+
+        if (code.Length == 0)
+        {
+            return Fail(StatusCodes.Status404NotFound, "Booking type must be mb, sp or ac.");
+        }
+
         try
         {
-            return await action();
+            return await action(code);
         }
         catch (KeyNotFoundException ex)
         {
@@ -98,8 +121,7 @@ public class BookingsController
         }
         catch (Exception ex)
         {
-            // Usually the tables are missing : run
-            // BookingsMB_Engine.sql
+            // Usually the tables are missing : run Bookings_Engine.sql
             _logger.LogError(ex, "{Failure}", failure);
 
             return Fail(StatusCodes.Status500InternalServerError, $"{failure} {ex.GetBaseException().Message}");
@@ -108,18 +130,19 @@ public class BookingsController
 
 
     [HttpGet]
-    public Task<IActionResult> GetPage()
+    public Task<IActionResult> GetPage(string type)
     {
         long branchId = BranchId;
 
         long userId = UserId;
 
         return Run(
-            async () =>
+            type,
+            async code =>
             {
-                BookingsPageDto page = await _repository.GetPageAsync(branchId);
+                BookingsPageDto page = await _repository.GetPageAsync(code, branchId);
 
-                page.CanCancel = await _effectiveAccess.HasActivityAsync(userId, PageRoute, ActivityCancel);
+                page.CanCancel = await _effectiveAccess.HasActivityAsync(userId, PageRoute(code), ActivityCancel);
 
                 return Ok(page);
             },
@@ -127,46 +150,60 @@ public class BookingsController
     }
 
 
-    [HttpGet("open")]
-    public Task<IActionResult> GetOpen([FromQuery] long customerId)
+    [HttpGet("products")]
+    public Task<IActionResult> SearchProducts(string type, [FromQuery] string? term)
     {
         return Run(
-            async () => Ok(await _repository.GetOpenForCustomerAsync(customerId)),
+            type,
+            async code => Ok(await _repository.SearchProductsAsync(code, term ?? string.Empty)),
+            "The items could not be searched.");
+    }
+
+
+    [HttpGet("open")]
+    public Task<IActionResult> GetOpen(string type, [FromQuery] long customerId)
+    {
+        return Run(
+            type,
+            async code => Ok(await _repository.GetOpenForCustomerAsync(code, customerId)),
             "The open bookings could not be loaded.");
     }
 
 
     [HttpGet("history/{bookingId:long}")]
-    public Task<IActionResult> GetHistory(long bookingId)
+    public Task<IActionResult> GetHistory(string type, long bookingId)
     {
         return Run(
-            async () => Ok(await _activityHistoryRepository.GetHistoryAsync("Sales Operations", "Booking", bookingId)),
+            type,
+            async _ => Ok(await _activityHistoryRepository.GetHistoryAsync("Sales Operations", "Booking", bookingId)),
             "The booking history could not be loaded.");
     }
 
 
     [HttpPost]
-    public Task<IActionResult> Create([FromBody] CreateBookingDto? dto)
+    public Task<IActionResult> Create(string type, [FromBody] CreateBookingDto? dto)
     {
         long userId = UserId;
 
         long branchId = BranchId;
 
         return Run(
-            async () => Ok(await _repository.CreateAsync(dto ?? new CreateBookingDto(), branchId, userId)),
+            type,
+            async code => Ok(await _repository.CreateAsync(code, dto ?? new CreateBookingDto(), branchId, userId)),
             "The booking could not be saved.");
     }
 
 
     [HttpPut("{publicId:guid}")]
-    public Task<IActionResult> Update(Guid publicId, [FromBody] UpdateBookingDto? dto)
+    public Task<IActionResult> Update(string type, Guid publicId, [FromBody] UpdateBookingDto? dto)
     {
         long userId = UserId;
 
         return Run(
-            async () =>
+            type,
+            async code =>
             {
-                await _repository.UpdateAsync(publicId, dto ?? new UpdateBookingDto(), userId);
+                await _repository.UpdateAsync(code, publicId, dto ?? new UpdateBookingDto(), userId);
 
                 return NoContent();
             },
@@ -175,32 +212,37 @@ public class BookingsController
 
 
     [HttpPost("{publicId:guid}/collect")]
-    public Task<IActionResult> Collect(Guid publicId, [FromBody] CollectBookingDto? dto)
+    public Task<IActionResult> Collect(string type, Guid publicId, [FromBody] CollectBookingDto? dto)
     {
         long userId = UserId;
 
         long branchId = BranchId;
 
         return Run(
-            async () => Ok(await _repository.CollectAsync(publicId, dto ?? new CollectBookingDto(), branchId, userId)),
+            type,
+            async code => Ok(await _repository.CollectAsync(code, publicId, dto ?? new CollectBookingDto(), branchId, userId)),
             "The advance could not be collected.");
     }
 
 
     [HttpPut("{publicId:guid}/cancel")]
-    public async Task<IActionResult> Cancel(Guid publicId, [FromBody] CancelBookingDto? dto)
+    public Task<IActionResult> Cancel(string type, Guid publicId, [FromBody] CancelBookingDto? dto)
     {
         long userId = UserId;
 
         long branchId = BranchId;
 
-        if (!await _effectiveAccess.HasActivityAsync(userId, PageRoute, ActivityCancel))
-        {
-            return Fail(StatusCodes.Status403Forbidden, "You do not have the \"Cancel Booking\" permission on Bookings.");
-        }
+        return Run(
+            type,
+            async code =>
+            {
+                if (!await _effectiveAccess.HasActivityAsync(userId, PageRoute(code), ActivityCancel))
+                {
+                    return Fail(StatusCodes.Status403Forbidden, $"You do not have the \"Cancel Booking\" permission on Bookings - {code}.");
+                }
 
-        return await Run(
-            async () => Ok(await _repository.CancelAsync(publicId, dto ?? new CancelBookingDto(), branchId, userId)),
+                return Ok(await _repository.CancelAsync(code, publicId, dto ?? new CancelBookingDto(), branchId, userId));
+            },
             "The booking could not be cancelled.");
     }
 }

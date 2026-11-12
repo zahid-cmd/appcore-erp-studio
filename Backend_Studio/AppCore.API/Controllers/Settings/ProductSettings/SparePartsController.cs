@@ -9,6 +9,7 @@ using AppCore.Application.Common.Paging;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.Settings.ProductSettings;
+using AppCore.Api.Platform.Tenancy;
 
 
 //===============================================================
@@ -583,9 +584,9 @@ public class SparePartsController : ControllerBase
 
     private string WebRoot()
     {
-        return string.IsNullOrWhiteSpace(_environment.WebRootPath)
+        return string.IsNullOrWhiteSpace(TenantWebRoot.Of(HttpContext, _environment))
             ? Path.Combine(_environment.ContentRootPath, "wwwroot")
-            : _environment.WebRootPath;
+            : TenantWebRoot.Of(HttpContext, _environment);
     }
 
 

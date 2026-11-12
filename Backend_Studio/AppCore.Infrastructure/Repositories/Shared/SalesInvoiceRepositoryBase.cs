@@ -109,6 +109,12 @@ using RegistrationOnInvoice =
 using BookingsEntity =
     AppCore.Domain.Entities.SalesOperations.BookingManagement.Bookings;
 
+using BookingLinesEntity =
+    AppCore.Domain.Entities.SalesOperations.BookingManagement.BookingLines;
+
+using SalesQuotationsEntity =
+    AppCore.Domain.Entities.SalesOperations.Shared.SalesQuotations;
+
 
 //===============================================================
 // Namespace
@@ -190,9 +196,11 @@ namespace AppCore.Infrastructure.Repositories.SalesOperations.Shared;
 //            batches (movement SaleCancel), VAT register reversed.
 //            Refused when a Price Adjustment was released by it
 //            (no reverse there yet) or anything was returned.
+// Returns  : Sales Returns - MB / SP / AC (one posted invoice per
+//            return) : SalesInvoiceRepositoryBase.Returns.cs.
 //===============================================================
 
-public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
+public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     : ISalesInvoiceRepository
     where THeader : SalesInvoiceHeader, new()
     where TLine : SalesInvoiceLine, new()
@@ -641,14 +649,45 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
     }
 
 
-    // Campaign offer (Business Promotions; not built yet)
+    // Campaign offer (Business Promotions › Promotional Offers,
+    // 2026-11-12) : the live discount offer of the page's channel
     private sealed class CampaignOffer
     {
         public long CampaignId { get; set; }
 
+        public string OfferNo { get; set; } = string.Empty;
+
         public string Name { get; set; } = string.Empty;
 
-        public decimal Percent { get; set; }
+        // Company / Distributor
+        public string FundedBy { get; set; } = string.Empty;
+
+        public long? BrandId { get; set; }
+
+        // Company : '' (CAMPAIGN-DISCOUNT-<type>); Distributor : the
+        // brand's Offer Adjustment ledger
+        public string LedgerCode { get; set; } = string.Empty;
+
+        // Why the offer cannot post ('' = it can)
+        public string LedgerIssue { get; set; } = string.Empty;
+
+        public List<CampaignTarget> Targets { get; set; } = new();
+    }
+
+    private sealed class CampaignTarget
+    {
+        // All / Category / SubCategory / Product
+        public string Type { get; set; } = string.Empty;
+
+        public long Id { get; set; }
+
+        // Percent / Amount (Tk per unit)
+        public string DiscountType { get; set; } = "Percent";
+
+        public decimal Value { get; set; }
+
+        // Exception : the item is left out of the offer
+        public bool Excluded { get; set; }
     }
 
 
@@ -737,6 +776,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         public decimal CmPercent { get; set; }
 
         public decimal CmAmount { get; set; }
+
+        // Business Promotions : the offer taken and its ledger
+        public long? OfferId { get; set; }
+
+        public string OfferNo { get; set; } = string.Empty;
+
+        public string CampaignLedger { get; set; } = string.Empty;
 
         public decimal SpecialPercentTyped { get; set; }
 
@@ -853,6 +899,11 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         public decimal BookingAdvance { get; set; }
 
+        // The Sales Quotation it is made from
+        public long? QuotationId { get; set; }
+
+        public string QuotationNo { get; set; } = string.Empty;
+
         public List<string> Warnings { get; set; } = new();
 
         public List<string> Errors { get; set; } = new();
@@ -898,6 +949,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         // For the receipt check narration ('' = not numbered yet)
         public string InvoiceNo { get; set; } = string.Empty;
+
+        // Sales Quotations (2026-11-11) : priced like an invoice but
+        // the customer may be a prospect (none), no stock is needed
+        // (the without-stock price path : card MRP / price index /
+        // last batch), MB lines are models with a quantity (no
+        // chassis), no payment, payment term or below-cost block
+        public bool Quotation { get; set; }
     }
 
 
@@ -2217,9 +2275,6 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             userId,
             now);
 
-        // Its booking is open again
-        await ReopenBookingAsync(entity, userId, now);
-
         // Its Customer Files cancelled (refused when one has moved
         // on : name transfer, Ready / Delivered, fees)
         await AppCore.Infrastructure.Platform.Sales.CustomerFileWriter.CancelForInvoiceAsync(
@@ -2720,25 +2775,284 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
 
     //===========================================================
-    // Campaign hook (Business Promotions › Promotional Offers).
-    //
-    // NOT BUILT YET : no campaign is offered, so only the
-    // membership discount applies today. When the promotions page
-    // exists, return the best active offer of the product for the
-    // customer on the date (the engine already takes the better of
-    // campaign and membership per line and posts a campaign to
-    // Posting Setup CAMPAIGN-DISCOUNT-<type>).
+    // Campaign offers (Business Promotions › Promotional Offers,
+    // 2026-11-12; PromotionalOffers_Engine.sql). The page's
+    // channel (MB Sales Center / SP Service Center / AC Accessory
+    // Shop) and its discount type (Fixed / Parts / Direct
+    // Discount), Active, the date inside Start..End, the branch
+    // in its branches. A line takes the offer's most specific
+    // target (product > sub category (MB : model) > category >
+    // all of the brand); several offers : the largest discount.
+    // Company funded : CAMPAIGN-DISCOUNT-<type>; Distributor : the
+    // brand's Offer Adjustment ledger (reimbursable claim).
+    // No offer table yet (SQL not run) : no offer, no error.
     //===========================================================
 
-    private static Task<CampaignOffer?>
-        FindCampaignAsync
+    private string CampaignChannel =>
+        Page.PageType switch
+        {
+            "MB" => "SalesCenter",
+            "SP" => "ServiceCenter",
+            _ => "AccessoryShop"
+        };
+
+    // The offer types an invoice applies. SP : the Service Campaign
+    // (2026-11-13) and older Parts Discount offers.
+    private string[] CampaignDiscountTypes =>
+        Page.PageType switch
+        {
+            "MB" => new[] { "Fixed Discount" },
+            "SP" => new[] { "Service Campaign", "Parts Discount" },
+            _ => new[] { "Direct Discount" }
+        };
+
+    private async Task<List<CampaignOffer>>
+        LiveCampaignsAsync
         (
-            long productId,
-            long customerId,
-            DateOnly date
+            DateOnly date,
+            long branchId
         )
     {
-        return Task.FromResult<CampaignOffer?>(null);
+        List<CampaignOffer> result = new();
+
+        try
+        {
+            string channel = CampaignChannel;
+
+            string[] types = CampaignDiscountTypes;
+
+            var offers =
+                await _context
+                    .Set<PromotionalOffers>()
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted
+                                && x.Channel == channel
+                                && types.Contains(x.OfferType)
+                                && x.Status == "Active"
+                                && x.StartDate <= date
+                                && x.EndDate >= date)
+                    .ToListAsync();
+
+            string branch = branchId.ToString(CultureInfo.InvariantCulture);
+
+            offers =
+                offers
+                    .Where(x => x.AllBranches
+                                || (x.BranchIds ?? string.Empty)
+                                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                    .Contains(branch))
+                    .ToList();
+
+            if (offers.Count == 0)
+            {
+                return result;
+            }
+
+            List<long> ids = offers.Select(x => x.PromotionalOfferId).ToList();
+
+            List<PromotionalOfferTargets> targets =
+                await _context
+                    .Set<PromotionalOfferTargets>()
+                    .AsNoTracking()
+                    .Where(x => ids.Contains(x.PromotionalOfferId))
+                    .ToListAsync();
+
+            // A Service Campaign for chosen bike models needs the
+            // customer's bike (job cards) : a parts invoice does not
+            // know it, so only campaigns for every customer apply here
+            HashSet<long> forModels =
+                targets.Where(t => t.TargetType == "Model").Select(t => t.PromotionalOfferId).ToHashSet();
+
+            offers = offers.Where(x => !forModels.Contains(x.PromotionalOfferId)).ToList();
+
+            if (offers.Count == 0)
+            {
+                return result;
+            }
+
+            List<long> brandIds =
+                offers.Where(x => x.BrandManagementId.HasValue).Select(x => x.BrandManagementId!.Value).Distinct().ToList();
+
+            var brands =
+                await _context
+                    .Set<AppCore.Domain.Entities.Settings.ProductSettings.BrandManagement>()
+                    .AsNoTracking()
+                    .Where(x => brandIds.Contains(x.BrandManagementId))
+                    .Select(x => new { x.BrandManagementId, x.BrandName, x.OfferAdjustmentLedgerCode })
+                    .ToDictionaryAsync(x => x.BrandManagementId);
+
+            foreach (var o in offers)
+            {
+                // The offer's own ledger (created on save, 2026-11-13);
+                // older offers : the brand's Offer Adjustment ledger /
+                // the Campaign Discount purpose
+                string ledger = (o.LedgerCode ?? string.Empty).Trim();
+
+                string issue = string.Empty;
+
+                if (ledger.Length == 0 && o.FundedBy == "Distributor")
+                {
+                    if (o.BrandManagementId.HasValue && brands.TryGetValue(o.BrandManagementId.Value, out var brand))
+                    {
+                        ledger = (brand.OfferAdjustmentLedgerCode ?? string.Empty).Trim();
+
+                        if (ledger.Length == 0)
+                        {
+                            issue = $"Offer {o.OfferNo} is paid by the distributor of {brand.BrandName}, which has no Offer Adjustment ledger (Brand Management).";
+                        }
+                    }
+                    else
+                    {
+                        issue = $"Offer {o.OfferNo} is paid by a distributor but has no brand.";
+                    }
+                }
+
+                result.Add(
+                    new CampaignOffer
+                    {
+                        CampaignId = o.PromotionalOfferId,
+                        OfferNo = o.OfferNo,
+                        Name = o.OfferName,
+                        FundedBy = o.FundedBy,
+                        BrandId = o.BrandManagementId,
+                        LedgerCode = ledger,
+                        LedgerIssue = issue,
+                        Targets =
+                            targets
+                                .Where(t => t.PromotionalOfferId == o.PromotionalOfferId)
+                                .Select
+                                (
+                                    t =>
+                                        new CampaignTarget
+                                        {
+                                            Type = t.TargetType,
+                                            Id = t.TargetId,
+                                            DiscountType = string.IsNullOrWhiteSpace(t.DiscountType) ? o.DiscountType : t.DiscountType!,
+                                            Value = t.DiscountValue ?? o.DiscountValue,
+                                            Excluded = t.IsExcluded
+                                        }
+                                )
+                                .ToList()
+                    });
+            }
+        }
+        catch (Exception ex) when (ex.GetBaseException().Message.Contains("PromotionalOffer", StringComparison.OrdinalIgnoreCase)
+                                   && ex.GetBaseException().Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
+        {
+            // PromotionalOffers_Engine.sql not run yet : no offers
+            return new List<CampaignOffer>();
+        }
+
+        return result;
+    }
+
+    // Category / sub category / brand / category type (Spare Parts /
+    // Lubricants ...) of the lines' products
+    private async Task<Dictionary<long, (long CategoryId, long SubCategoryId, long? BrandId, string CategoryType)>>
+        ProductPlacesAsync
+        (
+            List<long> productIds
+        )
+    {
+        var rows =
+            await ProductRows()
+                .Where(x => productIds.Contains(x.ProductId))
+                .Select(x => new { x.ProductId, x.ProductCategoryId, x.ProductSubCategoryId })
+                .ToListAsync();
+
+        List<long> categoryIds = rows.Select(x => x.ProductCategoryId).Distinct().ToList();
+
+        var categories =
+            await _context
+                .Set<ProductCategoryEntity>()
+                .AsNoTracking()
+                .Where(x => categoryIds.Contains(x.ProductCategoryId))
+                .Select(x => new { x.ProductCategoryId, x.BrandManagementId, x.CategoryType })
+                .ToDictionaryAsync(x => x.ProductCategoryId);
+
+        return rows.ToDictionary(
+            x => x.ProductId,
+            x => (x.ProductCategoryId,
+                  x.ProductSubCategoryId,
+                  categories.TryGetValue(x.ProductCategoryId, out var c) ? c.BrandManagementId : null,
+                  categories.TryGetValue(x.ProductCategoryId, out var t) ? (t.CategoryType ?? string.Empty).Trim() : string.Empty));
+    }
+
+    // Service Campaign "ProductType" rows (2026-11-13) : 1 = all
+    // Spare Parts, 2 = all Lubricants (the category type)
+    private static string ProductTypeOf(long id) =>
+        id switch
+        {
+            1 => "Spare Parts",
+            2 => "Lubricants",
+            _ => "?"
+        };
+
+    // The best offer of one line : (offer, discount amount)
+    private static (CampaignOffer? Offer, decimal Amount)
+        BestCampaign
+        (
+            List<CampaignOffer> offers,
+            (long CategoryId, long SubCategoryId, long? BrandId, string CategoryType) place,
+            long productId,
+            decimal quantity,
+            decimal gross
+        )
+    {
+        CampaignOffer? best = null;
+
+        decimal bestAmount = 0m;
+
+        foreach (CampaignOffer offer in offers)
+        {
+            if (offer.BrandId.HasValue && place.BrandId != offer.BrandId)
+            {
+                continue;
+            }
+
+            // Exceptions ("All Motor Bikes except ...") : the product,
+            // its model / sub category or its category left out
+            bool excluded =
+                offer.Targets.Any
+                (
+                    t =>
+                        t.Excluded
+                        && ((t.Type == "Product" && t.Id == productId)
+                            || (t.Type == "SubCategory" && t.Id == place.SubCategoryId)
+                            || (t.Type == "Category" && t.Id == place.CategoryId)
+                            || (t.Type == "ProductType" && ProductTypeOf(t.Id) == place.CategoryType))
+                );
+
+            if (excluded)
+            {
+                continue;
+            }
+
+            CampaignTarget? target =
+                offer.Targets.FirstOrDefault(t => !t.Excluded && t.Type == "Product" && t.Id == productId)
+                ?? offer.Targets.FirstOrDefault(t => !t.Excluded && t.Type == "SubCategory" && t.Id == place.SubCategoryId)
+                ?? offer.Targets.FirstOrDefault(t => !t.Excluded && t.Type == "Category" && t.Id == place.CategoryId)
+                ?? offer.Targets.FirstOrDefault(t => !t.Excluded && t.Type == "ProductType" && ProductTypeOf(t.Id) == place.CategoryType)
+                ?? offer.Targets.FirstOrDefault(t => !t.Excluded && t.Type == "All");
+
+            if (target == null || target.Value <= 0m)
+            {
+                continue;
+            }
+
+            decimal amount =
+                target.DiscountType == "Amount"
+                    ? Money(Math.Min(target.Value * quantity, gross))
+                    : Money(gross * Math.Min(target.Value, 100m) / 100m);
+
+            if (amount > bestAmount)
+            {
+                best = offer;
+                bestAmount = amount;
+            }
+        }
+
+        return (best, bestAmount);
     }
 
 
@@ -3020,7 +3334,11 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         if (dto.CustomerId <= 0)
         {
-            result.Errors.Add("Customer is required.");
+            // Quotation : a prospect (no profile) is fine
+            if (!options.Quotation)
+            {
+                result.Errors.Add("Customer is required.");
+            }
         }
         else
         {
@@ -3107,8 +3425,11 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         // MB : one bike (chassis) per line, in stock in the
         // warehouse, not on another open invoice
+        // Quotation : models with a quantity, no chassis
         bool bikes =
-            Page.PageType == "MB";
+            Page.PageType == "MB"
+            &&
+            !options.Quotation;
 
         Dictionary<long, BikeUnit> bikeUnits =
             bikes
@@ -3243,6 +3564,14 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 continue;
             }
 
+            // Quotation - MB : whole bikes
+            if (options.Quotation && Page.PageType == "MB" && row.Quantity != decimal.Truncate(row.Quantity))
+            {
+                result.Errors.Add($"Line {lineNo} : '{product.ProductName}' : the quantity of bikes must be a whole number.");
+
+                continue;
+            }
+
             result.Lines.Add(
                 new PricedLine
                 {
@@ -3364,7 +3693,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         ? $" ({Qty(unpriced)} more without MRP cannot be sold)"
                         : string.Empty;
 
-                if (!switches.AllowWithoutStock)
+                if (!switches.AllowWithoutStock && !options.Quotation)
                 {
                     result.Errors.Add($"{label} : only {Qty(line.OnHand)} {line.Product.Unit} in stock in {warehouse.WarehouseName}{unpricedNote}.");
 
@@ -3374,7 +3703,12 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 lastBatches ??=
                     await LastBatchesAsync(lineProductIds);
 
-                if (!lastBatches.TryGetValue(line.Product.ProductId, out StockBatchesEntity? last))
+                // Quotation : an item never in stock is quoted at its
+                // MRP (card / price index), its cost unknown (0)
+                StockBatchesEntity? last =
+                    lastBatches.GetValueOrDefault(line.Product.ProductId);
+
+                if (last == null && !options.Quotation)
                 {
                     result.Errors.Add($"{label} has never been in stock : its cost is not known, so it cannot be sold without stock.");
 
@@ -3387,7 +3721,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 decimal mrp =
                     lineCardMrp != null
                         ? lineCardMrp.GetValueOrDefault(line.Product.ProductId)
-                        : last.Mrp;
+                        : last?.Mrp ?? 0m;
 
                 if (!(mrp > 0) && lineCardMrp == null)
                 {
@@ -3416,15 +3750,18 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                         Batch = null,
                         Quantity = left,
                         Mrp = mrp,
-                        UnitCost = last.UnitCost,
-                        VatRate = last.SourceVatRate,
-                        VatPerUnit = last.SourceVatPerUnit,
+                        UnitCost = last?.UnitCost ?? 0m,
+                        VatRate = last?.SourceVatRate ?? 0m,
+                        VatPerUnit = last?.SourceVatPerUnit ?? 0m,
                         InventoryLedgerCode = line.Product.InventoryLedgerCode
                     });
 
                 line.Unallocated = left;
 
-                result.Warnings.Add($"{label} : {Qty(left)} {line.Product.Unit} sold without stock (costed at the last batch {last.BatchNo}){unpricedNote}.");
+                if (!options.Quotation)
+                {
+                    result.Warnings.Add($"{label} : {Qty(left)} {line.Product.Unit} sold without stock (costed at the last batch {last!.BatchNo}){unpricedNote}.");
+                }
             }
         }
 
@@ -3557,6 +3894,14 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         MembershipChoice? membership =
             result.Membership;
 
+        List<CampaignOffer> campaigns =
+            await LiveCampaignsAsync(date, dto.BranchId);
+
+        Dictionary<long, (long CategoryId, long SubCategoryId, long? BrandId, string CategoryType)> places =
+            campaigns.Count > 0
+                ? await ProductPlacesAsync(result.Lines.Select(x => x.Product.ProductId).Distinct().ToList())
+                : new();
+
         foreach (PricedLine line in result.Lines)
         {
             decimal memberAmount =
@@ -3564,23 +3909,25 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     ? 0m
                     : Money(line.Gross * membership.Percent / 100m);
 
-            CampaignOffer? campaign =
-                await FindCampaignAsync(
-                    line.Product.ProductId,
-                    dto.CustomerId,
-                    date);
-
-            decimal campaignAmount =
-                campaign == null
-                    ? 0m
-                    : Money(line.Gross * Math.Min(campaign.Percent, 100m) / 100m);
+            (CampaignOffer? campaign, decimal campaignAmount) =
+                campaigns.Count > 0 && places.TryGetValue(line.Product.ProductId, out var place)
+                    ? BestCampaign(campaigns, place, line.Product.ProductId, line.Quantity, line.Gross)
+                    : (null, 0m);
 
             if (campaign != null && campaignAmount > 0m && campaignAmount >= memberAmount)
             {
                 line.DiscountSource = SourceCampaign;
-                line.CmPercent = Math.Min(campaign.Percent, 100m);
+                line.CmPercent = line.Gross > 0m ? Math.Round(campaignAmount * 100m / line.Gross, 2) : 0m;
                 line.CmAmount = campaignAmount;
-                line.DiscountLabel = Limit($"Campaign {campaign.Name} {line.CmPercent:0.##}%", 100);
+                line.OfferId = campaign.CampaignId;
+                line.OfferNo = campaign.OfferNo;
+                line.CampaignLedger = campaign.LedgerCode;
+                line.DiscountLabel = Limit($"Offer {campaign.OfferNo} {campaign.Name}", 100);
+
+                if (campaign.LedgerIssue.Length > 0 && !result.Errors.Contains(campaign.LedgerIssue))
+                {
+                    result.Errors.Add(campaign.LedgerIssue);
+                }
             }
             else if (membership != null && memberAmount > 0m)
             {
@@ -3851,7 +4198,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                             ? Math.Max(line.VatInside - line.VatInDp, 0m)
                             : 0m;
 
-                    if (!(dp > 0m) && line.VatInside > 0m)
+                    if (!(dp > 0m) && line.VatInside > 0m && !options.Quotation)
                     {
                         result.Errors.Add($"{label} : no DP on the price card for the invoice date, the VAT payable cannot be worked out (Product Pricing - Motor Bikes).");
                     }
@@ -3907,7 +4254,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 line.BelowCostMessage =
                     $"{label} sells below cost (net {Amount(line.NetExclVat)} excl. VAT, cost {Amount(cost)}).";
 
-                if (switches.BlockBelowCost)
+                if (switches.BlockBelowCost && !options.Quotation)
                 {
                     result.Errors.Add(line.BelowCostMessage + " System Configuration › Block Sale Below Cost is ON.");
                 }
@@ -4108,9 +4455,25 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         result.Paid =
             result.Payments.Sum(x => x.Amount);
 
+        // Made from a Sales Quotation (Convert to Invoice)
+        if (!options.Quotation && dto.QuotationId is > 0)
+        {
+            await PriceQuotationLinkAsync(dto.QuotationId.Value, result, options);
+        }
+
+        // Quotation : no payment, booking, payment term or credit
+        // rule (asked when it becomes an invoice)
+        if (options.Quotation)
+        {
+            result.Paid = 0m;
+            result.Due = result.InvoiceTotal;
+
+            return result;
+        }
+
         // MB : a booking's advance (already on the customer's ledger)
         // counts as paid
-        if (Page.PageType == "MB" && dto.BookingId is > 0)
+        if (dto.BookingId is > 0)
         {
             await PriceBookingAsync(dto.BookingId.Value, result, options);
         }
@@ -4744,10 +5107,16 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             dto.RegistrationReversalNo = bike.RegistrationReversalNo ?? string.Empty;
             dto.RegistrationReversedDate = bike.RegistrationReversedDate;
             dto.RegistrationReverseReason = bike.RegistrationReverseReason ?? string.Empty;
-            dto.BookingId = bike.BookingId;
-            dto.BookingNo = bike.BookingNo ?? string.Empty;
-            dto.BookingAdvance = bike.BookingAdvance;
         }
+
+        // Booking taken (MB / SP / AC)
+        dto.BookingId = x.BookingId;
+        dto.BookingNo = x.BookingNo ?? string.Empty;
+        dto.BookingAdvance = x.BookingAdvance;
+
+        // Quotation it was made from
+        dto.QuotationId = x.QuotationId;
+        dto.QuotationNo = x.QuotationNo ?? string.Empty;
 
         return dto;
     }
@@ -5767,7 +6136,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         (
             CreateSalesInvoiceDto dto,
             bool canGiveSpecialDiscount,
-            long userId
+            long userId,
+            bool quotation = false
         )
     {
         PageOf(dto.PageType);
@@ -5780,7 +6150,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 {
                     CanSpecial = canGiveSpecialDiscount,
                     Posting = false,
-                    UserId = userId
+                    UserId = userId,
+                    Quotation = quotation
                 });
 
         // MB : Fuel / Electric of the bikes (the registration types
@@ -5904,12 +6275,16 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             bikeHeader.RegistrationTotal = registration?.Total ?? 0m;
             bikeHeader.RegistrationCommission = registration?.Commission ?? 0m;
             bikeHeader.RegistrationStatus = registration != null ? RegistrationOnInvoice.StatusActive : string.Empty;
-
-            // Booking (its advance counts as paid)
-            bikeHeader.BookingId = priced.BookingId;
-            bikeHeader.BookingNo = Limit(priced.BookingNo, 40);
-            bikeHeader.BookingAdvance = priced.BookingAdvance;
         }
+
+        // Booking (MB / SP / AC; its advance counts as paid)
+        entity.BookingId = priced.BookingId;
+        entity.BookingNo = Limit(priced.BookingNo, 40);
+        entity.BookingAdvance = priced.BookingAdvance;
+
+        // Quotation it was made from
+        entity.QuotationId = priced.QuotationId;
+        entity.QuotationNo = Limit(priced.QuotationNo, 40);
     }
 
 
@@ -5951,6 +6326,9 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
         entity.BelowCost = x.BelowCost;
         entity.UnallocatedQuantity = x.Unallocated;
         entity.PlannedAllocations = JsonSerializer.Serialize(AllocationsOf(x));
+        entity.PromotionalOfferId = x.DiscountSource == SourceCampaign ? x.OfferId : null;
+        entity.PromotionalOfferNo = x.DiscountSource == SourceCampaign ? Limit(x.OfferNo, 20) : string.Empty;
+        entity.CampaignLedgerCode = x.DiscountSource == SourceCampaign ? Limit(x.CampaignLedger, 30) : string.Empty;
 
         if (entity is IMotorBikeSaleLine bike && x.Bike != null)
         {
@@ -6091,7 +6469,8 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     .Where(x => x.IsRegistered && x.MotorBikeUnitId.HasValue)
                     .Select(x => x.MotorBikeUnitId!.Value)
                     .ToList(),
-            BookingId = (entity as IMotorBikeSaleHeader)?.BookingId
+            BookingId = entity.BookingId,
+            QuotationId = entity.QuotationId
         };
     }
 
@@ -6837,12 +7216,28 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         Debit(receivable, priced.InvoiceTotal, narration, true);
 
+        // Offers (Business Promotions) : Company funded to the
+        // Campaign Discount ledger, Distributor funded to the
+        // brand's Offer Adjustment ledger (reimbursable)
         if (priced.CampaignDiscount > 0m)
         {
-            Debit(
-                PostingLedgerCodes.Get(_context, Page.PurposeCampaignDiscount),
-                priced.CampaignDiscount,
-                $"Campaign discount");
+            foreach
+            (
+                var offer
+                in priced.Lines
+                    .Where(x => x.DiscountSource == SourceCampaign && x.CmAmount > 0m)
+                    .GroupBy(x => x.CampaignLedger.Length > 0 ? x.CampaignLedger : string.Empty)
+            )
+            {
+                Debit(
+                    offer.Key.Length > 0
+                        ? offer.Key
+                        : PostingLedgerCodes.Get(_context, Page.PurposeCampaignDiscount),
+                    offer.Sum(x => x.CmAmount),
+                    offer.Key.Length > 0
+                        ? $"Offer discount (distributor) : {string.Join(", ", offer.Select(x => x.OfferNo).Distinct())}"
+                        : $"Offer discount : {string.Join(", ", offer.Select(x => x.OfferNo).Where(x => x.Length > 0).Distinct())}");
+            }
         }
 
         if (priced.MembershipDiscount > 0m)
@@ -7313,19 +7708,24 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 now);
 
             await _context.SaveChangesAsync();
-
-            // The booking taken is converted (sold)
-            await ConvertBookingAsync(entity, userId, now);
         }
+
+        // The booking taken (MB / SP / AC) is converted (sold)
+        await ConvertBookingAsync(entity, userId, now);
+
+        // The quotation it was made from is converted
+        await ConvertQuotationAsync(entity, userId, now);
     }
 
 
     //===========================================================
-    // MB : Bookings (2026-11-11)
-    //   Price   : the booking must be Open, the invoice customer's,
-    //             not on another draft / approved invoice; its
-    //             advance (on the customer's ledger already) counts
-    //             as paid. Expired or another model : a warning.
+    // Bookings (MB / SP / AC, 2026-11-11)
+    //   Price   : the booking must be of the page's type, Open, the
+    //             invoice customer's, not on another draft /
+    //             approved invoice; its advance (on the customer's
+    //             ledger already) counts as paid. Expired, another
+    //             model (MB) or booked items missing (SP / AC) : a
+    //             warning.
     //   Post    : the booking becomes Converted.
     //   Cancel  : (posted invoice) the booking is Open again.
     //===========================================================
@@ -7351,6 +7751,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             return;
         }
 
+        if (!string.Equals(booking.ProductType, Page.PageType, StringComparison.OrdinalIgnoreCase))
+        {
+            result.Errors.Add($"Booking {booking.BookingNo} is a {booking.ProductType} booking : take it on a Sales Invoice - {booking.ProductType}.");
+
+            return;
+        }
+
         if (booking.Status != "Open")
         {
             result.Errors.Add($"Booking {booking.BookingNo} is {booking.Status}.");
@@ -7370,7 +7777,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
 
         string? other =
             await _context
-                .Set<AppCore.Domain.Entities.SalesOperations.MotorBikeSales.SalesInvoicesMb>()
+                .Set<THeader>()
                 .AsNoTracking()
                 .Where(x => !x.IsDeleted
                             && x.BookingId == bookingId
@@ -7391,9 +7798,42 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             result.Warnings.Add($"Booking {booking.BookingNo} expired on {booking.ValidUntil.Value:dd-MMM-yyyy}.");
         }
 
-        if (!result.Lines.Any(x => x.Bike != null && x.Product.ProductId == booking.MotorBikeId))
+        if (Page.PageType == "MB")
         {
-            result.Warnings.Add($"Booking {booking.BookingNo} is for {booking.ModelName} : no such bike on the invoice yet.");
+            if (!result.Lines.Any(x => x.Bike != null && x.Product.ProductId == booking.MotorBikeId))
+            {
+                result.Warnings.Add($"Booking {booking.BookingNo} is for {booking.ModelName} : no such bike on the invoice yet.");
+            }
+        }
+        else
+        {
+            // SP / AC : the booked items not (fully) on the invoice
+            List<BookingLinesEntity> booked =
+                await _context
+                    .Set<BookingLinesEntity>()
+                    .AsNoTracking()
+                    .Where(x => x.BookingId == booking.BookingId)
+                    .OrderBy(x => x.LineNo)
+                    .ToListAsync();
+
+            List<string> missing =
+                booked
+                    .Where
+                    (
+                        b =>
+                            result.Lines
+                                .Where(x => x.Product.ProductId == b.ProductId)
+                                .Sum(x => x.Quantity)
+                            <
+                            b.Quantity
+                    )
+                    .Select(b => $"{b.ProductName} x {b.Quantity:0.##}")
+                    .ToList();
+
+            if (missing.Count > 0)
+            {
+                result.Warnings.Add($"Booking {booking.BookingNo} : not on the invoice yet : {string.Join(", ", missing.Take(5))}{(missing.Count > 5 ? $" (+{missing.Count - 5} more)" : string.Empty)}.");
+            }
         }
 
         result.BookingId = booking.BookingId;
@@ -7410,10 +7850,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             DateTime now
         )
     {
-        if (entity is not IMotorBikeSaleHeader { BookingId: > 0 } header)
+        if (entity.BookingId is not > 0)
         {
             return;
         }
+
+        THeader header =
+            entity;
 
         BookingsEntity booking =
             await _context
@@ -7447,7 +7890,7 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 EntityId = booking.BookingId,
                 ActivityType = "Update",
                 ActivityTitle = "Booking Converted",
-                ActivityDescription = $"{booking.BookingNo} sold on Sales Invoice - MB {entity.InvoiceNo} (advance {booking.AdvanceAmount:N2} taken as paid).",
+                ActivityDescription = $"{booking.BookingNo} sold on Sales Invoice - {Page.PageType} {entity.InvoiceNo} (advance {booking.AdvanceAmount:N2} taken as paid).",
                 PerformedBy = userId,
                 PerformedByName = "System",
                 PerformedDate = now
@@ -7465,10 +7908,13 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
             DateTime now
         )
     {
-        if (entity is not IMotorBikeSaleHeader { BookingId: > 0 } header)
+        if (entity.BookingId is not > 0)
         {
             return;
         }
+
+        THeader header =
+            entity;
 
         BookingsEntity? booking =
             await _context
@@ -7495,7 +7941,185 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 EntityId = booking.BookingId,
                 ActivityType = "Update",
                 ActivityTitle = "Booking Re-opened",
-                ActivityDescription = $"{booking.BookingNo} open again : Sales Invoice - MB {entity.InvoiceNo} was cancelled.",
+                ActivityDescription = $"{booking.BookingNo} open again : Sales Invoice - {Page.PageType} {entity.InvoiceNo} was cancelled.",
+                PerformedBy = userId,
+                PerformedByName = "System",
+                PerformedDate = now
+            });
+    }
+
+
+    //===========================================================
+    // Sales Quotations (2026-11-11)
+    //   Price   : the quotation must be of the page's type, Open,
+    //             not on another draft / approved invoice; a
+    //             quotation for a customer only for that customer
+    //             (a prospect's : any customer). Expired : warning.
+    //   Post    : the quotation becomes Converted.
+    //   Cancel  : (posted invoice) the quotation is Open again.
+    //===========================================================
+
+    private async Task
+        PriceQuotationLinkAsync
+        (
+            long quotationId,
+            PricedInvoice result,
+            PriceOptions options
+        )
+    {
+        SalesQuotationsEntity? quotation =
+            await _context
+                .Set<SalesQuotationsEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.SalesQuotationId == quotationId && !x.IsDeleted);
+
+        if (quotation == null)
+        {
+            result.Errors.Add("Quotation : not found (it may have been deleted).");
+
+            return;
+        }
+
+        if (!string.Equals(quotation.ProductType, Page.PageType, StringComparison.OrdinalIgnoreCase))
+        {
+            result.Errors.Add($"Quotation {quotation.QuotationNo} is a {quotation.ProductType} quotation.");
+
+            return;
+        }
+
+        if (quotation.Status != "Open")
+        {
+            result.Errors.Add($"Quotation {quotation.QuotationNo} is {quotation.Status}.");
+
+            return;
+        }
+
+        if (quotation.CustomerId.HasValue && result.Customer != null && result.Customer.CustomerId != quotation.CustomerId.Value)
+        {
+            result.Errors.Add($"Quotation {quotation.QuotationNo} was made for {quotation.CustomerName} ({quotation.CustomerCode}), not for this customer.");
+
+            return;
+        }
+
+        string current =
+            (options.InvoiceNo ?? string.Empty).Trim();
+
+        string? other =
+            await _context
+                .Set<THeader>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted
+                            && x.QuotationId == quotationId
+                            && (x.Status == StatusDraft || x.Status == StatusApproved)
+                            && x.InvoiceNo != current)
+                .Select(x => x.InvoiceNo)
+                .FirstOrDefaultAsync();
+
+        if (!string.IsNullOrEmpty(other))
+        {
+            result.Errors.Add($"Quotation {quotation.QuotationNo} is already on Sales Invoice {other}.");
+
+            return;
+        }
+
+        if (quotation.ValidUntil.HasValue && quotation.ValidUntil.Value < BusinessToday())
+        {
+            result.Warnings.Add($"Quotation {quotation.QuotationNo} expired on {quotation.ValidUntil.Value:dd-MMM-yyyy} : today's prices apply.");
+        }
+
+        result.QuotationId = quotation.SalesQuotationId;
+        result.QuotationNo = quotation.QuotationNo;
+    }
+
+
+    private async Task
+        ConvertQuotationAsync
+        (
+            THeader entity,
+            long userId,
+            DateTime now
+        )
+    {
+        if (entity.QuotationId is not > 0)
+        {
+            return;
+        }
+
+        SalesQuotationsEntity? quotation =
+            await _context
+                .Set<SalesQuotationsEntity>()
+                .FirstOrDefaultAsync(x => x.SalesQuotationId == entity.QuotationId!.Value && !x.IsDeleted);
+
+        // Cancelled / deleted meanwhile : the sale stands
+        if (quotation == null || quotation.Status != "Open")
+        {
+            return;
+        }
+
+        quotation.Status = "Converted";
+        quotation.SalesInvoiceId = entity.SalesInvoiceId;
+        quotation.SalesInvoiceNo = Limit(entity.InvoiceNo, 50);
+        quotation.ConvertedDate = entity.InvoiceDate;
+        quotation.ModifiedBy = userId;
+        quotation.ModifiedDate = now;
+
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module = "Sales Operations",
+                EntityName = $"SalesQuotation{quotation.ProductType}",
+                EntityId = quotation.SalesQuotationId,
+                ActivityType = "Update",
+                ActivityTitle = "Quotation Converted",
+                ActivityDescription = $"{quotation.QuotationNo} sold on Sales Invoice - {Page.PageType} {entity.InvoiceNo}.",
+                PerformedBy = userId,
+                PerformedByName = "System",
+                PerformedDate = now
+            });
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    private async Task
+        ReopenQuotationAsync
+        (
+            THeader entity,
+            long userId,
+            DateTime now
+        )
+    {
+        if (entity.QuotationId is not > 0)
+        {
+            return;
+        }
+
+        SalesQuotationsEntity? quotation =
+            await _context
+                .Set<SalesQuotationsEntity>()
+                .FirstOrDefaultAsync(x => x.SalesQuotationId == entity.QuotationId!.Value && !x.IsDeleted);
+
+        if (quotation == null || quotation.Status != "Converted" || quotation.SalesInvoiceId != entity.SalesInvoiceId)
+        {
+            return;
+        }
+
+        quotation.Status = "Open";
+        quotation.SalesInvoiceId = null;
+        quotation.SalesInvoiceNo = string.Empty;
+        quotation.ConvertedDate = null;
+        quotation.ModifiedBy = userId;
+        quotation.ModifiedDate = now;
+
+        _context.ActivityHistories.Add(
+            new ActivityHistory
+            {
+                Module = "Sales Operations",
+                EntityName = $"SalesQuotation{quotation.ProductType}",
+                EntityId = quotation.SalesQuotationId,
+                ActivityType = "Update",
+                ActivityTitle = "Quotation Re-opened",
+                ActivityDescription = $"{quotation.QuotationNo} open again : Sales Invoice - {Page.PageType} {entity.InvoiceNo} was cancelled.",
                 PerformedBy = userId,
                 PerformedByName = "System",
                 PerformedDate = now
@@ -7755,6 +8379,12 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                     {
                         await BikesBackAsync(entity, userId, now);
                     }
+
+                    // Its booking (MB / SP / AC) is open again
+                    await ReopenBookingAsync(entity, userId, now);
+
+                    // Its quotation is open again
+                    await ReopenQuotationAsync(entity, userId, now);
                 }
 
                 entity.Status = StatusCancelled;
@@ -7824,6 +8454,20 @@ public abstract class SalesInvoiceRepositoryBase<THeader, TLine, TPayment>
                 {
                     throw new InvalidOperationException(
                         $"Sales invoice {entity.InvoiceNo} has no registration to reverse.");
+                }
+
+                // A chassis returned took its registration fee back
+                // already (Sales Returns - MB)
+                bool returned =
+                    await _context
+                        .Set<TLine>()
+                        .AsNoTracking()
+                        .AnyAsync(x => x.SalesInvoiceId == entity.SalesInvoiceId && x.ReturnedQuantity > 0m);
+
+                if (returned)
+                {
+                    throw new InvalidOperationException(
+                        $"Sales invoice {entity.InvoiceNo} has returns (Sales Returns - MB) : its registration cannot be reversed as a whole.");
                 }
 
                 string receivable =

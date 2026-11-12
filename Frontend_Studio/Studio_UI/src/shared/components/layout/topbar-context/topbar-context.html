@@ -17,7 +17,69 @@
          BRANCH
     ================================================== -->
 
-    @if (branchName())
+    @if (workBranch.current(); as work)
+    {
+        <!-- Line page : the branch of the page's business line -->
+        <div class="work-chip-wrap">
+
+            <button
+                type="button"
+                class="context-chip"
+                [class.context-chip-switch]="workBranch.canPick()"
+                [title]="workBranch.canPick() ? workLabel() + ' : ' + work.branchName + ' · click to work in another ' + workLabel().toLowerCase() : workLabel() + ' : ' + work.branchName"
+                (click)="onWorkClick()">
+
+                <i class="fa-solid fa-store"></i>
+
+                <span class="context-label">{{ workLabel() }}</span>
+
+                <b class="context-value">
+                    {{ work.branchName }}
+                </b>
+
+                @if (workBranch.canPick())
+                {
+                    <i class="fa-solid fa-chevron-down context-switch-caret"></i>
+                }
+
+            </button>
+
+            @if (workMenuOpen())
+            {
+                <div class="work-menu-backdrop" (click)="onWorkClose()"></div>
+
+                <div class="work-menu" role="listbox">
+
+                    <div class="work-menu-title">Work in {{ workLabel() }}</div>
+
+                    @for (b of workBranch.lineBranches(); track b.branchId)
+                    {
+                        <button
+                            type="button"
+                            class="work-menu-item"
+                            [class.work-menu-on]="b.branchId === work.branchId"
+                            (click)="onWorkPick(b.branchId)">
+
+                            <i [class]="b.branchId === work.branchId ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"></i>
+
+                            <span class="work-menu-name">{{ b.branchName }}</span>
+
+                            @if (b.branchCode)
+                            {
+                                <span class="work-menu-code">{{ b.branchCode }}</span>
+                            }
+
+                        </button>
+                    }
+
+                    <div class="work-menu-note">Only this kind of page uses it; the page reloads.</div>
+
+                </div>
+            }
+
+        </div>
+    }
+    @else if (branchName())
     {
         @if (branchSwitch.canSwitch())
         {

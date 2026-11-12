@@ -2,6 +2,8 @@
 // Namespaces
 //===============================================================
 
+using AppCore.Application.Platform.Tenancy;
+using AppCore.Infrastructure.Platform.Tenancy;
 using AppCore.Application.Settings.GeneralSettings;
 
 //===============================================================
@@ -36,10 +38,16 @@ public class FinancialYearAutoCreateJob : BackgroundService
 
     private readonly ILogger<FinancialYearAutoCreateJob> _logger;
 
+    // Tenancy : the work runs once per client company
+    private readonly TenantScopes _tenants;
+
     public FinancialYearAutoCreateJob(
         IServiceScopeFactory scopeFactory,
-        ILogger<FinancialYearAutoCreateJob> logger)
+        ILogger<FinancialYearAutoCreateJob> logger,
+        TenantScopes tenants)
     {
+        _tenants = tenants;
+
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -76,14 +84,15 @@ public class FinancialYearAutoCreateJob : BackgroundService
     {
         try
         {
-            // A fresh scope (own DbContext) for every check
-            using IServiceScope scope =
-                _scopeFactory.CreateScope();
+            // A fresh scope (own DbContext) for every check, once per
+            // company (Tenancy : TenantScopes)
+            await _tenants.ForEachAsync("Financial year auto create", async sp =>
+            {
+                IFinancialYearAutoCreateService service =
+                    sp.GetRequiredService<IFinancialYearAutoCreateService>();
 
-            IFinancialYearAutoCreateService service =
-                scope.ServiceProvider.GetRequiredService<IFinancialYearAutoCreateService>();
-
-            await service.RunIfDueAsync(stoppingToken);
+                await service.RunIfDueAsync(stoppingToken);
+            }, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

@@ -10,6 +10,7 @@ using AppCore.Application.Common.ActivityHistory.Interfaces;
 
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Application.Settings.GeneralSettings.Company.DTOs;
+using AppCore.Api.Platform.Tenancy;
 
 
 //===============================================================
@@ -228,7 +229,7 @@ public class CompanyController : ControllerBase
         //===========================================================
 
         string webRootPath =
-            _environment.WebRootPath;
+            TenantWebRoot.Of(HttpContext, _environment);
 
 
         if (string.IsNullOrWhiteSpace(webRootPath))

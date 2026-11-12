@@ -523,7 +523,9 @@ export abstract class SalesInvoiceService
             RegistrationReverseReason:this.text(item, 'RegistrationReverseReason'),
             BookingId:this.optionalId(item, 'BookingId'),
             BookingNo:this.text(item, 'BookingNo'),
-            BookingAdvance:this.num(item, 'BookingAdvance')
+            BookingAdvance:this.num(item, 'BookingAdvance'),
+            QuotationId:this.optionalId(item, 'QuotationId'),
+            QuotationNo:this.text(item, 'QuotationNo')
         };
     }
 
@@ -1234,15 +1236,20 @@ export abstract class SalesInvoiceService
 
 
     // Server pricing of the page's lines (never 400 for a rule)
+    // quotation : priced for a Sales Quotation (customer optional,
+    // no stock needed, MB models without chassis)
     quote
     (
         model:
-            CreateSalesInvoice
+            CreateSalesInvoice,
+        quotation:
+            boolean =
+            false
     ):
         Observable<SalesInvoiceQuote>
     {
         return this.http
-            .post<any>(`${this.apiUrl}/quote`, model)
+            .post<any>(`${this.apiUrl}/quote${quotation ? '?quotation=true' : ''}`, model)
             .pipe(
                 map(item => this.normalizeQuote(item))
             );
