@@ -313,5 +313,18 @@ export const PRINT_SOURCES:
     'sales-enquiries':
         () =>
             import('../../features/enquiry-management/enquiry-profiles/print/sales-enquiries.print')
-                .then(module => module.SALES_ENQUIRIES_PRINT)
+                .then(module => module.SALES_ENQUIRIES_PRINT),
+
+    // Human Resource : a report as the page shows it (Staff &
+    // Payroll Reports, PF Reports ...) and the payslips of a salary
+    // sheet; the id is the page's token
+    'hr-report':
+        () =>
+            import('../../features/human-resource-manangement/print/hr-print')
+                .then(module => module.HR_REPORT_PRINT),
+
+    'hr-payslip':
+        () =>
+            import('../../features/human-resource-manangement/print/hr-print')
+                .then(module => module.HR_PAYSLIP_PRINT)
 };

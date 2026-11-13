@@ -1,257 +1,133 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-sitemap"
-
         [title]="pageTitle"
-
-        subtitle="Manage departments">
+        subtitle="A department of the company">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
-    ====================================================== -->
-
-    <app-page-toolbar>
-
-        <app-control-tabs
-
-            pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
-
-    </app-page-toolbar>
-
-
-
-    <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS
+         The same look as the other Human Resource Setup forms
+         (pages/hr-setup/form) : the fields in three columns on
+         the left, how the row is used on the right.
     ====================================================== -->
 
     <app-page-canvas>
 
-        <app-form-grid
-
+        <div
             canvasBody
-
-            [columns]="4">
-
-
-
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Basic Information"
-
-                icon="fas fa-sitemap">
-
-
-
-                <!-- Department Code -->
-
-                <app-textbox
-
-                    label="Department Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.DepartmentCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 ORGANIZATION INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Department Information"
-
-                icon="fas fa-sitemap">
-
-
-
-                <!-- Department Name -->
-
-                <app-textbox
-
-                    label="Department Name"
-
-                    placeholder="Enter department name"
-
-                    [(value)]="entity.DepartmentName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- Short Name -->
-
-                <app-textbox
-
-                    label="Short Name"
-
-                    placeholder="Enter short name"
-
-                    [(value)]="entity.DepartmentShortName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 STATUS & CONTROL
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Control"
-
-                icon="fas fa-toggle-on">
-
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 CONFIGURATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Configuration"
-
-                icon="fas fa-sliders">
-
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-
-
-            </app-form-section>
-
-
-
-        </app-form-grid>
+            class="hrf-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the fields
+            ================================================== -->
+
+            <section class="hrf-card">
+
+                <header class="hrf-card-head">
+                    <i class="fas fa-sitemap"></i>
+                    <span>Department Details</span>
+                </header>
+
+                <div class="hrf-grid">
+
+                    <app-textbox
+                        label="Code"
+                        placeholder="Auto generated"
+                        [(value)]="entity.DepartmentCode"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Department Name"
+                        placeholder="e.g. Sales"
+                        [(value)]="entity.DepartmentName"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-textbox>
+
+                    <app-dropdown
+                        label="Status"
+                        [items]="statusItems"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <app-textbox
+                        label="Short Name"
+                        placeholder="e.g. SLS"
+                        [(value)]="entity.DepartmentShortName"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <div class="hrf-cell hrf-span-2">
+                        <app-textbox
+                            label="Remarks"
+                            placeholder="Optional"
+                            textCase="none"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode">
+                        </app-textbox>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- =================================================
+                 RIGHT : how it is used
+            ================================================== -->
+
+            <section class="hrf-card hrf-help">
+
+                <header class="hrf-card-head">
+                    <i class="fas fa-circle-info"></i>
+                    <span>How it is used</span>
+                </header>
+
+                <ul>
+                    <li>Each employee belongs to one department (Employee Management &gt; Employee Profiles).</li>
+                    <li>Departments filter the Employee Profiles list and the Staff List report.</li>
+                    <li>A transfer to another department is saved on Employee Movements.</li>
+                    <li>Make a department that is no longer used Inactive : it then stays on the old records.</li>
+                </ul>
+
+            </section>
+
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

@@ -301,6 +301,202 @@ implements OnChanges
   }
 
 
+  /* =====================================================
+     COLUMN WIDTHS (no clipping at any zoom, 2026-11-13)
+     -----------------------------------------------------
+     The page's widths are treated as proportions :
+       - small fixed columns (#, status, yes / no, image,
+         operation, actions) keep their width;
+       - the other columns share what is left, in the same
+         proportions, so the table always fits its frame;
+         long text ends with "..." (full text on hover).
+     When even the minimum widths do not fit (big zoom, small
+     window) the body scrolls sideways (lt-scroll); the #
+     column stays at the left and Actions at the right, and
+     the header / totals follow the scroll.
+  ====================================================== */
+
+  private static readonly FIXED_TYPES =
+    new Set<string>(['serial', 'status', 'boolean', 'image', 'operation', 'actions']);
+
+  // A flexible column never gets narrower than this
+  private static readonly MIN_FLEX = 72;
+
+  // Computed px width per column (same order as columns);
+  // empty = the page's own width
+  colWidths: number[] = [];
+
+  // Table width in px ; null = 100% of the frame
+  tableWidth: number | null = null;
+
+  scrollMode = false;
+
+  colWidth(index: number, column: ListTableColumn): string | null
+  {
+    const px =
+      this.colWidths[index];
+
+    return px > 0 ? `${px}px` : (column.width ?? null);
+  }
+
+  isStickLeft(index: number, column: ListTableColumn): boolean
+  {
+    return index === 0 && column.type === 'serial';
+  }
+
+  isStickRight(index: number, column: ListTableColumn): boolean
+  {
+    return index === this.columns.length - 1 && (column.type === 'actions' || column.type === 'operation');
+  }
+
+  private basePx(column: ListTableColumn): number
+  {
+    const text =
+      String(column.width ?? '').trim();
+
+    const value =
+      parseFloat(text);
+
+    if (text.endsWith('px') && value > 0)
+    {
+      return value;
+    }
+
+    // % or no width : an average text column
+    return 150;
+  }
+
+  // The status pill is 110px wide plus the cell's 6px sides :
+  // a narrower status column cuts the pill off
+  private static readonly MIN_STATUS = 124;
+
+  private fitColumns(host: HTMLElement, body: HTMLElement): void
+  {
+    const avail =
+      body.clientWidth;
+
+    if (avail <= 0 || !this.columns?.length)
+    {
+      return;
+    }
+
+    const hidden =
+      (c: ListTableColumn) =>
+        (c.priority === 3 && host.classList.contains('lt-hide-p3'))
+        ||
+        ((c.priority === 2 || c.priority === 3) && host.classList.contains('lt-hide-p2'));
+
+    let fixedSum = 0;
+    let flexSum = 0;
+    let flexMinSum = 0;
+
+    const info =
+      this.columns.map(c =>
+      {
+        const base =
+          c.type === 'status'
+            ? Math.max(this.basePx(c), ListTableComponent.MIN_STATUS)
+            : this.basePx(c);
+        const fixed = ListTableComponent.FIXED_TYPES.has(c.type ?? 'text');
+        const off = hidden(c);
+        const min = Math.max(ListTableComponent.MIN_FLEX, Math.round(base * 0.6));
+
+        if (!off)
+        {
+          if (fixed)
+          {
+            fixedSum += base;
+          }
+          else
+          {
+            flexSum += base;
+            flexMinSum += min;
+          }
+        }
+
+        return { base, fixed, off, min };
+      });
+
+    const scroll =
+      fixedSum + flexMinSum > avail;
+
+    const room =
+      Math.max(0, avail - fixedSum);
+
+    let used = 0;
+    let lastFlex = -1;
+
+    const widths =
+      info.map((x, i) =>
+      {
+        if (x.off)
+        {
+          return 0;
+        }
+
+        const w =
+          x.fixed
+            ? x.base
+            : scroll
+              ? x.min
+              : Math.floor(room * x.base / (flexSum || 1));
+
+        if (!x.fixed)
+        {
+          lastFlex = i;
+        }
+
+        used += w;
+
+        return w;
+      });
+
+    // rounding : the last flexible column takes the few px left
+    if (!scroll && lastFlex >= 0 && used < avail)
+    {
+      widths[lastFlex] += avail - used;
+      used = avail;
+    }
+
+    const table =
+      scroll ? used : avail;
+
+    const same =
+      this.scrollMode === scroll
+      && this.tableWidth === table
+      && widths.length === this.colWidths.length
+      && widths.every((w, i) => w === this.colWidths[i]);
+
+    host.classList.toggle('lt-scroll', scroll);
+
+    if (same)
+    {
+      return;
+    }
+
+    this.colWidths = widths;
+    this.tableWidth = table;
+    this.scrollMode = scroll;
+
+    if (!scroll)
+    {
+      body.scrollLeft = 0;
+      this.syncScroll(body);
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  // Header and totals follow the body's sideways scroll
+  syncScroll(body: HTMLElement): void
+  {
+    const host =
+      this.hostRef.nativeElement as HTMLElement;
+
+    host.querySelectorAll<HTMLElement>('.list-table-header, .list-table-foot')
+      .forEach(el => el.scrollLeft = body.scrollLeft);
+  }
+
   private fitToCanvas(): void
   {
     const host =
@@ -318,6 +514,11 @@ implements OnChanges
 
     const body =
       host.querySelector('.list-table-body') as HTMLElement | null;
+
+    if (body)
+    {
+      this.fitColumns(host, body);
+    }
 
     if (!body || !this.fitRowsChange.observed)
     {
@@ -701,10 +902,16 @@ private readonly navigationContextSubscription =
   ====================================================== */
 
   ngOnChanges(
-    _changes: SimpleChanges
+    changes: SimpleChanges
   ):
     void
   {
+    // new columns (or rows after loading) : widths again
+    if (changes['columns'] || changes['rows'] || changes['loading'])
+    {
+      this.scheduleFit();
+    }
+
     // (debug logging of loading / error / rows removed : it ran
     // on every load and slowed big lists down)
   }

@@ -160,6 +160,20 @@ from '../../bike-shelf/bike-shelf';
 
 import
 {
+    ProductShelfComponent
+}
+from '../../../../procurement/shared/product-shelf/product-shelf';
+
+import
+{
+    ShelfOptions,
+    ShelfPick,
+    ShelfProduct
+}
+from '../../../../procurement/shared/product-shelf/product-shelf.model';
+
+import
+{
     AccountingLookupService
 }
 from '../../../../../shared/components/accounting/accounting-lookup.service';
@@ -215,6 +229,7 @@ import
     CreateSalesInvoice,
     UpdateSalesInvoice,
     SalesQuotation,
+    SalesQuotationUnit,
     SaveSalesQuotation,
     SalesInvoiceListNotice,
     SalesInvoiceNoticeTone,
@@ -475,7 +490,8 @@ const SALES_INVOICE_DEFAULTS_CACHE =
         ConfirmDialogComponent,
         ProgressDialogComponent,
         PaymentDeskComponent,
-        BikeShelfComponent
+        BikeShelfComponent,
+        ProductShelfComponent
     ],
 
     templateUrl:'./sales-invoice-form.html',
@@ -762,6 +778,15 @@ implements OnInit, OnDestroy
         boolean
     {
         return !!this.customer && this.customer.CustomerId > 0;
+    }
+
+    // Items can be added : a customer is picked, or it is a
+    // quotation (a prospect needs no profile; the name and phone
+    // are checked on save)
+    get canAddLines():
+        boolean
+    {
+        return this.hasCustomer || this.isQuotation;
     }
 
     customerLoading:
@@ -1546,6 +1571,11 @@ implements OnInit, OnDestroy
     get pageSubtitle():
         string
     {
+        if (this.isQuotation)
+        {
+            return 'Sales quotation : Open -> Converted (its invoice posted) / Cancelled · no stock, no payment';
+        }
+
         return this.switches && !this.switches.PostOnApproval
             ? 'Counter sale : saving posts the invoice and its receipt'
             : 'Sales invoice : Draft -> Approved -> Posted';
@@ -2612,6 +2642,26 @@ implements OnInit, OnDestroy
         this.clearProductEntry();
 
         this.loadProductList();
+
+        // MB quotation : chassis are per warehouse
+        if
+        (
+            this.isMbQuotation
+        )
+        {
+            this.unitPicks =
+                {};
+
+            this.unitStock =
+                [];
+
+            this.unitStockWarehouse =
+                null;
+
+            if (this.specificUnits) { this.loadUnitStock(); }
+
+            this.buildUnitChoices();
+        }
 
         this.onChanged();
     }
@@ -5348,6 +5398,12 @@ implements OnInit, OnDestroy
     get termHint():
         string
     {
+        // A quotation takes no payment : no Cash / Credit hint
+        if (this.isQuotation)
+        {
+            return '';
+        }
+
         if (!this.isEditable)
         {
             return this.paymentTerm === 'EMI' && this.emiAccountName
@@ -5973,7 +6029,7 @@ implements OnInit, OnDestroy
     onAddLine():
         void
     {
-        if (!this.hasCustomer)
+        if (!this.canAddLines)
         {
             return;
         }
@@ -6109,6 +6165,630 @@ implements OnInit, OnDestroy
         this.clearProductEntry();
 
         this.onChanged();
+    }
+
+
+    //===========================================================
+    // MB quotation : "Specific unit (chassis / engine)"
+    // Off (default) : models with a quantity. On : one chassis
+    // (in stock in the warehouse) per quantity of each model line,
+    // printed on the quotation. Nothing is reserved.
+    //===========================================================
+
+    specificUnits =
+        false;
+
+    unitStock:
+        SalesInvoiceBikeUnit[] =
+        [];
+
+    unitStockLoading =
+        false;
+
+    private unitStockWarehouse:
+        number | null =
+        null;
+
+    // Picked bikes per model (ProductId)
+    unitPicks:
+        Record<number, SalesQuotationUnit[]> =
+        {};
+
+    // Pick list per model (built when stock / picks change)
+    unitChoiceMap:
+        Record<number, { label:string; value:number; badge:string }[]> =
+        {};
+
+    get isMbQuotation():
+        boolean
+    {
+        return this.isQuotation
+            &&
+            this.page.pageType === 'MB';
+    }
+
+    get unitsOn():
+        boolean
+    {
+        return this.isMbQuotation
+            &&
+            this.specificUnits;
+    }
+
+    toggleSpecificUnits():
+        void
+    {
+        if
+        (
+            !this.isMbQuotation
+            ||
+            this.isReadonly
+        )
+        {
+            return;
+        }
+
+        this.specificUnits =
+            !this.specificUnits;
+
+        if
+        (
+            this.specificUnits
+        )
+        {
+            this.loadUnitStock();
+        }
+
+        this.checkForChanges();
+
+        this.refresh();
+    }
+
+    private loadUnitStock
+    (
+        force:
+            boolean = false
+    ):
+        void
+    {
+        const warehouseId =
+            this.warehouseId;
+
+        if
+        (
+            !warehouseId
+        )
+        {
+            this.unitStock =
+                [];
+
+            this.buildUnitChoices();
+
+            return;
+        }
+
+        if
+        (
+            !force
+            &&
+            this.unitStockWarehouse === warehouseId
+        )
+        {
+            return;
+        }
+
+        this.unitStockLoading =
+            true;
+
+        this.salesInvoiceService
+            .getBikeUnits(warehouseId, 0)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    (units: SalesInvoiceBikeUnit[]):
+                        void =>
+                    {
+                        this.unitStockLoading =
+                            false;
+
+                        this.unitStockWarehouse =
+                            warehouseId;
+
+                        this.unitStock =
+                            units ?? [];
+
+                        this.buildUnitChoices();
+
+                        this.refresh();
+                    },
+                error:
+                    ():
+                        void =>
+                    {
+                        this.unitStockLoading =
+                            false;
+
+                        this.unitStock =
+                            [];
+
+                        this.buildUnitChoices();
+
+                        this.entryError =
+                            'The bikes in stock could not be loaded.';
+
+                        this.refresh();
+                    }
+            });
+    }
+
+    private buildUnitChoices():
+        void
+    {
+        const picked =
+            new Set<number>(this.pickedUnits().map(x => x.MotorBikeUnitId));
+
+        const map:
+            Record<number, { label:string; value:number; badge:string }[]> =
+            {};
+
+        for (const unit of this.unitStock)
+        {
+            if
+            (
+                picked.has(unit.MotorBikeUnitId)
+            )
+            {
+                continue;
+            }
+
+            (map[unit.ProductId] ??= []).push
+            ({
+                label:`${unit.ChassisNo} · ${unit.IsElectric ? 'Motor' : 'Engine'} ${unit.EngineNo}`,
+                value:unit.MotorBikeUnitId,
+                badge:[unit.ColorName, unit.ManufactureYear ? String(unit.ManufactureYear) : ''].filter(x => !!x).join(' · ')
+            });
+        }
+
+        this.unitChoiceMap =
+            map;
+    }
+
+    // Every bike picked (line order)
+    pickedUnits():
+        SalesQuotationUnit[]
+    {
+        return this.lines.flatMap(x => this.unitPicks[x.ProductId] ?? []);
+    }
+
+    unitsOf
+    (
+        row:
+            ItemRow
+    ):
+        SalesQuotationUnit[]
+    {
+        return this.unitPicks[row.entry.ProductId] ?? [];
+    }
+
+    unitsNeeded
+    (
+        row:
+            ItemRow
+    ):
+        number
+    {
+        return Math.max(0, Math.round(Number(row.entry.Quantity) || 0));
+    }
+
+    onUnitPick
+    (
+        row:
+            ItemRow,
+        value:
+            any
+    ):
+        void
+    {
+        const id =
+            Number(value) || 0;
+
+        const unit =
+            this.unitStock.find(x => x.MotorBikeUnitId === id);
+
+        if
+        (
+            !unit
+            ||
+            this.isReadonly
+            ||
+            this.unitsOf(row).length >= this.unitsNeeded(row)
+        )
+        {
+            return;
+        }
+
+        this.unitPicks =
+        {
+            ...this.unitPicks,
+            [row.entry.ProductId]:
+            [
+                ...this.unitsOf(row),
+                {
+                    ProductId:row.entry.ProductId,
+                    MotorBikeUnitId:unit.MotorBikeUnitId,
+                    ChassisNo:unit.ChassisNo,
+                    EngineNo:unit.EngineNo,
+                    ColorName:unit.ColorName
+                }
+            ]
+        };
+
+        this.buildUnitChoices();
+
+        this.checkForChanges();
+
+        this.refresh();
+    }
+
+    removeUnit
+    (
+        row:
+            ItemRow,
+        unit:
+            SalesQuotationUnit
+    ):
+        void
+    {
+        if
+        (
+            this.isReadonly
+        )
+        {
+            return;
+        }
+
+        this.unitPicks =
+        {
+            ...this.unitPicks,
+            [row.entry.ProductId]:
+                this.unitsOf(row).filter(x => x.MotorBikeUnitId !== unit.MotorBikeUnitId)
+        };
+
+        this.buildUnitChoices();
+
+        this.checkForChanges();
+
+        this.refresh();
+    }
+
+
+    //===========================================================
+    // Product Shelf (SP / AC invoices and quotations; MB
+    // quotation : the models) : the warehouse's active items as
+    // cards (category chips, sub category, search); several are
+    // picked at once with their quantities. The price is the MRP
+    // (read only); the server prices the lines as usual.
+    //===========================================================
+
+    itemShelfOpen =
+        false;
+
+    itemShelfLoading =
+        false;
+
+    itemShelfProducts:
+        ShelfProduct[] =
+        [];
+
+    itemShelfError =
+        '';
+
+    // Shelf code -> the product row it came from
+    private itemShelfSource =
+        new Map<string, SalesInvoiceProduct>();
+
+    get itemShelfOptions():
+        ShelfOptions
+    {
+        const many =
+            this.page.pageType === 'AC'
+                ? 'accessories'
+                : this.page.pageType === 'MB'
+                    ? 'motor bikes'
+                    : 'spare parts / lubricants';
+
+        return {
+            showMrp:false,
+            showMargin:false,
+            showFree:false,
+            mrpRequired:false,
+            priceWord:'MRP',
+            itemWord:this.page.itemLower,
+            itemsWord:many,
+            icon:this.page.icon,
+            docWord:this.isQuotation ? 'quotation' : 'invoice',
+            salesMode:true
+        };
+    }
+
+    get itemShelfSubtitle():
+        string
+    {
+        const house =
+            this.warehouseItems.find(x => x.value === this.warehouseId)?.label ?? 'this warehouse';
+
+        return this.isQuotation
+            ? `${house} · stock is shown, a quotation needs none`
+            : this.switches?.AllowSaleWithoutStock
+                ? `${house} · sale without stock is allowed`
+                : `${house} · at most the stock on hand`;
+    }
+
+    openItemShelf():
+        void
+    {
+        if
+        (
+            !this.canAddLines
+            ||
+            this.isReadonly
+            ||
+            this.itemShelfLoading
+        )
+        {
+            return;
+        }
+
+        if
+        (
+            !this.warehouseId
+        )
+        {
+            this.entryError =
+                'Pick the warehouse first.';
+
+            this.refresh();
+
+            return;
+        }
+
+        this.itemShelfLoading =
+            true;
+
+        this.itemShelfError =
+            '';
+
+        this.refresh();
+
+        this.salesInvoiceService
+            .searchProducts(
+                this.warehouseId,
+                '',
+                null,
+                null,
+                true)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe
+            ({
+                next:
+                    (products: SalesInvoiceProduct[]):
+                        void =>
+                    {
+                        this.itemShelfLoading =
+                            false;
+
+                        this.buildItemShelf(products ?? []);
+
+                        this.itemShelfOpen =
+                            true;
+
+                        this.refresh();
+                    },
+                error:
+                    ():
+                        void =>
+                    {
+                        this.itemShelfLoading =
+                            false;
+
+                        this.entryError =
+                            'The shelf could not be loaded. Try again.';
+
+                        this.refresh();
+                    }
+            });
+    }
+
+    private buildItemShelf
+    (
+        products:
+            SalesInvoiceProduct[]
+    ):
+        void
+    {
+        const categories =
+            new Map<number, string>(
+                (this.defaults?.Categories ?? []).map(x => [x.Id, x.Name] as [number, string]));
+
+        const subCategories =
+            new Map<number, string>(
+                (this.defaults?.SubCategories ?? []).map(x => [x.Id, x.Name] as [number, string]));
+
+        const capped =
+            !this.isQuotation
+            &&
+            !this.switches?.AllowSaleWithoutStock;
+
+        this.itemShelfSource =
+            new Map<string, SalesInvoiceProduct>();
+
+        this.itemShelfProducts =
+            products
+                // An invoice sells priced items only
+                .filter(p => this.isQuotation || p.Mrp > 0)
+                .map
+                (
+                    p =>
+                    {
+                        const code =
+                            p.ProductCode || String(p.ProductId);
+
+                        this.itemShelfSource.set(code, p);
+
+                        const onLine =
+                            this.lines.find(x => x.ProductId === p.ProductId)?.Quantity ?? 0;
+
+                        return {
+                            code,
+                            name:p.ProductName || [p.PartNumber, p.PartName].filter(x => !!x).join(' - '),
+                            unit:p.Unit,
+                            categoryId:p.ProductCategoryId || null,
+                            categoryName:categories.get(p.ProductCategoryId) ?? '',
+                            subCategoryId:p.ProductSubCategoryId || null,
+                            subCategoryName:subCategories.get(p.ProductSubCategoryId) ?? '',
+                            imageUrl:p.ImageUrl || '',
+                            lastText:'',
+                            boughtBefore:false,
+                            mrpText:p.Mrp > 0 ? `MRP ${this.money(p.Mrp)}` : 'MRP —',
+                            stockText:`Stock ${this.qtyString(p.OnHand)}`,
+                            stockQty:p.OnHand,
+                            stockTone:p.OnHand > 0 ? 'green' : 'red',
+                            room:capped ? Math.max(0, p.OnHand) : null,
+                            inOrderQty:onLine,
+                            start:
+                            {
+                                qty:onLine > 0 ? onLine : 1,
+                                free:0,
+                                mrp:p.Mrp,
+                                margin:null,
+                                dp:p.Mrp
+                            }
+                        } as ShelfProduct;
+                    }
+                );
+    }
+
+    // The picks : a new line, or the quantity of the line already
+    // there is set to the picked quantity
+    onItemShelfAdd
+    (
+        picks:
+            ShelfPick[]
+    ):
+        void
+    {
+        let added =
+            0;
+
+        for (const pick of picks ?? [])
+        {
+            const product =
+                this.itemShelfSource.get(pick.code);
+
+            const quantity =
+                roundMoney(Number(pick.figures?.qty) || 0);
+
+            if
+            (
+                !product
+                ||
+                !(quantity > 0)
+            )
+            {
+                continue;
+            }
+
+            if
+            (
+                this.isQuotation
+                &&
+                this.page.pageType === 'MB'
+                &&
+                quantity !== Math.trunc(quantity)
+            )
+            {
+                continue;
+            }
+
+            const existing =
+                this.lines.find(x => x.ProductId === product.ProductId);
+
+            if
+            (
+                existing
+            )
+            {
+                existing.Quantity =
+                    quantity;
+
+                existing.qtyText =
+                    this.qtyString(quantity);
+
+                existing.OnHand =
+                    product.OnHand;
+            }
+            else
+            {
+                if (this.customer) { this.customerCollapsed = true; }
+
+                this.lines =
+                [
+                    ...this.lines,
+                    {
+                        ProductId:product.ProductId,
+                        ProductCode:product.ProductCode,
+                        PartNumber:product.PartNumber,
+                        ProductName:product.ProductName || [product.PartNumber, product.PartName].filter(x => !!x).join(' - '),
+                        ProductType:product.ProductType,
+                        Unit:product.Unit,
+                        Quantity:quantity,
+                        UnitPrice:null,
+                        SpecialPercent:null,
+                        OnHand:product.OnHand,
+                        Mrp:product.Mrp,
+                        qtyText:this.qtyString(quantity),
+                        priceText:'',
+                        specialText:''
+                    }
+                ];
+            }
+
+            added++;
+        }
+
+        this.itemShelfOpen =
+            false;
+
+        this.itemShelfProducts =
+            [];
+
+        if
+        (
+            added > 0
+        )
+        {
+            this.entryError =
+                '';
+
+            this.onChanged();
+
+            return;
+        }
+
+        this.refresh();
+    }
+
+    closeItemShelf():
+        void
+    {
+        this.itemShelfOpen =
+            false;
+
+        this.itemShelfProducts =
+            [];
+
+        this.refresh();
     }
 
 
@@ -6302,6 +6982,25 @@ implements OnInit, OnDestroy
 
         this.lines =
             this.lines.filter(x => x !== row.entry);
+
+        // MB quotation : that model's chassis go too
+        if
+        (
+            this.unitPicks[row.entry.ProductId]
+            &&
+            !this.lines.some(x => x.ProductId === row.entry.ProductId)
+        )
+        {
+            const picks =
+                { ...this.unitPicks };
+
+            delete picks[row.entry.ProductId];
+
+            this.unitPicks =
+                picks;
+
+            this.buildUnitChoices();
+        }
 
         this.onChanged();
     }
@@ -6903,7 +7602,21 @@ implements OnInit, OnDestroy
             });
         }
 
+        // A quotation needs no stock : only a note, never an error
         if
+        (
+            priced.StockShort
+            &&
+            this.isQuotation
+        )
+        {
+            flags.push(
+            {
+                text:`On hand ${this.qtyString(priced.OnHand)} now : a quotation needs no stock`,
+                tone:'warn'
+            });
+        }
+        else if
         (
             priced.StockShort
         )
@@ -8270,7 +8983,8 @@ implements OnInit, OnDestroy
         {
             payload:this.buildPayload(),
             phone:this.phoneText,
-            prospect:this.isQuotation ? [this.prospectName, this.prospectPhone, this.prospectAddress, this.quotationTerms] : null
+            prospect:this.isQuotation ? [this.prospectName, this.prospectPhone, this.prospectAddress, this.quotationTerms] : null,
+            units:this.isMbQuotation ? [this.specificUnits, this.pickedUnits().map(x => x.MotorBikeUnitId)] : null
         });
     }
 
@@ -9508,6 +10222,38 @@ implements OnInit, OnDestroy
                 )
                 : [];
 
+        // MB quotation : Specific unit and its chassis
+        if
+        (
+            this.isMbQuotation
+            &&
+            !forInvoice
+        )
+        {
+            this.specificUnits =
+                !!quotation.SpecificUnits;
+
+            const picks:
+                Record<number, SalesQuotationUnit[]> =
+                {};
+
+            for (const line of quotation.Lines)
+            {
+                if ((line.Units ?? []).length > 0)
+                {
+                    picks[line.ProductId] =
+                        line.Units.map(u => ({ ...u, ProductId:line.ProductId }));
+                }
+            }
+
+            this.unitPicks =
+                picks;
+
+            if (this.specificUnits && this.isEditable) { this.loadUnitStock(true); }
+
+            this.buildUnitChoices();
+        }
+
         this.specialType =
             quotation.InvoiceSpecialType;
 
@@ -9597,6 +10343,28 @@ implements OnInit, OnDestroy
             return `Add at least one ${this.page.itemLower}.`;
         }
 
+        // MB quotation, Specific unit : one chassis per quantity
+        const badUnits =
+            this.unitsOn
+                ? this.rows.find(row => this.unitsOf(row).length !== this.unitsNeeded(row))
+                : undefined;
+
+        if
+        (
+            badUnits
+        )
+        {
+            const need =
+                this.unitsNeeded(badUnits);
+
+            const have =
+                this.unitsOf(badUnits).length;
+
+            return have < need
+                ? `Line ${badUnits.index + 1} : pick ${need - have} more chassis (Specific unit), or turn Specific unit off.`
+                : `Line ${badUnits.index + 1} : ${have - need} chassis more than the quantity : remove ${have - need === 1 ? 'one' : 'them'}.`;
+        }
+
         const badQty =
             this.rows.find(row => !!this.lineQtyIssue(row));
 
@@ -9653,7 +10421,9 @@ implements OnInit, OnDestroy
                 ProspectName:this.customer ? '' : toAsciiText(this.prospectName).trim(),
                 ProspectPhone:this.customer ? '' : this.prospectPhone.trim(),
                 ProspectAddress:this.customer ? '' : toAsciiText(this.prospectAddress).trim(),
-                Terms:toAsciiText(this.quotationTerms).replace(/[\r\n]+/g, ' ').trim().substring(0, 1000)
+                Terms:toAsciiText(this.quotationTerms).replace(/[\r\n]+/g, ' ').trim().substring(0, 1000),
+                SpecificUnits:this.unitsOn,
+                Units:this.unitsOn ? this.pickedUnits() : []
             };
 
         const editing =
@@ -9788,7 +10558,9 @@ implements OnInit, OnDestroy
                         {
                             this.toast.info(
                                 `Quotation ${quotation.QuotationNo}`,
-                                `Pick the chassis for : ${quotation.Lines.map(x => `${x.ProductName} x ${this.qtyString(x.Quantity)}`).join(', ')}.`);
+                                quotation.SpecificUnits
+                                    ? `Pick these chassis (named on the quotation) : ${quotation.Lines.map(x => `${x.ProductName} : ${(x.Units ?? []).map(u => u.ChassisNo).join(', ') || x.Quantity}`).join(' · ')}.`
+                                    : `Pick the chassis for : ${quotation.Lines.map(x => `${x.ProductName} x ${this.qtyString(x.Quantity)}`).join(', ')}.`);
                         }
                     },
                 error:

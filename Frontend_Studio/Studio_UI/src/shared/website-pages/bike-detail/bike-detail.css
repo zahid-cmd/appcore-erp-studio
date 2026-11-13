@@ -191,9 +191,9 @@
     margin:0;
     font-family:var(--w-display);
     font-size:clamp(52px, 7vw, 92px);
-    line-height:.88;
-    font-weight:800;
-    text-transform:uppercase;
+    line-height:var(--w-model-line, .88);
+    font-weight:var(--w-title-weight, 800);
+    text-transform:var(--w-title-transform, uppercase);
 }
 
 
@@ -306,8 +306,8 @@
     margin:0 0 10px;
     font-family:var(--w-display);
     font-size:24px;
-    font-weight:800;
-    text-transform:uppercase;
+    font-weight:var(--w-title-weight, 800);
+    text-transform:var(--w-title-transform, uppercase);
     color:var(--w-strong);
 }
 

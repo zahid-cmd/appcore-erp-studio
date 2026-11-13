@@ -47,7 +47,17 @@
 
                 (command2Click)="refresh()"
 
-                [command3Visible]="false">
+                command3Text="Restore"
+
+                command3Icon="fas fa-trash-arrow-up"
+
+                command3Title="Restore the most recently deleted booking"
+
+                (command3Click)="restore()"
+
+                rightCommandIcon="fas fa-clock-rotate-left"
+
+                (rightCommandClick)="openHistory()">
 
             </app-command-center>
 
@@ -148,13 +158,17 @@
 
                         [error]="loadFailed"
 
-                        [actions]="tab === 'collections' ? noTableActions : tableActions"
+                        [actions]="tableActions"
 
                         [rowActions]="rowActions"
 
                         (rowAction)="onRowAction($event)"
 
                         (view)="view($event)"
+
+                        (edit)="onEdit($event)"
+
+                        (delete)="onDelete($event)"
 
                         (sortChange)="onSort($event)">
 
@@ -535,7 +549,7 @@
                         {
                             <strong id="bkm-title">New Booking</strong>
 
-                            <span>{{ branchName }} · {{ dateText(today) }}</span>
+                            <span>{{ dateText(today) }}</span>
                         }
                         @else
                         {
@@ -544,15 +558,50 @@
                             <span>{{ deskBooking?.CustomerName }} · {{ deskBooking?.ModelName }} · advance so far {{ money(deskBooking?.AdvanceAmount ?? 0) }}</span>
                         }
 
-                        <span>
+                    </div>
 
-                            To collect <b>{{ money(targetAmount) }}</b>
 
-                            · Received <b class="bkm-emerald">{{ money(deskTotal) }}</b>
+                    <!-- Ribbon : the branch it is booked in + the collection -->
 
-                            · Balance <b [class.bkm-rose]="deskRemaining > 0">{{ money(deskRemaining) }}</b>
+                    <div class="bkm-ribbon">
 
-                        </span>
+                        <div class="bkm-ribbon-branch" [title]="'Booked in ' + deskBranchName">
+
+                            <i class="fas fa-store"></i>
+
+                            <span>
+
+                                <small>{{ branchKindLabel }}</small>
+
+                                <b>{{ deskBranchName }}</b>
+
+                            </span>
+
+                        </div>
+
+                        <div class="bkm-ribbon-stat">
+
+                            <small>To collect</small>
+
+                            <b>{{ money(targetAmount) }}</b>
+
+                        </div>
+
+                        <div class="bkm-ribbon-stat">
+
+                            <small>Received</small>
+
+                            <b class="bkm-emerald">{{ money(deskTotal) }}</b>
+
+                        </div>
+
+                        <div class="bkm-ribbon-stat">
+
+                            <small>Balance</small>
+
+                            <b [class.bkm-rose]="deskRemaining > 0">{{ money(deskRemaining) }}</b>
+
+                        </div>
 
                     </div>
 
@@ -792,6 +841,130 @@
                         </app-textbox>
 
                     </div>
+
+
+                    <!-- Customer card : the full profile after a pick -->
+
+                    @if (deskKind === 'new' && newCustomer)
+                    {
+                        <div class="bkm-cust-card">
+
+                            <div class="bkm-cust-head">
+
+                                <span class="bkm-cust-mark">
+
+                                    <i class="fa-regular fa-user"></i>
+
+                                </span>
+
+                                <div class="bkm-cust-title">
+
+                                    <strong [title]="customerCard?.DisplayName || newCustomer.CustomerName">{{ customerCard?.DisplayName || newCustomer.CustomerName }}</strong>
+
+                                    <span>{{ newCustomer.CustomerCode }}{{ (customerCard?.Phone || newCustomer.Phone1) ? ' · ' + (customerCard?.Phone || newCustomer.Phone1) : '' }}</span>
+
+                                </div>
+
+                                @if (customerCard?.IsCorporate)
+                                {
+                                    <span class="bkm-cust-tag bkm-cust-tag-corp" title="Corporate / Institution customer">Corporate</span>
+                                }
+
+                                @if (customerCard?.CustomerTag || newCustomer.CustomerType)
+                                {
+                                    <span class="bkm-cust-tag">{{ customerCard?.CustomerTag || newCustomer.CustomerType }}</span>
+                                }
+
+                                @if (customerCard && !customerCard.IsActive)
+                                {
+                                    <span class="bkm-cust-tag bkm-cust-tag-off">Inactive</span>
+                                }
+
+                                <button
+
+                                    type="button"
+
+                                    class="bkm-cust-x"
+
+                                    title="Change customer"
+
+                                    aria-label="Change customer"
+
+                                    (click)="clearCustomer()">
+
+                                    <i class="fas fa-xmark"></i>
+
+                                </button>
+
+                            </div>
+
+                            @if (customerCardLoading)
+                            {
+                                <div class="bkm-cust-note"><i class="fas fa-spinner fa-spin"></i> Loading the customer...</div>
+                            }
+                            @else if (customerCard)
+                            {
+                                <div class="bkm-cust-facts">
+
+                                    <div class="bkm-cust-fact bkm-cust-fact-wide">
+
+                                        <span>Address</span>
+
+                                        <b [title]="customerCard.Address">{{ customerCard.Address || '-' }}</b>
+
+                                    </div>
+
+                                    <div class="bkm-cust-fact">
+
+                                        <span>Receivable</span>
+
+                                        <b [class.bkm-rose]="cardOwes">{{ cardBalanceText }}</b>
+
+                                    </div>
+
+                                    <div class="bkm-cust-fact">
+
+                                        <span>Credit Limit</span>
+
+                                        <b>{{ cardCreditLimitText }}</b>
+
+                                    </div>
+
+                                    <div class="bkm-cust-fact">
+
+                                        <span>Membership</span>
+
+                                        @if (customerCard.MembershipNo)
+                                        {
+                                            <b class="bkm-emerald">
+
+                                                <i class="fa-regular fa-id-card"></i>
+
+                                                {{ customerCard.MembershipCard || 'Card' }} · {{ customerCard.MembershipNo }}
+
+                                            </b>
+
+                                            @if (customerCard.MembershipExpiry)
+                                            {
+                                                <i class="bkm-cust-sub">till {{ dateText(customerCard.MembershipExpiry) }}</i>
+                                            }
+                                        }
+                                        @else
+                                        {
+                                            <b class="bkm-cust-muted">No active card</b>
+                                        }
+
+                                    </div>
+
+                                </div>
+                            }
+                            @else
+                            {
+                                <div class="bkm-cust-note">{{ newCustomer.Phone1 ? 'The full profile could not be loaded.' : 'No phone on this profile : only the short card is shown.' }}</div>
+                            }
+
+                        </div>
+                    }
 
 
                     @if (deskKind === 'new' && !isBikes)
@@ -1434,9 +1607,47 @@
 
             </app-textbox>
 
-            @if (itemSearching || itemResults.length > 0 || itemQuery.trim().length >= 2)
+            <!-- Category / sub category : alone they list the items -->
+
+            <div class="bkm-item-filters">
+
+                <app-dropdown
+
+                    [items]="itemCategoryItems"
+
+                    [value]="itemCategoryId"
+
+                    (valueChange)="onItemCategory($event)">
+
+                </app-dropdown>
+
+                <app-dropdown
+
+                    [items]="itemSubCategoryItems"
+
+                    [value]="itemSubCategoryId"
+
+                    (valueChange)="onItemSubCategory($event)">
+
+                </app-dropdown>
+
+            </div>
+
+            @if (itemSearching || itemSearched)
             {
                 <div class="bkm-results appcore-scrollbar">
+
+                    <div class="bkm-result-head">
+
+                        <span>{{ itemSearching ? 'Searching...' : itemResults.length + ' item' + (itemResults.length === 1 ? '' : 's') }}</span>
+
+                        <button type="button" title="Close the list" aria-label="Close the list" (click)="closeItemResults()">
+
+                            <i class="fas fa-xmark"></i>
+
+                        </button>
+
+                    </div>
 
                     @if (itemSearching)
                     {

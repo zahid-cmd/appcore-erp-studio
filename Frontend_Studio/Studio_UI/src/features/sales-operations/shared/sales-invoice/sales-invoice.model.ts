@@ -331,6 +331,14 @@ export interface SalesInvoiceProduct
         number | null;
     IsActive:
         boolean;
+    // Product Shelf : category chips / sub category filter
+    ProductCategoryId:
+        number;
+    ProductSubCategoryId:
+        number;
+    // Full URL of the product image ('' = icon)
+    ImageUrl:
+        string;
 }
 
 
@@ -1109,9 +1117,10 @@ export function isCustomerPhone
     );
 }
 
-// Plain ASCII for anything sent to the server (the database is
-// WIN1252) : arrows, dashes, quotes and other symbols become
-// their ASCII forms; anything else outside ASCII is dropped
+// Text sent to the server : the database is UTF8 (2026-11-13),
+// so Bangla and every language are kept; arrows, dashes and
+// quotes still become their plain forms and control characters
+// are dropped
 export function toAsciiText
 (
     value:
@@ -1129,7 +1138,7 @@ export function toAsciiText
         .replace(/[\u00A0\u2007\u202F]/g, ' ')
         .replace(/\u00B7/g, '-')
         .replace(/\u00D7/g, 'x')
-        .replace(/[^\x20-\x7E]/g, '');
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
 
@@ -1250,6 +1259,27 @@ export interface SaveSalesQuotation
         string;
     Terms:
         string;
+    // MB : the exact bikes are named (one per quantity)
+    SpecificUnits:
+        boolean;
+    Units:
+        SalesQuotationUnit[];
+}
+
+// MB Specific unit : one bike of a quotation line
+export interface SalesQuotationUnit
+{
+    // The model (MotorBikeId)
+    ProductId:
+        number;
+    MotorBikeUnitId:
+        number;
+    ChassisNo:
+        string;
+    EngineNo:
+        string;
+    ColorName:
+        string;
 }
 
 export interface SalesQuotationLine
@@ -1288,6 +1318,9 @@ export interface SalesQuotationLine
         number;
     VatInside:
         number;
+    // MB Specific unit : the bikes of the line
+    Units:
+        SalesQuotationUnit[];
 }
 
 export interface SalesQuotation
@@ -1351,6 +1384,9 @@ export interface SalesQuotation
         string;
     Terms:
         string;
+    // MB : the exact bikes are named on the lines
+    SpecificUnits:
+        boolean;
     // Open / Converted / Cancelled
     Status:
         string;

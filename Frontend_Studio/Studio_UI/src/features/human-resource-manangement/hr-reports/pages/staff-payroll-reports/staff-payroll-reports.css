@@ -1,0 +1,200 @@
+/* =====================================================
+   Staff & Payroll Reports
+   Toolbar : the report tabs and its filters. Canvas : the
+   report as a table (header and totals stay put).
+   Summary line below the canvas.
+===================================================== */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+.rp-filters
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* The report */
+
+.rp-wrap
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+.rp-wrap > table
+{
+    flex: 0 0 auto;
+}
+
+.rp-table
+{
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13.5px;
+}
+
+.rp-table th,
+.rp-table td
+{
+    padding: 6px 10px;
+    border-bottom: 1px solid #eef2f8;
+    color: #1e293b;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.rp-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    height: 36px;
+    border-bottom: 1px solid #d6e4fb;
+    background: #f3f7ff;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.rp-table tfoot td
+{
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    border-top: 1px solid #d6e4fb;
+    border-bottom: 0;
+    background: #f3f7ff;
+    font-weight: 700;
+}
+
+.rp-table tbody tr:hover td
+{
+    background: #fafcff;
+}
+
+.rp-table [data-kind='center']
+{
+    text-align: center;
+}
+
+.rp-table [data-kind='days'],
+.rp-table [data-kind='money']
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.rp-no
+{
+    width: 44px;
+    color: #64748b !important;
+    text-align: center !important;
+}
+
+.rp-table tbody td.rp-strong
+{
+    background: #f7faff;
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.rp-table tbody td.rp-off
+{
+    color: #94a3b8;
+}
+
+/* Loading / failed / nothing to show : the shared empty state,
+   centred in the canvas (the same look as the list pages) */
+
+.rp-wrap > app-empty-state
+{
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 260px;
+}
+
+/* Summary line */
+
+.rp-summary
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 0;
+    min-height: 50px;
+    padding: 12px 22px;
+    box-sizing: border-box;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
+    font-size: 14.5px;
+}
+
+.rp-summary-item
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 18px;
+}
+
+.rp-summary-item:first-child
+{
+    padding-left: 0;
+}
+
+.rp-summary-item + .rp-summary-item
+{
+    border-left: 1px solid #c9daf5;
+}
+
+.rp-summary-label
+{
+    color: #475569;
+    font-weight: 500;
+}
+
+.rp-summary-value
+{
+    color: #1e293b;
+    font-size: 15.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.rp-summary-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+}

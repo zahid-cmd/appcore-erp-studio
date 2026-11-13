@@ -262,6 +262,21 @@ export class SiteHeaderComponent
         scrollToSection('visit');
     }
 
+    // For the design headers (Designs 2 and 3 extend this class)
+    protected navigate
+    (
+        commands:
+            unknown[],
+        queryParams?:
+            Record<string, string>
+    ):
+        void
+    {
+        this.router.navigate(
+            commands,
+            queryParams ? { queryParams } : undefined);
+    }
+
     closeAll():
         void
     {

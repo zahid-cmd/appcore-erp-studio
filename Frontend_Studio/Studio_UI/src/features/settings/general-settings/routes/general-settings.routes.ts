@@ -278,6 +278,27 @@ Routes =
                         )
                 },
 
+            // MANUAL : Terms & Conditions (hand-written page, no sync;
+            // TermsConditions_Engine.sql adds the submenu)
+
+                {
+                    path:'terms-conditions',
+
+                    data:
+                    {
+                        breadcrumb:'Terms & Conditions'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './terms-conditions.routes'
+                        )
+                        .then(
+                            m =>
+                                m.TermsConditionsRoutes
+                        )
+                },
+
         ]
 
     }

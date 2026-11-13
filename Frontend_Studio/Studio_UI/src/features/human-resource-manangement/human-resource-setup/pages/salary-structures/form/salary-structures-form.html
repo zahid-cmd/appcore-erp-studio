@@ -1,0 +1,337 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-layer-group"
+        [title]="pageTitle"
+        subtitle="How a gross salary is split : a percent for each salary head">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div
+            canvasBody
+            class="hrf-body sst-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the structure and how it is used
+            ================================================== -->
+
+            <div class="sst-left">
+
+                <section class="hrf-card">
+
+                    <header class="hrf-card-head">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Salary Structure Details</span>
+                    </header>
+
+                    <div class="hrf-grid sst-grid">
+
+                        <app-textbox
+                            label="Code"
+                            [value]="entity.Code"
+                            placeholder="Auto generated"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-dropdown
+                            label="Status"
+                            [items]="statusItems"
+                            [value]="entity.IsActive"
+                            (valueChange)="onStatus($event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-dropdown>
+
+                        <div class="hrf-cell hrf-wide">
+                            <app-textbox
+                                label="Structure Name"
+                                placeholder="Auto generated"
+                                [value]="entity.Name"
+                                [readonly]="true">
+                            </app-textbox>
+                        </div>
+
+                        <label
+                            class="hrf-switch hrf-cell hrf-wide"
+                            [class.hrf-switch-off]="isViewMode || !entity.IsActive">
+                            <input
+                                type="checkbox"
+                                [checked]="entity.IsDefault"
+                                [disabled]="isViewMode || !entity.IsActive"
+                                (change)="onDefault($event)">
+                            <span class="hrf-switch-track"><span class="hrf-switch-knob"></span></span>
+                            <span class="hrf-switch-text">
+                                <b>Default structure</b>
+                                <small>
+                                    @if (otherDefault && entity.IsDefault)
+                                    {
+                                        {{ otherDefault }} is the Default now : saving makes this one the Default instead.
+                                    }
+                                    @else if (otherDefault)
+                                    {
+                                        A new Employee Profile starts with the Default ({{ otherDefault }} now).
+                                    }
+                                    @else
+                                    {
+                                        A new Employee Profile starts with the Default structure.
+                                    }
+                                </small>
+                            </span>
+                        </label>
+
+                        <div class="hrf-cell hrf-wide">
+                            <app-textbox
+                                label="Remarks"
+                                placeholder="Optional"
+                                [value]="entity.Remarks"
+                                [maxLength]="500"
+                                textCase="none"
+                                (valueChange)="onText('Remarks', $event)"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <section class="hrf-card hrf-help">
+
+                    <header class="hrf-card-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>How it is used</span>
+                        @if (mode !== 'add')
+                        {
+                            <span class="sst-used">{{ entity.EmployeeCount }} employee{{ entity.EmployeeCount === 1 ? '' : 's' }} on it</span>
+                        }
+                    </header>
+
+                    <ul>
+                        <li>A structure says how a gross salary is split : each earning is a percent of the gross.</li>
+                        <li>A deduction is a fixed amount, a percent of the gross or a percent of the basic salary : typing one blocks the other two.</li>
+                        <li>On the Employee Profile the gross salary is typed and a structure is picked; the salary of each head is worked out from the two.</li>
+                        <li>Saving a structure works the salary out again for every employee on it.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+            <!-- =================================================
+                 RIGHT : the split, percent of the gross salary
+            ================================================== -->
+
+            <section class="hrf-card">
+
+                <header class="hrf-card-head">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Salary Split</span>
+                    <span class="sst-head-note">% of the gross salary</span>
+                    @if (canFillBasic)
+                    {
+                        <button
+                            type="button"
+                            class="sst-btn"
+                            title="Gives Basic Salary what the other earnings leave of the 100 %"
+                            (click)="fillBasic()">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            Rest to Basic
+                        </button>
+                    }
+                </header>
+
+                @if (rows.length === 0)
+                {
+                    <p class="sst-muted">
+                        {{ loading ? 'Loading the salary heads...' : 'There are no salary heads yet : add them on Human Resource Setup > Salary Heads.' }}
+                    </p>
+                }
+                @else
+                {
+                    <table class="sst-table">
+
+                        <thead>
+                            <tr>
+                                <th>Salary Head</th>
+                                <th class="sst-c-percent">Percent</th>
+                                <th class="sst-c-amount">
+                                    <span class="sst-example">
+                                        Example on Tk
+                                        <input
+                                            class="sst-example-input"
+                                            inputmode="decimal"
+                                            maxlength="10"
+                                            title="An example gross salary : it only shows what the percents come to"
+                                            [value]="exampleGross || ''"
+                                            (input)="onExampleGross($event)">
+                                    </span>
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            <tr class="sst-group">
+                                <td colspan="3">Earnings</td>
+                            </tr>
+
+                            @for (row of earningRows; track row.line.SalaryHeadId)
+                            {
+                                <tr [class.sst-retired]="row.retired">
+                                    <td>
+                                        <span class="sst-head-name">{{ row.line.HeadName }}</span>
+                                        @if (row.retired)
+                                        {
+                                            <small>No longer a salary head</small>
+                                        }
+                                    </td>
+                                    <td class="sst-c-percent">
+                                        <span class="sst-percent-box">
+                                            <input
+                                                class="sst-amount"
+                                                [class.sst-basic]="row.line.IsBasic"
+                                                inputmode="decimal"
+                                                maxlength="7"
+                                                placeholder="0"
+                                                [value]="row.line.Percent || ''"
+                                                [disabled]="isViewMode"
+                                                (input)="onPercent(row, $event)"
+                                                (blur)="onPercentBlur(row, $event)">
+                                            <span>%</span>
+                                        </span>
+                                    </td>
+                                    <td class="sst-c-amount sst-example-cell">{{ exampleOf(row) }}</td>
+                                </tr>
+                            }
+
+                            <tr
+                                class="sst-total"
+                                [class.sst-ok]="earningsOk"
+                                [class.sst-bad]="!earningsOk">
+                                <td>
+                                    Total Earnings
+                                    @if (!earningsOk)
+                                    {
+                                        <small>
+                                            {{ earningsLeft > 0 ? percent(earningsLeft) + ' % still to give' : percent(-earningsLeft) + ' % too much' }} : must be 100 %
+                                        </small>
+                                    }
+                                </td>
+                                <td class="sst-c-percent">{{ percent(earningPercent) }} %</td>
+                                <td class="sst-c-amount">{{ exampleTotal(earningRows) }}</td>
+                            </tr>
+
+                            @if (deductionRows.length > 0)
+                            {
+                                <tr class="sst-group">
+                                    <td colspan="3">
+                                        <div class="sst-ded">
+                                            <span>Deductions (every month) : one way for each</span>
+                                            <span class="sst-ded-h">Fixed Tk</span>
+                                            <span class="sst-ded-h">% of Gross</span>
+                                            <span class="sst-ded-h">% of Basic</span>
+                                            <span></span>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                @for (row of deductionRows; track row.line.SalaryHeadId)
+                                {
+                                    <tr [class.sst-retired]="row.retired">
+                                        <td colspan="3">
+                                            <div class="sst-ded">
+                                                <span>
+                                                    <span class="sst-head-name">{{ row.line.HeadName }}</span>
+                                                    @if (row.retired)
+                                                    {
+                                                        <small>No longer a salary head</small>
+                                                    }
+                                                </span>
+                                                <input
+                                                    class="sst-amount"
+                                                    inputmode="decimal"
+                                                    maxlength="12"
+                                                    placeholder="0.00"
+                                                    title="A fixed amount every month"
+                                                    [value]="wayValue(row, 'Fixed')"
+                                                    [disabled]="blocked(row, 'Fixed')"
+                                                    (input)="onWay(row, 'Fixed', $event)"
+                                                    (blur)="onWayBlur(row, 'Fixed', $event)">
+                                                <input
+                                                    class="sst-amount"
+                                                    inputmode="decimal"
+                                                    maxlength="7"
+                                                    placeholder="0"
+                                                    title="A percent of the gross salary"
+                                                    [value]="wayValue(row, 'Gross')"
+                                                    [disabled]="blocked(row, 'Gross')"
+                                                    (input)="onWay(row, 'Gross', $event)"
+                                                    (blur)="onWayBlur(row, 'Gross', $event)">
+                                                <input
+                                                    class="sst-amount"
+                                                    inputmode="decimal"
+                                                    maxlength="7"
+                                                    placeholder="0"
+                                                    title="A percent of the basic salary"
+                                                    [value]="wayValue(row, 'Basic')"
+                                                    [disabled]="blocked(row, 'Basic')"
+                                                    (input)="onWay(row, 'Basic', $event)"
+                                                    (blur)="onWayBlur(row, 'Basic', $event)">
+                                                <span class="sst-ded-amount sst-example-cell">{{ exampleOf(row) }}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+
+                                <tr class="sst-total">
+                                    <td colspan="2">Total Deductions</td>
+                                    <td class="sst-c-amount">{{ exampleTotal(deductionRows) }}</td>
+                                </tr>
+                            }
+
+                            <tr class="sst-net">
+                                <td colspan="2">Net Salary (before attendance)</td>
+                                <td class="sst-c-amount">{{ exampleNet }}</td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+                }
+
+            </section>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

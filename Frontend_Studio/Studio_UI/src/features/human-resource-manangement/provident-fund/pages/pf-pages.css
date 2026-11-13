@@ -1,0 +1,215 @@
+@import '../../payroll-management/pages/payroll-form.css';
+
+/* =====================================================
+   Provident Fund pages : the look of the payroll forms
+   (pf-body, pf-card, pf-grid, pf-facts, pf-help ...),
+   plus what the fund pages add.
+===================================================== */
+
+/* three fields on a row */
+
+.pfx-grid-3
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 14px;
+    align-items: end;
+}
+
+.pfx-span-2
+{
+    grid-column: span 2;
+}
+
+.pfx-span-3
+{
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 900px)
+{
+    .pfx-grid-3
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pfx-span-2
+    {
+        grid-column: auto;
+    }
+}
+
+/* a part of a card */
+
+.pfx-part
+{
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    padding-top: 10px;
+    border-top: 1px solid #eef2f8;
+}
+
+.pfx-part:first-of-type
+{
+    padding-top: 0;
+    border-top: 0;
+}
+
+.pfx-title
+{
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.pfx-note
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+/* the rule that decided a settlement */
+
+.pfx-rule
+{
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #dbe6f7;
+    border-radius: 12px;
+    background: #f7faff;
+    color: #1e3a8a;
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+.pfx-rule.pfx-bad
+{
+    border-color: #fecdd3;
+    background: #fff1f2;
+    color: #9f1239;
+}
+
+/* plain tables (interest, reports) */
+
+.pfx-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.pfx-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 9px 10px;
+    border-bottom: 1px solid #d6e4fb;
+    background: #f7faff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.pfx-table td
+{
+    padding: 7px 10px;
+    border-bottom: 1px solid #eef2f8;
+    color: #1e293b;
+}
+
+.pfx-table .pfx-no
+{
+    width: 46px;
+    color: #64748b;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.pfx-table .pfx-num
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.pfx-table tfoot td
+{
+    border-top: 1px solid #d6e4fb;
+    border-bottom: 0;
+    background: #f3f7ff;
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.pfx-minus
+{
+    color: #be123c;
+}
+
+.pfx-scroll
+{
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+}
+
+.pfx-empty
+{
+    padding: 40px 16px;
+    color: #64748b;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* toolbar pieces */
+
+.pfx-tools
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pfx-tools > app-search-dropdown
+{
+    flex: 0 0 300px;
+    width: 300px;
+}
+
+.pfx-input
+{
+    height: 36px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    outline: none;
+}
+
+.pfx-input:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.pfx-year
+{
+    width: 110px;
+    text-align: center;
+}

@@ -1,0 +1,149 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-file-invoice-dollar"
+        title="Generate Salary Sheet"
+        subtitle="The salary of one branch for one month, from attendance and salary structures">
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Generate"
+            command1Icon="fas fa-gears"
+            (command1Click)="onGenerate()"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="pf-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : month and branch
+            ================================================== -->
+
+            <section class="pf-card">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Salary Sheet</span>
+                    <span
+                        class="pf-status"
+                        data-status="Draft">Draft</span>
+                </header>
+
+                <div class="pf-grid">
+
+                    <app-textbox
+                        label="Code"
+                        [value]="nextCode"
+                        placeholder="Auto generated"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <label class="pf-native">
+                        <span class="pf-label">Salary Month <b>*</b></span>
+                        <input
+                            type="month"
+                            [value]="monthValue"
+                            (change)="onMonth($event)">
+                    </label>
+
+                    <div class="pf-wide">
+                        <app-search-dropdown
+                            label="Branch"
+                            [required]="true"
+                            placeholder="Select branch"
+                            [items]="branchItems"
+                            [value]="request.BranchId || null"
+                            (valueChange)="onBranch($event)">
+                        </app-search-dropdown>
+                    </div>
+
+                    <app-textbox
+                        label="Late days that cut one day of Basic"
+                        placeholder="0 = no cut"
+                        [value]="request.LateDaysPerCut"
+                        inputMode="numeric"
+                        [maxLength]="2"
+                        (valueChange)="onLateRule($event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="request.Remarks"
+                        [maxLength]="500"
+                        textCase="none"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                    @if (isFutureMonth)
+                    {
+                        <div class="pf-wide pf-hint">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>{{ monthText }} has not started yet.</span>
+                        </div>
+                    }
+                    @else if (isRunningMonth)
+                    {
+                        <div class="pf-wide pf-hint">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>
+                                {{ monthText }} has not ended : the days still to come are counted as paid.
+                                Recalculate the sheet after the month ends, before approving it.
+                            </span>
+                        </div>
+                    }
+
+                </div>
+
+            </section>
+
+            <!-- =================================================
+                 RIGHT : how it is worked out
+            ================================================== -->
+
+            <section class="pf-card">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-calculator"></i>
+                    <span>How the salary is worked out</span>
+                </header>
+
+                <ul class="pf-help">
+                    <li>Every employee of the branch with a salary structure gets a line (set the salary on Employee Profiles).</li>
+                    <li>Unpaid days are absent days, unpaid leave, days not marked, half of each half day and the days before joining. Their share of the salary is cut.</li>
+                    <li>Late : with 3 here, every 3 late days cut one day of Basic. 0 means late days are not cut.</li>
+                    <li>Overtime hours are paid at the employee's overtime rate.</li>
+                    <li>The structure's deductions (provident fund, tax ...) and the salary advance installments are taken off.</li>
+                    <li>On the Draft sheet you can add another earning or deduction for anyone, then approve and post it.</li>
+                </ul>
+
+                <p class="pf-muted">
+                    Mark the attendance of the whole month first : a day that is not marked is not paid.
+                </p>
+
+            </section>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

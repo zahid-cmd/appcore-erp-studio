@@ -1,0 +1,359 @@
+/* =====================================================
+   Human Resource Setup Form (Shifts, Holidays, Leave
+   Types, Salary Heads)
+   Left : the fields in three columns. Right : how the
+   row is used.
+===================================================== */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+.hrf-body
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.8fr);
+    /* the two cards are as tall as the taller one (and no taller :
+       the row keeps its own height at the top of the canvas) */
+    align-items: stretch;
+    align-content: start;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 6px 12px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1100px)
+{
+    .hrf-body
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.hrf-card
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 14px 16px 18px;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -16px rgba(30, 58, 138, 0.28);
+    box-sizing: border-box;
+}
+
+.hrf-card-head
+{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: -2px 0 2px;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.hrf-card-head > i
+{
+    color: #1e3a8a;
+}
+
+/* Three columns : Code, the name and Status on the first row */
+
+.hrf-grid
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 14px;
+    align-items: end;
+}
+
+.hrf-cell
+{
+    min-width: 0;
+}
+
+.hrf-span-2
+{
+    grid-column: span 2;
+}
+
+.hrf-wide
+{
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 1300px)
+{
+    .hrf-grid
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px)
+{
+    .hrf-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hrf-span-2
+    {
+        grid-column: 1 / -1;
+    }
+}
+
+app-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+}
+
+/* Native time / date inputs and the week days : same label and
+   box as app-textbox */
+
+.hrf-native
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.hrf-label
+{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 10px;
+    color: #334155;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    user-select: none;
+}
+
+.hrf-label > b
+{
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.hrf-native > input
+{
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+    color: #1e293b;
+    font: inherit;
+    font-size: 14.5px;
+    outline: none;
+    transition: border-color .20s ease, box-shadow .20s ease;
+}
+
+.hrf-native > input:hover
+{
+    border-color: #9fc2f7;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, .08);
+}
+
+.hrf-native > input:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.hrf-native > input:disabled
+{
+    background: #f8fafc;
+    opacity: .70;
+}
+
+/* Week days */
+
+.hrf-days
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.hrf-day
+{
+    min-width: 58px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #475569;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .20s ease, background .20s ease, color .20s ease;
+}
+
+.hrf-day:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+}
+
+.hrf-day.on
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.hrf-day:disabled
+{
+    cursor: default;
+    opacity: .70;
+}
+
+/* Switch */
+
+.hrf-switch
+{
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 1px solid #dbe6f7;
+    border-radius: 12px;
+    background: #f7faff;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.hrf-switch-off
+{
+    cursor: default;
+    opacity: .75;
+}
+
+.hrf-switch input
+{
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hrf-switch-track
+{
+    position: relative;
+    flex: 0 0 auto;
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    transition: background .20s ease;
+}
+
+.hrf-switch-knob
+{
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .25);
+    transition: transform .20s ease;
+}
+
+.hrf-switch input:checked + .hrf-switch-track
+{
+    background: #1e3a8a;
+}
+
+.hrf-switch input:checked + .hrf-switch-track .hrf-switch-knob
+{
+    transform: translateX(16px);
+}
+
+.hrf-switch input:focus-visible + .hrf-switch-track
+{
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .25);
+}
+
+.hrf-switch-text
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.hrf-switch-text > b
+{
+    color: #1e293b;
+    font-size: 14.5px;
+    font-weight: 600;
+}
+
+.hrf-switch-text > small
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+/* Notes */
+
+.hrf-hint
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 10px 12px;
+    border: 1px solid #fde68a;
+    border-radius: 11px;
+    background: #fffbeb;
+    color: #78350f;
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+.hrf-hint > i
+{
+    margin-top: 2px;
+    color: #b45309;
+}
+
+.hrf-help ul
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0 0 0 18px;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.5;
+}

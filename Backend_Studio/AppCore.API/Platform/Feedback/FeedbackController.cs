@@ -12,8 +12,8 @@
 // gets "not found" for the developer calls. Login required
 // (global fallback policy).
 //
-// The database is WIN1252 : characters it cannot hold (e.g.
-// Bangla) are saved as "?".
+// The database is UTF8 : Bangla and every language are kept;
+// only control characters are saved as "?".
 //===============================================================
 
 using Microsoft.AspNetCore.Mvc;
@@ -398,12 +398,12 @@ public class FeedbackController : ControllerBase
         ModifiedDate = x.ModifiedDate
     };
 
-    // trim, cut, and keep only what the WIN1252 database can hold
+    // trim, cut, and drop control characters (the database is UTF8)
     private static string Clean(string? value, int max)
     {
         string text =
             new string((value ?? string.Empty)
-                .Select(c => c == '\n' || c == '\t' || (c >= ' ' && c <= '~') || (c >= '\u00A0' && c <= '\u00FF') ? c : '?')
+                .Select(c => c == '\n' || c == '\t' || c >= ' ' ? c : '?')
                 .ToArray())
             .Trim();
 

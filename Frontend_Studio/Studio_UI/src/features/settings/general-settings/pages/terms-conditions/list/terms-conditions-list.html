@@ -1,0 +1,135 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Terms & Conditions"
+        subtitle="Numbered terms printed on invoices, quotations, bookings and purchase orders"
+        icon="fas fa-file-contract">
+
+        <div pageHeaderCenter>
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search titles, terms..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Add"
+                command1Icon="fas fa-plus"
+                command1Permission="add"
+                (command1Click)="add()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="refresh()"
+                command3Text="Restore"
+                command3Icon="fas fa-trash-arrow-up"
+                command3Permission="restore"
+                (command3Click)="restore()"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="Activity history"
+                (rightCommandClick)="openHistory()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+        </app-control-tabs>
+
+        <app-search-dropdown
+            pageToolbarRight
+            placeholder="All Operations"
+            [items]="operationItems"
+            labelField="label"
+            valueField="value"
+            [value]="selectedOperation"
+            (valueChange)="onOperationChange($event)">
+        </app-search-dropdown>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+            <app-list-table
+                [columns]="columns"
+                [rows]="rows"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                (view)="view($event)"
+                (edit)="edit($event)"
+                (delete)="delete($event)"
+                (sortChange)="onSort($event)">
+            </app-list-table>
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (search and operation applied, all statuses)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="tcl-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="tcl-summary-item">
+                    <span class="tcl-summary-label">{{ item.label }}</span>
+                    <b
+                        class="tcl-summary-value"
+                        [class.tcl-ok]="item.tone === 'ok'"
+                        [class.tcl-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="tcl-summary-note">
+                One Default per operation is printed on its A4 documents
+            </span>
+
+        </div>
+    }
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        [title]="historyTitle"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

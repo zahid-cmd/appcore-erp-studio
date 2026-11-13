@@ -750,7 +750,10 @@ export abstract class SalesInvoiceService
             HasMixedMrp:this.bool(item, 'HasMixedMrp'),
             MrpCount:this.num(item, 'MrpCount'),
             ScannedBatchId:this.optionalId(item, 'ScannedBatchId'),
-            IsActive:this.bool(item, 'IsActive', true)
+            IsActive:this.bool(item, 'IsActive', true),
+            ProductCategoryId:this.num(item, 'ProductCategoryId'),
+            ProductSubCategoryId:this.num(item, 'ProductSubCategoryId'),
+            ImageUrl:this.imageUrl(this.text(item, 'ImagePath'))
         };
     }
 

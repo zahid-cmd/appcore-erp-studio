@@ -1,0 +1,562 @@
+/* =====================================================
+   Terms & Conditions Form
+   Left column (the set) and right column (the lines) are
+   the same height; the print preview sits in the canvas
+   footer.
+===================================================== */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+.tc-body
+{
+    display: grid;
+    grid-template-columns: minmax(330px, 0.85fr) minmax(0, 1.6fr);
+    /* One row as tall as its taller column (no inner scroll) :
+       both columns end on the same line */
+    align-items: stretch;
+    gap: 14px;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 6px 12px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1100px)
+{
+    .tc-body
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.tc-side
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    min-height: 0;
+}
+
+.tc-card
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px 16px 16px;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -16px rgba(30, 58, 138, 0.28);
+    box-sizing: border-box;
+}
+
+.tc-side > .tc-card
+{
+    flex: 1 1 auto;
+}
+
+/* The card fills the column; its fields keep their own height
+   (spare room stays at the bottom, never between fields) */
+.tc-side > .tc-card > *
+{
+    flex: 0 0 auto;
+}
+
+/* Canvas split (the selectors outweigh the canvas' own rules) :
+   the body is as tall as its content (the Terms card shows
+   five lines, the left card matches it; no scroll); the footer
+   (print preview) takes the rest of the canvas, never under
+   132px. On a short screen the body gives up room first. */
+
+:host ::ng-deep .page-canvas > .page-canvas-body.page-canvas-body
+{
+    flex: 0 1 auto;
+}
+
+:host ::ng-deep .page-canvas > .page-canvas-footer.page-canvas-footer
+{
+    flex: 1 0 132px;
+    height: auto;
+    min-height: 132px;
+    padding: 0;
+}
+
+.tc-foot
+{
+    display: flex;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    align-items: stretch;
+    gap: 16px;
+    padding: 10px 16px;
+    box-sizing: border-box;
+}
+
+.tc-foot-side
+{
+    display: flex;
+    flex: 0 0 230px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+}
+
+.tc-foot-side .tc-card-head
+{
+    margin: 0;
+}
+
+.tc-foot-side .tc-seg
+{
+    margin-left: 0;
+}
+
+.tc-lines
+{
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tc-card-head
+{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: -2px 0 4px;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.tc-card-head > i
+{
+    color: #1e3a8a;
+}
+
+.tc-head-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.tc-grid-2
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+
+app-search-dropdown,
+app-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+}
+
+/* Default switch */
+
+.tc-switch
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid #dbe6f7;
+    border-radius: 11px;
+    background: #f7faff;
+    cursor: pointer;
+}
+
+.tc-switch input
+{
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.tc-switch-track
+{
+    position: relative;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 22px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    transition: background 0.15s;
+}
+
+.tc-switch-knob
+{
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+    transition: left 0.15s;
+}
+
+.tc-switch input:checked + .tc-switch-track
+{
+    background: #1d4ed8;
+}
+
+.tc-switch input:checked + .tc-switch-track .tc-switch-knob
+{
+    left: 21px;
+}
+
+.tc-switch input:disabled + .tc-switch-track
+{
+    opacity: 0.55;
+}
+
+.tc-switch-text
+{
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.tc-switch-text b
+{
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.tc-switch-text small
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.tc-switch-off
+{
+    cursor: default;
+    opacity: 0.75;
+}
+
+.tc-hint
+{
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.tc-hint i
+{
+    margin-top: 2px;
+    color: #1e3a8a;
+}
+
+/* Preview */
+
+.tc-seg
+{
+    display: inline-flex;
+    margin-left: auto;
+    padding: 2px;
+    border: 1px solid #d9e5f2;
+    border-radius: 9px;
+    background: #f8fafc;
+}
+
+.tc-seg button
+{
+    height: 26px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tc-seg button.on
+{
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.tc-paper
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 16px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.tc-paper-title
+{
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.tc-paper.tc-bn .tc-paper-title
+{
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.tc-paper ol
+{
+    margin: 0;
+    padding-left: 20px;
+    column-count: 2;
+    column-gap: 32px;
+}
+
+.tc-paper li
+{
+    break-inside: avoid;
+}
+
+.tc-paper li + li
+{
+    margin-top: 3px;
+}
+
+.tc-paper li.tc-fallback
+{
+    color: #94a3b8;
+}
+
+.tc-muted
+{
+    margin: 0;
+    color: #94a3b8;
+}
+
+.tc-note
+{
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+}
+
+/* Lines */
+
+.tc-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid #1d4ed8;
+    border-radius: 9px;
+    background: #1d4ed8;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tc-table-wrap
+{
+    /* Header + exactly five lines; a sixth line scrolls here */
+    flex: 0 0 auto;
+    height: 362px;
+    overflow-y: auto;
+}
+
+.tc-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.tc-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 6px;
+    border-bottom: 1px solid #e3e9f3;
+    background: #ffffff;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+}
+
+.tc-table td
+{
+    padding: 5px 6px;
+    border-bottom: 1px solid #eef2f7;
+    vertical-align: top;
+}
+
+.tc-c-no
+{
+    width: 42px;
+    text-align: center !important;
+}
+
+.tc-c-tools
+{
+    width: 132px;
+}
+
+.tc-no
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin-top: 6px;
+    border-radius: 50%;
+    background: #1e3a8a;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.tc-input
+{
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 54px;
+    padding: 7px 10px;
+    border: 1px solid #d9e5f2;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #1e293b;
+    font-family: inherit;
+    font-size: 13.5px;
+    line-height: 1.45;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.tc-input:focus
+{
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.tc-input:disabled
+{
+    background: #f8fafc;
+    color: #334155;
+    resize: none;
+}
+
+.tc-bn
+{
+    font-family: 'Noto Sans Bengali', 'SolaimanLipi', 'Kalpurush', 'Vrinda', sans-serif;
+}
+
+.tc-input.tc-bn
+{
+    font-size: 14.5px;
+}
+
+.tc-tools
+{
+    display: inline-flex;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.tc-tools button
+{
+    width: 28px;
+    height: 28px;
+    border: 1px solid #d9e5f2;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.tc-tools button:disabled
+{
+    opacity: 0.4;
+    cursor: default;
+}
+
+.tc-tools button.tc-danger:hover
+{
+    border-color: #fecdd3;
+    background: #fff1f2;
+    color: #be123c;
+}
+
+.tc-link
+{
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tc-fixed
+{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: -4px 0 0;
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.tc-fixed i
+{
+    color: #94a3b8;
+}

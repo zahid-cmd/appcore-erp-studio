@@ -1,0 +1,432 @@
+/* =====================================================
+   Monthly Attendance
+   Toolbar : the month, the legend and the branch.
+   Canvas : employees down, days across, totals at the
+   right (the employee column and the header stay put).
+   Summary line below the canvas.
+===================================================== */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+/* The month */
+
+.ma-month
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ma-nav
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    min-width: 36px;
+    padding: 0 10px;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .20s ease, background .20s ease;
+}
+
+.ma-nav:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+    background: #f3f7ff;
+}
+
+.ma-nav:disabled
+{
+    color: #94a3b8;
+    cursor: default;
+}
+
+.ma-date
+{
+    height: 36px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    outline: none;
+}
+
+.ma-date:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.ma-legend
+{
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-left: 10px;
+    color: #475569;
+    font-size: 12.5px;
+}
+
+.ma-legend-item
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+/* A day cell */
+
+.ma-cell
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 22px;
+    padding: 0 3px;
+    box-sizing: border-box;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.ma-cell[data-kind='P']
+{
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.ma-cell[data-kind='L']
+{
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.ma-cell[data-kind='H']
+{
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.ma-cell[data-kind='A']
+{
+    background: #fff1f2;
+    color: #be123c;
+}
+
+.ma-cell[data-kind='LV']
+{
+    background: #f5f3ff;
+    color: #6d28d9;
+}
+
+.ma-cell[data-kind='WO'],
+.ma-cell[data-kind='HD']
+{
+    background: #eef2f7;
+    color: #64748b;
+}
+
+.ma-cell[data-kind='NM']
+{
+    border: 1px dashed #f59e0b;
+    background: #ffffff;
+    color: #b45309;
+}
+
+.ma-cell[data-kind='-']
+{
+    background: transparent;
+    color: #cbd5e1;
+}
+
+/* The month table */
+
+.ma-wrap
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+.ma-wrap > table
+{
+    flex: 0 0 auto;
+}
+
+.ma-table
+{
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13.5px;
+}
+
+.ma-table th,
+.ma-table td
+{
+    padding: 5px 3px;
+    border-bottom: 1px solid #eef2f8;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.ma-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 1px solid #d6e4fb;
+    background: #f3f7ff;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.ma-c-emp
+{
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    min-width: 210px;
+    max-width: 260px;
+    padding: 5px 12px !important;
+    border-right: 1px solid #e3e9f3;
+    background: #ffffff;
+    text-align: left !important;
+}
+
+.ma-table thead th.ma-c-emp
+{
+    z-index: 3;
+    background: #f3f7ff;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.ma-c-emp > b,
+.ma-c-emp > small
+{
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ma-c-emp > b
+{
+    color: #1e293b;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.ma-c-emp > small
+{
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.ma-c-day
+{
+    min-width: 30px;
+}
+
+.ma-table thead th.ma-c-day
+{
+    cursor: pointer;
+}
+
+.ma-table thead th.ma-c-day:hover
+{
+    background: #dfe9ff;
+}
+
+.ma-table thead th.ma-c-day > b,
+.ma-table thead th.ma-c-day > small
+{
+    display: block;
+    line-height: 1.25;
+}
+
+.ma-table thead th.ma-c-day > small
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.ma-table thead th.ma-holiday
+{
+    background: #e8eefc;
+}
+
+.ma-table thead th.ma-holiday > b
+{
+    color: #6d28d9;
+}
+
+.ma-c-total
+{
+    min-width: 36px;
+    padding: 5px 6px !important;
+    color: #1e293b;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.ma-table tbody td.ma-c-total:nth-last-child(11),
+.ma-table thead th.ma-c-total:nth-last-child(11)
+{
+    border-left: 1px solid #d6e4fb;
+}
+
+.ma-table tbody td.ma-warn
+{
+    color: #b45309;
+}
+
+.ma-table tbody td.ma-bad
+{
+    color: #be123c;
+}
+
+.ma-c-pay
+{
+    min-width: 70px;
+    background: #f3f7ff;
+    color: #1e3a8a !important;
+    font-weight: 700 !important;
+}
+
+.ma-table tbody tr:hover td
+{
+    background: #fafcff;
+}
+
+.ma-table tbody tr:hover td.ma-c-pay
+{
+    background: #e9f0ff;
+}
+
+/* Loading / failed / nothing to show : the shared empty state,
+   centred in the canvas (the same look as the list pages) */
+
+.ma-wrap > app-empty-state
+{
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 260px;
+}
+
+/* Summary line */
+
+.ma-summary
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 0;
+    min-height: 50px;
+    padding: 12px 22px;
+    box-sizing: border-box;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
+    font-size: 14.5px;
+}
+
+.ma-summary-item
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 18px;
+}
+
+.ma-summary-item:first-child
+{
+    padding-left: 0;
+}
+
+.ma-summary-item + .ma-summary-item
+{
+    border-left: 1px solid #c9daf5;
+}
+
+.ma-summary-label
+{
+    color: #475569;
+    font-weight: 500;
+}
+
+.ma-summary-value
+{
+    color: #1e293b;
+    font-size: 15.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.ma-summary-value.ma-ok
+{
+    color: #047857;
+}
+
+.ma-summary-value.ma-bad
+{
+    color: #be123c;
+}
+
+.ma-summary-value.ma-warn
+{
+    color: #b45309;
+}
+
+.ma-summary-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+}

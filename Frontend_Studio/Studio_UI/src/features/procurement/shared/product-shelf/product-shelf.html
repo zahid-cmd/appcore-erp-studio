@@ -241,14 +241,17 @@
                                         </div>
                                     }
 
-                                    <!-- Last price from this supplier -->
-                                    <div
-                                        class="ps-card-last"
-                                        [class.ps-card-new]="!item.boughtBefore"
-                                        [title]="item.boughtBefore ? item.lastText : 'Not bought from this supplier yet'">
-                                        <i [class]="item.boughtBefore ? 'fas fa-clock-rotate-left' : 'fas fa-star'"></i>
-                                        <span>{{ item.boughtBefore ? item.lastText : 'New to this supplier' }}</span>
-                                    </div>
+                                    <!-- Last price from this supplier (not in sales) -->
+                                    @if (!options.salesMode)
+                                    {
+                                        <div
+                                            class="ps-card-last"
+                                            [class.ps-card-new]="!item.boughtBefore"
+                                            [title]="item.boughtBefore ? item.lastText : 'Not bought from this supplier yet'">
+                                            <i [class]="item.boughtBefore ? 'fas fa-clock-rotate-left' : 'fas fa-star'"></i>
+                                            <span>{{ item.boughtBefore ? item.lastText : 'New to this supplier' }}</span>
+                                        </div>
+                                    }
 
                                     <div class="ps-card-foot">
 
@@ -415,16 +418,16 @@
                                         </label>
                                     }
 
-                                    <label class="ps-field ps-field-price" [class.ps-field-ro]="options.showMargin">
+                                    <label class="ps-field ps-field-price" [class.ps-field-ro]="options.showMargin || options.salesMode">
                                         <span>{{ options.priceWord === 'Unit Price' ? 'Price' : options.priceWord }}</span>
                                         <input
                                             type="text"
                                             inputmode="decimal"
                                             placeholder="0.00"
                                             [attr.aria-label]="options.priceWord"
-                                            [readonly]="options.showMargin"
-                                            [attr.tabindex]="options.showMargin ? -1 : null"
-                                            [attr.title]="options.showMargin ? 'Worked out from MRP and Margin %' : null"
+                                            [readonly]="options.showMargin || options.salesMode"
+                                            [attr.tabindex]="options.showMargin || options.salesMode ? -1 : null"
+                                            [attr.title]="options.salesMode ? 'MRP : the invoice prices it' : options.showMargin ? 'Worked out from MRP and Margin %' : null"
                                             [value]="row.dpText"
                                             (input)="onField(row, 'dp', $event)"
                                             (keydown.enter)="nextBox($event)">

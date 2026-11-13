@@ -1,0 +1,222 @@
+<div class="app-form-page">
+
+    <app-page-header
+        icon="fas fa-id-card-clip"
+        [title]="pageTitle"
+        subtitle="An employee in the provident fund : membership, opening balances and nominee">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="mode === 'edit' ? 'Update' : 'Save'"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div
+            canvasBody
+            class="pf-body appcore-scrollbar">
+
+            <section class="pf-card">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-id-card-clip"></i>
+                    <span>Member</span>
+                    @if (mode !== 'add')
+                    {
+                        <span
+                            class="pf-status"
+                            [attr.data-status]="entity.Status === 'Active' ? 'Running' : 'Recovered'">{{ entity.Status }}</span>
+                    }
+                </header>
+
+                <div class="pfx-grid-3">
+
+                    <app-textbox
+                        label="Code"
+                        [value]="entity.Code"
+                        placeholder="Auto generated"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <div class="pfx-span-2">
+                        @if (mode === 'add')
+                        {
+                            <app-search-dropdown
+                                label="Employee"
+                                [required]="true"
+                                placeholder="Select employee"
+                                [items]="employeeItems"
+                                [value]="entity.EmployeeId || null"
+                                (valueChange)="onEmployee($event)">
+                            </app-search-dropdown>
+                        }
+                        @else
+                        {
+                            <app-textbox
+                                label="Employee"
+                                [value]="entity.EmployeeCode + '  ' + entity.EmployeeName"
+                                [readonly]="true">
+                            </app-textbox>
+                        }
+                    </div>
+
+                    <app-datepicker
+                        label="Member Since"
+                        [required]="true"
+                        [value]="$any(asDate(entity.MemberDate))"
+                        [minDate]="asDate(eligibleDate)"
+                        [disabled]="isViewMode"
+                        (valueChange)="onDate(dateEvent($event))">
+                    </app-datepicker>
+
+                    <app-textbox
+                        label="Opening : Own Part (Tk)"
+                        placeholder="0.00"
+                        [value]="entity.OpeningEmployee || ''"
+                        inputMode="decimal"
+                        [maxLength]="14"
+                        (valueChange)="onAmount('OpeningEmployee', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Opening : Company Part (Tk)"
+                        placeholder="0.00"
+                        [value]="entity.OpeningCompany || ''"
+                        inputMode="decimal"
+                        [maxLength]="14"
+                        (valueChange)="onAmount('OpeningCompany', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Nominee"
+                        placeholder="Name"
+                        [value]="entity.NomineeName"
+                        [maxLength]="150"
+                        textCase="none"
+                        (valueChange)="onText('NomineeName', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Relation"
+                        placeholder="e.g. Wife"
+                        [value]="entity.NomineeRelation"
+                        [maxLength]="50"
+                        textCase="none"
+                        (valueChange)="onText('NomineeRelation', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Nominee Phone"
+                        placeholder="01XXXXXXXXX"
+                        [value]="entity.NomineePhone"
+                        [maxLength]="20"
+                        inputMode="tel"
+                        (valueChange)="onText('NomineePhone', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <div class="pfx-span-3">
+                        <app-textbox
+                            label="Remarks"
+                            placeholder="Optional"
+                            [value]="entity.Remarks"
+                            [maxLength]="500"
+                            textCase="none"
+                            (valueChange)="onText('Remarks', $event)"
+                            [disabled]="isViewMode">
+                        </app-textbox>
+                    </div>
+
+                </div>
+
+                @if (mode === 'add' && entity.EmployeeId)
+                {
+                    <div
+                        class="pfx-rule"
+                        [class.pfx-bad]="!eligibleDate">
+                        <i class="fas fa-circle-info"></i>
+                        <span>
+                            @if (eligibleDate)
+                            {
+                                The policy lets this employee join {{ eligibleText }} : from {{ day(eligibleDate) }}.
+                            }
+                            @else
+                            {
+                                This employee is not confirmed yet : the policy lets an employee join {{ eligibleText }}.
+                            }
+                        </span>
+                    </div>
+                }
+
+            </section>
+
+            <div class="pf-column">
+
+                @if (mode !== 'add')
+                {
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-piggy-bank"></i>
+                            <span>Balance Now</span>
+                        </header>
+
+                        <dl class="pf-facts">
+                            <dt>Joined the company</dt>
+                            <dd>{{ day(entity.JoiningDate) }}</dd>
+                            <dt>Own part</dt>
+                            <dd>{{ money(entity.EmployeeBalance) }}</dd>
+                            <dt>Company part</dt>
+                            <dd>{{ money(entity.CompanyBalance) }}</dd>
+                            <dt>Loan still out</dt>
+                            <dd>{{ money(entity.LoanOutstanding) }}</dd>
+                            <dt class="pf-strong">Fund total</dt>
+                            <dd class="pf-strong">{{ money(entity.EmployeeBalance + entity.CompanyBalance) }}</dd>
+                        </dl>
+
+                    </section>
+                }
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>How it works</span>
+                    </header>
+
+                    <ul class="pf-help">
+                        <li>Contribution : {{ contributionText }}. It is kept back on the salary sheet of every month from the membership date.</li>
+                        <li>An employee can join {{ eligibleText }} (Provident Fund Policy).</li>
+                        <li>Opening balances are what the member had in the fund before this program.</li>
+                        <li>A member is not deleted once the fund has contributions : settle the member on PF Settlements.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

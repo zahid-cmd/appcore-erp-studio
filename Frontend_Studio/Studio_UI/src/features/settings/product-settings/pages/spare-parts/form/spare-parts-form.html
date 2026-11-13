@@ -333,6 +333,25 @@
 
                 </app-textbox>
 
+
+                <!-- Spare Part Image (optional; shared Image Hub; uploaded on save) -->
+
+                <app-image-hub
+
+                    label="Spare Part Image (optional)"
+
+                    placeholder="No image : the spare part icon is shown"
+
+                    [imageUrl]="imagePreview"
+
+                    (imageChange)="onImageChange($event)"
+
+                    [disabled]="isSaving"
+
+                    [readonly]="isViewMode">
+
+                </app-image-hub>
+
             </app-form-section>
 
 

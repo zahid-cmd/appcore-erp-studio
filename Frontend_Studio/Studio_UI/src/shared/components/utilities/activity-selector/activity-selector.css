@@ -12,9 +12,11 @@
 
 :host
 {
-    --act-all-width: 78px;
+    /* roomier (2026-11-14) : keep in step with
+       ACT_ALL_WIDTH / ACT_COL_WIDTH / ACT_SLOT_GAP (ts) */
+    --act-all-width: 84px;
 
-    --act-col-width: 102px;
+    --act-col-width: 116px;
 }
 
 .act-grid
@@ -76,11 +78,11 @@
 
     grid-template-rows: repeat(2, 26px);
 
-    column-gap: 10px;
+    column-gap: 22px;
 
     row-gap: 2px;
 
-    flex: 1 1 auto;
+    flex: 0 0 auto;
 
     min-width: 0;
 

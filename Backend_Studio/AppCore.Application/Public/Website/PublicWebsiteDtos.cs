@@ -34,6 +34,10 @@ public class PublicWebsiteConfigDto
 {
     public bool IsEnabled { get; set; }
     public string DefaultTheme { get; set; } = "auto";
+
+    // The default (live) website design only : website-page-1/2/3.
+    // The other designs are never named here.
+    public string Template { get; set; } = "website-page-1";
     public string CurrencySymbol { get; set; } = "৳";
 
     // Offer ribbon; OfferEndsOn "yyyy-MM-dd" or empty

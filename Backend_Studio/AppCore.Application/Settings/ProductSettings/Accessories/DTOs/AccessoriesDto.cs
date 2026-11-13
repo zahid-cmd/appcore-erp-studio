@@ -87,6 +87,9 @@ public class AccessoriesDto
     // For Sale / Additional Accessories / Promotional Accessories
     public string AccessoryUse { get; set; } = "For Sale";
 
+    // Saved image path ('' = none : pages show the item icon)
+    public string ImagePath { get; set; } = string.Empty;
+
 
     //===========================================================
     // Storage Locations (one per warehouse)

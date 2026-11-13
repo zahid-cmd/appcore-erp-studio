@@ -1176,6 +1176,16 @@ export class ProductShelfComponent
             return `At most ${row.product.room} (Max Stock Level)`;
         }
 
+        // Sales : the price is the MRP (read only; a quotation may
+        // quote an unpriced item)
+        if
+        (
+            this.options.salesMode
+        )
+        {
+            return '';
+        }
+
         if
         (
             !(dp > 0)

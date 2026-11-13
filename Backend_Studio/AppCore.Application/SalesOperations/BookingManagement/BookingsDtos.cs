@@ -13,10 +13,11 @@ namespace AppCore.Application.SalesOperations.BookingManagement;
 
 
 //===============================================================
-// Bookings (MB / SP / AC) : page data
+// Bookings (motor bikes) : page data
 //===============================================================
 
-// SP / AC : one item booked (quantity; no price)
+// SP / AC : one item of a booking (also the item asked for on
+// New Booking / Edit)
 public class BookingLineDto
 {
     public long ProductId { get; set; }
@@ -35,7 +36,7 @@ public class BookingLineDto
 }
 
 
-// SP / AC : a product found by the item search
+// SP / AC : an item found by the Add Item search
 public class BookingProductDto
 {
     public long ProductId { get; set; }
@@ -59,6 +60,9 @@ public class BookingRowDto
     // MB / SP / AC
     public string ProductType { get; set; } = string.Empty;
 
+    // SP / AC : the items
+    public List<BookingLineDto> Lines { get; set; } = new();
+
     public string BookingNo { get; set; } = string.Empty;
 
     // yyyy-MM-dd
@@ -76,14 +80,9 @@ public class BookingRowDto
 
     public string CustomerPhone { get; set; } = string.Empty;
 
-    // MB : model + colour
     public long MotorBikeId { get; set; }
 
-    // MB : the model; SP / AC : a summary of the items
     public string ModelName { get; set; } = string.Empty;
-
-    // SP / AC : the items
-    public List<BookingLineDto> Lines { get; set; } = new();
 
     public string ValidUntil { get; set; } = string.Empty;
 
@@ -150,7 +149,6 @@ public class BookingCollectionRowDto
 }
 
 
-// MB : a model + colour to book
 public class BookingModelDto
 {
     public long MotorBikeId { get; set; }
@@ -161,8 +159,7 @@ public class BookingModelDto
 }
 
 
-// Booking switches of the page (MB 0091-0094, SP 0095-0098,
-// AC 0099-0102)
+// Booking switches (CFG-MOD-008-0091 .. 0094)
 public class BookingSwitchesDto
 {
     // null = no minimum
@@ -175,6 +172,18 @@ public class BookingSwitchesDto
 
     // 0 = none suggested
     public decimal ForfeitPercent { get; set; }
+}
+
+
+// SP / AC : category / sub category of the item filters
+public class BookingCategoryDto
+{
+    public long Id { get; set; }
+
+    // Sub category : its category
+    public long ParentId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
 }
 
 
@@ -197,8 +206,12 @@ public class BookingsPageDto
 
     public List<BookingCollectionRowDto> Collections { get; set; } = new();
 
-    // MB only
     public List<BookingModelDto> Models { get; set; } = new();
+
+    // SP / AC : the categories / sub categories of active items
+    public List<BookingCategoryDto> Categories { get; set; } = new();
+
+    public List<BookingCategoryDto> SubCategories { get; set; } = new();
 }
 
 
@@ -214,36 +227,34 @@ public class CreateBookingDto
 
     public long CustomerId { get; set; }
 
-    // MB
     public long MotorBikeId { get; set; }
-
-    // SP / AC
-    public List<BookingLineDto> Lines { get; set; } = new();
 
     public string ExpectedDate { get; set; } = string.Empty;
 
     public string SalesPersonName { get; set; } = string.Empty;
 
     public string Remarks { get; set; } = string.Empty;
+
+    // SP / AC : the items (MB : the model)
+    public List<BookingLineDto> Lines { get; set; } = new();
 
     public List<ReceiptVoucherDebitDto> Debits { get; set; } = new();
 }
 
 
-// Details of an open booking (model / items, dates, notes)
+// Details of an open booking (model, dates, notes)
 public class UpdateBookingDto
 {
-    // MB
     public long MotorBikeId { get; set; }
-
-    // SP / AC
-    public List<BookingLineDto> Lines { get; set; } = new();
 
     public string ExpectedDate { get; set; } = string.Empty;
 
     public string SalesPersonName { get; set; } = string.Empty;
 
     public string Remarks { get; set; } = string.Empty;
+
+    // SP / AC : the items
+    public List<BookingLineDto> Lines { get; set; } = new();
 }
 
 
@@ -283,8 +294,7 @@ public class BookingSavedDto
 }
 
 
-// Open bookings of a customer (the Sales Invoice of the same type
-// picks one)
+// Open bookings of a customer (the Sales Invoice - MB picks one)
 public class OpenBookingDto
 {
     public long BookingId { get; set; }
@@ -297,9 +307,6 @@ public class OpenBookingDto
 
     public string ModelName { get; set; } = string.Empty;
 
-    // SP / AC : the items (the invoice puts them in its entry)
-    public List<BookingLineDto> Lines { get; set; } = new();
-
     public decimal AdvanceAmount { get; set; }
 
     public bool IsExpired { get; set; }
@@ -308,4 +315,7 @@ public class OpenBookingDto
 
     // Held by another draft / approved invoice
     public string HeldByInvoiceNo { get; set; } = string.Empty;
+
+    // SP / AC : the items
+    public List<BookingLineDto> Lines { get; set; } = new();
 }

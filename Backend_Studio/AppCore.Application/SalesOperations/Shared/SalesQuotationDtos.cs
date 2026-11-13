@@ -25,6 +25,29 @@ public class SaveSalesQuotationDto
 
     // Printed under the lines (delivery, validity, notes ...)
     public string Terms { get; set; } = string.Empty;
+
+    // MB : the exact bikes are named (one per quantity of each
+    // model line); false = models only
+    public bool SpecificUnits { get; set; }
+
+    // MB Specific unit : the bikes picked (ProductId = the model)
+    public List<SalesQuotationUnitDto> Units { get; set; } = new();
+}
+
+
+// MB Specific unit : one bike of a quotation line
+public class SalesQuotationUnitDto
+{
+    // The model (MotorBikeId)
+    public long ProductId { get; set; }
+
+    public long MotorBikeUnitId { get; set; }
+
+    public string ChassisNo { get; set; } = string.Empty;
+
+    public string EngineNo { get; set; } = string.Empty;
+
+    public string ColorName { get; set; } = string.Empty;
 }
 
 
@@ -65,6 +88,9 @@ public class SalesQuotationLineDto
     public decimal NetAmount { get; set; }
 
     public decimal VatInside { get; set; }
+
+    // MB Specific unit : the bikes of the line
+    public List<SalesQuotationUnitDto> Units { get; set; } = new();
 }
 
 
@@ -129,6 +155,9 @@ public class SalesQuotationDto
     public string Narration { get; set; } = string.Empty;
 
     public string Terms { get; set; } = string.Empty;
+
+    // MB : the exact bikes are named on the lines
+    public bool SpecificUnits { get; set; }
 
     // Open / Converted / Cancelled
     public string Status { get; set; } = string.Empty;

@@ -3,7 +3,10 @@
    -----------------------------------------------------
    Every website part reads these variables, so one class
    (.theme-light) switches the whole site. Deep is the
-   default.
+   default. These are Design 1 (Velocity : blue on black, owner
+   2026-11-14); Designs 2 and 3 load their own token sheet with
+   their own page parts (shared/website-designs/*), only when
+   that design is shown.
 ===================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap');
@@ -47,74 +50,74 @@
     --w-body:'Nunito Sans', 'Segoe UI', system-ui, sans-serif;
 
     /* Page */
-    --w-bg:#070d1f;
-    --w-bg-2:#0a1430;
-    --w-panel:#0b1530;
-    --w-text:#eef3ff;
+    --w-bg:#05060a;
+    --w-bg-2:#0a0d14;
+    --w-panel:#0b0f1a;
+    --w-text:#e9eefb;
     --w-strong:#ffffff;
-    --w-muted:#9fb1d1;
-    --w-faint:#6f84ad;
+    --w-muted:#a3afc6;
+    --w-faint:#7c879e;
     --w-line:rgba(255,255,255,.08);
 
     /* Cards */
-    --w-card:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    --w-card:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
     --w-card-edge:rgba(255,255,255,.09);
     --w-chip:rgba(255,255,255,.06);
-    --w-photo:radial-gradient(70% 80% at 50% 70%, rgba(59,130,246,.25), rgba(59,130,246,0)), #0d1a3a;
-    --w-photo-text:#6f84ad;
-    --w-glass:rgba(7,13,31,.72);
+    --w-photo:radial-gradient(70% 80% at 50% 70%, rgba(37,99,235,.3), rgba(37,99,235,0)), #0b0f1a;
+    --w-photo-text:#7c879e;
+    --w-glass:rgba(5,6,10,.74);
 
     /* Accent */
-    --w-accent:#f59e0b;
-    --w-accent-2:#fbbf24;
-    --w-accent-ink:#13254a;
-    --w-accent-soft:rgba(245,158,11,.16);
-    --w-kicker:#fcd34d;
-    --w-link:#fcd34d;
-    --w-blue-soft:rgba(59,130,246,.2);
+    --w-accent:#2563eb;
+    --w-accent-2:#3b82f6;
+    --w-accent-ink:#ffffff;
+    --w-accent-soft:rgba(37,99,235,.18);
+    --w-kicker:#8db8ff;
+    --w-link:#8db8ff;
+    --w-blue-soft:rgba(37,99,235,.2);
     --w-blue-text:#bcd3ff;
 
     /* Header */
-    --w-topbar-bg:#040916;
-    --w-topbar-text:#9fb1d1;
-    --w-header-bg:rgba(7,13,31,.82);
+    --w-topbar-bg:#020306;
+    --w-topbar-text:#a3afc6;
+    --w-header-bg:rgba(5,6,10,.84);
     --w-header-edge:rgba(255,255,255,.07);
-    --w-nav:#d7e3f7;
-    --w-ghost-edge:rgba(255,255,255,.2);
+    --w-nav:#d6deee;
+    --w-ghost-edge:rgba(255,255,255,.22);
     --w-ghost-text:#ffffff;
     --w-switch-bg:rgba(255,255,255,.06);
 
     /* Hero */
     --w-hero-bg:
-        radial-gradient(70% 90% at 78% 40%, rgba(59,130,246,.35) 0%, rgba(59,130,246,0) 60%),
-        radial-gradient(40% 50% at 15% 85%, rgba(245,158,11,.18) 0%, rgba(245,158,11,0) 70%),
-        linear-gradient(160deg, #050a19 0%, #0b1736 60%, #0e1f4a 100%);
+        radial-gradient(70% 90% at 78% 40%, rgba(37,99,235,.42) 0%, rgba(37,99,235,0) 60%),
+        radial-gradient(40% 50% at 12% 88%, rgba(56,189,248,.14) 0%, rgba(56,189,248,0) 70%),
+        linear-gradient(160deg, #030408 0%, #070a12 60%, #0b1224 100%);
     --w-hero-text:#ffffff;
-    --w-hero-muted:#b9c9e8;
+    --w-hero-muted:#b6c2d9;
     --w-monogram:rgba(255,255,255,.04);
-    --w-badge-bg:rgba(245,158,11,.14);
-    --w-badge-edge:rgba(252,211,77,.4);
-    --w-badge-text:#fde68a;
+    --w-badge-bg:rgba(37,99,235,.18);
+    --w-badge-edge:rgba(141,184,255,.4);
+    --w-badge-text:#cfe0ff;
 
     /* Stock */
     --w-ok-bg:rgba(52,211,153,.16);
     --w-ok-text:#6ee7b7;
     --w-few-bg:rgba(245,158,11,.18);
     --w-few-text:#fcd34d;
-    --w-pre-bg:rgba(59,130,246,.2);
+    --w-pre-bg:rgba(37,99,235,.22);
     --w-pre-text:#bcd3ff;
 
     /* Offer */
-    --w-offer-bg:linear-gradient(90deg, rgba(245,158,11,.18), rgba(245,158,11,.06));
-    --w-offer-edge:rgba(252,211,77,.35);
+    --w-offer-bg:linear-gradient(90deg, rgba(37,99,235,.22), rgba(37,99,235,.06));
+    --w-offer-edge:rgba(141,184,255,.35);
 
     /* Footer */
-    --w-footer-bg:#040916;
-    --w-footer-text:#9fb1d1;
-    --w-strip-bg:#02050d;
-    --w-strip-text:#8fa3c8;
+    --w-footer-bg:#020306;
+    --w-footer-text:#a3afc6;
+    --w-strip-bg:#000000;
+    --w-strip-text:#8f9ab0;
     --w-strip-strong:#ffffff;
-    --w-strip-link:#fcd34d;
+    --w-strip-link:#8db8ff;
 
     min-height:100vh;
     display:flex;
@@ -126,29 +129,29 @@
 
     /* Brands menu (deep) */
     --w-mega-bg:
-        radial-gradient(110% 80% at 0% 0%, rgba(59,130,246,.22) 0%, rgba(59,130,246,0) 55%),
-        radial-gradient(80% 70% at 100% 100%, rgba(245,158,11,.12) 0%, rgba(245,158,11,0) 60%),
-        linear-gradient(160deg, rgba(13,26,58,.97) 0%, rgba(8,16,40,.97) 100%);
+        radial-gradient(110% 80% at 0% 0%, rgba(37,99,235,.24) 0%, rgba(37,99,235,0) 55%),
+        radial-gradient(80% 70% at 100% 100%, rgba(56,189,248,.1) 0%, rgba(56,189,248,0) 60%),
+        linear-gradient(160deg, rgba(12,16,28,.97) 0%, rgba(6,8,14,.97) 100%);
     --w-mega-edge:rgba(255,255,255,.1);
     --w-mega-shadow:0 40px 80px -30px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.08) inset;
-    --w-mega-kicker:#fcd34d;
-    --w-mega-sub:#9fb1d1;
+    --w-mega-kicker:#8db8ff;
+    --w-mega-sub:#a3afc6;
     --w-mega-card:linear-gradient(180deg, rgba(255,255,255,.09) 0%, rgba(255,255,255,.03) 100%);
     --w-mega-card-edge:rgba(255,255,255,.12);
     --w-mega-card-shadow:0 18px 36px -18px rgba(0,0,0,.75), 0 1px 0 rgba(255,255,255,.08) inset;
-    --w-mega-card-lift:0 28px 50px -20px rgba(0,0,0,.85), 0 0 0 3px rgba(245,158,11,.18);
+    --w-mega-card-lift:0 28px 50px -20px rgba(0,0,0,.85), 0 0 0 3px rgba(37,99,235,.28);
     --w-mega-sheen:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
     --w-mega-name:#ffffff;
-    --w-mega-meta:#9fb1d1;
+    --w-mega-meta:#a3afc6;
     --w-mega-foot:rgba(0,0,0,.18);
     --w-mega-foot-edge:rgba(255,255,255,.08);
     --w-mega-pill:rgba(255,255,255,.06);
     --w-mega-pill-edge:rgba(255,255,255,.14);
-    --w-mega-pill-text:#fcd34d;
+    --w-mega-pill-text:#8db8ff;
     --w-mega-pill-shadow:none;
 
     /* Hero brand tabs (deep) */
-    --w-brand-tab-bg:rgba(7,13,31,.72);
+    --w-brand-tab-bg:rgba(5,6,10,.72);
     --w-brand-tab-edge:rgba(255,255,255,.12);
     --w-brand-tab-text:#ffffff;
 
@@ -156,6 +159,29 @@
     --w-logo-tile-bg:#ffffff;
     --w-logo-tile-edge:rgba(147,180,245,.35);
     --w-logo-tile-shadow:0 10px 22px -14px rgba(0,0,0,.6), 0 1px 0 #ffffff inset;
+
+    /* Accent channels (rgba(var(--w-accent-rgb), a) in the parts) */
+    --w-accent-rgb:37,99,235;
+    --w-glow-rgb:96,165,250;
+    --w-glint-rgb:141,184,255;
+    --w-pale:#cfe0ff;
+    --w-accent-glow:rgba(37,99,235,.75);
+
+    /* Test-ride band */
+    --w-band-bg:
+        radial-gradient(70% 120% at 100% 0%, rgba(255,255,255,.22), rgba(255,255,255,0)),
+        linear-gradient(120deg, #1d4ed8, #3b82f6);
+    --w-band-ink:#ffffff;
+    --w-band-solid-bg:#ffffff;
+    --w-band-solid-text:#0b1220;
+
+    /* Shape and headings (each design sets its own) */
+    --w-title-transform:uppercase;
+    --w-title-weight:800;
+    --w-title-spacing:-.2px;
+    --w-title-line:.95;
+    --w-radius-card:22px;
+    --w-radius-btn:13px;
 }
 
 
@@ -171,50 +197,50 @@
 
 .website.theme-light
 {
-    --w-bg:#f4f6fa;
-    --w-bg-2:#edf2f9;
+    --w-bg:#f5f7fb;
+    --w-bg-2:#eaeff8;
     --w-panel:#ffffff;
-    --w-text:#13254a;
-    --w-strong:#0b1736;
-    --w-muted:#4b5a76;
-    --w-faint:#6b7a94;
-    --w-line:#d9e1ee;
+    --w-text:#1f2937;
+    --w-strong:#0b1220;
+    --w-muted:#4b5563;
+    --w-faint:#6b7280;
+    --w-line:#dde3ee;
 
     --w-card:#ffffff;
-    --w-card-edge:#e0e7f1;
-    --w-chip:#eef3fa;
-    --w-photo:radial-gradient(70% 80% at 50% 70%, rgba(37,99,235,.12), rgba(37,99,235,0)), #e9eef7;
-    --w-photo-text:#5d6c87;
+    --w-card-edge:#e1e6ef;
+    --w-chip:#eef2f8;
+    --w-photo:radial-gradient(70% 80% at 50% 70%, rgba(37,99,235,.12), rgba(37,99,235,0)), #eef2fa;
+    --w-photo-text:#5b6474;
     --w-glass:rgba(255,255,255,.82);
 
-    --w-accent:#f59e0b;
-    --w-accent-2:#fbbf24;
-    --w-accent-ink:#13254a;
-    --w-accent-soft:#fff3d6;
-    --w-kicker:#b45309;
+    --w-accent:#2563eb;
+    --w-accent-2:#3b82f6;
+    --w-accent-ink:#ffffff;
+    --w-accent-soft:#e6eeff;
+    --w-kicker:#1d4ed8;
     --w-link:#1d4ed8;
-    --w-blue-soft:#e1eafa;
+    --w-blue-soft:#e6eeff;
     --w-blue-text:#1e40af;
 
-    --w-topbar-bg:#dfe7f3;
-    --w-topbar-text:#33445f;
-    --w-header-bg:rgba(240,244,250,.88);
-    --w-header-edge:#d3ddee;
-    --w-nav:#13254a;
-    --w-ghost-edge:#b9c8df;
-    --w-ghost-text:#13254a;
-    --w-switch-bg:#e4ebf6;
+    --w-topbar-bg:#e7ecf5;
+    --w-topbar-text:#334155;
+    --w-header-bg:rgba(245,247,251,.9);
+    --w-header-edge:#dde3ee;
+    --w-nav:#1f2937;
+    --w-ghost-edge:#c3cddd;
+    --w-ghost-text:#0b1220;
+    --w-switch-bg:#e7ecf5;
 
     --w-hero-bg:
-        radial-gradient(70% 90% at 78% 40%, rgba(37,99,235,.18) 0%, rgba(37,99,235,0) 60%),
-        radial-gradient(40% 50% at 15% 85%, rgba(245,158,11,.16) 0%, rgba(245,158,11,0) 70%),
-        linear-gradient(160deg, #f4f7fc 0%, #e2eaf6 60%, #cfdcef 100%);
-    --w-hero-text:#0b1736;
-    --w-hero-muted:#4b5a76;
-    --w-monogram:rgba(19,37,74,.05);
-    --w-badge-bg:#fff3d6;
-    --w-badge-edge:#f0c86a;
-    --w-badge-text:#8a4405;
+        radial-gradient(70% 90% at 78% 40%, rgba(37,99,235,.16) 0%, rgba(37,99,235,0) 60%),
+        radial-gradient(40% 50% at 12% 88%, rgba(56,189,248,.12) 0%, rgba(56,189,248,0) 70%),
+        linear-gradient(160deg, #ffffff 0%, #eef2fa 60%, #e3eaf8 100%);
+    --w-hero-text:#0b1220;
+    --w-hero-muted:#4b5563;
+    --w-monogram:rgba(11,18,32,.05);
+    --w-badge-bg:#e6eeff;
+    --w-badge-edge:#a9c2f5;
+    --w-badge-text:#1e3a8a;
 
     --w-ok-bg:#e7f6ee;
     --w-ok-text:#15803d;
@@ -223,30 +249,30 @@
     --w-pre-bg:#e1eafa;
     --w-pre-text:#1e40af;
 
-    --w-offer-bg:linear-gradient(90deg, #fff3d6, #fffaf0);
-    --w-offer-edge:#f0c86a;
+    --w-offer-bg:linear-gradient(90deg, #e6eeff, #ffffff);
+    --w-offer-edge:#a9c2f5;
 
-    --w-footer-bg:#dfe7f3;
-    --w-footer-text:#33445f;
-    --w-strip-bg:#cdd7e6;
-    --w-strip-text:#33445f;
-    --w-strip-strong:#13254a;
-    --w-strip-link:#9a4a06;
+    --w-footer-bg:#0b1220;
+    --w-footer-text:#c3cbdb;
+    --w-strip-bg:#05080f;
+    --w-strip-text:#a7b1c4;
+    --w-strip-strong:#ffffff;
+    --w-strip-link:#9cc0ff;
 
     /* Brands menu (light) : deeper blue-grey glass, floating
        white cards, a tinted tray of white pills */
     --w-mega-bg:
-        radial-gradient(110% 80% at 0% 0%, rgba(96,165,250,.35) 0%, rgba(96,165,250,0) 55%),
-        radial-gradient(80% 70% at 100% 100%, rgba(245,158,11,.18) 0%, rgba(245,158,11,0) 60%),
-        linear-gradient(160deg, rgba(205,218,240,.96) 0%, rgba(184,200,231,.96) 100%);
+        radial-gradient(110% 80% at 0% 0%, rgba(96,165,250,.32) 0%, rgba(96,165,250,0) 55%),
+        radial-gradient(80% 70% at 100% 100%, rgba(56,189,248,.14) 0%, rgba(56,189,248,0) 60%),
+        linear-gradient(160deg, rgba(214,224,242,.96) 0%, rgba(192,206,233,.96) 100%);
     --w-mega-edge:rgba(255,255,255,.7);
     --w-mega-shadow:0 44px 90px -30px rgba(19,37,74,.55), 0 2px 0 rgba(255,255,255,.85) inset;
-    --w-mega-kicker:#b45309;
+    --w-mega-kicker:#1d4ed8;
     --w-mega-sub:#2c4166;
     --w-mega-card:linear-gradient(180deg, #ffffff 0%, #f2f6fc 60%, #e8eef9 100%);
     --w-mega-card-edge:rgba(255,255,255,.95);
     --w-mega-card-shadow:0 22px 40px -18px rgba(19,37,74,.55), 0 6px 14px -6px rgba(19,37,74,.2), 0 1px 0 #ffffff inset;
-    --w-mega-card-lift:0 34px 56px -20px rgba(19,37,74,.6), 0 0 0 3px rgba(245,158,11,.25), 0 1px 0 #ffffff inset;
+    --w-mega-card-lift:0 34px 56px -20px rgba(11,18,32,.55), 0 0 0 3px rgba(37,99,235,.25), 0 1px 0 #ffffff inset;
     --w-mega-sheen:linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,0));
     --w-mega-name:#0f1f44;
     --w-mega-meta:#4b5f84;
@@ -259,15 +285,59 @@
 
     /* Hero brand tabs (light) : tinted, so the white logo
        tile stands out */
-    --w-brand-tab-bg:rgba(19,37,74,.07);
-    --w-brand-tab-edge:rgba(19,37,74,.14);
-    --w-brand-tab-text:#13254a;
+    --w-brand-tab-bg:rgba(11,18,32,.06);
+    --w-brand-tab-edge:rgba(11,18,32,.14);
+    --w-brand-tab-text:#0b1220;
 
     /* Company logo tile (light) : no tile, the logo sits
        straight on the header */
     --w-logo-tile-bg:transparent;
     --w-logo-tile-edge:transparent;
     --w-logo-tile-shadow:none;
+
+    --w-pale:#1e3a8a;
+    --w-accent-glow:rgba(37,99,235,.55);
+}
+
+
+/* =====================================================
+   STAFF PREVIEW BAR (design preview, this tab only)
+===================================================== */
+
+.preview-bar
+{
+    position:relative;
+    z-index:80;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:8px 16px;
+    padding:8px 16px;
+    background:#7c2d12;
+    color:#ffffff;
+    font-family:'Segoe UI', system-ui, sans-serif;
+    font-size:13.5px;
+}
+
+
+.preview-exit
+{
+    height:30px;
+    padding:0 14px;
+    border:1px solid rgba(255,255,255,.6);
+    border-radius:8px;
+    background:transparent;
+    color:#ffffff;
+    font:inherit;
+    font-weight:700;
+    cursor:pointer;
+}
+
+
+.preview-exit:hover
+{
+    background:rgba(255,255,255,.14);
 }
 
 
@@ -319,9 +389,18 @@
         overflow:visible;
     }
 
-    app-site-header,
     app-site-footer,
     app-appcore-strip
+    {
+        display:none;
+    }
+
+    /* The header is created by the design's kit (no content
+       attribute of this frame on it) */
+    :host ::ng-deep app-site-header,
+    :host ::ng-deep app-site-header-2,
+    :host ::ng-deep app-site-header-3,
+    .preview-bar
     {
         display:none;
     }

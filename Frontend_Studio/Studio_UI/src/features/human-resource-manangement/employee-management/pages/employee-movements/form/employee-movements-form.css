@@ -1,0 +1,234 @@
+@import '../../../../payroll-management/pages/payroll-form.css';
+
+/* =====================================================
+   Employee Movements form : the shared HR form look
+   (payroll-form.css) plus the movement kinds and the
+   salary now / new table.
+===================================================== */
+
+/* Kinds */
+
+.mv-types
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mv-type
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #475569;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .20s ease, background .20s ease, color .20s ease;
+}
+
+.mv-type:hover:not(:disabled):not(.on)
+{
+    border-color: #9fc2f7;
+    background: #f3f7ff;
+}
+
+.mv-type:disabled:not(.on)
+{
+    cursor: default;
+    opacity: .45;
+}
+
+.mv-type.on
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+    cursor: default;
+}
+
+.mv-type.on[data-type='Separation']
+{
+    border-color: #be123c;
+    background: #be123c;
+}
+
+/* Raise by percent */
+
+.mv-raise
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.mv-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #c7d7f5;
+    border-radius: 10px;
+    background: #f3f7ff;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mv-btn:hover
+{
+    border-color: #9fc2f7;
+    background: #e6efff;
+}
+
+/* Salary table */
+
+.mv-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+}
+
+.mv-table th
+{
+    padding: 6px 4px;
+    border-bottom: 1px solid #d6e4fb;
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.mv-table td
+{
+    padding: 6px 4px;
+    border-bottom: 1px solid #eef2f8;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+.mv-num
+{
+    width: 150px;
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.mv-changed td:first-child
+{
+    font-weight: 600;
+}
+
+.mv-changed td.mv-num:last-child
+{
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.mv-total td
+{
+    border-bottom: 1px solid #d6e4fb;
+    background: #f3f7ff;
+    font-weight: 700;
+}
+
+.mv-total td:first-child
+{
+    padding-left: 10px;
+}
+
+.mv-total td:last-child
+{
+    padding-right: 12px;
+}
+
+.mv-change
+{
+    margin-left: 8px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 12.5px;
+}
+
+.mv-group td
+{
+    padding-top: 12px;
+    border-bottom: 1px solid #d6e4fb;
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.mv-amount
+{
+    width: 100%;
+    height: 32px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14.5px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    outline: none;
+    transition: border-color .20s ease, box-shadow .20s ease;
+}
+
+.mv-amount:hover
+{
+    border-color: #9fc2f7;
+}
+
+.mv-amount:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.mv-percent
+{
+    width: 64px;
+    height: 30px;
+}
+
+.mv-summary
+{
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid #dbe6f7;
+    border-radius: 11px;
+    background: #f7faff;
+    color: #1e293b;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+/* The facts on this page are text, not amounts */
+
+.pf-facts dd
+{
+    max-width: 220px;
+    overflow-wrap: anywhere;
+}

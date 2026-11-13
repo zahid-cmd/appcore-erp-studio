@@ -1,0 +1,580 @@
+/* =====================================================
+   Salary Sheet
+   Toolbar : the status and the next step. Panel : the
+   unpost reason / the paid date. Canvas : the lines with
+   a total foot. Summary line below the canvas.
+===================================================== */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+/* Status and info */
+
+.ss-state
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    min-height: 36px;
+}
+
+.ss-status
+{
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.ss-status[data-status='Draft']
+{
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.ss-status[data-status='Approved']
+{
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.ss-status[data-status='Posted']
+{
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.ss-info
+{
+    color: #475569;
+    font-size: 14px;
+}
+
+.ss-info > b
+{
+    color: #1e293b;
+}
+
+.ss-unsaved
+{
+    margin-left: 6px;
+    padding: 2px 9px;
+    border: 1px solid #fde68a;
+    border-radius: 999px;
+    background: #fffbeb;
+    color: #92400e !important;
+    font-size: 12.5px;
+}
+
+.ss-chip
+{
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 11px;
+    border: 1px solid #dbe6f7;
+    border-radius: 999px;
+    background: #f7faff;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.ss-chip-warn
+{
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+/* Buttons */
+
+.ss-steps
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ss-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid #c7d7f5;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .20s ease, border-color .20s ease;
+}
+
+.ss-btn:hover:not(:disabled),
+.ss-btn.on
+{
+    border-color: #9fc2f7;
+    background: #eef4ff;
+}
+
+.ss-btn:disabled
+{
+    cursor: default;
+    opacity: .55;
+}
+
+.ss-btn.ss-primary
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.ss-btn.ss-primary:hover:not(:disabled),
+.ss-btn.ss-primary.on
+{
+    border-color: #172554;
+    background: #172554;
+}
+
+.ss-btn.ss-danger
+{
+    border-color: #be123c;
+    background: #be123c;
+    color: #ffffff;
+}
+
+.ss-btn.ss-danger:hover:not(:disabled)
+{
+    border-color: #9f1239;
+    background: #9f1239;
+}
+
+/* Panel */
+
+.ss-panel
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 1px solid #c7d7f5;
+    border-radius: 12px;
+    background: #f7faff;
+}
+
+.ss-panel-text
+{
+    display: flex;
+    flex-direction: column;
+    max-width: 420px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.ss-panel-text > b
+{
+    color: #1e293b;
+    font-size: 14.5px;
+}
+
+.ss-panel-input
+{
+    height: 36px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.ss-panel-input:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.ss-grow
+{
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+/* The lines */
+
+.ss-wrap
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+.ss-wrap > table
+{
+    flex: 0 0 auto;
+}
+
+.ss-table
+{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13.5px;
+}
+
+.ss-table th,
+.ss-table td
+{
+    padding: 6px 8px;
+    border-bottom: 1px solid #eef2f8;
+    color: #1e293b;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.ss-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    height: 36px;
+    border-bottom: 1px solid #d6e4fb;
+    background: #f3f7ff;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.ss-table tfoot td
+{
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    border-top: 1px solid #d6e4fb;
+    border-bottom: 0;
+    background: #f3f7ff;
+    font-weight: 700;
+}
+
+.ss-table tbody tr:hover td
+{
+    background: #fafcff;
+}
+
+.ss-table tbody tr.ss-paid-row td
+{
+    background: #f7fdf9;
+}
+
+.ss-num
+{
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.ss-strong
+{
+    font-weight: 700;
+}
+
+.ss-table tbody td.ss-bad,
+.ss-table .ss-bad
+{
+    color: #be123c;
+}
+
+.ss-table .ss-warn
+{
+    color: #b45309;
+}
+
+.ss-table tbody td.ss-net,
+.ss-table tfoot td.ss-net
+{
+    background: #eef4ff;
+    color: #1e3a8a;
+}
+
+.ss-c-no
+{
+    width: 40px;
+    color: #64748b !important;
+    text-align: center !important;
+}
+
+.ss-c-emp
+{
+    min-width: 190px;
+}
+
+.ss-c-emp > b,
+.ss-c-emp > small,
+.ss-c-days > span,
+.ss-c-days > small
+{
+    display: block;
+    line-height: 1.35;
+}
+
+.ss-c-emp > b
+{
+    font-weight: 600;
+}
+
+.ss-table td > small
+{
+    color: #64748b;
+    font-size: 12px;
+}
+
+.ss-c-days
+{
+    width: 96px;
+}
+
+.ss-c-days > small > span + span
+{
+    margin-left: 6px;
+}
+
+.ss-c-typed
+{
+    width: 96px;
+}
+
+.ss-c-paid
+{
+    width: 124px;
+    text-align: center !important;
+}
+
+.ss-c-remarks
+{
+    min-width: 140px;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ss-c-slip
+{
+    width: 40px;
+    text-align: center !important;
+}
+
+.ss-input
+{
+    width: 88px;
+    height: 28px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    outline: none;
+    transition: border-color .20s ease, box-shadow .20s ease;
+}
+
+.ss-input.ss-text
+{
+    width: 100%;
+    min-width: 130px;
+    text-align: left;
+}
+
+.ss-input:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+}
+
+.ss-input:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.ss-paid
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #64748b;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ss-paid:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+}
+
+.ss-paid.on
+{
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.ss-paid:disabled
+{
+    cursor: default;
+    opacity: .6;
+}
+
+.ss-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #1e3a8a;
+    cursor: pointer;
+}
+
+.ss-icon:hover
+{
+    border-color: #c7d7f5;
+    background: #eef4ff;
+}
+
+/* Loading / failed / nothing to show : the shared empty state,
+   centred in the canvas (the same look as the list pages) */
+
+.ss-wrap > app-empty-state
+{
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 260px;
+}
+
+/* Summary line */
+
+.ss-summary
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 0;
+    min-height: 50px;
+    padding: 12px 22px;
+    box-sizing: border-box;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
+    font-size: 14.5px;
+}
+
+.ss-summary-item
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 18px;
+}
+
+.ss-summary-item:first-child
+{
+    padding-left: 0;
+}
+
+.ss-summary-item + .ss-summary-item
+{
+    border-left: 1px solid #c9daf5;
+}
+
+.ss-summary-label
+{
+    color: #475569;
+    font-weight: 500;
+}
+
+.ss-summary-value
+{
+    color: #1e293b;
+    font-size: 15.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.ss-summary-value.ss-ok
+{
+    color: #047857;
+}
+
+.ss-summary-value.ss-bad
+{
+    color: #be123c;
+}
+
+.ss-summary-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* The shared date picker used without a label, in a row */
+
+.hr-date-inline
+{
+    flex: 0 0 170px;
+    width: 170px;
+}

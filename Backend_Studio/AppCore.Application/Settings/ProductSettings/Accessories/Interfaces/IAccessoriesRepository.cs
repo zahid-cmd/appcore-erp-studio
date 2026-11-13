@@ -56,4 +56,15 @@ public interface IAccessoriesRepository
 
     Task<AccessoriesDefaultsDto> GetDefaultsAsync(
         long productSubCategoryId);
+
+
+    //===========================================================
+    // Accessory Image : store the new path (or '' to clear).
+    // Returns the previous path so the old file can be removed.
+    //===========================================================
+
+    Task<string> SetImagePathAsync(
+        long id,
+        string imagePath,
+        long userId);
 }

@@ -1988,7 +1988,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                     .Set<AccessoriesEntity>()
                     .AsNoTracking()
                     .Where(x => !x.IsDeleted && (codes == null || codes.Contains(x.ProductCode)))
-                    .Select(x => new { x.AccessoryId, x.ProductCode, x.PartNumber, x.AccessoryName, x.Unit, x.ProductCategoryId, x.ProductSubCategoryId, x.IsActive, x.ReorderLevel, x.RedLevel, x.MaxStockLevel })
+                    .Select(x => new { x.AccessoryId, x.ProductCode, x.PartNumber, x.AccessoryName, x.Unit, x.ProductCategoryId, x.ProductSubCategoryId, x.IsActive, x.ImagePath, x.ReorderLevel, x.RedLevel, x.MaxStockLevel })
                     .ToListAsync();
 
             rows.AddRange(
@@ -2007,6 +2007,7 @@ public abstract class PurchaseRepositoryBase<THeader, TLine, TPoHeader, TPoLine>
                             Unit = x.Unit,
                             CategoryId = x.ProductCategoryId,
                             SubCategoryId = x.ProductSubCategoryId,
+                            ImagePath = x.ImagePath ?? string.Empty,
                             ReorderLevel = x.ReorderLevel,
                             RedLevel = x.RedLevel,
                             MaxStockLevel = x.MaxStockLevel,

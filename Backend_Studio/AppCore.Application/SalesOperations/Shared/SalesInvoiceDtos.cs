@@ -503,6 +503,14 @@ public class SalesInvoiceProductDto
     public long? ScannedBatchId { get; set; }
 
     public bool IsActive { get; set; }
+
+    // Product Shelf : category chips / sub category filter
+    public long ProductCategoryId { get; set; }
+
+    public long ProductSubCategoryId { get; set; }
+
+    // Product Shelf card image ('' = icon)
+    public string ImagePath { get; set; } = string.Empty;
 }
 
 

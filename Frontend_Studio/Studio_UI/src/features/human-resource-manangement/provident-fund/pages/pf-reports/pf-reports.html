@@ -1,0 +1,250 @@
+<div class="app-list-page">
+
+    <app-page-header
+        icon="fas fa-chart-column"
+        title="PF Reports"
+        subtitle="Fund summary, member statement and monthly contribution register">
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Print"
+                command1Icon="fas fa-print"
+                (command1Click)="print()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="load()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="report"
+            (selectedTabChange)="onTab($event)">
+        </app-control-tabs>
+
+        <div
+            pageToolbarRight
+            class="pfx-tools">
+
+            @if (report === 'statement')
+            {
+                <app-search-dropdown
+                    placeholder="Select member"
+                    [items]="memberItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="memberId || null"
+                    (valueChange)="onMember($event)">
+                </app-search-dropdown>
+            }
+
+            @if (report === 'register')
+            {
+                <input
+                    type="month"
+                    class="pfx-input"
+                    [value]="month"
+                    (change)="onMonth($event)">
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div
+            canvasBody
+            class="pfx-scroll appcore-scrollbar">
+
+            @switch (report)
+            {
+                @case ('summary')
+                {
+                    @if (members.length === 0)
+                    {
+                        <div class="pfx-empty">{{ loading ? 'Loading...' : 'The provident fund has no member yet.' }}</div>
+                    }
+                    @else
+                    {
+                        <table class="pfx-table">
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th>Member</th>
+                                    <th>Employee</th>
+                                    <th>Designation</th>
+                                    <th>Member Since</th>
+                                    <th class="pfx-num">Own Part</th>
+                                    <th class="pfx-num">Company Part</th>
+                                    <th class="pfx-num">Fund Total</th>
+                                    <th class="pfx-num">Loan Out</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (m of paged(members); track m.Code; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="pfx-no">{{ pageStart + i + 1 }}</td>
+                                        <td>{{ m.Code }}</td>
+                                        <td>{{ m.EmployeeCode }} &nbsp; {{ m.EmployeeName }}</td>
+                                        <td>{{ m.DesignationName }}</td>
+                                        <td>{{ day(m.MemberDate) }}</td>
+                                        <td class="pfx-num">{{ money(m.EmployeeBalance) }}</td>
+                                        <td class="pfx-num">{{ money(m.CompanyBalance) }}</td>
+                                        <td class="pfx-num">{{ money(m.EmployeeBalance + m.CompanyBalance) }}</td>
+                                        <td class="pfx-num">{{ signed(m.LoanOutstanding) }}</td>
+                                        <td>{{ m.Status }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5">Total ({{ members.length }})</td>
+                                    <td class="pfx-num">{{ money(sum(members, 'EmployeeBalance')) }}</td>
+                                    <td class="pfx-num">{{ money(sum(members, 'CompanyBalance')) }}</td>
+                                    <td class="pfx-num">{{ money(sum(members, 'EmployeeBalance') + sum(members, 'CompanyBalance')) }}</td>
+                                    <td class="pfx-num">{{ money(sum(members, 'LoanOutstanding')) }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    }
+                }
+
+                @case ('statement')
+                {
+                    @if (!memberId)
+                    {
+                        <div class="pfx-empty">Pick a member on the toolbar to see the statement.</div>
+                    }
+                    @else if (statement.length === 0)
+                    {
+                        <div class="pfx-empty">{{ loading ? 'Loading...' : 'The fund has no entry of this member yet.' }}</div>
+                    }
+                    @else
+                    {
+                        <table class="pfx-table">
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th>Date</th>
+                                    <th>Entry</th>
+                                    <th>Details</th>
+                                    <th class="pfx-num">Own Part</th>
+                                    <th class="pfx-num">Company Part</th>
+                                    <th class="pfx-num">Own Balance</th>
+                                    <th class="pfx-num">Company Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of paged(statement); track $index; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="pfx-no">{{ pageStart + i + 1 }}</td>
+                                        <td>{{ day(row.Date) }}</td>
+                                        <td>{{ row.Type }}</td>
+                                        <td>{{ row.Remarks }}</td>
+                                        <td
+                                            class="pfx-num"
+                                            [class.pfx-minus]="row.EmployeeAmount < 0">{{ signed(row.EmployeeAmount) }}</td>
+                                        <td
+                                            class="pfx-num"
+                                            [class.pfx-minus]="row.CompanyAmount < 0">{{ signed(row.CompanyAmount) }}</td>
+                                        <td class="pfx-num">{{ money(row.EmployeeBalance) }}</td>
+                                        <td class="pfx-num">{{ money(row.CompanyBalance) }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                }
+
+                @case ('register')
+                {
+                    @if (register.length === 0)
+                    {
+                        <div class="pfx-empty">{{ loading ? 'Loading...' : 'No salary sheet of this month has a fund deduction.' }}</div>
+                    }
+                    @else
+                    {
+                        <table class="pfx-table">
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th>Member</th>
+                                    <th>Employee</th>
+                                    <th>Salary Sheet</th>
+                                    <th class="pfx-num">Own Part</th>
+                                    <th class="pfx-num">Company Part</th>
+                                    <th class="pfx-num">Into the Fund</th>
+                                    <th class="pfx-num">Loan Recovered</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of paged(register); track row.EmployeeCode; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="pfx-no">{{ pageStart + i + 1 }}</td>
+                                        <td>{{ row.MemberCode }}</td>
+                                        <td>{{ row.EmployeeCode }} &nbsp; {{ row.EmployeeName }}</td>
+                                        <td>{{ row.SheetCode }}</td>
+                                        <td class="pfx-num">{{ money(row.EmployeeAmount) }}</td>
+                                        <td class="pfx-num">{{ money(row.CompanyAmount) }}</td>
+                                        <td class="pfx-num">{{ money(row.EmployeeAmount + row.CompanyAmount) }}</td>
+                                        <td class="pfx-num">{{ signed(row.LoanRecovered) }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4">Total ({{ register.length }})</td>
+                                    <td class="pfx-num">{{ money(sum(register, 'EmployeeAmount')) }}</td>
+                                    <td class="pfx-num">{{ money(sum(register, 'CompanyAmount')) }}</td>
+                                    <td class="pfx-num">{{ money(sum(register, 'EmployeeAmount') + sum(register, 'CompanyAmount')) }}</td>
+                                    <td class="pfx-num">{{ money(sum(register, 'LoanRecovered')) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    }
+                }
+            }
+
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="page"
+            [pageSize]="pageSize"
+            (pageChange)="onPage($event)"
+            (pageSizeChange)="onPageSize($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+
+    @if (summaryLine.length > 0)
+    {
+        <div class="hrs-summary">
+            @for (item of summaryLine; track item.label)
+            {
+                <span class="hrs-summary-item">
+                    <span class="hrs-summary-label">{{ item.label }}</span>
+                    <b class="hrs-summary-value">{{ item.value }}</b>
+                </span>
+            }
+        </div>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

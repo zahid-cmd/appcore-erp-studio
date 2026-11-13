@@ -167,6 +167,7 @@ public class PublicWebsiteRepository : IPublicWebsiteRepository
         {
             IsEnabled = c.IsEnabled,
             DefaultTheme = c.DefaultTheme,
+            Template = string.IsNullOrWhiteSpace(c.Template) ? "website-page-1" : c.Template,
             CurrencySymbol = string.IsNullOrWhiteSpace(c.CurrencySymbol) ? "৳" : c.CurrencySymbol,
             OfferTitle = c.OfferTitle,
             OfferText = c.OfferText,

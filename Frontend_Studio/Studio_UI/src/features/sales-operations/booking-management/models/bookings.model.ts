@@ -175,6 +175,18 @@ export interface BookingSwitches
         number;
 }
 
+// SP / AC : the Add Item filters
+export interface BookingCategory
+{
+    Id:
+        number;
+    // Sub category : its category
+    ParentId:
+        number;
+    Name:
+        string;
+}
+
 export interface BookingsPage
 {
     ProductType:
@@ -195,6 +207,10 @@ export interface BookingsPage
         BookingCollection[];
     Models:
         BookingModel[];
+    Categories:
+        BookingCategory[];
+    SubCategories:
+        BookingCategory[];
 }
 
 export interface BookingCustomer
@@ -211,6 +227,48 @@ export interface BookingCustomer
         string;
     IsWalkIn:
         boolean;
+}
+
+// The full customer card after a pick (Sales Invoice customer
+// lookup by phone : receivable, credit limit, membership)
+export interface BookingCustomerCard
+{
+    Found:
+        boolean;
+    CustomerId:
+        number;
+    CustomerCode:
+        string;
+    DisplayName:
+        string;
+    Phone:
+        string;
+    Address:
+        string;
+    CustomerType:
+        string;
+    CustomerTag:
+        string;
+    IsCorporate:
+        boolean;
+    IsWalkIn:
+        boolean;
+    IsActive:
+        boolean;
+    Balance:
+        number;
+    BalanceSide:
+        string;
+    CreditLimit:
+        number;
+    MembershipNo:
+        string;
+    MembershipCard:
+        string;
+    MembershipExpiry:
+        string;
+    Message:
+        string;
 }
 
 export interface CreateBooking

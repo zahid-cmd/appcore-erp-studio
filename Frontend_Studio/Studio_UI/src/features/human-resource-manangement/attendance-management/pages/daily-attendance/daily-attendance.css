@@ -1,0 +1,707 @@
+/* =====================================================
+   Daily Attendance
+   Toolbar : the day and the branch. Canvas : the sheet.
+   Summary line below the canvas.
+===================================================== */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+/* The day */
+
+.da-day
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.da-nav,
+.da-today
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    min-width: 36px;
+    padding: 0 10px;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .20s ease, background .20s ease;
+}
+
+.da-nav:hover,
+.da-today:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+    background: #f3f7ff;
+}
+
+.da-today:disabled
+{
+    color: #94a3b8;
+    cursor: default;
+}
+
+.da-date
+{
+    height: 36px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    outline: none;
+}
+
+.da-date:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.da-day-name
+{
+    margin-left: 4px;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.da-chip
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.da-chip-holiday
+{
+    border: 1px solid #c7d7f5;
+    background: #eef4ff;
+    color: #1e3a8a;
+}
+
+.da-chip-future
+{
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.da-chip-unsaved
+{
+    border: 1px solid #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+/* The sheet */
+
+.da-wrap
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+.da-wrap > table
+{
+    flex: 0 0 auto;
+}
+
+.da-table
+{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+}
+
+.da-table thead th
+{
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    height: 36px;
+    padding: 0 10px;
+    border-bottom: 1px solid #d6e4fb;
+    background: #f3f7ff;
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.da-table tbody td
+{
+    padding: 6px 10px;
+    border-bottom: 1px solid #eef2f8;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+.da-table tbody tr:hover td
+{
+    background: #fafcff;
+}
+
+.da-table tbody tr.da-unmarked td
+{
+    background: #fffdf5;
+}
+
+.da-table tbody tr.da-fixed td
+{
+    background: #f8fafc;
+}
+
+.da-table td > small,
+.da-table td > b
+{
+    display: block;
+}
+
+.da-table td > small
+{
+    color: #64748b;
+    font-size: 12.5px;
+    line-height: 1.35;
+}
+
+.da-table td > b
+{
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.da-c-no
+{
+    width: 44px;
+    color: #64748b;
+    text-align: center !important;
+}
+
+.da-c-emp
+{
+    min-width: 200px;
+}
+
+.da-c-shift
+{
+    width: 150px;
+    white-space: nowrap;
+}
+
+.da-c-status
+{
+    width: 400px;
+    white-space: nowrap;
+}
+
+.da-c-time
+{
+    width: 118px;
+}
+
+.da-c-ot
+{
+    width: 80px;
+}
+
+.da-c-note
+{
+    min-width: 200px;
+}
+
+/* Status buttons */
+
+.da-seg
+{
+    display: inline-flex;
+    overflow: hidden;
+    border: 1px solid #d9e5f2;
+    border-radius: 10px;
+    background: #ffffff;
+    vertical-align: middle;
+}
+
+.da-seg > button
+{
+    height: 30px;
+    padding: 0 11px;
+    border: 0;
+    border-right: 1px solid #e3e9f3;
+    background: transparent;
+    color: #475569;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.da-seg > button:last-child
+{
+    border-right: 0;
+}
+
+.da-seg > button:hover:not(:disabled):not(.on)
+{
+    background: #f3f7ff;
+}
+
+.da-seg > button:disabled
+{
+    cursor: default;
+    opacity: .65;
+}
+
+.da-seg > button.on
+{
+    color: #ffffff;
+}
+
+.da-seg > button.on[data-code='P']
+{
+    background: #047857;
+}
+
+.da-seg > button.on[data-code='H']
+{
+    background: #b45309;
+}
+
+.da-seg > button.on[data-code='A']
+{
+    background: #be123c;
+}
+
+.da-seg > button.on[data-code='LV']
+{
+    background: #6d28d9;
+}
+
+.da-seg > button.on[data-code='WO'],
+.da-seg > button.on[data-code='HD']
+{
+    background: #475569;
+}
+
+.da-late
+{
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    margin-left: 8px;
+    padding: 0 9px;
+    border: 1px solid #fde68a;
+    border-radius: 999px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 12.5px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+.da-leave-fixed
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #ddd6fe;
+    border-radius: 10px;
+    background: #f5f3ff;
+    color: #5b21b6;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Inputs of the sheet */
+
+.da-input
+{
+    width: 100%;
+    height: 30px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color .20s ease, box-shadow .20s ease;
+}
+
+.da-input:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+}
+
+.da-input:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.da-input:disabled
+{
+    background: #f8fafc;
+    opacity: .75;
+}
+
+.da-num
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.da-c-note
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+td.da-c-note
+{
+    display: table-cell;
+}
+
+td.da-c-note > .da-select
+{
+    width: 190px;
+    margin-right: 8px;
+}
+
+td.da-c-note > .da-select + .da-remarks
+{
+    width: calc(100% - 202px);
+}
+
+/* Loading / failed / nothing to show : the shared empty state,
+   centred in the canvas (the same look as the list pages) */
+
+.da-wrap > app-empty-state
+{
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 260px;
+}
+
+/* Summary line */
+
+.da-summary
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 0;
+    min-height: 50px;
+    padding: 12px 22px;
+    box-sizing: border-box;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
+    font-size: 14.5px;
+}
+
+.da-summary-item
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 18px;
+}
+
+.da-summary-item:first-child
+{
+    padding-left: 0;
+}
+
+.da-summary-item + .da-summary-item
+{
+    border-left: 1px solid #c9daf5;
+}
+
+.da-summary-label
+{
+    color: #475569;
+    font-weight: 500;
+}
+
+.da-summary-value
+{
+    color: #1e293b;
+    font-size: 15.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.da-summary-value.da-ok
+{
+    color: #047857;
+}
+
+.da-summary-value.da-bad
+{
+    color: #be123c;
+}
+
+.da-summary-value.da-warn
+{
+    color: #b45309;
+}
+
+.da-summary-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* The shared date picker used without a label, in a row */
+
+.hr-date-inline
+{
+    flex: 0 0 170px;
+    width: 170px;
+}
+
+/* =====================================================
+   The month : a dropdown on the toolbar, and a strip of
+   its days under the toolbar (a click opens that day)
+===================================================== */
+
+.da-filters
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.da-filters > app-search-dropdown
+{
+    flex: 0 0 210px;
+    width: 210px;
+}
+
+.da-month
+{
+    display: flex;
+    flex: 0 0 auto;
+    gap: 5px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    border: 1px solid #e7edf5;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.da-month-day
+{
+    display: flex;
+    flex: 1 0 40px;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    min-width: 40px;
+    padding: 5px 0 6px;
+    border: 1px solid #e3eaf4;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #334155;
+    font: inherit;
+    cursor: pointer;
+    transition: background .20s ease, border-color .20s ease, color .20s ease;
+}
+
+.da-month-day > small
+{
+    color: #94a3b8;
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.da-month-day > b
+{
+    font-size: 14.5px;
+    font-weight: 700;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+.da-month-day:hover
+{
+    border-color: #9fc2f7;
+    background: #f3f7ff;
+}
+
+/* today : a ring */
+
+.da-month-day.today
+{
+    border-color: #2563eb;
+}
+
+/* a day still to come */
+
+.da-month-day.future
+{
+    background: #f8fafc;
+    color: #94a3b8;
+}
+
+/* the day on screen */
+
+.da-month-day.on,
+.da-month-day.on:hover
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.da-month-day.on > small
+{
+    color: #c7d7f5;
+}
+
+/* =====================================================
+   By Month : one employee, a row for every day
+===================================================== */
+
+.da-filters > app-search-dropdown.da-employee
+{
+    flex: 0 0 300px;
+    width: 300px;
+}
+
+.da-c-date
+{
+    width: 110px;
+    white-space: nowrap;
+}
+
+/* a weekly holiday / holiday */
+
+.da-table tr.da-offday td
+{
+    background: #fafbff;
+}
+
+.da-table tr.da-offday .da-c-date b,
+.da-table tr.da-offday .da-c-shift span
+{
+    color: #6d28d9;
+}
+
+/* a day still to come / before joining */
+
+.da-table tr.da-later td
+{
+    color: #94a3b8;
+}
+
+/* The tick on the In / Out header : fills the column from the shift */
+
+.da-fill
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.da-fill > input
+{
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: #1e3a8a;
+    cursor: pointer;
+}
+
+.da-fill > small
+{
+    padding: 1px 7px;
+    border: 1px solid #dbe6f7;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* Overtime day : worked on a weekly holiday / public holiday */
+
+.da-c-otday
+{
+    width: 80px;
+    text-align: center !important;
+}
+
+.da-otday
+{
+    display: inline-block;
+    min-width: 34px;
+    padding: 3px 9px;
+    border: 1px solid #a7f3d0;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}

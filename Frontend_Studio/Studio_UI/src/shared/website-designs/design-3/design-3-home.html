@@ -1,0 +1,212 @@
+<!-- ===========================================================
+     DESIGN 3 : HOME
+     Section ids (menu targets) : models · why · emi · service ·
+     branches · faq · test-ride
+============================================================ -->
+
+@if (content(); as site)
+{
+    <div class="page">
+
+        <!-- Hero : words left, arched photo right -->
+        @if (hero(); as h)
+        {
+            <section class="wrap d3-hero">
+
+                <div class="d3-hero-text">
+                    @if (h.kicker)
+                    {
+                        <span class="kicker">{{ h.kicker }}</span>
+                    }
+                    <h1 class="d3-hero-title">{{ h.title }}</h1>
+                    @if (h.text)
+                    {
+                        <p class="d3-hero-lead">{{ h.text }}</p>
+                    }
+                    <div class="d3-hero-buttons">
+                        @if (site.bikes.length)
+                        {
+                            <button type="button" class="btn btn-accent btn-lg" (click)="goTo('models')">See our range</button>
+                        }
+                        <button type="button" class="btn btn-lg" (click)="goTo('visit')">Visit the showroom</button>
+                    </div>
+
+                    @if (h.facts.length)
+                    {
+                        <ul class="d3-facts">
+                            @for (f of h.facts; track $index)
+                            {
+                                <li>
+                                    <b>{{ f.title }}</b>
+                                    @if (f.text)
+                                    {
+                                        <span>{{ f.text }}</span>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+
+                <div class="d3-arch-wrap">
+                    <div class="d3-arch" [class.is-photo]="!!h.photo && !h.isBike">
+                        @if (h.photo)
+                        {
+                            <img [class.is-bike]="h.isBike" [src]="h.photo" alt="">
+                        }
+                        @else
+                        {
+                            <svg width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17" r="3.5"></circle><circle cx="18.5" cy="17" r="3.5"></circle><path d="M5.5 17l4-7h5l4 7M9.5 10l-1.5-3H5M14.5 10l1.5-3h3"></path></svg>
+                        }
+                    </div>
+                    @if (h.hours)
+                    {
+                        <div class="d3-hours-card">
+                            <span class="d3-dot" aria-hidden="true"></span>
+                            <span class="d3-hours-text">
+                                <b>Opening hours</b>
+                                <span>{{ h.hours }}</span>
+                            </span>
+                        </div>
+                    }
+                </div>
+
+            </section>
+        }
+
+        @if (offerActive())
+        {
+            <app-offer-strip
+                [offer]="site.offer!"
+                [company]="site.company">
+            </app-offer-strip>
+        }
+
+        <!-- The range : numbered catalogue rows -->
+        @if (site.bikes.length)
+        {
+            <section id="models" class="wrap section d3-range">
+
+                <div class="d3-range-head">
+                    <h2 class="title">{{ t('bikes.title') }}</h2>
+                    @if (brandNames().length)
+                    {
+                        <div class="d3-tabs" role="group" aria-label="Brand">
+                            @for (name of brandNames(); track name)
+                            {
+                                <button
+                                    type="button"
+                                    class="d3-tab"
+                                    [class.on]="name === brand()"
+                                    [attr.aria-pressed]="name === brand()"
+                                    (click)="pickBrand(name)">
+                                    {{ name }}
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="d3-rows">
+                    @for (row of rows(); track row.bike.slug)
+                    {
+                        <a class="d3-row" [routerLink]="['/bikes', row.bike.slug]">
+                            <span class="d3-no">{{ row.no }}</span>
+                            <span class="d3-thumb">
+                                @if (row.bike.photo)
+                                {
+                                    <img [src]="row.bike.photo" [alt]="row.bike.model" loading="lazy">
+                                }
+                            </span>
+                            <span class="d3-name-col">
+                                <span class="d3-model">{{ row.bike.model }}</span>
+                                @if (row.line)
+                                {
+                                    <span class="d3-line">{{ row.line }}</span>
+                                }
+                            </span>
+                            <span class="d3-stock-col">
+                                @if (row.stock)
+                                {
+                                    <span [class]="'chip stock ' + row.bike.stock">{{ row.stock }}</span>
+                                }
+                            </span>
+                            <span class="d3-price">{{ row.price }}</span>
+                            <span class="d3-arrow" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                            </span>
+                        </a>
+                    }
+                </div>
+
+                @if (moreCount() && !showAll())
+                {
+                    <button type="button" class="d3-more" (click)="showAll.set(true)">
+                        View full range ({{ moreCount() }} more)
+                    </button>
+                }
+
+            </section>
+        }
+
+        <!-- Quick bars : service and EMI -->
+        @if (site.services.length || site.emi.enabled)
+        {
+            <section class="wrap d3-bars">
+                @if (site.services.length)
+                {
+                    <button type="button" class="d3-bar" (click)="goTo('service')">
+                        <b>Book a service</b>
+                        <span>{{ t('service.title') }}</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                    </button>
+                }
+                @if (site.emi.enabled)
+                {
+                    <button type="button" class="d3-bar d3-bar-accent" (click)="goTo('emi')">
+                        <b>Easy EMI</b>
+                        <span>Work out your monthly payment</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                    </button>
+                }
+            </section>
+        }
+
+        @if (site.why.points.length)
+        {
+            <app-why-us id="why" [why]="site.why"></app-why-us>
+        }
+
+        <app-emi-estimator id="emi" [content]="site"></app-emi-estimator>
+
+        @if (site.services.length)
+        {
+            <app-service-strip id="service" [content]="site"></app-service-strip>
+        }
+
+        @if (site.branches.length)
+        {
+            <app-branch-list id="branches" [branches]="site.branches"></app-branch-list>
+        }
+
+        @if (site.faq.length)
+        {
+            <app-faq-accordion id="faq" [content]="site"></app-faq-accordion>
+        }
+
+        <app-contact id="test-ride" [company]="site.company"></app-contact>
+
+        <!-- Phones : Call and Book a test ride stay at the bottom -->
+        <nav class="d3-callbar" aria-label="Quick actions">
+            @if (callLink())
+            {
+                <a class="d3-call" [href]="callLink()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"></path></svg>
+                    Call
+                </a>
+            }
+            <a class="d3-ride" routerLink="/enquire">Book a test ride</a>
+        </nav>
+
+    </div>
+}

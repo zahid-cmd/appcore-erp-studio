@@ -603,6 +603,13 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
 
         public string Unit { get; set; } = string.Empty;
 
+        // Product Shelf : the category chips / sub category filter
+        public long ProductCategoryId { get; set; }
+
+        public long ProductSubCategoryId { get; set; }
+
+        public string ImagePath { get; set; } = string.Empty;
+
         public string InventoryLedgerCode { get; set; } = string.Empty;
 
         public string CogsLedgerCode { get; set; } = string.Empty;
@@ -1424,6 +1431,9 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
                         ? TypeMotorBikes
                         : TypeOf(categoryTypes, x.ProductCategoryId),
                 Unit = x.Unit ?? string.Empty,
+                ProductCategoryId = x.ProductCategoryId,
+                ProductSubCategoryId = x.ProductSubCategoryId,
+                ImagePath = x.ImagePath ?? string.Empty,
                 InventoryLedgerCode = (x.InventoryLedgerCode ?? string.Empty).Trim(),
                 CogsLedgerCode = (x.CogsLedgerCode ?? string.Empty).Trim(),
                 SalesLedgerCode = (x.SalesLedgerCode ?? string.Empty).Trim(),
@@ -1454,6 +1464,9 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
         public long ProductCategoryId { get; set; }
 
         public long ProductSubCategoryId { get; set; }
+
+        // Product Shelf card image ('' = icon)
+        public string ImagePath { get; set; } = string.Empty;
 
         public string InventoryLedgerCode { get; set; } = string.Empty;
 
@@ -1487,6 +1500,7 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
                             Unit = "Pcs",
                             ProductCategoryId = x.ProductCategoryId,
                             ProductSubCategoryId = x.ProductSubCategoryId,
+                            ImagePath = x.ImagePath ?? string.Empty,
                             InventoryLedgerCode = x.InventoryLedgerCode,
                             CogsLedgerCode = x.CogsLedgerCode,
                             SalesLedgerCode = x.SalesLedgerCode,
@@ -1513,6 +1527,8 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
                             Unit = x.Unit,
                             ProductCategoryId = x.ProductCategoryId,
                             ProductSubCategoryId = x.ProductSubCategoryId,
+                            // Optional image ('' = icon on the shelf)
+                            ImagePath = x.ImagePath ?? string.Empty,
                             InventoryLedgerCode = x.InventoryLedgerCode,
                             CogsLedgerCode = x.CogsLedgerCode,
                             SalesLedgerCode = x.SalesLedgerCode,
@@ -1537,6 +1553,7 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
                         Unit = x.Unit,
                         ProductCategoryId = x.ProductCategoryId,
                         ProductSubCategoryId = x.ProductSubCategoryId,
+                        ImagePath = x.ImagePath ?? string.Empty,
                         InventoryLedgerCode = x.InventoryLedgerCode,
                         CogsLedgerCode = x.CogsLedgerCode,
                         SalesLedgerCode = x.SalesLedgerCode,
@@ -5825,7 +5842,10 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
                         MrpCount = fifo.Select(x => x.Mrp).Distinct().Count(),
                         HasMixedMrp = fifo.Select(x => x.Mrp).Distinct().Count() > 1,
                         ScannedBatchId = scannedBatchId,
-                        IsActive = p.IsActive
+                        IsActive = p.IsActive,
+                        ProductCategoryId = p.ProductCategoryId,
+                        ProductSubCategoryId = p.ProductSubCategoryId,
+                        ImagePath = p.ImagePath
                     };
                 }
             )

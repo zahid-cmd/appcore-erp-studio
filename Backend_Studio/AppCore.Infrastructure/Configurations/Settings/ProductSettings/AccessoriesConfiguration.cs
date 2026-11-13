@@ -186,8 +186,12 @@ public class AccessoriesConfiguration
 
 
         //===========================================================
-        // Remarks
+        // Image / Remarks ('' = no image; Accessories_Image.sql)
         //===========================================================
+
+        builder.Property(x => x.ImagePath)
+               .IsRequired()
+               .HasMaxLength(500);
 
         builder.Property(x => x.Remarks)
                .IsRequired()

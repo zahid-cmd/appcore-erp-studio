@@ -3666,3 +3666,85 @@
     color: #475569;
     font-size: 12.5px;
 }
+
+
+
+/* =====================================================================
+   MB quotation, Specific unit : the chassis of a line (2026-11-13)
+   ===================================================================== */
+
+.si-units
+{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    align-items:center;
+
+    gap:6px;
+
+    margin-top:6px;
+}
+
+.si-unit-chip
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:3px 6px 3px 10px;
+
+    border:1px solid #c7d2fe;
+
+    border-radius:999px;
+
+    background:#eef2ff;
+
+    color:#3730a3;
+
+    font-size:12px;
+
+    white-space:nowrap;
+}
+
+.si-unit-chip b
+{
+    color:#1e1b4b;
+
+    font-weight:600;
+}
+
+.si-unit-chip button
+{
+    width:20px;
+
+    height:20px;
+
+    border:0;
+
+    border-radius:50%;
+
+    background:transparent;
+
+    color:#6366f1;
+
+    cursor:pointer;
+}
+
+.si-unit-chip button:hover
+{
+    background:#e0e7ff;
+
+    color:#312e81;
+}
+
+.si-unit-add
+{
+    flex:1 1 260px;
+
+    min-width:220px;
+
+    max-width:420px;
+}

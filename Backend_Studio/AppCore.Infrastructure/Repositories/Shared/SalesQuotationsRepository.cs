@@ -3,6 +3,7 @@
 //===============================================================
 
 using System.Globalization;
+using System.Text.Json;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -20,6 +21,9 @@ using AppCore.Infrastructure.Persistence;
 
 using UserProfileEntity =
     AppCore.Domain.Entities.SecurityPermission.UserManagement.UserProfile;
+
+using MotorBikeUnitsEntity =
+    AppCore.Domain.Entities.Procurement.MotorBikePurchase.MotorBikeUnits;
 
 
 //===============================================================
@@ -379,6 +383,7 @@ public class SalesQuotationsRepository
             TotalVatInside = x.TotalVatInside,
             Narration = x.Narration,
             Terms = x.Terms,
+            SpecificUnits = x.SpecificUnits,
             Status = x.Status,
             SalesInvoiceNo = x.SalesInvoiceNo,
             ConvertedDate = DateText(x.ConvertedDate),
@@ -409,7 +414,8 @@ public class SalesQuotationsRepository
                                 DiscountLabel = l.DiscountLabel,
                                 DiscountAmount = l.DiscountAmount,
                                 NetAmount = l.NetAmount,
-                                VatInside = l.VatInside
+                                VatInside = l.VatInside,
+                                Units = UnitsOf(l.ProductId, l.UnitsJson)
                             }
                     )
                     .ToList()
@@ -511,6 +517,156 @@ public class SalesQuotationsRepository
         row.TotalVatInside = priced.TotalVatInside;
         row.Narration = Limit(dto.Narration, 500);
         row.Terms = Limit(dto.Terms, 1000);
+        row.SpecificUnits = row.ProductType == "MB" && dto.SpecificUnits;
+    }
+
+
+    //===========================================================
+    // MB Specific unit : the bikes named on each model line
+    //===========================================================
+
+    // Kept on the line as JSON (short keys)
+    private sealed class UnitJson
+    {
+        public long u { get; set; }
+
+        public string c { get; set; } = string.Empty;
+
+        public string e { get; set; } = string.Empty;
+
+        public string k { get; set; } = string.Empty;
+    }
+
+    private static List<SalesQuotationUnitDto> UnitsOf(long productId, string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new List<SalesQuotationUnitDto>();
+        }
+
+        try
+        {
+            return (JsonSerializer.Deserialize<List<UnitJson>>(json) ?? new List<UnitJson>())
+                .Select(x => new SalesQuotationUnitDto
+                {
+                    ProductId = productId,
+                    MotorBikeUnitId = x.u,
+                    ChassisNo = x.c,
+                    EngineNo = x.e,
+                    ColorName = x.k
+                })
+                .ToList();
+        }
+        catch (JsonException)
+        {
+            return new List<SalesQuotationUnitDto>();
+        }
+    }
+
+    // The bikes of each priced line (by line no) : one per
+    // quantity, of the line's model, in stock in the quotation's
+    // warehouse (nothing is reserved : a quotation takes no stock)
+    private async Task<Dictionary<int, string>> UnitsByLineAsync(SalesQuotations row, SaveSalesQuotationDto dto, SalesInvoiceQuoteDto priced)
+    {
+        Dictionary<int, string> result = new();
+
+        if (!row.SpecificUnits)
+        {
+            return result;
+        }
+
+        List<SalesQuotationUnitDto> asked =
+            (dto.Units ?? new())
+                .Where(x => x != null && x.MotorBikeUnitId > 0)
+                .ToList();
+
+        List<long> ids = asked.Select(x => x.MotorBikeUnitId).ToList();
+
+        if (ids.Count != ids.Distinct().Count())
+        {
+            throw new InvalidOperationException("A chassis is picked twice.");
+        }
+
+        long warehouseBranch =
+            await _context.Set<AppCore.Domain.Entities.Settings.GeneralSettings.Warehouses>()
+                .AsNoTracking()
+                .Where(x => x.WarehouseId == row.WarehouseId)
+                .Select(x => x.BranchId)
+                .FirstOrDefaultAsync();
+
+        Dictionary<long, MotorBikeUnitsEntity> units =
+            await _context.Set<MotorBikeUnitsEntity>()
+                .AsNoTracking()
+                .Where(x => ids.Contains(x.MotorBikeUnitId) && !x.IsDeleted)
+                .ToDictionaryAsync(x => x.MotorBikeUnitId);
+
+        HashSet<long> used = new();
+
+        foreach (SalesInvoiceLineDto line in priced.Lines.OrderBy(x => x.LineNo))
+        {
+            List<SalesQuotationUnitDto> mine =
+                asked
+                    .Where(x => x.ProductId == line.ProductId && !used.Contains(x.MotorBikeUnitId))
+                    .ToList();
+
+            int need = (int)Math.Round(line.Quantity, 0);
+
+            if (mine.Count < need)
+            {
+                throw new InvalidOperationException(
+                    $"{line.ProductName} : pick {need} chassis (picked {mine.Count}), or turn Specific unit off.");
+            }
+
+            List<UnitJson> rows = new();
+
+            foreach (SalesQuotationUnitDto pick in mine.Take(need))
+            {
+                if (!units.TryGetValue(pick.MotorBikeUnitId, out MotorBikeUnitsEntity? unit))
+                {
+                    throw new InvalidOperationException($"A picked chassis ({pick.ChassisNo}) was not found : pick it again.");
+                }
+
+                if (unit.ProductId != line.ProductId)
+                {
+                    throw new InvalidOperationException($"Chassis {unit.ChassisNo} is not a {line.ProductName}.");
+                }
+
+                if (unit.Status != "InStock")
+                {
+                    throw new InvalidOperationException($"Chassis {unit.ChassisNo} is not in stock ({unit.Status}).");
+                }
+
+                bool here =
+                    unit.WarehouseId == row.WarehouseId
+                    ||
+                    (unit.WarehouseId == null && unit.BranchId == warehouseBranch);
+
+                if (!here)
+                {
+                    throw new InvalidOperationException($"Chassis {unit.ChassisNo} is not in this warehouse.");
+                }
+
+                used.Add(unit.MotorBikeUnitId);
+
+                rows.Add(
+                    new UnitJson
+                    {
+                        u = unit.MotorBikeUnitId,
+                        c = Limit(unit.ChassisNo, 60),
+                        e = Limit(unit.EngineNo, 60),
+                        k = Limit(pick.ColorName, 60)
+                    });
+            }
+
+            result[line.LineNo] = JsonSerializer.Serialize(rows);
+        }
+
+        if (used.Count != ids.Count)
+        {
+            throw new InvalidOperationException("A picked chassis is not on any line (its model is not on the quotation) : remove it.");
+        }
+
+        return result;
     }
 
     private async Task SaveLinesAsync(SalesQuotations row, SaveSalesQuotationDto dto, SalesInvoiceQuoteDto priced)
@@ -521,6 +677,8 @@ public class SalesQuotationsRepository
                 .ToListAsync();
 
         LineRows.RemoveRange(old);
+
+        Dictionary<int, string> unitsByLine = await UnitsByLineAsync(row, dto, priced);
 
         int no = 1;
 
@@ -551,7 +709,8 @@ public class SalesQuotationsRepository
                     DiscountLabel = Limit(line.DiscountLabel, 100),
                     DiscountAmount = Math.Max(0m, line.GrossAmount - line.LineTotal),
                     NetAmount = line.LineTotal,
-                    VatInside = line.VatInside
+                    VatInside = line.VatInside,
+                    UnitsJson = unitsByLine.GetValueOrDefault(line.LineNo, string.Empty)
                 });
         }
     }

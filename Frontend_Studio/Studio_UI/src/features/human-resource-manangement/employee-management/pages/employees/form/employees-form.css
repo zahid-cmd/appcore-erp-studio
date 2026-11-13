@@ -1,0 +1,752 @@
+/* =====================================================
+   Employee Profiles Form
+   Toolbar : the four tabs and Back / Next.
+   Canvas : two fixed sides, as tall as the taller one.
+   Left : the Profile Summary card (a few key lines and
+   the salary; it stays on every tab). Right : the tab's
+   card(s).
+===================================================== */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+.hre-body
+{
+    display: grid;
+    grid-template-columns: minmax(250px, 290px) minmax(0, 1fr);
+    /* the two sides are as tall as the taller one (and no taller) */
+    align-items: stretch;
+    align-content: start;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 6px 12px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1000px)
+{
+    .hre-body
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.hre-column
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.hre-card
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 14px 16px 18px;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -16px rgba(30, 58, 138, 0.28);
+    box-sizing: border-box;
+}
+
+/* Salary Structure tab : the structure and the payment side by
+   side (the tab fits the canvas without scrolling) */
+
+.hre-column.hre-pair
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: stretch;
+}
+
+@media (max-width: 1250px)
+{
+    .hre-column.hre-pair
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* The only card of a tab fills the right side */
+
+.hre-column > .hre-card:only-child
+{
+    flex: 1 1 auto;
+}
+
+.hre-card-head
+{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 30px;
+    margin: -2px 0 2px;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.hre-card-head > i
+{
+    color: #1e3a8a;
+}
+
+.hre-head-note
+{
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.hre-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 30px;
+    margin-left: auto;
+    padding: 0 12px;
+    border: 1px solid #c7d7f5;
+    border-radius: 10px;
+    background: #f3f7ff;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .20s ease, border-color .20s ease;
+}
+
+.hre-btn:hover
+{
+    border-color: #9fc2f7;
+    background: #e6efff;
+}
+
+/* Grids */
+
+.hre-grid-3
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px 14px;
+    align-items: end;
+}
+
+.hre-grid-2
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 14px;
+    align-items: end;
+}
+
+.hre-span-2
+{
+    grid-column: span 2;
+    min-width: 0;
+}
+
+.hre-span-3
+{
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+
+@media (max-width: 800px)
+{
+    .hre-grid-3,
+    .hre-grid-2
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hre-span-2
+    {
+        grid-column: 1 / -1;
+    }
+}
+
+app-search-dropdown,
+app-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+}
+
+/* Native date inputs : same label and box as app-textbox */
+
+.hre-native
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.hre-label
+{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 10px;
+    color: #334155;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    user-select: none;
+}
+
+.hre-label > b
+{
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.hre-native > input
+{
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+    color: #1e293b;
+    font: inherit;
+    font-size: 14.5px;
+    outline: none;
+    transition: border-color .20s ease, box-shadow .20s ease;
+}
+
+.hre-native > input:hover
+{
+    border-color: #9fc2f7;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, .08);
+}
+
+.hre-native > input:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.hre-native > input:disabled
+{
+    background: #f8fafc;
+    opacity: .70;
+}
+
+/* Salary structure */
+
+.hre-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+}
+
+/* Compact rows : the lines are read only */
+
+.hre-table td
+{
+    padding: 5px 4px;
+    border-bottom: 1px solid #eef2f8;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+.hre-table td > small
+{
+    display: block;
+    color: #64748b;
+    font-size: 12.5px;
+    line-height: 1.3;
+}
+
+.hre-head-name
+{
+    font-weight: 500;
+}
+
+.hre-group td
+{
+    padding-top: 8px;
+    border-bottom: 1px solid #d6e4fb;
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.hre-group:first-child td
+{
+    padding-top: 2px;
+}
+
+.hre-c-percent
+{
+    width: 120px;
+    white-space: nowrap;
+    color: #64748b;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.hre-c-amount
+{
+    width: 150px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.hre-amount
+{
+    width: 100%;
+    height: 32px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14.5px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    outline: none;
+    transition: border-color .20s ease, box-shadow .20s ease;
+}
+
+.hre-amount:hover
+{
+    border-color: #9fc2f7;
+}
+
+.hre-amount:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.hre-amount:disabled
+{
+    background: #f8fafc;
+    opacity: .80;
+}
+
+.hre-amount.hre-basic
+{
+    border-color: #9fc2f7;
+    background: #f7faff;
+    font-weight: 700;
+}
+
+.hre-retired td
+{
+    color: #94a3b8;
+}
+
+.hre-total td
+{
+    border-bottom: 1px solid #d6e4fb;
+    font-weight: 700;
+}
+
+.hre-total .hre-c-amount,
+.hre-net .hre-c-amount
+{
+    padding-right: 14px;
+}
+
+.hre-net td
+{
+    padding-top: 8px;
+    padding-bottom: 8px;
+    border-bottom: 0;
+    background: #f3f7ff;
+    color: #1e3a8a;
+    font-size: 15.5px;
+    font-weight: 700;
+}
+
+.hre-net td:first-child
+{
+    padding-left: 12px;
+    border-radius: 10px 0 0 10px;
+}
+
+.hre-net td:last-child
+{
+    border-radius: 0 10px 10px 0;
+}
+
+.hre-note,
+.hre-muted
+{
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+/* Switch */
+
+.hre-switch
+{
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 36px;
+    padding: 8px 12px;
+    border: 1px solid #dbe6f7;
+    border-radius: 12px;
+    background: #f7faff;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.hre-switch-off
+{
+    cursor: default;
+    opacity: .75;
+}
+
+.hre-switch input
+{
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hre-switch-track
+{
+    position: relative;
+    flex: 0 0 auto;
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    transition: background .20s ease;
+}
+
+.hre-switch-knob
+{
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .25);
+    transition: transform .20s ease;
+}
+
+.hre-switch input:checked + .hre-switch-track
+{
+    background: #1e3a8a;
+}
+
+.hre-switch input:checked + .hre-switch-track .hre-switch-knob
+{
+    transform: translateX(16px);
+}
+
+.hre-switch input:focus-visible + .hre-switch-track
+{
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .25);
+}
+
+.hre-switch-text
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.hre-switch-text > b
+{
+    color: #1e293b;
+    font-size: 14.5px;
+    font-weight: 600;
+}
+
+.hre-switch-text > small
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+/* Back / Next on the toolbar */
+
+.hre-steps
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hre-step-text
+{
+    margin-right: 6px;
+    color: #64748b;
+    font-size: 13.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.hre-step
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 96px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid #c7d7f5;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .20s ease, border-color .20s ease;
+}
+
+.hre-step:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+    background: #eef4ff;
+}
+
+.hre-step:disabled
+{
+    cursor: default;
+    opacity: .45;
+}
+
+.hre-step.hre-step-next
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.hre-step.hre-step-next:hover:not(:disabled)
+{
+    border-color: #172554;
+    background: #172554;
+}
+
+/* The Profile Summary card (left) : a few key lines, then the
+   salary at the foot */
+
+.hre-profile
+{
+    gap: 14px;
+}
+
+.hre-facts
+{
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    align-content: start;
+    gap: 9px 10px;
+    margin: 0;
+    font-size: 14px;
+}
+
+.hre-facts dt
+{
+    color: #64748b;
+}
+
+.hre-facts dd
+{
+    margin: 0;
+    color: #1e293b;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.hre-facts dd.hre-none
+{
+    color: #cbd5e1;
+    font-weight: 500;
+}
+
+.hre-money
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    /* at the foot of the card */
+    margin: auto 0 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #f3f7ff;
+    font-size: 14px;
+}
+
+.hre-money dt
+{
+    color: #475569;
+}
+
+.hre-money dd
+{
+    margin: 0;
+    color: #1e293b;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.hre-money .hre-money-net
+{
+    padding-top: 6px;
+    border-top: 1px solid #c9daf5;
+    color: #1e3a8a;
+    font-size: 15.5px;
+}
+
+/* A note inside a card */
+
+.hre-hint
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 10px 12px;
+    border: 1px solid #dbe6f7;
+    border-radius: 11px;
+    background: #f7faff;
+    color: #475569;
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+.hre-hint > i
+{
+    margin-top: 2px;
+    color: #1e3a8a;
+}
+
+/* Job tab : the employee's own weekly holiday */
+
+.hre-week
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hre-week-row
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+}
+
+.hre-week-row > small
+{
+    flex: 1 1 260px;
+    color: #64748b;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+.hre-days
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.hre-day
+{
+    min-width: 54px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #d9e5f2;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #475569;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .20s ease, border-color .20s ease, color .20s ease;
+}
+
+.hre-day:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+}
+
+.hre-day.on
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.hre-day:disabled
+{
+    cursor: default;
+    opacity: .70;
+}
+
+/* Salary tab : what the overtime structure comes to */
+
+.hre-ot
+{
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 5px 14px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid #dbe6f7;
+    border-radius: 12px;
+    background: #f7faff;
+    font-size: 13.5px;
+}
+
+.hre-ot > dt
+{
+    color: #64748b;
+}
+
+.hre-ot > dd
+{
+    margin: 0;
+    color: #1e293b;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}

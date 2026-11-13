@@ -51,10 +51,10 @@
     margin:0;
     font-family:var(--w-display);
     font-size:clamp(40px, 5vw, 60px);
-    line-height:.95;
-    font-weight:800;
-    letter-spacing:-.2px;
-    text-transform:uppercase;
+    line-height:var(--w-title-line, .95);
+    font-weight:var(--w-title-weight, 800);
+    letter-spacing:var(--w-title-spacing, -.2px);
+    text-transform:var(--w-title-transform, uppercase);
     color:var(--w-strong);
 }
 
@@ -71,7 +71,7 @@
 .card
 {
     border:1px solid var(--w-card-edge);
-    border-radius:22px;
+    border-radius:var(--w-radius-card, 22px);
     background:var(--w-card);
 }
 
@@ -99,7 +99,7 @@
     height:44px;
     padding:0 18px;
     border:1px solid var(--w-ghost-edge);
-    border-radius:13px;
+    border-radius:var(--w-radius-btn, 13px);
     background:transparent;
     color:var(--w-ghost-text);
     font:inherit;
@@ -124,7 +124,7 @@
     background:linear-gradient(135deg, var(--w-accent-2), var(--w-accent));
     color:var(--w-accent-ink);
     font-weight:800;
-    box-shadow:0 12px 26px -14px rgba(245,158,11,.9);
+    box-shadow:0 12px 26px -14px var(--w-accent-glow, rgba(var(--w-accent-rgb),.9));
 }
 
 
@@ -149,7 +149,7 @@
     height:52px;
     padding:0 24px;
     font-size:15px;
-    border-radius:14px;
+    border-radius:var(--w-radius-btn, 14px);
 }
 
 

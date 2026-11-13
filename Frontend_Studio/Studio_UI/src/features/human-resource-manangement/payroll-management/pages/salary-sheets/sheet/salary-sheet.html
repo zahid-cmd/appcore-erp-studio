@@ -1,0 +1,471 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-file-invoice-dollar"
+        [title]="pageTitle"
+        [subtitle]="pageSubtitle">
+
+        <div pageHeaderCenter>
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search name, code..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Save"
+                command1Icon="fas fa-floppy-disk"
+                command1Permission="update"
+                (command1Click)="onSave()"
+                [command1Visible]="isDraft"
+                command2Text="Recalculate"
+                command2Icon="fas fa-calculator"
+                command2Title="Works the sheet out again from the attendance, salary structures and advances"
+                command2Permission="update"
+                (command2Click)="onRecalculate()"
+                [command2Visible]="isDraft"
+                command3Text="Payslips"
+                command3Icon="fas fa-print"
+                command3Title="Prints the payslip of every employee on the sheet"
+                (command3Click)="printSlips(lines)"
+                [command3Visible]="lines.length > 0"
+                command4Text="Refresh"
+                command4Icon="fas fa-rotate-right"
+                (command4Click)="refresh()"
+                rightCommandIcon="fas fa-arrow-left"
+                (rightCommandClick)="onBackToList()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : status and the next step
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <div
+            pageToolbarLeft
+            class="ss-state">
+
+            @if (sheet)
+            {
+                <span
+                    class="ss-status"
+                    [attr.data-status]="sheet.Status">{{ sheet.Status }}</span>
+
+                @if (isDraft)
+                {
+                    <span class="ss-info">
+                        Type other earnings / deductions if any, save, then approve.
+                        @if (hasChanges)
+                        {
+                            <b class="ss-unsaved">Not saved</b>
+                        }
+                    </span>
+                }
+                @else if (isApproved)
+                {
+                    <span class="ss-info">Approved on {{ dayText(sheet.ApprovedDate) }} : post it to the accounts.</span>
+                }
+                @else if (isPosted)
+                {
+                    <span class="ss-info">
+                        Posted on {{ dayText(sheet.PostedDate) }} · Journal Voucher <b>{{ sheet.JournalVoucherNo || '-' }}</b>
+                        · {{ paidCount }} of {{ lines.length }} paid
+                    </span>
+                }
+
+                @if (sheet.LateDaysPerCut > 0)
+                {
+                    <span class="ss-chip">{{ sheet.LateDaysPerCut }} late days = 1 day of Basic</span>
+                }
+
+                @if (sheet.NoSalaryCount > 0)
+                {
+                    <span
+                        class="ss-chip ss-chip-warn"
+                        title="Set their salary on Employee Profiles, then recalculate">
+                        {{ sheet.NoSalaryCount }} employee(s) left off : no salary structure
+                    </span>
+                }
+            }
+
+        </div>
+
+        <div
+            pageToolbarRight
+            class="ss-steps">
+
+            @if (isDraft)
+            {
+                <button
+                    type="button"
+                    class="ss-btn ss-primary"
+                    [disabled]="isSaving"
+                    (click)="onApprove()">
+                    <i class="fas fa-circle-check"></i>
+                    Approve
+                </button>
+            }
+
+            @if (isApproved)
+            {
+                <button
+                    type="button"
+                    class="ss-btn"
+                    [disabled]="isSaving"
+                    (click)="onReturnToDraft()">
+                    <i class="fas fa-rotate-left"></i>
+                    Return to Draft
+                </button>
+
+                <button
+                    type="button"
+                    class="ss-btn ss-primary"
+                    [disabled]="isSaving"
+                    (click)="onPost()">
+                    <i class="fas fa-book"></i>
+                    Post
+                </button>
+            }
+
+            @if (isPosted)
+            {
+                <button
+                    type="button"
+                    class="ss-btn"
+                    [class.on]="panel === 'unpost'"
+                    [disabled]="isSaving"
+                    (click)="openPanel('unpost')">
+                    <i class="fas fa-rotate-left"></i>
+                    Unpost
+                </button>
+
+                <button
+                    type="button"
+                    class="ss-btn ss-primary"
+                    [class.on]="panel === 'pay'"
+                    [disabled]="isSaving || unpaidCount === 0"
+                    (click)="openPanel('pay')">
+                    <i class="fas fa-money-bill-wave"></i>
+                    Mark All Paid
+                </button>
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PANEL : unpost reason / paid date
+    ====================================================== -->
+
+    @if (panel === 'unpost')
+    {
+        <div class="ss-panel">
+            <span class="ss-panel-text">
+                <b>Unpost {{ sheet?.Code }}</b>
+                The Journal Voucher {{ sheet?.JournalVoucherNo }} is cancelled and the sheet goes back to Approved.
+            </span>
+            <input
+                class="ss-panel-input ss-grow"
+                maxlength="300"
+                placeholder="Reason (required)"
+                (input)="onPanelText($event)">
+            <button
+                type="button"
+                class="ss-btn ss-danger"
+                [disabled]="isSaving"
+                (click)="confirmUnpost()">Unpost</button>
+            <button
+                type="button"
+                class="ss-btn"
+                (click)="closePanel()">Cancel</button>
+        </div>
+    }
+
+    @if (panel === 'pay')
+    {
+        <div class="ss-panel">
+            <span class="ss-panel-text">
+                <b>Mark {{ unpaidCount }} employee(s) paid</b>
+                Pay the money out with a Payment Voucher (debit Salary Payable); this marks the sheet.
+            </span>
+            <app-datepicker class="hr-date-inline"
+                [value]="$any(asDate(panelDate))"
+                [maxDate]="asDate(today)"
+                (valueChange)="onPanelDate(dateEvent($event))">
+            </app-datepicker>
+            <input
+                class="ss-panel-input ss-grow"
+                maxlength="100"
+                placeholder="Note (optional) : e.g. the Payment Voucher No"
+                (input)="onPanelText($event)">
+            <button
+                type="button"
+                class="ss-btn ss-primary"
+                [disabled]="isSaving"
+                (click)="confirmPayAll()">Mark Paid</button>
+            <button
+                type="button"
+                class="ss-btn"
+                (click)="closePanel()">Cancel</button>
+        </div>
+    }
+
+    <!-- =====================================================
+         PAGE CANVAS : the lines
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="ss-wrap appcore-scrollbar">
+
+            @if (lines.length > 0)
+            {
+                <table class="ss-table">
+
+                    <thead>
+                        <tr>
+                            <th class="ss-c-no">#</th>
+                            <th class="ss-c-emp">Employee</th>
+                            <th
+                                class="ss-c-days"
+                                title="Pay days of the month's days; unpaid and late days below">Days</th>
+                            <th class="ss-num">Gross</th>
+                            <th
+                                class="ss-num"
+                                title="The share of the salary for the unpaid days">Absence</th>
+                            <th class="ss-num">Late</th>
+                            <th class="ss-num">Overtime</th>
+                            <th class="ss-num ss-c-typed">Other +</th>
+                            <th class="ss-num ss-strong">Earned</th>
+                            <th
+                                class="ss-num"
+                                title="Deductions of the salary structure : provident fund, tax ...">PF / Tax</th>
+                            <th class="ss-num">Advance</th>
+                            <th class="ss-num ss-c-typed">Other -</th>
+                            <th class="ss-num ss-strong">Net Pay</th>
+                            @if (isPosted)
+                            {
+                                <th class="ss-c-paid">Paid</th>
+                            }
+                            <th class="ss-c-remarks">Remarks</th>
+                            <th class="ss-c-slip"></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (line of visibleLines; track line.SalarySheetLineId; let i = $index)
+                        {
+                            <tr [class.ss-paid-row]="line.IsPaid">
+
+                                <td class="ss-c-no">{{ i + 1 }}</td>
+
+                                <td class="ss-c-emp">
+                                    <b>{{ line.EmployeeName }}</b>
+                                    <small>{{ line.EmployeeCode }} · {{ line.DesignationName }}</small>
+                                </td>
+
+                                <td class="ss-c-days">
+                                    <span>{{ line.PayableDays }} / {{ line.MonthDays }}</span>
+                                    @if (line.UnpaidDays > 0 || line.LateDays > 0)
+                                    {
+                                        <small>
+                                            @if (line.UnpaidDays > 0)
+                                            {
+                                                <span class="ss-bad">{{ line.UnpaidDays }} unpaid</span>
+                                            }
+                                            @if (line.LateDays > 0)
+                                            {
+                                                <span class="ss-warn">{{ line.LateDays }} late</span>
+                                            }
+                                        </small>
+                                    }
+                                </td>
+
+                                <td class="ss-num">{{ money(line.GrossSalary) }}</td>
+                                <td class="ss-num ss-bad">{{ blank(line.AbsenceDeduction) }}</td>
+                                <td class="ss-num ss-bad">{{ blank(line.LateDeduction) }}</td>
+                                <td
+                                    class="ss-num"
+                                    [title]="(line.OvertimeHours ? line.OvertimeHours + ' h' : '') + (line.OvertimeDays ? '  ' + line.OvertimeDays + ' extra day(s)' : '')">{{ blank(line.OvertimeAmount) }}</td>
+
+                                <td class="ss-num ss-c-typed">
+                                    @if (isDraft)
+                                    {
+                                        <input
+                                            class="ss-input"
+                                            inputmode="decimal"
+                                            maxlength="12"
+                                            placeholder="0"
+                                            [value]="line.OtherEarning || ''"
+                                            [disabled]="isSaving"
+                                            (input)="onTyped(line, 'OtherEarning', $event)"
+                                            (blur)="onTypedBlur(line, 'OtherEarning', $event)">
+                                    }
+                                    @else
+                                    {
+                                        {{ blank(line.OtherEarning) }}
+                                    }
+                                </td>
+
+                                <td class="ss-num ss-strong">{{ money(line.EarnedSalary) }}</td>
+                                <td
+                                    class="ss-num ss-bad"
+                                    [title]="line.PfEmployee ? 'Provident fund ' + money(line.PfEmployee) + (line.PfCompany ? '  (company adds ' + money(line.PfCompany) + ')' : '') : ''">{{ blank(line.StructureDeduction + line.PfEmployee) }}</td>
+                                <td
+                                    class="ss-num ss-bad"
+                                    [title]="line.PfLoan ? 'Provident fund loan ' + money(line.PfLoan) : ''">{{ blank(line.AdvanceDeduction + line.PfLoan) }}</td>
+
+                                <td class="ss-num ss-c-typed">
+                                    @if (isDraft)
+                                    {
+                                        <input
+                                            class="ss-input"
+                                            inputmode="decimal"
+                                            maxlength="12"
+                                            placeholder="0"
+                                            [value]="line.OtherDeduction || ''"
+                                            [disabled]="isSaving"
+                                            (input)="onTyped(line, 'OtherDeduction', $event)"
+                                            (blur)="onTypedBlur(line, 'OtherDeduction', $event)">
+                                    }
+                                    @else
+                                    {
+                                        <span class="ss-bad">{{ blank(line.OtherDeduction) }}</span>
+                                    }
+                                </td>
+
+                                <td class="ss-num ss-strong ss-net">{{ money(line.NetPay) }}</td>
+
+                                @if (isPosted)
+                                {
+                                    <td class="ss-c-paid">
+                                        <button
+                                            type="button"
+                                            class="ss-paid"
+                                            [class.on]="line.IsPaid"
+                                            [disabled]="isSaving"
+                                            [title]="line.IsPaid ? 'Paid on ' + dayText(line.PaidDate) + (line.PaidNote ? ' : ' + line.PaidNote : '') + ' (click to mark not paid)' : 'Mark paid today'"
+                                            (click)="togglePaid(line)">
+                                            <i [class]="line.IsPaid ? 'fas fa-circle-check' : 'far fa-circle'"></i>
+                                            {{ line.IsPaid ? dayText(line.PaidDate) : 'Not paid' }}
+                                        </button>
+                                    </td>
+                                }
+
+                                <td class="ss-c-remarks">
+                                    @if (isDraft)
+                                    {
+                                        <input
+                                            class="ss-input ss-text"
+                                            maxlength="200"
+                                            placeholder="Remarks"
+                                            [value]="line.Remarks"
+                                            [disabled]="isSaving"
+                                            (input)="onLineRemarks(line, $event)">
+                                    }
+                                    @else
+                                    {
+                                        {{ line.Remarks }}
+                                    }
+                                </td>
+
+                                <td class="ss-c-slip">
+                                    <button
+                                        type="button"
+                                        class="ss-icon"
+                                        title="Print this employee's payslip"
+                                        (click)="printSlips([line])">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </td>
+
+                            </tr>
+                        }
+                    </tbody>
+
+                    <tfoot>
+                        <tr>
+                            <td class="ss-c-no"></td>
+                            <td class="ss-c-emp"><b>Total ({{ lines.length }})</b></td>
+                            <td class="ss-c-days"></td>
+                            <td class="ss-num">{{ money(total('GrossSalary')) }}</td>
+                            <td class="ss-num">{{ blank(total('AbsenceDeduction')) }}</td>
+                            <td class="ss-num">{{ blank(total('LateDeduction')) }}</td>
+                            <td class="ss-num">{{ blank(total('OvertimeAmount')) }}</td>
+                            <td class="ss-num">{{ blank(total('OtherEarning')) }}</td>
+                            <td class="ss-num">{{ money(total('EarnedSalary')) }}</td>
+                            <td class="ss-num">{{ blank(total('StructureDeduction') + total('PfEmployee')) }}</td>
+                            <td class="ss-num">{{ blank(total('AdvanceDeduction') + total('PfLoan')) }}</td>
+                            <td class="ss-num">{{ blank(total('OtherDeduction')) }}</td>
+                            <td class="ss-num ss-net">{{ money(total('NetPay')) }}</td>
+                            @if (isPosted)
+                            {
+                                <td class="ss-c-paid">{{ paidCount }} / {{ lines.length }}</td>
+                            }
+                            <td class="ss-c-remarks"></td>
+                            <td class="ss-c-slip"></td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+            }
+
+            <!-- Loading / failed / nothing to show : centred in the canvas -->
+
+            @if (emptyState; as state)
+            {
+                <app-empty-state
+                    [icon]="state.icon"
+                    [title]="state.title"
+                    [subtitle]="state.subtitle">
+                </app-empty-state>
+            }
+
+        </div>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (the whole sheet, whatever the search)
+    ====================================================== -->
+
+    @if (lines.length > 0)
+    {
+        <div class="ss-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="ss-summary-item">
+                    <span class="ss-summary-label">{{ item.label }}</span>
+                    <b
+                        class="ss-summary-value"
+                        [class.ss-ok]="item.tone === 'ok'"
+                        [class.ss-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="ss-summary-note">
+                Earned = Gross - Absence - Late + Overtime + Other
+            </span>
+
+        </div>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

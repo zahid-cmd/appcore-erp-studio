@@ -889,6 +889,31 @@ implements OnInit, OnDestroy
         },
 
         {
+            header:'Image',
+
+            field:'ImageUrl',
+
+            // Optional : the image icon shows when there is none.
+            // Hover preview header : name + the three stock levels
+            previewTitleField:'PartName',
+
+            previewDetails:
+            [
+                { label:'Re-order', field:'ReorderLevel' },
+                { label:'Red', field:'RedLevel' },
+                { label:'Max', field:'MaxStockLevel' }
+            ],
+
+            sortable:false,
+
+            type:'image',
+
+            width:'80px',
+
+            align:'center'
+        },
+
+        {
             header:'Status',
 
             field:'IsActive',

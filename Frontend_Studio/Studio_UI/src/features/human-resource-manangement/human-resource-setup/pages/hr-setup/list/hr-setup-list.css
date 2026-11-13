@@ -1,0 +1,267 @@
+@import '../../../../../../shared/styles/app-list-page.css';
+
+/* Human Resource Setup lists : summary line below the canvas
+   (same look as the General Settings lists) */
+
+.hrs-summary
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 0;
+    min-height: 50px;
+    padding: 12px 22px;
+    box-sizing: border-box;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
+    font-size: 14.5px;
+}
+
+.hrs-summary-item
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 20px;
+}
+
+.hrs-summary-item:first-child
+{
+    padding-left: 0;
+}
+
+.hrs-summary-item + .hrs-summary-item
+{
+    border-left: 1px solid #c9daf5;
+}
+
+.hrs-summary-label
+{
+    color: #475569;
+    font-weight: 500;
+}
+
+.hrs-summary-value
+{
+    color: #1e293b;
+    font-size: 15.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.hrs-summary-value.hrs-ok
+{
+    color: #047857;
+}
+
+.hrs-summary-value.hrs-bad
+{
+    color: #be123c;
+}
+
+.hrs-summary-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* Two tab groups on the toolbar (Holidays : the section, then the
+   status) */
+
+.hrs-tabs
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+}
+
+/* =====================================================
+   Holidays > Weekly Holidays : one record, edited in place
+===================================================== */
+
+.hrw-body
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    align-items: stretch;
+    align-content: start;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1100px)
+{
+    .hrw-body
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.hrw-card
+{
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+    padding: 16px 18px;
+    box-sizing: border-box;
+    border: 1px solid #dbe6f7;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.hrw-head
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #1e293b;
+    font-size: 15.5px;
+    font-weight: 700;
+}
+
+.hrw-head > i
+{
+    color: #1e3a8a;
+}
+
+.hrw-now
+{
+    margin-left: auto;
+    padding: 3px 12px;
+    border: 1px solid #dbe6f7;
+    border-radius: 999px;
+    background: #f7faff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.hrw-field
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hrw-label
+{
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.hrw-days
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.hrw-day
+{
+    min-width: 62px;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #475569;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .20s ease, border-color .20s ease, color .20s ease;
+}
+
+.hrw-day:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+}
+
+.hrw-day.on
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.hrw-day:disabled
+{
+    cursor: default;
+    opacity: .70;
+}
+
+.hrw-actions
+{
+    display: flex;
+    gap: 10px;
+}
+
+.hrw-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    border: 1px solid #c7d7f5;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.hrw-btn.hrw-primary
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.hrw-btn:disabled
+{
+    cursor: default;
+    opacity: .50;
+}
+
+.hrw-help ul
+{
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin: 0;
+    padding-left: 18px;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.hrw-help b
+{
+    color: #1e3a8a;
+}
+
+/* Two dropdowns on the toolbar right (Holidays : year, status) */
+
+.hrs-filters
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hrs-filters > app-search-dropdown
+{
+    flex: 0 0 200px;
+    width: 200px;
+}

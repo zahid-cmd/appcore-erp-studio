@@ -1,0 +1,515 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-people-arrows"
+        [title]="pageTitle"
+        subtitle="Increment, promotion, transfer, confirmation or separation of one employee">
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Save"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="pf-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the movement
+            ================================================== -->
+
+            <div class="pf-column">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-people-arrows"></i>
+                        <span>Movement</span>
+                        @if (isViewMode && !entity.IsLatest)
+                        {
+                            <span class="pf-status">Not the latest : cannot be deleted</span>
+                        }
+                    </header>
+
+                    <!-- ---------- kind ---------- -->
+
+                    <div class="mv-types">
+                        @for (t of types; track t.value)
+                        {
+                            <button
+                                type="button"
+                                class="mv-type"
+                                [class.on]="type === t.value"
+                                [attr.data-type]="t.value"
+                                [disabled]="isViewMode"
+                                [title]="t.hint"
+                                (click)="setType(t.value)">
+                                <i [class]="t.icon"></i>
+                                {{ t.label }}
+                            </button>
+                        }
+                    </div>
+
+                    <div class="pf-grid">
+
+                        <app-textbox
+                            label="Code"
+                            [value]="entity.Code"
+                            placeholder="Auto generated"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-datepicker
+                            [label]="type === 'Separation' ? 'Last Working Day' : 'Effective Date'"
+                            [required]="true"
+                            [value]="$any(asDate(entity.EffectiveDate))"
+                            [disabled]="isViewMode"
+                            (valueChange)="onDate(dateEvent($event))">
+                        </app-datepicker>
+
+                        <div class="pf-wide">
+                            @if (isViewMode)
+                            {
+                                <app-textbox
+                                    label="Employee"
+                                    [value]="entity.EmployeeCode + '  ' + entity.EmployeeName"
+                                    [readonly]="true">
+                                </app-textbox>
+                            }
+                            @else
+                            {
+                                <app-search-dropdown
+                                    label="Employee"
+                                    [required]="true"
+                                    placeholder="Select employee"
+                                    [items]="employeeItems"
+                                    [value]="entity.EmployeeId || null"
+                                    (valueChange)="onEmployee($event)">
+                                </app-search-dropdown>
+                            }
+                        </div>
+
+                        <!-- ---------- Promotion ---------- -->
+
+                        @if (type === 'Promotion')
+                        {
+                            <app-textbox
+                                label="Designation Now"
+                                [value]="entity.OldDesignationName"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            @if (isViewMode)
+                            {
+                                <app-textbox
+                                    label="New Designation"
+                                    [value]="entity.NewDesignationName"
+                                    [readonly]="true">
+                                </app-textbox>
+                            }
+                            @else
+                            {
+                                <app-search-dropdown
+                                    label="New Designation"
+                                    [required]="true"
+                                    placeholder="Select designation"
+                                    [items]="designationItems"
+                                    [value]="entity.NewDesignationId || null"
+                                    [disabled]="!state"
+                                    (valueChange)="onLookup('NewDesignationId', $event)">
+                                </app-search-dropdown>
+
+                                <label class="pf-switch pf-wide">
+                                    <input
+                                        type="checkbox"
+                                        [checked]="withSalary"
+                                        [disabled]="!state"
+                                        (change)="onWithSalary($event)">
+                                    <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                                    <span class="pf-switch-text">
+                                        <b>Change the salary too</b>
+                                        <small>On : type the new gross salary below. Off : the salary stays as it is.</small>
+                                    </span>
+                                </label>
+                            }
+                        }
+
+                        <!-- ---------- Transfer ---------- -->
+
+                        @if (type === 'Transfer')
+                        {
+                            @if (isViewMode)
+                            {
+                                <app-textbox label="Branch" [value]="entity.OldBranchName + '  ->  ' + entity.NewBranchName" [readonly]="true"></app-textbox>
+                                <app-textbox label="Department" [value]="entity.OldDepartmentName + '  ->  ' + entity.NewDepartmentName" [readonly]="true"></app-textbox>
+                                <app-textbox label="Shift" [value]="entity.OldShiftName + '  ->  ' + entity.NewShiftName" [readonly]="true"></app-textbox>
+                            }
+                            @else
+                            {
+                                <app-search-dropdown
+                                    label="New Branch"
+                                    placeholder="Select branch"
+                                    [items]="branchItems"
+                                    [value]="entity.NewBranchId || null"
+                                    [disabled]="!state"
+                                    (valueChange)="onLookup('NewBranchId', $event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="New Department"
+                                    placeholder="Select department"
+                                    [items]="departmentItems"
+                                    [value]="entity.NewDepartmentId || null"
+                                    [disabled]="!state"
+                                    (valueChange)="onLookup('NewDepartmentId', $event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="New Shift"
+                                    placeholder="Select shift"
+                                    [items]="shiftItems"
+                                    [value]="entity.NewShiftId || null"
+                                    [disabled]="!state"
+                                    (valueChange)="onLookup('NewShiftId', $event)">
+                                </app-search-dropdown>
+                            }
+                        }
+
+                        <!-- ---------- Confirmation ---------- -->
+
+                        @if (type === 'Confirmation')
+                        {
+                            <app-textbox
+                                label="Employment Type Now"
+                                [value]="entity.OldEmploymentType || '-'"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Becomes"
+                                value="Permanent"
+                                [readonly]="true">
+                            </app-textbox>
+                        }
+
+                        <!-- ---------- Separation ---------- -->
+
+                        @if (type === 'Separation')
+                        {
+                            <app-dropdown
+                                label="Kind of Separation"
+                                placeholder="Select"
+                                [items]="separationItems"
+                                [value]="entity.SeparationType || null"
+                                (valueChange)="onSeparationType($event)"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <app-textbox
+                                label="Final Settlement (Tk)"
+                                placeholder="0.00 : what is agreed to pay"
+                                [value]="entity.SettlementAmount || ''"
+                                inputMode="decimal"
+                                [maxLength]="14"
+                                (valueChange)="onSettlement($event)"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+                            <div class="pf-wide">
+                                <app-textbox
+                                    label="Settlement Note"
+                                    placeholder="Optional : how the settlement was worked out"
+                                    [value]="entity.SettlementNote"
+                                    [maxLength]="300"
+                                    textCase="none"
+                                    (valueChange)="onText('SettlementNote', $event)"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+                            </div>
+                        }
+
+                        <div class="pf-wide">
+                            <app-textbox
+                                label="Remarks"
+                                placeholder="Optional"
+                                [value]="entity.Remarks"
+                                [maxLength]="500"
+                                textCase="none"
+                                (valueChange)="onText('Remarks', $event)"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- =============================================
+                     SALARY : now and new
+                ============================================== -->
+
+                @if (showSalary)
+                {
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Salary</span>
+                        </header>
+
+                        <div class="pf-grid">
+
+                            <app-textbox
+                                [label]="isViewMode ? 'Structure Before' : 'Structure Now'"
+                                [value]="entity.OldSalaryStructureName || 'None'"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            @if (!isViewMode)
+                            {
+                                <app-textbox
+                                    label="Gross Salary Now (Tk)"
+                                    [value]="money(oldGross)"
+                                    [readonly]="true">
+                                </app-textbox>
+                            }
+
+                            @if (isViewMode)
+                            {
+                                <app-textbox
+                                    label="Structure After"
+                                    [value]="entity.NewSalaryStructureName || 'None'"
+                                    [readonly]="true">
+                                </app-textbox>
+                            }
+                            @else
+                            {
+                                <app-search-dropdown
+                                    label="New Salary Structure"
+                                    [required]="true"
+                                    placeholder="Select salary structure"
+                                    [items]="structureItems"
+                                    [value]="entity.NewSalaryStructureId || null"
+                                    (valueChange)="onStructure($event)">
+                                </app-search-dropdown>
+
+                                <app-textbox
+                                    label="New Gross Salary (Tk)"
+                                    placeholder="0.00"
+                                    [value]="entity.NewGrossSalary || ''"
+                                    inputMode="decimal"
+                                    [maxLength]="14"
+                                    [required]="true"
+                                    (valueChange)="onGross($event)">
+                                </app-textbox>
+                            }
+
+                        </div>
+
+                        @if (hasSalaryLines)
+                        {
+                            <table class="mv-table">
+
+                                <thead>
+                                    <tr>
+                                        <th>Salary Head</th>
+                                        <th class="mv-num">{{ isViewMode ? 'Before' : 'Now' }}</th>
+                                        <th class="mv-num">{{ isViewMode ? 'After' : 'New' }}</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    @for (line of earningLines; track line.SalaryHeadId)
+                                    {
+                                        <tr [class.mv-changed]="line.NewAmount !== line.OldAmount">
+                                            <td>{{ line.HeadName }}</td>
+                                            <td class="mv-num">{{ money(line.OldAmount) }}</td>
+                                            <td class="mv-num">{{ money(line.NewAmount) }}</td>
+                                        </tr>
+                                    }
+
+                                    <tr class="mv-total">
+                                        <td>
+                                            Gross Salary
+                                            @if (grossChange)
+                                            {
+                                                <span class="mv-change">{{ grossChange }}</span>
+                                            }
+                                        </td>
+                                        <td class="mv-num">{{ money(oldGross) }}</td>
+                                        <td class="mv-num">{{ money(newGross) }}</td>
+                                    </tr>
+
+                                    @if (deductionLines.length > 0)
+                                    {
+                                        <tr class="mv-group">
+                                            <td colspan="3">Deductions (every month)</td>
+                                        </tr>
+
+                                        @for (line of deductionLines; track line.SalaryHeadId)
+                                        {
+                                            <tr [class.mv-changed]="line.NewAmount !== line.OldAmount">
+                                                <td>{{ line.HeadName }}</td>
+                                                <td class="mv-num">{{ money(line.OldAmount) }}</td>
+                                                <td class="mv-num">{{ money(line.NewAmount) }}</td>
+                                            </tr>
+                                        }
+                                    }
+
+                                </tbody>
+
+                            </table>
+                        }
+                        @else if (!isViewMode)
+                        {
+                            <p class="pf-muted">
+                                The employee has no salary yet. Type the gross salary and pick the salary structure;
+                                structures are made on Human Resource Setup &gt; Salary Structures.
+                            </p>
+                        }
+
+                    </section>
+                }
+
+            </div>
+
+            <!-- =================================================
+                 RIGHT : the employee now / notes
+            ================================================== -->
+
+            <div class="pf-column">
+
+                @if (isViewMode)
+                {
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-right-left"></i>
+                            <span>What Changed</span>
+                        </header>
+
+                        <p class="mv-summary">{{ entity.Summary || 'Nothing else changed.' }}</p>
+
+                        <dl class="pf-facts">
+                            <dt>Designation</dt>
+                            <dd>{{ entity.NewDesignationName || '-' }}</dd>
+                            <dt>Department</dt>
+                            <dd>{{ entity.NewDepartmentName || '-' }}</dd>
+                            <dt>Branch</dt>
+                            <dd>{{ entity.NewBranchName || '-' }}</dd>
+                            <dt>Shift</dt>
+                            <dd>{{ entity.NewShiftName || '-' }}</dd>
+                            <dt>Employment Type</dt>
+                            <dd>{{ entity.NewEmploymentType || '-' }}</dd>
+                            <dt>Salary Structure</dt>
+                            <dd>{{ entity.NewSalaryStructureName || 'None' }}</dd>
+                            <dt class="pf-strong">Gross Salary after</dt>
+                            <dd class="pf-strong">{{ money(entity.NewGrossSalary) }}</dd>
+                        </dl>
+
+                    </section>
+                }
+                @else
+                {
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-id-card-clip"></i>
+                            <span>The Employee Now</span>
+                        </header>
+
+                        @if (state)
+                        {
+                            <dl class="pf-facts">
+                                <dt>Designation</dt>
+                                <dd>{{ state.DesignationName || '-' }}</dd>
+                                <dt>Department</dt>
+                                <dd>{{ state.DepartmentName || '-' }}</dd>
+                                <dt>Branch</dt>
+                                <dd>{{ state.BranchName || '-' }}</dd>
+                                <dt>Shift</dt>
+                                <dd>{{ state.ShiftName || '-' }}</dd>
+                                <dt>Employment Type</dt>
+                                <dd>{{ state.EmploymentType || '-' }}</dd>
+                                <dt>Salary Structure</dt>
+                                <dd>{{ state.SalaryStructureName || 'None' }}</dd>
+                                <dt>Joined</dt>
+                                <dd>{{ dayText(state.JoiningDate) }}</dd>
+                                <dt>Latest Movement</dt>
+                                <dd>{{ state.LastMovementDate ? dayText(state.LastMovementDate) : 'None' }}</dd>
+                                <dt class="pf-strong">Gross Salary</dt>
+                                <dd class="pf-strong">{{ money(state.GrossSalary) }}</dd>
+                            </dl>
+
+                            @if (type === 'Separation')
+                            {
+                                <div class="pf-hint">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                    <span>
+                                        Before the final settlement :
+                                        salary advance balance Tk <b>{{ money(state.AdvanceBalance) }}</b>;
+                                        latest salary sheet {{ state.LastSalaryMonth || 'none yet' }}.
+                                        @if (state.HasLogin)
+                                        {
+                                            The employee has a login : make it inactive on User Profiles.
+                                        }
+                                    </span>
+                                </div>
+                            }
+                        }
+                        @else
+                        {
+                            <p class="pf-muted">
+                                {{ stateLoading ? 'Loading the employee...' : 'Pick the employee to see the record as it is now.' }}
+                            </p>
+                        }
+
+                    </section>
+                }
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>How it is used</span>
+                    </header>
+
+                    <ul class="pf-help">
+                        <li>Saving a movement changes the employee record at once and keeps what was before.</li>
+                        <li>An increment is a new gross salary, split by the employee's salary structure (or another one picked here). A salary sheet made afterwards uses the new salary for its whole month.</li>
+                        <li>Separation makes the employee Inactive. The days after the last working day are not paid. The final settlement here is a note; pay it with a Payment Voucher.</li>
+                        <li>A movement is not edited. Delete the employee's latest movement to take it back.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

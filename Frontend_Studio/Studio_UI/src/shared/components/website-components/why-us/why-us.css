@@ -29,7 +29,7 @@
     border-radius:28px;
     overflow:hidden;
     background:
-        radial-gradient(80% 70% at 30% 30%, rgba(245,158,11,.22), rgba(245,158,11,0)),
+        radial-gradient(80% 70% at 30% 30%, rgba(var(--w-accent-rgb),.22), rgba(var(--w-accent-rgb),0)),
         var(--w-panel);
 }
 

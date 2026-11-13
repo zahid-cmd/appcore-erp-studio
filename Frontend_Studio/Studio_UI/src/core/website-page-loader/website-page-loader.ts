@@ -7,6 +7,9 @@
 //   /bikes/:slug      bike detail
 //   /warranty /terms /privacy
 //
+//   0. The design : the default one (Website Configuration ›
+//      Design), or a staff preview (WebsiteDesignService). Its
+//      header, home page and token sheet come from its kit.
 //   1. Loads the website content once (WebsiteDataService)
 //   2. Site switched off, or no content → the login page
 //   3. Otherwise : header, the page, footer, AppCore strip,
@@ -64,7 +67,8 @@ import
 }
 from '../website/website-links';
 
-import { SiteHeaderComponent } from '../../shared/components/website-components/site-header/site-header';
+import { NgComponentOutlet } from '@angular/common';
+import { WebsiteDesignService } from '../website/website-design.service';
 import { SiteFooterComponent } from '../../shared/components/website-components/site-footer/site-footer';
 import { AppcoreStripComponent } from '../../shared/components/website-components/appcore-strip/appcore-strip';
 import { VisitUsComponent } from '../../shared/components/website-components/visit-us/visit-us';
@@ -78,7 +82,7 @@ import { ScrollRailComponent } from '../../shared/components/website-components/
     imports:
     [
         RouterOutlet,
-        SiteHeaderComponent,
+        NgComponentOutlet,
         SiteFooterComponent,
         AppcoreStripComponent,
         VisitUsComponent,
@@ -100,6 +104,9 @@ export class WebsitePageLoader
 
     readonly themes =
         inject(WebsiteThemeService);
+
+    readonly designs =
+        inject(WebsiteDesignService);
 
     readonly content =
         this.data.content;
@@ -155,9 +162,13 @@ export class WebsitePageLoader
 
                 // "Moto Zone · tagline" : browser tab and search results
                 document.title =
-                    content.company.tagline
-                        ? `${content.company.name} · ${content.company.tagline}`
-                        : content.company.name;
+                    (this.designs.preview() ? 'Preview · ' : '')
+                    +
+                    (
+                        content.company.tagline
+                            ? `${content.company.name} · ${content.company.tagline}`
+                            : content.company.name
+                    );
             }
         );
 
@@ -170,5 +181,15 @@ export class WebsitePageLoader
                 () =>
                     scrollToTop(this.host.nativeElement)
             );
+    }
+
+
+    // Staff preview : back to the live (default) design
+    exitPreview():
+        void
+    {
+        this.designs.exitPreview();
+
+        scrollToTop(this.host.nativeElement);
     }
 }

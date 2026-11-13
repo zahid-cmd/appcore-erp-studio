@@ -75,7 +75,8 @@
     width: 100%;
     min-height: 0;
     overflow-y: auto;
-    overflow-x: hidden;
+    /* sideways when the activities need more than the canvas */
+    overflow-x: auto;
     background: #ffffff;
 }
 
@@ -694,15 +695,15 @@
 {
     display:flex;
     align-items:center;
-    flex:0 0 78px;
-    width:78px;
+    flex:0 0 84px;
+    width:84px;
     height:100%;
 }
 
 .permission-header-common
 {
     display:grid;
-    grid-template-columns:repeat(3, 102px);
+    grid-template-columns:repeat(3, 116px);
     grid-auto-rows:24px;
     row-gap:2px;
     flex:0 0 auto;
@@ -713,9 +714,9 @@
     display:grid;
     grid-auto-flow:column;
     grid-template-rows:repeat(2, 24px);
-    column-gap:10px;
+    column-gap:22px;
     row-gap:2px;
-    flex:1 1 auto;
+    flex:0 0 auto;
     min-width:0;
     margin-left:4px;
     padding-left:12px;
@@ -824,3 +825,104 @@
 :host-context(.dark-theme) .cart-submenu-menu,
 :host-context(.theme-dark) .cart-submenu-menu
 { color:#94a3b8; }
+
+
+/* =====================================================
+   ROOMY ACTIVITIES (2026-11-14)
+   The tables never get narrower than tableMinWidth (ts);
+   the body scrolls sideways and the header follows.
+   The header table must not shrink inside its flex row.
+===================================================== */
+.list-table-header .list-table-grid,
+.list-table-body .list-table-grid
+{
+    flex:0 0 auto;
+}
+
+.list-table-header .list-table-grid
+{
+    flex:1 0 auto;
+}
+
+
+/* =====================================================
+   FLOATING ACTION COLUMN (2026-11-14)
+   Sticky at the right edge of the frame : it matters only
+   while the table scrolls sideways. The shadow shows while
+   there is more to the right (ic-scroll, not ic-end).
+===================================================== */
+.list-table-grid thead th.ic-stick-right,
+.list-table-grid tbody td.ic-stick-right
+{
+    position:sticky;
+    right:0;
+}
+
+.list-table-grid thead th.ic-stick-right
+{
+    z-index:25;
+}
+
+.list-table-grid tbody td.ic-stick-right
+{
+    z-index:6;
+    background:#ffffff;
+    transition:box-shadow .18s ease, background-color .18s ease;
+}
+
+.list-table-row:nth-child(even) td.ic-stick-right
+{
+    background:#fbfcfe;
+}
+
+.list-table-row:hover td.ic-stick-right
+{
+    background:#eef5ff;
+}
+
+:host(.ic-scroll:not(.ic-end)) .list-table-grid thead th.ic-stick-right,
+:host(.ic-scroll:not(.ic-end)) .list-table-grid tbody td.ic-stick-right
+{
+    box-shadow:-1px 0 0 #e3eaf4, -8px 0 10px -6px rgba(15, 23, 42, .18);
+}
+
+
+/* =====================================================
+   FROZEN LEFT COLUMNS (2026-11-14) : # and Sub Menu stay
+   at the left edge while the table scrolls sideways
+   (left offsets from item-cart.ts). The shadow shows once
+   the body has been scrolled (ic-scrolled).
+===================================================== */
+.list-table-grid thead th.ic-stick-left,
+.list-table-grid tbody td.ic-stick-left
+{
+    position:sticky;
+}
+
+.list-table-grid thead th.ic-stick-left
+{
+    z-index:25;
+}
+
+.list-table-grid tbody td.ic-stick-left
+{
+    z-index:6;
+    background:#ffffff;
+    transition:box-shadow .18s ease, background-color .18s ease;
+}
+
+.list-table-row:nth-child(even) td.ic-stick-left
+{
+    background:#fbfcfe;
+}
+
+.list-table-row:hover td.ic-stick-left
+{
+    background:#eef5ff;
+}
+
+:host(.ic-scrolled) .list-table-grid thead th.ic-stick-left-last,
+:host(.ic-scrolled) .list-table-grid tbody td.ic-stick-left-last
+{
+    box-shadow:1px 0 0 #e3eaf4, 8px 0 10px -6px rgba(15, 23, 42, .18);
+}

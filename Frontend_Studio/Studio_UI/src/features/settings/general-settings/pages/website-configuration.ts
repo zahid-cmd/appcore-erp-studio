@@ -3,7 +3,10 @@
 // (Settings › General Settings › Website Configuration)
 //
 // One record, no list : the page opens straight into the form.
-// Eleven tabs : General · Contact & Location · Hours & Social ·
+// Design tab first : the three website designs; the one set as
+// default is the only one published live (visitors never see the
+// others). Preview opens a design for this user only.
+// Then : General · Contact & Location · Hours & Social ·
 // Brands · Hero · Home Sections (moving strip, offer ribbon, why us) ·
 // Service & FAQ · EMI · Payments · Section Headings · Policies. Update saves everything in one go (progress
 // dialog, toast) and reloads; History shows the changed tabs.
@@ -150,6 +153,7 @@ implements OnInit, AfterViewInit, OnDestroy
     readonly tabs:
         ControlTab[] =
     [
+        { id:'design', label:'Design' },
         { id:'general', label:'General' },
         { id:'contact', label:'Contact & Location' },
         { id:'hours', label:'Hours & Social' },
@@ -165,7 +169,47 @@ implements OnInit, AfterViewInit, OnDestroy
     ];
 
     selectedTab =
-        'general';
+        'design';
+
+    // The website designs (blueprint-dealer-website-designs). The
+    // swatches only draw the small previews on the cards.
+    readonly designs:
+        {
+            key:string;
+            no:number;
+            name:string;
+            feel:string;
+            suits:string;
+            deep:{ bg:string; panel:string; text:string; accent:string };
+            light:{ bg:string; panel:string; text:string; accent:string };
+        }[] =
+    [
+        {
+            key:'website-page-1', no:1, name:'Velocity',
+            feel:'Cinematic : bike slider with a light sweep, electric blue on black.',
+            suits:'One or a few brands, performance and EV bikes.',
+            deep:{ bg:'#05060a', panel:'#0b1224', text:'#ffffff', accent:'#2563eb' },
+            light:{ bg:'#f5f7fb', panel:'#e3eaf8', text:'#0b1220', accent:'#2563eb' }
+        },
+        {
+            key:'website-page-2', no:2, name:'Showroom',
+            feel:'Clean and photo-first : one large photo, bikes in a grid with a filter panel.',
+            suits:'Multi-brand dealers and large ranges.',
+            deep:{ bg:'#121314', panel:'#1b1c1e', text:'#ffffff', accent:'#5b8cff' },
+            light:{ bg:'#ffffff', panel:'#f5f5f3', text:'#161616', accent:'#1f5fd6' }
+        },
+        {
+            key:'website-page-3', no:3, name:'Heritage',
+            feel:'Warm and trusted : serif headings, arched photo, the range as numbered rows.',
+            suits:'Family and neighbourhood dealers, service-led businesses.',
+            deep:{ bg:'#14201b', panel:'#1f3029', text:'#faf6ef', accent:'#e07a4f' },
+            light:{ bg:'#faf6ef', panel:'#f2ebde', text:'#1f2a24', accent:'#b04a26' }
+        }
+    ];
+
+    // The design saved as default (the live one)
+    savedTemplate =
+        'website-page-1';
 
     readonly themes:
         { id:WebsiteTheme; label:string }[] =
@@ -329,6 +373,7 @@ implements OnInit, AfterViewInit, OnDestroy
     readonly tabNotes:
         Record<string, { icon:string; text:string }> =
     {
+        design:{ icon:'fa-solid fa-swatchbook', text:'The website design. Only the default design is live; the others are never shown to visitors. Set as default, then Update.' },
         general:{ icon:'fa-solid fa-globe', text:'Website on / off, theme, tagline and which home-page parts show.' },
         contact:{ icon:'fa-solid fa-location-dot', text:'Phone, WhatsApp and email on the website, and the map pin.' },
         hours:{ icon:'fa-solid fa-clock', text:'Opening hours in "Visit us" and the social links in the footer.' },
@@ -378,6 +423,8 @@ implements OnInit, AfterViewInit, OnDestroy
                         model =>
                         {
                             model.bikes ??= [];
+                            model.template = this.designKey(model.template);
+                            this.savedTemplate = model.template;
                             this.model = model;
                             this.fillContact(model);
                             this.fillHeadings();
@@ -446,6 +493,34 @@ implements OnInit, AfterViewInit, OnDestroy
         void
     {
         window.open('/', '_blank', 'noopener');
+    }
+
+
+    // A design in a new tab, for this user only (behind the login;
+    // visitors keep seeing the default design)
+    previewDesign
+    (
+        key:
+            string,
+        theme:
+            'light' | 'deep'
+    ):
+        void
+    {
+        window.open(`/website-preview/${key}?theme=${theme}`, '_blank', 'noopener');
+    }
+
+
+    designKey
+    (
+        value:
+            string | null | undefined
+    ):
+        string
+    {
+        return this.designs.some(d => d.key === value)
+            ? String(value)
+            : 'website-page-1';
     }
 
 

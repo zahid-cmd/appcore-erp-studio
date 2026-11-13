@@ -9,7 +9,13 @@
 //                             Class, Storage Locations (bins)
 //
 // Storage locations are added from the page toolbar (Add Location)
-// in the shared Form Modal. No image on this form.
+// in the shared Form Modal.
+//
+// Spare Part Image (optional) : shared Image Hub in section 2. The
+// picked file is previewed locally and uploaded after the save
+// (POST {api}/{id}/image); removing it calls DELETE {api}/{id}/image.
+// Update never sends ImagePath, so a save without a new image
+// keeps the saved one.
 //
 // A BIN holds ONE item (spare part OR accessory) : the location
 // modal (Warehouse → Rack → Shelf → Bin) offers only free bins,
@@ -57,7 +63,9 @@ import
     throwError,
     delayWhen,
     catchError,
-    switchMap
+    switchMap,
+    map,
+    of
 }
 from 'rxjs';
 
@@ -125,6 +133,12 @@ import
     TextareaComponent
 }
 from '../../../../../../shared/components/controls/textarea/textarea';
+
+import
+{
+    ImageHubComponent
+}
+from '../../../../../../shared/components/controls/image-hub/image-hub';
 
 import
 {
@@ -321,6 +335,8 @@ const SPARE_PARTS_PAGE_TYPES:
         TextboxComponent,
 
         TextareaComponent,
+
+        ImageHubComponent,
 
         DropdownComponent,
 
@@ -766,7 +782,7 @@ implements OnInit, OnDestroy
 
         MovementClass:DEFAULT_MOVEMENT_CLASS,
 
-        // Not used on this form (kept for the model)
+        // Saved image ('' = none : the item icon is shown)
         ImagePath:'',
 
         Remarks:'',
@@ -777,6 +793,48 @@ implements OnInit, OnDestroy
 
         FitSubCategoryIds:[]
     };
+
+
+
+    //===========================================================
+    // Spare Part Image (optional : the lists and shelves show the
+    // item icon when there is none)
+    //
+    // imageFile    : newly picked file, uploaded after save
+    // imageRemoved : the saved image should be deleted on save
+    // imagePreview : what the Image Hub shows (local preview of
+    //                the picked file, or the saved image's URL)
+    //===========================================================
+
+    // Allowed image types and the size limit
+    private readonly IMAGE_TYPES:
+        string[] =
+        ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+    private readonly IMAGE_MAX_BYTES:
+        number =
+        2 * 1024 * 1024;
+
+    imageFile:
+        File | null =
+        null;
+
+    imageRemoved:
+        boolean =
+        false;
+
+    imagePreview:
+        string =
+        '';
+
+    private localPreviewUrl:
+        string =
+        '';
+
+    // Reason of the last failed image upload / delete
+    private imageError:
+        string =
+        '';
 
 
 
@@ -861,6 +919,8 @@ implements OnInit, OnDestroy
         void
     {
         this.clearProgressTimer();
+
+        this.releaseLocalPreview();
 
 
         if
@@ -1064,6 +1124,11 @@ implements OnInit, OnDestroy
 
 
         this.buildLocationOptions();
+
+
+        this.resetImageState(
+            ''
+        );
 
 
         this.setInitialFormState();
@@ -3033,6 +3098,11 @@ implements OnInit, OnDestroy
                     this.buildSubCategoryItems();
 
 
+                    this.resetImageState(
+                        this.entity.ImagePath ?? ''
+                    );
+
+
                     this.originalEntity =
                         JSON.stringify(
                             this.entity
@@ -3086,7 +3156,271 @@ implements OnInit, OnDestroy
                 this.entity
             )
             !==
-            this.originalEntity;
+            this.originalEntity
+            ||
+            this.imageFile !== null
+            ||
+            this.imageRemoved;
+    }
+
+
+
+    //===========================================================
+    // Spare Part Image : Picked / Removed (Image Hub)
+    //===========================================================
+
+    onImageChange
+    (
+        file:
+            File | null
+    ):
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+
+        //=======================================================
+        // Removed
+        //=======================================================
+
+        if
+        (
+            !file
+        )
+        {
+            this.releaseLocalPreview();
+
+            this.imageFile =
+                null;
+
+            // Only a saved image needs deleting on the server
+            this.imageRemoved =
+                !!this.entity.ImagePath;
+
+            this.imagePreview =
+                '';
+
+            this.onValueChange();
+
+            return;
+        }
+
+
+        //=======================================================
+        // Validate
+        //=======================================================
+
+        if
+        (
+            !this.IMAGE_TYPES.includes(
+                file.type
+            )
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Spare Part Image must be a JPG, PNG, WEBP or GIF file.'
+            );
+
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+        if
+        (
+            file.size >
+            this.IMAGE_MAX_BYTES
+        )
+        {
+            this.toast.error(
+                'Validation',
+
+                'Spare Part Image cannot be larger than 2 MB.'
+            );
+
+            this.cdr.detectChanges();
+
+            return;
+        }
+
+
+        //=======================================================
+        // Preview locally; uploaded after save
+        //=======================================================
+
+        this.releaseLocalPreview();
+
+        this.localPreviewUrl =
+            URL.createObjectURL(
+                file
+            );
+
+        this.imageFile =
+            file;
+
+        this.imageRemoved =
+            false;
+
+        this.imagePreview =
+            this.localPreviewUrl;
+
+        this.onValueChange();
+    }
+
+
+
+    //===========================================================
+    // Spare Part Image : Reset (new / loaded record)
+    //===========================================================
+
+    private resetImageState
+    (
+        savedPath:
+            string
+    ):
+        void
+    {
+        this.releaseLocalPreview();
+
+        this.imageFile =
+            null;
+
+        this.imageRemoved =
+            false;
+
+        this.imagePreview =
+            this.sparePartsService.getImageUrl(
+                savedPath
+            );
+    }
+
+
+
+    //===========================================================
+    // Spare Part Image : Free the local preview URL
+    //===========================================================
+
+    private releaseLocalPreview():
+        void
+    {
+        if
+        (
+            this.localPreviewUrl
+        )
+        {
+            URL.revokeObjectURL(
+                this.localPreviewUrl
+            );
+
+            this.localPreviewUrl =
+                '';
+        }
+    }
+
+
+
+    //===========================================================
+    // Spare Part Image : Save After The Spare Part Is Saved
+    //
+    // New file → upload. Removed → delete. Otherwise nothing.
+    //
+    // Emits true when the image step worked (or had nothing to
+    // do), false when it failed. A failed image never fails the
+    // spare part save itself : the spare part is already stored, so a
+    // second Save would only hit "code already exists".
+    //===========================================================
+
+    private saveImage
+    (
+        publicId:
+            string
+    ):
+        Observable<boolean>
+    {
+        return this.runImageStep(
+            publicId
+        )
+            .pipe(
+                map(
+                    (): boolean =>
+                        true
+                ),
+
+                catchError(
+                    error =>
+                    {
+                        console.error(
+                            'Spare Part Image Error',
+
+                            error
+                        );
+
+                        // Keep the real reason for the message
+                        this.imageError =
+                            this.describeImageError(
+                                error
+                            );
+
+                        return of(
+                            false
+                        );
+                    }
+                )
+            );
+    }
+
+
+    private runImageStep
+    (
+        publicId:
+            string
+    ):
+        Observable<void>
+    {
+        if
+        (
+            this.imageFile
+            &&
+            !!publicId
+        )
+        {
+            return this.sparePartsService
+                .uploadImage(
+                    publicId,
+                    this.imageFile
+                )
+                .pipe(
+                    map(
+                        (): void =>
+                            undefined
+                    )
+                );
+        }
+
+        if
+        (
+            this.imageRemoved
+            &&
+            !!publicId
+        )
+        {
+            return this.sparePartsService
+                .deleteImage(
+                    publicId
+                );
+        }
+
+        return of(
+            undefined
+        );
     }
 
 
@@ -3614,11 +3948,23 @@ implements OnInit, OnDestroy
                 .create(
                     model
                 )
+                .pipe(
+                    // Then upload the picked image to the new spare part
+                    switchMap(
+                        (id: string) =>
+                            this.saveImage(
+                                String(id ?? '')
+                            )
+                    )
+                )
         )
             .subscribe
             ({
                 next:
-                (): void =>
+                (
+                    imageSaved:
+                        boolean
+                ): void =>
                 {
                     this.completeProgress(
 
@@ -3626,13 +3972,17 @@ implements OnInit, OnDestroy
 
                         () =>
                         {
+                            this.resetImageState(
+                                ''
+                            );
+
                             this.setInitialFormState();
 
 
-                            this.toast.success(
-                                'Success',
-
-                                'Spare Part created successfully.'
+                            // One message : success, or saved-without-image
+                            this.notifySaved(
+                                'created',
+                                imageSaved
                             );
 
 
@@ -3765,11 +4115,23 @@ implements OnInit, OnDestroy
 
                     model
                 )
+                .pipe(
+                    // Then upload / delete the image
+                    switchMap(
+                        () =>
+                            this.saveImage(
+                                this.entityId
+                            )
+                    )
+                )
         )
             .subscribe
             ({
                 next:
-                (): void =>
+                (
+                    imageSaved:
+                        boolean
+                ): void =>
                 {
                     this.completeProgress(
 
@@ -3777,13 +4139,17 @@ implements OnInit, OnDestroy
 
                         () =>
                         {
+                            this.resetImageState(
+                                ''
+                            );
+
                             this.setInitialFormState();
 
 
-                            this.toast.success(
-                                'Success',
-
-                                'Spare Part updated successfully.'
+                            // One message : success, or saved-without-image
+                            this.notifySaved(
+                                'updated',
+                                imageSaved
                             );
 
 
@@ -3824,6 +4190,94 @@ implements OnInit, OnDestroy
                     );
                 }
             });
+    }
+
+
+
+    //===========================================================
+    // Saved Message (one toast only)
+    //
+    // Image fine      → "Spare Part created successfully."
+    // Image failed    → one error explaining the spare part is saved
+    //                   but its image is not.
+    //===========================================================
+
+    private notifySaved
+    (
+        verb:
+            'created' | 'updated',
+        imageSaved:
+            boolean
+    ):
+        void
+    {
+        if
+        (
+            imageSaved
+        )
+        {
+            this.toast.success(
+                'Success',
+
+                `Spare Part ${verb} successfully.`
+            );
+
+            return;
+        }
+
+        this.toast.error(
+            'Spare Part Image Not Saved',
+
+            `The spare part was ${verb}, but its image could not be saved. ${this.imageError}`
+        );
+    }
+
+
+
+    //===========================================================
+    // Image Error → readable reason (status + server message)
+    //===========================================================
+
+    private describeImageError
+    (
+        error:
+            any
+    ):
+        string
+    {
+        const status =
+            Number(error?.status ?? 0);
+
+        let serverText =
+            typeof error?.error === 'string'
+                ? error.error
+                : (error?.error?.title ?? error?.error?.message ?? '');
+
+        serverText =
+            String(serverText ?? '').trim();
+
+        switch
+        (
+            status
+        )
+        {
+            case 0:
+                return 'The API could not be reached (network / CORS).';
+
+            case 404:
+                return 'Upload endpoint not found (404): the API is still running the old Spare Parts controller. Rebuild and restart the API.';
+
+            case 413:
+                return 'The file is too large for the server (413).';
+
+            case 415:
+                return 'The server rejected the upload format (415). Check that no HTTP interceptor forces Content-Type: application/json on uploads.';
+
+            default:
+                return serverText
+                    ? `${serverText} (${status})`
+                    : `Server error ${status}. See the API console for details.`;
+        }
     }
 
 

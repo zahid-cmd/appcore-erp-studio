@@ -1,1 +1,5 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+@import '../../hr-setup/form/hr-setup-form.css';
+
+/* Department form : the look of the other Human Resource Setup forms
+   (pages/hr-setup/form) : a card with the fields in three columns
+   and the "How it is used" card */

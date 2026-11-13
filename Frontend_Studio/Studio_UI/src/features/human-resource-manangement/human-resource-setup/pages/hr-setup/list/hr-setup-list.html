@@ -1,0 +1,299 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        [title]="page.title"
+        [subtitle]="page.subtitle"
+        [icon]="page.icon">
+
+        <div pageHeaderCenter>
+            @if (!isWeekly)
+            {
+                <app-search-box
+                    [value]="searchText"
+                    [placeholder]="searchPlaceholder"
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            }
+        </div>
+
+        <div pageHeaderRight>
+            @if (isWeekly && weeklyEditing)
+            {
+                <!-- the one record, being changed -->
+                <app-command-center
+                    command1Text="Update"
+                    command1Icon="fas fa-floppy-disk"
+                    (command1Click)="saveWeekly()"
+                    command2Text="Undo"
+                    command2Icon="fas fa-rotate-left"
+                    (command2Click)="resetWeekly()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="closeWeekly()">
+                </app-command-center>
+            }
+            @else if (isWeekly)
+            {
+                <!-- one record : no Add, no Restore -->
+                <app-command-center
+                    command1Text="Refresh"
+                    command1Icon="fas fa-rotate-right"
+                    (command1Click)="refresh()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            }
+            @else
+            {
+            <app-command-center
+                command1Text="Add"
+                command1Icon="fas fa-plus"
+                command1Permission="add"
+                (command1Click)="add()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="refresh()"
+                command3Text="Restore"
+                command3Icon="fas fa-trash-arrow-up"
+                command3Permission="restore"
+                (command3Click)="restore()"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="Activity history"
+                (rightCommandClick)="openHistory()">
+            </app-command-center>
+            }
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        @if (hasSections)
+        {
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="sectionTabs"
+                [selectedTab]="section"
+                (selectedTabChange)="onSection($event)">
+            </app-control-tabs>
+        }
+
+        @if (!isWeekly)
+        {
+            <div
+                pageToolbarRight
+                class="hrs-filters">
+
+                @if (page.filter)
+                {
+                    <app-search-dropdown
+                        [placeholder]="page.filter.placeholder"
+                        [items]="filterItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="selectedFilter"
+                        (valueChange)="onFilterChange($event)">
+                    </app-search-dropdown>
+                }
+
+                <!-- the status : a dropdown (no tabs) -->
+                <app-search-dropdown
+                    placeholder="All Status"
+                    [items]="statusItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="selectedTab"
+                    (valueChange)="onTabChange($event)">
+                </app-search-dropdown>
+
+            </div>
+        }
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    @if (isWeekly && !weeklyEditing)
+    {
+        <!-- =================================================
+             WEEKLY HOLIDAYS : the list, one record (Edit only)
+        ================================================== -->
+
+        <app-page-canvas
+            [config]="canvasConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="weeklyColumns"
+                    [rows]="weeklyRows"
+                    [loading]="weeklyLoading"
+                    [actions]="weeklyActions"
+                    (edit)="editWeekly()">
+                </app-list-table>
+            </div>
+
+        </app-page-canvas>
+
+        <div class="hrs-summary">
+            <span class="hrs-summary-item">
+                <span class="hrs-summary-label">Weekly Holiday</span>
+                <b class="hrs-summary-value">{{ weeklyText }}</b>
+            </span>
+            <span class="hrs-summary-item">
+                <span class="hrs-summary-label">Employees with their own</span>
+                <b class="hrs-summary-value">{{ weeklyOwnCount }}</b>
+            </span>
+            <span class="hrs-summary-note">One record : it is changed, a second one cannot be added</span>
+        </div>
+    }
+    @else if (isWeekly)
+    {
+        <!-- =================================================
+             WEEKLY HOLIDAYS : the one record, being changed
+        ================================================== -->
+
+        <app-page-canvas
+            [config]="canvasConfig">
+
+            <div
+                canvasBody
+                class="hrw-body">
+
+                <section class="hrw-card">
+
+                    <header class="hrw-head">
+                        <i class="fas fa-calendar-week"></i>
+                        <span>Weekly Holiday</span>
+                        <span class="hrw-now">{{ weeklyLoading ? 'Loading...' : weeklyText }}</span>
+                    </header>
+
+                    <div class="hrw-field">
+                        <span class="hrw-label">Weekly holiday of every employee</span>
+                        <div class="hrw-days">
+                            @for (day of weekDays; track day)
+                            {
+                                <button
+                                    type="button"
+                                    class="hrw-day"
+                                    [class.on]="weeklyOn(day)"
+                                    [disabled]="weeklyLoading || weeklySaving"
+                                    (click)="toggleWeekly(day)">{{ day }}</button>
+                            }
+                        </div>
+                    </div>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="weeklyRemarks"
+                        [maxLength]="500"
+                        textCase="none"
+                        (valueChange)="onWeeklyRemarks($event)"
+                        [disabled]="weeklyLoading || weeklySaving">
+                    </app-textbox>
+
+                </section>
+
+                <section class="hrw-card hrw-help">
+
+                    <header class="hrw-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>How it is used</span>
+                    </header>
+
+                    <ul>
+                        <li>This is the one weekly holiday of the company : it is changed here, and a second one cannot be added.</li>
+                        <li>Every employee has it, unless the Employee Profile (Job tab) has its own weekly holiday.
+                            @if (weeklyOwnCount > 0)
+                            {
+                                <b>{{ weeklyOwnCount }} employee{{ weeklyOwnCount === 1 ? ' has' : 's have' }} their own now.</b>
+                            }
+                        </li>
+                        <li>A weekly holiday is paid and is never counted as absence. Leave days skip it.</li>
+                        <li>Festival and government holidays are dates : add them on the Public Holidays tab.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+    @else
+    {
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+            <app-list-table
+                [columns]="columns"
+                [rows]="rows"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                (view)="view($event)"
+                (edit)="edit($event)"
+                (delete)="delete($event)"
+                (sortChange)="onSort($event)">
+            </app-list-table>
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+    }
+
+    <!-- =====================================================
+         SUMMARY (search and filter applied, all statuses)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0 && !isWeekly)
+    {
+        <div class="hrs-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="hrs-summary-item">
+                    <span class="hrs-summary-label">{{ item.label }}</span>
+                    <b
+                        class="hrs-summary-value"
+                        [class.hrs-ok]="item.tone === 'ok'"
+                        [class.hrs-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="hrs-summary-note">{{ page.note }}</span>
+
+        </div>
+    }
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        [title]="historyTitle"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

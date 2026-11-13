@@ -1,0 +1,381 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-stopwatch"
+        [title]="pageTitle"
+        subtitle="How overtime is paid : extra hours and extra days">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div
+            canvasBody
+            class="hrf-body sst-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the structure and how it is used
+            ================================================== -->
+
+            <div class="sst-left">
+
+                <section class="hrf-card">
+
+                    <header class="hrf-card-head">
+                        <i class="fas fa-stopwatch"></i>
+                        <span>Overtime Structure Details</span>
+                    </header>
+
+                    <div class="hrf-grid sst-grid">
+
+                        <app-textbox
+                            label="Code"
+                            [value]="entity.Code"
+                            placeholder="Auto generated"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-dropdown
+                            label="Status"
+                            [items]="statusItems"
+                            [value]="entity.IsActive"
+                            (valueChange)="onStatus($event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-dropdown>
+
+                        <div class="hrf-cell hrf-wide">
+                            <app-textbox
+                                label="Structure Name"
+                                placeholder="Auto generated"
+                                [value]="entity.Name"
+                                [readonly]="true">
+                            </app-textbox>
+                        </div>
+
+                        <label
+                            class="hrf-switch hrf-cell hrf-wide"
+                            [class.hrf-switch-off]="isViewMode || !entity.IsActive">
+                            <input
+                                type="checkbox"
+                                [checked]="entity.IsDefault"
+                                [disabled]="isViewMode || !entity.IsActive"
+                                (change)="onDefault($event)">
+                            <span class="hrf-switch-track"><span class="hrf-switch-knob"></span></span>
+                            <span class="hrf-switch-text">
+                                <b>Default structure</b>
+                                <small>
+                                    @if (otherDefault && entity.IsDefault)
+                                    {
+                                        {{ otherDefault }} is the Default now : saving makes this one the Default instead.
+                                    }
+                                    @else if (otherDefault)
+                                    {
+                                        An Employee Profile with overtime starts with the Default ({{ otherDefault }} now).
+                                    }
+                                    @else
+                                    {
+                                        An Employee Profile with overtime starts with the Default structure.
+                                    }
+                                </small>
+                            </span>
+                        </label>
+
+                        <div class="hrf-cell hrf-wide">
+                            <app-textbox
+                                label="Remarks"
+                                placeholder="Optional"
+                                [value]="entity.Remarks"
+                                [maxLength]="500"
+                                textCase="none"
+                                (valueChange)="onText('Remarks', $event)"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <section class="hrf-card hrf-help">
+
+                    <header class="hrf-card-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>How it is used</span>
+                        @if (mode !== 'add')
+                        {
+                            <span class="sst-used">{{ entity.EmployeeCount }} employee{{ entity.EmployeeCount === 1 ? '' : 's' }} on it</span>
+                        }
+                    </header>
+
+                    <ul>
+                        <li>Overtime is paid on two bases : extra hours (typed on Daily Attendance) and extra days (days worked on a weekly holiday or a public holiday).</li>
+                        <li>Example of extra days : a month of 30 days with 4 weekly holidays and 2 public holidays has 24 working days. Attending 28 days is 4 extra days.</li>
+                        <li>The hours a day are not typed : they are the working hours of the employee's shift (shift hours less the break).</li>
+                        <li>The structure is picked on the Employee Profile when Overtime allowed is on. The salary sheet works the overtime out from it.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+            <!-- =================================================
+                 RIGHT : the rules and an example
+            ================================================== -->
+
+            <section class="hrf-card">
+
+                <header class="hrf-card-head">
+                    <i class="fas fa-calculator"></i>
+                    <span>Overtime Rules</span>
+                </header>
+
+                <!-- ---------- the rate ---------- -->
+
+                <div class="ots-part">
+                    <span class="ots-title">Rate</span>
+                    <span class="ots-formula">Day rate = {{ dayFormula }} &nbsp;·&nbsp; Hour rate = {{ hourFormula }}</span>
+                </div>
+
+                <div class="ots-grid ots-rate">
+
+                    <app-dropdown
+                        label="Rate on"
+                        [items]="baseItems"
+                        [value]="entity.RateBase"
+                        (valueChange)="onSelect('RateBase', $event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-dropdown>
+
+                    @if (isFixed)
+                    {
+                        <app-textbox
+                            label="Fixed Rate (Tk an hour)"
+                            placeholder="0.00"
+                            [value]="entity.FixedHourRate || ''"
+                            inputMode="decimal"
+                            [maxLength]="12"
+                            (valueChange)="onNumber('FixedHourRate', $event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-textbox>
+                    }
+                    @else
+                    {
+                        <app-dropdown
+                            label="Days in the Month"
+                            [items]="dayModeItems"
+                            [value]="entity.MonthDaysMode"
+                            (valueChange)="onSelect('MonthDaysMode', $event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-dropdown>
+
+                        @if (fixedDays)
+                        {
+                            <app-textbox
+                                label="Days"
+                                placeholder="26"
+                                [value]="entity.MonthDays || ''"
+                                inputMode="numeric"
+                                [maxLength]="2"
+                                (valueChange)="onNumber('MonthDays', $event)"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+                        }
+                    }
+
+                    <!-- not typed : the working hours of the shift -->
+                    <app-textbox
+                        label="Hours a Day (from the shift)"
+                        [value]="shiftText"
+                        [readonly]="true">
+                    </app-textbox>
+
+                </div>
+
+                <!-- ---------- 1. extra hours ---------- -->
+
+                <div class="ots-grid ots-rule">
+
+                    <label
+                        class="hrf-switch"
+                        [class.hrf-switch-off]="isViewMode">
+                        <input
+                            type="checkbox"
+                            [checked]="entity.PayExtraHours"
+                            [disabled]="isViewMode"
+                            (change)="onSwitch('PayExtraHours', $event)">
+                        <span class="hrf-switch-track"><span class="hrf-switch-knob"></span></span>
+                        <span class="hrf-switch-text">
+                            <b>1. Extra hours</b>
+                            <small>Hours x hour rate x multiplier</small>
+                        </span>
+                    </label>
+
+                    @if (entity.PayExtraHours)
+                    {
+                        <app-textbox
+                            label="Multiplier (working day)"
+                            placeholder="1"
+                            [value]="entity.HourMultiplier || ''"
+                            inputMode="decimal"
+                            [maxLength]="6"
+                            (valueChange)="onNumber('HourMultiplier', $event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Multiplier (holiday)"
+                            placeholder="1"
+                            [value]="entity.HolidayHourMultiplier || ''"
+                            inputMode="decimal"
+                            [maxLength]="6"
+                            (valueChange)="onNumber('HolidayHourMultiplier', $event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-textbox>
+                    }
+
+                </div>
+
+                <!-- ---------- 2. extra days ---------- -->
+
+                <div class="ots-grid ots-rule">
+
+                    <label
+                        class="hrf-switch"
+                        [class.hrf-switch-off]="isViewMode">
+                        <input
+                            type="checkbox"
+                            [checked]="entity.PayExtraDays"
+                            [disabled]="isViewMode"
+                            (change)="onSwitch('PayExtraDays', $event)">
+                        <span class="hrf-switch-track"><span class="hrf-switch-knob"></span></span>
+                        <span class="hrf-switch-text">
+                            <b>2. Extra days</b>
+                            <small>Days worked on a holiday x day rate x multiplier</small>
+                        </span>
+                    </label>
+
+                    @if (entity.PayExtraDays)
+                    {
+                        <app-textbox
+                            label="Multiplier (extra day)"
+                            placeholder="1"
+                            [value]="entity.DayMultiplier || ''"
+                            inputMode="decimal"
+                            [maxLength]="6"
+                            (valueChange)="onNumber('DayMultiplier', $event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-textbox>
+                    }
+
+                </div>
+
+                <!-- ---------- example ---------- -->
+
+                <table class="sst-table ots-example">
+
+                    <thead>
+                        <tr>
+                            <th>
+                                <span class="sst-example ots-example-head">
+                                    Example : Basic Tk
+                                    <input
+                                        class="sst-example-input"
+                                        inputmode="decimal"
+                                        maxlength="10"
+                                        [value]="exampleBasic || ''"
+                                        [disabled]="basicBlocked"
+                                        title="The rate is worked out on the box that is filled"
+                                        (input)="onExample('exampleBasic', $event)">
+                                    Gross Tk
+                                    <input
+                                        class="sst-example-input"
+                                        inputmode="decimal"
+                                        maxlength="10"
+                                        [value]="exampleGross || ''"
+                                        [disabled]="grossBlocked"
+                                        title="The rate is worked out on the box that is filled"
+                                        (input)="onExample('exampleGross', $event)">
+                                    in a month of {{ exampleMonthDays }} days
+                                </span>
+                            </th>
+                            <th class="sst-c-amount">Tk</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td>Day rate</td>
+                            <td class="sst-c-amount">{{ exampleDayRate }}</td>
+                        </tr>
+                        <tr>
+                            <td>Hour rate</td>
+                            <td class="sst-c-amount">{{ exampleHourRate }}</td>
+                        </tr>
+                        @if (entity.PayExtraHours)
+                        {
+                            <tr>
+                                <td>{{ exampleHours }} extra hours on working days <small>x {{ number(entity.HourMultiplier) }}</small></td>
+                                <td class="sst-c-amount">{{ exampleHoursPay }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ exampleHolidayHours }} extra hours on a holiday <small>x {{ number(entity.HolidayHourMultiplier) }}</small></td>
+                                <td class="sst-c-amount">{{ exampleHolidayPay }}</td>
+                            </tr>
+                        }
+                        @if (entity.PayExtraDays)
+                        {
+                            <tr>
+                                <td>{{ exampleDays }} extra days (28 attended, 24 working days) <small>x {{ number(entity.DayMultiplier) }}</small></td>
+                                <td class="sst-c-amount">{{ exampleDaysPay }}</td>
+                            </tr>
+                        }
+                        <tr class="sst-net">
+                            <td>Overtime of the month</td>
+                            <td class="sst-c-amount">{{ exampleTotal }}</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </section>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

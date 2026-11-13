@@ -1,5 +1,5 @@
 //===============================================================
-// Accessories Service (no image for accessories)
+// Accessories Service (includes Accessory Image upload / delete)
 //===============================================================
 // Imports
 //===============================================================
@@ -205,6 +205,9 @@ export class AccessoriesService
                 normalizeAccessoryUse(
                     item?.AccessoryUse ?? item?.accessoryUse
                 ),
+
+            ImagePath:
+                item?.ImagePath ?? item?.imagePath ?? '',
 
             Remarks:
                 item?.Remarks ?? item?.remarks ?? '',
@@ -564,6 +567,99 @@ export class AccessoriesService
             `${this.apiUrl}/restore`,
 
             {}
+        );
+    }
+
+
+
+    //===========================================================
+    // Accessory Image : URL to show (saved path → full URL)
+    //
+    // The API stores a relative path (/uploads/accessory-images/…);
+    // it is served from the API root, i.e. apiUrl without /api.
+    //===========================================================
+
+    getImageUrl
+    (
+        path:
+            string | null | undefined
+    ):
+        string
+    {
+        const value =
+            (path ?? '').trim();
+
+        if
+        (
+            !value
+            ||
+            /^(https?:|blob:|data:)/i.test(value)
+        )
+        {
+            return value;
+        }
+
+        const root =
+            environment.apiUrl
+                .replace(/\/+$/, '')
+                .replace(/\/api$/i, '');
+
+        return `${root}/${value.replace(/^\/+/, '')}`;
+    }
+
+
+
+    //===========================================================
+    // Accessory Image : Upload (multipart, field name "file")
+    //
+    // Returns the stored path.
+    //===========================================================
+
+    uploadImage
+    (
+        id:
+            string,
+
+        file:
+            File
+    ):
+        Observable<string>
+    {
+        const form =
+            new FormData();
+
+        form.append(
+            'file',
+            file,
+            file.name
+        );
+
+        return this.http.post(
+            `${this.apiUrl}/${id}/image`,
+
+            form,
+
+            {
+                responseType:'text'
+            }
+        );
+    }
+
+
+
+    //===========================================================
+    // Accessory Image : Delete
+    //===========================================================
+
+    deleteImage
+    (
+        id:
+            string
+    ):
+        Observable<void>
+    {
+        return this.http.delete<void>(
+            `${this.apiUrl}/${id}/image`
         );
     }
 

@@ -257,6 +257,7 @@ export function toQuotation
         TotalVatInside:num(x, 'TotalVatInside'),
         Narration:text(x, 'Narration'),
         Terms:text(x, 'Terms'),
+        SpecificUnits:!!pick(x, 'SpecificUnits'),
         Status:text(x, 'Status') || 'Open',
         SalesInvoiceNo:text(x, 'SalesInvoiceNo'),
         ConvertedDate:day(x, 'ConvertedDate'),
@@ -285,7 +286,19 @@ export function toQuotation
                     DiscountLabel:text(l, 'DiscountLabel'),
                     DiscountAmount:num(l, 'DiscountAmount'),
                     NetAmount:num(l, 'NetAmount'),
-                    VatInside:num(l, 'VatInside')
+                    VatInside:num(l, 'VatInside'),
+                    Units:
+                        ((pick(l, 'Units') ?? []) as any[]).map
+                        (
+                            u =>
+                            ({
+                                ProductId:num(u, 'ProductId'),
+                                MotorBikeUnitId:num(u, 'MotorBikeUnitId'),
+                                ChassisNo:text(u, 'ChassisNo'),
+                                EngineNo:text(u, 'EngineNo'),
+                                ColorName:text(u, 'ColorName')
+                            })
+                        )
                 })
             )
     };

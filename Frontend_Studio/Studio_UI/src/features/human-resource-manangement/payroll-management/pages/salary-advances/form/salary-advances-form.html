@@ -1,0 +1,240 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-hand-holding-dollar"
+        [title]="pageTitle"
+        subtitle="An advance or loan, recovered by an installment from each month's salary">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="pf-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the advance
+            ================================================== -->
+
+            <section class="pf-card">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-hand-holding-dollar"></i>
+                    <span>Advance / Loan</span>
+                    @if (mode !== 'add')
+                    {
+                        <span
+                            class="pf-status"
+                            [attr.data-status]="entity.Status">{{ entity.Status }}</span>
+                    }
+                </header>
+
+                <div class="pf-grid">
+
+                    <app-textbox
+                        label="Code"
+                        [value]="entity.Code"
+                        placeholder="Auto generated"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-dropdown
+                        label="Type"
+                        [items]="typeItems"
+                        [value]="entity.AdvanceType"
+                        (valueChange)="onType($event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <div class="pf-wide">
+                        <app-search-dropdown
+                            label="Employee"
+                            [required]="true"
+                            placeholder="Select employee"
+                            [items]="employeeItems"
+                            [value]="entity.EmployeeId || null"
+                            [disabled]="isViewMode || isUsed"
+                            (valueChange)="onEmployee($event)">
+                        </app-search-dropdown>
+                    </div>
+
+                    <app-datepicker
+                        label="Date Given"
+                        [required]="true"
+                        [value]="$any(asDate(entity.AdvanceDate))"
+                        [disabled]="isViewMode"
+                        (valueChange)="onDate(dateEvent($event))">
+                    </app-datepicker>
+
+                    <app-textbox
+                        label="Amount (Tk)"
+                        placeholder="0.00"
+                        [value]="entity.Amount || ''"
+                        inputMode="decimal"
+                        [maxLength]="14"
+                        (valueChange)="onAmount('Amount', $event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Monthly Installment (Tk)"
+                        placeholder="0.00"
+                        [value]="entity.InstallmentAmount || ''"
+                        inputMode="decimal"
+                        [maxLength]="14"
+                        (valueChange)="onAmount('InstallmentAmount', $event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-textbox>
+
+                    <label class="pf-native">
+                        <span class="pf-label">Recover From (salary month) <b>*</b></span>
+                        <input
+                            type="month"
+                            [value]="startValue"
+                            [disabled]="isViewMode"
+                            (change)="onStart($event)">
+                    </label>
+
+                    <app-textbox
+                        label="Payment Voucher No"
+                        placeholder="Optional : the voucher that paid it out"
+                        [value]="entity.VoucherNo"
+                        [maxLength]="30"
+                        textCase="none"
+                        (valueChange)="onText('VoucherNo', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    @if (mode !== 'add')
+                    {
+                        <label
+                            class="pf-switch"
+                            [class.pf-switch-off]="isViewMode">
+                            <input
+                                type="checkbox"
+                                [checked]="entity.IsClosed"
+                                [disabled]="isViewMode"
+                                (change)="onClosed($event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Closed</b>
+                                <small>Stops the recovery; the balance stays as it is.</small>
+                            </span>
+                        </label>
+                    }
+
+                    <div class="pf-wide">
+                        <app-textbox
+                            label="Reason"
+                            placeholder="Optional"
+                            [value]="entity.Reason"
+                            [maxLength]="500"
+                            textCase="none"
+                            (valueChange)="onText('Reason', $event)"
+                            [disabled]="isViewMode">
+                        </app-textbox>
+                    </div>
+
+                    @if (heavy)
+                    {
+                        <div class="pf-wide pf-hint">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>
+                                The installment is more than half of {{ selectedEmployee?.Name }}'s gross salary (Tk {{ money(selectedEmployee?.GrossSalary ?? 0) }}).
+                                A month with too little salary takes only what is left.
+                            </span>
+                        </div>
+                    }
+
+                </div>
+
+            </section>
+
+            <!-- =================================================
+                 RIGHT : recovery and notes
+            ================================================== -->
+
+            <div class="pf-column">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-list-check"></i>
+                        <span>Recovery</span>
+                    </header>
+
+                    <dl class="pf-facts">
+                        <dt>Amount</dt>
+                        <dd>{{ money(entity.Amount) }}</dd>
+                        <dt>Recovered from salary</dt>
+                        <dd>{{ money(entity.Recovered) }}</dd>
+                        <dt class="pf-strong">Balance</dt>
+                        <dd class="pf-strong">{{ money(balance) }}</dd>
+                    </dl>
+
+                    @if (months > 0 && !entity.IsClosed)
+                    {
+                        <p class="pf-muted">
+                            {{ months }} salary month{{ months === 1 ? '' : 's' }} from {{ startText }} :
+                            Tk {{ money(entity.InstallmentAmount) }} a month{{ months > 1 && lastInstallment !== entity.InstallmentAmount ? ', the last one Tk ' + money(lastInstallment) : '' }}.
+                        </p>
+                    }
+                    @else if (entity.IsClosed && balance > 0)
+                    {
+                        <p class="pf-muted">Closed : nothing more is taken from salary.</p>
+                    }
+
+                </section>
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>How it is used</span>
+                    </header>
+
+                    <ul class="pf-help">
+                        <li>The installment is taken when the salary sheet of a month is made, starting with the month chosen here.</li>
+                        <li>This page keeps the record. Pay the money out with a Payment Voucher (debit the Staff Advance ledger) and note its number here.</li>
+                        <li>Once a salary sheet has taken an installment, the advance cannot be deleted; close it to stop the recovery.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

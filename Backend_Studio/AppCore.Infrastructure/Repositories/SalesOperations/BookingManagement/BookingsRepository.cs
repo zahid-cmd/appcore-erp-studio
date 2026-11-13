@@ -336,6 +336,10 @@ public class BookingsRepository
                     .Select(x => new BookingModelDto { MotorBikeId = x.MotorBikeId, ProductCode = x.ProductCode, ProductName = x.ProductName })
                     .ToListAsync();
         }
+        else
+        {
+            await LoadCategoriesAsync(type, result);
+        }
 
         foreach (Bookings x in bookings)
         {
@@ -545,7 +549,54 @@ public class BookingsRepository
     }
 
 
-    public async Task<List<BookingProductDto>> SearchProductsAsync(string productType, string term)
+    // SP / AC : the categories / sub categories that have active
+    // items (the Add Item filters)
+    private async Task LoadCategoriesAsync(TypeInfo type, BookingsPageDto result)
+    {
+        List<(long CategoryId, long SubCategoryId)> used =
+            type.Code == "AC"
+                ? (await _context.Set<Accessories>()
+                        .AsNoTracking()
+                        .Where(x => !x.IsDeleted && x.IsActive)
+                        .Select(x => new { x.ProductCategoryId, x.ProductSubCategoryId })
+                        .Distinct()
+                        .ToListAsync())
+                    .Select(x => (x.ProductCategoryId, x.ProductSubCategoryId))
+                    .ToList()
+                : (await _context.Set<SpareParts>()
+                        .AsNoTracking()
+                        .Where(x => !x.IsDeleted && x.IsActive)
+                        .Select(x => new { x.ProductCategoryId, x.ProductSubCategoryId })
+                        .Distinct()
+                        .ToListAsync())
+                    .Select(x => (x.ProductCategoryId, x.ProductSubCategoryId))
+                    .ToList();
+
+        List<long> categoryIds = used.Select(x => x.CategoryId).Distinct().ToList();
+
+        List<long> subCategoryIds = used.Select(x => x.SubCategoryId).Distinct().ToList();
+
+        result.Categories =
+            await _context.Set<AppCore.Domain.Entities.Settings.ProductSettings.ProductCategory>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.IsActive && categoryIds.Contains(x.ProductCategoryId))
+                .OrderBy(x => x.CategoryName)
+                .Select(x => new BookingCategoryDto { Id = x.ProductCategoryId, Name = x.CategoryName })
+                .ToListAsync();
+
+        result.SubCategories =
+            await _context.Set<AppCore.Domain.Entities.Settings.ProductSettings.ProductSubCategory>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.IsActive && subCategoryIds.Contains(x.ProductSubCategoryId))
+                .OrderBy(x => x.SubCategoryName)
+                .Select(x => new BookingCategoryDto { Id = x.ProductSubCategoryId, ParentId = x.ProductCategoryId, Name = x.SubCategoryName })
+                .ToListAsync();
+    }
+
+
+    // SP / AC items : 2+ letters (name / code / part no), or a
+    // category / sub category alone (its items); both narrow
+    public async Task<List<BookingProductDto>> SearchProductsAsync(string productType, string term, long categoryId = 0, long subCategoryId = 0)
     {
         TypeInfo type = TypeOf(productType);
 
@@ -556,17 +607,47 @@ public class BookingsRepository
 
         string text = (term ?? string.Empty).Trim().ToLower();
 
-        if (text.Length < 2)
+        bool narrowed = categoryId > 0 || subCategoryId > 0;
+
+        if (text.Length < 2 && !narrowed)
         {
             return new List<BookingProductDto>();
         }
 
-        return await Products(type, true)
-            .Where(x => x.ProductName.ToLower().Contains(text)
-                        || x.ProductCode.ToLower().Contains(text)
-                        || x.PartNumber.ToLower().Contains(text))
+        IQueryable<BookingProductDto> query = Products(type, true);
+
+        if (narrowed)
+        {
+            List<long> ids =
+                type.Code == "AC"
+                    ? await _context.Set<Accessories>()
+                        .AsNoTracking()
+                        .Where(x => !x.IsDeleted && x.IsActive
+                                    && (categoryId == 0 || x.ProductCategoryId == categoryId)
+                                    && (subCategoryId == 0 || x.ProductSubCategoryId == subCategoryId))
+                        .Select(x => x.AccessoryId)
+                        .ToListAsync()
+                    : await _context.Set<SpareParts>()
+                        .AsNoTracking()
+                        .Where(x => !x.IsDeleted && x.IsActive
+                                    && (categoryId == 0 || x.ProductCategoryId == categoryId)
+                                    && (subCategoryId == 0 || x.ProductSubCategoryId == subCategoryId))
+                        .Select(x => x.SparePartId)
+                        .ToListAsync();
+
+            query = query.Where(x => ids.Contains(x.ProductId));
+        }
+
+        if (text.Length >= 2)
+        {
+            query = query.Where(x => x.ProductName.ToLower().Contains(text)
+                                     || x.ProductCode.ToLower().Contains(text)
+                                     || x.PartNumber.ToLower().Contains(text));
+        }
+
+        return await query
             .OrderBy(x => x.ProductName)
-            .Take(30)
+            .Take(text.Length >= 2 ? 30 : 200)
             .ToListAsync();
     }
 
@@ -1180,6 +1261,202 @@ public class BookingsRepository
     //===========================================================
     // Open bookings of a customer (Sales Invoice of the type)
     //===========================================================
+
+    //===========================================================
+    // Delete (soft) : an open booking entered by mistake. Every
+    // receipt voucher of its collections is cancelled (Posted ->
+    // Cancelled, reversed out of the ledgers), then the booking
+    // is hidden. Restore brings it back with new receipts.
+    //===========================================================
+
+    public async Task DeleteAsync(string productType, Guid publicId, long userId)
+    {
+        TypeInfo type = TypeOf(productType);
+
+        Bookings booking = await FindAsync(type, publicId);
+
+        if (booking.Status != StatusOpen)
+        {
+            throw new InvalidOperationException(
+                $"{booking.BookingNo} is {booking.Status}. Only an open booking can be deleted.");
+        }
+
+        string held = (await HeldByAsync(type, new List<long> { booking.BookingId })).GetValueOrDefault(booking.BookingId, string.Empty);
+
+        if (held.Length > 0)
+        {
+            throw new InvalidOperationException(
+                $"{booking.BookingNo} is on Sales Invoice {held} : remove it from the invoice (or delete the draft) first.");
+        }
+
+        List<BookingCollections> collections =
+            await CollectionRows
+                .Where(x => x.BookingId == booking.BookingId && x.ReceiptVoucherId.HasValue)
+                .OrderBy(x => x.BookingCollectionId)
+                .ToListAsync();
+
+        string reason = Limit($"Booking {booking.BookingNo} deleted", 500);
+
+        await InTransactionAsync(
+            async () =>
+            {
+                foreach (BookingCollections c in collections)
+                {
+                    ReceiptVoucherDto? voucher = await _receiptVouchers.GetByIdAsync(c.ReceiptVoucherId!.Value);
+
+                    // Already cancelled on the Receipt Voucher page
+                    if (voucher == null || !string.Equals(voucher.Status, "Posted", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    await _receiptVouchers.CancelAsync(
+                        c.ReceiptVoucherId!.Value,
+                        new CancelReceiptVoucherDto { CancelDate = DateText(Today), Reason = reason },
+                        userId);
+                }
+
+                DateTime now = DateTime.UtcNow;
+
+                booking.IsDeleted = true;
+                booking.DeletedBy = userId;
+                booking.DeletedDate = now;
+                booking.ModifiedBy = userId;
+                booking.ModifiedDate = now;
+
+                string vouchers = string.Join(", ", collections.Select(x => x.ReceiptVoucherNo).Where(x => x.Length > 0));
+
+                AddHistory(booking.BookingId, "Delete", "Booking Deleted",
+                    $"{booking.BookingNo} : {booking.ModelName} for {booking.CustomerName} ({booking.CustomerCode}); advance {Money(booking.AdvanceAmount)} reversed{(vouchers.Length > 0 ? " (" + vouchers + " cancelled)" : string.Empty)}.",
+                    userId);
+
+                await _context.SaveChangesAsync();
+            });
+    }
+
+
+    //===========================================================
+    // Restore : the most recently deleted booking of the type in
+    // the branch. Each collection is received again with a new
+    // posted Receipt Voucher (same rows as the cancelled one,
+    // dated today).
+    //===========================================================
+
+    public async Task<string> RestoreAsync(string productType, long branchId, long userId)
+    {
+        TypeInfo type = TypeOf(productType);
+
+        Bookings booking =
+            await BookingRows
+                .Where(x => x.IsDeleted && x.ProductType == type.Code && x.BranchId == branchId)
+                .OrderByDescending(x => x.DeletedDate)
+                .ThenByDescending(x => x.BookingId)
+                .FirstOrDefaultAsync()
+            ?? throw new KeyNotFoundException("There is no deleted booking to restore in this branch.");
+
+        CustomerProfiles customer =
+            await _context.Set<CustomerProfiles>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.CustomerId == booking.CustomerId)
+            ?? throw new InvalidOperationException("The booking's customer was not found.");
+
+        List<BookingCollections> collections =
+            await CollectionRows
+                .Where(x => x.BookingId == booking.BookingId && x.ReceiptVoucherId.HasValue)
+                .OrderBy(x => x.BookingCollectionId)
+                .ToListAsync();
+
+        List<string> receipts = new();
+
+        await InTransactionAsync(
+            async () =>
+            {
+                foreach (BookingCollections c in collections)
+                {
+                    ReceiptVoucherDto old =
+                        await _receiptVouchers.GetByIdAsync(c.ReceiptVoucherId!.Value)
+                        ?? throw new InvalidOperationException($"Receipt Voucher {c.ReceiptVoucherNo} was not found.");
+
+                    // Still posted (its cancel was undone) : keep it
+                    if (string.Equals(old.Status, "Posted", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    List<ReceiptVoucherDebitDto> debits =
+                        old.Debits
+                            .Select
+                            (
+                                d =>
+                                    new ReceiptVoucherDebitDto
+                                    {
+                                        Mode = d.Mode,
+                                        LedgerType = d.LedgerType,
+                                        SubGroupCode = d.SubGroupCode,
+                                        SubGroupName = d.SubGroupName,
+                                        LedgerCode = d.LedgerCode,
+                                        LedgerName = d.LedgerName,
+                                        AccountId = d.AccountId,
+                                        Amount = d.Amount,
+                                        ShortNotes = d.ShortNotes,
+                                        ChargePercent = d.ChargePercent,
+                                        ChargeAmount = d.ChargeAmount,
+                                        ChargeBorneBy = d.ChargeBorneBy,
+                                        CardSetupId = d.CardSetupId,
+                                        CardName = d.CardName,
+                                        TransactionRef = d.TransactionRef,
+                                        TenureMonths = d.TenureMonths,
+                                        InterestPercent = d.InterestPercent,
+                                        InterestAmount = d.InterestAmount,
+                                        TotalCharged = d.TotalCharged,
+                                        CheckNo = d.CheckNo,
+                                        CheckDate = d.CheckDate,
+                                        CheckBank = d.CheckBank
+                                    }
+                            )
+                            .ToList();
+
+                    ReceiptVoucherSavedDto receipt =
+                        await ReceiveAsync(booking, customer, debits, Today, booking.BranchId, $"restored (was {c.ReceiptVoucherNo})", userId);
+
+                    c.ReceiptVoucherId = receipt.ReceiptVoucherId;
+
+                    c.ReceiptVoucherNo = Limit(receipt.VoucherNo, 30);
+
+                    receipts.Add(receipt.VoucherNo);
+                }
+
+                DateTime now = DateTime.UtcNow;
+
+                booking.IsDeleted = false;
+                booking.DeletedBy = null;
+                booking.DeletedDate = null;
+                booking.ModifiedBy = userId;
+                booking.ModifiedDate = now;
+
+                AddHistory(booking.BookingId, "Restore", "Booking Restored",
+                    $"{booking.BookingNo} : advance {Money(booking.AdvanceAmount)} received again{(receipts.Count > 0 ? " by " + string.Join(", ", receipts) : string.Empty)}.",
+                    userId);
+
+                await _context.SaveChangesAsync();
+            });
+
+        return booking.BookingNo;
+    }
+
+
+    // Every booking id of the type (deleted too) : page history
+    public async Task<List<long>> BookingIdsAsync(string productType)
+    {
+        TypeInfo type = TypeOf(productType);
+
+        return await BookingRows
+            .AsNoTracking()
+            .Where(x => x.ProductType == type.Code)
+            .Select(x => x.BookingId)
+            .ToListAsync();
+    }
+
 
     public async Task<List<OpenBookingDto>> GetOpenForCustomerAsync(string productType, long customerId)
     {

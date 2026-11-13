@@ -84,6 +84,84 @@
                 @switch (selectedTab)
                 {
 
+                    @case ('design')
+                    {
+                        <!-- SECTION 00 / DESIGN -->
+                        <div class="wc-designs">
+                            @for (d of designs; track d.key)
+                            {
+                                <article
+                                    class="wc-design"
+                                    [class.is-picked]="m.template === d.key">
+
+                                    <div class="wc-shots">
+                                        <div class="wc-shot" [style.background]="d.deep.bg" aria-hidden="true">
+                                            <span class="wc-shot-bar" [style.background]="d.deep.panel"></span>
+                                            <span class="wc-shot-title" [style.background]="d.deep.text"></span>
+                                            <span class="wc-shot-line" [style.background]="d.deep.text"></span>
+                                            <span class="wc-shot-btn" [style.background]="d.deep.accent"></span>
+                                            <span class="wc-shot-block" [style.background]="d.deep.panel"></span>
+                                            <span class="wc-shot-name">Deep</span>
+                                        </div>
+                                        <div class="wc-shot" [style.background]="d.light.bg" aria-hidden="true">
+                                            <span class="wc-shot-bar" [style.background]="d.light.panel"></span>
+                                            <span class="wc-shot-title" [style.background]="d.light.text"></span>
+                                            <span class="wc-shot-line" [style.background]="d.light.text"></span>
+                                            <span class="wc-shot-btn" [style.background]="d.light.accent"></span>
+                                            <span class="wc-shot-block" [style.background]="d.light.panel"></span>
+                                            <span class="wc-shot-name dark">Light</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="wc-design-body">
+                                        <div class="wc-design-head">
+                                            <b>Design {{ d.no }} · {{ d.name }}</b>
+                                            @if (savedTemplate === d.key)
+                                            {
+                                                <span class="wc-live">Live</span>
+                                            }
+                                            @if (m.template === d.key && savedTemplate !== d.key)
+                                            {
+                                                <span class="wc-pending">Default after Update</span>
+                                            }
+                                        </div>
+                                        <p class="wc-design-feel">{{ d.feel }}</p>
+                                        <span class="wc-hint">Suits : {{ d.suits }}</span>
+
+                                        <div class="wc-design-actions">
+                                            <button type="button" class="wc-add" (click)="previewDesign(d.key, 'deep')">
+                                                <i class="fa-solid fa-moon"></i> Preview Deep
+                                            </button>
+                                            <button type="button" class="wc-add" (click)="previewDesign(d.key, 'light')">
+                                                <i class="fa-solid fa-sun"></i> Preview Light
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="wc-set"
+                                                [disabled]="m.template === d.key"
+                                                (click)="m.template = d.key">
+                                                @if (m.template === d.key)
+                                                {
+                                                    <i class="fa-solid fa-check"></i> Default
+                                                }
+                                                @else
+                                                {
+                                                    Set as default
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </article>
+                            }
+                        </div>
+
+                        <div class="wc-note wc-design-note">
+                            <i class="fa-solid fa-eye-slash"></i>
+                            <span>Visitors only ever see the default design : the website has no switch or address for the others. Preview opens a design in a new tab for you only (it needs your ERP login). Set as default, then Update, to publish it.</span>
+                        </div>
+                    }
+
                     @case ('general')
                     {
                         <!-- SECTION 01 / GENERAL -->

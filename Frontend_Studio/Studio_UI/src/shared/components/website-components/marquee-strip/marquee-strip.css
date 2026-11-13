@@ -37,7 +37,7 @@
     font-size:22px;
     font-weight:700;
     letter-spacing:1px;
-    text-transform:uppercase;
+    text-transform:var(--w-title-transform, uppercase);
     color:var(--w-faint);
 }
 

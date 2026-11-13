@@ -275,6 +275,25 @@
 
                 </app-textbox>
 
+
+                <!-- Accessory Image (optional; shared Image Hub; uploaded on save) -->
+
+                <app-image-hub
+
+                    label="Accessory Image (optional)"
+
+                    placeholder="No image : the accessory icon is shown"
+
+                    [imageUrl]="imagePreview"
+
+                    (imageChange)="onImageChange($event)"
+
+                    [disabled]="isSaving"
+
+                    [readonly]="isViewMode">
+
+                </app-image-hub>
+
             </app-form-section>
 
 

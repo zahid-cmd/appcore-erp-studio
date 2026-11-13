@@ -1,0 +1,228 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Monthly Attendance"
+        subtitle="Every employee, every day of the month, with totals"
+        icon="fas fa-table-cells">
+
+        <div pageHeaderCenter>
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search name, code..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="refresh()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : the month and the branch
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <div
+            pageToolbarLeft
+            class="ma-month">
+
+            <button
+                type="button"
+                class="ma-nav"
+                title="Previous month"
+                (click)="moveMonth(-1)">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <input
+                type="month"
+                class="ma-date"
+                [value]="monthValue"
+                (change)="onMonthInput($event)">
+
+            <button
+                type="button"
+                class="ma-nav"
+                title="Next month"
+                (click)="moveMonth(1)">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+
+            <button
+                type="button"
+                class="ma-nav ma-this"
+                [disabled]="isCurrentMonth"
+                (click)="thisMonth()">
+                This Month
+            </button>
+
+            <span class="ma-legend">
+                @for (item of legend; track item.kind)
+                {
+                    <span
+                        class="ma-legend-item"
+                        [title]="item.name">
+                        <span
+                            class="ma-cell"
+                            [attr.data-kind]="item.kind">{{ item.text }}</span>
+                        {{ item.name }}
+                    </span>
+                }
+            </span>
+
+        </div>
+
+        <app-search-dropdown
+            pageToolbarRight
+            placeholder="All Branches"
+            [items]="branchItems"
+            labelField="label"
+            valueField="value"
+            [value]="branchId"
+            (valueChange)="onBranchChange($event)">
+        </app-search-dropdown>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS : the month
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="ma-wrap appcore-scrollbar">
+
+            @if (days.length > 0 && visibleRows.length > 0)
+            {
+                <table class="ma-table">
+
+                    <thead>
+                        <tr>
+                            <th class="ma-c-emp">Employee</th>
+
+                            @for (day of days; track day.Day)
+                            {
+                                <th
+                                    class="ma-c-day"
+                                    [class.ma-holiday]="!!day.HolidayName"
+                                    [title]="(day.HolidayName ? day.HolidayName + ' : ' : '') + 'open Daily Attendance'"
+                                    (click)="openDay(day)">
+                                    <b>{{ day.Day }}</b>
+                                    <small>{{ day.DayName }}</small>
+                                </th>
+                            }
+
+                            <th class="ma-c-total" title="Present (on time)">P</th>
+                            <th class="ma-c-total" title="Late">L</th>
+                            <th class="ma-c-total" title="Half Day">H</th>
+                            <th class="ma-c-total" title="Absent">A</th>
+                            <th class="ma-c-total" title="Paid leave">PL</th>
+                            <th class="ma-c-total" title="Unpaid leave">UL</th>
+                            <th class="ma-c-total" title="Weekly off">WO</th>
+                            <th class="ma-c-total" title="Holiday">HD</th>
+                            <th class="ma-c-total" title="Not marked">NM</th>
+                            <th class="ma-c-total" title="Overtime hours">OT</th>
+                            <th class="ma-c-total ma-c-pay" title="Days the salary is paid for : present, late, half day (0.5), paid leave, weekly off, holiday">Pay Days</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (row of visibleRows; track row.EmployeeId)
+                        {
+                            <tr>
+
+                                <td class="ma-c-emp">
+                                    <b>{{ row.FullName }}</b>
+                                    <small>{{ row.Code }} · {{ row.DesignationName }}</small>
+                                </td>
+
+                                @for (cell of row.Cells; track $index; let i = $index)
+                                {
+                                    <td class="ma-c-day">
+                                        @if (cell)
+                                        {
+                                            <span
+                                                class="ma-cell"
+                                                [attr.data-kind]="row.Kinds[i]"
+                                                [title]="cellTitle(row, i)">{{ cell }}</span>
+                                        }
+                                    </td>
+                                }
+
+                                <td class="ma-c-total">{{ number(row.Present) }}</td>
+                                <td class="ma-c-total ma-warn">{{ number(row.Late) }}</td>
+                                <td class="ma-c-total">{{ number(row.HalfDay) }}</td>
+                                <td class="ma-c-total ma-bad">{{ number(row.Absent) }}</td>
+                                <td class="ma-c-total">{{ number(row.PaidLeave) }}</td>
+                                <td class="ma-c-total ma-bad">{{ number(row.UnpaidLeave) }}</td>
+                                <td class="ma-c-total">{{ number(row.WeeklyOff) }}</td>
+                                <td class="ma-c-total">{{ number(row.Holiday) }}</td>
+                                <td class="ma-c-total ma-warn">{{ number(row.NotMarked) }}</td>
+                                <td class="ma-c-total">{{ number(row.OvertimeHours) }}</td>
+                                <td class="ma-c-total ma-c-pay">{{ number(row.PayableDays) || '0' }}</td>
+
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            }
+
+            <!-- Loading / failed / nothing to show : centred in the canvas -->
+
+            @if (emptyState; as state)
+            {
+                <app-empty-state
+                    [icon]="state.icon"
+                    [title]="state.title"
+                    [subtitle]="state.subtitle">
+                </app-empty-state>
+            }
+
+        </div>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (the whole month, whatever the search)
+    ====================================================== -->
+
+    @if (rows.length > 0)
+    {
+        <div class="ma-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="ma-summary-item">
+                    <span class="ma-summary-label">{{ item.label }}</span>
+                    <b
+                        class="ma-summary-value"
+                        [class.ma-ok]="item.tone === 'ok'"
+                        [class.ma-bad]="item.tone === 'bad' && item.value !== '0'"
+                        [class.ma-warn]="item.tone === 'warn' && item.value !== '0'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="ma-summary-note">
+                Click a day to open Daily Attendance on it
+            </span>
+
+        </div>
+    }
+
+    <app-toast></app-toast>
+
+</div>

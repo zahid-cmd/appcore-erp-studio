@@ -1,0 +1,136 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Leave Applications"
+        subtitle="Leave with approval : approved days go into the attendance"
+        icon="fas fa-plane-departure">
+
+        <div pageHeaderCenter>
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search employee, code..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Add"
+                command1Icon="fas fa-plus"
+                command1Permission="add"
+                (command1Click)="add()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="refresh()"
+                command3Text="Restore"
+                command3Icon="fas fa-trash-arrow-up"
+                command3Permission="restore"
+                (command3Click)="restore()"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="Activity history"
+                (rightCommandClick)="openHistory()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+        </app-control-tabs>
+
+        <app-search-dropdown
+            pageToolbarRight
+            placeholder="All Leave Types"
+            [items]="typeItems"
+            labelField="label"
+            valueField="value"
+            [value]="selectedType"
+            (valueChange)="onTypeChange($event)">
+        </app-search-dropdown>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+            <app-list-table
+                [columns]="columns"
+                [rows]="rows"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                (view)="view($event)"
+                (edit)="edit($event)"
+                (delete)="delete($event)"
+                (sortChange)="onSort($event)">
+            </app-list-table>
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (search and leave type applied, every status)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="lva-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="lva-summary-item">
+                    <span class="lva-summary-label">{{ item.label }}</span>
+                    <b
+                        class="lva-summary-value"
+                        [class.lva-ok]="item.tone === 'ok'"
+                        [class.lva-bad]="item.tone === 'bad'"
+                        [class.lva-warn]="item.tone === 'warn' && item.value !== '0'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="lva-summary-note">
+                Open an application (View) to approve, reject or cancel it
+            </span>
+
+        </div>
+    }
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        title="Leave Application History"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

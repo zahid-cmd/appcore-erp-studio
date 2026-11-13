@@ -1348,3 +1348,75 @@ td.right .action-buttons
     bottom: 0;
     height: 8px;
 }
+
+
+/* =====================================================
+   NO CLIPPING (2026-11-13)
+   -----------------------------------------------------
+   list-table.ts fits the columns to the frame; when even
+   their minimum widths do not fit, the host gets
+   lt-scroll : the body scrolls sideways (header and
+   totals follow), # stays left and Actions stays right.
+===================================================== */
+
+:host(.lt-scroll) .list-table-body
+{
+    overflow-x: auto;
+}
+
+:host(.lt-scroll) .list-table-grid
+{
+    flex: 0 0 auto;
+    max-width: none;
+}
+
+:host(.lt-scroll) .list-table-header,
+:host(.lt-scroll) .list-table-foot
+{
+    overflow: hidden;
+}
+
+:host(.lt-scroll) .lt-stick-left,
+:host(.lt-scroll) .lt-stick-right
+{
+    position: sticky;
+    z-index: 6;
+    background: inherit;
+}
+
+:host(.lt-scroll) td.lt-stick-left,
+:host(.lt-scroll) td.lt-stick-right
+{
+    background-color: #ffffff;
+}
+
+:host(.lt-scroll) .list-table-row:nth-child(even) td.lt-stick-left,
+:host(.lt-scroll) .list-table-row:nth-child(even) td.lt-stick-right
+{
+    background-color: #fbfcfe;
+}
+
+:host(.lt-scroll) .list-table-row:hover td.lt-stick-left,
+:host(.lt-scroll) .list-table-row:hover td.lt-stick-right
+{
+    background-color: #eef5ff;
+}
+
+:host(.lt-scroll) .lt-stick-left
+{
+    left: 0;
+    box-shadow: 1px 0 0 #e3eaf4, 6px 0 8px -6px rgba(15, 23, 42, 0.18);
+}
+
+:host(.lt-scroll) .lt-stick-right
+{
+    right: 0;
+    box-shadow: -1px 0 0 #e3eaf4, -6px 0 8px -6px rgba(15, 23, 42, 0.18);
+}
+
+:host(.lt-scroll) thead th.lt-stick-left,
+:host(.lt-scroll) thead th.lt-stick-right
+{
+    z-index: 25;
+    background: #f6f9fd;
+}

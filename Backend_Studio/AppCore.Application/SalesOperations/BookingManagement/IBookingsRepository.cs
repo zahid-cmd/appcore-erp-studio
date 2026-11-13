@@ -43,6 +43,25 @@ public interface IBookingsRepository
         long branchId,
         long userId);
 
+    // Soft delete : an open booking entered by mistake; its
+    // receipt vouchers are cancelled (reversed out of the ledgers)
+    Task DeleteAsync(
+        string productType,
+        Guid publicId,
+        long userId);
+
+    // Restore : the most recently deleted booking of the type in
+    // the branch; its receipts are posted again (new vouchers).
+    // Returns the booking number.
+    Task<string> RestoreAsync(
+        string productType,
+        long branchId,
+        long userId);
+
+    // Every booking id of the type (deleted too) : page history
+    Task<List<long>> BookingIdsAsync(
+        string productType);
+
     // Open bookings of a customer (Sales Invoice of the type)
     Task<List<OpenBookingDto>> GetOpenForCustomerAsync(
         string productType,
@@ -51,5 +70,7 @@ public interface IBookingsRepository
     // SP / AC : active products by name / code / part number
     Task<List<BookingProductDto>> SearchProductsAsync(
         string productType,
-        string term);
+        string term,
+        long categoryId = 0,
+        long subCategoryId = 0);
 }

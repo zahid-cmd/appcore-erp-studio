@@ -292,14 +292,14 @@
     z-index:4;
     width:2px;
     background:linear-gradient(180deg,
-        rgba(252,211,77,0) 0%,
+        rgba(var(--w-glint-rgb),0) 0%,
         var(--w-accent-2) 18%,
         #ffffff 50%,
         var(--w-accent-2) 82%,
-        rgba(252,211,77,0) 100%);
+        rgba(var(--w-glint-rgb),0) 100%);
     box-shadow:
         0 0 14px 2px var(--w-accent),
-        0 0 70px 14px rgba(245,158,11,.35);
+        0 0 70px 14px rgba(var(--w-accent-rgb),.35);
     pointer-events:none;
     animation:sweep 1s cubic-bezier(.7,0,.25,1) forwards;
 }
@@ -315,7 +315,7 @@
     bottom:0;
     right:1px;
     width:260px;
-    background:linear-gradient(90deg, rgba(252,211,77,0), rgba(252,211,77,.14));
+    background:linear-gradient(90deg, rgba(var(--w-glint-rgb),0), rgba(var(--w-glint-rgb),.14));
 }
 
 
@@ -348,7 +348,7 @@
 {
     right:auto;
     left:1px;
-    background:linear-gradient(270deg, rgba(252,211,77,0), rgba(252,211,77,.14));
+    background:linear-gradient(270deg, rgba(var(--w-glint-rgb),0), rgba(var(--w-glint-rgb),.14));
 }
 
 
@@ -658,7 +658,7 @@
 
 .tab.on .tab-line
 {
-    box-shadow:0 0 12px rgba(245,158,11,.45);
+    box-shadow:0 0 12px rgba(var(--w-accent-rgb),.45);
 }
 
 
@@ -1020,7 +1020,7 @@
     border-color:transparent;
     background:linear-gradient(135deg, var(--w-accent-2), var(--w-accent));
     color:var(--w-accent-ink);
-    box-shadow:0 12px 26px -12px rgba(245,158,11,.85);
+    box-shadow:0 12px 26px -12px rgba(var(--w-accent-rgb),.85);
 }
 
 .cta-main:hover

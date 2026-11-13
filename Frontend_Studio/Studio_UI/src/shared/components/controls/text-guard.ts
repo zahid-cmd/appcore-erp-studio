@@ -1,18 +1,11 @@
 //===============================================================
 // Text Guard
 //
-// The database stores text in Windows-1252 (English letters,
-// digits, common symbols and Western accents). Anything else -
-// Bangla, emoji, arrows such as "→" - cannot be saved, so the
-// text controls drop it while the user types and show a short
-// "English only" note.
+// The database is UTF8 (2026-11-13) : Bangla, emoji and every
+// language are stored as typed. Only control characters (which
+// the database refuses) are dropped while the user types; the
+// short note then shows "Not allowed".
 //===============================================================
-
-// Windows-1252 characters outside Latin-1 (0x80-0x9F block)
-const WIN1252_EXTRA =
-    new Set<string>(
-        Array.from('€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ')
-    );
 
 export function isStorableChar(c: string): boolean
 {
@@ -22,9 +15,7 @@ export function isStorableChar(c: string): boolean
     return code === 9
         || code === 10
         || code === 13
-        || (code >= 0x20 && code <= 0x7E)
-        || (code >= 0xA0 && code <= 0xFF)
-        || WIN1252_EXTRA.has(c);
+        || (code >= 0x20 && code !== 0x7F);
 }
 
 // The text without the characters that cannot be saved

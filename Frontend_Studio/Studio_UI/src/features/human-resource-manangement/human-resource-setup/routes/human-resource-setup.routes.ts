@@ -85,8 +85,123 @@ Routes =
 
                 // AUTO-END : SUB-005-001-002
 
+            // MANUAL : Shifts, Holidays, Leave Types, Salary Structures,
+            // Salary Heads
+            // (hand-written pages, no sync;
+            // HumanResource_Phase1_Engine.sql adds the submenus)
+
+                {
+                    path:'shifts',
+
+                    data:
+                    {
+                        breadcrumb:'Shifts'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './hr-setup.routes'
+                        )
+                        .then(
+                            m =>
+                                m.ShiftsRoutes
+                        )
+                },
+
+                {
+                    path:'holidays',
+
+                    data:
+                    {
+                        breadcrumb:'Holidays'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './hr-setup.routes'
+                        )
+                        .then(
+                            m =>
+                                m.HolidaysRoutes
+                        )
+                },
+
+                {
+                    path:'leave-types',
+
+                    data:
+                    {
+                        breadcrumb:'Leave Types'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './hr-setup.routes'
+                        )
+                        .then(
+                            m =>
+                                m.LeaveTypesRoutes
+                        )
+                },
+
+                {
+                    path:'salary-structures',
+
+                    data:
+                    {
+                        breadcrumb:'Salary Structures'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './salary-structures.routes'
+                        )
+                        .then(
+                            m =>
+                                m.SalaryStructuresRoutes
+                        )
+                },
+
+                // Overtime Structures (MANUAL : hand-written page,
+                // HumanResource_OvertimeStructures_Engine.sql; NO Code Sync)
+                {
+                    path:'overtime-structures',
+
+                    data:
+                    {
+                        breadcrumb:'Overtime Structures'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './overtime-structures.routes'
+                        )
+                        .then(
+                            m =>
+                                m.OvertimeStructuresRoutes
+                        )
+                },
+
+                {
+                    path:'salary-heads',
+
+                    data:
+                    {
+                        breadcrumb:'Salary Heads'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './hr-setup.routes'
+                        )
+                        .then(
+                            m =>
+                                m.SalaryHeadsRoutes
+                        )
+                },
+
         ]
 
     }
 
-];
+];

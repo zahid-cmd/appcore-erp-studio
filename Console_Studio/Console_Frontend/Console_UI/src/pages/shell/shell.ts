@@ -192,10 +192,15 @@ const SIDE_KEY = 'appcore.console.side';
                                 @if (agent.status(); as st)
                                 {
                                     <p class="sh-dev-msg" [class.bad]="st.state === 'failed'" [class.good]="st.state === 'running' && !st.busy">
-                                        @if (st.busy) { <i class="fas fa-spinner fa-spin"></i> }
-                                        {{ st.step }}
-                                        @if (st.buildMs && st.action === 'build-restart' && !st.busy) { <small>({{ (st.buildMs / 1000).toFixed(0) }} s)</small> }
+                                        @if (st.busy || reloading()) { <i class="fas fa-spinner fa-spin"></i> }
+                                        {{ reloading() ? 'Waiting for the API, then reloading ...' : st.step }}
+                                        @if (st.buildMs && st.action === 'build-restart' && !st.busy && !reloading()) { <small>({{ (st.buildMs / 1000).toFixed(0) }} s)</small> }
                                     </p>
+
+                                    <div class="sh-dev-progress" [class.bad]="st.state === 'failed'" [class.good]="progress() === 100" [class.live]="st.busy || reloading()">
+                                        <div class="sh-dev-bar"><i [style.width.%]="progress()"></i></div>
+                                        <span>{{ progress() }}%</span>
+                                    </div>
 
                                     @if (st.errorCount)
                                     {
@@ -212,8 +217,8 @@ const SIDE_KEY = 'appcore.console.side';
                             }
 
                             <div class="sh-dev-actions">
-                                <button class="ac-btn ac-btn-primary" type="button" [disabled]="agentBusy() || agent.reachable() === false" (click)="runAgent('build-restart')"><i class="fas fa-hammer"></i> Build &amp; Restart API</button>
-                                <button class="ac-btn" type="button" [disabled]="agentBusy() || agent.reachable() === false" (click)="runAgent('restart')"><i class="fas fa-rotate-right"></i> Restart only</button>
+                                <button class="ac-btn ac-btn-primary" type="button" [disabled]="agentBusy() || reloading() || agent.reachable() === false" (click)="runAgent('build-restart')"><i class="fas fa-hammer"></i> Build &amp; Restart API</button>
+                                <button class="ac-btn" type="button" [disabled]="agentBusy() || reloading() || agent.reachable() === false" (click)="runAgent('restart')"><i class="fas fa-rotate-right"></i> Restart only</button>
                             </div>
                             <p class="sh-dev-note">After C# changes : Build &amp; Restart. The screen reloads by itself when the API is back.</p>
                         </div>
@@ -258,6 +263,104 @@ export class ShellPage
         return s === 'stopping' ? 'Stopping API' : s === 'building' ? 'Building API' : s === 'starting' ? 'Starting API' : 'Working';
     });
     private agentTimer: ReturnType<typeof setInterval> | null = null;
+
+    // Progress bar (2026-11-14). The agent reports only the step
+    // (stopping / building / starting), so the bar moves through
+    // each step's share by time; a build's share is timed on the
+    // last build (remembered on this PC).
+    readonly reloading = signal(false);
+    private readonly now = signal(Date.now());
+    private nowTimer: ReturnType<typeof setInterval> | null = null;
+
+    readonly progress = computed(() =>
+    {
+        const st = this.agent.status();
+
+        if (!st)
+        {
+            return 0;
+        }
+
+        if (this.reloading())
+        {
+            return 97;
+        }
+
+        if (!st.busy)
+        {
+            return st.state === 'running' || st.state === 'failed' ? 100 : 0;
+        }
+
+        const started = st.startedAt ? Date.parse(st.startedAt) : NaN;
+        const elapsed = Number.isFinite(started) ? Math.max(0, this.now() - started) : 0;
+
+        // [from %, to %, expected ms] for each step
+        const build = st.action === 'build-restart';
+        const lastBuild = this.lastBuildMs();
+
+        const share: Record<string, [number, number, number]> =
+            build
+                ? { stopping: [0, 10, 3000], building: [10, 82, lastBuild], starting: [82, 95, 6000] }
+                : { stopping: [0, 35, 3000], starting: [35, 95, 6000] };
+
+        const [from, to, expected] = share[st.state] ?? [0, 95, 10000];
+
+        // the build's time starts after stopping (about 3 s)
+        const inStep = st.state === 'building' ? Math.max(0, elapsed - 3000) : st.state === 'starting' ? 0 : elapsed;
+
+        // eases toward the end of the step, never past it
+        const part = 1 - Math.exp(-inStep / Math.max(1000, expected));
+
+        return Math.min(to, Math.round(from + (to - from) * part));
+    });
+
+    private lastBuildMs(): number
+    {
+        try
+        {
+            return Number(localStorage.getItem('ac-last-build-ms')) || 25000;
+        }
+        catch
+        {
+            return 25000;
+        }
+    }
+
+    private rememberBuild(ms: number | null): void
+    {
+        if (!ms || ms <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            localStorage.setItem('ac-last-build-ms', String(ms));
+        }
+        catch
+        {
+            // storage blocked
+        }
+    }
+
+    private startClock(): void
+    {
+        this.now.set(Date.now());
+
+        if (!this.nowTimer)
+        {
+            this.nowTimer = setInterval(() => this.now.set(Date.now()), 250);
+        }
+    }
+
+    private stopClock(): void
+    {
+        if (this.nowTimer)
+        {
+            clearInterval(this.nowTimer);
+            this.nowTimer = null;
+        }
+    }
 
     readonly initials = computed(() =>
     {
@@ -311,6 +414,8 @@ export class ShellPage
             {
                 clearInterval(this.agentTimer);
             }
+
+            this.stopClock();
         });
     }
 
@@ -340,6 +445,13 @@ export class ShellPage
         if (this.devOpen())
         {
             void this.agent.refresh();
+
+            // the bar moves while a job runs (also one started elsewhere)
+            this.startClock();
+        }
+        else if (!this.agentTimer)
+        {
+            this.stopClock();
         }
     }
 
@@ -351,6 +463,8 @@ export class ShellPage
         }
 
         const before = this.agent.status()?.jobId ?? 0;
+
+        this.startClock();
 
         if (this.agentTimer)
         {
@@ -370,13 +484,20 @@ export class ShellPage
             clearInterval(this.agentTimer!);
             this.agentTimer = null;
 
+            if (st.action === 'build-restart' && st.errorCount === 0)
+            {
+                this.rememberBuild(st.buildMs);
+            }
+
             if (st.state === 'running' && st.errorCount === 0)
             {
+                this.reloading.set(true);
                 await this.waitForApi();
                 location.reload();
             }
             else
             {
+                this.stopClock();
                 void this.ping();
             }
         }, 1000);

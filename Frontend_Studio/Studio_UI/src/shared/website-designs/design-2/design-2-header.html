@@ -1,0 +1,216 @@
+<!-- ===========================================================
+     DESIGN 2 : SITE HEADER
+============================================================ -->
+
+<div class="d2-top">
+    <div class="wrap d2-top-inner">
+
+        <div class="d2-top-info">
+            @if (company().hours)
+            {
+                <span>{{ company().hours }}</span>
+            }
+            @if (place())
+            {
+                <span>{{ place() }}</span>
+            }
+            @if (hotlineLink())
+            {
+                <a [href]="hotlineLink()">Hotline {{ company().hotline }}</a>
+            }
+        </div>
+
+        <div class="d2-top-actions">
+            <div class="theme" role="group" aria-label="Appearance">
+                <button
+                    type="button"
+                    class="theme-btn"
+                    [class.on]="themes.theme() === 'light'"
+                    [attr.aria-pressed]="themes.theme() === 'light'"
+                    aria-label="Light"
+                    (click)="themes.set('light')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"></path></svg>
+                </button>
+                <button
+                    type="button"
+                    class="theme-btn"
+                    [class.on]="themes.theme() === 'deep'"
+                    [attr.aria-pressed]="themes.theme() === 'deep'"
+                    aria-label="Deep"
+                    (click)="themes.set('deep')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+                </button>
+            </div>
+
+            <a
+                class="d2-office"
+                [routerLink]="signedIn() ? '/dashboard' : '/login'"
+                target="_blank"
+                rel="noopener"
+                aria-label="Office Login (opens in a new tab)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+                Office Login
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<header class="header d2-header">
+
+    <div class="wrap d2-row">
+
+        <form class="d2-search" role="search" (submit)="search($event, q.value)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+            <input
+                #q
+                type="search"
+                list="d2-search-list"
+                placeholder="Search bikes and parts"
+                aria-label="Search bikes and parts">
+            <datalist id="d2-search-list">
+                @for (o of searchOptions(); track $index)
+                {
+                    <option [value]="o"></option>
+                }
+            </datalist>
+        </form>
+
+        <a
+            class="brand d2-brand"
+            routerLink="/"
+            (click)="home($event)"
+            [attr.aria-label]="company().name + ' home'">
+            @if (logo())
+            {
+                <img class="brand-logo" [src]="logo()" [alt]="company().name">
+            }
+            @else
+            {
+                <span class="d2-name">{{ company().name }}</span>
+            }
+        </a>
+
+        <div class="d2-cta">
+            <a class="btn btn-accent d2-ride" routerLink="/enquire" (click)="closeAll()">Book a test ride</a>
+            <button
+                type="button"
+                class="menu-btn"
+                [attr.aria-expanded]="menuOpen()"
+                aria-label="Menu"
+                (click)="menuOpen.set(!menuOpen())">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+            </button>
+        </div>
+
+    </div>
+
+    <div class="d2-nav-row">
+        <nav
+            class="nav d2-nav"
+            [class.open]="menuOpen()"
+            aria-label="Main">
+            <a class="nav-link" routerLink="/" (click)="home($event)">Home</a>
+
+            @if (brandCards().length > 1)
+            {
+                <div
+                    class="nav-drop"
+                    [class.open]="brandsOpen()"
+                    (mouseenter)="openBrands()"
+                    (mouseleave)="closeBrandsSoon()"
+                    (keydown.escape)="brandsOpen.set(false)">
+
+                    <button
+                        type="button"
+                        class="nav-link drop-btn"
+                        aria-haspopup="true"
+                        [attr.aria-expanded]="brandsOpen()"
+                        (click)="brandsOpen.set(!brandsOpen())">
+                        Brands
+                        <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                    </button>
+
+                    <div class="mega" (mouseenter)="openBrands()">
+                        <div class="mega-head">
+                            <span class="mega-kicker">Our brands</span>
+                            <span class="mega-sub">Bikes, price lists and parts catalogues by brand</span>
+                        </div>
+
+                        <div class="mega-grid">
+                            @for (b of brandCards(); track b.slug)
+                            {
+                                <div class="mega-card">
+                                    <a
+                                        class="mega-main"
+                                        [routerLink]="['/brands', b.slug]"
+                                        (click)="closeAll()">
+                                        <span class="mega-logo">
+                                            @if (b.logo)
+                                            {
+                                                <img [src]="b.logo" [alt]="b.name">
+                                            }
+                                            @else
+                                            {
+                                                <b>{{ b.initial }}</b>
+                                            }
+                                        </span>
+                                        <span class="mega-name">{{ b.name }}</span>
+                                        <span class="mega-meta">
+                                            @if (b.models)
+                                            {
+                                                {{ b.models }} {{ b.models === 1 ? 'model' : 'models' }}
+                                                @if (b.from)
+                                                {
+                                                    · from {{ b.from }}
+                                                }
+                                            }
+                                            @else
+                                            {
+                                                Parts &amp; accessories
+                                            }
+                                        </span>
+                                    </a>
+                                    <div class="mega-links">
+                                        @if (b.models)
+                                        {
+                                            <a [routerLink]="['/brands', b.slug]" [queryParams]="{ tab:'bikes' }" (click)="closeAll()">Bikes</a>
+                                            <a [routerLink]="['/brands', b.slug]" [queryParams]="{ tab:'prices' }" (click)="closeAll()">Price list</a>
+                                        }
+                                        <a [routerLink]="['/brands', b.slug]" [queryParams]="{ tab:'parts' }" (click)="closeAll()">Parts</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            }
+
+            @for (item of menu(); track item.id)
+            {
+                <button
+                    type="button"
+                    class="nav-link"
+                    (click)="go(item.id)">
+                    {{ item.label }}
+                </button>
+            }
+
+            <a
+                class="nav-link"
+                routerLink="/enquire"
+                (click)="closeAll()">
+                Enquire
+            </a>
+
+            <button
+                type="button"
+                class="nav-link"
+                (click)="contact()">
+                Contact
+            </button>
+        </nav>
+    </div>
+
+</header>

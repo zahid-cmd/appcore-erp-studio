@@ -8,10 +8,14 @@ import
 from '@angular/common';
 import
 {
+    AfterViewInit,
     Component,
+    ElementRef,
     EventEmitter,
     Input,
-    Output
+    OnDestroy,
+    Output,
+    inject
 }
 from '@angular/core';
 import
@@ -19,6 +23,7 @@ import
     ActivityItem,
     ActivitySelector,
     PageSlot,
+    activityColumnWidth,
     pageSlotColumns
 }
 from '../../utilities/activity-selector/activity-selector';
@@ -108,8 +113,99 @@ export interface ItemCartRow
     templateUrl:'./item-cart.html',
     styleUrl:'./item-cart.css'
 })
-export class ItemCart
+export class ItemCart implements AfterViewInit, OnDestroy
 {
+    //===========================================================
+    // Floating Action column (2026-11-14) : while the table
+    // scrolls sideways, Action stays at the right edge of the
+    // frame (sticky) with a soft shadow; the host gets
+    // ic-scroll when there is something to scroll and ic-end
+    // when the body is scrolled all the way right.
+    //===========================================================
+
+    private readonly host =
+        inject(ElementRef<HTMLElement>);
+
+    private resizeObserver?:ResizeObserver;
+
+    private mutationObserver?:MutationObserver;
+
+    ngAfterViewInit():
+        void
+    {
+        const el =
+            this.host.nativeElement as HTMLElement;
+
+        const update =
+            () => this.updateScrollState();
+
+        if (typeof ResizeObserver !== 'undefined')
+        {
+            this.resizeObserver =
+                new ResizeObserver(update);
+
+            this.resizeObserver.observe(el);
+        }
+
+        // rows / tables come and go (loading, paging)
+        this.mutationObserver =
+            new MutationObserver(update);
+
+        this.mutationObserver.observe(el, { childList:true, subtree:true });
+
+        update();
+    }
+
+    ngOnDestroy():
+        void
+    {
+        this.resizeObserver?.disconnect();
+
+        this.mutationObserver?.disconnect();
+    }
+
+    private updateScrollState():
+        void
+    {
+        const el =
+            this.host.nativeElement as HTMLElement;
+
+        const body =
+            el.querySelector('.list-table-body') as HTMLElement | null;
+
+        if (!body)
+        {
+            return;
+        }
+
+        const scroll =
+            body.scrollWidth > body.clientWidth + 1;
+
+        const end =
+            body.scrollLeft + body.clientWidth >= body.scrollWidth - 1;
+
+        el.classList.toggle('ic-scroll', scroll);
+
+        el.classList.toggle('ic-end', !scroll || end);
+
+        el.classList.toggle('ic-scrolled', scroll && body.scrollLeft > 0);
+
+        // the header leaves room for the body's vertical scrollbar,
+        // so both scroll the same distance and Action lines up
+        const header =
+            el.querySelector('.list-table-header') as HTMLElement | null;
+
+        if (header)
+        {
+            const gutter =
+                Math.max(0, body.offsetWidth - body.clientWidth);
+
+            header.style.paddingRight = `${gutter}px`;
+
+            header.scrollLeft = body.scrollLeft;
+        }
+    }
+
     //===========================================================
     // Inputs
     //===========================================================
@@ -152,6 +248,102 @@ export class ItemCart
     @Input()
     allRows:
         ItemCartRow[] = [];
+
+    //===========================================================
+    // Table width (2026-11-14) : the fixed columns plus what the
+    // activities need. On a narrower canvas the body scrolls
+    // sideways and the header follows it.
+    //===========================================================
+
+    get tableMinWidth():
+        number
+    {
+        const fixed =
+            this.columns
+                .filter(column => column.type !== 'masterActivities')
+                .reduce((sum, column) => sum + (parseFloat(column.width ?? '') || 100), 0);
+
+        return fixed + activityColumnWidth(this.pageSlots);
+    }
+
+    //===========================================================
+    // Frozen left columns (2026-11-14) : # and Sub Menu stay at
+    // the left edge while the table scrolls sideways.
+    //===========================================================
+
+    isStickLeft
+    (
+        column:ItemCartColumn
+    ):
+        boolean
+    {
+        return column.type === 'serial'
+            ||
+            (column.type === 'text' && column.field === 'subMenu');
+    }
+
+    // the last frozen column carries the shadow
+    isStickLeftLast
+    (
+        column:ItemCartColumn
+    ):
+        boolean
+    {
+        const frozen =
+            this.columns.filter(c => this.isStickLeft(c));
+
+        return frozen.length > 0 && frozen[frozen.length - 1] === column;
+    }
+
+    // left offset = the widths of the frozen columns before it
+    stickLeft
+    (
+        column:ItemCartColumn
+    ):
+        number | null
+    {
+        if (!this.isStickLeft(column))
+        {
+            return null;
+        }
+
+        let left = 0;
+
+        for (const c of this.columns)
+        {
+            if (c === column)
+            {
+                break;
+            }
+
+            if (this.isStickLeft(c))
+            {
+                left += parseFloat(c.width ?? '') || 0;
+            }
+        }
+
+        return left;
+    }
+
+    onBodyScroll
+    (
+        event:Event
+    ):
+        void
+    {
+        const body =
+            event.target as HTMLElement;
+
+        const header =
+            body.parentElement?.querySelector('.list-table-header') as HTMLElement | null;
+
+        if (header)
+        {
+            header.scrollLeft = body.scrollLeft;
+        }
+
+        this.updateScrollState();
+    }
 
     get slotColumns():
         string

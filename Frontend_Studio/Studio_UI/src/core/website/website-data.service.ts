@@ -1189,6 +1189,8 @@ function withConfiguration
             .map(x => ({ name:text(x.title), logo:fileUrl(x.photoPath) }))
             .filter(x => x.name),
         defaultTheme:['light', 'deep'].includes(text(c.defaultTheme)) ? text(c.defaultTheme) as 'light' | 'deep' : 'auto',
+        // The default (live) design : website-page-1 / 2 / 3
+        template:text(c.template) || site.template,
         company:
         {
             ...site.company,

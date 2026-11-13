@@ -1,0 +1,436 @@
+/* =====================================================
+   DESIGN 2 : HOME
+   (after website-section.css)
+===================================================== */
+
+:host
+{
+    display:block;
+}
+
+/* Sections land below the sticky header when jumped to */
+.page > [id]
+{
+    display:block;
+    scroll-margin-top:140px;
+}
+
+/* =====================================================
+   HERO : one large still photo
+===================================================== */
+
+.d2-hero-wrap
+{
+    padding-top:28px;
+}
+
+.d2-hero
+{
+    position:relative;
+    min-height:clamp(380px, 46vw, 540px);
+    display:flex;
+    align-items:flex-end;
+    overflow:hidden;
+    border-radius:24px;
+    background:var(--w-hero-bg);
+}
+
+.d2-hero-photo
+{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+/* A bike cut-out (no showroom photo) : on the right, whole */
+.d2-hero-photo.is-bike
+{
+    inset:8% 4% 8% 42%;
+    width:54%;
+    height:84%;
+    object-fit:contain;
+}
+
+/* Text stays readable over a photo */
+.d2-hero.has-photo::after
+{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(90deg, var(--w-glass) 0%, var(--w-glass) 34%, transparent 70%);
+    pointer-events:none;
+}
+
+.d2-hero-text
+{
+    position:relative;
+    z-index:1;
+    max-width:560px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    padding:48px 56px;
+}
+
+.d2-hero-title
+{
+    margin:0;
+    font-family:var(--w-display);
+    font-size:clamp(36px, 4.6vw, 60px);
+    font-weight:600;
+    line-height:1.08;
+    letter-spacing:-.8px;
+    color:var(--w-hero-text);
+}
+
+.d2-hero-lead
+{
+    margin:0;
+    color:var(--w-hero-muted);
+    font-size:17px;
+    line-height:1.6;
+}
+
+.d2-hero-buttons
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-top:6px;
+}
+
+/* =====================================================
+   BRANDS ROW
+===================================================== */
+
+.d2-brands
+{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:16px;
+    padding-top:32px;
+}
+
+.d2-label
+{
+    color:var(--w-muted);
+    font-size:12.5px;
+    font-weight:600;
+    letter-spacing:3px;
+    text-transform:uppercase;
+}
+
+.d2-brand-tile
+{
+    width:200px;
+    height:58px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+    padding:8px 18px;
+    border:1px solid var(--w-line);
+    border-radius:14px;
+    background:#ffffff;
+    color:#161616;
+    text-decoration:none;
+}
+
+.d2-brand-tile img
+{
+    max-width:100%;
+    max-height:40px;
+    object-fit:contain;
+}
+
+.d2-brand-tile b
+{
+    font-family:var(--w-display);
+    font-size:18px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+}
+
+a.d2-brand-tile:hover
+{
+    border-color:var(--w-accent);
+}
+
+/* =====================================================
+   BIKES : filter panel + grid
+===================================================== */
+
+.d2-bikes
+{
+    display:flex;
+    gap:36px;
+    padding-top:56px;
+}
+
+.d2-filters
+{
+    flex:0 0 220px;
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+    padding-top:72px;
+}
+
+.d2-filters fieldset
+{
+    margin:0;
+    padding:0;
+    border:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.d2-filters legend
+{
+    margin-bottom:10px;
+    padding:0;
+    color:var(--w-muted);
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:2px;
+    text-transform:uppercase;
+}
+
+.d2-filters label
+{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--w-text);
+    font-size:15px;
+    cursor:pointer;
+}
+
+.d2-filters input
+{
+    width:18px;
+    height:18px;
+    accent-color:var(--w-accent);
+}
+
+.d2-clear
+{
+    align-self:flex-start;
+    padding:0;
+    border:0;
+    background:none;
+    color:var(--w-link);
+    font:inherit;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.d2-grid-wrap
+{
+    flex:1 1 auto;
+    min-width:0;
+}
+
+.d2-grid-head
+{
+    display:flex;
+    align-items:baseline;
+    gap:16px;
+    margin-bottom:22px;
+}
+
+.d2-count
+{
+    color:var(--w-muted);
+    font-size:14px;
+}
+
+.d2-grid
+{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+    gap:26px 22px;
+}
+
+.d2-card
+{
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+    color:var(--w-text);
+    text-decoration:none;
+}
+
+.d2-photo
+{
+    height:180px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:var(--w-radius-card);
+    background:var(--w-photo);
+    color:var(--w-photo-text);
+    overflow:hidden;
+    transition:transform .2s ease;
+}
+
+.d2-photo img
+{
+    max-width:88%;
+    max-height:86%;
+    object-fit:contain;
+}
+
+.d2-card:hover .d2-photo
+{
+    transform:translateY(-3px);
+}
+
+.d2-meta
+{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.d2-brand-name
+{
+    color:var(--w-muted);
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:1.6px;
+    text-transform:uppercase;
+}
+
+.d2-dots
+{
+    margin-left:auto;
+    display:flex;
+    gap:4px;
+}
+
+.d2-dot
+{
+    width:12px;
+    height:12px;
+    border:1px solid var(--w-line);
+    border-radius:50%;
+}
+
+.d2-name-row
+{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+}
+
+.d2-model
+{
+    font-family:var(--w-display);
+    font-size:21px;
+    font-weight:600;
+    color:var(--w-strong);
+}
+
+.d2-card:hover .d2-model
+{
+    color:var(--w-link);
+}
+
+.d2-stock
+{
+    margin-left:auto;
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+}
+
+.d2-stock.in-stock { color:var(--w-ok-text); }
+.d2-stock.few-left { color:var(--w-few-text); }
+.d2-stock.pre-order { color:var(--w-pre-text); }
+
+.d2-line
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 10px;
+    color:var(--w-muted);
+    font-size:14px;
+}
+
+.d2-line b
+{
+    color:var(--w-strong);
+}
+
+@media (max-width: 900px)
+{
+    .d2-bikes
+    {
+        flex-direction:column;
+        gap:20px;
+    }
+
+    .d2-filters
+    {
+        flex:0 0 auto;
+        flex-direction:row;
+        flex-wrap:wrap;
+        gap:16px 28px;
+        padding-top:0;
+    }
+
+    .d2-hero-text
+    {
+        padding:28px 24px;
+    }
+
+    .d2-hero-photo.is-bike
+    {
+        inset:6% 4% 50% 4%;
+        width:92%;
+        height:44%;
+    }
+
+    .d2-hero.has-photo::after
+    {
+        background:linear-gradient(0deg, var(--w-glass) 0%, var(--w-glass) 40%, transparent 75%);
+    }
+}
+
+@media (max-width: 560px)
+{
+    .d2-grid
+    {
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:18px 12px;
+    }
+
+    .d2-photo
+    {
+        height:120px;
+    }
+
+    .d2-brand-tile
+    {
+        width:calc(50% - 8px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+    .d2-photo
+    {
+        transition:none;
+    }
+
+    .d2-card:hover .d2-photo
+    {
+        transform:none;
+    }
+}

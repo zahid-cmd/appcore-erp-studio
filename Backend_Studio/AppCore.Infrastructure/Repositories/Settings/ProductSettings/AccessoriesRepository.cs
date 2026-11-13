@@ -79,7 +79,8 @@ namespace AppCore.Infrastructure.Configurations.Settings.ProductSettings;
 //               "<prefix> - <Product Code> - <Accessory Name>"  (no part no.)
 // Levels    : whole numbers ≥ 0; Red Level below Re-order Level
 //             (both 0 is allowed).
-// Image     : none for accessories.
+// Image     : optional (SetImagePathAsync; the controller saves
+//             the file). '' = none : pages show the item icon.
 // Locations : optional, one per warehouse (Warehouse → Rack →
 //             Shelf). The rack must belong to the warehouse and the
 //             shelf must exist on it; a shelf holds one item only
@@ -250,6 +251,9 @@ public class AccessoriesRepository : IAccessoriesRepository
 
                 AccessoryUse =
                     x.AccessoryUse,
+
+                ImagePath =
+                    x.ImagePath,
 
                 Remarks =
                     x.Remarks,
@@ -2817,6 +2821,64 @@ public class AccessoriesRepository : IAccessoriesRepository
             .Set<AccessoryLocationsEntity>()
             .RemoveRange(
                 invalid);
+    }
+
+
+    //===========================================================
+    // Set Image Path
+    //
+    // Stores the new path ('' clears it) and returns the old one.
+    //===========================================================
+
+    public async Task<string>
+        SetImagePathAsync
+        (
+            long id,
+            string imagePath,
+            long userId
+        )
+    {
+        AccessoriesEntity? entity =
+            await _context
+                .Set<AccessoriesEntity>()
+                .FirstOrDefaultAsync
+                (
+                    x =>
+                        x.AccessoryId ==
+                        id
+                        &&
+                        !x.IsDeleted
+                );
+
+        if
+        (
+            entity ==
+            null
+        )
+        {
+            throw new KeyNotFoundException(
+                "Accessory not found.");
+        }
+
+        string oldPath =
+            entity.ImagePath
+            ??
+            string.Empty;
+
+        entity.ImagePath =
+            imagePath
+            ??
+            string.Empty;
+
+        entity.ModifiedBy =
+            userId;
+
+        entity.ModifiedDate =
+            DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return oldPath;
     }
 
 

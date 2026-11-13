@@ -1,0 +1,222 @@
+<!-- ===========================================================
+     DESIGN 2 : HOME
+     Section ids (menu targets) : models · why · emi · service ·
+     branches · faq · test-ride
+============================================================ -->
+
+@if (content(); as site)
+{
+    <div class="page">
+
+        <!-- Hero : one large still photo, one headline -->
+        @if (hero(); as h)
+        {
+            <section class="wrap d2-hero-wrap">
+                <div class="d2-hero" [class.has-photo]="!!h.photo">
+                    @if (h.photo)
+                    {
+                        <img
+                            class="d2-hero-photo"
+                            [class.is-bike]="h.isBike"
+                            [src]="h.photo"
+                            alt="">
+                    }
+                    <div class="d2-hero-text">
+                        @if (h.kicker)
+                        {
+                            <span class="kicker">{{ h.kicker }}</span>
+                        }
+                        <h1 class="d2-hero-title">{{ h.title }}</h1>
+                        @if (h.text)
+                        {
+                            <p class="d2-hero-lead">{{ h.text }}</p>
+                        }
+                        <div class="d2-hero-buttons">
+                            @if (site.bikes.length)
+                            {
+                                <button type="button" class="btn btn-accent btn-lg" (click)="goTo('models')">See all bikes</button>
+                            }
+                            <button type="button" class="btn btn-lg" (click)="goTo('visit')">Visit us</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        }
+
+        @if (offerActive())
+        {
+            <app-offer-strip
+                [offer]="site.offer!"
+                [company]="site.company">
+            </app-offer-strip>
+        }
+
+        <!-- Our brands -->
+        @if (brandTiles().length)
+        {
+            <section class="wrap d2-brands" aria-label="Our brands">
+                <span class="d2-label">Our brands</span>
+                @for (b of brandTiles(); track b.slug)
+                {
+                    @if (b.page)
+                    {
+                        <a class="d2-brand-tile" [routerLink]="['/brands', b.slug]" [attr.aria-label]="b.name">
+                            @if (b.logo)
+                            {
+                                <img [src]="b.logo" [alt]="b.name">
+                            }
+                            @else
+                            {
+                                <b>{{ b.name }}</b>
+                            }
+                        </a>
+                    }
+                    @else
+                    {
+                        <span class="d2-brand-tile">
+                            @if (b.logo)
+                            {
+                                <img [src]="b.logo" [alt]="b.name">
+                            }
+                            @else
+                            {
+                                <b>{{ b.name }}</b>
+                            }
+                        </span>
+                    }
+                }
+            </section>
+        }
+
+        <!-- Bikes : filter panel + photo grid -->
+        @if (site.bikes.length)
+        {
+            <section id="models" class="wrap d2-bikes">
+
+                <aside class="d2-filters" aria-label="Filter bikes">
+                    @if (brandNames().length > 1)
+                    {
+                        <fieldset>
+                            <legend>Brand</legend>
+                            @for (name of brandNames(); track name)
+                            {
+                                <label>
+                                    <input type="checkbox" [checked]="pickedBrands().includes(name)" (change)="toggle('brand', name)">
+                                    {{ name }}
+                                </label>
+                            }
+                        </fieldset>
+                    }
+                    @if (typeNames().length > 1)
+                    {
+                        <fieldset>
+                            <legend>Type</legend>
+                            @for (name of typeNames(); track name)
+                            {
+                                <label>
+                                    <input type="checkbox" [checked]="pickedTypes().includes(name)" (change)="toggle('type', name)">
+                                    {{ name }}
+                                </label>
+                            }
+                        </fieldset>
+                    }
+                    <fieldset>
+                        <legend>Availability</legend>
+                        <label>
+                            <input type="checkbox" [checked]="inStockOnly()" (change)="inStockOnly.set(!inStockOnly())">
+                            In stock only
+                        </label>
+                    </fieldset>
+                    @if (pickedBrands().length || pickedTypes().length || inStockOnly())
+                    {
+                        <button type="button" class="d2-clear" (click)="clearFilters()">Clear filters</button>
+                    }
+                </aside>
+
+                <div class="d2-grid-wrap">
+                    <div class="d2-grid-head">
+                        <h2 class="title">{{ t('bikes.title') }}</h2>
+                        <span class="d2-count">{{ cards().length }} shown</span>
+                    </div>
+
+                    <div class="d2-grid">
+                        @for (card of cards(); track card.bike.slug)
+                        {
+                            <a class="d2-card" [routerLink]="['/bikes', card.bike.slug]">
+                                <span class="d2-photo">
+                                    @if (card.bike.photo)
+                                    {
+                                        <img [src]="card.bike.photo" [alt]="card.bike.model" loading="lazy">
+                                    }
+                                    @else
+                                    {
+                                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5.5" cy="17" r="3.5"></circle><circle cx="18.5" cy="17" r="3.5"></circle><path d="M5.5 17l4-7h5l4 7M9.5 10l-1.5-3H5M14.5 10l1.5-3h3"></path></svg>
+                                    }
+                                </span>
+                                <span class="d2-meta">
+                                    <span class="d2-brand-name">{{ card.bike.brand }}</span>
+                                    @if (card.dots.length)
+                                    {
+                                        <span class="d2-dots" aria-hidden="true">
+                                            @for (d of card.dots; track $index)
+                                            {
+                                                <span class="d2-dot" [style.background]="d.hex"></span>
+                                            }
+                                        </span>
+                                    }
+                                </span>
+                                <span class="d2-name-row">
+                                    <span class="d2-model">{{ card.bike.model }}</span>
+                                    @if (card.stock)
+                                    {
+                                        <span [class]="'d2-stock ' + card.bike.stock">{{ card.stock }}</span>
+                                    }
+                                </span>
+                                <span class="d2-line">
+                                    @if (card.line)
+                                    {
+                                        {{ card.line }}
+                                    }
+                                    @if (card.price)
+                                    {
+                                        <b>{{ card.price }}</b>
+                                    }
+                                </span>
+                            </a>
+                        }
+                        @empty
+                        {
+                            <p class="lead">No bikes match this choice.</p>
+                        }
+                    </div>
+                </div>
+
+            </section>
+        }
+
+        @if (site.why.points.length)
+        {
+            <app-why-us id="why" [why]="site.why"></app-why-us>
+        }
+
+        <app-emi-estimator id="emi" [content]="site"></app-emi-estimator>
+
+        @if (site.services.length)
+        {
+            <app-service-strip id="service" [content]="site"></app-service-strip>
+        }
+
+        @if (site.branches.length)
+        {
+            <app-branch-list id="branches" [branches]="site.branches"></app-branch-list>
+        }
+
+        @if (site.faq.length)
+        {
+            <app-faq-accordion id="faq" [content]="site"></app-faq-accordion>
+        }
+
+        <app-contact id="test-ride" [company]="site.company"></app-contact>
+
+    </div>
+}

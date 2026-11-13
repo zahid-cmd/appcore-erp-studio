@@ -1,0 +1,255 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        [icon]="page.icon"
+        [title]="pageTitle"
+        [subtitle]="page.subtitle">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="hrf-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the fields
+            ================================================== -->
+
+            <section class="hrf-card">
+
+                <header class="hrf-card-head">
+                    <i [class]="page.icon"></i>
+                    <span>{{ page.singular }} Details</span>
+                </header>
+
+                <div class="hrf-grid">
+
+                    <app-textbox
+                        label="Code"
+                        [value]="entity.Code"
+                        placeholder="Auto generated"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    @if (nameField; as name)
+                    {
+                        <app-textbox
+                            [label]="name.label"
+                            [placeholder]="name.placeholder ?? ''"
+                            [value]="entity.Name"
+                            [maxLength]="name.maxLength"
+                            textCase="none"
+                            (valueChange)="onText(name, $event)"
+                            [disabled]="isLocked(name)"
+                            [required]="true">
+                        </app-textbox>
+                    }
+
+                    <app-dropdown
+                        label="Status"
+                        [items]="statusItems"
+                        [value]="entity.IsActive"
+                        (valueChange)="onStatus($event)"
+                        [disabled]="statusLocked"
+                        [required]="true">
+                    </app-dropdown>
+
+                    @for (field of otherFields; track field.key)
+                    {
+                        <div
+                            class="hrf-cell"
+                            [class.hrf-span-2]="field.span2"
+                            [class.hrf-wide]="field.wide">
+
+                            @switch (field.type)
+                            {
+                                @case ('text')
+                                {
+                                    <app-textbox
+                                        [label]="field.label"
+                                        [placeholder]="field.placeholder ?? ''"
+                                        [value]="entity[field.key]"
+                                        [maxLength]="field.maxLength"
+                                        [textCase]="field.upper ? 'upper' : 'none'"
+                                        (valueChange)="onText(field, $event)"
+                                        [disabled]="isLocked(field)"
+                                        [required]="!!field.required">
+                                    </app-textbox>
+                                }
+
+                                @case ('number')
+                                {
+                                    <app-textbox
+                                        [label]="field.label"
+                                        [placeholder]="field.placeholder ?? ''"
+                                        [value]="entity[field.key]"
+                                        [inputMode]="field.whole ? 'numeric' : 'decimal'"
+                                        [maxLength]="12"
+                                        (valueChange)="onNumber(field, $event)"
+                                        [disabled]="isLocked(field)"
+                                        [required]="!!field.required">
+                                    </app-textbox>
+                                }
+
+                                @case ('select')
+                                {
+                                    <app-dropdown
+                                        [label]="field.label"
+                                        [items]="field.options ?? []"
+                                        [value]="entity[field.key]"
+                                        (valueChange)="onSelect(field, $event)"
+                                        [disabled]="isLocked(field)"
+                                        [required]="!!field.required">
+                                    </app-dropdown>
+                                }
+
+                                @case ('time')
+                                {
+                                    <label class="hrf-native">
+                                        <span class="hrf-label">
+                                            {{ field.label }}
+                                            @if (field.required)
+                                            {
+                                                <b>*</b>
+                                            }
+                                        </span>
+                                        <input
+                                            type="time"
+                                            [value]="entity[field.key]"
+                                            [disabled]="isLocked(field)"
+                                            (change)="onNative(field, $event)">
+                                    </label>
+                                }
+
+                                @case ('info')
+                                {
+                                    <!-- worked out from the row, read only -->
+                                    <app-textbox
+                                        [label]="field.label"
+                                        [value]="field.info ? field.info(entity) : ''"
+                                        placeholder="-"
+                                        [readonly]="true">
+                                    </app-textbox>
+                                }
+
+                                @case ('date')
+                                {
+                                    <!-- the shared date picker -->
+                                    <app-datepicker
+                                        [label]="field.label"
+                                        [required]="!!field.required"
+                                        [allowEmpty]="!field.required"
+                                        [value]="$any(asDate(entity[field.key]))"
+                                        [disabled]="isLocked(field)"
+                                        (valueChange)="onNative(field, dateEvent($event))">
+                                    </app-datepicker>
+                                }
+
+                                @case ('switch')
+                                {
+                                    <label
+                                        class="hrf-switch"
+                                        [class.hrf-switch-off]="isLocked(field)">
+                                        <input
+                                            type="checkbox"
+                                            [checked]="!!entity[field.key]"
+                                            [disabled]="isLocked(field)"
+                                            (change)="onSwitch(field, $event)">
+                                        <span class="hrf-switch-track"><span class="hrf-switch-knob"></span></span>
+                                        <span class="hrf-switch-text">
+                                            <b>{{ field.label }}</b>
+                                            @if (field.hint)
+                                            {
+                                                <small>{{ field.hint }}</small>
+                                            }
+                                        </span>
+                                    </label>
+                                }
+
+                                @case ('weekdays')
+                                {
+                                    <div class="hrf-native">
+                                        <span class="hrf-label">{{ field.label }}</span>
+                                        <div class="hrf-days">
+                                            @for (day of weekDays; track day)
+                                            {
+                                                <button
+                                                    type="button"
+                                                    class="hrf-day"
+                                                    [class.on]="dayOn(field, day)"
+                                                    [disabled]="isLocked(field)"
+                                                    (click)="toggleDay(field, day)">{{ day }}</button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+
+                        </div>
+                    }
+
+                </div>
+
+                @if (partlyLocked)
+                {
+                    <div class="hrf-hint">
+                        <i class="fas fa-lock"></i>
+                        <span>{{ entity.Name }} is used by payroll : only its name, order and remarks can be changed.</span>
+                    </div>
+                }
+
+            </section>
+
+            <!-- =================================================
+                 RIGHT : how it is used
+            ================================================== -->
+
+            <section class="hrf-card hrf-help">
+
+                <header class="hrf-card-head">
+                    <i class="fas fa-circle-info"></i>
+                    <span>How it is used</span>
+                </header>
+
+                <ul>
+                    @for (line of page.help; track $index)
+                    {
+                        <li>{{ line }}</li>
+                    }
+                </ul>
+
+            </section>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

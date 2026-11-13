@@ -14,7 +14,12 @@
 //                            Payment Desk (one Receipt Voucher to
 //                            the customer's own ledger).
 //                            Row actions : Collect more, Edit,
-//                            Cancel ("Cancel Booking"), History.
+//                            Cancel ("Cancel Booking"), Delete
+//                            (open booking entered by mistake :
+//                            its receipts are cancelled).
+//                            Command center : Add, Refresh,
+//                            Restore (latest deleted, receipts
+//                            posted again) | History (the page).
 //   Collections              every advance collected (Receipt
 //                            Voucher per row).
 //   Cancellations & Refunds  the cancelled bookings : forfeit
@@ -61,7 +66,9 @@ import
 {
     Booking,
     BookingCollection,
+    BookingCategory,
     BookingCustomer,
+    BookingCustomerCard,
     BookingLine,
     BookingModel,
     BookingProduct,
@@ -176,6 +183,12 @@ import
     ConfirmDialogComponent
 }
 from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
+
+import
+{
+    ConfirmDialogService
+}
+from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
 
 import
 {
@@ -344,6 +357,9 @@ export class BookingsList
     private readonly toast =
         inject(ToastService);
 
+    private readonly confirmDialog =
+        inject(ConfirmDialogService);
+
     private readonly cdr =
         inject(ChangeDetectorRef);
 
@@ -496,53 +512,90 @@ export class BookingsList
             visible:(r: BookingRow) => r.Status === 'Open' && !r.HeldByInvoiceNo
         },
         {
-            key:'edit',
-            icon:'fas fa-pen',
-            title:'Edit the booking',
-            tone:'primary',
-            visible:(r: BookingRow) => r.Status === 'Open'
-        },
-        {
             key:'cancel',
             icon:'fas fa-ban',
             title:'Cancel the booking',
             tone:'danger',
             visible:(r: BookingRow) => r.Status === 'Open' && !r.HeldByInvoiceNo && this.canCancel
-        },
-        {
-            key:'history',
-            icon:'fas fa-clock-rotate-left',
-            title:'History',
-            tone:'default'
         }
     ];
 
     private readonly noActions: ListTableRowAction[] = [];
 
-    private readonly cancellationActions: ListTableRowAction[] =
-    [
-        {
-            key:'history',
-            icon:'fas fa-clock-rotate-left',
-            title:'History',
-            tone:'default'
-        }
-    ];
-
+    // History is on the command center (the page), not per row
     get rowActions(): ListTableRowAction[]
     {
-        return this.tab === 'collections'
-            ? this.noActions
-            : this.tab === 'cancellations'
-                ? this.cancellationActions
-                : this.bookingActions;
+        return this.tab === 'bookings'
+            ? this.bookingActions
+            : this.noActions;
     }
 
-    readonly tableActions =
+    // The list's own View / Edit / Delete (eye, pen, trash : last,
+    // like every list page); page buttons (Collect, Cancel) first
+    private readonly bookingTableActions =
+        { view:true, edit:true, delete:true };
+
+    private readonly viewOnlyActions =
         { view:true, edit:false, delete:false };
 
-    readonly noTableActions =
+    private readonly noTableActions =
         { view:false, edit:false, delete:false };
+
+    get tableActions(): { view:boolean; edit:boolean; delete:boolean }
+    {
+        return this.tab === 'bookings'
+            ? this.bookingTableActions
+            : this.tab === 'cancellations'
+                ? this.viewOnlyActions
+                : this.noTableActions;
+    }
+
+    // Edit (pen) : an open booking only
+    onEdit(row: any): void
+    {
+        const booking = this.bookingRows.find(x => x.BookingId === Number(row?.BookingId));
+
+        if (!booking)
+        {
+            return;
+        }
+
+        if (booking.Status !== 'Open')
+        {
+            this.toast.warning('Edit Not Allowed', `${booking.BookingNo} is ${booking.StatusText}. Only an open booking can be edited.`);
+
+            return;
+        }
+
+        this.openEdit(booking);
+    }
+
+    // Delete (trash) : an open booking not on a sales invoice
+    onDelete(row: any): void
+    {
+        const booking = this.bookingRows.find(x => x.BookingId === Number(row?.BookingId));
+
+        if (!booking)
+        {
+            return;
+        }
+
+        if (booking.Status !== 'Open')
+        {
+            this.toast.warning('Delete Not Allowed', `${booking.BookingNo} is ${booking.StatusText}. Only an open booking can be deleted; use Cancel for a refund or forfeit.`);
+
+            return;
+        }
+
+        if (booking.HeldByInvoiceNo)
+        {
+            this.toast.warning('Delete Not Allowed', `${booking.BookingNo} is on Sales Invoice ${booking.HeldByInvoiceNo} : remove it from the invoice first.`);
+
+            return;
+        }
+
+        this.confirmDelete(booking);
+    }
 
 
     //===========================================================
@@ -653,6 +706,8 @@ export class BookingsList
                         this.branchName = page.BranchName;
                         this.canCancel = page.CanCancel;
                         this.switches = page.Switches;
+                        this.itemCategories = page.Categories ?? [];
+                        this.itemSubCategories = page.SubCategories ?? [];
                         this.models = page.Models;
 
                         this.modelItems =
@@ -903,10 +958,121 @@ export class BookingsList
                 this.openCancel(row);
                 break;
 
-            case 'history':
-                this.showHistory(row);
+            case 'delete':
+                this.confirmDelete(row);
                 break;
         }
+    }
+
+
+    //===========================================================
+    // Delete (soft) / Restore
+    //===========================================================
+
+    private confirmDelete(row: BookingRow): void
+    {
+        if (!row || this.progress.busy)
+        {
+            return;
+        }
+
+        this.confirmDialog.open
+        (
+            'Delete Booking',
+            `Delete ${row.BookingNo} (${row.CustomerName}, advance ${formatMoney(row.AdvanceAmount)})? Its receipt vouchers are cancelled (reversed out of the ledgers). Restore brings it back with new receipts.`,
+            (): void =>
+            {
+                setTimeout(() => this.deleteBooking(row));
+            },
+            'Delete',
+            'Cancel',
+            'danger'
+        );
+    }
+
+    private deleteBooking(row: BookingRow): void
+    {
+        this.progress
+            .run<any>(
+                'Deleting Booking',
+                `Please wait while ${row.BookingNo} is deleted and its receipts reversed...`,
+                'Booking deleted.',
+                this.service.delete(this.type, row.PublicId))
+            .subscribe
+            ({
+                next:
+                    (): void =>
+                    {
+                        if (this.viewRow?.BookingId === row.BookingId)
+                        {
+                            this.viewRow = null;
+                        }
+
+                        this.toast.success('Delete Successful', `${row.BookingNo} deleted; its receipts are reversed.`);
+
+                        this.load();
+                    },
+                error:
+                    (error: unknown): void =>
+                    {
+                        this.toast.error('Delete Failed', this.errorText(error, 'The booking could not be deleted.'));
+                    }
+            });
+    }
+
+    restore(): void
+    {
+        if (this.progress.busy)
+        {
+            return;
+        }
+
+        this.confirmDialog.open
+        (
+            'Restore Booking',
+            `Restore the most recently deleted booking of ${this.branchName || 'this branch'}? Its advance is received again with new receipt vouchers (dated today).`,
+            (): void =>
+            {
+                setTimeout(() => this.restoreBooking());
+            },
+            'Restore',
+            'Cancel',
+            'primary'
+        );
+    }
+
+    private restoreBooking(): void
+    {
+        this.progress
+            .run<{ BookingNo:string }>(
+                'Restoring Booking',
+                'Please wait while the most recently deleted booking is restored...',
+                'Booking restored.',
+                this.service.restore(this.type))
+            .subscribe
+            ({
+                next:
+                    (saved): void =>
+                    {
+                        this.toast.success('Restore Successful', `${saved?.BookingNo || 'The booking'} restored; its receipts are posted again.`);
+
+                        this.load();
+                    },
+                error:
+                    (error: unknown): void =>
+                    {
+                        const status = (error as any)?.status;
+
+                        if (status === 404)
+                        {
+                            this.toast.info('No Data to Restore', 'There is no deleted booking to restore in this branch.');
+
+                            return;
+                        }
+
+                        this.toast.error('Restore Failed', this.errorText(error, 'The booking could not be restored.'));
+                    }
+            });
     }
 
 
@@ -970,16 +1136,17 @@ export class BookingsList
 
     historyItems: any[] = [];
 
-    private showHistory(row: Booking): void
+    // The page's history (command center) : every booking of the type
+    openHistory(): void
     {
         this.service
-            .getHistory(this.type, row.BookingId)
+            .getPageHistory(this.type)
             .subscribe
             ({
                 next:
                     (response: any[]) =>
                     {
-                        this.historyTitle = `${row.BookingNo} · History`;
+                        this.historyTitle = `${this.pageTitle} · History`;
 
                         this.historyItems =
                             (response ?? []).map
@@ -1023,6 +1190,14 @@ export class BookingsList
 
     // New booking details
     newCustomer: BookingCustomer | null = null;
+
+    // Full card of the picked customer (receivable, credit limit,
+    // membership) : the Sales Invoice customer lookup
+    customerCard: BookingCustomerCard | null = null;
+
+    customerCardLoading = false;
+
+    private customerCardSeq = 0;
 
     customerQuery = '';
 
@@ -1077,6 +1252,7 @@ export class BookingsList
         this.deskKind = 'new';
         this.deskBooking = null;
         this.newCustomer = null;
+        this.resetCustomerCard();
         this.customerQuery = '';
         this.customerResults = [];
         this.newModelId = null;
@@ -1084,7 +1260,9 @@ export class BookingsList
         this.newExpected = this.daysFromToday(7);
         this.newSalesPerson = '';
         this.newRemarks = '';
-        this.targetText = this.switches.MinimumAmount ? String(this.switches.MinimumAmount) : '';
+        // Starts at 0 (owner 2026-11-13) : the cashier types it; the
+        // Minimum Booking Amount is still checked on save
+        this.targetText = '';
 
         this.resetDesk();
     }
@@ -1173,6 +1351,8 @@ export class BookingsList
 
         this.newCustomer = null;
 
+        this.resetCustomerCard();
+
         this.deskError = '';
 
         if (this.customerTimer)
@@ -1249,6 +1429,8 @@ export class BookingsList
 
         this.deskError = '';
 
+        this.loadCustomerCard(item);
+
         this.cdr.detectChanges();
     }
 
@@ -1256,7 +1438,115 @@ export class BookingsList
     {
         this.newCustomer = null;
 
+        this.resetCustomerCard();
+
         this.cdr.detectChanges();
+    }
+
+    private resetCustomerCard(): void
+    {
+        this.customerCardSeq++;
+
+        this.customerCard = null;
+
+        this.customerCardLoading = false;
+    }
+
+    // The full card : looked up by the customer's phone (the
+    // Sales Invoice lookup); without a phone the short card stays
+    private loadCustomerCard(item: BookingCustomer): void
+    {
+        this.resetCustomerCard();
+
+        const phone = (item.Phone1 ?? '').trim();
+
+        if (!phone)
+        {
+            return;
+        }
+
+        const seq = this.customerCardSeq;
+
+        this.customerCardLoading = true;
+
+        this.service
+            .customerCard(phone, this.today)
+            .subscribe
+            ({
+                next:
+                    card =>
+                    {
+                        if (seq !== this.customerCardSeq)
+                        {
+                            return;
+                        }
+
+                        this.customerCardLoading = false;
+
+                        this.customerCard =
+                            card.Found && card.CustomerId === item.CustomerId
+                                ? card
+                                : null;
+
+                        this.cdr.detectChanges();
+                    },
+                error:
+                    () =>
+                    {
+                        if (seq !== this.customerCardSeq)
+                        {
+                            return;
+                        }
+
+                        this.customerCardLoading = false;
+
+                        this.customerCard = null;
+
+                        this.cdr.detectChanges();
+                    }
+            });
+    }
+
+    // Receivable : what the customer owes (debit) or holds (credit)
+    get cardBalanceText(): string
+    {
+        const c = this.customerCard;
+
+        if (!c || !(c.Balance > 0))
+        {
+            return this.money(0);
+        }
+
+        return `${this.money(c.Balance)} ${c.BalanceSide || ''}`.trim();
+    }
+
+    get cardOwes(): boolean
+    {
+        const c = this.customerCard;
+
+        return !!c && c.Balance > 0 && (c.BalanceSide || '').toUpperCase().startsWith('D');
+    }
+
+    get cardCreditLimitText(): string
+    {
+        const c = this.customerCard;
+
+        return c && c.CreditLimit > 0 ? this.money(c.CreditLimit) : 'No credit';
+    }
+
+    // The branch this page works in (top-bar working branch)
+    get branchKindLabel(): string
+    {
+        return this.type === 'SP'
+            ? 'Service Center'
+            : this.type === 'AC'
+                ? 'Accessory Shop'
+                : 'Showroom';
+    }
+
+    get deskBranchName(): string
+    {
+        return (this.deskKind === 'collect' ? this.deskBooking?.BranchName : '') || this.branchName || '-';
     }
 
     onNewModel(value: any): void
@@ -1786,6 +2076,85 @@ export class BookingsList
 
     itemSearching = false;
 
+    // A search has answered (the list stays open, also empty)
+    itemSearched = false;
+
+    // Add Item filters (SP / AC) : category / sub category
+    itemCategories: BookingCategory[] = [];
+
+    itemSubCategories: BookingCategory[] = [];
+
+    itemCategoryId = 0;
+
+    itemSubCategoryId = 0;
+
+    get itemCategoryItems(): { label:string; value:number }[]
+    {
+        return [
+            { label:'All categories', value:0 },
+            ...this.itemCategories.map(x => ({ label:x.Name, value:x.Id }))
+        ];
+    }
+
+    get itemSubCategoryItems(): { label:string; value:number }[]
+    {
+        return [
+            { label:'All sub categories', value:0 },
+            ...this.itemSubCategories
+                .filter(x => !this.itemCategoryId || x.ParentId === this.itemCategoryId)
+                .map(x => ({ label:x.Name, value:x.Id }))
+        ];
+    }
+
+    get hasItemFilter(): boolean
+    {
+        return this.itemCategoryId > 0 || this.itemSubCategoryId > 0;
+    }
+
+    onItemCategory(value: any): void
+    {
+        const id = Number(value) || 0;
+
+        if (id === this.itemCategoryId)
+        {
+            return;
+        }
+
+        this.itemCategoryId = id;
+
+        // The sub category must belong to the category
+        const sub = this.itemSubCategories.find(x => x.Id === this.itemSubCategoryId);
+
+        if (sub && id > 0 && sub.ParentId !== id)
+        {
+            this.itemSubCategoryId = 0;
+        }
+
+        this.runItemSearch(0);
+    }
+
+    onItemSubCategory(value: any): void
+    {
+        const id = Number(value) || 0;
+
+        if (id === this.itemSubCategoryId)
+        {
+            return;
+        }
+
+        this.itemSubCategoryId = id;
+
+        // A sub category fixes its category
+        const sub = this.itemSubCategories.find(x => x.Id === id);
+
+        if (sub)
+        {
+            this.itemCategoryId = sub.ParentId;
+        }
+
+        this.runItemSearch(0);
+    }
+
     private itemTimer: any = null;
 
     private itemSeq = 0;
@@ -1797,6 +2166,9 @@ export class BookingsList
         this.itemQuery = '';
         this.itemResults = [];
         this.itemSearching = false;
+        this.itemSearched = false;
+        this.itemCategoryId = 0;
+        this.itemSubCategoryId = 0;
     }
 
     // The rule the items break ('' = fine)
@@ -1843,6 +2215,12 @@ export class BookingsList
     {
         this.itemQuery = String(value ?? '');
 
+        this.runItemSearch(300);
+    }
+
+    // 2+ letters, or a category / sub category alone
+    private runItemSearch(delay: number): void
+    {
         if (this.itemTimer)
         {
             clearTimeout(this.itemTimer);
@@ -1850,15 +2228,20 @@ export class BookingsList
 
         const term = this.itemQuery.trim();
 
-        if (term.length < 2)
+        if (term.length < 2 && !this.hasItemFilter)
         {
             this.itemSeq++;
             this.itemResults = [];
             this.itemSearching = false;
+            this.itemSearched = false;
             this.cdr.detectChanges();
 
             return;
         }
+
+        const categoryId = this.itemCategoryId;
+
+        const subCategoryId = this.itemSubCategoryId;
 
         this.itemTimer =
             setTimeout(
@@ -1871,7 +2254,7 @@ export class BookingsList
                     this.cdr.detectChanges();
 
                     this.service
-                        .searchProducts(this.type, term)
+                        .searchProducts(this.type, term.length >= 2 ? term : '', categoryId, subCategoryId)
                         .subscribe
                         ({
                             next:
@@ -1883,6 +2266,7 @@ export class BookingsList
                                     }
 
                                     this.itemSearching = false;
+                                    this.itemSearched = true;
                                     this.itemResults = rows ?? [];
                                     this.cdr.detectChanges();
                                 },
@@ -1890,12 +2274,13 @@ export class BookingsList
                                 () =>
                                 {
                                     this.itemSearching = false;
+                                    this.itemSearched = true;
                                     this.itemResults = [];
                                     this.cdr.detectChanges();
                                 }
                         });
                 },
-                300);
+                delay);
 
         this.cdr.detectChanges();
     }
@@ -1917,8 +2302,19 @@ export class BookingsList
 
         this.itemQuery = '';
         this.itemResults = [];
+        this.itemSearched = false;
         this.deskError = '';
         this.editError = '';
+        this.cdr.detectChanges();
+    }
+
+    // Closes the item list (the filters stay)
+    closeItemResults(): void
+    {
+        this.itemSeq++;
+        this.itemResults = [];
+        this.itemSearching = false;
+        this.itemSearched = false;
         this.cdr.detectChanges();
     }
 

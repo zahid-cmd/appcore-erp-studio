@@ -1,0 +1,388 @@
+<div [class]="editing ? 'app-form-page' : 'app-list-page'">
+
+    <app-page-header
+        icon="fas fa-scale-balanced"
+        title="Provident Fund Policy"
+        subtitle="The rules of the fund : contributions, eligibility, interest, loans and forfeiture">
+
+        <div pageHeaderRight>
+            @if (editing)
+            {
+                <app-command-center
+                    command1Text="Update"
+                    command1Icon="fas fa-floppy-disk"
+                    (command1Click)="save()"
+                    command2Text="Undo"
+                    command2Icon="fas fa-rotate-left"
+                    (command2Click)="undo()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="back()">
+                </app-command-center>
+            }
+            @else
+            {
+                <!-- one record : no Add, no Delete -->
+                <app-command-center
+                    command1Text="Refresh"
+                    command1Icon="fas fa-rotate-right"
+                    (command1Click)="load()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            }
+        </div>
+
+    </app-page-header>
+
+    @if (!editing)
+    {
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [loading]="loading"
+                    [actions]="actions"
+                    (edit)="edit()">
+                </app-list-table>
+            </div>
+
+        </app-page-canvas>
+
+        <div class="hrs-summary pfp-rules">
+            @for (line of forfeitLines; track line)
+            {
+                <span class="pfp-rule"><i class="fas fa-circle-check"></i>{{ line }}</span>
+            }
+        </div>
+    }
+    @else
+    {
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div
+                canvasBody
+                class="pf-body pfp-body appcore-scrollbar">
+
+                <!-- ============ LEFT : contributions, eligibility, interest, loans ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-coins"></i>
+                        <span>Contributions and Membership</span>
+                    </header>
+
+                    <div class="pfx-part">
+                        <span class="pfx-title">Contribution</span>
+                        <span class="pfx-note">every month, from the salary sheet</span>
+                    </div>
+
+                    <div class="pfx-grid-3">
+
+                        <app-textbox
+                            label="Employee (%)"
+                            placeholder="0"
+                            [value]="entity.EmployeePercent || ''"
+                            inputMode="decimal"
+                            [maxLength]="7"
+                            (valueChange)="onPercent('EmployeePercent', $event)"
+                            [required]="true">
+                        </app-textbox>
+
+                        <app-dropdown
+                            label="Percent of"
+                            [items]="baseItems"
+                            [value]="entity.ContributionBase"
+                            (valueChange)="onSelect('ContributionBase', $event)"
+                            [required]="true">
+                        </app-dropdown>
+
+                        <span></span>
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="entity.CompanyContributes"
+                                (change)="onSwitch('CompanyContributes', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Company contributes</b>
+                                <small>The company adds its own part every month</small>
+                            </span>
+                        </label>
+
+                        @if (entity.CompanyContributes)
+                        {
+                        <app-textbox
+                            label="Company (%)"
+                            placeholder="0"
+                            [value]="entity.CompanyPercent || ''"
+                            inputMode="decimal"
+                            [maxLength]="7"
+                            (valueChange)="onPercent('CompanyPercent', $event)"
+                            [required]="true">
+                        </app-textbox>
+                        }
+
+                    </div>
+
+                    <div class="pfx-part">
+                        <span class="pfx-title">Who can join</span>
+                    </div>
+
+                    <div class="pfx-grid-3">
+
+                        <div class="pfx-span-2">
+                            <app-dropdown
+                                label="An employee can join"
+                                [items]="eligibilityItems"
+                                [value]="entity.EligibilityRule"
+                                (valueChange)="onSelect('EligibilityRule', $event)"
+                                [required]="true">
+                            </app-dropdown>
+                        </div>
+
+                        @if (entity.EligibilityRule === 'Months')
+                        {
+                        <app-textbox
+                            label="Months after joining"
+                            placeholder="0"
+                            [value]="entity.EligibilityMonths || ''"
+                            inputMode="numeric"
+                            [maxLength]="7"
+                            (valueChange)="onWhole('EligibilityMonths', $event)"
+                            [required]="true">
+                        </app-textbox>
+                        }
+
+                    </div>
+
+                    <div class="pfx-part">
+                        <span class="pfx-title">Interest and loans</span>
+                    </div>
+
+                    <div class="pfx-grid-3">
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="entity.InterestEnabled"
+                                (change)="onSwitch('InterestEnabled', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Yearly interest</b>
+                                <small>Credited once a year on PF Interest</small>
+                            </span>
+                        </label>
+
+                        @if (entity.InterestEnabled)
+                        {
+                        <app-textbox
+                            label="Rate (% a year)"
+                            placeholder="0"
+                            [value]="entity.InterestRate || ''"
+                            inputMode="decimal"
+                            [maxLength]="7"
+                            (valueChange)="onPercent('InterestRate', $event)"
+                            [required]="true">
+                        </app-textbox>
+                        }
+                        @else
+                        {
+                            <span></span>
+                        }
+
+                        <span></span>
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="entity.LoanEnabled"
+                                (change)="onSwitch('LoanEnabled', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Loans from the fund</b>
+                                <small>Recovered from the salary by instalments</small>
+                            </span>
+                        </label>
+
+                        @if (entity.LoanEnabled)
+                        {
+                        <app-textbox
+                            label="Limit (% of own balance)"
+                            placeholder="0"
+                            [value]="entity.LoanMaxPercent || ''"
+                            inputMode="decimal"
+                            [maxLength]="7"
+                            (valueChange)="onPercent('LoanMaxPercent', $event)"
+                            [required]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Most instalments"
+                            placeholder="0"
+                            [value]="entity.LoanMaxInstallments || ''"
+                            inputMode="numeric"
+                            [maxLength]="7"
+                            (valueChange)="onWhole('LoanMaxInstallments', $event)"
+                            [required]="true">
+                        </app-textbox>
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="entity.LoanInterestEnabled"
+                                (change)="onSwitch('LoanInterestEnabled', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Interest on loans</b>
+                                <small>Income of the fund, not the member's money</small>
+                            </span>
+                        </label>
+
+                        @if (entity.LoanInterestEnabled)
+                        {
+                            <app-textbox
+                                label="Loan rate (% a year)"
+                                placeholder="0"
+                                [value]="entity.LoanInterestRate || ''"
+                                inputMode="decimal"
+                                [maxLength]="7"
+                                (valueChange)="onPercent('LoanInterestRate', $event)"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-dropdown
+                                label="Worked out"
+                                [items]="loanMethodItems"
+                                [value]="entity.LoanInterestMethod"
+                                (valueChange)="onSelect('LoanInterestMethod', $event)"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <span class="pfx-span-3 pfx-note">
+                                {{ entity.LoanInterestMethod === 'Reducing'
+                                    ? 'Reducing balance : every month the interest is the rate / 12 on what is still unpaid; the instalments are equal.'
+                                    : 'Flat : rate x the whole loan x the years, fixed when the loan is given and spread over the instalments.' }}
+                                A loan settled early pays the interest of the months used only. A loan given already keeps its own terms.
+                            </span>
+                        }
+                        }
+
+                    </div>
+
+                </section>
+
+                <!-- ============ RIGHT : forfeiture ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-gavel"></i>
+                        <span>Cancellation and Forfeiture</span>
+                    </header>
+
+                    <div class="pfx-part">
+                        <span class="pfx-title">The company part</span>
+                        <span class="pfx-note">the member always gets the own part</span>
+                    </div>
+
+                    <div class="pfx-grid-3">
+
+                        <app-textbox
+                            label="Years needed"
+                            placeholder="0 = always paid"
+                            [value]="entity.VestingYears || ''"
+                            inputMode="decimal"
+                            [maxLength]="5"
+                            (valueChange)="onPercent('VestingYears', $event)">
+                        </app-textbox>
+
+                        <div class="pfx-span-2">
+                            <app-dropdown
+                                label="Counted from"
+                                [items]="vestingFromItems"
+                                [value]="entity.VestingFrom"
+                                (valueChange)="onSelect('VestingFrom', $event)"
+                                [required]="true">
+                            </app-dropdown>
+                        </div>
+
+                        <div class="pfx-span-3">
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="entity.ForfeitOnMisconduct"
+                                (change)="onSwitch('ForfeitOnMisconduct', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Misconduct forfeits the company part</b>
+                                <small>Terminated for misconduct or an illegal activity : no company part, even after the years</small>
+                            </span>
+                        </label>
+                        </div>
+
+                        <div class="pfx-span-3">
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="entity.FullOnDeathRetirement"
+                                (change)="onSwitch('FullOnDeathRetirement', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Death or retirement pays the whole company part</b>
+                                <small>Whatever the years</small>
+                            </span>
+                        </label>
+                        </div>
+
+                        <div class="pfx-span-3">
+                            <app-textbox
+                                label="Remarks"
+                                placeholder="Optional"
+                                [value]="entity.Remarks"
+                                [maxLength]="500"
+                                textCase="none"
+                                (valueChange)="onRemarks($event)">
+                            </app-textbox>
+                        </div>
+
+                    </div>
+
+                    <div class="pfx-part">
+                        <span class="pfx-title">What these rules mean</span>
+                    </div>
+
+                    <ul class="pf-help">
+                        @for (line of forfeitLines; track line)
+                        {
+                            <li>{{ line }}</li>
+                        }
+                        <li>The rules are applied on PF Settlements when a member leaves : the reason picked there decides the company part.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        title="Provident Fund Policy History"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

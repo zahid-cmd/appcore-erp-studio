@@ -1218,7 +1218,7 @@
 
 .bkm-progress
 {
-    margin-left: auto;
+    margin-left: 0;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -1723,10 +1723,10 @@
     --textbox-height:36px;
 }
 
-.bkm-details-grid > :nth-child(5),
+/* Amount to Collect : one column; Remarks : the rest of the row */
 .bkm-details-grid > :nth-child(6)
 {
-    grid-column:span 2;
+    grid-column:span 3;
 }
 
 .bkm-details-grid-collect
@@ -2089,4 +2089,477 @@ td.bkm-col-qty app-textbox
 .bkm-amber
 {
     color:#b45309;
+}
+
+
+/* =====================================================================
+   Desk header ribbon (right) : the branch it is booked in (working
+   branch) and the collection summary
+   ===================================================================== */
+
+.bkm-ribbon
+{
+    margin-left:auto;
+
+    display:flex;
+
+    align-items:stretch;
+
+    flex:0 1 auto;
+
+    min-width:0;
+
+    border:1px solid rgba(148, 163, 184, 0.45);
+
+    border-radius:12px;
+
+    background:rgba(255, 255, 255, 0.72);
+
+    box-shadow:0 4px 12px -8px rgba(30, 58, 138, 0.45);
+
+    overflow:hidden;
+}
+
+.bkm-ribbon > div
+{
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    gap:2px;
+
+    padding:8px 16px;
+
+    min-width:0;
+
+    line-height:1.25;
+}
+
+.bkm-ribbon > div + div
+{
+    border-left:1px solid rgba(148, 163, 184, 0.35);
+}
+
+.bkm-ribbon small
+{
+    color:#64748b;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    text-transform:uppercase;
+
+    letter-spacing:0.04em;
+
+    white-space:nowrap;
+}
+
+.bkm-ribbon b
+{
+    color:#0f172a;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    font-variant-numeric:tabular-nums;
+
+    white-space:nowrap;
+}
+
+.bkm-ribbon-branch
+{
+    flex-direction:row !important;
+
+    align-items:center;
+
+    gap:10px !important;
+
+    background:#eff6ff;
+}
+
+.bkm-ribbon-branch > i
+{
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:30px;
+
+    height:30px;
+
+    border-radius:8px;
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+    font-size:13px;
+}
+
+.bkm-ribbon-branch span
+{
+    display:flex;
+
+    flex-direction:column;
+
+    min-width:0;
+}
+
+.bkm-ribbon-branch b
+{
+    max-width:220px;
+
+    overflow:hidden;
+
+    color:#1e3a8a;
+
+    text-overflow:ellipsis;
+}
+
+.bkm-ribbon-stat
+{
+    align-items:flex-end;
+
+    min-width:104px !important;
+}
+
+@media (max-width: 900px)
+{
+    .bkm-head
+    {
+        flex-wrap:wrap;
+    }
+
+    .bkm-ribbon
+    {
+        order:5;
+
+        flex:1 1 100%;
+
+        margin-left:0;
+    }
+
+    .bkm-ribbon > div
+    {
+        flex:1 1 0;
+    }
+}
+
+
+/* =====================================================================
+   Customer card : the full profile after a pick
+   ===================================================================== */
+
+.bkm-cust-card
+{
+    margin:10px 0 2px;
+
+    padding:10px 12px;
+
+    border:1px solid #dbe4f0;
+
+    border-radius:10px;
+
+    background:linear-gradient(180deg, #f8fbff, #ffffff);
+}
+
+.bkm-cust-head
+{
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    min-width:0;
+}
+
+.bkm-cust-mark
+{
+    display:inline-flex;
+
+    flex:0 0 34px;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:34px;
+
+    height:34px;
+
+    border-radius:50%;
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+    font-size:15px;
+}
+
+.bkm-cust-title
+{
+    display:flex;
+
+    flex:1 1 auto;
+
+    flex-direction:column;
+
+    min-width:0;
+
+    line-height:1.3;
+}
+
+.bkm-cust-title strong
+{
+    overflow:hidden;
+
+    color:#0f172a;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
+}
+
+.bkm-cust-title span
+{
+    color:#64748b;
+
+    font-size:12.5px;
+}
+
+.bkm-cust-tag
+{
+    flex:0 0 auto;
+
+    padding:2px 9px;
+
+    border:1px solid #c7d2fe;
+
+    border-radius:999px;
+
+    background:#eef2ff;
+
+    color:#3730a3;
+
+    font-size:11.5px;
+
+    font-weight:600;
+}
+
+.bkm-cust-tag-corp
+{
+    border-color:#fde68a;
+
+    background:#fffbeb;
+
+    color:#92400e;
+}
+
+.bkm-cust-tag-off
+{
+    border-color:#fecdd3;
+
+    background:#fff1f2;
+
+    color:#be123c;
+}
+
+.bkm-cust-x
+{
+    flex:0 0 auto;
+
+    width:28px;
+
+    height:28px;
+
+    border:0;
+
+    border-radius:6px;
+
+    background:transparent;
+
+    color:#64748b;
+
+    cursor:pointer;
+}
+
+.bkm-cust-x:hover
+{
+    background:#f1f5f9;
+
+    color:#0f172a;
+}
+
+.bkm-cust-facts
+{
+    display:grid;
+
+    grid-template-columns:minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+
+    gap:8px 16px;
+
+    margin-top:10px;
+
+    padding-top:8px;
+
+    border-top:1px dashed #d6e0ef;
+}
+
+.bkm-cust-fact
+{
+    display:flex;
+
+    flex-direction:column;
+
+    min-width:0;
+
+    line-height:1.35;
+}
+
+.bkm-cust-fact span
+{
+    color:#64748b;
+
+    font-size:11.5px;
+
+    text-transform:uppercase;
+
+    letter-spacing:0.03em;
+}
+
+.bkm-cust-fact b
+{
+    overflow:hidden;
+
+    color:#0f172a;
+
+    font-size:13.5px;
+
+    font-weight:600;
+
+    font-variant-numeric:tabular-nums;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
+}
+
+.bkm-cust-sub
+{
+    color:#64748b;
+
+    font-size:11.5px;
+}
+
+.bkm-cust-muted
+{
+    color:#94a3b8 !important;
+
+    font-weight:500 !important;
+}
+
+.bkm-cust-note
+{
+    margin-top:8px;
+
+    color:#64748b;
+
+    font-size:12.5px;
+}
+
+@media (max-width: 760px)
+{
+    .bkm-cust-facts
+    {
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+
+    .bkm-cust-fact-wide
+    {
+        grid-column:span 2;
+    }
+}
+
+
+/* =====================================================================
+   SP / AC Add Item : category / sub category filters under the
+   search; the item list opens below them
+   ===================================================================== */
+
+.bkm-item-filters
+{
+    display:grid;
+
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+
+    gap:8px;
+
+    margin-top:8px;
+}
+
+.bkm-item-filters app-dropdown
+{
+    display:block;
+
+    min-width:0;
+}
+
+.bkm-result-head
+{
+    position:sticky;
+
+    top:0;
+
+    z-index:1;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:6px 10px;
+
+    border-bottom:1px solid #e2e8f0;
+
+    background:#f8fafc;
+
+    color:#64748b;
+
+    font-size:12px;
+}
+
+.bkm-result-head button
+{
+    width:24px;
+
+    height:24px;
+
+    border:0;
+
+    border-radius:6px;
+
+    background:transparent;
+
+    color:#64748b;
+
+    cursor:pointer;
+}
+
+.bkm-result-head button:hover
+{
+    background:#e2e8f0;
+
+    color:#0f172a;
 }

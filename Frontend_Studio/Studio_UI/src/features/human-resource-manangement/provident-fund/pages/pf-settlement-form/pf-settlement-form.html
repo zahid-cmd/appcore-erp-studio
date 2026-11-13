@@ -1,0 +1,199 @@
+<div class="app-form-page">
+
+    <app-page-header
+        icon="fas fa-money-check-dollar"
+        [title]="pageTitle"
+        subtitle="Payment, cancellation and forfeiture : what a member gets on leaving the fund">
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Save"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div
+            canvasBody
+            class="pf-body appcore-scrollbar">
+
+            <section class="pf-card">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-money-check-dollar"></i>
+                    <span>Settlement</span>
+                </header>
+
+                <div class="pfx-grid-3">
+
+                    <app-textbox
+                        label="Code"
+                        [value]="entity.Code"
+                        placeholder="Auto generated"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <div class="pfx-span-2">
+                        @if (isViewMode)
+                        {
+                            <app-textbox
+                                label="Member"
+                                [value]="entity.MemberCode + '  ' + entity.EmployeeCode + '  ' + entity.EmployeeName"
+                                [readonly]="true">
+                            </app-textbox>
+                        }
+                        @else
+                        {
+                            <app-search-dropdown
+                                label="Member"
+                                [required]="true"
+                                placeholder="Select member"
+                                [items]="memberItems"
+                                [value]="entity.PfMemberId || null"
+                                (valueChange)="onMember($event)">
+                            </app-search-dropdown>
+                        }
+                    </div>
+
+                    <app-datepicker
+                        label="Settlement Date"
+                        [required]="true"
+                        [value]="$any(asDate(entity.SettlementDate))"
+                        [disabled]="isViewMode"
+                        (valueChange)="onDate(dateEvent($event))">
+                    </app-datepicker>
+
+                    <div class="pfx-span-2">
+                        @if (isViewMode)
+                        {
+                            <app-textbox
+                                label="Reason"
+                                [value]="entity.Reason"
+                                [readonly]="true">
+                            </app-textbox>
+                        }
+                        @else
+                        {
+                            <app-dropdown
+                                label="Reason"
+                                placeholder="Select reason"
+                                [items]="reasonItems"
+                                [value]="entity.Reason || null"
+                                (valueChange)="onReason($event)"
+                                [required]="true">
+                            </app-dropdown>
+                        }
+                    </div>
+
+                    <div class="pfx-span-3">
+                        <app-textbox
+                            label="Remarks"
+                            placeholder="Optional"
+                            [value]="entity.Remarks"
+                            [maxLength]="500"
+                            textCase="none"
+                            (valueChange)="onRemarks($event)"
+                            [disabled]="isViewMode">
+                        </app-textbox>
+                    </div>
+
+                </div>
+
+                @if (workProblem)
+                {
+                    <div class="pfx-rule pfx-bad">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span>{{ workProblem }}</span>
+                    </div>
+                }
+                @else if (showAmounts)
+                {
+                    <div
+                        class="pfx-rule"
+                        [class.pfx-bad]="entity.CompanyForfeited > 0">
+                        <i class="fas fa-gavel"></i>
+                        <span>{{ entity.RuleNote }}</span>
+                    </div>
+
+                    <dl class="pf-facts">
+                        <dt>Years counted</dt>
+                        <dd>{{ number(entity.ServiceYears) }}</dd>
+                        <dt>Own part</dt>
+                        <dd>{{ money(entity.EmployeeBalance) }}</dd>
+                        <dt>Company part in the fund</dt>
+                        <dd>{{ money(entity.CompanyBalance) }}</dd>
+                        <dt>Company part paid</dt>
+                        <dd>{{ money(entity.CompanyPaid) }}</dd>
+                        <dt>Company part forfeited</dt>
+                        <dd>{{ money(entity.CompanyForfeited) }}</dd>
+                        <dt>Loan still out (taken off)</dt>
+                        <dd>{{ money(entity.LoanOutstanding) }}</dd>
+                        <dt class="pf-strong">Net payable</dt>
+                        <dd class="pf-strong">{{ money(entity.NetPayable) }}</dd>
+                    </dl>
+                }
+                @else
+                {
+                    <p class="pf-muted">
+                        {{ working ? 'Working out what the member gets...' : 'Pick the member, the date and the reason : the policy works out what the member gets.' }}
+                    </p>
+                }
+
+            </section>
+
+            <div class="pf-column">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-scale-balanced"></i>
+                        <span>The Policy</span>
+                    </header>
+
+                    <ul class="pf-help">
+                        @for (line of forfeitLines; track line)
+                        {
+                            <li>{{ line }}</li>
+                        }
+                    </ul>
+
+                </section>
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>How it works</span>
+                    </header>
+
+                    <ul class="pf-help">
+                        <li>The member always gets the own part. The company part is decided by the policy from the reason and the years : nothing is typed.</li>
+                        <li>Pick "Membership Cancelled" when the employee stays in the company but leaves the fund.</li>
+                        <li>Saving makes the member Settled : no more fund deduction is taken from the salary. Pay the net amount with a Payment Voucher.</li>
+                        <li>A settlement is not edited. Deleting it on the list makes the member Active again and takes the payment and the forfeiture back.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

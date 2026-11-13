@@ -2100,6 +2100,225 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Terms & Conditions : sets and their lines (MANUAL :
+    // TermsConditions_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.TermsConditionSets>
+    TermsConditionSetRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.Settings.GeneralSettings.TermsConditionLines>
+    TermsConditionLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource phase 1 : Shifts, Holidays, Leave Types,
+    // Salary Heads, Employees and their salary lines (MANUAL :
+    // HumanResource_Phase1_Engine.sql, hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrShifts>
+    HrShiftRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrHolidays>
+    HrHolidayRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrLeaveTypes>
+    HrLeaveTypeRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrSalaryHeads>
+    HrSalaryHeadRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.EmployeeManagement.HrEmployees>
+    HrEmployeeRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.EmployeeManagement.HrEmployeeSalaryLines>
+    HrEmployeeSalaryLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource phase 2 : attendance and leave applications
+    // (MANUAL : HumanResource_Phase2_Engine.sql, hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.AttendanceManagement.HrAttendance>
+    HrAttendanceRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.AttendanceManagement.HrLeaveApplications>
+    HrLeaveApplicationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource phase 3 : salary advances, salary sheets and
+    // their lines (MANUAL : HumanResource_Phase3_Engine.sql,
+    // hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrSalaryAdvances>
+    HrSalaryAdvanceRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrSalarySheets>
+    HrSalarySheetRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrSalarySheetLines>
+    HrSalarySheetLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrSalarySheetLineHeads>
+    HrSalarySheetLineHeadRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrAdvanceRecoveries>
+    HrAdvanceRecoveryRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource phase 4 : employee movements and their salary
+    // lines (MANUAL : HumanResource_Phase4_Engine.sql, hand-written
+    // page)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.EmployeeManagement.HrEmployeeMovements>
+    HrEmployeeMovementRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.EmployeeManagement.HrEmployeeMovementLines>
+    HrEmployeeMovementLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource : salary structures and their lines (MANUAL :
+    // HumanResource_SalaryStructures_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrSalaryStructures>
+    HrSalaryStructureRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrSalaryStructureLines>
+    HrSalaryStructureLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource : provident fund (MANUAL :
+    // HumanResource_ProvidentFund_Engine.sql, hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.ProvidentFund.HrPfPolicy>
+    HrPfPolicyRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.ProvidentFund.HrPfMembers>
+    HrPfMemberRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.ProvidentFund.HrPfTransactions>
+    HrPfTransactionRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.ProvidentFund.HrPfLoans>
+    HrPfLoanRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.ProvidentFund.HrPfLoanRecoveries>
+    HrPfLoanRecoveryRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.ProvidentFund.HrPfSettlements>
+    HrPfSettlementRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource : overtime structures (MANUAL :
+    // HumanResource_OvertimeStructures_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrOvertimeStructures>
+    HrOvertimeStructureRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource : the weekly holiday, one row (MANUAL :
+    // HumanResource_WeeklyHoliday_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrWeeklyHolidays>
+    HrWeeklyHolidayRows
+    {
+    get;
+    set;
+    } = null!;
+
     // Sales Returns - MB / SP / AC and their lines (MANUAL :
     // SalesReturns_Engine.sql, hand-written pages)
 
@@ -2496,24 +2715,20 @@ public class AppDbContext
 
 
     //===========================================================
-    // English-only text (the database is Windows-1252)
+    // Text check before saving
     //
-    // Text that Windows-1252 cannot hold (Bangla, emoji, "→" ...)
-    // is refused before saving, with the field named, instead of
-    // the database's 22P05 error. Controllers answer it as 400.
+    // The database is UTF8 (2026-11-13) : Bangla, emoji and every
+    // language are stored as typed. Only control characters (NUL
+    // and friends, which PostgreSQL refuses in text) are refused,
+    // with the field named. Controllers answer it as 400.
     //===========================================================
-
-    private static readonly HashSet<char> Win1252Extra =
-        new("€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ");
 
     private static bool IsStorable(char c)
     {
         return c == '\t'
             || c == '\n'
             || c == '\r'
-            || (c >= ' ' && c <= '~')
-            || (c >= '\u00A0' && c <= '\u00FF')
-            || Win1252Extra.Contains(c);
+            || c >= ' ';
     }
 
     private void RefuseUnstorableText()
@@ -2539,7 +2754,7 @@ public class AppDbContext
                     if (!IsStorable(c))
                     {
                         throw new InvalidOperationException(
-                            $"\"{property.Metadata.Name}\" has letters that cannot be saved. Use English letters only (no Bangla, emoji or special symbols).");
+                            $"\"{property.Metadata.Name}\" has control characters that cannot be saved. Remove them and try again.");
                     }
                 }
             }

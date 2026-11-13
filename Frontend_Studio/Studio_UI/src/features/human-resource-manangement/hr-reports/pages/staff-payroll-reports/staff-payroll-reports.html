@@ -1,0 +1,219 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Staff & Payroll Reports"
+        subtitle="Staff list, leave balance and salary register"
+        icon="fas fa-file-lines">
+
+        <div pageHeaderCenter>
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search the report..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Excel"
+                command1Icon="fas fa-file-excel"
+                command1Title="Saves what is on screen as an Excel file"
+                (command1Click)="exportExcel()"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                command2Title="Prints what is on screen (A4 landscape)"
+                (command2Click)="print()"
+                command3Text="Refresh"
+                command3Icon="fas fa-rotate-right"
+                (command3Click)="refresh()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : the report and its filters
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="report"
+            (selectedTabChange)="onTabChange($event)">
+        </app-control-tabs>
+
+        <div
+            pageToolbarRight
+            class="rp-filters">
+
+            @if (report !== 'staff')
+            {
+                <app-search-dropdown
+                    placeholder="Year"
+                    [items]="yearItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="year"
+                    (valueChange)="onYear($event)">
+                </app-search-dropdown>
+            }
+
+            <app-search-dropdown
+                placeholder="All Branches"
+                [items]="branchItems"
+                labelField="label"
+                valueField="value"
+                [value]="branchId"
+                (valueChange)="onBranch($event)">
+            </app-search-dropdown>
+
+            @if (report === 'staff')
+            {
+                <app-search-dropdown
+                    placeholder="All Departments"
+                    [items]="departmentItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="departmentId"
+                    (valueChange)="onDepartment($event)">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    placeholder="Status"
+                    [items]="statusItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="status"
+                    (valueChange)="onStatus($event)">
+                </app-search-dropdown>
+            }
+
+            @if (report === 'salary')
+            {
+                <app-search-dropdown
+                    placeholder="Sheets"
+                    [items]="sheetItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="sheets"
+                    (valueChange)="onSheets($event)">
+                </app-search-dropdown>
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS : the report
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="rp-wrap appcore-scrollbar">
+
+            @if (grid && visibleRows.length > 0)
+            {
+                <table class="rp-table">
+
+                    <thead>
+                        <tr>
+                            <th class="rp-no">#</th>
+                            @for (column of grid.columns; track $index)
+                            {
+                                <th
+                                    [attr.data-kind]="column.kind"
+                                    [class.rp-strong]="column.strong"
+                                    [title]="column.title ?? ''">{{ column.header }}</th>
+                            }
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (row of pageRows; track $index; let i = $index)
+                        {
+                            <tr>
+                                <td class="rp-no">{{ pageStart + i + 1 }}</td>
+                                @for (cell of row; track $index; let c = $index)
+                                {
+                                    <td
+                                        [attr.data-kind]="grid.columns[c].kind"
+                                        [class.rp-strong]="grid.columns[c].strong"
+                                        [class.rp-off]="cell === 'Inactive' || cell === '-'">{{ show(cell, grid.columns[c]) }}</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+
+                    @if (grid.footer && visibleRows.length === grid.rows.length)
+                    {
+                        <tfoot>
+                            <tr>
+                                <td class="rp-no"></td>
+                                @for (cell of grid.footer; track $index; let c = $index)
+                                {
+                                    <td [attr.data-kind]="grid.columns[c].kind">{{ show(cell, grid.columns[c]) }}</td>
+                                }
+                            </tr>
+                        </tfoot>
+                    }
+
+                </table>
+            }
+
+            <!-- Loading / failed / nothing to show : centred in the canvas -->
+
+            @if (emptyState; as state)
+            {
+                <app-empty-state
+                    [icon]="state.icon"
+                    [title]="state.title"
+                    [subtitle]="state.subtitle">
+                </app-empty-state>
+            }
+
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="page"
+            [pageSize]="pageSize"
+            (pageChange)="onPage($event)"
+            (pageSizeChange)="onPageSize($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (the whole report, whatever the search)
+    ====================================================== -->
+
+    @if (grid && summaryItems.length > 0)
+    {
+        <div class="rp-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="rp-summary-item">
+                    <span class="rp-summary-label">{{ item.label }}</span>
+                    <b class="rp-summary-value">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="rp-summary-note">{{ grid.subtitle }}</span>
+
+        </div>
+    }
+
+    <app-toast></app-toast>
+
+</div>

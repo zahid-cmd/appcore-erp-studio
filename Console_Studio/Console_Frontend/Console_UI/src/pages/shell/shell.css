@@ -762,9 +762,92 @@ a.sh-link.on i
 
 .sh-dev-actions
 {
+    /* the two buttons share the panel's whole width (2026-11-14) */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.sh-dev-actions .ac-btn
+{
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    white-space: nowrap;
+}
+
+/* Progress bar */
+
+.sh-dev-progress
+{
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    align-items: center;
+    gap: 10px;
+}
+
+.sh-dev-progress > span
+{
+    flex: 0 0 38px;
+    color: var(--ac-muted);
+    font-family: var(--ac-mono-font);
+    font-size: 12px;
+    text-align: right;
+}
+
+.sh-dev-bar
+{
+    position: relative;
+    flex: 1 1 auto;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--ac-hover);
+}
+
+.sh-dev-bar > i
+{
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: inherit;
+    background: var(--ac-accent);
+    transition: width 0.3s ease;
+}
+
+.sh-dev-progress.good .sh-dev-bar > i
+{
+    background: var(--ac-green);
+}
+
+.sh-dev-progress.bad .sh-dev-bar > i
+{
+    background: var(--ac-red);
+}
+
+.sh-dev-progress.good > span
+{
+    color: var(--ac-green);
+}
+
+.sh-dev-progress.bad > span
+{
+    color: var(--ac-red);
+}
+
+/* moving shine while working */
+.sh-dev-progress.live .sh-dev-bar > i::after
+{
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    animation: sh-dev-shine 1.2s linear infinite;
+}
+
+@keyframes sh-dev-shine
+{
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
 }
 
 .sh-dev-note

@@ -73,6 +73,10 @@ public class SalesQuotations
 
     public string Terms { get; set; } = string.Empty;
 
+    // MB : the exact bikes are named (chassis / engine on each
+    // line, SalesQuotations_SpecificUnits.sql); false = models
+    public bool SpecificUnits { get; set; }
+
     // Open / Converted / Cancelled
     public string Status { get; set; } = "Open";
 
@@ -145,4 +149,8 @@ public class SalesQuotationLines
     public decimal NetAmount { get; set; }
 
     public decimal VatInside { get; set; }
+
+    // MB Specific unit : the bikes of the line, JSON
+    // [{"u":unitId,"c":chassis,"e":engine,"k":colour}]; '' = none
+    public string UnitsJson { get; set; } = string.Empty;
 }

@@ -74,6 +74,15 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
 
     private static readonly string[] Themes = { "auto", "light", "deep" };
 
+    // Website designs (blueprint-dealer-website-designs) : the one in
+    // Template is the default and the only one published live
+    private static readonly Dictionary<string, string> Designs = new()
+    {
+        ["website-page-1"] = "Velocity",
+        ["website-page-2"] = "Showroom",
+        ["website-page-3"] = "Heritage"
+    };
+
     private static readonly string[] Kinds = { "tag", "why-point", "why-stat", "service", "faq", "payment", "text" };
 
     private static readonly string[] PolicyKeys = { "warranty", "terms", "privacy" };
@@ -959,6 +968,13 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
 
         dto.DefaultTheme ??= "auto";
 
+        dto.Template = string.IsNullOrWhiteSpace(dto.Template) ? "website-page-1" : dto.Template.Trim().ToLowerInvariant();
+
+        if (!Designs.ContainsKey(dto.Template))
+        {
+            throw new InvalidOperationException("Pick one of the website designs (Velocity, Showroom or Heritage).");
+        }
+
         Max(dto.Tagline, 200, "Tagline");
         Max(dto.About, 1000, "About");
         Max(dto.Hotline, 30, "Hotline");
@@ -1196,6 +1212,14 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
                 .OrderBy(g => g.Key)
                 .SelectMany(g => g.Select(x => new { Kind = g.Key, Title = Clean(x.Title), Text = Clean(x.Text), PhotoPath = Clean(x.PhotoPath) })));
 
+        string oldDesign = string.IsNullOrWhiteSpace(a.Template) ? "website-page-1" : a.Template.Trim().ToLowerInvariant();
+        string newDesign = string.IsNullOrWhiteSpace(b.Template) ? "website-page-1" : b.Template.Trim().ToLowerInvariant();
+
+        if (oldDesign != newDesign)
+        {
+            tabs.Add($"Design (default design : {DesignName(oldDesign)} -> {DesignName(newDesign)})");
+        }
+
         if (Rows(a.Items, "payment") != Rows(b.Items, "payment"))
         {
             tabs.Add("Payments");
@@ -1264,6 +1288,13 @@ public class WebsiteConfigurationRepository : IWebsiteConfigurationRepository
         return tabs.Count == 0
             ? "Saved with no changes."
             : "Changed : " + string.Join(", ", tabs) + ".";
+    }
+
+
+    private static string DesignName(
+        string key)
+    {
+        return Designs.TryGetValue(key, out string? name) ? name : key;
     }
 }
 

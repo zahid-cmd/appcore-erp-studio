@@ -1,0 +1,121 @@
+<div class="app-list-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Employee Movements"
+        subtitle="Increment, promotion, transfer, confirmation and separation"
+        icon="fas fa-people-arrows">
+
+        <div pageHeaderCenter>
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search employee, code..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Add"
+                command1Icon="fas fa-plus"
+                command1Permission="add"
+                (command1Click)="add()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="refresh()"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="Activity history"
+                (rightCommandClick)="openHistory()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div canvasBody>
+            <app-list-table
+                [columns]="columns"
+                [rows]="rows"
+                [actions]="tableActions"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                (view)="view($event)"
+                (delete)="delete($event)"
+                (sortChange)="onSort($event)">
+            </app-list-table>
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (search applied, every type)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <div class="empl-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="empl-summary-item">
+                    <span class="empl-summary-label">{{ item.label }}</span>
+                    <b
+                        class="empl-summary-value"
+                        [class.empl-ok]="item.tone === 'ok'"
+                        [class.empl-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="empl-summary-note">
+                Saving a movement changes the employee record at once
+            </span>
+
+        </div>
+    }
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        title="Employee Movement History"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

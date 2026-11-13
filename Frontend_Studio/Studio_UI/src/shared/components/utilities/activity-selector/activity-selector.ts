@@ -95,11 +95,12 @@ export function pageSlotColumns
 ):
     string
 {
-    // checkbox + gap (26px) + label (~6.4px a letter at 12.5px)
+    // checkbox + gap (26px) + label (~7px a letter at 12.5px,
+    // so no label is cut) + a little air (2026-11-14)
     const width =
         (slot?:PageSlot):number =>
             slot
-                ? 26 + Math.ceil(slot.label.length * 6.4)
+                ? 34 + Math.ceil(slot.label.length * 7)
                 : 0;
 
     const columns:
@@ -316,4 +317,43 @@ export class ActivitySelector
 
         this.changed.emit();
     }
+}
+
+//===============================================================
+// Activity Table Width (2026-11-14)
+//
+// The width the activity column needs so nothing is cut :
+// side padding + All + 3 common columns + the page-action
+// slots. The table never gets narrower than this; a narrower
+// canvas scrolls sideways (item-cart).
+// Keep in step with activity-selector.css / item-cart.css.
+//===============================================================
+
+export const ACT_ALL_WIDTH = 84;
+
+export const ACT_COL_WIDTH = 116;
+
+export const ACT_SLOT_GAP = 22;
+
+export function activityColumnWidth
+(
+    slots:PageSlot[]
+):
+    number
+{
+    const columns =
+        pageSlotColumns(slots)
+            .split(' ')
+            .filter(c => c.length > 0)
+            .map(c => parseFloat(c) || 0);
+
+    const page =
+        columns.length > 0
+            ? 4 + 12 + 1
+              + columns.reduce((a, c) => a + c, 0)
+              + ACT_SLOT_GAP * (columns.length - 1)
+            : 0;
+
+    // 32 = the cell's side padding, 16 = air at the end
+    return 32 + ACT_ALL_WIDTH + 3 * ACT_COL_WIDTH + page + 16;
 }

@@ -275,27 +275,27 @@ implements OnInit
             align:'center'
         },
         {
-            header:'Designation Code',
+            header:'Code',
             field:'DesignationCode',
-            width:'180px',
+            width:'100px',
             align:'center'
         },
         {
             header:'Designation Name',
             field:'DesignationName',
-            width:'280px',
+            width:'320px',
             align:'left'
         },
         {
             header:'Short Name',
             field:'DesignationShortName',
-            width:'180px',
-            align:'left'
+            width:'160px',
+            align:'center'
         },
         {
             header:'Status',
             field:'IsActive',
-            width:'120px',
+            width:'110px',
             align:'center',
             type:'status'
         },
@@ -303,7 +303,7 @@ implements OnInit
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'120px',
             align:'center'
         }
     ];

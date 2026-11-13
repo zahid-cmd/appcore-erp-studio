@@ -1,0 +1,654 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-id-card-clip"
+        [title]="pageTitle"
+        subtitle="Personal, contact, job and salary structure of one employee">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : the tabs and Back / Next
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="selectedTab"
+            (selectedTabChange)="onTabChange($event)">
+        </app-control-tabs>
+
+        <div
+            pageToolbarRight
+            class="hre-steps">
+
+            <span class="hre-step-text">Step {{ tabIndex + 1 }} of {{ tabs.length }}</span>
+
+            <button
+                type="button"
+                class="hre-step"
+                [disabled]="isFirstTab"
+                (click)="back()">
+                <i class="fas fa-chevron-left"></i>
+                Back
+            </button>
+
+            @if (!isLastTab)
+            {
+                <button
+                    type="button"
+                    class="hre-step hre-step-next"
+                    (click)="next()">
+                    Next
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            }
+            @else
+            {
+                <!-- the last step : Save is in the command center -->
+                <button
+                    type="button"
+                    class="hre-step hre-step-next"
+                    disabled>
+                    Next
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            }
+
+        </div>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="hre-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the profile summary (fixed, on every tab)
+            ================================================== -->
+
+            <section class="hre-card hre-profile">
+
+                <header class="hre-card-head">
+                    <i class="fas fa-id-card"></i>
+                    <span>Profile Summary</span>
+                </header>
+
+                <dl class="hre-facts">
+                    @for (fact of profileFacts; track fact.label)
+                    {
+                        <dt>{{ fact.label }}</dt>
+                        <dd [class.hre-none]="!fact.value">{{ fact.value || '-' }}</dd>
+                    }
+                </dl>
+
+                <dl class="hre-money">
+                    <dt>Gross Salary</dt>
+                    <dd>{{ money(gross) }}</dd>
+                    <dt class="hre-money-net">Net Salary</dt>
+                    <dd class="hre-money-net">{{ money(net) }}</dd>
+                </dl>
+
+            </section>
+
+            <!-- =================================================
+                 RIGHT : the tab
+            ================================================== -->
+
+            <div
+                class="hre-column"
+                [class.hre-pair]="selectedTab === 'salary'">
+
+                @switch (selectedTab)
+                {
+                    <!-- ================= PERSONAL ================= -->
+
+                    @case ('personal')
+                    {
+                        <section class="hre-card">
+
+                            <header class="hre-card-head">
+                                <i class="fas fa-user"></i>
+                                <span>Personal</span>
+                            </header>
+
+                            <div class="hre-grid-3">
+
+                                <app-textbox
+                                    label="Employee Code"
+                                    [value]="entity.Code"
+                                    placeholder="Auto generated"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <div class="hre-span-2">
+                                    <app-textbox
+                                        label="Full Name"
+                                        placeholder="As on the national ID"
+                                        [value]="entity.FullName"
+                                        [maxLength]="150"
+                                        textCase="none"
+                                        (valueChange)="onText('FullName', $event)"
+                                        [disabled]="isViewMode"
+                                        [required]="true">
+                                    </app-textbox>
+                                </div>
+
+                                <app-textbox
+                                    label="Father's Name"
+                                    [value]="entity.FatherName"
+                                    [maxLength]="150"
+                                    textCase="none"
+                                    (valueChange)="onText('FatherName', $event)"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Mother's Name"
+                                    [value]="entity.MotherName"
+                                    [maxLength]="150"
+                                    textCase="none"
+                                    (valueChange)="onText('MotherName', $event)"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="National ID"
+                                    [value]="entity.NationalId"
+                                    [maxLength]="30"
+                                    textCase="none"
+                                    (valueChange)="onText('NationalId', $event)"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+
+                                <app-dropdown
+                                    label="Gender"
+                                    placeholder="Select"
+                                    [items]="genderItems"
+                                    [value]="entity.Gender || null"
+                                    (valueChange)="onSelect('Gender', $event)"
+                                    [disabled]="isViewMode">
+                                </app-dropdown>
+
+                                <app-datepicker
+                                    label="Date of Birth"
+                                    [allowEmpty]="true"
+                                    [value]="$any(asDate(entity.DateOfBirth))"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onDate('DateOfBirth', dateEvent($event))">
+                                </app-datepicker>
+
+                                <app-dropdown
+                                    label="Marital Status"
+                                    placeholder="Select"
+                                    [items]="maritalItems"
+                                    [value]="entity.MaritalStatus || null"
+                                    (valueChange)="onSelect('MaritalStatus', $event)"
+                                    [disabled]="isViewMode">
+                                </app-dropdown>
+
+                                <app-dropdown
+                                    label="Blood Group"
+                                    placeholder="Select"
+                                    [items]="bloodItems"
+                                    [value]="entity.BloodGroup || null"
+                                    (valueChange)="onSelect('BloodGroup', $event)"
+                                    [disabled]="isViewMode">
+                                </app-dropdown>
+
+                            </div>
+
+                        </section>
+                    }
+
+                    <!-- ================= CONTACT ================= -->
+
+                    @case ('contact')
+                    {
+                        <section class="hre-card">
+
+                            <header class="hre-card-head">
+                                <i class="fas fa-address-book"></i>
+                                <span>Contact</span>
+                                @if (!isViewMode && entity.PresentAddress.trim())
+                                {
+                                    <button
+                                        type="button"
+                                        class="hre-btn"
+                                        (click)="sameAddress()">
+                                        <i class="fas fa-copy"></i>
+                                        Permanent = Present
+                                    </button>
+                                }
+                            </header>
+
+                            <div class="hre-grid-3">
+
+                                <app-textbox
+                                    label="Mobile No"
+                                    placeholder="01XXXXXXXXX"
+                                    [value]="entity.MobileNo"
+                                    [maxLength]="20"
+                                    inputMode="tel"
+                                    (valueChange)="onText('MobileNo', $event)"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+
+                                <div class="hre-span-2">
+                                    <app-textbox
+                                        label="Email"
+                                        type="email"
+                                        [value]="entity.Email"
+                                        [maxLength]="150"
+                                        (valueChange)="onText('Email', $event)"
+                                        [disabled]="isViewMode">
+                                    </app-textbox>
+                                </div>
+
+                                <div class="hre-span-3">
+                                    <app-textbox
+                                        label="Present Address"
+                                        [value]="entity.PresentAddress"
+                                        [maxLength]="300"
+                                        textCase="none"
+                                        (valueChange)="onText('PresentAddress', $event)"
+                                        [disabled]="isViewMode">
+                                    </app-textbox>
+                                </div>
+
+                                <div class="hre-span-3">
+                                    <app-textbox
+                                        label="Permanent Address"
+                                        [value]="entity.PermanentAddress"
+                                        [maxLength]="300"
+                                        textCase="none"
+                                        (valueChange)="onText('PermanentAddress', $event)"
+                                        [disabled]="isViewMode">
+                                    </app-textbox>
+                                </div>
+
+                                <div class="hre-span-2">
+                                    <app-textbox
+                                        label="Emergency Contact (name, relation)"
+                                        [value]="entity.EmergencyContactName"
+                                        [maxLength]="150"
+                                        textCase="none"
+                                        (valueChange)="onText('EmergencyContactName', $event)"
+                                        [disabled]="isViewMode">
+                                    </app-textbox>
+                                </div>
+
+                                <app-textbox
+                                    label="Emergency Phone"
+                                    [value]="entity.EmergencyContactPhone"
+                                    [maxLength]="20"
+                                    inputMode="tel"
+                                    (valueChange)="onText('EmergencyContactPhone', $event)"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+
+                            </div>
+
+                        </section>
+                    }
+
+                    <!-- ================= JOB ================= -->
+
+                    @case ('job')
+                    {
+                        <section class="hre-card">
+
+                            <header class="hre-card-head">
+                                <i class="fas fa-briefcase"></i>
+                                <span>Job</span>
+                            </header>
+
+                            <div class="hre-grid-3">
+
+                                <app-search-dropdown
+                                    label="Branch"
+                                    [required]="true"
+                                    placeholder="Select branch"
+                                    [items]="branchItems"
+                                    [value]="entity.BranchId || null"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onLookup('BranchId', $event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Department"
+                                    [required]="true"
+                                    placeholder="Select department"
+                                    [items]="departmentItems"
+                                    [value]="entity.DepartmentId || null"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onLookup('DepartmentId', $event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Designation"
+                                    [required]="true"
+                                    placeholder="Select designation"
+                                    [items]="designationItems"
+                                    [value]="entity.DesignationId || null"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onLookup('DesignationId', $event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Shift"
+                                    [required]="true"
+                                    placeholder="Select shift"
+                                    [items]="shiftItems"
+                                    [value]="entity.ShiftId || null"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onLookup('ShiftId', $event)">
+                                </app-search-dropdown>
+
+                                <app-dropdown
+                                    label="Employment Type"
+                                    [items]="typeItems"
+                                    [value]="entity.EmploymentType"
+                                    (valueChange)="onSelect('EmploymentType', $event)"
+                                    [disabled]="isViewMode"
+                                    [required]="true">
+                                </app-dropdown>
+
+                                <app-dropdown
+                                    label="Status"
+                                    [items]="statusItems"
+                                    [value]="entity.IsActive"
+                                    (valueChange)="onStatus($event)"
+                                    [disabled]="isViewMode"
+                                    [required]="true">
+                                </app-dropdown>
+
+                                <app-datepicker
+                                    label="Joining Date"
+                                    [required]="true"
+                                    [value]="$any(asDate(entity.JoiningDate))"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onDate('JoiningDate', dateEvent($event))">
+                                </app-datepicker>
+
+                                <app-datepicker
+                                    label="Confirmation Date"
+                                    [allowEmpty]="true"
+                                    [value]="$any(asDate(entity.ConfirmationDate))"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onDate('ConfirmationDate', dateEvent($event))">
+                                </app-datepicker>
+
+                                <app-search-dropdown
+                                    label="Login (user)"
+                                    placeholder="No login"
+                                    [items]="loginItems"
+                                    [value]="entity.UserProfileId"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onLookup('UserProfileId', $event)">
+                                </app-search-dropdown>
+
+                                <div class="hre-span-3 hre-week">
+                                    <span class="hre-label">Weekly Holiday</span>
+                                    <div class="hre-week-row">
+                                        <div class="hre-days">
+                                            @for (day of weekDays; track day)
+                                            {
+                                                <button
+                                                    type="button"
+                                                    class="hre-day"
+                                                    [class.on]="weeklyOn(day)"
+                                                    [disabled]="isViewMode"
+                                                    (click)="toggleWeekly(day)">{{ day }}</button>
+                                            }
+                                        </div>
+                                        <small>{{ weeklyHint }}</small>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </section>
+                    }
+
+                    <!-- ================= SALARY STRUCTURE ================= -->
+
+                    @case ('salary')
+                    {
+                        <section class="hre-card">
+
+                            <header class="hre-card-head">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Salary Structure</span>
+                                <span class="hre-head-note">Tk a month</span>
+                            </header>
+
+                            <div class="hre-grid-3">
+
+                                <app-textbox
+                                    label="Gross Salary (Tk)"
+                                    placeholder="0.00"
+                                    [value]="entity.GrossSalary || ''"
+                                    inputMode="decimal"
+                                    [maxLength]="14"
+                                    (valueChange)="onGross($event)"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+
+                                <div class="hre-span-2">
+                                    <app-search-dropdown
+                                        label="Salary Structure"
+                                        placeholder="Select salary structure"
+                                        [items]="structureItems"
+                                        [value]="entity.SalaryStructureId"
+                                        [disabled]="isViewMode"
+                                        (valueChange)="onStructure($event)">
+                                    </app-search-dropdown>
+                                </div>
+
+                            </div>
+
+                            @if (hasOldSalary)
+                            {
+                                <div class="hre-hint">
+                                    <i class="fas fa-circle-info"></i>
+                                    <span>
+                                        This salary was typed on the profile before salary structures. It stays as it is
+                                        until a salary structure is picked or the gross salary is changed here.
+                                    </span>
+                                </div>
+                            }
+
+                            @if (staleLines)
+                            {
+                                <div class="hre-hint">
+                                    <i class="fas fa-circle-info"></i>
+                                    <span>
+                                        The lines below are the salary saved before : the new gross salary is split when the profile is saved.
+                                    </span>
+                                </div>
+                            }
+
+                            @if (salaryLines.length === 0)
+                            {
+                                <p class="hre-muted">
+                                    Type the gross salary and pick a salary structure : the structure splits the gross
+                                    into the salary heads. Structures are made on Human Resource Setup &gt; Salary Structures.
+                                </p>
+                            }
+                            @else
+                            {
+                                <table class="hre-table">
+
+                                    <tbody>
+
+                                        <tr class="hre-group">
+                                            <td colspan="3">Earnings</td>
+                                        </tr>
+
+                                        @for (line of earningLines; track line.SalaryHeadId)
+                                        {
+                                            <tr>
+                                                <td><span class="hre-head-name">{{ line.HeadName }}</span></td>
+                                                <td class="hre-c-percent">{{ line.PercentText }}</td>
+                                                <td class="hre-c-amount">{{ money(line.Amount) }}</td>
+                                            </tr>
+                                        }
+
+                                        <tr class="hre-total">
+                                            <td colspan="2">Gross Salary</td>
+                                            <td class="hre-c-amount">{{ money(gross) }}</td>
+                                        </tr>
+
+                                        @if (deductionLines.length > 0)
+                                        {
+                                            <tr class="hre-group">
+                                                <td colspan="3">Deductions (every month)</td>
+                                            </tr>
+
+                                            @for (line of deductionLines; track line.SalaryHeadId)
+                                            {
+                                                <tr>
+                                                    <td><span class="hre-head-name">{{ line.HeadName }}</span></td>
+                                                    <td class="hre-c-percent">{{ line.PercentText }}</td>
+                                                    <td class="hre-c-amount">{{ money(line.Amount) }}</td>
+                                                </tr>
+                                            }
+
+                                            <tr class="hre-total">
+                                                <td colspan="2">Total Deductions</td>
+                                                <td class="hre-c-amount">{{ money(deductions) }}</td>
+                                            </tr>
+                                        }
+
+                                        <tr class="hre-net">
+                                            <td colspan="2">Net Salary (before attendance)</td>
+                                            <td class="hre-c-amount">{{ money(net) }}</td>
+                                        </tr>
+
+                                    </tbody>
+
+                                </table>
+
+                                <p class="hre-note">
+                                    The percents come from the salary structure and are changed there.
+                                    Overtime, absence, late and advance / loan recovery are worked out by payroll each month.
+                                </p>
+                            }
+
+                        </section>
+
+                        <section class="hre-card">
+
+                            <header class="hre-card-head">
+                                <i class="fas fa-building-columns"></i>
+                                <span>Overtime and Remarks</span>
+                            </header>
+
+                            <div class="hre-grid-2">
+
+                                <label
+                                    class="hre-switch"
+                                    [class.hre-switch-off]="isViewMode">
+                                    <input
+                                        type="checkbox"
+                                        [checked]="entity.OvertimeAllowed"
+                                        [disabled]="isViewMode"
+                                        (change)="onOvertime($event)">
+                                    <span class="hre-switch-track"><span class="hre-switch-knob"></span></span>
+                                    <span class="hre-switch-text">
+                                        <b>Overtime allowed</b>
+                                        <small>Extra hours and extra days are paid by payroll.</small>
+                                    </span>
+                                </label>
+
+                                @if (entity.OvertimeAllowed)
+                                {
+                                    <app-search-dropdown
+                                        label="Overtime Structure"
+                                        [required]="!hasOldOvertimeRate"
+                                        placeholder="Select overtime structure"
+                                        [items]="overtimeItems"
+                                        [value]="entity.OvertimeStructureId || null"
+                                        [disabled]="isViewMode"
+                                        (valueChange)="onOvertimeStructure($event)">
+                                    </app-search-dropdown>
+
+                                    @if (hasOldOvertimeRate)
+                                    {
+                                        <div class="hre-span-3 hre-hint">
+                                            <i class="fas fa-circle-info"></i>
+                                            <span>
+                                                This employee has a typed overtime rate of Tk {{ money(entity.OvertimeRate) }} an hour from before
+                                                overtime structures. It stays until an overtime structure is picked here.
+                                            </span>
+                                        </div>
+                                    }
+
+                                    @if (overtimeFacts.length > 0)
+                                    {
+                                        <dl class="hre-span-3 hre-ot">
+                                            @for (fact of overtimeFacts; track fact.label)
+                                            {
+                                                <dt>{{ fact.label }}</dt>
+                                                <dd>{{ fact.value }}</dd>
+                                            }
+                                        </dl>
+                                    }
+                                }
+
+                                <div class="hre-span-3">
+                                    <app-textbox
+                                        label="Remarks"
+                                        placeholder="Optional"
+                                        [value]="entity.Remarks"
+                                        [maxLength]="500"
+                                        textCase="none"
+                                        (valueChange)="onText('Remarks', $event)"
+                                        [disabled]="isViewMode">
+                                    </app-textbox>
+                                </div>
+
+                            </div>
+
+                        </section>
+                    }
+                }
+
+            </div>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

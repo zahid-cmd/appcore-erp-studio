@@ -120,6 +120,11 @@ export class DatepickerComponent
     @Input()
     readonly = false;
 
+    // An optional date : emptying the field clears the value (null
+    // is emitted). Off by default : the old value stays.
+    @Input()
+    allowEmpty = false;
+
     /* =====================================================
        STATE
     ====================================================== */
@@ -332,6 +337,22 @@ export class DatepickerComponent
         this.draftText = '';
 
         this.draftDate = null;
+
+        if (!text && this.allowEmpty)
+        {
+            this.typedInvalid = false;
+
+            if (this.value)
+            {
+                this.value = null as any;
+
+                this.valueChange.emit(
+                    this.value
+                );
+            }
+
+            return;
+        }
 
         if (!parsed || !this.inRange(parsed))
         {

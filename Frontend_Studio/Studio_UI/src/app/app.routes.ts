@@ -37,9 +37,15 @@ from '../core/website-page-loader/website-page-loader';
 
 import
 {
-    WebsitePage1
+    WebsiteHome
 }
-from '../shared/website-pages/website-page-1/website-page-1';
+from '../shared/website-pages/website-home/website-home';
+
+import
+{
+    WebsitePreviewEntry
+}
+from '../shared/website-pages/website-preview/website-preview';
 
 import
 {
@@ -71,7 +77,8 @@ export const routes:
 [
     //===========================================================
     // Company website (public)
-    //   /                home
+    //   /                home (of the default design : Website
+    //                    Configuration › Design)
     //   /bikes/:slug     bike detail
     //   /enquire         Enquire Now (→ an ERP Sales Enquiry)
     //   /brands/:slug    brand : bikes · price list · parts
@@ -97,7 +104,7 @@ export const routes:
                     'full',
 
                 component:
-                    WebsitePage1
+                    WebsiteHome
             },
 
             {
@@ -167,6 +174,27 @@ export const routes:
             },
 
         ]
+    },
+
+
+    //===========================================================
+    // Website design preview (staff only : behind the ERP login)
+    //   /website-preview/<website-page-1|2|3>?theme=light|deep
+    //   Shows that design in this tab only, with a "Preview,
+    //   not live" bar. Visitors always get the default design.
+    //===========================================================
+
+    {
+        path:
+            'website-preview/:design',
+
+        canActivate:
+        [
+            authenticationGuard
+        ],
+
+        component:
+            WebsitePreviewEntry
     },
 
 

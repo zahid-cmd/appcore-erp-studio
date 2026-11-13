@@ -171,19 +171,14 @@ from '../../../services/department.service';
         //=======================================================
 
         PageHeaderComponent,
-        PageToolbarComponent,
         CommandCenterComponent,
-        ControlTabsComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-        TextareaComponent,
         DropdownComponent,
 
         //=======================================================

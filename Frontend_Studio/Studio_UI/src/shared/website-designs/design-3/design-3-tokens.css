@@ -1,0 +1,196 @@
+/* =====================================================
+   DESIGN 3 : token sheet
+   -----------------------------------------------------
+   Loaded only while Design 3 is shown (its own chunk; the
+   component has no view encapsulation, so these rules reach
+   the frame's .website). The doubled class outweighs the
+   frame's Design 1 tokens. Deep, then Light.
+===================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+.website.website[data-design="3"]
+{
+    --w-display:'Fraunces', Georgia, serif;
+    --w-body:'DM Sans', 'Segoe UI', system-ui, sans-serif;
+    --w-bg:#14201b;
+    --w-bg-2:#1b2a23;
+    --w-panel:#1f3029;
+    --w-text:#e9e2d4;
+    --w-strong:#faf6ef;
+    --w-muted:#b9b3a4;
+    --w-faint:#8f998f;
+    --w-line:rgba(239,232,218,.14);
+    --w-card:#1b2a23;
+    --w-card-edge:rgba(239,232,218,.12);
+    --w-chip:rgba(239,232,218,.08);
+    --w-photo:radial-gradient(80% 70% at 50% 40%, #2a3d34 0%, #1b2a23 75%);
+    --w-photo-text:#8f998f;
+    --w-glass:rgba(20,32,27,.8);
+    --w-accent:#e07a4f;
+    --w-accent-2:#ea9269;
+    --w-accent-ink:#14201b;
+    --w-accent-soft:rgba(224,122,79,.16);
+    --w-kicker:#eaa883;
+    --w-link:#eaa883;
+    --w-blue-soft:rgba(239,232,218,.08);
+    --w-blue-text:#e9e2d4;
+    --w-topbar-bg:#0e1713;
+    --w-topbar-text:#b9b3a4;
+    --w-header-bg:rgba(20,32,27,.92);
+    --w-header-edge:rgba(239,232,218,.14);
+    --w-nav:#d8d1c2;
+    --w-ghost-edge:rgba(239,232,218,.35);
+    --w-ghost-text:#faf6ef;
+    --w-switch-bg:rgba(239,232,218,.08);
+    --w-hero-bg:linear-gradient(180deg, #14201b 0%, #182620 100%);
+    --w-hero-text:#faf6ef;
+    --w-hero-muted:#b9b3a4;
+    --w-monogram:rgba(239,232,218,.04);
+    --w-badge-bg:rgba(224,122,79,.14);
+    --w-badge-edge:rgba(234,168,131,.4);
+    --w-badge-text:#f0c4a8;
+    --w-ok-bg:rgba(123,211,137,.16);
+    --w-ok-text:#9ee2a8;
+    --w-few-bg:rgba(234,168,131,.18);
+    --w-few-text:#f0b996;
+    --w-pre-bg:rgba(239,232,218,.12);
+    --w-pre-text:#e9e2d4;
+    --w-offer-bg:rgba(224,122,79,.12);
+    --w-offer-edge:rgba(234,168,131,.3);
+    --w-footer-bg:#0e1713;
+    --w-footer-text:#b9b3a4;
+    --w-strip-bg:#0a110e;
+    --w-strip-text:#9a9588;
+    --w-strip-strong:#faf6ef;
+    --w-strip-link:#eaa883;
+    --w-mega-bg:linear-gradient(160deg, rgba(31,48,41,.98), rgba(20,32,27,.98));
+    --w-mega-edge:rgba(239,232,218,.12);
+    --w-mega-shadow:0 40px 80px -30px rgba(0,0,0,.75);
+    --w-mega-kicker:#eaa883;
+    --w-mega-sub:#b9b3a4;
+    --w-mega-card:rgba(239,232,218,.05);
+    --w-mega-card-edge:rgba(239,232,218,.12);
+    --w-mega-card-shadow:none;
+    --w-mega-card-lift:0 24px 40px -20px rgba(0,0,0,.75), 0 0 0 2px rgba(224,122,79,.45);
+    --w-mega-sheen:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,0));
+    --w-mega-name:#faf6ef;
+    --w-mega-meta:#b9b3a4;
+    --w-mega-foot:rgba(0,0,0,.18);
+    --w-mega-foot-edge:rgba(239,232,218,.14);
+    --w-mega-pill:rgba(239,232,218,.06);
+    --w-mega-pill-edge:rgba(239,232,218,.35);
+    --w-mega-pill-text:#eaa883;
+    --w-mega-pill-shadow:none;
+    --w-brand-tab-bg:rgba(239,232,218,.08);
+    --w-brand-tab-edge:rgba(239,232,218,.14);
+    --w-brand-tab-text:#faf6ef;
+    --w-logo-tile-bg:#ffffff;
+    --w-logo-tile-edge:rgba(239,232,218,.2);
+    --w-logo-tile-shadow:none;
+    --w-accent-rgb:224,122,79;
+    --w-glow-rgb:234,146,105;
+    --w-glint-rgb:234,168,131;
+    --w-pale:#f0c4a8;
+    --w-accent-glow:rgba(224,122,79,.45);
+    --w-band-bg:#e07a4f;
+    --w-band-ink:#14201b;
+    --w-band-solid-bg:#14201b;
+    --w-band-solid-text:#faf6ef;
+    --w-title-transform:none;
+    --w-title-weight:600;
+    --w-title-spacing:-.3px;
+    --w-title-line:1.06;
+    --w-radius-card:20px;
+    --w-radius-btn:999px;
+    --w-model-line:1.05;
+}
+
+
+.website.website.theme-light[data-design="3"]
+{
+    --w-bg:#faf6ef;
+    --w-bg-2:#f2ebde;
+    --w-panel:#ffffff;
+    --w-text:#2b2f2c;
+    --w-strong:#1f2a24;
+    --w-muted:#5e5a51;
+    --w-faint:#7d776b;
+    --w-line:#e4d9c6;
+    --w-card:#ffffff;
+    --w-card-edge:#e9dfcd;
+    --w-chip:#f2ebde;
+    --w-photo:radial-gradient(80% 70% at 50% 40%, #ffffff 0%, #ece3d3 75%);
+    --w-photo-text:#7d776b;
+    --w-glass:rgba(250,246,239,.88);
+    --w-accent:#b04a26;
+    --w-accent-2:#c2562e;
+    --w-accent-ink:#ffffff;
+    --w-accent-soft:#f8e5da;
+    --w-kicker:#9b3f1f;
+    --w-link:#9b3f1f;
+    --w-blue-soft:#f2ebde;
+    --w-blue-text:#2b2f2c;
+    --w-topbar-bg:#1f2a24;
+    --w-topbar-text:#e9e2d4;
+    --w-header-bg:rgba(250,246,239,.94);
+    --w-header-edge:#e4d9c6;
+    --w-nav:#3b3f3a;
+    --w-ghost-edge:#cbbfa9;
+    --w-ghost-text:#1f2a24;
+    --w-switch-bg:#f2ebde;
+    --w-hero-bg:linear-gradient(180deg, #faf6ef 0%, #f5eee2 100%);
+    --w-hero-text:#1f2a24;
+    --w-hero-muted:#5e5a51;
+    --w-monogram:rgba(31,42,36,.05);
+    --w-badge-bg:#f8e5da;
+    --w-badge-edge:#e3b49c;
+    --w-badge-text:#8f3a18;
+    --w-ok-bg:#e3f3e5;
+    --w-ok-text:#22662f;
+    --w-few-bg:#fbe6d9;
+    --w-few-text:#8f3a18;
+    --w-pre-bg:#ece6da;
+    --w-pre-text:#4a463e;
+    --w-offer-bg:#f8e5da;
+    --w-offer-edge:#e3b49c;
+    --w-footer-bg:#1f2a24;
+    --w-footer-text:#d8d1c2;
+    --w-strip-bg:#17201b;
+    --w-strip-text:#b9b3a4;
+    --w-strip-strong:#faf6ef;
+    --w-strip-link:#f0b996;
+    --w-mega-bg:#faf6ef;
+    --w-mega-edge:#e4d9c6;
+    --w-mega-shadow:0 30px 60px -30px rgba(31,42,36,.3);
+    --w-mega-kicker:#9b3f1f;
+    --w-mega-sub:#5e5a51;
+    --w-mega-card:#ffffff;
+    --w-mega-card-edge:#e9dfcd;
+    --w-mega-card-shadow:none;
+    --w-mega-card-lift:0 18px 30px -18px rgba(31,42,36,.3), 0 0 0 2px rgba(176,74,38,.35);
+    --w-mega-sheen:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,0));
+    --w-mega-name:#1f2a24;
+    --w-mega-meta:#5e5a51;
+    --w-mega-foot:#f2ebde;
+    --w-mega-foot-edge:#e4d9c6;
+    --w-mega-pill:#ffffff;
+    --w-mega-pill-edge:#cbbfa9;
+    --w-mega-pill-text:#9b3f1f;
+    --w-mega-pill-shadow:none;
+    --w-brand-tab-bg:#f2ebde;
+    --w-brand-tab-edge:#e4d9c6;
+    --w-brand-tab-text:#1f2a24;
+    --w-logo-tile-bg:transparent;
+    --w-logo-tile-edge:transparent;
+    --w-logo-tile-shadow:none;
+    --w-accent-rgb:176,74,38;
+    --w-glow-rgb:194,86,46;
+    --w-glint-rgb:227,180,156;
+    --w-pale:#8f3a18;
+    --w-accent-glow:rgba(176,74,38,.35);
+    --w-band-bg:#1f2a24;
+    --w-band-ink:#faf6ef;
+    --w-band-solid-bg:#faf6ef;
+    --w-band-solid-text:#1f2a24;
+}

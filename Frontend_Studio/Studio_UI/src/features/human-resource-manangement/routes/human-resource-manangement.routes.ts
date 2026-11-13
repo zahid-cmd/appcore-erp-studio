@@ -56,4 +56,109 @@ export const humanResourceManangementRoutes:
 
     // AUTO-END : MNU-005-001
 
-];
+    // MANUAL : Employee Management (hand-written pages, no sync;
+    // HumanResource_Phase1_Engine.sql adds the menu and submenu)
+
+    {
+        path:'employee-management',
+
+        data:
+        {
+            breadcrumb:'Employee Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../employee-management/routes/employee-management.routes'
+            )
+            .then(
+                m =>
+                    m.EmployeeManagementRoutes
+            )
+    },
+
+    // MANUAL : Attendance Management (hand-written pages, no sync;
+    // HumanResource_Phase2_Engine.sql adds the menu and submenus)
+
+    {
+        path:'attendance-management',
+
+        data:
+        {
+            breadcrumb:'Attendance Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../attendance-management/routes/attendance-management.routes'
+            )
+            .then(
+                m =>
+                    m.AttendanceManagementRoutes
+            )
+    },
+
+    // MANUAL : Payroll Management (hand-written pages, no sync;
+    // HumanResource_Phase3_Engine.sql adds the menu and submenus)
+
+    {
+        path:'payroll-management',
+
+        data:
+        {
+            breadcrumb:'Payroll Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../payroll-management/routes/payroll-management.routes'
+            )
+            .then(
+                m =>
+                    m.PayrollManagementRoutes
+            )
+    },
+
+    // MANUAL : Provident Fund (hand-written pages, no sync;
+    // HumanResource_ProvidentFund_Engine.sql adds the menu and submenus)
+
+    {
+        path:'provident-fund',
+
+        data:
+        {
+            breadcrumb:'Provident Fund'
+        },
+
+        loadChildren:() =>
+            import(
+                '../provident-fund/routes/provident-fund.routes'
+            )
+            .then(
+                m =>
+                    m.ProvidentFundRoutes
+            )
+    },
+
+    // MANUAL : HR Reports (hand-written page, no sync;
+    // HumanResource_Phase5_Engine.sql adds the menu and submenu)
+
+    {
+        path:'hr-reports',
+
+        data:
+        {
+            breadcrumb:'HR Reports'
+        },
+
+        loadChildren:() =>
+            import(
+                '../hr-reports/routes/hr-reports.routes'
+            )
+            .then(
+                m =>
+                    m.HrReportsRoutes
+            )
+    },
+
+];

@@ -2,42 +2,67 @@
      WEBSITE FRAME
      -----------------------------------------------------------
      Theme variables live on .website (Deep by default,
-     .theme-light for Light). Pages show in the outlet.
+     .theme-light for Light). data-design = the design in use
+     (1, 2 or 3); Designs 2 and 3 bring their own token sheet
+     and header. Pages show in the outlet.
 ============================================================ -->
 
 <div
     class="website"
-    [class.theme-light]="themes.theme() === 'light'">
+    [class.theme-light]="themes.theme() === 'light'"
+    [attr.data-design]="designs.kit()?.no ?? 1">
 
     @if (content(); as site)
     {
         @if (site.enabled)
         {
-            <app-site-header
-                [content]="site">
-            </app-site-header>
+            @if (designs.kit(); as kit)
+            {
+                <!-- Staff preview of a design : this tab only -->
+                @if (designs.preview())
+                {
+                    <div class="preview-bar" role="status">
+                        <span><b>Preview</b> · Design {{ kit.no }} · not live. Visitors see the default design.</span>
+                        <button type="button" class="preview-exit" (click)="exitPreview()">Exit preview</button>
+                    </div>
+                }
 
-            <main class="website-main">
-                <router-outlet></router-outlet>
-            </main>
+                @if (kit.tokens)
+                {
+                    <ng-container *ngComponentOutlet="kit.tokens"></ng-container>
+                }
 
-            <app-visit-us
-                id="visit"
-                [content]="site">
-            </app-visit-us>
+                <ng-container *ngComponentOutlet="kit.header; inputs: { content: site }"></ng-container>
 
-            <app-site-footer
-                [content]="site">
-            </app-site-footer>
+                <main class="website-main">
+                    <router-outlet></router-outlet>
+                </main>
 
-            <app-appcore-strip>
-            </app-appcore-strip>
+                <app-visit-us
+                    id="visit"
+                    [content]="site">
+                </app-visit-us>
 
-            <!-- Section progress on the right (replaces the
-                 scrollbar on desktop) -->
-            <app-scroll-rail
-                [scroller]="frame">
-            </app-scroll-rail>
+                <app-site-footer
+                    [content]="site">
+                </app-site-footer>
+
+                <app-appcore-strip>
+                </app-appcore-strip>
+
+                <!-- Section progress on the right (replaces the
+                     scrollbar on desktop) -->
+                <app-scroll-rail
+                    [scroller]="frame">
+                </app-scroll-rail>
+            }
+            @else
+            {
+                <!-- The design's part of the site is still loading -->
+                <div class="website-loading" aria-live="polite">
+                    <span class="website-spinner" aria-hidden="true"></span>
+                </div>
+            }
         }
     }
     @else if (!loaded())

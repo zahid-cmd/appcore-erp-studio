@@ -106,7 +106,7 @@ export interface AccessoryLocation
 // of Category Type "Accessories"). Codes are built by the server;
 // Accessory Name is typed. Part Number is OPTIONAL; when given it
 // is unique within the brand (category), ignoring spaces, hyphens,
-// dots and case. No image.
+// dots and case. Image optional ('' = the item icon is shown).
 //===============================================================
 
 export interface Accessories
@@ -172,6 +172,10 @@ export interface Accessories
     // For Sale (default) / Additional Accessories / Promotional
     // Accessories (see ACCESSORY_USES)
     AccessoryUse?: string;
+
+    // Saved image path from the server ('' when none : pages show
+    // the item icon). Uploaded / deleted separately.
+    ImagePath?: string;
 
     Remarks: string;
 

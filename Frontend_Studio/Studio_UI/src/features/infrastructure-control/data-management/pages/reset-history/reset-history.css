@@ -1,5 +1,13 @@
+@import '../../../../../shared/styles/app-list-page.css';
+
+
 /* =====================================================
    RESET HISTORY (shared look : database-backups.css)
+
+   Layout : the shared list page (app-list-page.css, loaded
+   after database-backups.css so its :host wins). The canvas
+   keeps its height on every filter; rows scroll inside it
+   and the pagination stays fixed at the bottom.
 ===================================================== */
 
 .rh-chip
@@ -111,4 +119,14 @@
 {
     margin-right: 4px;
     color: var(--dm-text-2);
+}
+
+
+/* The canvas body fills the canvas; the table scrolls inside */
+
+.dm-canvas-body
+{
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
 }

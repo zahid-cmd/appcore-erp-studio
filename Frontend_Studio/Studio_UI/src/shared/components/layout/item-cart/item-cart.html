@@ -14,7 +14,9 @@
 
     <div class="list-table-header">
 
-        <table class="list-table-grid">
+        <table
+            class="list-table-grid"
+            [style.min-width.px]="tableMinWidth">
 
             <thead>
 
@@ -26,7 +28,11 @@
                         [class.left]="column.align === 'left'"
                         [class.center]="column.align === 'center'"
                         [class.right]="column.align === 'right'"
-                        [class.permission-column]="column.headerCheckbox">
+                        [class.permission-column]="column.headerCheckbox"
+                        [class.ic-stick-right]="column.type === 'action'"
+                        [class.ic-stick-left]="isStickLeft(column)"
+                        [class.ic-stick-left-last]="isStickLeftLast(column)"
+                        [style.left.px]="stickLeft(column)">
 
                         <ng-container
                             *ngIf="
@@ -103,7 +109,9 @@
         Body
     =========================================================-->
 
-    <div class="list-table-body appcore-scrollbar">
+    <div
+        class="list-table-body appcore-scrollbar"
+        (scroll)="onBodyScroll($event)">
 
         <div
             *ngIf="loading"
@@ -144,7 +152,8 @@
                 !orbitLoading &&
                 rows.length > 0
             "
-            class="list-table-grid">
+            class="list-table-grid"
+            [style.min-width.px]="tableMinWidth">
 
             <tbody>
 
@@ -162,7 +171,11 @@
                         [class.left]="column.align === 'left'"
                         [class.center]="column.align === 'center'"
                         [class.right]="column.align === 'right'"
-                        [class.permission-cell]="column.type === 'masterActivities'">
+                        [class.permission-cell]="column.type === 'masterActivities'"
+                        [class.ic-stick-right]="column.type === 'action'"
+                        [class.ic-stick-left]="isStickLeft(column)"
+                        [class.ic-stick-left-last]="isStickLeftLast(column)"
+                        [style.left.px]="stickLeft(column)">
 
                         <ng-container
                             *ngIf="

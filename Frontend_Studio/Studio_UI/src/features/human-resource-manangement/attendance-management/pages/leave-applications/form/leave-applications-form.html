@@ -1,0 +1,279 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-plane-departure"
+        [title]="pageTitle"
+        subtitle="Leave of one employee : weekly off days and holidays are not counted">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            command3Text="Approve"
+            command3Icon="fas fa-circle-check"
+            command3Activity="Approve"
+            (command3Click)="onApprove()"
+            [command3Visible]="canDecide"
+            command4Text="Reject"
+            command4Icon="fas fa-circle-xmark"
+            command4Activity="Approve"
+            (command4Click)="onReject()"
+            [command4Visible]="canDecide"
+            command5Text="Cancel Leave"
+            command5Icon="fas fa-ban"
+            command5Activity="Approve"
+            (command5Click)="onCancelLeave()"
+            [command5Visible]="canCancel"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="lvf-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the application
+            ================================================== -->
+
+            <section class="lvf-card">
+
+                <header class="lvf-card-head">
+                    <i class="fas fa-plane-departure"></i>
+                    <span>Application</span>
+                    <span
+                        class="lvf-status"
+                        [attr.data-status]="entity.Status">{{ entity.Status }}</span>
+                </header>
+
+                <div class="lvf-grid">
+
+                    <app-textbox
+                        label="Code"
+                        [value]="entity.Code"
+                        placeholder="Auto generated"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Applied On"
+                        [value]="entity.AppliedDate ? dayText(entity.AppliedDate) : 'Today'"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <div class="lvf-wide">
+                        <app-search-dropdown
+                            label="Employee"
+                            [required]="true"
+                            placeholder="Select employee"
+                            [items]="employeeItems"
+                            [value]="entity.EmployeeId || null"
+                            [disabled]="isViewMode"
+                            (valueChange)="onEmployee($event)">
+                        </app-search-dropdown>
+                    </div>
+
+                    <div class="lvf-wide">
+                        <app-dropdown
+                            label="Leave Type"
+                            placeholder="Select leave type"
+                            [items]="typeItems"
+                            [value]="entity.LeaveTypeId || null"
+                            (valueChange)="onLeaveType($event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-dropdown>
+                    </div>
+
+                    <app-datepicker
+                        label="From Date"
+                        [required]="true"
+                        [value]="$any(asDate(entity.FromDate))"
+                        [disabled]="isViewMode"
+                        (valueChange)="onDate('FromDate', dateEvent($event))">
+                    </app-datepicker>
+
+                    <app-datepicker
+                        label="To Date"
+                        [required]="true"
+                        [value]="$any(asDate(entity.ToDate))"
+                        [minDate]="asDate(entity.FromDate)"
+                        [disabled]="isViewMode"
+                        (valueChange)="onDate('ToDate', dateEvent($event))">
+                    </app-datepicker>
+
+                    <div class="lvf-wide lvf-days">
+                        <span class="lvf-days-number">{{ counting ? '...' : days(entity.Days) }}</span>
+                        <span class="lvf-days-text">
+                            <b>leave day{{ entity.Days === 1 ? '' : 's' }}</b>
+                            <small>
+                                @if (offDays > 0)
+                                {
+                                    {{ offDays }} day(s) of the range are weekly off days or holidays : they are not leave.
+                                }
+                                @else
+                                {
+                                    Working days of the range.
+                                }
+                            </small>
+                        </span>
+                    </div>
+
+                    @if (overLimit)
+                    {
+                        <div class="lvf-wide lvf-hint lvf-hint-bad">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>
+                                Only {{ days(selectedBalance?.Remaining ?? 0) }} day(s) of {{ selectedBalance?.Name }} are left in {{ balanceYear }} :
+                                this application cannot be saved as it is.
+                            </span>
+                        </div>
+                    }
+
+                    <div class="lvf-wide">
+                        <app-textbox
+                            label="Reason"
+                            placeholder="Why the leave is needed"
+                            [value]="entity.Reason"
+                            [maxLength]="500"
+                            textCase="none"
+                            (valueChange)="onReason($event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-textbox>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- =================================================
+                 RIGHT : decision and balance
+            ================================================== -->
+
+            <div class="lvf-side">
+
+                @if (isViewMode)
+                {
+                    <section class="lvf-card">
+
+                        <header class="lvf-card-head">
+                            <i class="fas fa-gavel"></i>
+                            <span>Decision</span>
+                        </header>
+
+                        @if (entity.Status === 'Pending')
+                        {
+                            <p class="lvf-muted">
+                                Waiting for a decision. Approve puts the leave days into the attendance; Reject needs a note.
+                            </p>
+                        }
+                        @else
+                        {
+                            <dl class="lvf-facts">
+                                <dt>Status</dt>
+                                <dd>{{ entity.Status }}</dd>
+                                <dt>By</dt>
+                                <dd>{{ entity.DecidedByName || '-' }}</dd>
+                                <dt>On</dt>
+                                <dd>{{ entity.DecidedDate ? dayText(entity.DecidedDate) : '-' }}</dd>
+                                <dt>Note</dt>
+                                <dd>{{ entity.DecisionNote || '-' }}</dd>
+                            </dl>
+                        }
+
+                        @if (canDecide || canCancel)
+                        {
+                            <app-textbox
+                                [label]="canCancel ? 'Decision Note (why the leave is cancelled)' : 'Decision Note (needed to reject)'"
+                                placeholder="Note"
+                                [value]="decisionNote"
+                                [maxLength]="500"
+                                textCase="none"
+                                (valueChange)="onDecisionNote($event)">
+                            </app-textbox>
+                        }
+
+                    </section>
+                }
+
+                <section class="lvf-card">
+
+                    <header class="lvf-card-head">
+                        <i class="fas fa-scale-balanced"></i>
+                        <span>Leave Balance {{ balanceYear || '' }}</span>
+                    </header>
+
+                    @if (!entity.EmployeeId)
+                    {
+                        <p class="lvf-muted">Pick the employee to see the leave balance.</p>
+                    }
+                    @else if (balance.length === 0)
+                    {
+                        <p class="lvf-muted">There are no leave types yet : add them on Human Resource Setup &gt; Leave Types.</p>
+                    }
+                    @else
+                    {
+                        <table class="lvf-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Leave</th>
+                                    <th>Per Year</th>
+                                    <th>Taken</th>
+                                    <th>Pending</th>
+                                    <th>Left</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (b of balance; track b.LeaveTypeId)
+                                {
+                                    <tr [class.lvf-on]="b.LeaveTypeId === entity.LeaveTypeId">
+                                        <td>{{ b.Name }} <small>{{ b.ShortName }}</small></td>
+                                        <td>{{ b.Entitled > 0 ? days(b.Entitled) : 'No limit' }}</td>
+                                        <td>{{ days(b.Used) }}</td>
+                                        <td>{{ days(b.Pending) }}</td>
+                                        <td [class.lvf-bad]="b.Entitled > 0 && b.Remaining <= 0">{{ b.Entitled > 0 ? days(b.Remaining) : '-' }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+
+                        <p class="lvf-note">
+                            Taken : the leave days on the attendance of the year (approved applications and leave marked on Daily Attendance).
+                        </p>
+                    }
+
+                </section>
+
+            </div>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

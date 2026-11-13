@@ -139,7 +139,7 @@ export function salesQuotationHtml
                 (line, index) =>
                     `<tr>
   <td class="vd-c">${index + 1}</td>
-  <td><div class="vd-main">${e(line.ProductName)}</div><div class="vd-sub">${e([line.PartNumber, line.ProductCode].filter(x => !!x).join(' || '))}${line.DiscountLabel ? ` <span class="si-div">||</span> ${e(line.DiscountLabel)}` : ''}</div></td>
+  <td><div class="vd-main">${e(line.ProductName)}</div><div class="vd-sub">${e([line.PartNumber, line.ProductCode].filter(x => !!x).join(' || '))}${line.DiscountLabel ? ` <span class="si-div">||</span> ${e(line.DiscountLabel)}` : ''}</div>${(line.Units ?? []).length > 0 ? `<div class="vd-sub">${(line.Units ?? []).map(u => `Chassis <b>${e(u.ChassisNo)}</b> <span class="si-div">||</span> Engine <b>${e(u.EngineNo)}</b>${u.ColorName ? ` <span class="si-div">||</span> ${e(u.ColorName)}` : ''}`).join('<br>')}</div>` : ''}</td>
   <td class="vd-r">${e(qty(line.Quantity))}${line.Unit ? ` <span class="si-unit">${e(line.Unit)}</span>` : ''}</td>
   <td class="vd-r">${kit.money(line.UnitPrice)}</td>
   <td class="vd-r">${kit.money(line.GrossAmount)}</td>

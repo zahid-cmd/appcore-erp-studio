@@ -468,7 +468,7 @@
 
                             <i class="fa-regular fa-file-lines"></i>
 
-                            <span>Invoice Information</span>
+                            <span>{{ isQuotation ? 'Quotation Information' : 'Invoice Information' }}</span>
 
                             <!-- MB : Individual (value Regular, one chassis) / Corporate
                                  (several; switch 0073 and its dates) -->
@@ -1661,7 +1661,7 @@
                     }
                     @else if (isEditable)
                     {
-                            <div class="si-card si-add-card" [class.si-add-locked]="!hasCustomer">
+                            <div class="si-card si-add-card" [class.si-add-locked]="!canAddLines">
 
                                 <div class="si-card-header">
 
@@ -1692,6 +1692,47 @@
                                         </button>
                                     }
 
+                                    <!-- MB quotation : name the exact bikes -->
+                                    @if (isMbQuotation)
+                                    {
+                                        <button
+
+                                            type="button"
+
+                                            class="si-shelf si-reg-head"
+
+                                            [class.is-set]="specificUnits"
+
+                                            [title]="specificUnits ? 'Specific unit ON : one chassis per quantity, printed on the quotation (click to quote models only)' : 'Specific unit OFF : models only (click to name the exact chassis / engine)'"
+
+                                            (click)="toggleSpecificUnits()">
+
+                                            <i [class]="specificUnits ? 'fas fa-circle-check' : 'fas fa-barcode'"></i>
+
+                                            Specific unit
+
+                                        </button>
+                                    }
+
+                                    <!-- Product Shelf : several items at once -->
+                                    <button
+
+                                        type="button"
+
+                                        class="si-shelf"
+
+                                        title="Product Shelf : pick several items at once"
+
+                                        [disabled]="!canAddLines || itemShelfLoading || !warehouseId"
+
+                                        (click)="openItemShelf()">
+
+                                        <i [class]="itemShelfLoading ? 'fas fa-spinner fa-spin' : 'fas fa-store'"></i>
+
+                                        Shelf
+
+                                    </button>
+
                                     <button
 
                                         type="button"
@@ -1700,7 +1741,7 @@
 
                                         title="Clear the category, search and quantity"
 
-                                        [disabled]="!hasCustomer"
+                                        [disabled]="!canAddLines"
 
                                         (click)="clearAddSection()">
 
@@ -1716,7 +1757,7 @@
 
                                         class="si-add"
 
-                                        [disabled]="!hasCustomer || !selectedProduct"
+                                        [disabled]="!canAddLines || !selectedProduct"
 
                                         (click)="onAddLine()">
 
@@ -1728,7 +1769,7 @@
 
                                 </div>
 
-                                <div class="si-fields si-add-fields" [attr.inert]="hasCustomer ? null : ''">
+                                <div class="si-fields si-add-fields" [attr.inert]="canAddLines ? null : ''">
 
                                     <div
 
@@ -1853,7 +1894,7 @@
 
                                 </div>
 
-                                @if (!hasCustomer)
+                                @if (!canAddLines)
                                 {
                                     <div class="si-bike-hint">
 
@@ -1867,7 +1908,7 @@
                                 <!-- Category / sub category narrow the search;
                                      a scanned batch label ignores them -->
 
-                                <div class="si-fields si-grid-2 si-filter-fields" [attr.inert]="hasCustomer ? null : ''">
+                                <div class="si-fields si-grid-2 si-filter-fields" [attr.inert]="canAddLines ? null : ''">
 
                                     <app-search-dropdown
 
@@ -1904,7 +1945,7 @@
                                 <!-- Manual pick : the narrowed area's items;
                                      picking fills the search box -->
 
-                                <div class="si-fields si-product-field" [attr.inert]="hasCustomer ? null : ''">
+                                <div class="si-fields si-product-field" [attr.inert]="canAddLines ? null : ''">
 
                                     <app-search-dropdown
 
@@ -2100,6 +2141,64 @@
                                                 <div class="si-part">{{ lineName(row) }}</div>
 
                                                 <div class="si-sub">{{ lineMeta(row) }}</div>
+
+                                                <!-- MB quotation, Specific unit : the chassis of the line -->
+                                                @if (unitsOn)
+                                                {
+                                                    <div class="si-units" (click)="$event.stopPropagation()" (dblclick)="$event.stopPropagation()">
+
+                                                        @for (u of unitsOf(row); track u.MotorBikeUnitId)
+                                                        {
+                                                            <span class="si-unit-chip">
+
+                                                                Chassis <b>{{ u.ChassisNo }}</b> · Engine <b>{{ u.EngineNo }}</b>{{ u.ColorName ? ' · ' + u.ColorName : '' }}
+
+                                                                @if (isEditable)
+                                                                {
+                                                                    <button type="button" title="Remove this chassis" aria-label="Remove this chassis" (click)="removeUnit(row, u)">
+
+                                                                        <i class="fas fa-xmark"></i>
+
+                                                                    </button>
+                                                                }
+
+                                                            </span>
+                                                        }
+
+                                                        @if (isEditable && unitsOf(row).length < unitsNeeded(row))
+                                                        {
+                                                            <!-- Re-made after each pick (the box starts empty) -->
+                                                            @for (k of [unitsOf(row).length]; track k)
+                                                            {
+                                                                <div class="si-unit-add">
+
+                                                                    <app-search-dropdown
+
+                                                                        [placeholder]="unitStockLoading ? 'Loading the bikes in stock...' : (unitChoiceMap[row.entry.ProductId] ?? []).length === 0 ? 'No free chassis of this model here' : 'Pick chassis (' + (unitsNeeded(row) - unitsOf(row).length) + ' to go)'"
+
+                                                                        [items]="unitChoiceMap[row.entry.ProductId] ?? []"
+
+                                                                        badgeField="badge"
+
+                                                                        [value]="null"
+
+                                                                        [disabled]="unitStockLoading || (unitChoiceMap[row.entry.ProductId] ?? []).length === 0"
+
+                                                                        (valueChange)="onUnitPick(row, $event)">
+
+                                                                    </app-search-dropdown>
+
+                                                                </div>
+                                                            }
+                                                        }
+
+                                                        @if (unitsOf(row).length > unitsNeeded(row))
+                                                        {
+                                                            <div class="si-sub si-text-rose">{{ unitsOf(row).length - unitsNeeded(row) }} chassis more than the quantity : remove the extra.</div>
+                                                        }
+
+                                                    </div>
+                                                }
 
                                                 @if (row.entry.ChassisNo)
                                                 {
@@ -3816,6 +3915,33 @@
 <!-- =========================================================
      UTILITIES (no toasts : messages are inline)
 ========================================================== -->
+
+<!-- Product Shelf (SP / AC; MB quotation : models) -->
+
+@if (itemShelfOpen)
+{
+    <app-product-shelf
+
+        [open]="itemShelfOpen"
+
+        [title]="'Product Shelf · ' + page.title"
+
+        [subtitle]="itemShelfSubtitle"
+
+        [products]="itemShelfProducts"
+
+        [options]="itemShelfOptions"
+
+        [lineCount]="lines.length"
+
+        [error]="itemShelfError"
+
+        (add)="onItemShelfAdd($event)"
+
+        (closed)="closeItemShelf()">
+
+    </app-product-shelf>
+}
 
 <!-- Motor Bike Shelf (MB) -->
 @if (isBikes)

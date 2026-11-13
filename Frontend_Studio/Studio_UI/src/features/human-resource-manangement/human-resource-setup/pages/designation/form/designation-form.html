@@ -1,257 +1,133 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-id-badge"
-
         [title]="pageTitle"
-
-        subtitle="Manage designations">
+        subtitle="A job title">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
-    ====================================================== -->
-
-    <app-page-toolbar>
-
-        <app-control-tabs
-
-            pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
-
-    </app-page-toolbar>
-
-
-
-    <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS
+         The same look as the other Human Resource Setup forms
+         (pages/hr-setup/form) : the fields in three columns on
+         the left, how the row is used on the right.
     ====================================================== -->
 
     <app-page-canvas>
 
-        <app-form-grid
-
+        <div
             canvasBody
-
-            [columns]="4">
-
-
-
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Basic Information"
-
-                icon="fas fa-id-badge">
-
-
-
-                <!-- Designation Code -->
-
-                <app-textbox
-
-                    label="Designation Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.DesignationCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 POSITION INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Position Information"
-
-                icon="fas fa-user-tie">
-
-
-
-                <!-- Designation Name -->
-
-                <app-textbox
-
-                    label="Designation Name"
-
-                    placeholder="Enter designation name"
-
-                    [(value)]="entity.DesignationName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- Short Name -->
-
-                <app-textbox
-
-                    label="Short Name"
-
-                    placeholder="Enter short name"
-
-                    [(value)]="entity.DesignationShortName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 STATUS & CONTROL
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Control"
-
-                icon="fas fa-toggle-on">
-
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 CONFIGURATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Configuration"
-
-                icon="fas fa-sliders">
-
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-
-
-            </app-form-section>
-
-
-
-        </app-form-grid>
+            class="hrf-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the fields
+            ================================================== -->
+
+            <section class="hrf-card">
+
+                <header class="hrf-card-head">
+                    <i class="fas fa-id-badge"></i>
+                    <span>Designation Details</span>
+                </header>
+
+                <div class="hrf-grid">
+
+                    <app-textbox
+                        label="Code"
+                        placeholder="Auto generated"
+                        [(value)]="entity.DesignationCode"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Designation Name"
+                        placeholder="e.g. Sales Executive"
+                        [(value)]="entity.DesignationName"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-textbox>
+
+                    <app-dropdown
+                        label="Status"
+                        [items]="statusItems"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <app-textbox
+                        label="Short Name"
+                        placeholder="e.g. SE"
+                        [(value)]="entity.DesignationShortName"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                    <div class="hrf-cell hrf-span-2">
+                        <app-textbox
+                            label="Remarks"
+                            placeholder="Optional"
+                            textCase="none"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode">
+                        </app-textbox>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- =================================================
+                 RIGHT : how it is used
+            ================================================== -->
+
+            <section class="hrf-card hrf-help">
+
+                <header class="hrf-card-head">
+                    <i class="fas fa-circle-info"></i>
+                    <span>How it is used</span>
+                </header>
+
+                <ul>
+                    <li>Each employee has one designation (Employee Management &gt; Employee Profiles); user profiles use it too.</li>
+                    <li>It is shown on the attendance sheets, the salary sheets and the payslips.</li>
+                    <li>A promotion to another designation is saved on Employee Movements.</li>
+                    <li>Make a designation that is no longer used Inactive : it then stays on the old records.</li>
+                </ul>
+
+            </section>
+
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

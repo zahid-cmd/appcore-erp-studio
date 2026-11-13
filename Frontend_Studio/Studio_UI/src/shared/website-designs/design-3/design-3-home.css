@@ -1,0 +1,537 @@
+/* =====================================================
+   DESIGN 3 : HOME
+   (after website-section.css)
+===================================================== */
+
+:host
+{
+    display:block;
+}
+
+/* Sections land below the sticky header when jumped to */
+.page > [id]
+{
+    display:block;
+    scroll-margin-top:100px;
+}
+
+/* =====================================================
+   HERO : words left, arched photo right
+===================================================== */
+
+.d3-hero
+{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) minmax(0, 480px);
+    align-items:center;
+    gap:56px;
+    padding-top:48px;
+}
+
+.d3-hero-text
+{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.d3-hero-title
+{
+    margin:0;
+    font-family:var(--w-display);
+    font-size:clamp(40px, 5.2vw, 72px);
+    font-weight:600;
+    line-height:1.04;
+    letter-spacing:-.6px;
+    color:var(--w-strong);
+}
+
+.d3-hero-lead
+{
+    margin:0;
+    max-width:520px;
+    color:var(--w-muted);
+    font-size:18px;
+    line-height:1.6;
+}
+
+.d3-hero-buttons
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+}
+
+.d3-facts
+{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:16px;
+    margin:12px 0 0;
+    padding:22px 0 0;
+    border-top:1px solid var(--w-line);
+    list-style:none;
+}
+
+.d3-facts li
+{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+.d3-facts b
+{
+    font-family:var(--w-display);
+    font-size:19px;
+    font-weight:600;
+    color:var(--w-strong);
+}
+
+.d3-facts span
+{
+    color:var(--w-muted);
+    font-size:13px;
+    line-height:1.45;
+}
+
+.d3-arch-wrap
+{
+    position:relative;
+}
+
+.d3-arch
+{
+    height:clamp(380px, 40vw, 540px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border-radius:999px 999px 28px 28px;
+    background:var(--w-photo);
+    color:var(--w-photo-text);
+}
+
+.d3-arch img
+{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+/* A showroom photo : the whole picture, its own shape (no
+   arch, no cropping) */
+.d3-arch.is-photo
+{
+    height:auto;
+    display:block;
+    border-radius:28px;
+    background:none;
+}
+
+.d3-arch.is-photo img
+{
+    display:block;
+    width:100%;
+    height:auto;
+    object-fit:contain;
+}
+
+.d3-arch img.is-bike
+{
+    width:86%;
+    height:auto;
+    max-height:70%;
+    object-fit:contain;
+}
+
+/* Under the picture, so nothing covers it */
+.d3-hours-card
+{
+    position:relative;
+    margin-top:14px;
+    display:inline-flex;
+    align-items:center;
+    gap:12px;
+    max-width:280px;
+    padding:14px 18px;
+    border:1px solid var(--w-line);
+    border-radius:18px;
+    background:var(--w-panel);
+    box-shadow:0 20px 40px -24px rgba(0,0,0,.45);
+}
+
+.d3-dot
+{
+    flex:0 0 auto;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:var(--w-ok-text);
+}
+
+.d3-hours-text
+{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    font-size:13px;
+    color:var(--w-muted);
+}
+
+.d3-hours-text b
+{
+    color:var(--w-strong);
+    font-size:14px;
+}
+
+/* =====================================================
+   THE RANGE : numbered rows
+===================================================== */
+
+.d3-range-head
+{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    gap:12px 28px;
+    padding-bottom:16px;
+    border-bottom:1.5px solid var(--w-strong);
+}
+
+.d3-tabs
+{
+    display:flex;
+    gap:20px;
+    padding-bottom:6px;
+}
+
+.d3-tab
+{
+    padding:0;
+    border:0;
+    background:none;
+    color:var(--w-muted);
+    font:inherit;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.d3-tab.on
+{
+    color:var(--w-strong);
+    text-decoration:underline;
+    text-underline-offset:6px;
+}
+
+.d3-row
+{
+    min-height:92px;
+    display:grid;
+    grid-template-columns:56px 120px minmax(0, 1fr) 130px 150px 44px;
+    align-items:center;
+    gap:20px;
+    border-bottom:1px solid var(--w-line);
+    color:var(--w-text);
+    text-decoration:none;
+    transition:background .15s ease;
+}
+
+.d3-row:hover
+{
+    background:var(--w-chip);
+}
+
+.d3-no
+{
+    padding-left:6px;
+    font-family:var(--w-display);
+    font-size:22px;
+    color:var(--w-faint);
+}
+
+.d3-thumb
+{
+    height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border-radius:12px;
+    background:var(--w-photo);
+}
+
+.d3-thumb img
+{
+    max-width:90%;
+    max-height:90%;
+    object-fit:contain;
+}
+
+.d3-name-col
+{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+}
+
+.d3-model
+{
+    font-family:var(--w-display);
+    font-size:28px;
+    font-weight:600;
+    color:var(--w-strong);
+}
+
+.d3-line
+{
+    color:var(--w-muted);
+    font-size:14px;
+}
+
+.d3-price
+{
+    color:var(--w-strong);
+    font-size:17px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.d3-arrow
+{
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+    border:1px solid var(--w-line);
+    border-radius:50%;
+    color:var(--w-strong);
+}
+
+.d3-row:hover .d3-arrow
+{
+    border-color:var(--w-accent);
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+}
+
+.d3-more
+{
+    margin-top:18px;
+    padding:0;
+    border:0;
+    background:none;
+    color:var(--w-link);
+    font:inherit;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+/* =====================================================
+   QUICK BARS
+===================================================== */
+
+.d3-bars
+{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+    gap:16px;
+    padding-top:40px;
+}
+
+.d3-bar
+{
+    min-height:76px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:0 26px;
+    border:1px solid var(--w-line);
+    border-radius:20px;
+    background:transparent;
+    color:var(--w-strong);
+    font:inherit;
+    text-align:left;
+    cursor:pointer;
+}
+
+.d3-bar b
+{
+    font-family:var(--w-display);
+    font-size:22px;
+    font-weight:600;
+}
+
+.d3-bar span
+{
+    color:var(--w-muted);
+    font-size:14px;
+}
+
+.d3-bar svg
+{
+    margin-left:auto;
+    flex:0 0 auto;
+}
+
+.d3-bar-accent
+{
+    border-color:transparent;
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+}
+
+.d3-bar-accent span
+{
+    color:inherit;
+    opacity:.85;
+}
+
+/* =====================================================
+   PHONE CALL BAR (phones only)
+===================================================== */
+
+.d3-callbar
+{
+    display:none;
+}
+
+@media (max-width: 640px)
+{
+    .page
+    {
+        padding-bottom:84px;
+    }
+
+    .d3-callbar
+    {
+        position:fixed;
+        left:0;
+        right:0;
+        bottom:0;
+        z-index:40;
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:10px;
+        padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+        border-top:1px solid var(--w-line);
+        background:var(--w-header-bg);
+        backdrop-filter:blur(14px);
+        -webkit-backdrop-filter:blur(14px);
+    }
+
+    .d3-call,
+    .d3-ride
+    {
+        height:50px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+        border-radius:999px;
+        font-weight:700;
+        text-decoration:none;
+    }
+
+    .d3-call
+    {
+        border:1.5px solid var(--w-strong);
+        color:var(--w-strong);
+    }
+
+    .d3-ride
+    {
+        background:var(--w-accent);
+        color:var(--w-accent-ink);
+    }
+
+    /* One button only : it takes the whole bar */
+    .d3-ride:only-child
+    {
+        grid-column:1 / -1;
+    }
+}
+
+/* =====================================================
+   SMALLER SCREENS
+===================================================== */
+
+@media (max-width: 1000px)
+{
+    .d3-hero
+    {
+        grid-template-columns:minmax(0, 1fr);
+        gap:28px;
+        padding-top:24px;
+    }
+
+    .d3-arch-wrap
+    {
+        order:-1;
+    }
+
+    .d3-arch:not(.is-photo)
+    {
+        height:300px;
+        border-radius:200px 200px 22px 22px;
+    }
+
+    .d3-arch.is-photo
+    {
+        border-radius:22px;
+    }
+
+    .d3-facts
+    {
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+    }
+
+    .d3-row
+    {
+        grid-template-columns:40px 90px minmax(0, 1fr) auto;
+        gap:12px;
+    }
+
+    .d3-stock-col,
+    .d3-arrow
+    {
+        display:none;
+    }
+}
+
+@media (max-width: 560px)
+{
+    .d3-row
+    {
+        grid-template-columns:32px minmax(0, 1fr) auto;
+        min-height:68px;
+    }
+
+    .d3-thumb
+    {
+        display:none;
+    }
+
+    .d3-model
+    {
+        font-size:21px;
+    }
+
+    .d3-line
+    {
+        font-size:12.5px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+    .d3-row
+    {
+        transition:none;
+    }
+}

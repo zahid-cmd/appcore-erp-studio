@@ -139,6 +139,12 @@ export interface ShelfOptions
     // The record lines go to : 'order' (default) / 'purchase'
     docWord?:
         string;
+
+    // Sales (Sales Invoices / Quotations, 2026-11-13) : the price
+    // box shows the MRP read only (no price to type), the card's
+    // "last from this supplier" strip is hidden
+    salesMode?:
+        boolean;
 }
 
 

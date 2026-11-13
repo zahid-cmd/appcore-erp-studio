@@ -1,0 +1,230 @@
+<div class="app-form-page">
+
+    <app-page-header
+        icon="fas fa-hand-holding-dollar"
+        [title]="pageTitle"
+        subtitle="A loan against the provident fund, recovered from the salary by instalments">
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Save"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div
+            canvasBody
+            class="pf-body appcore-scrollbar">
+
+            <section class="pf-card">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-hand-holding-dollar"></i>
+                    <span>Loan</span>
+                    @if (isViewMode)
+                    {
+                        <span
+                            class="pf-status"
+                            [attr.data-status]="entity.Status === 'Running' ? 'Running' : 'Recovered'">{{ entity.Status }}</span>
+                    }
+                </header>
+
+                <div class="pfx-grid-3">
+
+                    <app-textbox
+                        label="Code"
+                        [value]="entity.Code"
+                        placeholder="Auto generated"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <div class="pfx-span-2">
+                        @if (isViewMode)
+                        {
+                            <app-textbox
+                                label="Member"
+                                [value]="entity.MemberCode + '  ' + entity.EmployeeCode + '  ' + entity.EmployeeName"
+                                [readonly]="true">
+                            </app-textbox>
+                        }
+                        @else
+                        {
+                            <app-search-dropdown
+                                label="Member"
+                                [required]="true"
+                                placeholder="Select member"
+                                [items]="memberItems"
+                                [value]="entity.PfMemberId || null"
+                                (valueChange)="onMember($event)">
+                            </app-search-dropdown>
+                        }
+                    </div>
+
+                    <app-datepicker
+                        label="Loan Date"
+                        [required]="true"
+                        [value]="$any(asDate(entity.LoanDate))"
+                        [disabled]="isViewMode"
+                        (valueChange)="onDate(dateEvent($event))">
+                    </app-datepicker>
+
+                    <app-textbox
+                        label="Amount (Tk)"
+                        placeholder="0.00"
+                        [value]="entity.Amount || ''"
+                        inputMode="decimal"
+                        [maxLength]="14"
+                        (valueChange)="onAmount($event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Instalments"
+                        placeholder="12"
+                        [value]="entity.Installments || ''"
+                        inputMode="numeric"
+                        [maxLength]="3"
+                        (valueChange)="onInstallments($event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-textbox>
+
+                    <label class="pf-native">
+                        <span class="pf-label">Recovery Starts <b>*</b></span>
+                        <input
+                            type="month"
+                            [value]="entity.StartMonth"
+                            [min]="entity.LoanDate.substring(0, 7)"
+                            [disabled]="isViewMode"
+                            (change)="onMonth($event)">
+                    </label>
+
+                    <app-textbox
+                        label="Each Instalment (Tk)"
+                        [value]="money(installment)"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Interest"
+                        [value]="interestText"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Interest of the Loan (Tk)"
+                        [value]="money(totalInterest)"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="To Repay in All (Tk)"
+                        [value]="money(entity.Amount + totalInterest)"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <span></span>
+
+                    <div class="pfx-span-3">
+                        <app-textbox
+                            label="Remarks"
+                            placeholder="Optional"
+                            [value]="entity.Remarks"
+                            [maxLength]="500"
+                            textCase="none"
+                            (valueChange)="onRemarks($event)"
+                            [disabled]="isViewMode">
+                        </app-textbox>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <div class="pf-column">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-piggy-bank"></i>
+                        <span>{{ isViewMode ? 'Recovery' : 'The Member Now' }}</span>
+                    </header>
+
+                    @if (isViewMode)
+                    {
+                        <dl class="pf-facts">
+                            <dt>Loan</dt>
+                            <dd>{{ money(entity.Amount) }}</dd>
+                            <dt>Interest as planned</dt>
+                            <dd>{{ money(entity.TotalInterest) }}</dd>
+                            <dt>Recovered</dt>
+                            <dd>{{ money(entity.Recovered) }}</dd>
+                            <dt>of which interest (fund income)</dt>
+                            <dd>{{ money(entity.InterestPaid) }}</dd>
+                            <dt>Principal still out</dt>
+                            <dd>{{ money(entity.PrincipalOutstanding) }}</dd>
+                            <dt class="pf-strong">Still to recover</dt>
+                            <dd class="pf-strong">{{ money(entity.Outstanding) }}</dd>
+                        </dl>
+                    }
+                    @else if (member)
+                    {
+                        <dl class="pf-facts">
+                            <dt>Own part</dt>
+                            <dd>{{ money(member.EmployeeBalance) }}</dd>
+                            <dt>Company part</dt>
+                            <dd>{{ money(member.CompanyBalance) }}</dd>
+                            <dt>Still on loan</dt>
+                            <dd>{{ money(member.LoanOutstanding) }}</dd>
+                            <dt class="pf-strong">Can borrow now</dt>
+                            <dd class="pf-strong">{{ money(limit) }}</dd>
+                        </dl>
+                    }
+                    @else
+                    {
+                        <p class="pf-muted">Pick the member to see the balance and how much can be borrowed.</p>
+                    }
+
+                </section>
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>How it works</span>
+                    </header>
+
+                    <ul class="pf-help">
+                        <li>A member can borrow up to {{ number(policy.LoanMaxPercent) }} % of the own part, less what is still on loan, in no more than {{ policy.LoanMaxInstallments }} instalments (Provident Fund Policy).</li>
+                        <li>Interest on a new loan : {{ policyInterestText }} (Provident Fund Policy). It is income of the fund; a loan keeps the terms it was given with.</li>
+                        <li>An instalment is taken from the salary sheet of every month from the start month, until the loan is back. A loan settled early pays the interest of the months used only.</li>
+                        <li>A loan does not lower the fund balance : what is still out is taken off the payment when the member is settled.</li>
+                        <li>A loan is not edited. One nothing was recovered of can be deleted.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

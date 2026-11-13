@@ -33,6 +33,7 @@ import
     Booking,
     BookingCollection,
     BookingCustomer,
+    BookingCustomerCard,
     BookingLine,
     BookingProduct,
     BookingSaved,
@@ -157,7 +158,11 @@ export class BookingsService
                                         ProductCode:text(r, 'ProductCode'),
                                         ProductName:text(r, 'ProductName')
                                     })
-                                )
+                                ),
+                            Categories:
+                                list(x, 'Categories').map(r => ({ Id:num(r, 'Id'), ParentId:num(r, 'ParentId'), Name:text(r, 'Name') })),
+                            SubCategories:
+                                list(x, 'SubCategories').map(r => ({ Id:num(r, 'Id'), ParentId:num(r, 'ParentId'), Name:text(r, 'Name') }))
                         };
                     }
                 )
@@ -193,18 +198,95 @@ export class BookingsService
             );
     }
 
+    // The full card of a picked customer (Sales Invoice - MB
+    // customer lookup : by phone, on the booking date)
+    customerCard
+    (
+        phone:
+            string,
+        date:
+            string
+    ):
+        Observable<BookingCustomerCard>
+    {
+        const params:
+            Record<string, string> =
+            { phone };
+
+        if (date)
+        {
+            params['date'] = date;
+        }
+
+        return this.http
+            .get<any>(`${this.invoiceUrl}/customer-lookup`, { params })
+            .pipe(
+                map
+                (
+                    r =>
+                    {
+                        const m = pick(r, 'Membership');
+
+                        const walkIn = !!pick(r, 'IsWalkIn');
+
+                        const type = text(r, 'CustomerType');
+
+                        return {
+                            Found:pick(r, 'Found') ?? num(r, 'CustomerId') > 0,
+                            CustomerId:num(r, 'CustomerId'),
+                            CustomerCode:text(r, 'CustomerCode'),
+                            DisplayName:text(r, 'DisplayName') || text(r, 'Name'),
+                            Phone:text(r, 'Phone'),
+                            Address:text(r, 'Address'),
+                            CustomerType:type,
+                            CustomerTag:text(r, 'CustomerTag') || (walkIn ? 'Walk-in' : type),
+                            IsCorporate:!!pick(r, 'IsCorporate'),
+                            IsWalkIn:walkIn,
+                            IsActive:pick(r, 'IsActive') ?? true,
+                            Balance:num(r, 'Balance'),
+                            BalanceSide:text(r, 'BalanceSide'),
+                            CreditLimit:num(r, 'CreditLimit'),
+                            MembershipNo:m && num(m, 'MembershipId') > 0 ? text(m, 'MembershipNo') : '',
+                            MembershipCard:m && num(m, 'MembershipId') > 0 ? text(m, 'CardName') : '',
+                            MembershipExpiry:m && num(m, 'MembershipId') > 0 ? day(m, 'ExpiryDate') : '',
+                            Message:text(r, 'Message')
+                        } as BookingCustomerCard;
+                    }
+                )
+            );
+    }
+
     // SP / AC : items by name / code / part number (2+ letters)
+    // 2+ letters, or a category / sub category alone (its items)
     searchProducts
     (
         type:
             BookingType,
         term:
-            string
+            string,
+        categoryId:
+            number = 0,
+        subCategoryId:
+            number = 0
     ):
         Observable<BookingProduct[]>
     {
+        const params:
+            Record<string, string> =
+            { term };
+
+        if (categoryId > 0)
+        {
+            params['categoryId'] = String(categoryId);
+        }
+
+        if (subCategoryId > 0)
+        {
+            params['subCategoryId'] = String(subCategoryId);
+        }
+
         return this.http
-            .get<any[]>(`${this.url(type)}/products`, { params:{ term } })
+            .get<any[]>(`${this.url(type)}/products`, { params })
             .pipe(
                 map
                 (
@@ -282,16 +364,42 @@ export class BookingsService
             .pipe(map(x => toSaved(x)));
     }
 
-    getHistory
+    // The page's history : every booking of the type
+    getPageHistory
     (
         type:
-            BookingType,
-        bookingId:
-            number
+            BookingType
     ):
         Observable<any[]>
     {
-        return this.http.get<any[]>(`${this.url(type)}/history/${bookingId}`);
+        return this.http.get<any[]>(`${this.url(type)}/history`);
+    }
+
+    // Soft delete : an open booking; its receipts are cancelled
+    delete
+    (
+        type:
+            BookingType,
+        publicId:
+            string
+    ):
+        Observable<any>
+    {
+        return this.http.delete<any>(`${this.url(type)}/${publicId}`);
+    }
+
+    // Restore the most recently deleted booking (working branch);
+    // its receipts are posted again
+    restore
+    (
+        type:
+            BookingType
+    ):
+        Observable<{ BookingNo:string }>
+    {
+        return this.http
+            .put<any>(`${this.url(type)}/restore`, {})
+            .pipe(map(x => ({ BookingNo:String(x?.BookingNo ?? x?.bookingNo ?? '') })));
     }
 
     // Open bookings of a customer (Sales Invoice of the type)

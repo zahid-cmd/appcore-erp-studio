@@ -26,10 +26,17 @@ namespace AppCore.Api.Controllers.SalesOperations.BookingManagement;
 //   GET    {type}                      page data (bookings,
 //                                      collections, switches,
 //                                      models (MB))
-//   GET    {type}/products?term=       SP / AC : item search
+//   GET    {type}/products?term=&categoryId=&subCategoryId=
+//                                      SP / AC : item search
 //   GET    {type}/open?customerId=     open bookings of a customer
 //                                      (Sales Invoice of the type)
 //   GET    {type}/history/{bookingId}  one booking's history
+//   GET    {type}/history                the page's history (all
+//                                      bookings of the type)
+//   DELETE {type}/{publicId}           soft delete (open booking;
+//                                      receipts cancelled)
+//   PUT    {type}/restore              restore the latest deleted
+//                                      (branch; receipts again)
 //   POST   {type}                      new booking + first
 //                                      collection (Receipt Voucher)
 //   PUT    {type}/{publicId}           details of an open booking
@@ -151,11 +158,11 @@ public class BookingsController
 
 
     [HttpGet("products")]
-    public Task<IActionResult> SearchProducts(string type, [FromQuery] string? term)
+    public Task<IActionResult> SearchProducts(string type, [FromQuery] string? term, [FromQuery] long categoryId = 0, [FromQuery] long subCategoryId = 0)
     {
         return Run(
             type,
-            async code => Ok(await _repository.SearchProductsAsync(code, term ?? string.Empty)),
+            async code => Ok(await _repository.SearchProductsAsync(code, term ?? string.Empty, categoryId, subCategoryId)),
             "The items could not be searched.");
     }
 
@@ -177,6 +184,62 @@ public class BookingsController
             type,
             async _ => Ok(await _activityHistoryRepository.GetHistoryAsync("Sales Operations", "Booking", bookingId)),
             "The booking history could not be loaded.");
+    }
+
+
+    // The page's history : every booking of the type, newest first
+    [HttpGet("history")]
+    public Task<IActionResult> GetPageHistory(string type)
+    {
+        return Run(
+            type,
+            async code =>
+            {
+                HashSet<long> ids = (await _repository.BookingIdsAsync(code)).ToHashSet();
+
+                return Ok(
+                    (await _activityHistoryRepository.GetListHistoryAsync("Sales Operations", "Booking"))
+                        .Where(x => ids.Contains(x.EntityId))
+                        .OrderByDescending(x => x.PerformedDate)
+                        .ToList());
+            },
+            "The booking history could not be loaded.");
+    }
+
+
+    [HttpDelete("{publicId:guid}")]
+    public Task<IActionResult> Delete(string type, Guid publicId)
+    {
+        long userId = UserId;
+
+        return Run(
+            type,
+            async code =>
+            {
+                await _repository.DeleteAsync(code, publicId, userId);
+
+                return Ok(new { message = "Booking deleted." });
+            },
+            "The booking could not be deleted.");
+    }
+
+
+    [HttpPut("restore")]
+    public Task<IActionResult> Restore(string type)
+    {
+        long userId = UserId;
+
+        long branchId = BranchId;
+
+        return Run(
+            type,
+            async code =>
+            {
+                string bookingNo = await _repository.RestoreAsync(code, branchId, userId);
+
+                return Ok(new { BookingNo = bookingNo, message = $"{bookingNo} restored." });
+            },
+            "The booking could not be restored.");
     }
 
 

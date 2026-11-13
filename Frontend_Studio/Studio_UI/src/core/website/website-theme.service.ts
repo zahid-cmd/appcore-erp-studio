@@ -108,6 +108,19 @@ export class WebsiteThemeService
         }
     }
 
+    // Staff preview : this visit only, nothing remembered
+    preview
+    (
+        value:
+            WebsiteTheme
+    ):
+        void
+    {
+        this.theme.set(value);
+
+        this.chosen = true;
+    }
+
     toggle():
         void
     {

@@ -96,7 +96,7 @@ export class TextareaComponent
     private composing = false;
 
     /* =====================================================
-       ENGLISH ONLY (see text-guard.ts)
+       CONTROL CHARACTERS DROPPED (see text-guard.ts)
        Characters the database cannot store are dropped as
        they are typed; a short note shows for 2.5 s.
     ====================================================== */

@@ -112,6 +112,14 @@ public class Accessories
 
 
     //===========================================================
+    // Image (optional; path only, the file is saved by the
+    // controller). '' = no image : pages show the item icon.
+    //===========================================================
+
+    public string ImagePath { get; set; } = string.Empty;
+
+
+    //===========================================================
     // Description / Status
     //===========================================================
 

@@ -6,17 +6,21 @@
 
     <div class="list-table-header">
 
-        <table class="list-table-grid">
+        <table
+            class="list-table-grid"
+            [style.width.px]="tableWidth">
 
             <thead>
 
                 <tr>
 
                     <th
-                        *ngFor="let column of columns"
+                        *ngFor="let column of columns; let ci=index"
                         [class.lt-p2]="column.priority===2"
                         [class.lt-p3]="column.priority===3"
-                        [style.width]="column.width"
+                        [class.lt-stick-left]="isStickLeft(ci, column)"
+                        [class.lt-stick-right]="isStickRight(ci, column)"
+                        [style.width]="colWidth(ci, column)"
                         [class.left]="column.align==='left'"
                         [class.center]="column.align==='center'"
                         [class.right]="column.align==='right'"
@@ -46,7 +50,9 @@
          BODY
     ========================================================= -->
 
-    <div class="list-table-body appcore-scrollbar">
+    <div
+        class="list-table-body appcore-scrollbar"
+        (scroll)="syncScroll($any($event.target))">
 
         <!-- =====================================================
              LOADING
@@ -105,7 +111,8 @@
 
         <table
             *ngIf="!loading && !error && rows.length>0"
-            class="list-table-grid">
+            class="list-table-grid"
+            [style.width.px]="tableWidth">
 
             <tbody>
 
@@ -124,10 +131,12 @@
 
 
                     <td
-                        *ngFor="let column of columns"
+                        *ngFor="let column of columns; let ci=index"
                         [class.lt-p2]="column.priority===2"
                         [class.lt-p3]="column.priority===3"
-                        [style.width]="column.width"
+                        [class.lt-stick-left]="isStickLeft(ci, column)"
+                        [class.lt-stick-right]="isStickRight(ci, column)"
+                        [style.width]="colWidth(ci, column)"
                         [class.status-cell]="column.type==='status'"
                         [attr.title]="getCellTitle(row, column)"
                         [class.left]="(column.cellAlign || column.align)==='left'"
@@ -731,7 +740,9 @@
         class="list-table-foot"
         *ngIf="footerRows.length && !loading && !error && rows.length">
 
-        <table class="list-table-grid">
+        <table
+            class="list-table-grid"
+            [style.width.px]="tableWidth">
 
             <tbody>
 
@@ -741,10 +752,12 @@
                     [class.grand]="foot?.grand">
 
                     <td
-                        *ngFor="let column of columns"
+                        *ngFor="let column of columns; let ci=index"
                         [class.lt-p2]="column.priority===2"
                         [class.lt-p3]="column.priority===3"
-                        [style.width]="column.width"
+                        [class.lt-stick-left]="isStickLeft(ci, column)"
+                        [class.lt-stick-right]="isStickRight(ci, column)"
+                        [style.width]="colWidth(ci, column)"
                         [class.left]="column.align==='left'"
                         [class.center]="column.align==='center'"
                         [class.right]="column.align==='right'">

@@ -2179,3 +2179,204 @@
 {
     width:100%;
 }
+
+
+/* =====================================================
+   DESIGN TAB : three design cards
+===================================================== */
+
+.wc-designs
+{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+    gap:16px;
+}
+
+
+.wc-design
+{
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    border:1px solid #e3e9f2;
+    border-radius:16px;
+    background:#ffffff;
+}
+
+
+.wc-design.is-picked
+{
+    border-color:#1d4ed8;
+    box-shadow:0 0 0 2px rgba(29,78,216,.18);
+}
+
+
+.wc-shots
+{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+
+
+.wc-shot
+{
+    position:relative;
+    height:150px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:0 14px 14px;
+    box-sizing:border-box;
+}
+
+
+.wc-shot-bar
+{
+    height:16px;
+    margin:0 -14px 8px;
+    opacity:.9;
+}
+
+
+.wc-shot-title
+{
+    width:70%;
+    height:12px;
+    border-radius:3px;
+}
+
+
+.wc-shot-line
+{
+    width:48%;
+    height:6px;
+    border-radius:3px;
+    opacity:.45;
+}
+
+
+.wc-shot-btn
+{
+    width:56px;
+    height:16px;
+    border-radius:8px;
+}
+
+
+.wc-shot-block
+{
+    flex:1 1 auto;
+    border-radius:8px;
+}
+
+
+.wc-shot-name
+{
+    position:absolute;
+    right:10px;
+    bottom:8px;
+    color:rgba(255,255,255,.8);
+    font-size:11px;
+    font-weight:800;
+}
+
+
+.wc-shot-name.dark
+{
+    color:rgba(0,0,0,.55);
+}
+
+
+.wc-design-body
+{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:14px 16px 16px;
+}
+
+
+.wc-design-head
+{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+    color:#13254a;
+    font-size:15.5px;
+}
+
+
+.wc-live,
+.wc-pending
+{
+    padding:2px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:800;
+}
+
+
+.wc-live
+{
+    background:#dcfce7;
+    color:#166534;
+}
+
+
+.wc-pending
+{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+
+.wc-design-feel
+{
+    margin:0;
+    color:#33445f;
+    font-size:14px;
+    line-height:1.5;
+}
+
+
+.wc-design-actions
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:6px;
+}
+
+
+.wc-set
+{
+    height:30px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-left:auto;
+    padding:0 14px;
+    border:0;
+    border-radius:999px;
+    background:#1e3a8a;
+    color:#ffffff;
+    font:inherit;
+    font-size:13.5px;
+    font-weight:800;
+    cursor:pointer;
+}
+
+
+.wc-set:disabled
+{
+    background:#dcfce7;
+    color:#166534;
+    cursor:default;
+}
+
+
+.wc-design-note
+{
+    margin-top:16px;
+}

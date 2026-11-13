@@ -1,0 +1,313 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-file-contract"
+        [title]="pageTitle"
+        subtitle="Numbered terms for one document : English and Bangla">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="tc-body appcore-scrollbar">
+
+            <!-- =================================================
+                 LEFT : the set
+            ================================================== -->
+
+            <div class="tc-side">
+
+                <section class="tc-card">
+
+                    <header class="tc-card-head">
+                        <i class="fas fa-file-contract"></i>
+                        <span>Terms Set</span>
+                    </header>
+
+                    <div class="tc-grid-2">
+
+                        <app-textbox
+                            label="Code"
+                            [value]="entity.Code"
+                            placeholder="Auto generated"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-dropdown
+                            label="Status"
+                            [items]="statusItems"
+                            [value]="entity.IsActive"
+                            (valueChange)="onStatus($event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-dropdown>
+
+                    </div>
+
+                    <app-search-dropdown
+                        label="Operation (document)"
+                        [required]="true"
+                        placeholder="Select the document"
+                        [items]="operationItems"
+                        [value]="entity.OperationCode || null"
+                        [disabled]="isViewMode || operationLocked"
+                        (valueChange)="onOperation($event)">
+                    </app-search-dropdown>
+
+                    <app-textbox
+                        label="Title"
+                        [placeholder]="operationLocked ? '' : 'Named after the operation (pick it first)'"
+                        [value]="titleText"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    @if (operationLocked && !isViewMode)
+                    {
+                        <p class="tc-fixed">
+                            <i class="fas fa-lock"></i>
+                            The operation and title are fixed once saved. For another document, add a new set.
+                        </p>
+                    }
+
+                    <label
+                        class="tc-switch"
+                        [class.tc-switch-off]="!entity.IsActive">
+                        <input
+                            type="checkbox"
+                            [checked]="entity.IsDefault"
+                            [disabled]="isViewMode || !entity.IsActive"
+                            (change)="onDefault($event)">
+                        <span class="tc-switch-track"><span class="tc-switch-knob"></span></span>
+                        <span class="tc-switch-text">
+                            <b>Default for this operation</b>
+                            <small>The documents print the Default set on A4.</small>
+                        </span>
+                    </label>
+
+                    @if (entity.OperationCode)
+                    {
+                        <div class="tc-hint">
+                            <i class="fas fa-circle-info"></i>
+                            <span>
+                                @if (otherDefault)
+                                {
+                                    The Default of {{ selectedOperation?.Name }} is now <b>{{ otherDefault }}</b>.
+                                    @if (entity.IsDefault)
+                                    {
+                                        Saving makes this set the Default instead.
+                                    }
+                                }
+                                @else if (entity.IsDefault)
+                                {
+                                    This set is the Default of {{ selectedOperation?.Name }}.
+                                }
+                                @else
+                                {
+                                    {{ selectedOperation?.Name }} has no Default set yet : it prints no terms.
+                                }
+                            </span>
+                        </div>
+                    }
+
+                    <app-textbox
+                        label="Note (internal)"
+                        placeholder="Optional : not printed"
+                        [value]="entity.Note"
+                        [maxLength]="500"
+                        textCase="none"
+                        (valueChange)="onText('Note', $event)"
+                        [disabled]="isViewMode">
+                    </app-textbox>
+
+                </section>
+
+            </div>
+
+            <!-- =================================================
+                 RIGHT : the lines
+            ================================================== -->
+
+            <section class="tc-card tc-lines">
+
+                <header class="tc-card-head">
+                    <i class="fas fa-list-ol"></i>
+                    <span>Terms</span>
+                    <span class="tc-head-note">{{ filledLines.length }} line{{ filledLines.length === 1 ? '' : 's' }} · {{ banglaCount }} in Bangla</span>
+                    @if (!isViewMode)
+                    {
+                        <button
+                            type="button"
+                            class="tc-btn"
+                            (click)="addLine()">
+                            <i class="fas fa-plus"></i>
+                            Line
+                        </button>
+                    }
+                </header>
+
+                <div class="tc-table-wrap appcore-scrollbar">
+
+                    <table class="tc-table">
+
+                        <thead>
+                            <tr>
+                                <th class="tc-c-no">#</th>
+                                <th>English</th>
+                                <th>Bangla (optional)</th>
+                                @if (!isViewMode)
+                                {
+                                    <th class="tc-c-tools"></th>
+                                }
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @for (line of entity.Lines; track $index; let i = $index)
+                            {
+                                <tr>
+                                    <td class="tc-c-no"><span class="tc-no">{{ i + 1 }}</span></td>
+                                    <td>
+                                        <textarea
+                                            class="tc-input"
+                                            rows="2"
+                                            maxlength="1000"
+                                            placeholder="e.g. Goods once sold will not be taken back."
+                                            [value]="line.TextEn"
+                                            [disabled]="isViewMode"
+                                            (input)="onLineText(line, 'TextEn', $event)"></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea
+                                            class="tc-input tc-bn"
+                                            lang="bn"
+                                            rows="2"
+                                            maxlength="1000"
+                                            placeholder="যেমন : বিক্রিত পণ্য ফেরত নেওয়া হয় না।"
+                                            [value]="line.TextBn"
+                                            [disabled]="isViewMode"
+                                            (input)="onLineText(line, 'TextBn', $event)"></textarea>
+                                    </td>
+                                    @if (!isViewMode)
+                                    {
+                                        <td class="tc-c-tools">
+                                            <span class="tc-tools">
+                                                <button type="button" title="Move up" [disabled]="i === 0" (click)="moveLine(i, -1)"><i class="fas fa-arrow-up"></i></button>
+                                                <button type="button" title="Move down" [disabled]="i === entity.Lines.length - 1" (click)="moveLine(i, 1)"><i class="fas fa-arrow-down"></i></button>
+                                                <button type="button" title="Insert a line below" (click)="insertLine(i)"><i class="fas fa-plus"></i></button>
+                                                <button type="button" class="tc-danger" title="Remove line" (click)="removeLine(i)"><i class="fas fa-xmark"></i></button>
+                                            </span>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                @if (!isViewMode)
+                {
+                    <button
+                        type="button"
+                        class="tc-link"
+                        (click)="addLine()">
+                        <i class="fas fa-plus"></i>
+                        Add line
+                    </button>
+                }
+
+            </section>
+
+        </div>
+
+        <!-- =================================================
+             CANVAS FOOTER : print preview
+        ================================================== -->
+
+        <div
+            canvasFooter
+            class="tc-foot">
+
+            <div class="tc-foot-side">
+
+                <header class="tc-card-head">
+                    <i class="fas fa-print"></i>
+                    <span>Print Preview</span>
+                </header>
+
+                <span class="tc-seg">
+                    <button
+                        type="button"
+                        [class.on]="!previewBangla"
+                        (click)="setPreview(false)">English</button>
+                    <button
+                        type="button"
+                        [class.on]="previewBangla"
+                        (click)="setPreview(true)">বাংলা</button>
+                </span>
+
+                @if (previewBangla && banglaCount < filledLines.length)
+                {
+                    <p class="tc-note">
+                        {{ filledLines.length - banglaCount }} line(s) without Bangla print in English (shown in grey).
+                    </p>
+                }
+
+            </div>
+
+            <div
+                class="tc-paper appcore-scrollbar"
+                [class.tc-bn]="previewBangla">
+
+                <div class="tc-paper-title">{{ previewBangla ? 'শর্তাবলী' : 'Terms & Conditions' }}</div>
+
+                @if (filledLines.length > 0)
+                {
+                    <ol>
+                        @for (line of filledLines; track $index)
+                        {
+                            <li [class.tc-fallback]="previewBangla && !line.TextBn.trim()">{{ previewText(line) }}</li>
+                        }
+                    </ol>
+                }
+                @else
+                {
+                    <p class="tc-muted">The lines appear here as they will print.</p>
+                }
+
+            </div>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

@@ -1,0 +1,465 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        [title]="pageTitle"
+        subtitle="An employee's month, or one day of a branch : present, late, absent, off"
+        icon="fas fa-user-check">
+
+        <div pageHeaderCenter>
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search name, code..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                [command1Text]="mode === 'edit' ? 'Update' : 'Save'"
+                command1Icon="fas fa-floppy-disk"
+                (command1Click)="save()"
+                [command1Visible]="!isViewMode"
+                command2Text="All Present"
+                command2Icon="fas fa-check-double"
+                command2Title="Marks everyone who has no mark yet as Present"
+                (command2Click)="markAllPresent()"
+                [command2Visible]="!isViewMode"
+                command3Text="Refresh"
+                command3Icon="fas fa-rotate-right"
+                (command3Click)="refresh()"
+                rightCommandIcon="fas fa-arrow-left"
+                rightCommandTitle="Back to the list"
+                (rightCommandClick)="onBackToList()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE TOOLBAR : the day and the branch
+    ====================================================== -->
+
+    <app-page-toolbar>
+
+        <div
+            pageToolbarLeft
+            class="da-day">
+
+            <app-control-tabs
+                [tabs]="viewTabs"
+                [selectedTab]="view"
+                (selectedTabChange)="onView($event)">
+            </app-control-tabs>
+
+            @if (isMonth)
+            {
+                @if (hasChanges)
+                {
+                    <span class="da-chip da-chip-unsaved">
+                        <i class="fas fa-pen"></i>
+                        Not saved
+                    </span>
+                }
+            }
+            @else
+            {
+
+            <button
+                type="button"
+                class="da-nav"
+                title="Previous day"
+                (click)="moveDay(-1)">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <app-datepicker class="hr-date-inline"
+                [value]="$any(asDate(date))"
+                (valueChange)="onDateInput(dateEvent($event))">
+            </app-datepicker>
+
+            <button
+                type="button"
+                class="da-nav"
+                title="Next day"
+                (click)="moveDay(1)">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+
+            <button
+                type="button"
+                class="da-today"
+                [disabled]="date === today"
+                (click)="goToDate(today)">
+                Today
+            </button>
+
+            <span class="da-day-name">{{ dayName }}</span>
+
+            @if (holidayName)
+            {
+                <span class="da-chip da-chip-holiday">
+                    <i class="fas fa-umbrella-beach"></i>
+                    {{ holidayName }}
+                </span>
+            }
+
+            @if (isFuture)
+            {
+                <span class="da-chip da-chip-future">
+                    <i class="fas fa-lock"></i>
+                    A day still to come : it cannot be marked
+                </span>
+            }
+            @else if (hasChanges)
+            {
+                <span class="da-chip da-chip-unsaved">
+                    <i class="fas fa-pen"></i>
+                    Not saved
+                </span>
+            }
+
+            }
+
+        </div>
+
+        <div
+            pageToolbarRight
+            class="da-filters">
+
+        <app-search-dropdown
+            placeholder="Month"
+            [items]="monthItems"
+            labelField="label"
+            valueField="value"
+            [value]="month"
+            (valueChange)="onMonth($event)">
+        </app-search-dropdown>
+
+        @if (isMonth)
+        {
+            <app-search-dropdown
+                class="da-employee"
+                placeholder="Employee"
+                [items]="employeeItems"
+                labelField="label"
+                valueField="value"
+                [value]="employeeId || null"
+                (valueChange)="onEmployee($event)">
+            </app-search-dropdown>
+        }
+
+        <app-search-dropdown
+            placeholder="All Branches"
+            [items]="branchItems"
+            labelField="label"
+            valueField="value"
+            [value]="branchId"
+            (valueChange)="onBranchChange($event)">
+        </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <!-- =====================================================
+         THE MONTH : its days, a click opens that day
+    ====================================================== -->
+
+    @if (!isMonth)
+    {
+    <div class="da-month appcore-scrollbar">
+
+        @for (d of monthDays; track d.date)
+        {
+            <button
+                type="button"
+                class="da-month-day"
+                [class.on]="d.date === date"
+                [class.today]="d.date === today"
+                [class.future]="d.future"
+                [title]="d.future ? 'A day still to come' : ''"
+                (click)="goToDate(d.date)">
+                <small>{{ d.week }}</small>
+                <b>{{ d.day }}</b>
+            </button>
+        }
+
+    </div>
+    }
+
+    <!-- =====================================================
+         PAGE CANVAS : the sheet
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="da-wrap appcore-scrollbar">
+
+            @if (visibleRows.length > 0)
+            {
+            <table class="da-table">
+
+                <thead>
+                    <tr>
+                        <th class="da-c-no">#</th>
+                        @if (isMonth)
+                        {
+                            <th class="da-c-date">Date</th>
+                            <th class="da-c-shift">Day</th>
+                        }
+                        @else
+                        {
+                            <th class="da-c-emp">Employee</th>
+                            <th class="da-c-shift">Shift</th>
+                        }
+                        <th class="da-c-status">Status</th>
+                        <th class="da-c-time">
+                            <label
+                                class="da-fill"
+                                title="Tick : the In time of every worked row that has none is filled from the shift. A row can still be changed.">
+                                <input
+                                    type="checkbox"
+                                    [checked]="fillIn"
+                                    [disabled]="isSaving"
+                                    (change)="onFill('InTime', $event)">
+                                <span>In</span>
+                                <small>{{ fillText('InTime') }}</small>
+                            </label>
+                        </th>
+                        <th class="da-c-time">
+                            <label
+                                class="da-fill"
+                                title="Tick : the Out time of every worked row that has none is filled from the shift. A row can still be changed.">
+                                <input
+                                    type="checkbox"
+                                    [checked]="fillOut"
+                                    [disabled]="isSaving"
+                                    (change)="onFill('OutTime', $event)">
+                                <span>Out</span>
+                                <small>{{ fillText('OutTime') }}</small>
+                            </label>
+                        </th>
+                        <th class="da-c-ot">OT (h)</th>
+                        <th
+                            class="da-c-otday"
+                            title="Overtime day : worked on a weekly holiday or a public holiday (present 1, half day 0.5)">OT Day</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @for (row of visibleRows; track rowKey(row); let i = $index)
+                    {
+                        <tr
+                            [class.da-unmarked]="!row.Status"
+                            [class.da-fixed]="!!row.LeaveApplicationCode"
+                            [class.da-offday]="isMonth && (row.IsWeeklyOff || !!row.HolidayName)"
+                            [class.da-later]="isMonth && (row.IsFuture || row.BeforeJoining)">
+
+                            <td class="da-c-no">{{ i + 1 }}</td>
+
+                            @if (isMonth)
+                            {
+                                <td class="da-c-date">
+                                    <b>{{ dayLabel(row) }}</b>
+                                </td>
+
+                                <td class="da-c-shift">
+                                    <span>{{ row.DayName }}</span>
+                                    <small>
+                                        @if (row.HolidayName) { {{ row.HolidayName }} }
+                                        @else if (row.IsWeeklyOff) { weekly holiday }
+                                        @else if (row.BeforeJoining) { before joining }
+                                        @else if (row.IsFuture) { still to come }
+                                        @else { {{ row.ShiftStart }} - {{ row.ShiftEnd }} }
+                                    </small>
+                                </td>
+                            }
+                            @else
+                            {
+                                <td class="da-c-emp">
+                                    <b>{{ row.FullName }}</b>
+                                    <small>{{ row.Code }} · {{ row.DesignationName }}@if (branchId === 0 && row.BranchName) { · {{ row.BranchName }} }</small>
+                                </td>
+
+                                <td class="da-c-shift">
+                                    <span>{{ row.ShiftName }}</span>
+                                    <small>
+                                        {{ row.ShiftStart }} - {{ row.ShiftEnd }}@if (row.IsWeeklyOff) { · weekly off }
+                                    </small>
+                                </td>
+                            }
+
+                            <td class="da-c-status">
+
+                                @if (row.LeaveApplicationCode)
+                                {
+                                    <span
+                                        class="da-leave-fixed"
+                                        title="Approved leave : change it on Leave Applications">
+                                        <i class="fas fa-plane-departure"></i>
+                                        Leave · {{ row.LeaveApplicationCode }}
+                                    </span>
+                                }
+                                @else
+                                {
+                                    <span class="da-seg">
+                                        @for (b of buttonsOf(row); track b.code)
+                                        {
+                                            <button
+                                                type="button"
+                                                [title]="b.title"
+                                                [class.on]="isOn(row, b.code)"
+                                                [attr.data-code]="b.code"
+                                                [disabled]="isLocked(row)"
+                                                (click)="setStatus(row, b.code)">{{ b.label }}</button>
+                                        }
+                                    </span>
+
+                                    @if (row.Status === 'LV')
+                                    {
+                                        <!-- a leave typed here before : it now comes
+                                             from Leave Applications only -->
+                                        <span class="da-late">Leave</span>
+                                    }
+
+                                    @if (lateMinutes(row) > 0)
+                                    {
+                                        <span class="da-late">
+                                            Late {{ lateMinutes(row) > 1 ? lateMinutes(row) + ' min' : '' }}
+                                        </span>
+                                    }
+                                }
+
+                            </td>
+
+                            <td class="da-c-time">
+                                @if (isWorked(row))
+                                {
+                                    <input
+                                        type="time"
+                                        class="da-input da-time"
+                                        [value]="row.InTime"
+                                        [disabled]="isLocked(row)"
+                                        (keydown.enter)="nextBox($event)"
+                                        (change)="onTime(row, 'InTime', $event)">
+                                }
+                            </td>
+
+                            <td class="da-c-time">
+                                @if (isWorked(row))
+                                {
+                                    <input
+                                        type="time"
+                                        class="da-input da-time"
+                                        [value]="row.OutTime"
+                                        [disabled]="isLocked(row)"
+                                        (keydown.enter)="nextBox($event)"
+                                        (change)="onTime(row, 'OutTime', $event)">
+                                }
+                            </td>
+
+                            <td class="da-c-ot">
+                                @if (isWorked(row) && row.OvertimeAllowed)
+                                {
+                                    <input
+                                        class="da-input da-num"
+                                        inputmode="decimal"
+                                        maxlength="5"
+                                        placeholder="0"
+                                        [value]="row.OvertimeHours || ''"
+                                        [disabled]="isLocked(row)"
+                                        (change)="onOvertime(row, $event)">
+                                }
+                            </td>
+
+                            <td class="da-c-otday">
+                                @if (otDay(row) > 0)
+                                {
+                                    <span
+                                        class="da-otday"
+                                        title="Worked on an off day : paid as an overtime day">{{ otDay(row) }}</span>
+                                }
+                            </td>
+
+                            <td class="da-c-note">
+
+                                <input
+                                    class="da-input da-remarks"
+                                    maxlength="200"
+                                    placeholder="Remarks"
+                                    [value]="row.Remarks"
+                                    [disabled]="isLocked(row) || !row.Status"
+                                    (change)="onRemarks(row, $event)">
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+            }
+
+            <!-- Loading / failed / nothing to show : centred in the canvas -->
+
+            @if (emptyState; as state)
+            {
+                <app-empty-state
+                    [icon]="state.icon"
+                    [title]="state.title"
+                    [subtitle]="state.subtitle">
+                </app-empty-state>
+            }
+
+        </div>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         SUMMARY (the whole sheet, whatever the search)
+    ====================================================== -->
+
+    @if (rows.length > 0)
+    {
+        <div class="da-summary">
+
+            @for (item of summaryItems; track item.label)
+            {
+                <span class="da-summary-item">
+                    <span class="da-summary-label">{{ item.label }}</span>
+                    <b
+                        class="da-summary-value"
+                        [class.da-ok]="item.tone === 'ok'"
+                        [class.da-bad]="item.tone === 'bad'"
+                        [class.da-warn]="item.tone === 'warn' && item.value !== '0'">{{ item.value }}</b>
+                </span>
+            }
+
+            <span class="da-summary-note">
+                A click on the status that is on takes the mark off
+            </span>
+
+        </div>
+    }
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        title="Attendance History"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

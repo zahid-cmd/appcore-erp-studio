@@ -1546,6 +1546,139 @@ public static class DependencyInjection
             AppCore.Infrastructure.Repositories.SalesOperations.Shared.PromotionalOffersRepository
         >();
 
+        // Human Resource phase 1 : Shifts, Holidays, Leave Types,
+        // Salary Heads, Employees (MANUAL : hand-written pages,
+        // HumanResource_Phase1_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HumanResourceSetup.IHrSetupRepository<AppCore.Application.HumanResourceManangement.HumanResourceSetup.HrShiftDto>,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.HrShiftsRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HumanResourceSetup.IHrSetupRepository<AppCore.Application.HumanResourceManangement.HumanResourceSetup.HrHolidayDto>,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.HrHolidaysRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HumanResourceSetup.IHrSetupRepository<AppCore.Application.HumanResourceManangement.HumanResourceSetup.HrLeaveTypeDto>,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.HrLeaveTypesRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HumanResourceSetup.IHrSetupRepository<AppCore.Application.HumanResourceManangement.HumanResourceSetup.HrSalaryHeadDto>,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.HrSalaryHeadsRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.EmployeeManagement.IEmployeesRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.EmployeeManagement.EmployeesRepository
+        >();
+
+        // Human Resource phase 2 : Daily / Monthly Attendance, Leave
+        // Applications (MANUAL : hand-written pages,
+        // HumanResource_Phase2_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.AttendanceManagement.IAttendanceRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.AttendanceManagement.AttendanceRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.AttendanceManagement.ILeaveApplicationsRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.AttendanceManagement.LeaveApplicationsRepository
+        >();
+
+        // Human Resource phase 3 : Salary Advances, Salary Sheets
+        // (MANUAL : hand-written pages,
+        // HumanResource_Phase3_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.PayrollManagement.ISalaryAdvancesRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.PayrollManagement.SalaryAdvancesRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.PayrollManagement.ISalarySheetsRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.PayrollManagement.SalarySheetsRepository
+        >();
+
+        // Human Resource phase 4 : Employee Movements (MANUAL :
+        // hand-written page, HumanResource_Phase4_Engine.sql; NO
+        // Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.EmployeeManagement.IEmployeeMovementsRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.EmployeeManagement.EmployeeMovementsRepository
+        >();
+
+        // Human Resource phase 5 : Staff & Payroll Reports (MANUAL :
+        // hand-written page, HumanResource_Phase5_Engine.sql; NO
+        // Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HrReports.IHrReportsRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HrReports.HrReportsRepository
+        >();
+
+        // Human Resource : Salary Structures (MANUAL : hand-written
+        // page, HumanResource_SalaryStructures_Engine.sql; NO Code
+        // Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HumanResourceSetup.ISalaryStructuresRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.SalaryStructuresRepository
+        >();
+
+        // Human Resource : provident fund (MANUAL : hand-written
+        // pages, HumanResource_ProvidentFund_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.ProvidentFund.IProvidentFundRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.ProvidentFund.ProvidentFundRepository
+        >();
+
+        // Human Resource : overtime structures (MANUAL : hand-written
+        // page, HumanResource_OvertimeStructures_Engine.sql; NO Code
+        // Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HumanResourceSetup.IOvertimeStructuresRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.OvertimeStructuresRepository
+        >();
+
+        // Human Resource : the weekly holiday (MANUAL : hand-written
+        // page, HumanResource_WeeklyHoliday_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HumanResourceSetup.IWeeklyHolidayRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.WeeklyHolidayRepository
+        >();
+
+        // Terms & Conditions (MANUAL : hand-written page,
+        // TermsConditions_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.Settings.GeneralSettings.ITermsConditionsRepository,
+            AppCore.Infrastructure.Repositories.Settings.GeneralSettings.TermsConditionsRepository
+        >();
+
         // Membership Fees Collection (MANUAL : hand-written page,
         // MembershipFees_Engine.sql; NO Code Sync)
 

@@ -1,0 +1,225 @@
+/* =====================================================
+   DESIGN 2 : SITE HEADER
+   (after website-section.css and site-header.css)
+===================================================== */
+
+/* Thin top bar */
+.d2-top
+{
+    background:var(--w-topbar-bg);
+    color:var(--w-topbar-text);
+    font-size:13px;
+}
+
+.d2-top-inner
+{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    min-height:40px;
+}
+
+.d2-top-info
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 22px;
+    min-width:0;
+}
+
+.d2-top-info a
+{
+    color:inherit;
+    font-weight:600;
+    text-decoration:none;
+}
+
+.d2-top-actions
+{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.d2-top .theme
+{
+    padding:2px;
+    border-color:rgba(255,255,255,.2);
+    background:transparent;
+}
+
+.d2-top .theme-btn
+{
+    width:30px;
+    height:26px;
+    color:var(--w-topbar-text);
+}
+
+.d2-top .theme-btn.on
+{
+    background:var(--w-accent);
+    color:var(--w-accent-ink);
+}
+
+.d2-office
+{
+    height:30px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:0 12px;
+    border:1px solid rgba(255,255,255,.22);
+    border-radius:999px;
+    color:var(--w-topbar-text);
+    font-size:12.5px;
+    font-weight:600;
+    text-decoration:none;
+}
+
+.d2-office:hover
+{
+    border-color:var(--w-accent);
+}
+
+/* Logo row : search · logo · test ride */
+.d2-row
+{
+    display:grid;
+    grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items:center;
+    gap:20px;
+    min-height:76px;
+}
+
+.d2-search
+{
+    justify-self:start;
+    width:min(320px, 100%);
+    height:42px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:0 14px;
+    box-sizing:border-box;
+    border:1px solid var(--w-line);
+    border-radius:999px;
+    background:var(--w-chip);
+    color:var(--w-muted);
+}
+
+.d2-search input
+{
+    flex:1 1 auto;
+    min-width:0;
+    border:0;
+    outline:none;
+    background:transparent;
+    color:var(--w-text);
+    font:inherit;
+    font-size:14px;
+}
+
+.d2-search:focus-within
+{
+    border-color:var(--w-accent);
+}
+
+.d2-brand
+{
+    justify-self:center;
+    align-self:center;
+}
+
+.d2-name
+{
+    font-family:var(--w-display);
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:6px;
+    text-transform:uppercase;
+    color:var(--w-strong);
+}
+
+.d2-cta
+{
+    justify-self:end;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+/* Menu centred under the logo */
+.d2-nav-row
+{
+    border-top:1px solid var(--w-line);
+}
+
+.d2-nav
+{
+    justify-content:center;
+    gap:14px;
+    margin:0 auto;
+    min-height:50px;
+}
+
+.d2-nav .nav-link
+{
+    font-size:15px;
+    font-weight:500;
+    border-radius:999px;
+}
+
+.d2-nav .nav-link:hover
+{
+    color:var(--w-strong);
+}
+
+@media (max-width: 1180px)
+{
+    .d2-nav-row
+    {
+        border-top:0;
+    }
+
+    .d2-nav
+    {
+        justify-content:flex-start;
+        min-height:0;
+    }
+}
+
+@media (max-width: 860px)
+{
+    .d2-top-info span
+    {
+        display:none;
+    }
+
+    .d2-row
+    {
+        grid-template-columns:auto 1fr;
+        min-height:64px;
+    }
+
+    .d2-search
+    {
+        display:none;
+    }
+
+    .d2-brand
+    {
+        justify-self:start;
+    }
+
+    .d2-name
+    {
+        font-size:19px;
+        letter-spacing:4px;
+    }
+
+    .d2-ride
+    {
+        display:none;
+    }
+}

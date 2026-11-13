@@ -372,11 +372,11 @@ implements OnInit
         },
 
         {
-            header:'Department Code',
+            header:'Code',
 
             field:'DepartmentCode',
 
-            width:'180px',
+            width:'100px',
 
             align:'center'
         },
@@ -386,7 +386,7 @@ implements OnInit
 
             field:'DepartmentName',
 
-            width:'280px',
+            width:'320px',
 
             align:'left'
         },
@@ -396,9 +396,9 @@ implements OnInit
 
             field:'DepartmentShortName',
 
-            width:'180px',
+            width:'160px',
 
-            align:'left'
+            align:'center'
         },
 
         {
@@ -406,7 +406,7 @@ implements OnInit
 
             field:'IsActive',
 
-            width:'120px',
+            width:'110px',
 
             align:'center',
 
@@ -420,7 +420,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'80px',
+            width:'120px',
 
             align:'center'
         }

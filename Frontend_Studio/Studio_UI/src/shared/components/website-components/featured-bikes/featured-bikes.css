@@ -147,9 +147,9 @@
     margin:0;
     font-family:var(--w-display);
     font-size:28px;
-    font-weight:800;
+    font-weight:var(--w-title-weight, 800);
     line-height:1;
-    text-transform:uppercase;
+    text-transform:var(--w-title-transform, uppercase);
 }
 
 

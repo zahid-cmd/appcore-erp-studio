@@ -1,0 +1,34 @@
+@import '../pf-pages.css';
+@import '../../../human-resource-setup/pages/hr-setup/list/hr-setup-list.css';
+
+/* Provident Fund Policy : a one-row list, then the form */
+
+.pf-body.pfp-body
+{
+    grid-auto-rows: minmax(min-content, 1fr);
+    align-content: stretch;
+}
+
+/* the forfeiture rules under the list */
+
+.pfp-rules
+{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.pfp-rule
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 9px;
+    color: #334155;
+    font-size: 13.5px;
+}
+
+.pfp-rule > i
+{
+    color: #1e3a8a;
+    font-size: 12px;
+}
