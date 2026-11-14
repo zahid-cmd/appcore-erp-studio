@@ -618,7 +618,7 @@ implements OnInit
 
         for (const t of r.LeaveTypes)
         {
-            typeColumns.push({ header:`${t.ShortName} Taken`, kind:'days', title:`${t.Name} : days taken in ${r.Year}` });
+            typeColumns.push({ header:`${t.ShortName} Taken`, kind:'days', title:`${t.Name} : days taken in ${r.YearName || r.Year}` });
 
             if (t.DaysPerYear > 0)
             {
@@ -627,7 +627,7 @@ implements OnInit
         }
 
         return {
-            title:`Leave Balance ${r.Year}`,
+            title:`Leave Balance ${r.YearName || r.Year}`,
             subtitle:`${this.branchName} · active employees`,
             columns:
             [

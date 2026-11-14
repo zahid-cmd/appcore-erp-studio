@@ -200,7 +200,7 @@ implements OnInit
 
     get pageTitle(): string
     {
-        return this.mode === 'add' ? 'PF Member' : `${this.mode === 'edit' ? 'Update' : 'View'} PF Member ${this.entity.Code}`;
+        return this.mode === 'add' ? 'PF Member' : `${this.mode === 'edit' ? 'Update' : 'View'} PF Member`;
     }
 
     get contributionText(): string

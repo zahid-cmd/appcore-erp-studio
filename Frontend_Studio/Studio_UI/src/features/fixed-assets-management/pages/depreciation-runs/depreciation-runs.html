@@ -1,0 +1,439 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Depreciation Runs"
+            subtitle="The monthly depreciation of each branch, posted to the accounts"
+            icon="fas fa-chart-line">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search code, month, branch..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="New Run"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <span
+                pageToolbarLeft
+                class="hp-note">One run is one month of one branch. The months go in order, with no gap.</span>
+
+            <div
+                pageToolbarRight
+                class="pfx-tools dr-filters">
+
+                <app-search-dropdown
+                    placeholder="All Branches"
+                    [items]="branchFilterItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="branchFilter"
+                    (valueChange)="onBranchFilter($event)">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    class="dr-year"
+                    placeholder="All Years"
+                    [items]="yearFilterItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="yearFilter"
+                    (valueChange)="onYearFilter($event)">
+                </app-search-dropdown>
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [actions]="listActions"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    (view)="open($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <div class="pay-summary">
+                @for (item of summaryItems; track item.label)
+                {
+                    <span class="pay-summary-item">
+                        <span class="pay-summary-label">{{ item.label }}</span>
+                        <b class="pay-summary-value">{{ item.value }}</b>
+                    </span>
+                }
+                <span class="pay-summary-note">
+                    Open a run to see its assets; only the last run of a branch can be undone
+                </span>
+            </div>
+        }
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Depreciation Run History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else if (mode === 'add')
+    {
+        <app-page-header
+            title="Depreciation Run"
+            subtitle="Charge the depreciation of the next month of a branch"
+            icon="fas fa-chart-line">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Post Run"
+                    command1Icon="fas fa-file-circle-check"
+                    command1Permission="add"
+                    (command1Click)="onPost()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="refreshAdd()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split appcore-scrollbar">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Run</span>
+                    </header>
+
+                    <app-search-dropdown
+                        label="Branch"
+                        placeholder="Select branch"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="branchId"
+                        (valueChange)="onBranch($event)"
+                        [required]="true">
+                    </app-search-dropdown>
+
+                    <app-textbox
+                        label="Month"
+                        placeholder="The next month of the branch"
+                        [value]="monthText"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Last Run"
+                        [value]="lastRunText"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Assets in Use"
+                        [value]="assetsText"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                    <div class="hp-bar">
+                        <button
+                            type="button"
+                            class="hp-add"
+                            [disabled]="!branchId || previewing"
+                            (click)="workOut()">
+                            <i class="fas fa-calculator"></i>
+                            Work Out
+                        </button>
+                        <span class="hp-note">The month is never typed : it is always the month after the last run of the branch.</span>
+                    </div>
+
+                </section>
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-table-list"></i>
+                        <span>{{ preview ? 'Depreciation of ' + preview.PeriodText : 'Depreciation of the Month' }}</span>
+                        @if (preview)
+                        {
+                            <span class="pf-status">Not posted yet</span>
+                        }
+                    </header>
+
+                    @if (lines.length === 0)
+                    {
+                        <div class="pfx-empty">{{ previewEmptyText }}</div>
+                    }
+                    @else
+                    {
+                        <table class="pfx-table hp-table">
+
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th>Asset No</th>
+                                    <th>Asset</th>
+                                    <th>Asset Group</th>
+                                    <th class="pfx-num">Cost</th>
+                                    <th class="pfx-num">Depreciation Before</th>
+                                    <th class="pfx-num hp-pay">This Month</th>
+                                    <th class="pfx-num">Depreciation After</th>
+                                    <th class="pfx-num">Book Value</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (line of lines; track line.FaAssetId; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="pfx-no">{{ i + 1 }}</td>
+                                        <td class="dr-nowrap">{{ line.AssetNo }}</td>
+                                        <td>{{ line.Name }}</td>
+                                        <td>{{ line.CategoryName }}</td>
+                                        <td class="pfx-num">{{ money(line.Cost) }}</td>
+                                        <td class="pfx-num">{{ money(line.OpeningAccumulated) }}</td>
+                                        <td class="pfx-num hp-pay"><b>{{ money(line.Charge) }}</b></td>
+                                        <td class="pfx-num">{{ money(line.ClosingAccumulated) }}</td>
+                                        <td class="pfx-num">{{ money(line.BookValue) }}</td>
+                                        <td class="dr-line-note">{{ line.Note }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4">Total ({{ lines.length }})</td>
+                                    <td class="pfx-num">{{ money(costTotal) }}</td>
+                                    <td></td>
+                                    <td class="pfx-num hp-pay">{{ money(chargeTotal) }}</td>
+                                    <td></td>
+                                    <td class="pfx-num">{{ money(bookValueTotal) }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    }
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+    @else
+    {
+        <app-page-header
+            title="Depreciation Run"
+            subtitle="The depreciation charged to the assets of a branch for one month"
+            icon="fas fa-chart-line">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search asset no, asset, asset group..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Undo Run"
+                    command1Icon="fas fa-rotate-left"
+                    command1Permission="update"
+                    command1Title="Undo this run (only the last run of a branch can be undone)"
+                    (command1Click)="askUndo()"
+                    [command1Visible]="!!run && run.IsLast"
+                    command2Text="Print"
+                    command2Icon="fas fa-print"
+                    (command2Click)="print()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <div
+                pageToolbarLeft
+                class="hp-steps">
+
+                @if (run)
+                {
+                    <span class="hp-step on"><b><i class="fas fa-chart-line"></i></b> {{ run.Code }}</span>
+                    <span class="hp-state hp-ok">{{ run.PeriodText }}</span>
+                    <span class="hp-note">
+                        {{ run.BranchName }} &nbsp;·&nbsp; Journal Voucher {{ run.JournalVoucherNo || '-' }}
+                        @if (!run.IsLast)
+                        {
+                            &nbsp;·&nbsp; a later month of the branch is posted, so this run cannot be undone
+                        }
+                    </span>
+                }
+
+            </div>
+
+            <span
+                pageToolbarRight
+                class="hp-note">{{ run ? 'Run date ' + day(run.RunDate) : '' }}</span>
+
+        </app-page-toolbar>
+
+        @if (undoing && run)
+        {
+            <div class="hp-panel">
+                <span class="hp-note">
+                    <b>Undo {{ run.Code }}</b> : the depreciation of {{ run.PeriodText }} is taken off the assets of {{ run.BranchName }} and its Journal Voucher {{ run.JournalVoucherNo }} is cancelled.
+                </span>
+                <app-textbox
+                    class="hp-panel-box"
+                    placeholder="Reason (required)"
+                    [value]="undoReason"
+                    [maxLength]="300"
+                    (valueChange)="onUndoReason($event)">
+                </app-textbox>
+                <button
+                    type="button"
+                    class="hp-add hp-danger"
+                    [disabled]="isSaving"
+                    (click)="confirmUndo()">Undo Run</button>
+                <button
+                    type="button"
+                    class="hp-btn"
+                    (click)="keepRun()">Cancel</button>
+            </div>
+        }
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="pfx-scroll appcore-scrollbar">
+
+                @if (lines.length === 0)
+                {
+                    <div class="pfx-empty">{{ viewEmptyText }}</div>
+                }
+                @else
+                {
+                    <table class="pfx-table hp-table dr-sheet">
+
+                        <thead>
+                            <tr>
+                                <th class="pfx-no">#</th>
+                                <th>Asset No</th>
+                                <th>Asset</th>
+                                <th>Asset Group</th>
+                                <th class="pfx-num">Cost</th>
+                                <th class="pfx-num">Depreciation Before</th>
+                                <th class="pfx-num hp-pay">This Month</th>
+                                <th class="pfx-num">Depreciation After</th>
+                                <th class="pfx-num">Book Value</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @for (line of lines; track line.FaAssetId; let i = $index)
+                            {
+                                <tr>
+                                    <td class="pfx-no">{{ i + 1 }}</td>
+                                    <td class="dr-nowrap">{{ line.AssetNo }}</td>
+                                    <td>{{ line.Name }}</td>
+                                    <td>{{ line.CategoryName }}</td>
+                                    <td class="pfx-num">{{ money(line.Cost) }}</td>
+                                    <td class="pfx-num">{{ money(line.OpeningAccumulated) }}</td>
+                                    <td class="pfx-num hp-pay"><b>{{ money(line.Charge) }}</b></td>
+                                    <td class="pfx-num">{{ money(line.ClosingAccumulated) }}</td>
+                                    <td class="pfx-num">{{ money(line.BookValue) }}</td>
+                                    <td class="dr-line-note">{{ line.Note }}</td>
+                                </tr>
+                            }
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <td colspan="4">Total ({{ lines.length }})</td>
+                                <td class="pfx-num">{{ money(costTotal) }}</td>
+                                <td></td>
+                                <td class="pfx-num hp-pay">{{ money(chargeTotal) }}</td>
+                                <td></td>
+                                <td class="pfx-num">{{ money(bookValueTotal) }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+
+                    </table>
+                }
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

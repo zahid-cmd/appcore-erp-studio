@@ -190,8 +190,8 @@ implements OnInit
         return this.mode === 'add'
             ? 'Salary Structure'
             : this.mode === 'edit'
-                ? `Update Salary Structure ${this.entity.Code}`
-                : `View Salary Structure ${this.entity.Code}`;
+                ? `Update Salary Structure`
+                : `View Salary Structure`;
     }
 
     get saveButtonText(): string

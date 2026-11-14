@@ -3,7 +3,7 @@
     <app-page-header
         icon="fas fa-percent"
         title="PF Interest"
-        subtitle="The yearly interest of the fund, credited to the members">
+        subtitle="The interest of the fund for a financial year, credited to the members">
 
         <div pageHeaderRight>
             <app-command-center
@@ -27,40 +27,46 @@
             pageToolbarLeft
             class="pfx-tools">
 
-            <button
-                type="button"
-                class="pfx-input pfi-step"
-                title="The year before"
-                (click)="step(-1)">
-                <i class="fas fa-chevron-left"></i>
-            </button>
+            <select
+                class="pfx-input pfi-year"
+                title="Financial year (Settings > General Settings > Financial Years)"
+                (change)="onYear($event)">
 
-            <input
-                class="pfx-input pfx-year"
-                inputmode="numeric"
-                maxlength="4"
-                [value]="year"
-                (input)="onYear($event)"
-                (keydown.enter)="load()"
-                (blur)="load()">
+                @if (years.length === 0 && oldRuns.length === 0)
+                {
+                    <option value="0">No financial year</option>
+                }
 
-            <button
-                type="button"
-                class="pfx-input pfi-step"
-                title="The year after"
-                (click)="step(1)">
-                <i class="fas fa-chevron-right"></i>
-            </button>
+                @for (item of years; track item.FinancialYearId)
+                {
+                    <option
+                        [value]="item.FinancialYearId"
+                        [selected]="item.FinancialYearId === yearId">{{ item.Name }}{{ item.IsCurrent ? ' (current)' : '' }}</option>
+                }
+
+                @for (run of oldRuns; track run.Id)
+                {
+                    <option
+                        [value]="run.Id"
+                        [selected]="run.Id === yearId">{{ run.Name }}</option>
+                }
+
+            </select>
+
+            @if (periodText)
+            {
+                <span class="pfx-note">{{ periodText }}</span>
+            }
 
             <span
                 class="pfi-chip"
-                [class.pfi-on]="data.IsPosted">{{ data.IsPosted ? 'Credited' : 'Not credited yet' }}</span>
+                [class.pfi-on]="isPosted">{{ chipText }}</span>
 
         </div>
 
         <span
             pageToolbarRight
-            class="pfx-note">Rate {{ number(data.Rate) }} % a year &nbsp;·&nbsp; credited years : {{ runsText }}</span>
+            class="pfx-note">Rate {{ number(data.Rate) }} % a year on the {{ data.Basis === 'Closing' ? 'closing balance' : 'monthly balances' }} &nbsp;·&nbsp; credited : {{ runsText }}</span>
 
     </app-page-toolbar>
 
@@ -74,7 +80,7 @@
             @if (rows.length === 0)
             {
                 <div class="pfx-empty">
-                    {{ loading ? 'Working out the interest...' : 'No member has a balance at the end of ' + data.Year + '.' }}
+                    {{ emptyText }}
                 </div>
             }
             @else
@@ -83,10 +89,11 @@
 
                     <thead>
                         <tr>
+                            <th class="pfx-no">#</th>
                             <th>Member</th>
                             <th>Employee</th>
-                            <th class="pfx-num">Own Balance</th>
-                            <th class="pfx-num">Company Balance</th>
+                            <th class="pfx-num">Own Balance (year end)</th>
+                            <th class="pfx-num">Company Balance (year end)</th>
                             <th class="pfx-num">Interest : Own</th>
                             <th class="pfx-num">Interest : Company</th>
                             <th class="pfx-num">Interest</th>
@@ -94,9 +101,10 @@
                     </thead>
 
                     <tbody>
-                        @for (row of rows; track row.MemberCode)
+                        @for (row of pagedRows; track row.MemberCode; let i = $index)
                         {
                             <tr>
+                                <td class="pfx-no">{{ pageStart + i + 1 }}</td>
                                 <td>{{ row.MemberCode }}</td>
                                 <td>{{ row.EmployeeCode }} &nbsp; {{ row.EmployeeName }}</td>
                                 <td class="pfx-num">{{ money(row.EmployeeBalance) }}</td>
@@ -110,7 +118,7 @@
 
                     <tfoot>
                         <tr>
-                            <td colspan="2">Total ({{ rows.length }})</td>
+                            <td colspan="3">Total ({{ rows.length }})</td>
                             <td
                                 class="pfx-num"
                                 colspan="2">{{ money(totalBalance) }}</td>
@@ -125,6 +133,15 @@
 
         </div>
 
+        <app-pagination
+            canvasFooter
+            [totalRecords]="rows.length"
+            [currentPage]="page"
+            [pageSize]="pageSize"
+            (pageChange)="onPage($event)"
+            (pageSizeChange)="onPageSize($event)">
+        </app-pagination>
+
     </app-page-canvas>
 
     <div class="hrs-summary">
@@ -133,10 +150,10 @@
             <b class="hrs-summary-value">{{ rows.length }}</b>
         </span>
         <span class="hrs-summary-item">
-            <span class="hrs-summary-label">Interest of {{ data.Year }}</span>
+            <span class="hrs-summary-label">Interest of {{ yearName }}</span>
             <b class="hrs-summary-value">Tk {{ money(totalEmployee + totalCompany) }}</b>
         </span>
-        <span class="hrs-summary-note">Interest = rate x the balance at 31 December, before the interest of that year</span>
+        <span class="hrs-summary-note">{{ basisText }}</span>
     </div>
 
     <app-toast></app-toast>

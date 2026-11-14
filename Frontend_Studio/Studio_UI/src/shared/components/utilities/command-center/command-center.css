@@ -86,7 +86,12 @@
 
     gap: 8px;
 
-    width: 100px;
+    /* 100px at least : a longer text widens the button */
+    min-width: 100px;
+
+    width: auto;
+
+    flex-shrink: 0;
 
     height: 36px;
 

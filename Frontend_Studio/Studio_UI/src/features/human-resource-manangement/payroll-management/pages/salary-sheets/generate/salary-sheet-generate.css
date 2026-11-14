@@ -1,3 +1,20 @@
 @import '../../payroll-form.css';
 
 /* Generate Salary Sheet : the shared payroll form look */
+
+/* Advances not paid out by the month end (a notice) */
+.sg-unpaid
+{
+    cursor: help;
+}
+
+.sg-unpaid ul
+{
+    margin: 4px 0;
+    padding-left: 18px;
+}
+
+.sg-unpaid li
+{
+    line-height: 1.45;
+}

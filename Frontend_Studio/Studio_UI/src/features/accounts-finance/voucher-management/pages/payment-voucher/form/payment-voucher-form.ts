@@ -1635,6 +1635,23 @@ implements OnInit, OnDestroy
                     this.loading =
                         false;
 
+                    // A voucher of another page is read only here
+                    if
+                    (
+                        this.isEditMode
+                        &&
+                        item.SourceType
+                    )
+                    {
+                        this.mode =
+                            'view';
+
+                        this.toast.info(
+                            'View Only',
+                            `${item.VoucherNo} belongs to ${item.SourceType} ${item.ReferenceNo}. Change it from that page.`
+                        );
+                    }
+
                     // Only drafts open in Edit
                     if
                     (

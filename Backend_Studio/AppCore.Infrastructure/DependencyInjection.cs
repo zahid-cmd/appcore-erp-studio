@@ -868,6 +868,45 @@ public static class DependencyInjection
         >();
 
         //=======================================================
+        // Final Accounts Repository (manual, read-only pages)
+        //
+        // Accounts & Finance › Financial Statements › Profit &
+        // Loss, Balance Sheet (built on the Trial Balance engine)
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.AccountsFinance.FinancialStatements.IFinalAccountsRepository,
+            AppCore.Infrastructure.Repositories.AccountsFinance.FinancialStatements.FinalAccountsRepository
+        >();
+
+        //=======================================================
+        // Financial Flows Repository (manual, read-only pages)
+        //
+        // Accounts & Finance › Financial Statements › Cash Flow
+        // Statement, Changes in Equity, Receipt & Payment Account
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.AccountsFinance.FinancialStatements.IFinancialFlowsRepository,
+            AppCore.Infrastructure.Repositories.AccountsFinance.FinancialStatements.FinancialFlowsRepository
+        >();
+
+        //=======================================================
+        // Daily Statements Repository (manual, read-only pages)
+        //
+        // Accounts & Finance › Financial Statements › Daily
+        // Collection Statement, Invoice-wise Profit & Loss
+        //=======================================================
+
+        services.AddScoped
+        <
+            AppCore.Application.AccountsFinance.FinancialStatements.IDailyStatementsRepository,
+            AppCore.Infrastructure.Repositories.AccountsFinance.FinancialStatements.DailyStatementsRepository
+        >();
+
+        //=======================================================
         // Product Ledgers Repository (manual, read-only pages)
         //
         // Inventory Management › Product Ledgers : Motor Bikes
@@ -1612,6 +1651,32 @@ public static class DependencyInjection
             AppCore.Infrastructure.Repositories.HumanResourceManangement.PayrollManagement.SalarySheetsRepository
         >();
 
+        // Human Resource : Payroll Payments / PF Payments (MANUAL :
+        // hand-written page, HumanResource_Payments_Engine.sql; NO
+        // Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.PayrollManagement.IHrPaymentsRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.PayrollManagement.HrPaymentsRepository
+        >();
+
+        // Human Resource : Leave Encashments, Festival Bonus (MANUAL :
+        // hand-written pages,
+        // HumanResource_Bonus_Encashment_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.PayrollManagement.ILeaveEncashmentsRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.PayrollManagement.LeaveEncashmentsRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.PayrollManagement.IBonusSheetsRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.PayrollManagement.BonusSheetsRepository
+        >();
+
         // Human Resource phase 4 : Employee Movements (MANUAL :
         // hand-written page, HumanResource_Phase4_Engine.sql; NO
         // Code Sync)
@@ -1659,6 +1724,59 @@ public static class DependencyInjection
         <
             AppCore.Application.HumanResourceManangement.HumanResourceSetup.IOvertimeStructuresRepository,
             AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.OvertimeStructuresRepository
+        >();
+
+        // Human Resource : bonus structures (MANUAL : hand-written
+        // page, HumanResource_BonusStructures_Engine.sql; NO Code
+        // Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HumanResourceSetup.IBonusStructuresRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.BonusStructuresRepository
+        >();
+
+        // Fixed Assets Management (MANUAL : hand-written pages,
+        // FixedAssets_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.FixedAssetsManagement.IFaSetupRepository,
+            AppCore.Infrastructure.Repositories.FixedAssetsManagement.FaSetupRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.FixedAssetsManagement.IFaAssetsRepository,
+            AppCore.Infrastructure.Repositories.FixedAssetsManagement.FaAssetsRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.FixedAssetsManagement.IFaDepreciationRepository,
+            AppCore.Infrastructure.Repositories.FixedAssetsManagement.FaDepreciationRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.FixedAssetsManagement.IFaMovementsRepository,
+            AppCore.Infrastructure.Repositories.FixedAssetsManagement.FaMovementsRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.FixedAssetsManagement.IFaReportsRepository,
+            AppCore.Infrastructure.Repositories.FixedAssetsManagement.FaReportsRepository
+        >();
+
+        // Human Resource : leave encashment policies (MANUAL :
+        // hand-written page,
+        // HumanResource_EncashmentPolicies_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.HumanResourceManangement.HumanResourceSetup.ILeaveEncashPoliciesRepository,
+            AppCore.Infrastructure.Repositories.HumanResourceManangement.HumanResourceSetup.LeaveEncashPoliciesRepository
         >();
 
         // Human Resource : the weekly holiday (MANUAL : hand-written

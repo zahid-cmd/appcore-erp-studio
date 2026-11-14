@@ -97,6 +97,12 @@ public class HrEmployees
     // OvertimeRate : a profile from before overtime structures.
     public long? OvertimeStructureId { get; set; }
 
+    // The employee's own bonus structure and leave encashment
+    // policy (Human Resource Setup). null = the Default one.
+    public long? BonusStructureId { get; set; }
+
+    public long? LeaveEncashPolicyId { get; set; }
+
     // Tk per hour
     public decimal OvertimeRate { get; set; }
 

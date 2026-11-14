@@ -692,3 +692,42 @@
 {
     display:none;
 }
+
+
+/* How the figures work : one short note beside Submit (full text
+   on hover), so the filter needs no scroll. Also used by the other
+   Financial Statements pages (they load this file). */
+.fa-foot-note
+{
+    display:flex;
+    align-items:flex-start;
+    gap:7px;
+    flex:1 1 auto;
+    min-width:0;
+    margin-right:auto;
+    color:#64748b;
+    font-size:11.5px;
+    line-height:1.35;
+    cursor:help;
+}
+
+.fa-foot-note i
+{
+    flex:0 0 auto;
+    margin-top:2px;
+    color:#3b62b8;
+    font-size:12px;
+}
+
+.fa-foot-note span
+{
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+
+.lr-filter-foot .lr-btn-primary
+{
+    flex:0 0 auto;
+}

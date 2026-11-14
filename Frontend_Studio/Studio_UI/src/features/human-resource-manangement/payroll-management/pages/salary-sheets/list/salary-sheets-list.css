@@ -2,3 +2,94 @@
 
 /* Salary Sheets list : the payroll list look (summary line below
    the canvas) */
+
+/* The employees of a sheet, under its row (a click on the row) */
+
+.ssl-detail
+{
+    padding: 10px 16px 14px 56px;
+    cursor: default;
+}
+
+.ssl-note
+{
+    padding: 8px 2px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.ssl-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #dbe4f3;
+    border-radius: 10px;
+    background: #ffffff;
+    font-size: 12.5px;
+}
+
+.ssl-table th
+{
+    padding: 7px 10px;
+    border-bottom: 1px solid #dbe4f3;
+    background: #eef4fd;
+    color: #1e3a8a;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.ssl-table td
+{
+    padding: 6px 10px;
+    border-bottom: 1px solid #eef2f8;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.ssl-table td small
+{
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.ssl-table .ssl-no
+{
+    width: 36px;
+    color: #64748b;
+    text-align: center;
+}
+
+.ssl-table .ssl-num
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.ssl-table .ssl-minus
+{
+    color: #b4232c;
+}
+
+.ssl-table .ssl-strong
+{
+    font-weight: 700;
+}
+
+.ssl-table .ssl-net
+{
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.ssl-table tfoot td
+{
+    border-bottom: 0;
+    background: #f4f8ff;
+    color: #0f2a44;
+    font-weight: 700;
+}

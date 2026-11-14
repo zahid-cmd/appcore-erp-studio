@@ -1,0 +1,775 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Asset Acquisitions : left the acquisition, right its items */
+
+.faq-split
+{
+    /* a narrow left section (one field a row) : the items get the room */
+    grid-template-columns: 300px minmax(0, 1fr);
+}
+
+/* the facts of a document (view) : the value may be a long text */
+
+.faq-facts
+{
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.faq-facts dd
+{
+    overflow-wrap: anywhere;
+}
+
+/* the line table */
+
+.faq-table td
+{
+    vertical-align: middle;
+}
+
+.faq-table .faq-open
+{
+    width: 34px;
+    padding-left: 4px;
+    padding-right: 4px;
+    text-align: center;
+}
+
+.faq-table .faq-category
+{
+    width: 300px;
+}
+
+.faq-table .faq-qty
+{
+    width: 84px;
+}
+
+.faq-table .faq-cost
+{
+    width: 130px;
+}
+
+.faq-table .faq-amount
+{
+    width: 130px;
+    background: #f4f8ff;
+}
+
+.faq-table .faq-card
+{
+    width: 130px;
+}
+
+.hp-input.faq-text
+{
+    font-weight: 500;
+    text-align: left;
+}
+
+select.hp-input
+{
+    padding: 0 6px;
+    cursor: pointer;
+}
+
+.faq-toggle
+{
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 8px;
+    background: #eef4fd;
+    color: #1e3a8a;
+    cursor: pointer;
+}
+
+/* brand, model, serial, location, custodian, use date of a line */
+
+.faq-table .faq-detail > td
+{
+    padding: 10px 10px 14px;
+    background: #f9fbff;
+}
+
+/* the asset cards a posted acquisition made */
+
+.faq-cards
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+}
+
+.faq-chip
+{
+    padding: 3px 10px;
+    border: 1px solid #d6e4fb;
+    border-radius: 999px;
+    background: #f7faff;
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* two fields side by side : the left section never scrolls */
+
+.faq-two
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 12px;
+}
+
+
+/* =====================================================================
+   The items of an acquisition (add / edit) : a head that stays in
+   place with the totals, then one floating row an item
+   ===================================================================== */
+
+.faq-items
+{
+    gap: 10px;
+}
+
+/* ---- the head : title, counters, total, Add Item ---- */
+
+.faq-head
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.faq-pill
+{
+    padding: 3px 11px;
+    border: 1px solid #dbe6fb;
+    border-radius: 999px;
+    background: #f4f8ff;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.faq-total
+{
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-left: auto;
+    padding: 6px 16px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #16307a 0%, #2f55d4 100%);
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(30, 58, 138, .22);
+    white-space: nowrap;
+}
+
+.faq-total small
+{
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    opacity: .8;
+}
+
+.faq-total b
+{
+    font-size: 17px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.faq-add
+{
+    flex: 0 0 auto;
+}
+
+/* ---- asset groups that cannot be picked yet ---- */
+
+.faq-warn
+{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 14px;
+    border: 1px solid #f5d9a8;
+    border-radius: 12px;
+    background: #fffaf0;
+    color: #92400e;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+/* ---- the columns : one template for the names and for every item ---- */
+
+.faq-row
+{
+    display: grid;
+    grid-template-columns:
+        30px
+        minmax(190px, 1.25fr)
+        minmax(140px, 1.5fr)
+        76px
+        126px
+        128px
+        126px
+        32px
+        30px;
+    align-items: center;
+    gap: 10px;
+}
+
+.faq-cols
+{
+    padding: 2px 13px 0;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.faq-right
+{
+    text-align: right;
+}
+
+/* ---- an item : a row that floats ---- */
+
+.faq-item
+{
+    padding: 9px 12px;
+    border: 1px solid #e3e9f3;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 42, 68, .04);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.faq-item:hover,
+.faq-item:focus-within
+{
+    border-color: #b7cbf6;
+    box-shadow: 0 8px 22px rgba(30, 58, 138, .10);
+}
+
+.faq-item-open
+{
+    border-color: #9db8f3;
+    background: #fbfcff;
+}
+
+.faq-no
+{
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #16307a 0%, #2f55d4 100%);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.faq-item .hp-input
+{
+    width: 100%;
+    min-width: 0;
+}
+
+.faq-amount-pill
+{
+    display: block;
+    padding: 8px 12px;
+    border-radius: 11px;
+    background: #f1f6ff;
+    color: #0f2a44;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- Each / Group : two buttons, one is on ---- */
+
+.faq-seg
+{
+    display: inline-flex;
+    width: 100%;
+    padding: 3px;
+    border-radius: 11px;
+    background: #edf1f8;
+}
+
+.faq-seg button
+{
+    flex: 1 1 0;
+    height: 30px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #64748b;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+.faq-seg button.faq-seg-on
+{
+    background: #ffffff;
+    color: #1e3a8a;
+    box-shadow: 0 1px 4px rgba(15, 42, 68, .16);
+}
+
+.faq-seg button:disabled
+{
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+/* ---- the details of an item ---- */
+
+.faq-item .faq-toggle
+{
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+}
+
+.faq-toggle-on
+{
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.faq-more
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 14px;
+    margin-top: 10px;
+    padding: 12px 14px 14px;
+    border: 1px dashed #c9d8f5;
+    border-radius: 13px;
+    background: #f6f9ff;
+}
+
+/* ---- nothing yet / one more ---- */
+
+.faq-empty
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    min-height: 220px;
+    border: 2px dashed #c9d8f5;
+    border-radius: 18px;
+    background: #f8fbff;
+    color: #475569;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.faq-empty:hover
+{
+    border-color: #2f55d4;
+    background: #f1f6ff;
+}
+
+.faq-empty i
+{
+    font-size: 30px;
+    color: #2f55d4;
+}
+
+.faq-empty b
+{
+    color: #0f2a44;
+    font-size: 15px;
+}
+
+.faq-another
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 40px;
+    border: 1px dashed #c9d8f5;
+    border-radius: 14px;
+    background: transparent;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.faq-another:hover
+{
+    border-color: #2f55d4;
+    background: #f4f8ff;
+}
+
+@media (max-width: 1280px)
+{
+    .faq-more
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* =====================================================================
+   View Acquisition : the acquisition at a glance on top, then what
+   was bought
+   ===================================================================== */
+
+.fav-view
+{
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.fav-hero
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px 22px;
+    align-items: center;
+    padding: 16px 18px 14px;
+    border: 1px solid #dbe6fb;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #f3f7ff 100%);
+    box-shadow: 0 6px 20px rgba(30, 58, 138, .07);
+}
+
+.fav-who
+{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.fav-icon
+{
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #16307a 0%, #2f55d4 100%);
+    color: #ffffff;
+    font-size: 22px;
+    box-shadow: 0 8px 18px rgba(30, 58, 138, .25);
+}
+
+.fav-title
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.fav-line
+{
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 10px;
+}
+
+.fav-no
+{
+    flex: 0 0 auto;
+    padding: 3px 10px;
+    white-space: nowrap;
+    border-radius: 8px;
+    background: #0f2a44;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.fav-status
+{
+    flex: 0 0 auto;
+    padding: 3px 10px;
+    white-space: nowrap;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.fav-status-ok
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.fav-name
+{
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    color: #0f2a44;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fav-chips,
+.fav-meta
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    color: #475569;
+    font-size: 12.5px;
+}
+
+.fav-chips i,
+.fav-meta i,
+.fav-foot i
+{
+    margin-right: 6px;
+    color: #2f55d4;
+    font-size: 11.5px;
+}
+
+.fav-tiles
+{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(110px, auto));
+    gap: 10px;
+}
+
+.fav-tile
+{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 9px 14px;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.fav-tile span
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.fav-tile b
+{
+    color: #0f2a44;
+    font-size: 15.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.fav-tile-main
+{
+    border-color: transparent;
+    background: linear-gradient(135deg, #16307a 0%, #2f55d4 100%);
+    box-shadow: 0 8px 18px rgba(30, 58, 138, .25);
+}
+
+.fav-tile-main span
+{
+    color: rgba(255, 255, 255, .8);
+}
+
+.fav-tile-main b
+{
+    color: #ffffff;
+}
+
+.fav-foot
+{
+    display: flex;
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 20px;
+    padding-top: 10px;
+    border-top: 1px dashed #dbe6fb;
+    color: #475569;
+    font-size: 12.5px;
+}
+
+.fav-remarks b
+{
+    margin-right: 6px;
+    color: #0f2a44;
+}
+
+/* ---- what was bought : a card a line ---- */
+
+.fav-body
+{
+    min-height: 0;
+    overflow: auto;
+}
+
+.fav-count
+{
+    padding: 1px 9px;
+    border-radius: 999px;
+    background: #eef4fd;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.fav-items
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fav-item
+{
+    display: grid;
+    grid-template-columns: 34px minmax(180px, 1.2fr) minmax(0, 1.6fr) auto minmax(130px, auto) minmax(110px, auto);
+    gap: 14px;
+    align-items: center;
+    padding: 10px 14px;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.fav-item:hover
+{
+    border-color: #b9cdf6;
+    box-shadow: 0 6px 16px rgba(30, 58, 138, .08);
+}
+
+.fav-badge
+{
+    display: inline-grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    background: #eef4fd;
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 800;
+}
+
+.fav-what
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.fav-what b
+{
+    color: #0f2a44;
+    font-size: 14px;
+}
+
+.fav-what span
+{
+    color: #64748b;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.fav-mode
+{
+    padding: 2px 10px;
+    border: 1px solid #dbe6fb;
+    border-radius: 999px;
+    background: #f7faff;
+    color: #1e3a8a;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.fav-qty
+{
+    color: #475569;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.fav-qty small
+{
+    color: #94a3b8;
+}
+
+.fav-amount
+{
+    color: #0f2a44;
+    font-size: 14.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.fav-made
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #dbe6fb;
+    color: #0f2a44;
+    font-size: 12.5px;
+}
+
+@media (max-width: 1400px)
+{
+    .fav-hero
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .fav-tiles
+    {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}

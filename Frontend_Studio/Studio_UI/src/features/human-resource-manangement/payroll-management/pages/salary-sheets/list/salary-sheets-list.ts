@@ -50,6 +50,7 @@ import { ProgressDialogComponent } from '../../../../../../shared/components/uti
 import
 {
     PAYROLL_STATUS_COLORS,
+    SalarySheetLine,
     SalarySheetListItem,
     payMoney,
     payMonthText
@@ -93,7 +94,9 @@ type SheetRow =
 // One sheet per branch per month. Loaded once, filtered / paged
 // in the page. Tabs All / Draft / Approved / Posted; Branch
 // filter on the toolbar right; summary line below the canvas.
-// Add opens Generate; View / Edit open the sheet.
+// Add opens Generate; View / Edit open the sheet. A click on a
+// row opens the employees of that sheet under it (another click
+// closes them).
 //===============================================================
 
 @Component(
@@ -223,6 +226,98 @@ implements OnInit
         { header:'Actions', field:'actions', type:'actions', width:'120px', align:'center' }
     ];
 
+    //===========================================================
+    // The employees of a sheet, under its row (a click on the row)
+    //===========================================================
+
+    // PublicId of the sheet that is open (null = none)
+    openId:
+        string | null = null;
+
+    detail:
+        { loading: boolean; failed: boolean; lines: SalarySheetLine[] } =
+        { loading:false, failed:false, lines:[] };
+
+    money(value: number): string
+    {
+        return payMoney(value);
+    }
+
+    blank(value: number): string
+    {
+        return Number(value) ? payMoney(value) : '';
+    }
+
+    days(line: SalarySheetLine): string
+    {
+        return `${line.PayableDays} / ${line.MonthDays}`;
+    }
+
+    // PF / Tax : the structure deductions, the fund and its loan
+    kept(line: SalarySheetLine): number
+    {
+        return line.StructureDeduction + line.PfEmployee + line.PfLoan;
+    }
+
+    sum(pick: (line: SalarySheetLine) => number): string
+    {
+        return payMoney(this.detail.lines.reduce((total, x) => total + pick(x), 0));
+    }
+
+    readonly gross = (x: SalarySheetLine): number => x.GrossSalary;
+    readonly absence = (x: SalarySheetLine): number => x.AbsenceDeduction;
+    readonly late = (x: SalarySheetLine): number => x.LateDeduction;
+    readonly otherPlus = (x: SalarySheetLine): number => x.OtherEarning;
+    readonly earned = (x: SalarySheetLine): number => x.EarnedSalary;
+    readonly keptOf = (x: SalarySheetLine): number => this.kept(x);
+    readonly advance = (x: SalarySheetLine): number => x.AdvanceDeduction;
+    readonly otherMinus = (x: SalarySheetLine): number => x.OtherDeduction;
+    readonly net = (x: SalarySheetLine): number => x.NetPay;
+
+    toggle(row: SheetRow):
+        void
+    {
+        if (this.openId === row.PublicId)
+        {
+            this.openId = null;
+            this.cdr.detectChanges();
+            return;
+        }
+
+        this.openId = row.PublicId;
+        this.detail = { loading:true, failed:false, lines:[] };
+        this.cdr.detectChanges();
+
+        const id = row.PublicId;
+
+        this.service
+            .getSheet(id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(
+            {
+                next:sheet =>
+                {
+                    if (this.openId !== id)
+                    {
+                        return;
+                    }
+
+                    this.detail = { loading:false, failed:false, lines:sheet.Lines ?? [] };
+                    this.cdr.detectChanges();
+                },
+                error:() =>
+                {
+                    if (this.openId !== id)
+                    {
+                        return;
+                    }
+
+                    this.detail = { loading:false, failed:true, lines:[] };
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
     ngOnInit():
         void
     {
@@ -232,6 +327,7 @@ implements OnInit
     private load():
         void
     {
+        this.openId = null;
         this.loading = true;
         this.loadFailed = false;
         this.cdr.detectChanges();

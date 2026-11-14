@@ -465,6 +465,9 @@ public class LeaveApplicationDefaultsDto
 // One leave type of an employee in a year
 public class LeaveBalanceDto
 {
+    // The leave year the balance is of (a financial year)
+    public string YearName { get; set; } = string.Empty;
+
     public long LeaveTypeId { get; set; }
 
     public string Name { get; set; } = string.Empty;

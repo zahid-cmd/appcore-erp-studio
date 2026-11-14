@@ -161,13 +161,17 @@ public class HrReportsRepository
 
     public async Task<LeaveBalanceReportDto> GetLeaveBalanceAsync(int year, long branchId)
     {
-        if (year < 2000 || year > 2100)
-        {
-            year = HrCalendar.Today().Year;
-        }
+        // the leave year is the financial year that starts in the
+        // year asked (none asked : the one of today)
+        HrLeaveYears leaveYears = await HrLeaveYears.LoadAsync(_context);
 
-        DateOnly first = new(year, 1, 1);
-        DateOnly last = new(year, 12, 31);
+        LeaveYear leaveYear =
+            year < 2000 || year > 2100 ? leaveYears.Of(HrCalendar.Today()) : leaveYears.Get(year);
+
+        year = leaveYear.Year;
+
+        DateOnly first = leaveYear.First;
+        DateOnly last = leaveYear.Last;
 
         var types =
             await _context.Set<HrLeaveTypes>().AsNoTracking()
@@ -202,9 +206,22 @@ public class HrReportsRepository
                 .Select(g => new { g.Key.EmployeeId, g.Key.LeaveTypeId, Days = g.Count() })
                 .ToListAsync();
 
+        // the days paid as money (Leave Encashments) : counted as used
+        var encashed =
+            await (
+                from x in _context.Set<HrLeaveEncashments>().AsNoTracking()
+                where !x.IsDeleted && x.Status != "Rejected" && x.LeaveYear == year && ids.Contains(x.EmployeeId)
+                join l in _context.Set<HrLeaveEncashmentLines>().AsNoTracking() on x.LeaveEncashmentId equals l.LeaveEncashmentId
+                group l by new { x.EmployeeId, l.LeaveTypeId } into g
+                select new { g.Key.EmployeeId, g.Key.LeaveTypeId, Days = g.Sum(v => v.Days) })
+            .ToListAsync();
+
         LeaveBalanceReportDto report = new()
         {
             Year = year,
+            YearName = leaveYear.Name,
+            FromDate = HrCalendar.Day(first),
+            ToDate = HrCalendar.Day(last),
             LeaveTypes =
                 types
                     .Select(t => new LeaveBalanceTypeDto { LeaveTypeId = t.LeaveTypeId, Name = t.Name, ShortName = t.ShortName, DaysPerYear = t.DaysPerYear })
@@ -225,7 +242,8 @@ public class HrReportsRepository
                 bool applies = t.AppliesTo == "All" || e.Gender.Length == 0 || t.AppliesTo == e.Gender;
 
                 decimal days =
-                    used.FirstOrDefault(x => x.EmployeeId == e.EmployeeId && x.LeaveTypeId == t.LeaveTypeId)?.Days ?? 0;
+                    (used.FirstOrDefault(x => x.EmployeeId == e.EmployeeId && x.LeaveTypeId == t.LeaveTypeId)?.Days ?? 0)
+                    + (encashed.FirstOrDefault(x => x.EmployeeId == e.EmployeeId && x.LeaveTypeId == t.LeaveTypeId)?.Days ?? 0);
 
                 row.Cells.Add(new LeaveBalanceCellDto
                 {

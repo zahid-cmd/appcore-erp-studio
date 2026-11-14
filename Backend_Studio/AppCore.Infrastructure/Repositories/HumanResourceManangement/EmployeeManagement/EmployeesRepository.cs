@@ -331,6 +331,8 @@ public class EmployeesRepository
                         .Select(x => x.Code + "  " + x.Name)
                         .FirstOrDefaultAsync() ?? string.Empty,
             OvertimeRate = e.OvertimeRate,
+            BonusStructureId = e.BonusStructureId ?? 0,
+            LeaveEncashPolicyId = e.LeaveEncashPolicyId ?? 0,
             PaymentMode = e.PaymentMode,
             BankName = e.BankName,
             BankAccountNo = e.BankAccountNo,
@@ -436,6 +438,20 @@ public class EmployeesRepository
             .ToListAsync();
 
         defaults.DefaultWeeklyOffDays = await HrCalendar.DefaultOffDaysAsync(_context);
+
+        defaults.BonusStructures =
+            await _context.Set<HrBonusStructures>().AsNoTracking()
+                .Where(x => !x.IsDeleted && x.IsActive)
+                .OrderBy(x => x.Code)
+                .Select(x => new EmployeeLookupDto { Id = x.BonusStructureId, Name = x.Code + "  " + x.Name, Note = x.IsDefault ? "Default" : "" })
+                .ToListAsync();
+
+        defaults.LeaveEncashPolicies =
+            await _context.Set<HrLeaveEncashPolicies>().AsNoTracking()
+                .Where(x => !x.IsDeleted && x.IsActive)
+                .OrderBy(x => x.Code)
+                .Select(x => new EmployeeLookupDto { Id = x.LeaveEncashPolicyId, Name = x.Code + "  " + x.Name, Note = x.IsDefault ? "Default" : "" })
+                .ToListAsync();
 
         defaults.OvertimeStructures =
             await _context.Set<HrOvertimeStructures>().AsNoTracking()
@@ -694,6 +710,29 @@ public class EmployeesRepository
 
         entity.OvertimeAllowed = dto.OvertimeAllowed;
         entity.OvertimeStructureId = overtimeStructureId;
+
+        // The employee's own bonus structure and leave encashment
+        // policy : 0 = the Default one
+        long? bonusStructureId = dto.BonusStructureId > 0 ? dto.BonusStructureId : null;
+
+        if (bonusStructureId != null
+            && !await _context.Set<HrBonusStructures>().AsNoTracking()
+                .AnyAsync(x => x.BonusStructureId == bonusStructureId && !x.IsDeleted))
+        {
+            throw new InvalidOperationException("The bonus structure was not found : pick another one.");
+        }
+
+        long? leaveEncashPolicyId = dto.LeaveEncashPolicyId > 0 ? dto.LeaveEncashPolicyId : null;
+
+        if (leaveEncashPolicyId != null
+            && !await _context.Set<HrLeaveEncashPolicies>().AsNoTracking()
+                .AnyAsync(x => x.LeaveEncashPolicyId == leaveEncashPolicyId && !x.IsDeleted))
+        {
+            throw new InvalidOperationException("The leave encashment policy was not found : pick another one.");
+        }
+
+        entity.BonusStructureId = bonusStructureId;
+        entity.LeaveEncashPolicyId = leaveEncashPolicyId;
 
         // the typed rate goes once a structure is picked (or overtime
         // is switched off)

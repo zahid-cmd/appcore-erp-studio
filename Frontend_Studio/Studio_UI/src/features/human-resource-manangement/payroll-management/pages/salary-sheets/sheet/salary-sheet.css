@@ -104,6 +104,26 @@
     color: #92400e;
 }
 
+.ss-chip-icon
+{
+    margin-right: 6px;
+    font-size: 12px;
+}
+
+.ss-chip[title]
+{
+    cursor: help;
+}
+
+/* An advance of the line not paid out by the month end */
+.ss-unpaid-mark
+{
+    margin-right: 5px;
+    color: #d97706;
+    font-size: 11.5px;
+    cursor: help;
+}
+
 /* Buttons */
 
 .ss-steps
@@ -577,4 +597,34 @@
 {
     flex: 0 0 170px;
     width: 170px;
+}
+
+/* the number of the sheet, before its status */
+
+.ss-code
+{
+    padding: 6px 12px;
+    border: 1px solid #d9e5f2;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* the paid status of a line : read only (Payroll Payments sets it) */
+
+.ss-paid.ss-paid-info
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+}
+
+.ss-paid.ss-paid-info.part
+{
+    border-color: #f5d590;
+    background: #fffbeb;
+    color: #92400e;
 }

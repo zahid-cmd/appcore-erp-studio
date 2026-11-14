@@ -1,0 +1,4 @@
+/* Same frame as the Trial Balance (which loads the Ledger
+   Statements look), plus the final-accounts parts */
+@import '../trial-balance/trial-balance.css';
+@import '../shared/final-accounts.css';

@@ -1,0 +1,413 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Asset Disposals"
+            subtitle="Sale, scrap, write-off or loss of an asset, with the gain or loss"
+            icon="fas fa-box-archive">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search asset, code, asset group, buyer..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Add Disposal"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    command3Text="Print"
+                    command3Icon="fas fa-print"
+                    command3Title="Print the list as it is filtered now"
+                    (command3Click)="printList()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+            <app-search-dropdown
+                pageToolbarRight
+                class="fa-filter"
+                placeholder="All Branches"
+                [items]="branchItems"
+                labelField="label"
+                valueField="value"
+                [value]="branchFilter"
+                (valueChange)="onBranchFilter($event)">
+            </app-search-dropdown>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="actions"
+                    (view)="open($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <div class="pay-summary">
+                @for (item of summaryItems; track item.label)
+                {
+                    <span class="pay-summary-item">
+                        <span class="pay-summary-label">{{ item.label }}</span>
+                        <b
+                            class="pay-summary-value"
+                            [class.pay-ok]="item.tone === 'ok'"
+                            [class.pay-bad]="item.tone === 'bad'">{{ item.value }}</b>
+                    </span>
+                }
+                <span class="pay-summary-note">
+                    Gain or loss = price less book value
+                </span>
+            </div>
+        }
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Asset Disposal History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else if (mode === 'add')
+    {
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="Sale, scrap, write-off or loss of an asset, with the gain or loss"
+            icon="fas fa-box-archive">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Save"
+                    command1Icon="fas fa-floppy-disk"
+                    command1Permission="add"
+                    (command1Click)="onSave()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split fa-split appcore-scrollbar">
+
+                <!-- ============ LEFT : the disposal ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-box-archive"></i>
+                        <span>Disposal</span>
+                    </header>
+
+                    <app-datepicker
+                        label="Date"
+                        [required]="true"
+                        [value]="$any(asDate(disposalDate))"
+                        (valueChange)="onDate($event)">
+                    </app-datepicker>
+
+                    <app-search-dropdown
+                        label="Asset"
+                        placeholder="Select asset"
+                        [items]="assetItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="assetId"
+                        (valueChange)="onAsset($event)"
+                        [required]="true">
+                    </app-search-dropdown>
+
+                    <app-dropdown
+                        label="Kind"
+                        [items]="kindItems"
+                        [value]="kind"
+                        (valueChange)="onKind($event)"
+                        [required]="true">
+                    </app-dropdown>
+
+                    @if (hasBuyer)
+                    {
+                        <app-textbox
+                            label="Buyer Name"
+                            placeholder="Optional"
+                            [value]="buyerName"
+                            [maxLength]="200"
+                            (valueChange)="onBuyer($event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Price (Tk)"
+                            [placeholder]="kind === 'Sale' ? '0.00' : 'Optional'"
+                            inputMode="decimal"
+                            [value]="priceText"
+                            [maxLength]="18"
+                            [required]="kind === 'Sale'"
+                            (valueChange)="onPrice($event)">
+                        </app-textbox>
+                    }
+
+                    @if (price > 0)
+                    {
+                        <app-search-dropdown
+                            label="Receivable From"
+                            placeholder="Select ledger"
+                            [items]="ledgerItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="debitLedgerCode"
+                            (valueChange)="onLedger($event)">
+                        </app-search-dropdown>
+
+                        <span class="hp-note">
+                            The price is owed by this ledger : the money comes in later on a Receipt Voucher against it.
+                        </span>
+                    }
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                </section>
+
+                <!-- ============ RIGHT : what the disposal does ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-scale-balanced"></i>
+                        <span>What It Does</span>
+                    </header>
+
+                    @if (!asset)
+                    {
+                        <div class="fa-empty">
+                            {{ loading ? 'Loading...' : 'Pick the asset on the left : its book value and the gain or loss come here.' }}
+                        </div>
+                    }
+                    @else
+                    {
+                        <div class="fa-who">
+                            <b>{{ asset.AssetNo }} &nbsp; {{ asset.Name }}</b>
+                            <small>{{ asset.CategoryName }} · {{ asset.BranchName }} · {{ asset.Status }}</small>
+                        </div>
+
+                        <dl class="pf-facts">
+                            <dt>Cost</dt>
+                            <dd>Tk {{ money(asset.TotalCost) }}</dd>
+                            <dt>Accumulated depreciation</dt>
+                            <dd>Tk {{ money(asset.AccumulatedDepreciation) }}</dd>
+                            <dt>Book value</dt>
+                            <dd>Tk {{ money(asset.BookValue) }}</dd>
+                            <dt>Price</dt>
+                            <dd>Tk {{ money(price) }}</dd>
+                            <dt class="pf-strong">{{ liveGainLoss >= 0 ? 'Gain' : 'Loss' }} (price less book value)</dt>
+                            <dd
+                                class="pf-strong"
+                                [class.fa-gain]="liveGainLoss >= 0"
+                                [class.fa-loss]="liveGainLoss < 0">{{ gainLoss(liveGainLoss) }}</dd>
+                        </dl>
+
+                        @if (voucherLines.length > 0)
+                        {
+                            <div class="fa-note fa-note-on">
+                                <b>The Journal Voucher in words</b>
+                                <ul class="hp-list">
+                                    @for (line of voucherLines; track $index)
+                                    {
+                                        <li>{{ line }}</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    }
+
+                    <div class="fa-note">
+                        <b>Before you save</b>
+                        <ul class="hp-list">
+                            <li>An asset is not depreciated in the month it is disposed, so the date must be after the last month it was depreciated{{ asset?.LastRunText ? ' (' + asset?.LastRunText + ')' : '' }}.</li>
+                            <li>A disposal is not edited. Deleting it cancels its Journal Voucher and puts the asset back in use.</li>
+                        </ul>
+                    </div>
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="Sale, scrap, write-off or loss of an asset, with the gain or loss"
+            icon="fas fa-box-archive">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Print"
+                    command1Icon="fas fa-print"
+                    command1Title="Print this disposal"
+                    [command1Visible]="!!entity"
+                    (command1Click)="printOne()"
+                    command2Text="Delete"
+                    command2Icon="fas fa-trash"
+                    command2Permission="update"
+                    command2Title="Delete it : the Journal Voucher is cancelled and the asset is put back in use"
+                    [command2Visible]="!!entity"
+                    (command2Click)="entity && delete(entity)"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split fa-split appcore-scrollbar">
+
+                @if (!entity)
+                {
+                    <div class="pfx-empty">{{ loading ? 'Loading...' : 'The asset disposal could not be loaded.' }}</div>
+                }
+                @else
+                {
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-box-archive"></i>
+                            <span>Disposal</span>
+                        </header>
+
+                        <dl class="pf-facts">
+                            <dt>Code</dt>
+                            <dd>{{ entity.Code }}</dd>
+                            <dt>Date</dt>
+                            <dd>{{ day(entity.DisposalDate) }}</dd>
+                            <dt>Asset</dt>
+                            <dd>{{ entity.AssetNo }} &nbsp; {{ entity.AssetName }}</dd>
+                            <dt>Asset Group</dt>
+                            <dd>{{ entity.CategoryName || '-' }}</dd>
+                            <dt>Branch</dt>
+                            <dd>{{ entity.BranchName || '-' }}</dd>
+                            <dt>Kind</dt>
+                            <dd>{{ entity.Kind }}</dd>
+                            @if (entity.BuyerName)
+                            {
+                                <dt>Buyer</dt>
+                                <dd>{{ entity.BuyerName }}</dd>
+                            }
+                            @if (entity.SalePrice > 0)
+                            {
+                                <dt>Receivable from</dt>
+                                <dd>{{ entity.DebitLedgerName || '-' }}{{ entity.DebitLedgerType ? '  (' + entity.DebitLedgerType + ')' : '' }}</dd>
+                            }
+                            @if (entity.Remarks)
+                            {
+                                <dt>Remarks</dt>
+                                <dd>{{ entity.Remarks }}</dd>
+                            }
+                        </dl>
+
+                    </section>
+
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-scale-balanced"></i>
+                            <span>What It Did</span>
+                        </header>
+
+                        <dl class="pf-facts">
+                            <dt>Cost</dt>
+                            <dd>Tk {{ money(entity.Cost) }}</dd>
+                            <dt>Accumulated depreciation</dt>
+                            <dd>Tk {{ money(entity.Accumulated) }}</dd>
+                            <dt>Book value</dt>
+                            <dd>Tk {{ money(entity.BookValue) }}</dd>
+                            <dt>Price</dt>
+                            <dd>Tk {{ money(entity.SalePrice) }}</dd>
+                            <dt class="pf-strong">{{ entity.GainLoss >= 0 ? 'Gain' : 'Loss' }} (price less book value)</dt>
+                            <dd
+                                class="pf-strong"
+                                [class.fa-gain]="entity.GainLoss >= 0"
+                                [class.fa-loss]="entity.GainLoss < 0">{{ gainLoss(entity.GainLoss) }}</dd>
+                            <dt>Journal Voucher</dt>
+                            <dd>{{ entity.JournalVoucherNo || '-' }}</dd>
+                        </dl>
+
+                        <span class="hp-note">
+                            A disposal is not edited. Deleting it cancels its Journal Voucher and puts the asset back in use. The price is received on a Receipt Voucher against the Receivable From ledger.
+                        </span>
+
+                    </section>
+                }
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

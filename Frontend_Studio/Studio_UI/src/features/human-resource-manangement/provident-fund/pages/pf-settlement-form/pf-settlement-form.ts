@@ -93,6 +93,8 @@ function emptySettlement(): PfSettlement
         CompanyForfeited:0,
         LoanOutstanding:0,
         NetPayable:0,
+        ForfeitedToCompany:false,
+        JournalVoucherNo:'',
         RuleNote:'',
         IsLatest:false
     };
@@ -208,7 +210,7 @@ implements OnInit
 
     get pageTitle(): string
     {
-        return this.isViewMode ? `View PF Settlement ${this.entity.Code}` : 'PF Settlement';
+        return this.isViewMode ? `View PF Settlement` : 'PF Settlement';
     }
 
     get member(): PfLookup | undefined

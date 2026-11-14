@@ -1,0 +1,137 @@
+@import '../bonus-structures/bonus-structures.css';
+
+/* Leave Encashment Policies : the two sections of the bonus
+   structure page (left the policy, right the leave types) */
+
+.lep-two
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+}
+
+.lep-check
+{
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #1d4ed8;
+}
+
+.lep-check:disabled
+{
+    cursor: default;
+}
+
+.hp-picked td
+{
+    background: #f4f8ff;
+}
+
+/* The switches of the policy : two by two, on top of the right card */
+
+.lep-options
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px 12px;
+}
+
+.lep-options .pf-switch
+{
+    margin: 0;
+}
+
+.lep-total td
+{
+    border-top: 2px solid #cbd5e1;
+    background: #f8fafc;
+    color: #0f2a44;
+    font-weight: 700;
+}
+
+/* The policy in words : one band under both sections, its lines
+   in two columns */
+
+.lep-split
+{
+    grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.lep-notes
+{
+    grid-column: 1 / -1;
+}
+
+.lep-notes .hp-list
+{
+    display: block;
+    column-count: 2;
+    column-gap: 40px;
+}
+
+.lep-notes .hp-list li
+{
+    margin-bottom: 6px;
+    break-inside: avoid;
+}
+
+@media (max-width: 1100px)
+{
+    .lep-notes .hp-list
+    {
+        column-count: 1;
+    }
+}
+
+
+/* =====================================================
+   NO SCROLL (2026-11-14) : the sections are as tall as
+   their content (no scrollbar inside them), the left card
+   is a row shorter and the policy in words is small print.
+   Only a very small window still scrolls the canvas.
+===================================================== */
+
+.hp-split.lep-split
+{
+    grid-template-rows: auto auto;
+    align-content: start;
+    overflow-y: auto;
+}
+
+.hp-split.lep-split > .pf-card
+{
+    height: auto;
+    overflow: visible;
+}
+
+.hp-split.lep-split > .pf-card > .pf-card-head
+{
+    position: static;
+    margin: -2px 0 2px;
+    padding: 0;
+}
+
+/* Minimum Employment : the width of the other fields;
+   Remarks : the whole width under it */
+.lep-two-last > app-textbox:last-child
+{
+    grid-column: 1 / -1;
+}
+
+.lep-notes
+{
+    gap: 6px;
+    padding: 10px 14px;
+}
+
+.lep-notes .hp-list
+{
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.lep-notes .hp-list li
+{
+    margin-bottom: 3px;
+}

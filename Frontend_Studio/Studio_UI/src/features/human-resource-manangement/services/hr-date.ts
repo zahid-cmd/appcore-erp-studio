@@ -63,3 +63,21 @@ export function hrDateEvent(date: Date | null | undefined): any
 {
     return { target:{ value:hrToText(date) } };
 }
+
+// '2026-11' : the Date of the first day of that month (null for ''
+// or a text that is no month) : for the date picker's month mode
+export function hrMonthToDate(text: string | null | undefined): Date | null
+{
+    const value =
+        String(text ?? '').substring(0, 7);
+
+    return /^\d{4}-\d{2}$/.test(value) ? hrToDate(`${value}-01`) : null;
+}
+
+// What the picker gives in month mode, shaped as the change event
+// of a month box : the pages' month handlers read
+// event.target.value ('2026-11')
+export function hrMonthEvent(date: Date | null | undefined): any
+{
+    return { target:{ value:hrToText(date).substring(0, 7) } };
+}

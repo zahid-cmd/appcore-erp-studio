@@ -1,0 +1,414 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Festival Bonus"
+            subtitle="The festival bonus of a branch : a percent of the salary, posted to the accounts"
+            icon="fas fa-gift">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search bonus, branch, code..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Generate"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+            <app-search-dropdown
+                pageToolbarRight
+                placeholder="All Branches"
+                [items]="branchFilterItems"
+                labelField="label"
+                valueField="value"
+                [value]="branchFilter"
+                (valueChange)="onBranchFilter($event)">
+            </app-search-dropdown>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    (view)="open($event)"
+                    (edit)="open($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <div class="pay-summary">
+                @for (item of summaryItems; track item.label)
+                {
+                    <span class="pay-summary-item">
+                        <span class="pay-summary-label">{{ item.label }}</span>
+                        <b class="pay-summary-value">{{ item.value }}</b>
+                    </span>
+                }
+                <span class="pay-summary-note">
+                    Open a sheet to check the amounts and post it; the money goes out on Payroll Payments
+                </span>
+            </div>
+        }
+    }
+    @else if (mode === 'add')
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="pageSubtitle"
+            icon="fas fa-gift">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Generate"
+                    command1Icon="fas fa-floppy-disk"
+                    command1Permission="add"
+                    (command1Click)="onGenerate()"
+                    command2Text="Clear"
+                    command2Icon="fas fa-broom"
+                    (command2Click)="onClear()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split appcore-scrollbar">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-gift"></i>
+                        <span>Bonus</span>
+                    </header>
+
+                    <app-textbox
+                        label="Code"
+                        [value]="nextCode"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Bonus Name"
+                        placeholder="e.g. Eid-ul-Fitr 2027"
+                        [value]="title"
+                        [maxLength]="100"
+                        (valueChange)="onText('title', $event)"
+                        [required]="true">
+                    </app-textbox>
+
+                    <app-search-dropdown
+                        label="Branch"
+                        placeholder="Select branch"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="branchId"
+                        (valueChange)="onBranch($event)"
+                        [required]="true">
+                    </app-search-dropdown>
+
+                    <app-datepicker
+                        label="Bonus Date"
+                        [required]="true"
+                        [value]="$any(asDate(bonusDate))"
+                        (valueChange)="onBonusDate($event)">
+                    </app-datepicker>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        (valueChange)="onText('remarks', $event)">
+                    </app-textbox>
+
+                </section>
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-layer-group"></i>
+                        <span>{{ structure ? 'The Default : ' + structure.Name : 'Bonus Structure' }}</span>
+                    </header>
+
+                    @if (!structure)
+                    {
+                        <div class="pfx-empty">
+                            There is no Default bonus structure. Mark one as the Default on Human Resource Setup > Bonus Structures : it applies to every employee whose Employee Profile names no other structure.
+                        </div>
+                    }
+                    @else
+                    {
+                        <ul class="hp-list">
+                            @for (line of structureLines; track $index)
+                            {
+                                <li>{{ line }}</li>
+                            }
+                        </ul>
+                    }
+
+                    <b class="hp-sub">How it works</b>
+
+                    <ul class="hp-list">
+                        <li>Every employee is worked out by the bonus structure of the Employee Profile; an employee whose profile names none follows the Default above.</li>
+                        <li>Every active employee of the branch who joined on or before the bonus date and falls in a slab of the structure gets a line.</li>
+                        <li>The sheet is a Draft first : open it to change the amount of anyone (0 leaves that employee without bonus), then post it.</li>
+                        <li>Posting writes a Journal Voucher : Bonus Expense against Bonus Payable (Posting Setup, group Payroll).</li>
+                        <li>The money goes out on Payroll Payments (Paid For : Festival Bonus), in full or in part.</li>
+                        <li>One sheet for a bonus name and a branch. The sheet keeps what the structures said today : changing a structure later does not change it.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="pageSubtitle"
+            icon="fas fa-gift">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search name, code..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Save"
+                    command1Icon="fas fa-floppy-disk"
+                    command1Permission="update"
+                    (command1Click)="onSave()"
+                    [command1Visible]="isDraft"
+                    command2Text="Post"
+                    command2Icon="fas fa-file-circle-check"
+                    command2Permission="update"
+                    (command2Click)="onPost()"
+                    [command2Visible]="isDraft"
+                    command3Text="Payroll Payments"
+                    command3Icon="fas fa-money-bill-transfer"
+                    command3Title="Pay it on Payroll Payments (Paid For : Festival Bonus)"
+                    (command3Click)="goToPayments()"
+                    [command3Visible]="isPosted"
+                    command4Text="Unpost"
+                    command4Icon="fas fa-rotate-left"
+                    command4Permission="update"
+                    (command4Click)="askUnpost()"
+                    [command4Visible]="isPosted"
+                    command5Text="Print"
+                    command5Icon="fas fa-print"
+                    (command5Click)="print()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <div
+                pageToolbarLeft
+                class="hp-steps">
+
+                @if (sheet)
+                {
+                    <span class="hp-step on"><b><i class="fas fa-gift"></i></b> {{ sheet.Code }}</span>
+                    <span
+                        class="hp-state"
+                        [class.hp-ok]="isPosted">{{ sheet.Status }}</span>
+                    <span class="hp-note">
+                        {{ isDraft ? 'Change the amount of anyone if needed, save, then post.' : 'Journal Voucher ' + (sheet.JournalVoucherNo || '-') + ' · paid Tk ' + money(paidTotal) + ' of ' + money(sheetTotal) }}
+                    </span>
+                }
+
+            </div>
+
+            <span
+                pageToolbarRight
+                class="hp-note">{{ sheet ? day(sheet.BonusDate) : '' }}</span>
+
+        </app-page-toolbar>
+
+        @if (unposting && sheet)
+        {
+            <div class="hp-panel">
+                <span class="hp-note">
+                    <b>Unpost {{ sheet.Code }}</b> : its Journal Voucher {{ sheet.JournalVoucherNo }} is cancelled and the sheet goes back to Draft.
+                </span>
+                <app-textbox
+                    class="hp-panel-box"
+                    placeholder="Reason (required)"
+                    [value]="unpostReason"
+                    [maxLength]="300"
+                    (valueChange)="onUnpostReason($event)">
+                </app-textbox>
+                <button
+                    type="button"
+                    class="hp-add hp-danger"
+                    [disabled]="isSaving"
+                    (click)="confirmUnpost()">Unpost</button>
+                <button
+                    type="button"
+                    class="hp-btn"
+                    (click)="keepPosted()">Cancel</button>
+            </div>
+        }
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="pfx-scroll appcore-scrollbar">
+
+                @if (lines.length === 0)
+                {
+                    <div class="pfx-empty">
+                        {{ loading ? 'Loading the bonus sheet...' : loadFailed ? 'The bonus sheet could not be loaded.' : 'No employee matches.' }}
+                    </div>
+                }
+                @else
+                {
+                    <table class="pfx-table hp-table">
+
+                        <thead>
+                            <tr>
+                                <th class="pfx-no">#</th>
+                                <th>Employee</th>
+                                <th>Designation</th>
+                                <th>Structure</th>
+                                <th class="pfx-num">Service (months)</th>
+                                <th class="pfx-num">Basic</th>
+                                <th class="pfx-num">Gross</th>
+                                <th class="pfx-num">%</th>
+                                <th class="pfx-num hp-pay">Bonus</th>
+                                @if (isPosted)
+                                {
+                                    <th>Payment</th>
+                                }
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @for (line of lines; track line.BonusSheetLineId; let i = $index)
+                            {
+                                <tr>
+                                    <td class="pfx-no">{{ i + 1 }}</td>
+                                    <td>{{ line.EmployeeCode }} &nbsp; {{ line.EmployeeName }}</td>
+                                    <td>{{ line.DesignationName }}</td>
+                                    <td>{{ line.StructureName }}</td>
+                                    <td class="pfx-num">{{ line.ServiceMonths }}</td>
+                                    <td class="pfx-num">{{ money(line.BasicSalary) }}</td>
+                                    <td class="pfx-num">{{ money(line.GrossSalary) }}</td>
+                                    <td class="pfx-num">{{ line.BonusPercent || '' }}</td>
+                                    <td class="pfx-num hp-pay">
+                                        @if (isDraft)
+                                        {
+                                            <input
+                                                class="hp-input"
+                                                inputmode="numeric"
+                                                maxlength="12"
+                                                placeholder="0"
+                                                [value]="line.Amount"
+                                                (change)="onAmount(line, $event)">
+                                        }
+                                        @else
+                                        {
+                                            <b>{{ money(line.Amount) }}</b>
+                                        }
+                                    </td>
+                                    @if (isPosted)
+                                    {
+                                        <td>
+                                            <span
+                                                class="hp-state"
+                                                [class.hp-ok]="line.PaidAmount >= line.Amount && line.Amount > 0">{{ paidText(line) }}</span>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <td colspan="7">Total ({{ lines.length }})</td>
+                                <td class="pfx-num hp-pay">{{ money(sheetTotal) }}</td>
+                                @if (isPosted)
+                                {
+                                    <td>Tk {{ money(paidTotal) }} paid</td>
+                                }
+                            </tr>
+                        </tfoot>
+
+                    </table>
+                }
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

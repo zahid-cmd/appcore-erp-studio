@@ -121,6 +121,8 @@ function normalizeEmployee
         OvertimeStructureId:num(x, 'OvertimeStructureId'),
         OvertimeStructureName:text(x, 'OvertimeStructureName'),
         OvertimeRate:num(x, 'OvertimeRate'),
+        BonusStructureId:num(x, 'BonusStructureId'),
+        LeaveEncashPolicyId:num(x, 'LeaveEncashPolicyId'),
         PaymentMode:text(x, 'PaymentMode') || 'Cash',
         BankName:text(x, 'BankName'),
         BankAccountNo:text(x, 'BankAccountNo'),
@@ -197,6 +199,8 @@ export class EmployeesService
                     Designations:lookups(x, 'Designations'),
                     Shifts:lookups(x, 'Shifts'),
                     Users:lookups(x, 'Users'),
+                    BonusStructures:lookups(x, 'BonusStructures'),
+                    LeaveEncashPolicies:lookups(x, 'LeaveEncashPolicies'),
                     OvertimeStructures:list(x, 'OvertimeStructures').map(ot => ({
                         Id:num(ot, 'Id'),
                         Code:text(ot, 'Code'),

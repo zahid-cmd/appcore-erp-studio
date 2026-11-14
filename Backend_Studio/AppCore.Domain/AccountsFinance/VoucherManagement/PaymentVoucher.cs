@@ -108,6 +108,14 @@ public class PaymentVoucher
 
     public string CancelReason { get; set; } = string.Empty;
 
+    // A voucher written by another page (Payroll Payments, PF
+    // Payments ...) : the page ("Payroll Payment") and its number
+    // ("PPY-0001 · SAL-0001"). It is changed from that page only.
+    // '' : a voucher keyed on the Payment Voucher page.
+    public string SourceType { get; set; } = string.Empty;
+
+    public string ReferenceNo { get; set; } = string.Empty;
+
 
     //===========================================================
     // Soft Delete (drafts only)

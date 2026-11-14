@@ -224,6 +224,47 @@ export const PRINT_SOURCES:
             import('../../features/accounts-finance/financial-statements/print/trial-balance.print')
                 .then(module => module.TRIAL_BALANCE_PRINT),
 
+    // Accounts & Finance : Profit & Loss and Balance Sheet (the
+    // id is the page's token)
+    'profit-loss':
+        () =>
+            import('../../features/accounts-finance/financial-statements/print/final-accounts.print')
+                .then(module => module.PROFIT_LOSS_PRINT),
+
+    'balance-sheet':
+        () =>
+            import('../../features/accounts-finance/financial-statements/print/final-accounts.print')
+                .then(module => module.BALANCE_SHEET_PRINT),
+
+    // Accounts & Finance : Receipt & Payment Account, Cash Flow
+    // Statement, Changes in Equity (the id is the page's token)
+    'receipt-payment':
+        () =>
+            import('../../features/accounts-finance/financial-statements/print/financial-flows.print')
+                .then(module => module.RECEIPT_PAYMENT_PRINT),
+
+    'cash-flow':
+        () =>
+            import('../../features/accounts-finance/financial-statements/print/financial-flows.print')
+                .then(module => module.CASH_FLOW_PRINT),
+
+    'changes-in-equity':
+        () =>
+            import('../../features/accounts-finance/financial-statements/print/financial-flows.print')
+                .then(module => module.CHANGES_IN_EQUITY_PRINT),
+
+    // Accounts & Finance : Daily Collection Statement, Invoice-wise
+    // Profit & Loss (the id is the page's token)
+    'daily-collection':
+        () =>
+            import('../../features/accounts-finance/financial-statements/print/daily-statements.print')
+                .then(module => module.DAILY_COLLECTION_PRINT),
+
+    'invoice-profit':
+        () =>
+            import('../../features/accounts-finance/financial-statements/print/daily-statements.print')
+                .then(module => module.INVOICE_PROFIT_PRINT),
+
     // Inventory Management : Product Ledgers (Ledger / Summary of
     // Motor Bikes / Spare Parts & Lubricants / Accessories; the
     // id is the page's token)
@@ -326,5 +367,13 @@ export const PRINT_SOURCES:
     'hr-payslip':
         () =>
             import('../../features/human-resource-manangement/print/hr-print')
-                .then(module => module.HR_PAYSLIP_PRINT)
+                .then(module => module.HR_PAYSLIP_PRINT),
+
+    // Fixed Assets : a document or a list as the page shows it,
+    // with the head of the operational documents (logo | company |
+    // QR, title ribbon, status stamp); the id is the page's token
+    'fa-report':
+        () =>
+            import('../../features/fixed-assets-management/print/fa-print')
+                .then(module => module.FA_REPORT_PRINT)
 };

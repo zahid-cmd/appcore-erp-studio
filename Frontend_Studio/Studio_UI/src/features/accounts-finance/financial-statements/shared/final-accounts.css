@@ -1,0 +1,1145 @@
+/* =====================================================
+   FINAL ACCOUNTS (Profit & Loss, Balance Sheet)
+   Loaded after trial-balance.css by each page : the same
+   filter | switch bar | canvas frame, head card and tree rows
+===================================================== */
+
+/* Compare choices (filter) : one per line */
+.fa-choices
+{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    padding:4px;
+    border:1px solid #e3e9f2;
+    border-radius:10px;
+    background:#f8fafc;
+}
+
+.fa-choice
+{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    width:100%;
+    height:34px;
+    padding:0 10px;
+    border:1px solid transparent;
+    border-radius:7px;
+    background:transparent;
+    color:#334155;
+    font-size:13.5px;
+    text-align:left;
+    cursor:pointer;
+}
+
+.fa-choice i
+{
+    color:#94a3b8;
+    font-size:13px;
+}
+
+.fa-choice:hover
+{
+    background:#eef3fb;
+}
+
+.fa-choice.on
+{
+    border-color:#c7d5f0;
+    background:#ffffff;
+    color:#1e3a8a;
+    font-weight:600;
+    box-shadow:0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.fa-choice.on i
+{
+    color:#2563eb;
+}
+
+
+/* Statement and side panel */
+.fa-main
+{
+    display:flex;
+    gap:12px;
+    flex:1 1 0;
+    min-height:0;
+}
+
+.fa-main > .fa-tcard
+{
+    flex:1 1 0;
+    min-width:0;
+}
+
+.fa-table col.c-bal
+{
+    width:170px;
+}
+
+.fa-table col.c-amt
+{
+    width:150px;
+}
+
+.fa-table col.c-pct
+{
+    width:96px;
+}
+
+.tb-page .fa-table col.c-bal
+{
+    width:180px;
+}
+
+/* Column heads : title + dates */
+.fa-table th.fa-col-h
+{
+    vertical-align:middle;
+    line-height:1.25;
+    border-left:1px solid #d5dfef;
+}
+
+.fa-table th.fa-col-h b
+{
+    display:block;
+    font-weight:800;
+}
+
+.fa-table th.fa-col-h span
+{
+    display:block;
+    color:#64748b;
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:0;
+    text-transform:none;
+}
+
+.fa-table td.r
+{
+    border-left:1px solid #edf1f6;
+}
+
+/* Section heading : title with its total */
+.lr-table tbody tr.fa-section td
+{
+    height:42px;
+    background:#e9f0fb;
+    color:#0f2557;
+    font-weight:750;
+    letter-spacing:.2px;
+    border-top:1px solid #d5dfef;
+}
+
+.lr-table tbody tr.fa-section .lr-clip
+{
+    text-transform:uppercase;
+    font-size:12.5px;
+    letter-spacing:1px;
+}
+
+/* Under a section : one step further in */
+.fa-table .tb-l1 .tb-acc
+{
+    padding-left:24px;
+}
+
+.fa-table .tb-l2 .tb-acc
+{
+    padding-left:42px;
+}
+
+.fa-table .tb-l3 .tb-acc
+{
+    padding-left:60px;
+}
+
+.fa-table .tb-l4 .tb-acc
+{
+    padding-left:78px;
+}
+
+/* Extra line (Profit for the year to date) */
+.lr-table tbody tr.fa-extra td
+{
+    background:#fffbeb;
+    color:#78350f;
+    font-weight:600;
+}
+
+.fa-table tr.fa-extra .tb-acc
+{
+    padding-left:24px;
+}
+
+.fa-hint
+{
+    font-size:11.5px;
+    font-weight:400;
+}
+
+/* Result bands : Gross Profit, Net Profit, totals */
+.lr-table tbody tr.fa-result td
+{
+    height:46px;
+    background:#f3f7ff;
+    color:#0f2557;
+    font-size:15px;
+    font-weight:800;
+    border-top:1.5px solid #1e3a8a;
+    border-bottom:1.5px solid #1e3a8a;
+    box-shadow:inset 0 2px 0 #e2c27a;
+}
+
+.lr-table tbody tr.fa-result.is-good td.lr-bal
+{
+    color:#15803d;
+}
+
+.lr-table tbody tr.fa-result.is-bad td.lr-bal,
+.lr-table tbody tr.fa-result.is-bad .tb-name
+{
+    color:#b42318;
+}
+
+.lr-table tbody tr.fa-result.is-good .fa-check-icon
+{
+    color:#15803d;
+}
+
+.lr-table tbody tr.fa-result.is-bad .fa-check-icon
+{
+    color:#b42318;
+}
+
+.fa-margin
+{
+    background:#ecfdf5;
+    color:#047857;
+    font-weight:700;
+}
+
+.is-bad .fa-margin
+{
+    background:#fef2f2;
+    color:#b42318;
+}
+
+.fa-cmp-cell
+{
+    color:#475569;
+}
+
+.fa-cmp-margin
+{
+    display:block;
+    color:#94a3b8;
+    font-size:10.5px;
+    font-weight:600;
+    line-height:1;
+}
+
+/* Change : green when better, red when worse */
+.fa-table td.fa-chg
+{
+    color:#64748b;
+    font-size:13px;
+}
+
+.fa-table td.fa-chg.is-up-good
+{
+    color:#15803d;
+}
+
+.fa-table td.fa-chg.is-up-bad
+{
+    color:#b42318;
+}
+
+
+/* =====================================================
+   T-FORM
+===================================================== */
+
+.fa-tform
+{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    padding:14px;
+    overflow-y:auto;
+}
+
+/* Accounts keep their full height : the area scrolls instead of
+   squeezing (and clipping) them */
+.fa-tform > *
+{
+    flex:0 0 auto;
+}
+
+.fa-tnote
+{
+    margin:0;
+}
+
+.fa-taccount
+{
+    border:1px solid #d5dfef;
+    border-radius:10px;
+    /* clip (not hidden) : keeps the rounded corners without
+       stopping the sticky total row */
+    overflow:clip;
+    background:#ffffff;
+}
+
+.fa-ttitle
+{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:10px;
+    padding:10px 14px;
+    background:#eef3fb;
+    border-bottom:1px solid #d5dfef;
+    box-shadow:inset 0 -2px 0 #e2c27a;
+}
+
+.fa-ttitle b
+{
+    color:#0f2557;
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:.4px;
+}
+
+.fa-ttitle span
+{
+    color:#64748b;
+    font-size:12.5px;
+}
+
+.fa-ttable
+{
+    width:100%;
+    table-layout:fixed;
+}
+
+.fa-ttable col.c-bal
+{
+    width:160px;
+}
+
+.fa-ttable th
+{
+    position:static !important;
+    background:#f8fafd !important;
+    color:#475569;
+}
+
+/* Rule down the middle (Dr | Cr) */
+.fa-ttable .fa-tcr
+{
+    border-left:2px solid #c7d5f0 !important;
+}
+
+.fa-ttable td
+{
+    height:36px;
+}
+
+.fa-tname
+{
+    white-space:nowrap;
+    overflow:hidden;
+}
+
+.fa-tname .tb-code
+{
+    margin-left:8px;
+}
+
+.fa-tl0
+{
+    padding-left:12px !important;
+}
+
+.fa-tl1
+{
+    padding-left:26px !important;
+}
+
+.fa-tl2
+{
+    padding-left:40px !important;
+}
+
+.fa-tl3
+{
+    padding-left:54px !important;
+}
+
+.fa-tl4
+{
+    padding-left:68px !important;
+}
+
+.fa-ttable td.is-strong
+{
+    color:#0f2557;
+    font-weight:750;
+}
+
+.fa-ttable tfoot tr.fa-ttotal td
+{
+    /* Total stays at the bottom of the scroll area (the area has
+       14px padding) */
+    position:sticky;
+    bottom:-14px;
+    z-index:2;
+    box-shadow:0 -8px 14px -10px rgba(15, 42, 90, 0.35);
+    height:44px;
+    background:#eef3fb;
+    color:#0f2557;
+    font-size:15px;
+    font-weight:800;
+    border-top:1.5px solid #1e3a8a;
+    border-bottom:0;
+}
+
+.fa-ttable tfoot tr.fa-ttotal td:first-child,
+.fa-ttable tfoot tr.fa-ttotal td.fa-tcr
+{
+    color:#9a7420;
+    font-size:12.5px;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+}
+
+
+/* =====================================================
+   BUSINESS LINES PANEL
+===================================================== */
+
+.fa-lines
+{
+    display:flex;
+    flex-direction:column;
+    flex:0 0 340px;
+    min-height:0;
+    overflow:hidden;
+}
+
+.fa-lines-head
+{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:12px 14px;
+    background:#eef3fb;
+    border-bottom:1px solid #d5dfef;
+    box-shadow:inset 0 -2px 0 #e2c27a;
+}
+
+.fa-lines-head b
+{
+    color:#0f2557;
+    font-size:14px;
+    font-weight:800;
+}
+
+.fa-lines-head span
+{
+    color:#64748b;
+    font-size:12px;
+}
+
+.fa-lines-body
+{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    flex:1 1 0;
+    min-height:0;
+    padding:12px 14px;
+    overflow:auto;
+}
+
+.fa-bl
+{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    padding:10px 12px;
+    border:1px solid #e3e9f2;
+    border-radius:10px;
+    background:#fbfcfe;
+}
+
+.fa-bl-top
+{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+}
+
+.fa-bl-name
+{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+    color:#1e293b;
+    font-size:13.5px;
+    font-weight:650;
+}
+
+.fa-bl-name i
+{
+    width:18px;
+    color:#3b62b8;
+    text-align:center;
+}
+
+.fa-bl-top b
+{
+    color:#15803d;
+    font-size:14.5px;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+}
+
+.fa-bl-bar
+{
+    height:7px;
+    border-radius:999px;
+    background:#eef2f7;
+    overflow:hidden;
+}
+
+.fa-bl-bar i
+{
+    display:block;
+    height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg, #22c55e, #15803d);
+}
+
+.fa-bl.is-loss .fa-bl-top b
+{
+    color:#b42318;
+}
+
+.fa-bl.is-loss .fa-bl-bar i
+{
+    background:linear-gradient(90deg, #f87171, #b42318);
+}
+
+.fa-bl-figs
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 14px;
+    color:#64748b;
+    font-size:11.5px;
+}
+
+.fa-bl-figs b
+{
+    color:#334155;
+    font-weight:650;
+    font-variant-numeric:tabular-nums;
+}
+
+.fa-bl-cmp
+{
+    color:#94a3b8;
+    font-size:11.5px;
+}
+
+.fa-lines-foot
+{
+    display:grid;
+    grid-template-columns:1fr auto;
+    align-items:baseline;
+    gap:2px 10px;
+    padding:12px 14px;
+    background:#eef3fb;
+    box-shadow:inset 0 2px 0 #e2c27a;
+}
+
+.fa-lines-foot span
+{
+    color:#9a7420;
+    font-size:11.5px;
+    font-weight:800;
+    letter-spacing:1px;
+    text-transform:uppercase;
+}
+
+.fa-lines-foot b
+{
+    color:#0f2557;
+    font-size:16px;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+}
+
+.fa-lines-foot em
+{
+    grid-column:1 / -1;
+    color:#64748b;
+    font-size:12px;
+    font-style:normal;
+    text-align:right;
+}
+
+
+/* Narrow canvas : the panel goes under the statement and the
+   whole view scrolls */
+@media (max-width:1280px)
+{
+    .fa-page .lr-view
+    {
+        overflow:auto;
+    }
+
+    .fa-main.has-side
+    {
+        flex-direction:column;
+        flex:0 0 auto;
+    }
+
+    .fa-main.has-side > .fa-tcard
+    {
+        flex:0 0 auto;
+        max-height:70vh;
+    }
+
+    .fa-main.has-side > .fa-lines
+    {
+        flex:0 0 auto;
+    }
+
+    .fa-lines-body
+    {
+        display:grid;
+        grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+        flex:0 0 auto;
+    }
+}
+
+
+/* Under Retained Earnings : "incl. profit / loss for the year
+   to date" (ledger level) */
+.lr-table tbody tr.fa-extra.fa-detail td
+{
+    height:34px;
+    background:#fffdf5;
+    color:#92400e;
+    font-size:13px;
+    font-weight:500;
+    font-style:italic;
+}
+
+.fa-table tr.fa-extra.fa-detail .tb-acc
+{
+    padding-left:100px;
+}
+
+/* Balance check : the icon before the name */
+.fa-check-icon
+{
+    order:-1;
+    font-size:14px;
+}
+
+
+/* =====================================================
+   BREAKDOWN BUTTON (switch bar, right) AND POP-UP
+   (P&L business lines, Daily Collection totals)
+===================================================== */
+
+.fa-bar-btn
+{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    flex:0 0 auto;
+    height:32px;
+    margin-left:auto;
+    padding:0 14px;
+    border:1px solid #c7d5f0;
+    border-radius:8px;
+    background:#ffffff;
+    color:#1e3a8a;
+    font-size:13.5px;
+    font-weight:650;
+    cursor:pointer;
+    box-shadow:0 1px 2px rgba(15, 23, 42, 0.06);
+    transition:background .15s ease, border-color .15s ease;
+}
+
+.fa-bar-btn:hover:not(:disabled)
+{
+    border-color:#93b4f5;
+    background:#eef3fb;
+}
+
+.fa-bar-btn:disabled
+{
+    opacity:.5;
+    cursor:default;
+}
+
+.fa-bar-btn-go
+{
+    font-size:10.5px;
+    color:#94a3b8;
+}
+
+.fa-modal-back
+{
+    position:fixed;
+    inset:0;
+    z-index:1200;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:rgba(15, 23, 42, 0.45);
+    backdrop-filter:blur(2px);
+    animation:fa-fade .15s ease;
+}
+
+.fa-modal
+{
+    display:flex;
+    flex-direction:column;
+    width:min(940px, 100%);
+    max-height:calc(100vh - 48px);
+    overflow:hidden;
+    border-radius:14px;
+    background:#ffffff;
+    box-shadow:0 24px 60px -12px rgba(15, 23, 42, 0.45);
+    animation:fa-rise .18s ease;
+}
+
+@keyframes fa-fade
+{
+    from { opacity:0; }
+    to { opacity:1; }
+}
+
+@keyframes fa-rise
+{
+    from { opacity:0; transform:translateY(10px); }
+    to { opacity:1; transform:none; }
+}
+
+.fa-modal-head
+{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex:0 0 auto;
+    padding:14px 18px;
+    background:#eef3fb;
+    box-shadow:inset 0 -2px 0 #e2c27a;
+}
+
+.fa-modal-ico
+{
+    display:grid;
+    place-items:center;
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    background:#1e3a8a;
+    color:#ffffff;
+    font-size:15px;
+}
+
+.fa-modal-title
+{
+    display:flex;
+    flex-direction:column;
+    flex:1 1 auto;
+    min-width:0;
+}
+
+.fa-modal-title b
+{
+    color:#0f2557;
+    font-size:16px;
+    font-weight:800;
+}
+
+.fa-modal-title b em
+{
+    color:#64748b;
+    font-size:12.5px;
+    font-style:normal;
+    font-weight:600;
+}
+
+.fa-modal-title span
+{
+    color:#64748b;
+    font-size:12.5px;
+}
+
+.fa-modal-x
+{
+    display:grid;
+    place-items:center;
+    width:34px;
+    height:34px;
+    border:1px solid #d5dfef;
+    border-radius:9px;
+    background:#ffffff;
+    color:#475569;
+    cursor:pointer;
+}
+
+.fa-modal-x:hover
+{
+    background:#fef2f2;
+    color:#b42318;
+    border-color:#fecaca;
+}
+
+.fa-modal-tabs
+{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    flex:0 0 auto;
+    padding:10px 18px;
+    border-bottom:1px solid #e3e9f2;
+}
+
+.fa-modal-tabs button
+{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    height:32px;
+    padding:0 12px;
+    border:1px solid #dbe3ef;
+    border-radius:8px;
+    background:#f8fafc;
+    color:#334155;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+.fa-modal-tabs button.on
+{
+    border-color:#1e3a8a;
+    background:#1e3a8a;
+    color:#ffffff;
+}
+
+.fa-modal-tabs button.on .tb-count
+{
+    background:rgba(255, 255, 255, 0.2);
+    color:#ffffff;
+}
+
+.fa-modal-body
+{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    padding:16px 18px;
+}
+
+.fa-bl-grid
+{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:12px;
+}
+
+.fa-modal-note
+{
+    margin-top:12px;
+    color:#94a3b8;
+    font-size:12px;
+}
+
+.fa-modal-empty
+{
+    padding:30px 0;
+}
+
+.fa-share-list
+{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.fa-share
+{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding:10px 12px;
+    border:1px solid #e3e9f2;
+    border-radius:10px;
+    background:#fbfcfe;
+}
+
+.fa-share-top
+{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    color:#1e293b;
+    font-size:14px;
+    font-weight:600;
+}
+
+.fa-share-top em
+{
+    margin-left:6px;
+    color:#94a3b8;
+    font-size:11.5px;
+    font-style:normal;
+    font-weight:500;
+}
+
+.fa-share-top b
+{
+    color:#0f2557;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+}
+
+.fa-share.is-neg .fa-share-top b
+{
+    color:#b42318;
+}
+
+.fa-share.is-neg .fa-bl-bar i
+{
+    background:linear-gradient(90deg, #f87171, #b42318);
+}
+
+.fa-share-pct
+{
+    color:#64748b;
+    font-size:11.5px;
+}
+
+.fa-modal-foot
+{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex:0 0 auto;
+    padding:12px 18px;
+    background:#f8fafd;
+    border-top:1px solid #e3e9f2;
+    box-shadow:inset 0 2px 0 #e2c27a;
+}
+
+.fa-modal-nav
+{
+    display:flex;
+    gap:8px;
+}
+
+.fa-modal-nav .lr-btn
+{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    height:34px;
+    padding:0 12px;
+}
+
+.fa-modal-sum
+{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-left:auto;
+}
+
+.fa-modal-sum span
+{
+    color:#9a7420;
+    font-size:11.5px;
+    font-weight:800;
+    letter-spacing:1px;
+    text-transform:uppercase;
+}
+
+.fa-modal-sum b
+{
+    color:#0f2557;
+    font-size:17px;
+    font-weight:800;
+    font-variant-numeric:tabular-nums;
+}
+
+.fa-modal-sum em
+{
+    color:#64748b;
+    font-size:12px;
+    font-style:normal;
+}
+
+.fa-modal-foot > .lr-btn-primary
+{
+    width:auto;
+    height:34px;
+    padding:0 18px;
+}
+
+@media (max-width:640px)
+{
+    .fa-modal-foot
+    {
+        flex-wrap:wrap;
+    }
+}
+
+
+/* Business-line card : one-column income statement */
+.fa-bl-stmt
+{
+    width:100%;
+    margin-top:2px;
+    border-collapse:collapse;
+    font-size:13px;
+    font-variant-numeric:tabular-nums;
+}
+
+.fa-bl-stmt td
+{
+    padding:5px 2px;
+    color:#334155;
+    border-bottom:1px dashed #e3e9f2;
+}
+
+.fa-bl-stmt td.r
+{
+    text-align:right;
+    white-space:nowrap;
+    font-weight:600;
+    color:#1e293b;
+}
+
+.fa-bl-stmt tr.fa-bl-gp td
+{
+    padding-top:7px;
+    border-top:1.5px solid #1e3a8a;
+    border-bottom:1.5px double #1e3a8a;
+    color:#0f2557;
+    font-size:14px;
+    font-weight:800;
+}
+
+.fa-bl.is-loss .fa-bl-stmt tr.fa-bl-gp td
+{
+    color:#b42318;
+}
+
+.fa-bl-stmt tr.fa-bl-mg td
+{
+    border-bottom:0;
+    color:#64748b;
+    font-size:12px;
+}
+
+.fa-bl-stmt tr.fa-bl-mg td.r
+{
+    color:#047857;
+}
+
+.fa-bl.is-loss .fa-bl-stmt tr.fa-bl-mg td.r
+{
+    color:#b42318;
+}
+
+.fa-bl-stmt tr.fa-bl-cmprow td
+{
+    border-bottom:0;
+    color:#94a3b8;
+    font-size:11.5px;
+}
+
+.fa-bl-stmt tr.fa-bl-cmprow td.r
+{
+    color:#64748b;
+    font-weight:600;
+}
+
+
+/* How the figures work : one short note beside Submit (full text
+   on hover), so the filter needs no scroll */
+.fa-foot-note
+{
+    display:flex;
+    align-items:flex-start;
+    gap:7px;
+    flex:1 1 auto;
+    min-width:0;
+    margin-right:auto;
+    color:#64748b;
+    font-size:11.5px;
+    line-height:1.35;
+    cursor:help;
+}
+
+.fa-foot-note i
+{
+    flex:0 0 auto;
+    margin-top:2px;
+    color:#3b62b8;
+    font-size:12px;
+}
+
+.fa-foot-note span
+{
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+
+.lr-filter-foot .lr-btn-primary
+{
+    flex:0 0 auto;
+}
+
+
+/* Compare with : the three choices on one row (no filter scroll) */
+.fa-choices.fa-choices-row
+{
+    flex-direction:row;
+    gap:3px;
+    padding:3px;
+}
+
+.fa-choices-row .fa-choice
+{
+    flex:1 1 0;
+    justify-content:center;
+    min-width:0;
+    height:32px;
+    padding:0 6px;
+    font-size:13px;
+    text-align:center;
+    white-space:nowrap;
+}

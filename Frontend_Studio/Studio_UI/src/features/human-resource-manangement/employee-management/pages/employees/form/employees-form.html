@@ -568,7 +568,7 @@
 
                             <header class="hre-card-head">
                                 <i class="fas fa-building-columns"></i>
-                                <span>Overtime and Remarks</span>
+                                <span>Overtime, Bonus and Leave Encashment</span>
                             </header>
 
                             <div class="hre-grid-2">
@@ -622,6 +622,24 @@
                                         </dl>
                                     }
                                 }
+
+                                <app-search-dropdown
+                                    label="Bonus Structure"
+                                    [placeholder]="bonusItems[0]?.label || 'The Default'"
+                                    [items]="bonusItems"
+                                    [value]="entity.BonusStructureId"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onBonusStructure($event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Leave Encashment Policy"
+                                    [placeholder]="encashItems[0]?.label || 'The Default'"
+                                    [items]="encashItems"
+                                    [value]="entity.LeaveEncashPolicyId"
+                                    [disabled]="isViewMode"
+                                    (valueChange)="onEncashPolicy($event)">
+                                </app-search-dropdown>
 
                                 <div class="hre-span-3">
                                     <app-textbox

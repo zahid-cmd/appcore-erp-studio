@@ -150,7 +150,10 @@ export interface SalarySheetLine
     PfLoan: number;
     NetPay: number;
     Remarks: string;
+    // Paid in full (worked out from Payroll Payments)
     IsPaid: boolean;
+    // What Payroll Payments have paid of the net pay so far
+    PaidAmount: number;
     PaidDate: string;
     PaidNote: string;
     Heads: SalarySheetHead[];
@@ -165,7 +168,38 @@ export interface SalarySheet extends SalarySheetListItem
     PostedDate: string;
     // Active employees left off : no salary structure
     NoSalaryCount: number;
+    // Draft / Approved : advances due this month not (fully) paid
+    // out by the month end (not recovered on this sheet)
+    UnpaidAdvances: UnpaidAdvance[];
     Lines: SalarySheetLine[];
+}
+
+// An advance due in the salary month that was not (fully) paid out
+// on Payroll Payments by the month end : the sheet recovers only
+// what was paid out, so the rest waits (a notice, not a block)
+export interface UnpaidAdvance
+{
+    AdvanceId: number;
+    Code: string;
+    EmployeeId: number;
+    EmployeeCode: string;
+    EmployeeName: string;
+    AdvanceDate: string;
+    Amount: number;
+    // paid out by the month end
+    PaidOut: number;
+    // paid out after the month end (recovered from a later month)
+    PaidLater: number;
+    NotPaidOut: number;
+}
+
+// One line per advance, for a tooltip
+export function unpaidAdvanceText(a: UnpaidAdvance): string
+{
+    const later =
+        a.PaidLater > 0 ? `, Tk ${payMoney(a.PaidLater)} paid after the month end` : '';
+
+    return `${a.Code} ${a.EmployeeName} : Tk ${payMoney(a.NotPaidOut)} of ${payMoney(a.Amount)} not paid out${later}`;
 }
 
 export interface SalarySheetDefaults
@@ -252,3 +286,53 @@ export const PAYROLL_STATUS_COLORS:
     Recovered:'#047857',
     Closed:'#64748b'
 };
+
+//---------------------------------------------------------------
+// Overtime Sheets : the overtime of a POSTED salary sheet
+// (OTS-0001 for SAL-0001; no Add : it is there on posting)
+//---------------------------------------------------------------
+
+export interface OvertimeSheetListItem
+{
+    // (of the salary sheet)
+    PublicId: string;
+    Code: string;
+    SalarySheetCode: string;
+    Year: number;
+    Month: number;
+    BranchId: number;
+    BranchName: string;
+    // Employees with overtime
+    EmployeeCount: number;
+    OvertimeHours: number;
+    OvertimeDays: number;
+    Amount: number;
+    // yyyy-MM-dd
+    PostedDate: string;
+    JournalVoucherNo: string;
+}
+
+export interface OvertimeSheetLine
+{
+    EmployeeCode: string;
+    EmployeeName: string;
+    DesignationName: string;
+    DepartmentName: string;
+    BasicSalary: number;
+    GrossSalary: number;
+    OvertimeHours: number;
+    OvertimeDays: number;
+    Amount: number;
+}
+
+export interface OvertimeSheet
+extends OvertimeSheetListItem
+{
+    Lines: OvertimeSheetLine[];
+}
+
+// 12.5 / 3 : hours and days without trailing zeros ('' for nothing)
+export function payQuantity(value: number): string
+{
+    return Number(value) ? (Number(value) || 0).toLocaleString('en-US', { maximumFractionDigits:2 }) : '';
+}

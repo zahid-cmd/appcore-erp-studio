@@ -1,0 +1,86 @@
+@import '../../../payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Bonus Structures : the two sections of the payroll pages (left the
+   structure, right the service slabs) */
+
+.bst-split
+{
+    grid-template-columns: minmax(320px, 1fr) minmax(0, 1.6fr);
+    /* the two sections, then the structure in words under both */
+    grid-template-rows: minmax(0, 1fr) auto;
+}
+
+/* The switches : side by side, on top of the right card */
+
+.bst-options
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px 12px;
+}
+
+.bst-options .pf-switch
+{
+    margin: 0;
+}
+
+/* The structure in words : one band under both sections, its
+   lines in two columns */
+
+.bst-notes
+{
+    grid-column: 1 / -1;
+}
+
+.bst-notes .hp-list
+{
+    display: block;
+    column-count: 2;
+    column-gap: 40px;
+}
+
+.bst-notes .hp-list li
+{
+    margin-bottom: 6px;
+    break-inside: avoid;
+}
+
+@media (max-width: 1100px)
+{
+    .bst-notes .hp-list
+    {
+        column-count: 1;
+    }
+}
+
+.bst-two
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+    gap: 12px;
+}
+
+.bst-table .hp-pay
+{
+    width: 42%;
+}
+
+.bst-table .hp-input:disabled
+{
+    border-color: #e3e9f3;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.bst-rule
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: #f7faff;
+    color: #0f2a44;
+    font-size: 13px;
+}

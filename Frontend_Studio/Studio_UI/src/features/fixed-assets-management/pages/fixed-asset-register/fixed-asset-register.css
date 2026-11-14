@@ -1,0 +1,480 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Fixed Asset Register : left the asset, right its value and history */
+
+.far-split
+{
+    grid-template-columns: minmax(320px, 1fr) minmax(0, 1.8fr);
+}
+
+.far-form
+{
+    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+}
+
+/* the branch and category filters, on the right of the toolbar */
+
+.far-filters
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.far-filters > app-search-dropdown
+{
+    flex: 0 0 220px;
+    width: 220px;
+}
+
+/* the facts of a card : the value may be a long text */
+
+.far-facts
+{
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.far-facts dd
+{
+    overflow-wrap: anywhere;
+}
+
+/* cost on the left, depreciation on the right */
+
+.far-value
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 28px;
+    align-items: start;
+}
+
+@media (max-width: 1300px)
+{
+    .far-value
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.far-nowrap
+{
+    white-space: nowrap;
+}
+
+
+/* =====================================================================
+   View Asset : the asset at a glance on top, then its details and
+   its history
+   ===================================================================== */
+
+.far-view
+{
+    grid-template-columns: minmax(340px, 1fr) minmax(0, 1.5fr);
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+.far-wide
+{
+    grid-column: 1 / -1;
+}
+
+/* ---- the top : who it is, what it is worth ---- */
+
+.far-hero
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px 22px;
+    align-items: center;
+    padding: 16px 18px 14px;
+    border: 1px solid #dbe6fb;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #f3f7ff 100%);
+    box-shadow: 0 6px 20px rgba(30, 58, 138, .07);
+}
+
+.far-who
+{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.far-icon
+{
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #16307a 0%, #2f55d4 100%);
+    color: #ffffff;
+    font-size: 22px;
+    box-shadow: 0 8px 18px rgba(30, 58, 138, .25);
+}
+
+.far-title
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.far-line
+{
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 10px;
+}
+
+.far-no
+{
+    flex: 0 0 auto;
+    padding: 3px 10px;
+    white-space: nowrap;
+    border-radius: 8px;
+    background: #0f2a44;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+}
+
+.far-status
+{
+    flex: 0 0 auto;
+    padding: 3px 10px;
+    white-space: nowrap;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.far-status-ok
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.far-status-wait
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.far-name
+{
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    color: #0f2a44;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.far-chips
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    color: #475569;
+    font-size: 12.5px;
+}
+
+.far-chips i
+{
+    margin-right: 6px;
+    color: #2f55d4;
+    font-size: 11.5px;
+}
+
+/* ---- the four figures ---- */
+
+.far-tiles
+{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(118px, auto));
+    gap: 10px;
+}
+
+.far-tile
+{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 9px 14px;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.far-tile span
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.far-tile b
+{
+    color: #0f2a44;
+    font-size: 15.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.far-tile-main
+{
+    border-color: transparent;
+    background: linear-gradient(135deg, #16307a 0%, #2f55d4 100%);
+    box-shadow: 0 8px 18px rgba(30, 58, 138, .25);
+}
+
+.far-tile-main span
+{
+    color: rgba(255, 255, 255, .8);
+}
+
+.far-tile-main b
+{
+    color: #ffffff;
+}
+
+/* ---- how far it is depreciated ---- */
+
+.far-progress
+{
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    gap: 16px;
+    color: #475569;
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+.far-progress b
+{
+    color: #0f2a44;
+}
+
+.far-bar
+{
+    flex: 1 1 auto;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e6ecf7;
+}
+
+.far-bar i
+{
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #2f55d4 0%, #16307a 100%);
+    transition: width .3s ease;
+}
+
+/* ---- the details : a label over its value, two a row ---- */
+
+.far-grid
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+
+.far-grid > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid #e9eef6;
+    border-radius: 12px;
+    background: #fafcff;
+}
+
+.far-grid span
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.far-grid b
+{
+    color: #0f2a44;
+    font-size: 13.5px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.far-full
+{
+    grid-column: 1 / -1;
+}
+
+/* ---- the history : a line of events ---- */
+
+.far-count
+{
+    padding: 1px 9px;
+    border-radius: 999px;
+    background: #eef4fd;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.far-timeline
+{
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.far-timeline li
+{
+    position: relative;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+    padding: 0 0 14px;
+}
+
+/* the line that joins the events */
+
+.far-timeline li::before
+{
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 34px;
+    bottom: 0;
+    width: 2px;
+    background: #e3e9f3;
+}
+
+.far-timeline li:last-child::before
+{
+    display: none;
+}
+
+.far-timeline li:last-child
+{
+    padding-bottom: 0;
+}
+
+.far-dot
+{
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: #eef4fd;
+    color: #1e3a8a;
+    font-size: 13px;
+}
+
+.far-timeline li[data-kind='Acquired'] .far-dot,
+.far-timeline li[data-kind='Opening'] .far-dot
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.far-timeline li[data-kind='Disposal'] .far-dot
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.far-event
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding-top: 2px;
+}
+
+.far-event-top
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    color: #0f2a44;
+    font-size: 13.5px;
+}
+
+.far-code
+{
+    padding: 1px 8px;
+    border: 1px solid #dbe6fb;
+    border-radius: 999px;
+    background: #f7faff;
+    color: #1e3a8a;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.far-date
+{
+    color: #64748b;
+    font-size: 12px;
+}
+
+.far-event-text
+{
+    color: #475569;
+    font-size: 12.5px;
+    overflow-wrap: anywhere;
+}
+
+.far-amount
+{
+    padding-top: 4px;
+    color: #0f2a44;
+    font-size: 13.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+@media (max-width: 1400px)
+{
+    .far-hero
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .far-tiles
+    {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}

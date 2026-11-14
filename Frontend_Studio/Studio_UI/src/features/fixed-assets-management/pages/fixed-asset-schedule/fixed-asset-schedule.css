@@ -1,0 +1,104 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Fixed Asset Schedule : the look of the festival bonus page */
+
+.fas-show
+{
+    height: 36px;
+}
+
+.pfx-tools.fas-branch > app-search-dropdown
+{
+    flex: 0 0 240px;
+    width: 240px;
+}
+
+/* the note under the table */
+
+.fas-note
+{
+    flex: 0 0 auto;
+    padding: 0 6px;
+}
+
+/* one wide table : it scrolls inside the canvas, both ways */
+
+.fas-table
+{
+    min-width: 1320px;
+}
+
+.fas-table .fas-name
+{
+    min-width: 220px;
+    text-align: left;
+}
+
+/* two rows of headings, both stay in place */
+
+.fas-table thead th
+{
+    height: 34px;
+    box-sizing: border-box;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.fas-table .fas-head-1 th
+{
+    top: 0;
+}
+
+.fas-table .fas-head-2 th
+{
+    top: 34px;
+}
+
+.fas-table th.fas-band
+{
+    border-left: 1px solid #d6e4fb;
+    color: #1e3a8a;
+    text-align: center;
+}
+
+/* the first column of Cost / Depreciation / Book Value */
+
+.fas-table .fas-first
+{
+    border-left: 1px solid #d6e4fb;
+}
+
+.fas-table td.fas-close
+{
+    font-weight: 700;
+}
+
+/* a group : its heading and its subtotal */
+
+.fas-table tr.fas-group td
+{
+    padding-top: 10px;
+    background: #f8fafc;
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.fas-table tr.fas-subtotal td
+{
+    border-top: 1px solid #d6e4fb;
+    background: #f7faff;
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+/* the grand total stays at the bottom of the canvas */
+
+.fas-table tfoot td
+{
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+}

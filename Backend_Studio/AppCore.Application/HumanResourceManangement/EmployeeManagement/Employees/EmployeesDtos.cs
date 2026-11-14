@@ -152,6 +152,12 @@ public class EmployeeDto
 
     public decimal OvertimeRate { get; set; }
 
+    // The employee's own bonus structure and leave encashment
+    // policy (0 = the Default one)
+    public long BonusStructureId { get; set; }
+
+    public long LeaveEncashPolicyId { get; set; }
+
     // Cash / Bank / MFS
     public string PaymentMode { get; set; } = "Cash";
 
@@ -278,4 +284,10 @@ public class EmployeeDefaultsDto
 
     // Active overtime structures
     public List<EmployeeOvertimeStructureDto> OvertimeStructures { get; set; } = new();
+
+    // Active bonus structures / leave encashment policies (Note :
+    // "Default" on the one that applies when the profile names none)
+    public List<EmployeeLookupDto> BonusStructures { get; set; } = new();
+
+    public List<EmployeeLookupDto> LeaveEncashPolicies { get; set; } = new();
 }

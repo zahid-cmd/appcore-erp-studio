@@ -24,6 +24,8 @@ import
 from '@angular/router';
 
 import { PageHeaderComponent } from '../../../../../../shared/components/layout/page-header/page-header';
+import { DatepickerComponent } from '../../../../../../shared/components/controls/datepicker/datepicker';
+import { hrDateEvent, hrMonthEvent, hrMonthToDate, hrToDate } from '../../../../services/hr-date';
 import { PageCanvasComponent } from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { TextboxComponent } from '../../../../../../shared/components/controls/textbox/textbox';
@@ -37,7 +39,10 @@ import { HrProgressService } from '../../../../services/hr-progress.service';
 import
 {
     GenerateSalarySheet,
-    payMonthText
+    UnpaidAdvance,
+    payMoney,
+    payMonthText,
+    unpaidAdvanceText
 }
 from '../../../models/payroll.model';
 
@@ -63,6 +68,7 @@ from '../../../services/payroll.service';
     imports:
     [
         CommonModule,
+        DatepickerComponent,
         PageHeaderComponent,
         PageCanvasComponent,
         CommandCenterComponent,
@@ -78,6 +84,16 @@ from '../../../services/payroll.service';
 export class SalarySheetGenerate
 implements OnInit
 {
+    readonly asDate = hrToDate;
+
+    readonly dateEvent = hrDateEvent;
+
+    // The shared date picker in month mode works with a Date; the
+    // page keeps yyyy-MM text
+    readonly asMonth = hrMonthToDate;
+
+    readonly monthEvent = hrMonthEvent;
+
     private readonly service = inject(PayrollService);
 
     private readonly router = inject(Router);
@@ -106,6 +122,35 @@ implements OnInit
 
     isSaving =
         false;
+
+    // Advances of the branch due in the month but not paid out by
+    // its end : a notice (the sheet will not recover them)
+    unpaidAdvances:
+        UnpaidAdvance[] = [];
+
+    private unpaidRequest =
+        0;
+
+    // The first few on the page; all of them in the tooltip
+    readonly unpaidShown =
+        4;
+
+    readonly unpaidText = unpaidAdvanceText;
+
+    get unpaidTotal(): number
+    {
+        return this.unpaidAdvances.reduce((sum, a) => sum + a.NotPaidOut, 0);
+    }
+
+    get unpaidTitle(): string
+    {
+        return this.unpaidAdvances.map(unpaidAdvanceText).join('\n');
+    }
+
+    money(value: number): string
+    {
+        return payMoney(value);
+    }
 
     // yyyy-MM of the month box
     get monthValue(): string
@@ -156,6 +201,8 @@ implements OnInit
                         this.request.BranchId = d.Branches[0].Id;
                     }
 
+                    this.loadUnpaidAdvances();
+
                     this.cdr.detectChanges();
                 },
                 error:error =>
@@ -178,6 +225,8 @@ implements OnInit
             this.request.Month = Number(m[2]);
         }
 
+        this.loadUnpaidAdvances();
+
         this.cdr.detectChanges();
     }
 
@@ -185,7 +234,46 @@ implements OnInit
         void
     {
         this.request.BranchId = Number(value) || 0;
+
+        this.loadUnpaidAdvances();
+
         this.cdr.detectChanges();
+    }
+
+    // The month or the branch changed : the advances not paid out
+    private loadUnpaidAdvances():
+        void
+    {
+        const ticket =
+            ++this.unpaidRequest;
+
+        this.unpaidAdvances = [];
+
+        if (!this.request.BranchId || this.isFutureMonth)
+        {
+            return;
+        }
+
+        this.service
+            .getUnpaidAdvances(this.request.BranchId, this.request.Year, this.request.Month)
+            .subscribe(
+            {
+                next:rows =>
+                {
+                    // an older answer (the month / branch moved on)
+                    if (ticket !== this.unpaidRequest)
+                    {
+                        return;
+                    }
+
+                    this.unpaidAdvances = rows;
+                    this.cdr.detectChanges();
+                },
+                error:() =>
+                {
+                    // only a notice : nothing to show
+                }
+            });
     }
 
     onLateRule(value: any):

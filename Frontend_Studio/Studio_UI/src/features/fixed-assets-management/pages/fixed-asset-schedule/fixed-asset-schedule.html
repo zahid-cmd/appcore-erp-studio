@@ -1,0 +1,201 @@
+<div class="app-list-page">
+
+    <app-page-header
+        title="Fixed Asset Schedule"
+        subtitle="Cost, depreciation and book value of every asset group for a period"
+        icon="fas fa-table-columns">
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="load()"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                (command2Click)="print()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <div
+            pageToolbarLeft
+            class="pfx-tools">
+
+            <app-datepicker
+                class="pfx-month"
+                placeholder="From date"
+                [allowEmpty]="true"
+                [value]="$any(asDate(fromDate))"
+                (valueChange)="onFrom($event)">
+            </app-datepicker>
+
+            <span class="hp-note">to</span>
+
+            <app-datepicker
+                class="pfx-month"
+                placeholder="To date"
+                [allowEmpty]="true"
+                [value]="$any(asDate(toDate))"
+                (valueChange)="onTo($event)">
+            </app-datepicker>
+
+            <button
+                type="button"
+                class="hp-add fas-show"
+                [disabled]="loading"
+                (click)="load()">
+                <i class="fas fa-magnifying-glass"></i>
+                Show
+            </button>
+
+            <span class="hp-note">Leave both dates empty for this financial year, up to today</span>
+
+        </div>
+
+        <div
+            pageToolbarRight
+            class="pfx-tools fas-branch">
+
+            <app-search-dropdown
+                placeholder="All Branches"
+                [items]="branchItems"
+                labelField="label"
+                valueField="value"
+                [value]="branchId"
+                (valueChange)="onBranch($event)">
+            </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+    @if (report)
+    {
+        <div class="pay-summary">
+            <span class="pay-summary-item">
+                <span class="pay-summary-label">Period</span>
+                <b class="pay-summary-value">{{ periodText }}</b>
+            </span>
+            <span class="pay-summary-item">
+                <span class="pay-summary-label">Branch</span>
+                <b class="pay-summary-value">{{ branchText }}</b>
+            </span>
+            <span class="pay-summary-item">
+                <span class="pay-summary-label">Cost Closing</span>
+                <b class="pay-summary-value">{{ money(report.Total.CostClosing) }}</b>
+            </span>
+            <span class="pay-summary-item">
+                <span class="pay-summary-label">Depreciation Closing</span>
+                <b class="pay-summary-value">{{ money(report.Total.DepClosing) }}</b>
+            </span>
+            <span class="pay-summary-item">
+                <span class="pay-summary-label">Book Value Closing</span>
+                <b class="pay-summary-value pay-ok">{{ money(report.Total.NbvClosing) }}</b>
+            </span>
+        </div>
+    }
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div
+            canvasBody
+            class="pfx-scroll appcore-scrollbar">
+
+            @if (!report || shown.length === 0)
+            {
+                <div class="pfx-empty">{{ emptyText }}</div>
+            }
+            @else
+            {
+                <table class="pfx-table fas-table">
+
+                    <thead>
+                        <tr class="fas-head-1">
+                            <th
+                                class="pfx-no"
+                                rowspan="2">#</th>
+                            <th
+                                class="fas-name"
+                                rowspan="2">Asset Group</th>
+                            <th
+                                class="fas-band"
+                                colspan="4">Cost</th>
+                            <th
+                                class="fas-band"
+                                colspan="4">Depreciation</th>
+                            <th
+                                class="fas-band"
+                                colspan="2">Book Value</th>
+                        </tr>
+                        <tr class="fas-head-2">
+                            <th class="pfx-num fas-first">Opening</th>
+                            <th class="pfx-num">Additions</th>
+                            <th class="pfx-num">Disposals</th>
+                            <th class="pfx-num">Closing</th>
+                            <th class="pfx-num fas-first">Opening</th>
+                            <th class="pfx-num">Charge for the period</th>
+                            <th class="pfx-num">On disposals</th>
+                            <th class="pfx-num">Closing</th>
+                            <th class="pfx-num fas-first">Opening</th>
+                            <th class="pfx-num">Closing</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (row of shown; track $index)
+                        {
+                            @if (row.kind === 'group')
+                            {
+                                <tr class="fas-group">
+                                    <td class="pfx-no"></td>
+                                    <td colspan="11">{{ row.label }}</td>
+                                </tr>
+                            }
+                            @else
+                            {
+                                <tr [class.fas-subtotal]="row.kind === 'subtotal'">
+                                    <td class="pfx-no">{{ row.serial }}</td>
+                                    <td class="fas-name">{{ row.label }}</td>
+                                    @for (field of fields; track field; let c = $index)
+                                    {
+                                        <td
+                                            class="pfx-num"
+                                            [class.fas-first]="c === 0 || c === 4 || c === 8"
+                                            [class.fas-close]="c === 3 || c === 7 || c === 9">{{ row.data ? money(row.data[field]) : '' }}</td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+
+                    <tfoot>
+                        <tr>
+                            <td class="pfx-no"></td>
+                            <td class="fas-name">Total</td>
+                            @for (field of fields; track field; let c = $index)
+                            {
+                                <td
+                                    class="pfx-num"
+                                    [class.fas-first]="c === 0 || c === 4 || c === 8">{{ money(report.Total[field]) }}</td>
+                            }
+                        </tr>
+                    </tfoot>
+
+                </table>
+            }
+
+        </div>
+
+    </app-page-canvas>
+
+    <div class="hp-note fas-note">
+        Additions are the assets bought in the period. Charge is the depreciation runs of the period. A branch shows the assets that are in it now.
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

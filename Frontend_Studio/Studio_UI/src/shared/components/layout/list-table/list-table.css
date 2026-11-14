@@ -1420,3 +1420,11 @@ td.right .action-buttons
     z-index: 25;
     background: #f6f9fd;
 }
+
+
+/* A row the page listens to (rowClick) : it opens its detail */
+
+.list-table-grid tbody tr.lt-row-click
+{
+    cursor:pointer;
+}

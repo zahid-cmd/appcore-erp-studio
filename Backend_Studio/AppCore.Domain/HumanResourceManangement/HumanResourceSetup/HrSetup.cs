@@ -141,6 +141,9 @@ public class HrLeaveTypes : IHrSetupEntity
 
     public decimal MaxCarryDays { get; set; }
 
+    // The days not taken can be paid as money (Leave Encashments)
+    public bool IsEncashable { get; set; }
+
     // All / Male / Female
     public string AppliesTo { get; set; } = "All";
 
@@ -189,6 +192,10 @@ public class HrSalaryHeads : IHrSetupEntity
 
     // Falls with unpaid days (absence / unpaid leave)
     public bool IsProrated { get; set; } = true;
+
+    // A deduction head : the ledger it is credited to when a
+    // salary sheet is posted ('' : Payroll - Deductions Payable)
+    public string PayableLedgerCode { get; set; } = string.Empty;
 
     public int DisplayOrder { get; set; }
 

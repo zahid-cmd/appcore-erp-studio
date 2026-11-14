@@ -40,9 +40,18 @@ public interface ISalarySheetsRepository
 {
     Task<List<SalarySheetListItemDto>> GetListAsync();
 
+    // Overtime Sheets : the overtime of the posted salary sheets
+    Task<List<OvertimeSheetListItemDto>> GetOvertimeSheetsAsync();
+
+    Task<OvertimeSheetDto> GetOvertimeSheetAsync(Guid publicId);
+
     Task<SalarySheetDto> GetAsync(Guid publicId);
 
     Task<SalarySheetDefaultsDto> GetDefaultsAsync();
+
+    // Advances of a branch due in a month but not (fully) paid out
+    // by the month end : shown on Generate (not recovered)
+    Task<List<UnpaidAdvanceDto>> GetUnpaidAdvancesAsync(long branchId, int year, int month);
 
     // Makes the Draft sheet of a branch's month from the
     // attendance, the salary structures and the advances
@@ -72,4 +81,87 @@ public interface ISalarySheetsRepository
 
     // The most recently deleted sheet back : its code; null = none
     Task<string?> RestoreAsync(long userId);
+}
+
+
+//===============================================================
+// Payments of Human Resource. group : "payroll" (Salary,
+// Overtime) / "pf" (PfSettlement, PfLoan)
+//===============================================================
+
+public interface IHrPaymentsRepository
+{
+    Task<List<HrPaymentListItemDto>> GetListAsync(string group);
+
+    Task<HrPaymentDto> GetAsync(string group, Guid publicId);
+
+    // The salary sheets / settlements / loans with something due
+    Task<List<HrPaymentSourceDto>> GetSourcesAsync(string group, string type);
+
+    // The employees of a source : payable, paid, due
+    Task<List<HrPaymentLineDto>> GetDuesAsync(string group, string type, long sourceId);
+
+    // Saves the payment and its Payment Voucher (posted at once)
+    Task<HrPaymentDto> CreateAsync(string group, CreateHrPaymentDto dto, long userId);
+
+    // Cancels the payment and its Payment Voucher
+    Task CancelAsync(string group, Guid publicId, CancelHrPaymentDto dto, long userId);
+}
+
+
+//===============================================================
+// Leave Encashments
+//===============================================================
+
+public interface ILeaveEncashmentsRepository
+{
+    Task<List<LeaveEncashmentDto>> GetListAsync();
+
+    Task<LeaveEncashmentDto> GetAsync(Guid publicId);
+
+    Task<LeaveEncashmentDefaultsDto> GetDefaultsAsync();
+
+    // The leave an employee can encash for a leave year, by the
+    // employee's leave encashment policy
+    Task<EncashEligibilityDto> GetBalanceAsync(long employeeId, int year);
+
+    // Saves it as Pending : the days are held, nothing is posted
+    Task<LeaveEncashmentDto> CreateAsync(LeaveEncashmentDto dto, long userId);
+
+    // Pending -> Approved : posts its Journal Voucher
+    Task ApproveAsync(Guid publicId, long userId);
+
+    // Pending -> Rejected : the days go back
+    Task RejectAsync(Guid publicId, SalarySheetReasonDto dto, long userId);
+
+    // Cancels the voucher (when approved) and gives the days back
+    Task DeleteAsync(Guid publicId, long userId);
+}
+
+
+//===============================================================
+// Festival Bonus
+//===============================================================
+
+public interface IBonusSheetsRepository
+{
+    Task<List<BonusSheetListItemDto>> GetListAsync();
+
+    Task<BonusSheetDto> GetAsync(Guid publicId);
+
+    Task<BonusSheetDefaultsDto> GetDefaultsAsync();
+
+    // Makes the Draft sheet of a branch
+    Task<BonusSheetDto> GenerateAsync(GenerateBonusSheetDto dto, long userId);
+
+    // Draft : the amounts typed
+    Task SaveAsync(Guid publicId, SaveBonusSheetDto dto, long userId);
+
+    // Draft -> Posted : the Journal Voucher
+    Task PostAsync(Guid publicId, long userId);
+
+    // Posted -> Draft : the Journal Voucher is cancelled
+    Task UnpostAsync(Guid publicId, SalarySheetReasonDto dto, long userId);
+
+    Task DeleteAsync(Guid publicId, long userId);
 }

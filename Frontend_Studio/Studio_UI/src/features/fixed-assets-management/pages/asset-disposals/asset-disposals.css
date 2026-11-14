@@ -1,0 +1,77 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Asset Disposals : the two sections of the payroll pages (left the
+   disposal, right what it does) */
+
+.fa-split
+{
+    grid-template-columns: minmax(340px, 1fr) minmax(0, 1.3fr);
+}
+
+.fa-who
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.fa-who b
+{
+    color: #0f172a;
+    font-size: 15.5px;
+}
+
+.fa-who small
+{
+    color: #64748b;
+    font-size: 13px;
+}
+
+.fa-empty
+{
+    padding: 24px 0;
+    color: #64748b;
+    font-size: 13.5px;
+}
+
+.fa-note
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid #e3e9f3;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #0f2a44;
+    font-size: 13px;
+}
+
+/* the note that matters most */
+
+.fa-note.fa-note-on
+{
+    border-color: #d6e4fb;
+    background: #f7faff;
+}
+
+/* the gain (green) or the loss (red) */
+
+.pf-facts dd.fa-gain
+{
+    color: #047857;
+}
+
+.pf-facts dd.fa-loss
+{
+    color: #b4232c;
+}
+
+/* the filter dropdown of the toolbar : wide enough to read */
+
+.fa-filter
+{
+    display: block;
+    flex: 0 0 220px;
+    width: 220px;
+}

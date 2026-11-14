@@ -59,13 +59,17 @@ public interface IProvidentFundRepository
     Task DeleteSettlementAsync(Guid publicId, long userId);
 
     // ---------- Interest ----------
-    Task<List<PfInterestRunDto>> GetInterestRunsAsync();
+    // The financial years and the interest credited already
+    Task<PfInterestHomeDto> GetInterestHomeAsync();
 
-    Task<PfInterestYearDto> PreviewInterestAsync(int year);
+    // The interest of a financial year as it would be credited
+    Task<PfInterestYearDto> PreviewInterestAsync(long financialYearId);
 
-    Task<PfInterestRunDto> PostInterestAsync(int year, long userId);
+    Task<PfInterestRunDto> PostInterestAsync(long financialYearId, long userId);
 
-    Task DeleteInterestAsync(int year, long userId);
+    // id : the financial year (or the calendar year of an interest
+    // credited before financial years)
+    Task DeleteInterestAsync(long id, long userId);
 
     // ---------- Reports ----------
     Task<PfStatementDto> GetStatementAsync(long memberId);

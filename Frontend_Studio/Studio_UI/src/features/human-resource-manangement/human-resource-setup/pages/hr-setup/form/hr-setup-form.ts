@@ -154,8 +154,8 @@ implements OnInit
         return this.mode === 'add'
             ? this.page.singular
             : this.mode === 'edit'
-                ? `Update ${this.page.singular} ${this.entity.Code}`
-                : `View ${this.page.singular} ${this.entity.Code}`;
+                ? `Update ${this.page.singular}`
+                : `View ${this.page.singular}`;
     }
 
     get saveButtonText(): string
@@ -196,6 +196,32 @@ implements OnInit
     // Initialize
     //===========================================================
 
+    // The options of the selects that come from the API, by field
+    loadedOptions:
+        Record<string, { label: string; value: string }[]> = {};
+
+    optionsOf(field: HrSetupField): { label: string; value: string }[]
+    {
+        if (!field.optionsFrom)
+        {
+            return field.options ?? [];
+        }
+
+        const none =
+            { label:field.noneLabel ?? 'None', value:'' };
+
+        const loaded =
+            this.loadedOptions[field.key] ?? [];
+
+        // (a ledger that is no longer in the list stays visible)
+        const value =
+            String(this.entity?.[field.key] ?? '');
+
+        return value && !loaded.some(x => x.value === value)
+            ? [none, { label:value, value }, ...loaded]
+            : [none, ...loaded];
+    }
+
     ngOnInit():
         void
     {
@@ -204,6 +230,22 @@ implements OnInit
 
         this.page =
             HR_SETUP_PAGES[key] ?? HR_SETUP_PAGES['shifts'];
+
+        for (const field of this.page.fields.filter(x => !!x.optionsFrom))
+        {
+            this.service
+                .getOptions(this.page, field.optionsFrom!)
+                .subscribe(
+                {
+                    next:options =>
+                    {
+                        this.loadedOptions = { ...this.loadedOptions, [field.key]:options };
+                        this.cdr.detectChanges();
+                    },
+                    error:error =>
+                        this.toast.error('Error', error?.error?.message ?? `The list of ${field.label} could not be loaded.`)
+                });
+        }
 
         this.entity =
             this.emptyEntity();

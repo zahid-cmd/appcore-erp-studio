@@ -28,3 +28,11 @@
     background: #ecfdf5;
     color: #047857;
 }
+
+/* the financial year dropdown */
+
+.pfi-year
+{
+    min-width: 200px;
+    cursor: pointer;
+}

@@ -362,7 +362,14 @@ implements OnChanges
       return value;
     }
 
-    // % or no width : an average text column
+    // % : the share of a 1600px table, so % pages keep their
+    // proportions (a 4% # column stays small)
+    if (text.endsWith('%') && value > 0)
+    {
+      return Math.round(value * 16);
+    }
+
+    // no width : an average text column
     return 150;
   }
 
@@ -780,6 +787,35 @@ private readonly navigationContextSubscription =
   // row); context : $implicit = row, column = the column
   @ContentChild('cellTemplate')
   cellTemplate?: TemplateRef<any>;
+
+  // A click on a row (not on a button, a link or a box in it) :
+  // e.g. to open / close the detail row. Pages that do not listen
+  // are unchanged.
+  @Output()
+  rowClick =
+    new EventEmitter<any>();
+
+  onRowClick(
+    row: any,
+    event: Event
+  ):
+    void
+  {
+    if (!this.rowClick.observed)
+    {
+      return;
+    }
+
+    const target =
+      event.target as HTMLElement | null;
+
+    if (target?.closest?.('button, a, input, select, textarea, label'))
+    {
+      return;
+    }
+
+    this.rowClick.emit(row);
+  }
 
   @Input()
   detailKey = '';

@@ -711,6 +711,8 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
             CompanyCharges = x.CompanyCharges,
             Status = x.Status,
             CancelReason = x.CancelReason,
+            SourceType = x.SourceType,
+            ReferenceNo = x.ReferenceNo,
             CancelDate = x.CancelDate?.ToString(DateFormat, CultureInfo.InvariantCulture) ?? string.Empty,
             ApprovedDate = x.ApprovedDate,
             PostedDate = x.PostedDate,
@@ -1520,6 +1522,25 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
                 "Payment Voucher not found.");
     }
 
+    // A voucher of another page is changed from that page only
+    // (_bySource : the call comes from that page)
+    private bool _bySource;
+
+    private void RequireOwn
+    (
+        PaymentVoucher entity,
+        string action
+    )
+    {
+        if (_bySource || string.IsNullOrWhiteSpace(entity.SourceType))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"Payment Voucher {entity.VoucherNo} belongs to {entity.SourceType} {entity.ReferenceNo} : it cannot be {action} here. Change it from that page.");
+    }
+
     private static void RequireStatus
     (
         PaymentVoucher entity,
@@ -1544,6 +1565,14 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
         Func<Task> work
     )
     {
+        // (inside the transaction of the page that pays : its own)
+        if (_context.Database.CurrentTransaction != null)
+        {
+            await work();
+
+            return;
+        }
+
         await using IDbContextTransaction transaction =
             await _context.Database.BeginTransactionAsync();
 
@@ -1627,6 +1656,109 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
 
 
     //===========================================================
+    // Payment of another page : Draft -> Approved -> Posted at
+    // once (the caller's transaction when there is one)
+    //===========================================================
+
+    public async Task<PaymentVoucherSavedDto>
+        CreatePostedAsync
+        (
+            CreatePaymentVoucherDto dto,
+            string sourceType,
+            string referenceNo,
+            long userId
+        )
+    {
+        PvInput input =
+            await NormalizeAsync(dto);
+
+        await EnsureDateAllowedAsync(
+            input.VoucherDate,
+            null);
+
+        DateTime now =
+            DateTime.UtcNow;
+
+        PaymentVoucher entity =
+            new()
+            {
+                Status = VoucherStatuses.Draft,
+                CancelReason = string.Empty,
+                SourceType = Limit(sourceType, 30),
+                ReferenceNo = Limit(referenceNo, 60),
+                IsDeleted = false,
+                CreatedBy = userId,
+                CreatedDate = now
+            };
+
+        ApplyHeader(entity, input);
+
+        await InTransactionAsync(
+            async () =>
+            {
+                VoucherNumberDto number =
+                    await _numberService.NextAsync(
+                        VoucherTypes.Payment,
+                        input.Period.BranchId,
+                        input.VoucherDate);
+
+                entity.VoucherNo =
+                    number.VoucherNo;
+
+                _context.Set<PaymentVoucher>().Add(entity);
+
+                await _context.SaveChangesAsync();
+
+                await ReplaceDetailsAsync(
+                    entity.PaymentVoucherId,
+                    input);
+
+                AddHistory(entity, "Create", "Created", userId, now, $"{entity.SourceType} {entity.ReferenceNo}.");
+
+                await _context.SaveChangesAsync();
+
+                entity.Status = VoucherStatuses.Approved;
+                entity.ApprovedBy = userId;
+                entity.ApprovedDate = now;
+
+                AddHistory(entity, "Approve", "Approved", userId, now);
+
+                await PostCoreAsync(entity, userId);
+
+                await _context.SaveChangesAsync();
+            });
+
+        return new PaymentVoucherSavedDto
+        {
+            PaymentVoucherId = entity.PaymentVoucherId,
+            PublicId = entity.PublicId,
+            VoucherNo = entity.VoucherNo
+        };
+    }
+
+
+    public async Task
+        CancelBySourceAsync
+        (
+            long id,
+            CancelPaymentVoucherDto dto,
+            long userId
+        )
+    {
+        _bySource = true;
+
+        try
+        {
+            await CancelAsync(id, dto, userId);
+        }
+        finally
+        {
+            _bySource = false;
+        }
+    }
+
+
+    //===========================================================
     // Update (Draft)
     //
     // A new number is taken when the branch, financial year or
@@ -1648,6 +1780,8 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
             {
                 PaymentVoucher entity =
                     await LoadAsync(dto.PaymentVoucherId);
+
+                RequireOwn(entity, "edited");
 
                 RequireStatus(entity, VoucherStatuses.Draft, "edited");
 
@@ -1704,6 +1838,8 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
             {
                 PaymentVoucher entity =
                     await LoadAsync(id);
+
+                RequireOwn(entity, "deleted");
 
                 RequireStatus(entity, VoucherStatuses.Draft, "deleted");
 
@@ -1849,6 +1985,8 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
             {
                 PaymentVoucher entity =
                     await LoadAsync(id);
+
+                RequireOwn(entity, "returned to draft");
 
                 RequireStatus(entity, VoucherStatuses.Approved, "returned to draft");
 
@@ -2306,6 +2444,8 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
             {
                 PaymentVoucher entity =
                     await LoadAsync(id);
+
+                RequireOwn(entity, "cancelled");
 
                 RequireStatus(entity, VoucherStatuses.Posted, "cancelled");
 

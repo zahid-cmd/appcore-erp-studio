@@ -24,6 +24,8 @@ import
 from '@angular/router';
 
 import { PageHeaderComponent } from '../../../../../shared/components/layout/page-header/page-header';
+import { DatepickerComponent } from '../../../../../shared/components/controls/datepicker/datepicker';
+import { hrDateEvent, hrMonthEvent, hrMonthToDate, hrToDate } from '../../../services/hr-date';
 import { PageToolbarComponent } from '../../../../../shared/components/layout/page-toolbar/page-toolbar';
 import { PageCanvasComponent } from '../../../../../shared/components/layout/page-canvas/page-canvas';
 import { EmptyStateComponent } from '../../../../../shared/components/layout/empty-state/empty-state';
@@ -70,6 +72,7 @@ const MONTH_NAMES =
     imports:
     [
         CommonModule,
+        DatepickerComponent,
         PageHeaderComponent,
         PageToolbarComponent,
         PageCanvasComponent,
@@ -85,6 +88,16 @@ const MONTH_NAMES =
 export class MonthlyAttendancePage
 implements OnInit
 {
+    readonly asDate = hrToDate;
+
+    readonly dateEvent = hrDateEvent;
+
+    // The shared date picker in month mode works with a Date; the
+    // page keeps yyyy-MM text
+    readonly asMonth = hrMonthToDate;
+
+    readonly monthEvent = hrMonthEvent;
+
     private readonly service = inject(AttendanceService);
 
     private readonly router = inject(Router);

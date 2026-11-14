@@ -44,6 +44,11 @@ public class HrPfPolicy
     // Percent a year
     public decimal InterestRate { get; set; }
 
+    // The yearly interest is worked out on : Monthly (the balance
+    // at the end of every month of the financial year x rate / 12)
+    // or Closing (the balance on the last day of the year x rate)
+    public string InterestBasis { get; set; } = "Monthly";
+
     public bool LoanEnabled { get; set; } = true;
 
     // Percent of the member's own balance that can be on loan
@@ -75,6 +80,10 @@ public class HrPfPolicy
 
     // Death / retirement : the whole company part, whatever the years
     public bool FullOnDeathRetirement { get; set; } = true;
+
+    // The company part forfeited : kept by the fund (false) or
+    // given back to the company (true)
+    public bool ForfeitToCompany { get; set; }
 
     public string Remarks { get; set; } = string.Empty;
 
@@ -154,6 +163,12 @@ public class HrPfTransactions
     public long SourceId { get; set; }
 
     public string Remarks { get; set; } = string.Empty;
+
+    // The Journal Voucher written for it (Posting Setup, group
+    // Provident Fund); null : written before the fund was posted
+    public long? JournalVoucherId { get; set; }
+
+    public string JournalVoucherNo { get; set; } = string.Empty;
 
     public long CreatedBy { get; set; }
 
@@ -265,6 +280,9 @@ public class HrPfSettlements
 
     public decimal CompanyForfeited { get; set; }
 
+    // Where the forfeited part went : the policy of that day
+    public bool ForfeitedToCompany { get; set; }
+
     public decimal LoanOutstanding { get; set; }
 
     public decimal NetPayable { get; set; }
@@ -273,6 +291,12 @@ public class HrPfSettlements
     public string RuleNote { get; set; } = string.Empty;
 
     public string Remarks { get; set; } = string.Empty;
+
+    // The Journal Voucher written for it (Posting Setup, group
+    // Provident Fund); null : written before the fund was posted
+    public long? JournalVoucherId { get; set; }
+
+    public string JournalVoucherNo { get; set; } = string.Empty;
 
     public bool IsDeleted { get; set; }
 

@@ -1,0 +1,199 @@
+/* =====================================================
+   FINANCIAL FLOWS (Cash Flow, Receipt & Payment,
+   Changes in Equity) : on top of final-accounts.css
+===================================================== */
+
+/* Money in / out columns */
+.fa-table td.fa-in
+{
+    color:#15803d;
+}
+
+.fa-table td.fa-out
+{
+    color:#b42318;
+}
+
+.lr-table tbody tr.fa-section td.fa-in,
+.lr-table tbody tr.fa-section td.fa-out,
+.lr-table tbody tr.fa-result td.fa-in,
+.lr-table tbody tr.fa-result td.fa-out
+{
+    color:inherit;
+    font-weight:700;
+}
+
+
+/* =====================================================
+   CHANGES IN EQUITY : matrix + ledgers
+===================================================== */
+
+.ce-body
+{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    flex:1 1 0;
+    min-height:0;
+    overflow:auto;
+}
+
+.ce-card
+{
+    flex:0 0 auto;
+    overflow:hidden;
+}
+
+.ce-title
+{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    padding:10px 14px;
+    background:#eef3fb;
+    border-bottom:1px solid #d5dfef;
+    box-shadow:inset 0 -2px 0 #e2c27a;
+}
+
+.ce-title b
+{
+    color:#0f2557;
+    font-size:14.5px;
+    font-weight:800;
+}
+
+.ce-title span
+{
+    color:#64748b;
+    font-size:12.5px;
+}
+
+.ce-scroll
+{
+    overflow:auto;
+}
+
+.ce-table
+{
+    width:100%;
+    min-width:640px;
+    table-layout:fixed;
+}
+
+.ce-table col.c-name
+{
+    width:280px;
+}
+
+.ce-table th
+{
+    position:static !important;
+    background:#f8fafd !important;
+    color:#1e3a8a;
+    text-align:right;
+    white-space:normal;
+    line-height:1.25;
+}
+
+.ce-table th:first-child
+{
+    text-align:left;
+}
+
+.ce-table td
+{
+    height:40px;
+    font-variant-numeric:tabular-nums;
+}
+
+.ce-table td.r,
+.ce-table th.r
+{
+    border-left:1px solid #edf1f6;
+}
+
+.ce-table tr.ce-total td,
+.ce-table td.ce-tot,
+.ce-table th.ce-tot
+{
+    background:#f3f7ff;
+    color:#0f2557;
+    font-weight:800;
+}
+
+.ce-table tr.ce-closing td
+{
+    height:46px;
+    background:#eef3fb;
+    color:#0f2557;
+    font-size:15px;
+    font-weight:800;
+    border-top:1.5px solid #1e3a8a;
+    border-bottom:1.5px solid #1e3a8a;
+    box-shadow:inset 0 2px 0 #e2c27a;
+}
+
+.ce-table tr.ce-opening td
+{
+    font-weight:700;
+    color:#0f2557;
+}
+
+.ce-neg
+{
+    color:#b42318;
+}
+
+.ce-check
+{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 14px;
+    font-size:13.5px;
+    color:#334155;
+}
+
+.ce-check b
+{
+    font-variant-numeric:tabular-nums;
+}
+
+.ce-check.is-ok i,
+.ce-check.is-ok b.ce-state
+{
+    color:#15803d;
+}
+
+.ce-check.is-bad i,
+.ce-check.is-bad b.ce-state
+{
+    color:#b42318;
+}
+
+.ce-table tr.ce-ledger td:first-child
+{
+    padding-left:14px;
+}
+
+.ce-table tr.ce-ledger.lr-click:hover td
+{
+    background:#f3f7ff;
+}
+
+.ce-group td
+{
+    background:#f5f8fd;
+    color:#1e3a8a;
+    font-weight:650;
+}
+
+
+/* =====================================================
+   RECEIPT & PAYMENT : rule beside opening / closing rows
+===================================================== */
+
+.rp-cash
+{
+    color:#475569;
+}

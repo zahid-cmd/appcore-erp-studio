@@ -1,0 +1,34 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Depreciation of Fixed Assets : two sections (left the
+   depreciation of the asset group, right its ledgers and the
+   rule in words) */
+
+.dfa-split
+{
+    grid-template-columns: minmax(320px, 1fr) minmax(0, 1.2fr);
+}
+
+/* The rule in words */
+
+.dfa-rule
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: #f7faff;
+    color: #0f2a44;
+    font-size: 13px;
+}
+
+/* two fields side by side : neither section scrolls */
+
+.dfa-two
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+}

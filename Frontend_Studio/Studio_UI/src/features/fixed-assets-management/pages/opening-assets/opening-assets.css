@@ -1,0 +1,106 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Opening Assets : left the asset, right its value and depreciation */
+
+.fao-split
+{
+    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+}
+
+/* the branch and category filters, on the right of the toolbar */
+
+.fao-filters
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fao-filters > app-search-dropdown
+{
+    flex: 0 0 220px;
+    width: 220px;
+}
+
+
+/* =====================================================================
+   The form : no scroll, two fields a row on the left, three on the
+   right
+   ===================================================================== */
+
+.fao-grid
+{
+    display: grid;
+    gap: 10px 12px;
+    align-items: end;
+}
+
+.fao-grid > *
+{
+    min-width: 0;
+}
+
+.fao-two
+{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fao-three
+{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fao-full
+{
+    grid-column: 1 / -1;
+}
+
+/* the book value, in the last cell of the grid */
+
+.fao-tile
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 44px;
+    padding: 6px 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #16307a 0%, #2f55d4 100%);
+    box-shadow: 0 8px 18px rgba(30, 58, 138, .22);
+}
+
+.fao-tile span
+{
+    color: rgba(255, 255, 255, .8);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.fao-tile b
+{
+    color: #ffffff;
+    font-size: 15.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.fao-foot
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    padding-top: 10px;
+    border-top: 1px dashed #dbe6fb;
+    color: #475569;
+    font-size: 12.5px;
+}
+
+.fao-foot b
+{
+    margin-left: 6px;
+    color: #0f2a44;
+}

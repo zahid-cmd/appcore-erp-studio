@@ -125,6 +125,12 @@ export class DatepickerComponent
     @Input()
     allowEmpty = false;
 
+    // Month mode : the picker picks a month (the value is the first
+    // day of the month). The field shows Nov-2026; the calendar
+    // opens on the months. Typed : nov 2026, 11-2026, 2026-11.
+    @Input()
+    monthMode = false;
+
     /* =====================================================
        STATE
     ====================================================== */
@@ -186,6 +192,11 @@ export class DatepickerComponent
 
         const year =
             this.value.getFullYear();
+
+        if (this.monthMode)
+        {
+            return `${month}-${year}`;
+        }
 
         return `${day}-${month}-${year}`;
     }
@@ -439,6 +450,44 @@ export class DatepickerComponent
         if (!text)
         {
             return null;
+        }
+
+        // month mode : nov 2026 / nov-2026 / 11-2026 / 2026-11 /
+        // t (this month)
+        if (this.monthMode)
+        {
+            if (text === 't' || text === 'today')
+            {
+                const now = new Date();
+
+                return new Date(now.getFullYear(), now.getMonth(), 1);
+            }
+
+            let found: RegExpMatchArray | null;
+
+            let monthIndex = -1;
+
+            let yearNumber = 0;
+
+            if ((found = text.match(/^([a-z]{3,9})[\s\-\/.,]*(\d{4})$/)))
+            {
+                monthIndex = DatepickerComponent.MONTHS.indexOf(found[1].substring(0, 3));
+                yearNumber = Number(found[2]);
+            }
+            else if ((found = text.match(/^(\d{1,2})[\s\-\/.](\d{4})$/)))
+            {
+                monthIndex = Number(found[1]) - 1;
+                yearNumber = Number(found[2]);
+            }
+            else if ((found = text.match(/^(\d{4})[\s\-\/.](\d{1,2})$/)))
+            {
+                monthIndex = Number(found[2]) - 1;
+                yearNumber = Number(found[1]);
+            }
+
+            return monthIndex >= 0 && monthIndex <= 11 && yearNumber >= 1900 && yearNumber <= 2999
+                ? new Date(yearNumber, monthIndex, 1)
+                : null;
         }
 
         if (text === 't' || text === 'today')

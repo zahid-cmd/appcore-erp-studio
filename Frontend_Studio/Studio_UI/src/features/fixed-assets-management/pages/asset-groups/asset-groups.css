@@ -1,0 +1,100 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Asset Groups : two sections (left the asset group, right the
+   two ledgers made for it) */
+
+.fag-split
+{
+    grid-template-columns: minmax(320px, 1fr) minmax(0, 1.2fr);
+}
+
+/* The switches : stacked */
+
+.fag-options
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fag-options .pf-switch
+{
+    margin: 0;
+}
+
+/* A ledger of the group : read-only */
+
+.fag-ledger
+{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.fag-ledger-label
+{
+    color: #64748b;
+    font-size: 12px;
+}
+
+.fag-ledger-name
+{
+    color: #0f2a44;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.fag-ledger-under
+{
+    color: #475569;
+    font-size: 12px;
+}
+
+/* An account sub group was not found */
+
+.fag-warn
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid #f3c6c9;
+    border-radius: 12px;
+    background: #fff8f8;
+    color: #b4232c;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.fag-warn i
+{
+    margin-top: 3px;
+}
+
+/* What happens, in words */
+
+.fag-rule
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: #f7faff;
+    color: #0f2a44;
+    font-size: 13px;
+}
+
+/* the status dropdown of the toolbar */
+
+.fag-filter
+{
+    display: block;
+    flex: 0 0 200px;
+    width: 200px;
+}

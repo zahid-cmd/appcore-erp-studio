@@ -1,0 +1,58 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Depreciation Schedule : the look of the festival bonus page */
+
+/* the asset to show, and the two filters that narrow it */
+
+.pfx-tools.ds-asset
+{
+    flex-wrap: nowrap;
+}
+
+.pfx-tools.ds-asset > app-search-dropdown
+{
+    flex: 0 0 380px;
+    width: 380px;
+}
+
+.pfx-tools.ds-filters
+{
+    flex-wrap: nowrap;
+}
+
+.pfx-tools.ds-filters > app-search-dropdown
+{
+    flex: 0 0 220px;
+    width: 220px;
+}
+
+/* the asset card : long names break instead of widening the card */
+
+.ds-facts
+{
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.ds-facts dd
+{
+    overflow-wrap: anywhere;
+}
+
+/* a month still to come */
+
+.pfx-table tr.ds-coming td
+{
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.pfx-table tr.ds-coming td b
+{
+    font-weight: 600;
+}
+
+.ds-later
+{
+    color: #94a3b8;
+    font-size: 12px;
+}

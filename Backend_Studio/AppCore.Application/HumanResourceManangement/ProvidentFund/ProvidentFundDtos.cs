@@ -31,6 +31,9 @@ public class PfPolicyDto
 
     public decimal InterestRate { get; set; }
 
+    // Monthly / Closing
+    public string InterestBasis { get; set; } = "Monthly";
+
     public bool LoanEnabled { get; set; } = true;
 
     public decimal LoanMaxPercent { get; set; } = 80;
@@ -52,6 +55,10 @@ public class PfPolicyDto
     public bool ForfeitOnMisconduct { get; set; } = true;
 
     public bool FullOnDeathRetirement { get; set; } = true;
+
+    // The company part forfeited goes back to the company (not
+    // kept by the fund)
+    public bool ForfeitToCompany { get; set; }
 
     public string Remarks { get; set; } = string.Empty;
 
@@ -229,6 +236,10 @@ public class PfSettlementDto
 
     public decimal NetPayable { get; set; }
 
+    public bool ForfeitedToCompany { get; set; }
+
+    public string JournalVoucherNo { get; set; } = string.Empty;
+
     public string RuleNote { get; set; } = string.Empty;
 
     // The member's latest settlement : it can be deleted
@@ -265,27 +276,64 @@ public class PfInterestRowDto
     public decimal CompanyInterest { get; set; }
 }
 
-public class PfInterestYearDto
+// A financial year (Settings > General Settings > Financial Years)
+public class PfFinancialYearDto
 {
-    public int Year { get; set; }
+    public long FinancialYearId { get; set; }
 
-    public decimal Rate { get; set; }
+    // FY 2026-2027
+    public string Name { get; set; } = string.Empty;
+
+    public string StartDate { get; set; } = string.Empty;
+
+    public string EndDate { get; set; } = string.Empty;
+
+    public bool IsCurrent { get; set; }
+
+    // The year is over : its interest can be credited
+    public bool Ended { get; set; }
 
     // The interest of the year is credited already
     public bool IsPosted { get; set; }
+}
+
+public class PfInterestYearDto
+{
+    public PfFinancialYearDto Year { get; set; } = new();
+
+    public decimal Rate { get; set; }
+
+    // Monthly / Closing (the policy)
+    public string Basis { get; set; } = "Monthly";
 
     public List<PfInterestRowDto> Rows { get; set; } = new();
 }
 
+// The interest credited for one year
 public class PfInterestRunDto
 {
-    public int Year { get; set; }
+    // The financial year (an interest credited before financial
+    // years : the calendar year)
+    public long Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    // The Journal Voucher(s) of it : one a branch
+    public string JournalVoucherNo { get; set; } = string.Empty;
 
     public int Members { get; set; }
 
     public decimal EmployeeInterest { get; set; }
 
     public decimal CompanyInterest { get; set; }
+}
+
+// The PF Interest page : the financial years and what is credited
+public class PfInterestHomeDto
+{
+    public List<PfFinancialYearDto> Years { get; set; } = new();
+
+    public List<PfInterestRunDto> Runs { get; set; } = new();
 }
 
 // Reports
@@ -336,6 +384,9 @@ public class PfIncomeDto
     // Interest received on the loans
     public decimal LoanInterest { get; set; }
 
-    // Company parts forfeited on settlements
+    // Company parts forfeited on settlements, kept by the fund
     public decimal Forfeited { get; set; }
+
+    // Company parts forfeited that went back to the company
+    public decimal ForfeitedToCompany { get; set; }
 }

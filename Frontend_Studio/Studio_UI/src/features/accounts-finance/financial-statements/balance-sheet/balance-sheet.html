@@ -1,0 +1,435 @@
+<div class="app-list-page lr-page tb-page fa-page" [attr.data-render]="renderTick()">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Balance Sheet"
+        subtitle="Assets, liabilities and equity on a date"
+        icon="fas fa-building-columns">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search ledger, code, class, group, sub group…"
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                command1Title="Back to the default filter : today, all allotted branches, nothing loaded"
+                (command1Click)="refresh()"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                command2Activity="Print"
+                command2Title="Print or save as Excel (from the print viewer)"
+                (command2Click)="print()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         BODY : filter (full height) | canvas
+    ====================================================== -->
+
+    <div class="lr-body">
+
+        <!-- ---------------- FILTER ---------------- -->
+
+        <aside class="lr-filter">
+
+            <div class="lr-filter-head">
+                <span>Balance Sheet Filter</span>
+            </div>
+
+            <div class="lr-filter-body appcore-scrollbar">
+
+                <div class="lr-field">
+                    <label>As on</label>
+                    <app-datepicker
+                        class="lr-date"
+                        [value]="asOnDate"
+                        (valueChange)="onAsOnChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="lr-field">
+                    <label>Branch</label>
+                    <app-search-dropdown
+                        class="lr-dd"
+                        placeholder="All Allotted Branches"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(branchId)"
+                        (valueChange)="onBranchChange($event)">
+                    </app-search-dropdown>
+                    <span class="lr-hint">Only the branches you are allotted to. "All" adds them together.</span>
+                </div>
+
+                <div class="lr-field">
+                    <label>Compare with</label>
+                    <div class="fa-choices fa-choices-row" role="radiogroup" aria-label="Compare with">
+                        @for (item of compareOptions; track item.value)
+                        {
+                            <button
+                                type="button"
+                                role="radio"
+                                class="fa-choice"
+                                [class.on]="compare === item.value"
+                                [attr.aria-checked]="compare === item.value"
+                                [title]="item.title"
+                                (click)="setCompare(item.value)">
+                                {{ item.short }}
+                            </button>
+                        }
+                    </div>
+                    <span class="lr-hint">{{ compareHint }}</span>
+                </div>
+
+                @if (branchesError)
+                {
+                    <div class="lr-note lr-error">{{ branchesError }}</div>
+                }
+
+                <!-- Display switches (bottom of the filter) -->
+                <div class="tb-opts">
+                    <b>Display</b>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showCancelled"
+                            (change)="onCancelledChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show cancelled vouchers <em>(on Submit)</em></span>
+                    </label>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showCodes"
+                            (change)="onCodesChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show codes</span>
+                    </label>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showZero"
+                            (change)="onZeroChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show zero rows</span>
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="lr-filter-foot">
+
+                <!-- How the figures work (full text on hover) -->
+                <span class="fa-foot-note" title="The closing balance of every balance-sheet ledger on the date, the same as the Trial Balance. Income less expense from the start of the financial year sits in Retained Earnings, which already holds the earlier years' result.">
+                    <i class="fas fa-circle-info"></i>
+                    <span>Closing balances on the date; this year's result sits in Retained Earnings.</span>
+                </span>
+
+                <button
+                    type="button"
+                    class="lr-btn lr-btn-primary"
+                    [disabled]="branchesLoading || loading || !!branchesError"
+                    (click)="submit()">
+                    Submit
+                </button>
+
+            </div>
+
+        </aside>
+
+        <!-- ---------------- CANVAS ---------------- -->
+
+        <section class="lr-canvas">
+
+            <!-- Switch bar : one line over the canvas -->
+            <div class="lr-switchbar">
+
+                <span class="lr-switchbar-title"><i class="fas fa-sliders"></i> View</span>
+
+                <span class="lr-seg tb-levels" role="group" aria-label="Level">
+                    @for (item of levels; track item.value)
+                    {
+                        <button
+                            type="button"
+                            [class.on]="level === item.value"
+                            [title]="'Show down to ' + item.label"
+                            (click)="setLevel(item.value)">
+                            {{ item.label }}
+                        </button>
+                    }
+                </span>
+
+            </div>
+
+            @if (!loaded)
+            {
+                <div class="lr-empty">
+                    <i class="fas fa-building-columns lr-empty-ico"></i>
+                    <b>Choose the date and branch, then press Submit</b>
+                    <span>Assets, liabilities and equity on the date, with the profit for the year to date and the balance check.</span>
+                </div>
+            }
+            @else if (loading)
+            {
+                <div class="tb-loading">
+                    <app-orbit-loader
+                        title="Loading Balance Sheet"
+                        message="Adding up every balance-sheet ledger on the date…">
+                    </app-orbit-loader>
+                </div>
+            }
+            @else if (loadError)
+            {
+                <div class="lr-empty lr-error"><i class="fas fa-triangle-exclamation"></i> {{ loadError }}</div>
+            }
+            @else if (report)
+            {
+                <div class="lr-view">
+
+                    <!-- Head : title | figures | date -->
+                    <div class="lr-card lr-head">
+
+                        <div class="lr-head-info">
+                            <div class="lr-head-title">
+                                <b>Balance Sheet</b>
+                                <span class="lr-pill">Down to {{ levelWord }}</span>
+                                @if (report.ShowCancelled)
+                                {
+                                    <span class="lr-pill lr-pill-warn">Cancelled shown</span>
+                                }
+                            </div>
+                            <div class="lr-head-sub">
+                                @if (hasCompare)
+                                {
+                                    <span class="lr-clip">Compared with {{ report.CompareLabel }} : {{ date(report.CompareAsOn) }}</span>
+                                }
+                                @else if (report.YearStart)
+                                {
+                                    <span class="lr-clip">Profit for the year to date from {{ date(report.YearStart) }}</span>
+                                }
+                                @if (priorText())
+                                {
+                                    <span
+                                        class="lr-clip"
+                                        [title]="'Inside ' + (report.RetainedEarningsName || 'Retained Earnings')">
+                                        · Earlier years {{ priorText() }}
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="lr-figs">
+                            <div>
+                                <span>Total Assets</span>
+                                <b>{{ total(report.Totals.Assets) }}</b>
+                            </div>
+                            <div>
+                                <span>Liabilities &amp; Equity</span>
+                                <b>{{ total(report.Totals.LiabilitiesAndEquity) }}</b>
+                            </div>
+                            <div
+                                class="tb-check"
+                                [class.is-ok]="balanced"
+                                [class.is-bad]="!balanced">
+                                <span>Difference</span>
+                                <b>
+                                    @if (balanced)
+                                    {
+                                        <i class="fas fa-circle-check"></i> Balanced
+                                    }
+                                    @else
+                                    {
+                                        <i class="fas fa-triangle-exclamation"></i> {{ total(report.Totals.Difference) }}
+                                    }
+                                </b>
+                            </div>
+                        </div>
+
+                        <div class="lr-head-period">
+                            <b>As on {{ date(report.AsOn) }}</b>
+                            <span>{{ report.BranchName }}</span>
+                        </div>
+
+                    </div>
+
+                    @if (report.Message)
+                    {
+                        <div class="lr-note"><i class="fas fa-circle-info"></i> {{ report.Message }}</div>
+                    }
+
+                    @if (searchText)
+                    {
+                        <div class="lr-note"><i class="fas fa-magnifying-glass"></i> Only the ledgers matching the search are listed; the section totals and the check are of the whole statement.</div>
+                    }
+
+                    <div class="fa-main">
+
+                            <!-- ============ STATEMENT ============ -->
+                            <div class="lr-card tb-tcard fa-tcard">
+
+                                <div class="tb-scroll appcore-scrollbar">
+
+                                    <table
+                                        class="lr-table tb-table fa-table"
+                                        [class.fa-cmp]="hasCompare">
+
+                                        <colgroup>
+                                            <col>
+                                            <col class="c-bal">
+                                            @if (hasCompare)
+                                            {
+                                                <col class="c-bal">
+                                                <col class="c-amt">
+                                                <col class="c-pct">
+                                            }
+                                        </colgroup>
+
+                                        <thead>
+                                            <tr>
+                                                <th class="tb-acc-h">
+                                                    <span>Account</span>
+                                                    <span class="tb-tools">
+                                                        <button type="button" class="lr-link" (click)="expandAll()">Expand all</button>
+                                                        <button type="button" class="lr-link" (click)="collapseAll()">Collapse all</button>
+                                                    </span>
+                                                </th>
+                                                <th class="r fa-col-h">
+                                                    <b>As on</b>
+                                                    <span>{{ date(report.AsOn) }}</span>
+                                                </th>
+                                                @if (hasCompare)
+                                                {
+                                                    <th class="r fa-col-h">
+                                                        <b>{{ report.CompareLabel }}</b>
+                                                        <span>{{ date(report.CompareAsOn) }}</span>
+                                                    </th>
+                                                    <th class="r fa-col-h"><b>Change</b></th>
+                                                    <th class="r fa-col-h"><b>Change %</b></th>
+                                                }
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @for (line of lines; track line.key)
+                                            {
+                                                <tr
+                                                    class="tb-row fa-row"
+                                                    [ngClass]="line.kind === 'node' ? 'tb-l' + line.level : 'fa-' + line.kind"
+                                                    [class.fa-detail]="line.level === 5"
+                                                    [class.lr-click]="isLedger(line) || canToggle(line)"
+                                                    [class.is-inactive]="line.kind === 'node' && line.level === 4 && !line.row?.IsActive"
+                                                    [class.is-good]="line.tone === 'good'"
+                                                    [class.is-bad]="line.tone === 'bad'"
+                                                    [title]="lineTitle(line)"
+                                                    (click)="lineClick(line)">
+
+                                                    <td class="tb-acc">
+                                                        <span class="tb-name">
+                                                            @if (canToggle(line))
+                                                            {
+                                                                <i
+                                                                    class="fas tb-caret"
+                                                                    [class.fa-caret-right]="isCollapsed(line)"
+                                                                    [class.fa-caret-down]="!isCollapsed(line)"></i>
+                                                            }
+                                                            <span class="lr-clip fa-name">{{ line.name }}</span>
+                                                            @if (showCodes && line.code && line.kind === 'node')
+                                                            {
+                                                                <span class="lr-dim lr-mono tb-code">{{ line.code }}</span>
+                                                            }
+                                                            @if ((line.kind === 'node' && line.level < 4) || (line.kind === 'section' && line.count > 0))
+                                                            {
+                                                                <span class="tb-count">{{ line.count }}</span>
+                                                            }
+                                                            @if (line.check)
+                                                            {
+                                                                <i
+                                                                    class="fas fa-check-icon"
+                                                                    [class.fa-circle-check]="line.tone === 'good'"
+                                                                    [class.fa-triangle-exclamation]="line.tone !== 'good'"></i>
+                                                            }
+                                                            @if (line.kind === 'extra' && line.hint)
+                                                            {
+                                                                <span class="lr-dim fa-hint lr-clip">{{ line.hint }}</span>
+                                                            }
+                                                            @if (line.row?.IsRetainedEarnings && priorText())
+                                                            {
+                                                                <span
+                                                                    class="lr-pill tb-re"
+                                                                    [title]="'Includes the result of the earlier financial years : ' + priorText()">
+                                                                    incl. earlier years
+                                                                </span>
+                                                            }
+                                                            @if (line.kind === 'node' && line.level === 4 && !line.row?.IsActive)
+                                                            {
+                                                                <span class="lr-tag">Inactive</span>
+                                                            }
+                                                        </span>
+                                                    </td>
+
+                                                    <td class="r lr-bal">{{ amountText(line, line.amount) }}</td>
+
+                                                    @if (hasCompare)
+                                                    {
+                                                        <td class="r lr-bal fa-cmp-cell">
+                                                            {{ amountText(line, line.compare) }}
+                                                        </td>
+                                                        <td
+                                                            class="r fa-chg"
+                                                            [class.is-up-good]="changeTone(line) === 'good'"
+                                                            [class.is-up-bad]="changeTone(line) === 'bad'">
+                                                            {{ change(line) }}
+                                                        </td>
+                                                        <td
+                                                            class="r fa-chg"
+                                                            [class.is-up-good]="changeTone(line) === 'good'"
+                                                            [class.is-up-bad]="changeTone(line) === 'bad'">
+                                                            {{ changePct(line) }}
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+
+                                            @if (!hasLedgers)
+                                            {
+                                                <tr class="lr-none">
+                                                    <td [attr.colspan]="hasCompare ? 5 : 2">{{ searchText ? 'No ledger matches the search.' : 'No balance-sheet ledger has a balance on this date.' }}</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

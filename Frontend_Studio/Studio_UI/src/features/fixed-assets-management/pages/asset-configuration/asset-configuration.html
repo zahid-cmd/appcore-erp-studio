@@ -1,0 +1,158 @@
+<div class="app-list-page">
+
+    <app-page-header
+        title="Asset Configuration"
+        subtitle="The rules of an asset card, and how an asset number is made"
+        icon="fas fa-sliders">
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Save"
+                command1Icon="fas fa-floppy-disk"
+                command1Permission="update"
+                (command1Click)="onSave()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="load()"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="Activity history"
+                (rightCommandClick)="openHistory()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <app-page-canvas
+        [config]="formConfig">
+
+        <div
+            canvasBody
+            class="hp-split fag-split appcore-scrollbar">
+
+            <!-- ============ LEFT : the rules ============ -->
+
+            <section class="pf-card">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-list-check"></i>
+                    <span>Rules</span>
+                </header>
+
+                <div class="fag-options">
+
+                    <label class="pf-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="requireLocation"
+                            (change)="onSwitch('requireLocation', $event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>Location is required on an asset</b>
+                            <small>An asset card cannot be saved without the place where it is kept</small>
+                        </span>
+                    </label>
+
+                    <label class="pf-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="requireCustodian"
+                            (change)="onSwitch('requireCustodian', $event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>Custodian is required on an asset</b>
+                            <small>An asset card cannot be saved without the employee who looks after it</small>
+                        </span>
+                    </label>
+
+                    <label class="pf-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="allowAssetRule"
+                            (change)="onSwitch('allowAssetRule', $event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>An asset may have its own depreciation rule</b>
+                            <small>The method, rate and life of a card can differ from its asset group until its first depreciation run</small>
+                        </span>
+                    </label>
+
+                    <label class="pf-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="allowRunningMonth"
+                            (change)="onSwitch('allowRunningMonth', $event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>Allow a depreciation run before the month ends</b>
+                            <small>A run can be made for the month that is still going on</small>
+                        </span>
+                    </label>
+
+                </div>
+
+            </section>
+
+            <!-- ============ RIGHT : the asset number ============ -->
+
+            <section class="pf-card">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-hashtag"></i>
+                    <span>Asset Numbering</span>
+                </header>
+
+                <app-textbox
+                    label="Prefix"
+                    placeholder="FA"
+                    textCase="upper"
+                    [value]="prefix"
+                    [maxLength]="10"
+                    [required]="true"
+                    (valueChange)="onPrefix($event)">
+                </app-textbox>
+
+                <span class="hp-note">Letters and digits only, up to 10.</span>
+
+                <app-dropdown
+                    label="Running number digits"
+                    [items]="digitItems"
+                    [value]="digits"
+                    (valueChange)="onDigits($event)"
+                    [required]="true">
+                </app-dropdown>
+
+                <div class="fag-preview">
+                    <span>An asset number looks like</span>
+                    <b>{{ previewText }}</b>
+                    <small>prefix - branch - asset group - running number</small>
+                </div>
+
+                <div class="fag-rule">
+                    <b>How the module works</b>
+                    <ul class="hp-list">
+                        <li>Saving an asset group makes its own two ledgers : the asset ledger and the accumulated depreciation ledger. Nothing is picked.</li>
+                        <li>The depreciation of an asset group is declared on Depreciation of Fixed Assets, before assets are bought into it.</li>
+                        <li>Depreciation is charged for the full month an asset is put to use, and not in the month it is disposed.</li>
+                        <li>Every posting is a Journal Voucher.</li>
+                        <li>Money is paid or received on Payment / Receipt Vouchers against the payable / receivable ledger.</li>
+                        <li>Opening assets post nothing, because they are already in the ledgers.</li>
+                    </ul>
+                </div>
+
+            </section>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        title="Asset Configuration History"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

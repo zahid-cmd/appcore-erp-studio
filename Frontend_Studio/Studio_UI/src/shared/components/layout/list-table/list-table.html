@@ -126,6 +126,8 @@
                 <tr
                     class="list-table-row"
                     [class.detail-open]="isDetailOpen(row)"
+                    [class.lt-row-click]="rowClick.observed"
+                    (click)="onRowClick(row, $event)"
                     (mouseenter)="onRowEnter(row, $event)"
                     (mouseleave)="onRowLeave()">
 

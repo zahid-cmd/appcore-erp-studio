@@ -26,7 +26,7 @@
 
         <div
             canvasBody
-            class="pf-body appcore-scrollbar">
+            class="pf-body pfx-even appcore-scrollbar">
 
             <section class="pf-card">
 
@@ -102,15 +102,16 @@
                         [required]="true">
                     </app-textbox>
 
-                    <label class="pf-native">
-                        <span class="pf-label">Recovery Starts <b>*</b></span>
-                        <input
-                            type="month"
-                            [value]="entity.StartMonth"
-                            [min]="entity.LoanDate.substring(0, 7)"
-                            [disabled]="isViewMode"
-                            (change)="onMonth($event)">
-                    </label>
+                    <app-datepicker
+                        label="Recovery Starts"
+                        [required]="true"
+                        [monthMode]="true"
+                        placeholder="Select Month"
+                        [value]="$any(asMonth(entity.StartMonth))"
+                        [minDate]="asMonth(entity.LoanDate)"
+                        [disabled]="isViewMode"
+                        (valueChange)="onMonth(monthEvent($event))">
+                    </app-datepicker>
 
                     <app-textbox
                         label="Each Instalment (Tk)"
@@ -211,6 +212,7 @@
                         <li>A member can borrow up to {{ number(policy.LoanMaxPercent) }} % of the own part, less what is still on loan, in no more than {{ policy.LoanMaxInstallments }} instalments (Provident Fund Policy).</li>
                         <li>Interest on a new loan : {{ policyInterestText }} (Provident Fund Policy). It is income of the fund; a loan keeps the terms it was given with.</li>
                         <li>An instalment is taken from the salary sheet of every month from the start month, until the loan is back. A loan settled early pays the interest of the months used only.</li>
+                        <li>The money is paid out on Provident Fund > PF Payments (a Payment Voucher is written).</li>
                         <li>A loan does not lower the fund balance : what is still out is taken off the payment when the member is settled.</li>
                         <li>A loan is not edited. One nothing was recovered of can be deleted.</li>
                     </ul>

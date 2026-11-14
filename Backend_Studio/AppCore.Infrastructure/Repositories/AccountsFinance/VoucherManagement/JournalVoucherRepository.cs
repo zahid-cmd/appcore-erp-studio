@@ -630,7 +630,12 @@ public class JournalVoucherRepository : IJournalVoucherRepository
     private async Task<JvInput>
         NormalizeAsync
         (
-            CreateJournalVoucherDto dto
+            CreateJournalVoucherDto dto,
+            // A voucher the system writes for another document (a
+            // salary sheet, a provident fund settlement ...) : it may
+            // have several groups even when switch 0045 is OFF. The
+            // switch is for vouchers keyed by hand.
+            bool automatic = false
         )
     {
         JvInput input =
@@ -687,7 +692,7 @@ public class JournalVoucherRepository : IJournalVoucherRepository
                 .OrderBy(g => rows.FindIndex(x => x.GroupNo == g.Key))
                 .ToList();
 
-        if (groups.Count > 1 && !await IsSwitchOnAsync(MultiGroupSwitch, true))
+        if (groups.Count > 1 && !automatic && !await IsSwitchOnAsync(MultiGroupSwitch, true))
         {
             throw new InvalidOperationException(
                 "One group per Journal Voucher : several groups are turned off (System Configuration 0045).");
@@ -1288,7 +1293,7 @@ public class JournalVoucherRepository : IJournalVoucherRepository
         )
     {
         JvInput input =
-            await NormalizeAsync(dto);
+            await NormalizeAsync(dto, true);
 
         DateTime now =
             DateTime.UtcNow;

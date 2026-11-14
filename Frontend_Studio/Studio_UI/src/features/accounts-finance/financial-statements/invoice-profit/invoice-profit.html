@@ -1,0 +1,455 @@
+<div class="app-list-page lr-page tb-page fa-page" [attr.data-render]="renderTick()">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Invoice-wise Profit & Loss"
+        subtitle="Daily profit of every sales invoice : Motor Bikes, Spare Parts, Accessories"
+        icon="fas fa-file-invoice-dollar">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search invoice, customer, chassis, product…"
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                command1Title="Back to the default filter : today, all allotted branches, nothing loaded"
+                (command1Click)="refresh()"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                command2Activity="Print"
+                command2Title="Print or save as Excel (from the print viewer)"
+                (command2Click)="print()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         BODY : filter (full height) | canvas
+    ====================================================== -->
+
+    <div class="lr-body">
+
+        <!-- ---------------- FILTER ---------------- -->
+
+        <aside class="lr-filter">
+
+            <div class="lr-filter-head">
+                <span>Invoice Profit Filter</span>
+            </div>
+
+            <div class="lr-filter-body appcore-scrollbar">
+
+                <div class="lr-field">
+                    <label>From</label>
+                    <app-datepicker
+                        class="lr-date"
+                        [value]="fromDate"
+                        (valueChange)="onFromChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="lr-field">
+                    <label>To</label>
+                    <app-datepicker
+                        class="lr-date"
+                        [value]="toDate"
+                        [minDate]="fromDate"
+                        (valueChange)="onToChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="lr-field">
+                    <label>Branch</label>
+                    <app-search-dropdown
+                        class="lr-dd"
+                        placeholder="All Allotted Branches"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(branchId)"
+                        (valueChange)="onBranchChange($event)">
+                    </app-search-dropdown>
+                    <span class="lr-hint">Only the branches you are allotted to. "All" adds them together.</span>
+                </div>
+
+                <div class="lr-field">
+                    <label>Sales person <em class="fa-live">no reload</em></label>
+                    <app-search-dropdown
+                        class="lr-dd"
+                        placeholder="All sales people"
+                        [items]="salesPeople"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(salesPerson)"
+                        (valueChange)="onSalesPersonChange($event)">
+                    </app-search-dropdown>
+                    <span class="lr-hint">The list fills after Submit (people on the chosen tab).</span>
+                </div>
+
+                @if (branchesError)
+                {
+                    <div class="lr-note lr-error">{{ branchesError }}</div>
+                }
+
+                <!-- Display switches (bottom of the filter) -->
+                <div class="tb-opts">
+                    <b>Display</b>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showCancelled"
+                            (change)="onCancelledChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show cancelled vouchers <em>(on Submit)</em></span>
+                    </label>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showCodes"
+                            (change)="onCodesChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show codes</span>
+                    </label>
+
+                </div>
+
+            </div>
+
+            <div class="lr-filter-foot">
+
+                <!-- How the figures work (full text on hover) -->
+                <span class="fa-foot-note" title="Every posted sales invoice of the period; a sales return shows as a negative row on its own date. The figures come from the invoice's own journal : sales without VAT, discounts, other income, FIFO cost. Registration fees collected for others are not income and stay out.">
+                    <i class="fas fa-circle-info"></i>
+                    <span>From each invoice's own journal (agrees with the P&amp;L); returns negative.</span>
+                </span>
+
+                <button
+                    type="button"
+                    class="lr-btn lr-btn-primary"
+                    [disabled]="branchesLoading || loading || !!branchesError"
+                    (click)="submit()">
+                    Submit
+                </button>
+
+            </div>
+
+        </aside>
+
+        <!-- ---------------- CANVAS ---------------- -->
+
+        <section class="lr-canvas">
+
+            <!-- Switch bar : one line over the canvas -->
+            <div class="lr-switchbar">
+
+                <span class="lr-switchbar-title"><i class="fas fa-sliders"></i> Line</span>
+
+                <span class="lr-seg ip-tabs" role="tablist" aria-label="Business line">
+                    @for (item of tabs; track item.key)
+                    {
+                        <button
+                            type="button"
+                            role="tab"
+                            [class.on]="tab === item.key"
+                            [attr.aria-selected]="tab === item.key"
+                            (click)="setTab(item.key)">
+                            <i [class]="item.icon"></i> {{ item.label }}
+                            @if (report)
+                            {
+                                <span class="tb-count">{{ tabCount(item.key) }}</span>
+                            }
+                        </button>
+                    }
+                </span>
+
+            </div>
+
+            @if (!loaded)
+            {
+                <div class="lr-empty">
+                    <i class="fas fa-file-invoice-dollar lr-empty-ico"></i>
+                    <b>Choose the period and branch, then press Submit</b>
+                    <span>Every sales invoice with its sales, discount, cost and profit, day by day, for Motor Bikes, Spare Parts &amp; Lubricants and Accessories.</span>
+                </div>
+            }
+            @else if (loading)
+            {
+                <div class="tb-loading">
+                    <app-orbit-loader
+                        title="Loading Invoice Profit"
+                        message="Reading the journals of the sales invoices…">
+                    </app-orbit-loader>
+                </div>
+            }
+            @else if (loadError)
+            {
+                <div class="lr-empty lr-error"><i class="fas fa-triangle-exclamation"></i> {{ loadError }}</div>
+            }
+            @else if (report && grand)
+            {
+                <div class="lr-view">
+
+                    <div class="lr-card lr-head">
+
+                        <div class="lr-head-info">
+                            <div class="lr-head-title">
+                                <b>{{ tabLabel }}</b>
+                                @if (salesPerson)
+                                {
+                                    <span class="lr-pill">{{ salesPerson }}</span>
+                                }
+                                @if (report.ShowCancelled)
+                                {
+                                    <span class="lr-pill lr-pill-warn">Cancelled shown</span>
+                                }
+                            </div>
+                            <div class="lr-head-sub">
+                                <span class="lr-clip">{{ grand.count }} document{{ grand.count === 1 ? '' : 's' }} · {{ qty(grand.quantity) }} item{{ grand.quantity === 1 ? '' : 's' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="lr-figs">
+                            <div>
+                                <span>Net sales</span>
+                                <b>{{ total(grand.netSales) }}</b>
+                            </div>
+                            <div>
+                                <span>Cost</span>
+                                <b>{{ total(grand.cost) }}</b>
+                            </div>
+                            <div
+                                class="tb-check"
+                                [class.is-ok]="grand.profit >= 0"
+                                [class.is-bad]="grand.profit < 0">
+                                <span>Profit{{ margin(grand.profit, grand.netSales) ? ' · ' + margin(grand.profit, grand.netSales) : '' }}</span>
+                                <b>{{ total(grand.profit) }}</b>
+                            </div>
+                        </div>
+
+                        <div class="lr-head-period">
+                            <b>{{ date(report.From) }}{{ report.From === report.To ? '' : ' – ' + date(report.To) }}</b>
+                            <span>{{ report.BranchName }}</span>
+                        </div>
+
+                    </div>
+
+                    @if (report.Message)
+                    {
+                        <div class="lr-note"><i class="fas fa-circle-info"></i> {{ report.Message }}</div>
+                    }
+
+                    <!-- Check : the invoices against the Profit & Loss of the same line -->
+                    @if (check; as c)
+                    {
+                        <div class="ip-check" [class.is-ok]="c.agrees" [class.is-bad]="!c.agrees">
+                            <i class="fas" [class.fa-circle-check]="c.agrees" [class.fa-triangle-exclamation]="!c.agrees"></i>
+                            <span>
+                                Profit &amp; Loss · {{ tabLabel }} : Sales <b>{{ total(c.plSales) }}</b> · Cost <b>{{ total(c.plCost) }}</b>
+                            </span>
+                            @if (c.agrees)
+                            {
+                                <b class="ip-check-state">Agrees with the invoices</b>
+                            }
+                            @else
+                            {
+                                <b class="ip-check-state" title="Sales or cost posted outside the sales invoices and returns (e.g. a Journal Voucher), or a ledger not linked to this line">
+                                    Not on invoices : Sales {{ total(c.salesGap) }} · Cost {{ total(c.costGap) }}
+                                </b>
+                            }
+                        </div>
+                    }
+
+                    <div class="fa-main">
+
+                        <div class="lr-card tb-tcard fa-tcard">
+
+                            <div class="tb-scroll appcore-scrollbar">
+
+                                <table class="lr-table dc-table ip-table">
+
+                                    <colgroup>
+                                        <col class="c-doc">
+                                        <col>
+                                        <col class="c-qty">
+                                        <col class="c-amt2">
+                                        <col class="c-amt2">
+                                        <col class="c-amt2">
+                                        <col class="c-amt2">
+                                        <col class="c-amt2">
+                                        <col class="c-pct">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th>Invoice</th>
+                                            <th>Customer · sales person</th>
+                                            <th class="r">{{ tab === 'mb' ? 'Bikes' : 'Items' }}</th>
+                                            <th class="r" title="Sales classes, without VAT">Sales</th>
+                                            <th class="r" title="Discount and price-reduction ledgers on the invoice">Discount</th>
+                                            <th class="r" title="Sales − discount + other income on the invoice (price increase, commission)">Net sales</th>
+                                            <th class="r" title="Cost of goods sold (FIFO)">Cost</th>
+                                            <th class="r dc-net">Profit</th>
+                                            <th class="r">Margin</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        @for (day of days; track day.date)
+                                        {
+                                            <tr class="ip-dayhead">
+                                                <td colspan="9">{{ dayName(day.date) }}</td>
+                                            </tr>
+                                            @for (row of day.rows; track row.DocumentNo)
+                                            {
+                                                <tr
+                                                    class="ip-doc lr-click"
+                                                    [class.is-refund]="row.Kind === 'return'"
+                                                    [class.is-open]="isOpenDoc(row)"
+                                                    [title]="isOpenDoc(row) ? 'Hide the lines' : 'Show the lines'"
+                                                    (click)="toggleDoc(row)">
+                                                    <td>
+                                                        <span class="tb-name">
+                                                            <i class="fas tb-caret" [class.fa-caret-right]="!isOpenDoc(row)" [class.fa-caret-down]="isOpenDoc(row)"></i>
+                                                            <b class="lr-mono">{{ row.DocumentNo }}</b>
+                                                        </span>
+                                                        @if (row.Kind === 'return')
+                                                        {
+                                                            <span class="dc-sub">Return of {{ row.InvoiceNo || '—' }}</span>
+                                                        }
+                                                        @if (row.LinkedVouchers > 0)
+                                                        {
+                                                            <span class="dc-sub" title="Later vouchers under this invoice number (free accessories, registration reversal) are included">+ {{ row.LinkedVouchers }} linked voucher{{ row.LinkedVouchers === 1 ? '' : 's' }}</span>
+                                                        }
+                                                    </td>
+                                                    <td class="dc-wrap">
+                                                        {{ row.Customer || '—' }}
+                                                        @if (row.SalesPerson || row.Chassis)
+                                                        {
+                                                            <span class="dc-sub">{{ row.SalesPerson }}{{ row.SalesPerson && row.Chassis ? ' · ' : '' }}{{ row.Chassis }}</span>
+                                                        }
+                                                    </td>
+                                                    <td class="r">{{ qty(row.Quantity) }}</td>
+                                                    <td class="r">{{ money(row.Sales) }}</td>
+                                                    <td class="r dc-neg">{{ money(row.Discount) }}</td>
+                                                    <td class="r">{{ money(row.NetSales) }}</td>
+                                                    <td class="r">{{ money(row.Cost) }}</td>
+                                                    <td class="r dc-net" [class.dc-neg]="row.Profit < 0">{{ total(row.Profit) }}</td>
+                                                    <td class="r">{{ margin(row.Profit, row.NetSales) }}</td>
+                                                </tr>
+                                                @if (isOpenDoc(row))
+                                                {
+                                                    <tr class="dc-detail-row">
+                                                        <td colspan="9">
+                                                            <table class="dc-detail">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Product</th>
+                                                                        <th class="r">Qty</th>
+                                                                        <th class="r">Rate</th>
+                                                                        <th class="r">Discount</th>
+                                                                        <th class="r">Net (no VAT)</th>
+                                                                        <th class="r">Unit cost</th>
+                                                                        <th class="r">Cost</th>
+                                                                        <th class="r">Profit</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @for (item of row.Lines; track item.LineNo)
+                                                                    {
+                                                                        <tr>
+                                                                            <td class="dc-wrap">
+                                                                                {{ item.ProductName }}
+                                                                                <span class="dc-sub">
+                                                                                    @if (showCodes)
+                                                                                    {
+                                                                                        <span class="lr-mono">{{ item.ProductCode }}</span>
+                                                                                    }
+                                                                                    {{ item.ChassisNo ? ' · ' + item.ChassisNo : '' }}{{ item.Detail ? ' · ' + item.Detail : '' }}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td class="r">{{ qty(item.Quantity) }}</td>
+                                                                            <td class="r">{{ money(item.UnitPrice) }}</td>
+                                                                            <td class="r">{{ money(item.Discount) }}</td>
+                                                                            <td class="r">{{ money(item.Net) }}</td>
+                                                                            <td class="r">{{ money(item.UnitCost) }}</td>
+                                                                            <td class="r">{{ money(item.Cost) }}</td>
+                                                                            <td class="r lr-bal" [class.dc-neg]="item.Profit < 0">{{ total(item.Profit) }}</td>
+                                                                        </tr>
+                                                                    }
+                                                                    @empty
+                                                                    {
+                                                                        <tr><td colspan="8" class="lr-dim">The document's lines were not found.</td></tr>
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                            <div class="ip-note">Lines are the document's own figures (net = after discount, without the VAT inside the price). The row above is the journal : it also holds invoice-level discounts and the VAT difference.</div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                            <tr class="ip-daytotal">
+                                                <td colspan="2">Day total · {{ day.totals.count }} document{{ day.totals.count === 1 ? '' : 's' }}</td>
+                                                <td class="r">{{ qty(day.totals.quantity) }}</td>
+                                                <td class="r">{{ total(day.totals.sales) }}</td>
+                                                <td class="r">{{ total(day.totals.discount) }}</td>
+                                                <td class="r">{{ total(day.totals.netSales) }}</td>
+                                                <td class="r">{{ total(day.totals.cost) }}</td>
+                                                <td class="r dc-net">{{ total(day.totals.profit) }}</td>
+                                                <td class="r">{{ margin(day.totals.profit, day.totals.netSales) }}</td>
+                                            </tr>
+                                        }
+                                        @if (days.length === 0)
+                                        {
+                                            <tr class="lr-none">
+                                                <td colspan="9">{{ searchText || salesPerson ? 'No invoice matches the filter.' : 'No posted ' + tabLabel + ' invoice in this period.' }}</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+
+                                    <tfoot>
+                                        <tr class="dc-total">
+                                            <td colspan="2">Total · {{ grand.count }} document{{ grand.count === 1 ? '' : 's' }}</td>
+                                            <td class="r">{{ qty(grand.quantity) }}</td>
+                                            <td class="r">{{ total(grand.sales) }}</td>
+                                            <td class="r">{{ total(grand.discount) }}</td>
+                                            <td class="r">{{ total(grand.netSales) }}</td>
+                                            <td class="r">{{ total(grand.cost) }}</td>
+                                            <td class="r dc-net">{{ total(grand.profit) }}</td>
+                                            <td class="r">{{ margin(grand.profit, grand.netSales) }}</td>
+                                        </tr>
+                                    </tfoot>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

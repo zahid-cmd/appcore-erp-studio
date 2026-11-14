@@ -1,0 +1,426 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Opening Assets"
+            [subtitle]="subtitle"
+            icon="fas fa-box-archive">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search asset no, asset, asset group..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Add Opening Asset"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <span
+                pageToolbarLeft
+                class="hp-note">Saving an opening asset writes a Journal Voucher : Dr its PPE ledger, Cr its ACD ledger and the opening ledger of Posting Setup</span>
+
+            <div
+                pageToolbarRight
+                class="fao-filters">
+
+                <app-search-dropdown
+                    placeholder="All Branches"
+                    [items]="branchFilterItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="branchFilter"
+                    (valueChange)="onBranchFilter($event)">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    placeholder="All Asset Groups"
+                    [items]="categoryFilterItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="categoryFilter"
+                    (valueChange)="onCategoryFilter($event)">
+                </app-search-dropdown>
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    (view)="view($event)"
+                    (edit)="edit($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <div class="pay-summary">
+                @for (item of summaryItems; track item.label)
+                {
+                    <span class="pay-summary-item">
+                        <span class="pay-summary-label">{{ item.label }}</span>
+                        <b class="pay-summary-value">{{ item.value }}</b>
+                    </span>
+                }
+                <span class="pay-summary-note">
+                    The depreciation runs continue from the month after the opening
+                </span>
+            </div>
+        }
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Opening Asset History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="subtitle"
+            icon="fas fa-box-archive">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    [command1Text]="saveText"
+                    command1Icon="fas fa-floppy-disk"
+                    [command1Permission]="mode === 'edit' ? 'update' : 'add'"
+                    (command1Click)="onSave()"
+                    [command1Visible]="!isViewMode"
+                    command2Text="Edit"
+                    command2Icon="fas fa-pen"
+                    command2Permission="update"
+                    (command2Click)="editCard()"
+                    [command2Visible]="isViewMode"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split fao-split appcore-scrollbar">
+
+                <!-- ============ LEFT : the asset ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-box-archive"></i>
+                        <span>Asset</span>
+                    </header>
+
+                    <div class="fao-grid fao-two">
+
+                        <app-textbox
+                            label="Asset No"
+                            placeholder="Pick the branch and the asset group"
+                            [value]="assetNo"
+                            [disabled]="true">
+                        </app-textbox>
+
+                        <app-search-dropdown
+                            label="Asset Group"
+                            placeholder="Select asset group"
+                            [items]="categoryItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="categoryId"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onCategory($event)"
+                            [required]="true">
+                        </app-search-dropdown>
+
+                        <app-textbox
+                            class="fao-full"
+                            label="Name"
+                            placeholder="What the asset is"
+                            [value]="name"
+                            [maxLength]="150"
+                            [disabled]="isViewMode"
+                            (valueChange)="onText('name', $event)"
+                            [required]="true">
+                        </app-textbox>
+
+                        <app-search-dropdown
+                            label="Branch"
+                            placeholder="Select branch"
+                            [items]="branchItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="branchId"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onBranch($event)"
+                            [required]="true">
+                        </app-search-dropdown>
+
+                        <app-search-dropdown
+                            label="Location"
+                            [placeholder]="branchId ? 'Select location' : 'Pick the branch first'"
+                            [items]="locationItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="locationId"
+                            [disabled]="isViewMode"
+                            (valueChange)="onChoice('locationId', $event)">
+                        </app-search-dropdown>
+
+                        <app-search-dropdown
+                            label="Custodian"
+                            placeholder="Select employee"
+                            [items]="custodianItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="custodianId"
+                            [disabled]="isViewMode"
+                            (valueChange)="onChoice('custodianId', $event)">
+                        </app-search-dropdown>
+
+                        <app-textbox
+                            label="Purchase Reference"
+                            placeholder="Invoice or voucher no"
+                            textCase="none"
+                            [value]="purchaseRef"
+                            [maxLength]="50"
+                            [disabled]="isViewMode"
+                            (valueChange)="onText('purchaseRef', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Brand"
+                            textCase="none"
+                            [value]="brand"
+                            [maxLength]="100"
+                            [disabled]="isViewMode"
+                            (valueChange)="onText('brand', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Model"
+                            textCase="none"
+                            [value]="model"
+                            [maxLength]="100"
+                            [disabled]="isViewMode"
+                            (valueChange)="onText('model', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Serial No"
+                            textCase="none"
+                            [value]="serial"
+                            [maxLength]="100"
+                            [disabled]="isViewMode"
+                            (valueChange)="onText('serial', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Remarks"
+                            placeholder="Optional"
+                            textCase="none"
+                            [value]="remarks"
+                            [maxLength]="500"
+                            [disabled]="isViewMode"
+                            (valueChange)="onText('remarks', $event)">
+                        </app-textbox>
+
+                    </div>
+
+                </section>
+
+                <!-- ============ RIGHT : the value and the depreciation ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-coins"></i>
+                        <span>Value and Depreciation</span>
+                    </header>
+
+                    @if (showMoneyNote)
+                    {
+                        <span class="hp-note hp-bad">{{ lockedNote }}</span>
+                    }
+
+                    <div class="fao-grid fao-three">
+
+                        <app-datepicker
+                            label="Purchase Date"
+                            [required]="true"
+                            [allowEmpty]="true"
+                            [disabled]="moneyLocked"
+                            [value]="$any(asDate(purchaseDate))"
+                            (valueChange)="onPurchaseDate($event)">
+                        </app-datepicker>
+
+                        <app-datepicker
+                            label="Put to Use"
+                            [allowEmpty]="true"
+                            [disabled]="moneyLocked"
+                            [value]="$any(asDate(useDate))"
+                            (valueChange)="onUseDate($event)">
+                        </app-datepicker>
+
+                        <app-textbox
+                            label="Quantity"
+                            inputMode="decimal"
+                            [value]="qty"
+                            [maxLength]="10"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onText('qty', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Cost (Tk)"
+                            inputMode="decimal"
+                            placeholder="0.00"
+                            [value]="cost"
+                            [maxLength]="16"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onText('cost', $event)"
+                            [required]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Residual Value (Tk)"
+                            inputMode="decimal"
+                            placeholder="0.00"
+                            [value]="residual"
+                            [maxLength]="16"
+                            [disabled]="moneyLocked || noDepreciation"
+                            (valueChange)="onResidual($event)">
+                        </app-textbox>
+
+                        <app-dropdown
+                            label="Method"
+                            [items]="methodItems"
+                            [value]="method"
+                            [disabled]="ruleLocked"
+                            (valueChange)="onMethod($event)">
+                        </app-dropdown>
+
+                        <app-textbox
+                            label="Rate % a Year"
+                            inputMode="decimal"
+                            placeholder="0"
+                            [value]="rate"
+                            [maxLength]="8"
+                            [disabled]="ruleLocked || noDepreciation"
+                            (valueChange)="onText('rate', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Life (Years)"
+                            inputMode="numeric"
+                            placeholder="0 = use the rate"
+                            [value]="life"
+                            [maxLength]="3"
+                            [disabled]="ruleLocked || noDepreciation"
+                            (valueChange)="onText('life', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Depreciation to Date (Tk)"
+                            inputMode="decimal"
+                            placeholder="0.00"
+                            [value]="opening"
+                            [maxLength]="16"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onText('opening', $event)">
+                        </app-textbox>
+
+                        <app-dropdown
+                            label="Depreciated Up To"
+                            placeholder="Month"
+                            [items]="monthItems"
+                            [value]="upToMonth"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onChoice('upToMonth', $event)">
+                        </app-dropdown>
+
+                        <app-dropdown
+                            label="Up To Year"
+                            placeholder="Year"
+                            [items]="yearItems"
+                            [value]="upToYear"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onChoice('upToYear', $event)">
+                        </app-dropdown>
+
+                        <!-- what follows from the figures -->
+
+                        <div class="fao-tile fao-tile-main">
+                            <span>Book Value</span>
+                            <b>Tk {{ money(bookValue) }}</b>
+                        </div>
+
+                    </div>
+
+                    <div class="fao-foot">
+                        <span>Monthly charge that will follow <b>{{ chargeText }}</b></span>
+                        <span>{{ continuesText }}</span>
+                        @if (ruleNote)
+                        {
+                            <span>{{ ruleNote }}</span>
+                        }
+                    </div>
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

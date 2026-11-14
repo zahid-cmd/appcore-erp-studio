@@ -1,0 +1,245 @@
+<div class="app-list-page">
+
+    @if (!sheetId)
+    {
+        <!-- =====================================================
+             THE LIST
+        ====================================================== -->
+
+        <app-page-header
+            title="Overtime Sheets"
+            subtitle="The overtime of every posted salary sheet : view and print"
+            icon="fas fa-business-time">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search month, branch, code..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Refresh"
+                    command1Icon="fas fa-rotate-right"
+                    (command1Click)="load()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <div
+                pageToolbarLeft
+                class="ots-tools">
+
+                <app-search-dropdown
+                    placeholder="All Years"
+                    [items]="yearItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="selectedYear"
+                    (valueChange)="onYearChange($event)">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    placeholder="All Branches"
+                    [items]="branchItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="selectedBranch"
+                    (valueChange)="onBranchChange($event)">
+                </app-search-dropdown>
+
+            </div>
+
+            <span
+                pageToolbarRight
+                class="ots-note">An overtime sheet is made when a salary sheet is posted</span>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="canvasConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="actions"
+                    [rowActions]="rowActions"
+                    (rowAction)="onRowAction($event)"
+                    (view)="open($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <div class="pay-summary">
+                @for (item of summaryItems; track item.label)
+                {
+                    <span class="pay-summary-item">
+                        <span class="pay-summary-label">{{ item.label }}</span>
+                        <b class="pay-summary-value">{{ item.value }}</b>
+                    </span>
+                }
+                <span class="pay-summary-note">
+                    Unposting a salary sheet takes its overtime sheet away
+                </span>
+            </div>
+        }
+    }
+    @else
+    {
+        <!-- =====================================================
+             ONE SHEET
+        ====================================================== -->
+
+        <app-page-header
+            [title]="title"
+            [subtitle]="subtitle"
+            icon="fas fa-business-time">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search name, code..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Print"
+                    command1Icon="fas fa-print"
+                    (command1Click)="printOpen()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="load()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="back()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="canvasConfig">
+
+            <div
+                canvasBody
+                class="pfx-scroll appcore-scrollbar">
+
+                @if (lines.length === 0)
+                {
+                    <div class="pfx-empty">
+                        {{ loading ? 'Loading the overtime sheet...' : loadFailed ? 'The overtime sheet could not be loaded.' : 'No employee matches.' }}
+                    </div>
+                }
+                @else
+                {
+                    <table class="pfx-table">
+
+                        <thead>
+                            <tr>
+                                <th class="pfx-no">#</th>
+                                <th>Employee</th>
+                                <th>Designation</th>
+                                <th>Department</th>
+                                <th class="pfx-num">Basic</th>
+                                <th class="pfx-num">Gross</th>
+                                <th class="pfx-num">OT Hours</th>
+                                <th class="pfx-num">OT Days</th>
+                                <th class="pfx-num">Amount</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @for (row of pagedLines; track row.EmployeeCode; let i = $index)
+                            {
+                                <tr>
+                                    <td class="pfx-no">{{ pageStart + i + 1 }}</td>
+                                    <td>{{ row.EmployeeCode }} &nbsp; {{ row.EmployeeName }}</td>
+                                    <td>{{ row.DesignationName }}</td>
+                                    <td>{{ row.DepartmentName }}</td>
+                                    <td class="pfx-num">{{ money(row.BasicSalary) }}</td>
+                                    <td class="pfx-num">{{ money(row.GrossSalary) }}</td>
+                                    <td class="pfx-num">{{ quantity(row.OvertimeHours) }}</td>
+                                    <td class="pfx-num">{{ quantity(row.OvertimeDays) }}</td>
+                                    <td class="pfx-num">{{ money(row.Amount) }}</td>
+                                </tr>
+                            }
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <td colspan="6">Total ({{ lines.length }})</td>
+                                <td class="pfx-num">{{ quantity(total('OvertimeHours')) }}</td>
+                                <td class="pfx-num">{{ quantity(total('OvertimeDays')) }}</td>
+                                <td class="pfx-num">{{ money(total('Amount')) }}</td>
+                            </tr>
+                        </tfoot>
+
+                    </table>
+                }
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="lines.length"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (sheet)
+        {
+            <div class="pay-summary">
+                <span class="pay-summary-item">
+                    <span class="pay-summary-label">Sheet</span>
+                    <b class="pay-summary-value">{{ sheet.Code }}</b>
+                </span>
+                <span class="pay-summary-item">
+                    <span class="pay-summary-label">Employees</span>
+                    <b class="pay-summary-value">{{ sheet.EmployeeCount }}</b>
+                </span>
+                <span class="pay-summary-item">
+                    <span class="pay-summary-label">Overtime</span>
+                    <b class="pay-summary-value">Tk {{ money(sheet.Amount) }}</b>
+                </span>
+                <span class="pay-summary-item">
+                    <span class="pay-summary-label">Journal Voucher</span>
+                    <b class="pay-summary-value">{{ sheet.JournalVoucherNo || '-' }}</b>
+                </span>
+                <span class="pay-summary-note">
+                    Part of salary sheet {{ sheet.SalarySheetCode }} : paid with the salary
+                </span>
+            </div>
+        }
+    }
+
+    <app-toast></app-toast>
+
+</div>

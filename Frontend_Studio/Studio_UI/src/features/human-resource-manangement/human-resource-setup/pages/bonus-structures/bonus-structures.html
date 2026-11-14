@@ -1,0 +1,326 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Bonus Structures"
+            subtitle="How a festival bonus is worked out, and who gets it by the length of employment"
+            icon="fas fa-gift">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search code, structure..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    command3Text="Restore"
+                    command3Icon="fas fa-trash-arrow-up"
+                    command3Permission="restore"
+                    (command3Click)="restore()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <span
+                pageToolbarLeft
+                class="hp-note">The Default applies to every employee; another structure applies to the employees whose Employee Profile names it</span>
+
+            <app-search-dropdown
+                pageToolbarRight
+                placeholder="All"
+                [items]="statusItems"
+                labelField="label"
+                valueField="value"
+                [value]="statusFilter"
+                (valueChange)="onStatusFilter($event)">
+            </app-search-dropdown>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    (view)="view($event)"
+                    (edit)="edit($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Bonus Structure History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="How a festival bonus is worked out, and who gets it by the length of employment"
+            icon="fas fa-gift">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    [command1Text]="saveText"
+                    command1Icon="fas fa-floppy-disk"
+                    [command1Permission]="mode === 'edit' ? 'update' : 'add'"
+                    (command1Click)="onSave()"
+                    [command1Visible]="!isViewMode"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split bst-split appcore-scrollbar">
+
+                <!-- ============ LEFT : the structure ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-gift"></i>
+                        <span>Structure</span>
+                    </header>
+
+                    <div class="bst-two">
+
+                        <app-textbox
+                            label="Code"
+                            [value]="code"
+                            [disabled]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Structure Name"
+                            [value]="name"
+                            [disabled]="true">
+                        </app-textbox>
+
+                    </div>
+
+                    <app-dropdown
+                        label="Bonus On"
+                        [items]="rateItems"
+                        [value]="rateBase"
+                        (valueChange)="onRate($event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <app-dropdown
+                        label="Service Counted From"
+                        [items]="serviceItems"
+                        [value]="serviceFrom"
+                        (valueChange)="onServiceFrom($event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        [disabled]="isViewMode"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                </section>
+
+                <!-- ============ RIGHT : who gets how much ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-sliders"></i>
+                        <span>Who and When</span>
+                    </header>
+
+                    <div class="bst-options">
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="confirmedOnly"
+                                [disabled]="isViewMode"
+                                (change)="onSwitch('confirmedOnly', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Confirmed employees only</b>
+                                <small>An employee not confirmed on the bonus date gets no bonus</small>
+                            </span>
+                        </label>
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="isDefault"
+                                [disabled]="isViewMode || !isActive"
+                                (change)="onSwitch('isDefault', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Default structure</b>
+                                <small>Applies to every employee whose Employee Profile names no other structure</small>
+                            </span>
+                        </label>
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="isActive"
+                                [disabled]="isViewMode"
+                                (change)="onSwitch('isActive', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Active</b>
+                                <small>The employees of an Inactive structure follow the Default</small>
+                            </span>
+                        </label>
+
+                    </div>
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Eligibility by Length of Employment</span>
+                    </header>
+
+                    <span class="hp-note">
+                        Each row says : from this many months of service, this percent of the salary. A service below the first row gets no bonus.
+                    </span>
+
+                    <table class="pfx-table hp-table bst-table">
+
+                        <thead>
+                            <tr>
+                                <th class="pfx-no">#</th>
+                                <th class="pfx-num hp-pay">From (months of service)</th>
+                                <th class="pfx-num hp-pay">Bonus (% of the salary)</th>
+                                <th class="pfx-no"></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @for (row of slabs; track $index; let i = $index)
+                            {
+                                <tr>
+                                    <td class="pfx-no">{{ i + 1 }}</td>
+                                    <td class="pfx-num hp-pay">
+                                        <input
+                                            class="hp-input"
+                                            inputmode="numeric"
+                                            maxlength="3"
+                                            placeholder="0"
+                                            [value]="row.months"
+                                            [disabled]="isViewMode"
+                                            (input)="onSlab(row, 'months', $event)">
+                                    </td>
+                                    <td class="pfx-num hp-pay">
+                                        <input
+                                            class="hp-input"
+                                            inputmode="decimal"
+                                            maxlength="8"
+                                            placeholder="0"
+                                            [value]="row.percent"
+                                            [disabled]="isViewMode"
+                                            (input)="onSlab(row, 'percent', $event)">
+                                    </td>
+                                    <td class="pfx-no">
+                                        @if (!isViewMode)
+                                        {
+                                            <button
+                                                type="button"
+                                                class="hp-x"
+                                                title="Remove this slab"
+                                                (click)="removeSlab(i)">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+
+                    @if (!isViewMode)
+                    {
+                        <div class="hp-bar">
+                            <button
+                                type="button"
+                                class="hp-add"
+                                (click)="addSlab()">
+                                <i class="fas fa-plus"></i>
+                                Add Slab
+                            </button>
+                        </div>
+                    }
+
+                </section>
+
+                <!-- ============ BELOW : the structure in words, under both ============ -->
+
+                <div class="bst-rule bst-notes">
+                    <b>What this structure means</b>
+                    <ul class="hp-list">
+                        @for (line of ruleLines; track $index)
+                        {
+                            <li>{{ line }}</li>
+                        }
+                    </ul>
+                </div>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

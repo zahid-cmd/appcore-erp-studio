@@ -45,11 +45,13 @@
                 <i class="fas fa-chevron-left"></i>
             </button>
 
-            <input
-                type="month"
-                class="ma-date"
-                [value]="monthValue"
-                (change)="onMonthInput($event)">
+            <app-datepicker
+                class="hr-date-inline"
+                [monthMode]="true"
+                placeholder="Select Month"
+                [value]="$any(asMonth(monthValue))"
+                (valueChange)="onMonthInput(monthEvent($event))">
+            </app-datepicker>
 
             <button
                 type="button"

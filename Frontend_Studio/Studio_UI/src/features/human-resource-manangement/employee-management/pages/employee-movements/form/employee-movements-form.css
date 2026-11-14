@@ -232,3 +232,21 @@
     max-width: 220px;
     overflow-wrap: anywhere;
 }
+
+
+/* Both sides end at the same line (2026-11-14) : the columns
+   stretch to the taller one and the last card of each column
+   takes the rest. Side by side only. */
+
+@media (min-width: 1101px)
+{
+    .pf-body
+    {
+        align-items: stretch;
+    }
+
+    .pf-column > .pf-card:last-child
+    {
+        flex: 1 1 auto;
+    }
+}

@@ -1,0 +1,424 @@
+<div class="app-list-page lr-page tb-page fa-page" [attr.data-render]="renderTick()">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Changes in Equity"
+        subtitle="Opening equity, profit, capital and drawings, closing equity"
+        icon="fas fa-landmark">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search equity ledger, code, group…"
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                command1Title="Back to the default filter : this financial year, all allotted branches, nothing loaded"
+                (command1Click)="refresh()"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                command2Activity="Print"
+                command2Title="Print or save as Excel (from the print viewer)"
+                (command2Click)="print()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         BODY : filter (full height) | canvas
+    ====================================================== -->
+
+    <div class="lr-body">
+
+        <!-- ---------------- FILTER ---------------- -->
+
+        <aside class="lr-filter">
+
+            <div class="lr-filter-head">
+                <span>Changes in Equity Filter</span>
+            </div>
+
+            <div class="lr-filter-body appcore-scrollbar">
+
+                <div class="lr-field">
+                    <label>From</label>
+                    <app-datepicker
+                        class="lr-date"
+                        [value]="fromDate"
+                        (valueChange)="onFromChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="lr-field">
+                    <label>To</label>
+                    <app-datepicker
+                        class="lr-date"
+                        [value]="toDate"
+                        [minDate]="fromDate"
+                        (valueChange)="onToChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="lr-field">
+                    <label>Branch</label>
+                    <app-search-dropdown
+                        class="lr-dd"
+                        placeholder="All Allotted Branches"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(branchId)"
+                        (valueChange)="onBranchChange($event)">
+                    </app-search-dropdown>
+                    <span class="lr-hint">Only the branches you are allotted to. "All" adds them together.</span>
+                </div>
+
+                @if (branchesError)
+                {
+                    <div class="lr-note lr-error">{{ branchesError }}</div>
+                }
+
+                <!-- Display switches (bottom of the filter) -->
+                <div class="tb-opts">
+                    <b>Display</b>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showCancelled"
+                            (change)="onCancelledChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show cancelled vouchers <em>(on Submit)</em></span>
+                    </label>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showCodes"
+                            (change)="onCodesChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show codes</span>
+                    </label>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showZero"
+                            (change)="onZeroChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show zero rows</span>
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="lr-filter-foot">
+
+                <!-- How the figures work (full text on hover) -->
+                <span class="fa-foot-note" title="Equity ledgers, credit side positive : the same as the Balance Sheet's Equity. The profit / loss sits in Retained Earnings : its opening holds the earlier years and this year's result before From. Credits are capital introduced / additions; debits are drawings / withdrawals.">
+                    <i class="fas fa-circle-info"></i>
+                    <span>Equity ledgers, credit positive; the result sits in Retained Earnings.</span>
+                </span>
+
+                <button
+                    type="button"
+                    class="lr-btn lr-btn-primary"
+                    [disabled]="branchesLoading || loading || !!branchesError"
+                    (click)="submit()">
+                    Submit
+                </button>
+
+            </div>
+
+        </aside>
+
+        <!-- ---------------- CANVAS ---------------- -->
+
+        <section class="lr-canvas">
+
+            <!-- Switch bar : one line over the canvas -->
+            <div class="lr-switchbar">
+
+                <span class="lr-switchbar-title"><i class="fas fa-sliders"></i> View</span>
+
+                <span class="lr-seg" role="group" aria-label="Detail">
+                    <button
+                        type="button"
+                        [class.on]="!showLedgers"
+                        title="One column per equity group"
+                        (click)="setShowLedgers(false)">
+                        <i class="fas fa-table-cells"></i> Summary
+                    </button>
+                    <button
+                        type="button"
+                        [class.on]="showLedgers"
+                        title="The summary and every equity ledger under it"
+                        (click)="setShowLedgers(true)">
+                        <i class="fas fa-list"></i> With ledgers
+                    </button>
+                </span>
+
+            </div>
+
+            @if (!loaded)
+            {
+                <div class="lr-empty">
+                    <i class="fas fa-landmark lr-empty-ico"></i>
+                    <b>Choose the period and branch, then press Submit</b>
+                    <span>Opening equity, the profit or loss, capital introduced, drawings and the closing equity, checked against the Balance Sheet.</span>
+                </div>
+            }
+            @else if (loading)
+            {
+                <div class="tb-loading">
+                    <app-orbit-loader
+                        title="Loading Changes in Equity"
+                        message="Adding up the equity ledgers and the result…">
+                    </app-orbit-loader>
+                </div>
+            }
+            @else if (loadError)
+            {
+                <div class="lr-empty lr-error"><i class="fas fa-triangle-exclamation"></i> {{ loadError }}</div>
+            }
+            @else if (report)
+            {
+                <div class="lr-view">
+
+                    <!-- Head : title | figures | date -->
+                    <div class="lr-card lr-head">
+
+                        <div class="lr-head-info">
+                            <div class="lr-head-title">
+                                <b>Changes in Equity</b>
+                                @if (report.ShowCancelled)
+                                {
+                                    <span class="lr-pill lr-pill-warn">Cancelled shown</span>
+                                }
+                            </div>
+                            <div class="lr-head-sub">
+                                @if (report.YearStart)
+                                {
+                                    <span class="lr-clip">Profit / loss from {{ date(report.YearStart) }} in {{ report.RetainedEarningsName || 'Retained Earnings' }}</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="lr-figs">
+                            <div>
+                                <span>Opening equity</span>
+                                <b>{{ total(report.Opening) }}</b>
+                            </div>
+                            <div
+                                class="tb-check"
+                                [class.is-ok]="!isLoss"
+                                [class.is-bad]="isLoss">
+                                <span>{{ isLoss ? 'Loss' : 'Profit' }} for the period</span>
+                                <b>{{ total(report.Profit) }}</b>
+                            </div>
+                            <div
+                                class="tb-check"
+                                [class.is-ok]="balanced"
+                                [class.is-bad]="!balanced">
+                                <span>Closing equity{{ balanced ? ' · agrees' : '' }}</span>
+                                <b>{{ total(report.Closing) }}</b>
+                            </div>
+                        </div>
+
+                        <div class="lr-head-period">
+                            <b>{{ date(report.From) }} – {{ date(report.To) }}</b>
+                            <span>{{ report.BranchName }}</span>
+                        </div>
+
+                    </div>
+
+                    @if (report.Message)
+                    {
+                        <div class="lr-note"><i class="fas fa-circle-info"></i> {{ report.Message }}</div>
+                    }
+
+                    @if (matrix; as m)
+                    {
+                        <div class="ce-body appcore-scrollbar">
+
+                            <!-- ============ SUMMARY ============ -->
+                            <div class="lr-card ce-card">
+
+                                <div class="ce-title">
+                                    <b>Statement of Changes in Equity</b>
+                                    <span>for {{ date(report.From) }} – {{ date(report.To) }}</span>
+                                </div>
+
+                                <div class="ce-scroll appcore-scrollbar">
+
+                                    <table class="lr-table ce-table">
+
+                                        <colgroup>
+                                            <col class="c-name">
+                                            @for (column of m.columns; track column.key)
+                                            {
+                                                <col>
+                                            }
+                                            <col>
+                                        </colgroup>
+
+                                        <thead>
+                                            <tr>
+                                                <th>Particulars</th>
+                                                @for (column of m.columns; track column.key)
+                                                {
+                                                    <th class="r">
+                                                        {{ column.name }}
+                                                        @if (column.hasRetained)
+                                                        {
+                                                            <span class="lr-dim" title="Holds Retained Earnings : the profit / loss goes here"> *</span>
+                                                        }
+                                                    </th>
+                                                }
+                                                <th class="r ce-tot">Total</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @for (row of matrixRows; track row.key)
+                                            {
+                                                <tr
+                                                    [class.ce-opening]="row.key === 'opening'"
+                                                    [class.ce-closing]="row.key === 'closing'">
+                                                    <td>{{ row.key === 'opening' ? 'Opening balance at ' + date(report.From) : row.key === 'closing' ? 'Closing balance at ' + date(report.To) : row.name }}</td>
+                                                    @for (column of m.columns; track column.key)
+                                                    {
+                                                        <td class="r" [class.ce-neg]="cell(column, row) < 0">{{ row.key === 'opening' || row.key === 'closing' ? total(cell(column, row)) : money(cell(column, row)) }}</td>
+                                                    }
+                                                    <td class="r ce-tot" [class.ce-neg]="cell(m.total, row) < 0">{{ total(cell(m.total, row)) }}</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                                <div
+                                    class="ce-check"
+                                    [class.is-ok]="balanced"
+                                    [class.is-bad]="!balanced">
+                                    <i class="fas" [class.fa-circle-check]="balanced" [class.fa-triangle-exclamation]="!balanced"></i>
+                                    <span>Equity on the Balance Sheet at {{ date(report.To) }} (incl. the profit / loss to date) : <b>{{ total(report.BalanceSheetEquity) }}</b></span>
+                                    <b class="ce-state">{{ balanced ? 'Agrees' : 'Difference ' + total(report.Difference) }}</b>
+                                </div>
+
+                            </div>
+
+                            <!-- ============ LEDGERS ============ -->
+                            @if (showLedgers)
+                            {
+                                <div class="lr-card ce-card">
+
+                                    <div class="ce-title">
+                                        <b>Equity ledgers</b>
+                                        <span>{{ ledgers.length }} ledger{{ ledgers.length === 1 ? '' : 's' }}{{ searchText ? ' matching the search' : '' }}</span>
+                                    </div>
+
+                                    <div class="ce-scroll appcore-scrollbar">
+
+                                        <table class="lr-table ce-table">
+
+                                            <colgroup>
+                                                <col class="c-name">
+                                                <col>
+                                                <col>
+                                                <col>
+                                                <col>
+                                                <col>
+                                            </colgroup>
+
+                                            <thead>
+                                                <tr>
+                                                    <th>Ledger</th>
+                                                    <th class="r">Opening</th>
+                                                    <th class="r">Profit / (loss)</th>
+                                                    <th class="r">Introduced</th>
+                                                    <th class="r">Drawings</th>
+                                                    <th class="r ce-tot">Closing</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                @for (column of m.columns; track column.key)
+                                                {
+                                                    @if (groupLedgers(column).length)
+                                                    {
+                                                        <tr class="ce-group">
+                                                            <td colspan="6">{{ column.name }}</td>
+                                                        </tr>
+                                                        @for (ledger of groupLedgers(column); track ledger.LedgerCode + ledger.LedgerName)
+                                                        {
+                                                            <tr
+                                                                class="ce-ledger"
+                                                                [class.lr-click]="!!ledger.LedgerCode"
+                                                                [class.is-inactive]="!ledger.IsActive"
+                                                                [title]="ledger.LedgerCode ? 'Open the statement (new tab)' : ''"
+                                                                (click)="ledgerClick(ledger)">
+                                                                <td>
+                                                                    <span class="tb-name">
+                                                                        <span class="lr-clip">{{ ledger.LedgerName }}</span>
+                                                                        @if (showCodes && ledger.LedgerCode)
+                                                                        {
+                                                                            <span class="lr-dim lr-mono tb-code">{{ ledger.LedgerCode }}</span>
+                                                                        }
+                                                                        @if (ledger.IsRetainedEarnings)
+                                                                        {
+                                                                            <span class="lr-pill tb-re" title="Holds the earlier years and this year's result">incl. result</span>
+                                                                        }
+                                                                    </span>
+                                                                </td>
+                                                                <td class="r" [class.ce-neg]="ledger.Opening < 0">{{ money(ledger.Opening) }}</td>
+                                                                <td class="r" [class.ce-neg]="ledger.Profit < 0">{{ money(ledger.Profit) }}</td>
+                                                                <td class="r">{{ money(ledger.Added) }}</td>
+                                                                <td class="r ce-neg">{{ money(-ledger.Withdrawn) }}</td>
+                                                                <td class="r ce-tot" [class.ce-neg]="ledger.Closing < 0">{{ total(ledger.Closing) }}</td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                }
+                                                @if (ledgers.length === 0)
+                                                {
+                                                    <tr class="lr-none">
+                                                        <td colspan="6">{{ searchText ? 'No equity ledger matches the search.' : 'No equity ledger has a balance or a movement.' }}</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+
+                                        </table>
+
+                                    </div>
+
+                                </div>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

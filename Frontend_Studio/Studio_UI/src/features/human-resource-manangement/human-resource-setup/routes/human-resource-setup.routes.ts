@@ -162,6 +162,46 @@ Routes =
                         )
                 },
 
+                // Leave Encashment Policies (MANUAL : hand-written page,
+                // HumanResource_EncashmentPolicies_Engine.sql; NO Code Sync)
+                {
+                    path:'leave-encashment-policies',
+
+                    data:
+                    {
+                        breadcrumb:'Leave Encashment Policies'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './leave-encashment-policies.routes'
+                        )
+                        .then(
+                            m =>
+                                m.LeaveEncashmentPoliciesRoutes
+                        )
+                },
+
+                // Bonus Structures (MANUAL : hand-written page,
+                // HumanResource_BonusStructures_Engine.sql; NO Code Sync)
+                {
+                    path:'bonus-structures',
+
+                    data:
+                    {
+                        breadcrumb:'Bonus Structures'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './bonus-structures.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BonusStructuresRoutes
+                        )
+                },
+
                 // Overtime Structures (MANUAL : hand-written page,
                 // HumanResource_OvertimeStructures_Engine.sql; NO Code Sync)
                 {

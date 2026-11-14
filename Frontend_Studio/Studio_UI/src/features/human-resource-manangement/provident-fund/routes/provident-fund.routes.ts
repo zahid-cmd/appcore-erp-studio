@@ -8,6 +8,9 @@
 //   pf-loans                list / add / view
 //   pf-settlements          list / add / view
 //   pf-interest             the yearly interest
+//   pf-payments             list / add / view : pays the settlements
+//                           and the loans (the payment page of Human
+//                           Resource, group 'pf')
 // (PF Reports is a page of the HR Reports menu.)
 //===============================================================
 
@@ -21,6 +24,11 @@ const list =
     () =>
         import('../pages/pf-list/pf-list')
             .then(m => m.PfList);
+
+const hrPayments =
+    () =>
+        import('../../payroll-management/pages/hr-payments/hr-payments')
+            .then(m => m.HrPaymentsPage);
 
 const memberForm =
     () =>
@@ -50,6 +58,17 @@ Routes =
                 loadComponent:() =>
                     import('../pages/pf-policy/pf-policy')
                         .then(m => m.PfPolicyPage)
+            },
+            {
+                path:'pf-payments',
+                data:{ breadcrumb:'PF Payments', hrPayGroup:'pf' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'PF Payments', hrPayGroup:'pf' }, loadComponent:hrPayments },
+                    { path:'add', data:{ breadcrumb:'PF Payment', hrPayGroup:'pf' }, loadComponent:hrPayments },
+                    { path:'view/:id', data:{ breadcrumb:'View PF Payment', hrPayGroup:'pf' }, loadComponent:hrPayments }
+                ]
             },
             {
                 path:'pf-members',

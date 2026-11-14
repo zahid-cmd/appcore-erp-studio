@@ -47,7 +47,9 @@ public interface ILeaveApplicationsRepository
 
     Task<LeaveApplicationDefaultsDto> GetDefaultsAsync();
 
-    Task<List<LeaveBalanceDto>> GetBalanceAsync(long employeeId, int year);
+    // The balance of the leave year (a financial year) the date is
+    // in (yyyy-MM-dd; none : today)
+    Task<List<LeaveBalanceDto>> GetBalanceAsync(long employeeId, string? onDate);
 
     // Working days of a range for an employee
     Task<LeaveDaysDto> CountDaysAsync(long employeeId, string fromDate, string toDate);

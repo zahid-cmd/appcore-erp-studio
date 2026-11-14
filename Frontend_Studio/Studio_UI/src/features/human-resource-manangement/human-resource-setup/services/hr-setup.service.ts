@@ -194,4 +194,18 @@ export class HrSetupService
             .put<any>(this.weeklyUrl, { WeeklyOffDays:weeklyOffDays, Remarks:remarks })
             .pipe(map(x => this.weekly(x)));
     }
+
+    // The options of a select that come from the page's API
+    // (Salary Heads : the ledgers a deduction can be credited to)
+    getOptions(page: HrSetupPage, name: string):
+        Observable<{ label: string; value: string }[]>
+    {
+        return this.http
+            .get<any[]>(`${environment.apiUrl}/${page.api}/${name}`)
+            .pipe(map(rows => (Array.isArray(rows) ? rows : []).map(x => (
+            {
+                value:String(x?.LedgerCode ?? x?.ledgerCode ?? ''),
+                label:`${x?.LedgerName ?? x?.ledgerName ?? ''}  (${x?.LedgerCode ?? x?.ledgerCode ?? ''})`
+            }))));
+    }
 }

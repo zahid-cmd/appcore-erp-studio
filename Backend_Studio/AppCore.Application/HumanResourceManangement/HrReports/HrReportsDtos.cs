@@ -122,6 +122,13 @@ public class LeaveBalanceRowDto
 
 public class LeaveBalanceReportDto
 {
+    // The leave year is a financial year : its name and its days
+    public string YearName { get; set; } = string.Empty;
+
+    public string FromDate { get; set; } = string.Empty;
+
+    public string ToDate { get; set; } = string.Empty;
+
     public int Year { get; set; }
 
     public List<LeaveBalanceTypeDto> LeaveTypes { get; set; } = new();

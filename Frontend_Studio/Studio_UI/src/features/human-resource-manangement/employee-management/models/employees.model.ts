@@ -95,6 +95,10 @@ export interface Employee
     OvertimeStructureName: string;
     // A rate typed before overtime structures (read only)
     OvertimeRate: number;
+    // The employee's own bonus structure and leave encashment
+    // policy (0 = the Default one)
+    BonusStructureId: number;
+    LeaveEncashPolicyId: number;
     // Cash / Bank / MFS
     PaymentMode: string;
     BankName: string;
@@ -162,6 +166,10 @@ export interface EmployeeDefaults
     SalaryStructures: EmployeeSalaryStructure[];
     // Active overtime structures
     OvertimeStructures: EmployeeOvertimeStructure[];
+    // Active bonus structures / leave encashment policies (Note :
+    // "Default" on the one that applies when the profile names none)
+    BonusStructures: EmployeeLookup[];
+    LeaveEncashPolicies: EmployeeLookup[];
 }
 
 
@@ -236,6 +244,8 @@ export function emptyEmployee(): Employee
         OvertimeStructureId:0,
         OvertimeStructureName:'',
         OvertimeRate:0,
+        BonusStructureId:0,
+        LeaveEncashPolicyId:0,
         PaymentMode:'Cash',
         BankName:'',
         BankAccountNo:'',

@@ -1,0 +1,193 @@
+<div class="app-list-page">
+
+    <app-page-header
+        title="Depreciation Schedule"
+        subtitle="The depreciation of one asset, month by month : what is posted and what is still to come"
+        icon="fas fa-calendar-days">
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="refresh()"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                (command2Click)="print()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <div
+            pageToolbarLeft
+            class="pfx-tools ds-asset">
+
+            <app-search-dropdown
+                placeholder="Select asset"
+                [items]="assetItems"
+                labelField="label"
+                valueField="value"
+                [value]="assetId"
+                (valueChange)="onAsset($event)">
+            </app-search-dropdown>
+
+            <span class="hp-note">{{ assetItems.length }} asset(s) to pick from</span>
+
+        </div>
+
+        <div
+            pageToolbarRight
+            class="pfx-tools ds-filters">
+
+            <app-search-dropdown
+                placeholder="All Branches"
+                [items]="branchFilterItems"
+                labelField="label"
+                valueField="value"
+                [value]="branchFilter"
+                (valueChange)="onBranchFilter($event)">
+            </app-search-dropdown>
+
+            <app-search-dropdown
+                placeholder="All Asset Groups"
+                [items]="categoryFilterItems"
+                labelField="label"
+                valueField="value"
+                [value]="categoryFilter"
+                (valueChange)="onCategoryFilter($event)">
+            </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <app-page-canvas
+        [config]="canvasConfig">
+
+        <div
+            canvasBody
+            class="appcore-scrollbar"
+            [class.hp-split]="!!schedule"
+            [class.pfx-scroll]="!schedule">
+
+            @if (schedule && asset)
+            {
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-cube"></i>
+                        <span>Asset</span>
+                        <span class="pf-status">{{ asset.Status }}</span>
+                    </header>
+
+                    <dl class="pf-facts ds-facts">
+                        <dt>Asset No</dt>
+                        <dd>{{ asset.AssetNo }}</dd>
+                        <dt>Name</dt>
+                        <dd>{{ asset.Name }}</dd>
+                        <dt>Asset Group</dt>
+                        <dd>{{ asset.CategoryName }}</dd>
+                        <dt>Branch</dt>
+                        <dd>{{ asset.BranchName }}</dd>
+                        <dt>Status</dt>
+                        <dd>{{ asset.Status }}</dd>
+                        <dt>Purchase Date</dt>
+                        <dd>{{ day(asset.PurchaseDate) || '-' }}</dd>
+                        <dt>Put to Use</dt>
+                        <dd>{{ day(asset.UseDate) || '-' }}</dd>
+                        <dt>Cost</dt>
+                        <dd>{{ money(asset.TotalCost) }}</dd>
+                        <dt>Residual Value</dt>
+                        <dd>{{ money(asset.ResidualValue) }}</dd>
+                        <dt>Rule</dt>
+                        <dd>{{ ruleText }}</dd>
+                        <dt>Depreciation so far</dt>
+                        <dd>{{ money(asset.AccumulatedDepreciation) }}</dd>
+                        <dt class="pf-strong">Book Value</dt>
+                        <dd class="pf-strong">{{ money(asset.BookValue) }}</dd>
+                        <dt>Months Left</dt>
+                        <dd>{{ schedule.MonthsLeft }}</dd>
+                        <dt>Ends in</dt>
+                        <dd>{{ schedule.EndsText || '-' }}</dd>
+                    </dl>
+
+                </section>
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-calendar-days"></i>
+                        <span>Month by Month</span>
+                    </header>
+
+                    @if (rows.length === 0)
+                    {
+                        <div class="pfx-empty">{{ emptyText }}</div>
+                    }
+                    @else
+                    {
+                        <table class="pfx-table hp-table">
+
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th>Month</th>
+                                    <th class="pfx-num">Depreciation Before</th>
+                                    <th class="pfx-num hp-pay">Charge</th>
+                                    <th class="pfx-num">Depreciation After</th>
+                                    <th class="pfx-num">Book Value</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (row of rows; track row.Period; let i = $index)
+                                {
+                                    <tr [class.ds-coming]="!row.Posted">
+                                        <td class="pfx-no">{{ i + 1 }}</td>
+                                        <td>{{ row.PeriodText }}</td>
+                                        <td class="pfx-num">{{ money(row.Opening) }}</td>
+                                        <td class="pfx-num hp-pay"><b>{{ money(row.Charge) }}</b></td>
+                                        <td class="pfx-num">{{ money(row.Closing) }}</td>
+                                        <td class="pfx-num">{{ money(row.BookValue) }}</td>
+                                        <td>
+                                            @if (row.Posted)
+                                            {
+                                                <span class="hp-state hp-ok">Posted</span>
+                                            }
+                                            @else
+                                            {
+                                                <span class="ds-later">To come</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3">Posted {{ money(postedTotal) }} &nbsp;·&nbsp; To come {{ money(comingTotal) }}</td>
+                                    <td class="pfx-num hp-pay">{{ money(postedTotal + comingTotal) }}</td>
+                                    <td colspan="3">{{ rows.length }} month(s)</td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    }
+
+                </section>
+            }
+            @else
+            {
+                <div class="pfx-empty">{{ emptyText }}</div>
+            }
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+
+</div>

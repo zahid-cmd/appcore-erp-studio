@@ -98,6 +98,10 @@ export interface LeaveBalanceRow
 export interface LeaveBalanceReport
 {
     Year: number;
+    // The leave year is a financial year : its name and its days
+    YearName: string;
+    FromDate: string;
+    ToDate: string;
     LeaveTypes: LeaveBalanceType[];
     Rows: LeaveBalanceRow[];
 }
@@ -232,6 +236,9 @@ export class HrReportsService
             .pipe(
                 map(x => ({
                     Year:num(x, 'Year'),
+                    YearName:text(x, 'YearName'),
+                    FromDate:text(x, 'FromDate'),
+                    ToDate:text(x, 'ToDate'),
                     LeaveTypes:list(x, 'LeaveTypes').map(t => ({
                         LeaveTypeId:num(t, 'LeaveTypeId'),
                         Name:text(t, 'Name'),

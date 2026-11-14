@@ -39,6 +39,8 @@ import
 from '@angular/core/rxjs-interop';
 
 import { PageHeaderComponent } from '../../../../../shared/components/layout/page-header/page-header';
+import { DatepickerComponent } from '../../../../../shared/components/controls/datepicker/datepicker';
+import { hrDateEvent, hrMonthEvent, hrMonthToDate, hrToDate } from '../../../services/hr-date';
 import { PageToolbarComponent } from '../../../../../shared/components/layout/page-toolbar/page-toolbar';
 import { PageCanvasComponent, PageCanvasConfig } from '../../../../../shared/components/layout/page-canvas/page-canvas';
 import { CommandCenterComponent } from '../../../../../shared/components/utilities/command-center/command-center';
@@ -51,7 +53,6 @@ import { ProgressDialogComponent } from '../../../../../shared/components/utilit
 import { ToastService } from '../../../../../shared/components/utilities/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
 import { HrProgressService } from '../../../services/hr-progress.service';
-import { hrDateEvent, hrToDate } from '../../../services/hr-date';
 
 import
 {
@@ -102,6 +103,7 @@ type ReportKey =
     imports:
     [
         CommonModule,
+        DatepickerComponent,
         PageHeaderComponent,
         PageToolbarComponent,
         PageCanvasComponent,
@@ -140,6 +142,12 @@ implements OnInit
     readonly asDate = hrToDate;
 
     readonly dateEvent = hrDateEvent;
+
+    // The shared date picker in month mode works with a Date; the
+    // page keeps yyyy-MM text
+    readonly asMonth = hrMonthToDate;
+
+    readonly monthEvent = hrMonthEvent;
 
     readonly canvasConfig:
         PageCanvasConfig =
@@ -228,7 +236,7 @@ implements OnInit
     // The income of the fund : loan interest received and company
     // parts forfeited (not the members' money)
     income =
-        { LoanInterest:0, Forfeited:0 };
+        { LoanInterest:0, Forfeited:0, ForfeitedToCompany:0 };
 
     // Member Statement
     memberItems:
@@ -281,7 +289,8 @@ implements OnInit
                 { label:'Company Part', value:`Tk ${pfMoney(this.sum(this.members, 'CompanyBalance'))}` },
                 { label:'Loans Out', value:`Tk ${pfMoney(this.sum(this.members, 'LoanOutstanding'))}` },
                 { label:'Loan Interest Earned', value:`Tk ${pfMoney(this.income.LoanInterest)}` },
-                { label:'Forfeited to the Fund', value:`Tk ${pfMoney(this.income.Forfeited)}` }
+                { label:'Forfeited to the Fund', value:`Tk ${pfMoney(this.income.Forfeited)}` },
+                { label:'Forfeited to the Company', value:`Tk ${pfMoney(this.income.ForfeitedToCompany)}` }
             ];
         }
 
@@ -529,6 +538,13 @@ implements OnInit
 
                     this.memberItems =
                         members.map(m => ({ label:`${m.Code}  ${m.EmployeeCode}  ${m.EmployeeName}${m.Status === 'Settled' ? '  (settled)' : ''}`, value:m.PfMemberId }));
+
+                    // Member Statement : the first member is picked when
+                    // none is (the dropdown changes it)
+                    if (this.report === 'statement' && !members.some(m => m.PfMemberId === this.memberId))
+                    {
+                        this.memberId = members[0]?.PfMemberId ?? 0;
+                    }
 
                     if (this.report === 'statement' && this.memberId)
                     {

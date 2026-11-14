@@ -137,6 +137,12 @@ export class CalendarComponent
     @Input()
     showTodayButton = true;
 
+    // Month mode : the calendar picks a month, not a day. It opens
+    // on the months; a click on a month gives the first day of that
+    // month. Off by default : nothing changes for date pickers.
+    @Input()
+    monthMode = false;
+
     /* =====================================================
        WEEK DAYS (Saturday first)
     ====================================================== */
@@ -353,7 +359,7 @@ export class CalendarComponent
             this.pageStartFor(this.currentYear);
 
         this.view =
-            'days';
+            this.monthMode ? 'months' : 'days';
 
         this.rebuild();
     }
@@ -519,6 +525,21 @@ export class CalendarComponent
 
         this.currentMonth =
             cell.index;
+
+        // month mode : the month is the answer (its first day)
+        if (this.monthMode)
+        {
+            this.value =
+                new Date(this.currentYear, cell.index, 1);
+
+            this.valueChange.emit(
+                this.value
+            );
+
+            this.rebuild();
+
+            return;
+        }
 
         this.view =
             'days';

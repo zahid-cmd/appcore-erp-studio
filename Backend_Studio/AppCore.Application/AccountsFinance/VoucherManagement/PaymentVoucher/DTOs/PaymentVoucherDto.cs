@@ -51,6 +51,12 @@ public class PaymentVoucherDto
 
     public string CancelReason { get; set; } = string.Empty;
 
+    // A voucher written by another page : the page and its number
+    // ('' : keyed here). Such a voucher is read only on this page.
+    public string SourceType { get; set; } = string.Empty;
+
+    public string ReferenceNo { get; set; } = string.Empty;
+
     // yyyy-MM-dd
     public string CancelDate { get; set; } = string.Empty;
 

@@ -1,0 +1,173 @@
+<div class="app-list-page">
+
+    <app-page-header
+        title="Asset Tags"
+        subtitle="QR labels to stick on the assets, 3 across on an A4 page"
+        icon="fas fa-qrcode">
+
+        <div pageHeaderCenter>
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search asset no, asset, custodian..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Print Tags"
+                command1Icon="fas fa-print"
+                command1Title="Print the ticked assets; with none ticked, all the assets shown"
+                (command1Click)="printTags()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="load()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <span
+            pageToolbarLeft
+            class="hp-note">Tick the assets that need a tag</span>
+
+        <div
+            pageToolbarRight
+            class="fat-tools">
+
+            <app-search-dropdown
+                placeholder="All Branches"
+                [items]="branchItems"
+                labelField="label"
+                valueField="value"
+                [value]="branchFilter"
+                (valueChange)="onBranchFilter($event)">
+            </app-search-dropdown>
+
+            <app-search-dropdown
+                placeholder="All Asset Groups"
+                [items]="categoryItems"
+                labelField="label"
+                valueField="value"
+                [value]="categoryFilter"
+                (valueChange)="onCategoryFilter($event)">
+            </app-search-dropdown>
+
+            <app-search-dropdown
+                placeholder="All Locations"
+                [items]="locationItems"
+                labelField="label"
+                valueField="value"
+                [value]="locationFilter"
+                (valueChange)="onLocationFilter($event)">
+            </app-search-dropdown>
+
+            <app-search-dropdown
+                placeholder="Assets in hand"
+                [items]="statusItems"
+                labelField="label"
+                valueField="value"
+                [value]="statusFilter"
+                (valueChange)="onStatusFilter($event)">
+            </app-search-dropdown>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <app-page-canvas
+        [config]="listConfig">
+
+        <div
+            canvasBody
+            class="pfx-scroll appcore-scrollbar">
+
+            @if (rows.length === 0)
+            {
+                <div class="pfx-empty">
+                    {{ loading ? 'Loading the assets...' : loadFailed ? 'The assets could not be loaded.' : 'No asset matches.' }}
+                </div>
+            }
+            @else
+            {
+                <table class="pfx-table fat-table">
+
+                    <thead>
+                        <tr>
+                            <th class="fat-tick">
+                                <input
+                                    type="checkbox"
+                                    title="Tick all the assets shown, on every page"
+                                    [checked]="allTicked"
+                                    [indeterminate]="someTicked"
+                                    (change)="onTickAll($event)">
+                            </th>
+                            <th class="pfx-no">#</th>
+                            <th>Asset No</th>
+                            <th>Asset</th>
+                            <th>Asset Group</th>
+                            <th>Branch</th>
+                            <th>Location</th>
+                            <th>Custodian</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (row of rows; track row.FaAssetId; let i = $index)
+                        {
+                            <tr [class.fat-on]="isTicked(row)">
+                                <td class="fat-tick">
+                                    <input
+                                        type="checkbox"
+                                        [checked]="isTicked(row)"
+                                        (change)="onTick(row, $event)">
+                                </td>
+                                <td class="pfx-no">{{ serialStart + i + 1 }}</td>
+                                <td class="fat-code">{{ row.AssetNo }}</td>
+                                <td>{{ row.Name }}</td>
+                                <td>{{ row.CategoryName }}</td>
+                                <td>{{ row.BranchName }}</td>
+                                <td>{{ row.LocationName }}</td>
+                                <td>{{ row.CustodianName }}</td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            }
+
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <div class="pay-summary">
+        <span class="pay-summary-item">
+            <span class="pay-summary-label">Ticked</span>
+            <b class="pay-summary-value">{{ tickedCount }}</b>
+        </span>
+        <span class="pay-summary-item">
+            <span class="pay-summary-label">Shown</span>
+            <b class="pay-summary-value">{{ totalRecords }}</b>
+        </span>
+        <span class="pay-summary-item">
+            <span class="pay-summary-label">{{ printText }}</span>
+        </span>
+        <span class="pay-summary-note">
+            Scanning a tag shows the Asset No : type it in the search of Fixed Asset Register to open the card
+        </span>
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

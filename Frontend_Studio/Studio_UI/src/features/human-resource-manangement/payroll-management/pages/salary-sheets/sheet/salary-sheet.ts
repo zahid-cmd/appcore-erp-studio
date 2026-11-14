@@ -31,7 +31,6 @@ import
 from 'rxjs';
 
 import { PageHeaderComponent } from '../../../../../../shared/components/layout/page-header/page-header';
-import { DatepickerComponent } from '../../../../../../shared/components/controls/datepicker/datepicker';
 import { hrDateEvent, hrToDate } from '../../../../services/hr-date';
 import { PageToolbarComponent } from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
 import { PageCanvasComponent } from '../../../../../../shared/components/layout/page-canvas/page-canvas';
@@ -49,12 +48,14 @@ import
 {
     SalarySheet,
     SalarySheetLine,
+    UnpaidAdvance,
     payAmount,
     payDayText,
     payMoney,
     payMoneyOrBlank,
     payMonthText,
-    payToday
+    payToday,
+    unpaidAdvanceText
 }
 from '../../../models/payroll.model';
 
@@ -69,6 +70,14 @@ import
     printPayslips
 }
 from './payslip.print';
+
+import
+{
+    HR_REPORT_PRINT_KEY,
+    openHrPrint,
+    saveHrReport
+}
+from '../../../../print/hr-print';
 
 
 //===============================================================
@@ -91,7 +100,6 @@ from './payslip.print';
     imports:
     [
         CommonModule,
-        DatepickerComponent,
         PageHeaderComponent,
         PageToolbarComponent,
         PageCanvasComponent,
@@ -189,7 +197,7 @@ implements OnInit
     get pageTitle(): string
     {
         return this.sheet
-            ? `Salary Sheet ${this.sheet.Code}`
+            ? `Salary Sheet`
             : 'Salary Sheet';
     }
 
@@ -205,6 +213,41 @@ implements OnInit
         return this.sheet?.Lines ?? [];
     }
 
+    //===========================================================
+    // Advances not paid out by the month end (a notice : the sheet
+    // recovers only what was paid out on Payroll Payments)
+    //===========================================================
+
+    get unpaidAdvances(): UnpaidAdvance[]
+    {
+        return this.sheet && this.sheet.Status !== 'Posted'
+            ? this.sheet.UnpaidAdvances
+            : [];
+    }
+
+    get unpaidTotal(): number
+    {
+        return this.unpaidAdvances.reduce((sum, a) => sum + a.NotPaidOut, 0);
+    }
+
+    get unpaidTitle(): string
+    {
+        return [
+            ...this.unpaidAdvances.map(unpaidAdvanceText),
+            '',
+            'Not recovered on this sheet. Pay them on Payroll Payments (dated in this month), then recalculate; otherwise a later month recovers them.'
+        ].join('\n');
+    }
+
+    // The line's advances that were not paid out ('' = none)
+    unpaidFor(line: SalarySheetLine): string
+    {
+        return this.unpaidAdvances
+            .filter(a => a.EmployeeId === line.EmployeeId)
+            .map(unpaidAdvanceText)
+            .join('\n');
+    }
+
     get visibleLines(): SalarySheetLine[]
     {
         const find =
@@ -215,6 +258,25 @@ implements OnInit
             : this.lines.filter(l =>
                 [l.EmployeeCode, l.EmployeeName, l.DesignationName, l.DepartmentName]
                     .some(v => (v ?? '').toLowerCase().includes(find)));
+    }
+
+    // Paid on Payroll Payments (the status is never typed here)
+    get paidTotal(): number
+    {
+        return this.lines.reduce((sum, l) => sum + (Number(l.PaidAmount) || 0), 0);
+    }
+
+    paidText(line: SalarySheetLine): string
+    {
+        return line.IsPaid ? 'Paid'
+            : line.PaidAmount > 0 ? `Part ${payMoney(line.PaidAmount)}`
+            : 'Unpaid';
+    }
+
+    goToPayments():
+        void
+    {
+        void this.router.navigate(['../../../payroll-payments/add'], { relativeTo:this.route });
     }
 
     get unpaidCount(): number
@@ -228,6 +290,119 @@ implements OnInit
     }
 
     // Totals of the whole sheet (whatever the search)
+    // The whole sheet on one statement : the Print Engine viewer
+    // (company header, PDF, Excel), landscape, with a signature
+    // column. It prints the saved sheet.
+    printSheet():
+        void
+    {
+        if (!this.sheet || this.lines.length === 0)
+        {
+            return;
+        }
+
+        if (this.hasChanges)
+        {
+            this.toast.error('Print Sheet', 'Save the typed amounts first : the print shows the saved sheet.');
+            return;
+        }
+
+        const sheet = this.sheet;
+
+        const lines = this.lines;
+
+        const month = payMonthText(sheet.Year, sheet.Month);
+
+        const kept =
+            (l: SalarySheetLine): number => l.StructureDeduction + l.PfEmployee + l.PfLoan;
+
+        const sum =
+            (pick: (l: SalarySheetLine) => number): string =>
+                payMoney(lines.reduce((total, l) => total + pick(l), 0));
+
+        const token =
+            saveHrReport(
+            {
+                title:'Salary Sheet',
+                subtitle:`${month} · ${sheet.BranchName}`,
+                meta:
+                [
+                    { label:'Sheet', value:sheet.Code },
+                    { label:'Status', value:sheet.Status },
+                    { label:'Journal Voucher', value:sheet.JournalVoucherNo }
+                ].filter(x => !!x.value),
+                band:
+                [
+                    { label:'Employees', value:String(lines.length) },
+                    { label:'Gross', value:sum(l => l.GrossSalary) },
+                    { label:'Earned', value:sum(l => l.EarnedSalary) },
+                    { label:'Deductions', value:sum(l => kept(l) + l.AdvanceDeduction + l.OtherDeduction) },
+                    { label:'Net Pay', value:`Tk ${sum(l => l.NetPay)}` }
+                ],
+                columns:
+                [
+                    { header:'Code', kind:'text' },
+                    { header:'Employee', kind:'text' },
+                    { header:'Designation', kind:'text' },
+                    { header:'Days', kind:'center' },
+                    { header:'Gross', kind:'money' },
+                    { header:'Absence', kind:'money' },
+                    { header:'Late', kind:'money' },
+                    { header:'Other +', kind:'money' },
+                    { header:'Earned', kind:'money', strong:true },
+                    { header:'PF / Tax', kind:'money' },
+                    { header:'Advance', kind:'money' },
+                    { header:'Other -', kind:'money' },
+                    { header:'Net Pay', kind:'money', strong:true },
+                    { header:'Signature', kind:'text' }
+                ],
+                rows:lines.map((l, i) =>
+                [
+                    l.EmployeeCode,
+                    l.EmployeeName,
+                    l.DesignationName,
+                    `${l.PayableDays} / ${l.MonthDays}`,
+                    payMoney(l.GrossSalary),
+                    payMoneyOrBlank(l.AbsenceDeduction),
+                    payMoneyOrBlank(l.LateDeduction),
+                    payMoneyOrBlank(l.OtherEarning),
+                    payMoney(l.EarnedSalary),
+                    payMoneyOrBlank(kept(l)),
+                    payMoneyOrBlank(l.AdvanceDeduction),
+                    payMoneyOrBlank(l.OtherDeduction),
+                    payMoney(l.NetPay),
+                    ''
+                ]),
+                footer:
+                [
+                    '',
+                    `Total (${lines.length})`,
+                    '',
+                    '',
+                    sum(l => l.GrossSalary),
+                    sum(l => l.AbsenceDeduction),
+                    sum(l => l.LateDeduction),
+                    sum(l => l.OtherEarning),
+                    sum(l => l.EarnedSalary),
+                    sum(l => kept(l)),
+                    sum(l => l.AdvanceDeduction),
+                    sum(l => l.OtherDeduction),
+                    sum(l => l.NetPay),
+                    ''
+                ],
+                note:'PF / Tax : the deductions of the salary structure, the provident fund and its loan instalment. Overtime is not on this sheet : see the Overtime Sheet of the month.',
+                landscape:true
+            });
+
+        const problem =
+            openHrPrint(this.router, HR_REPORT_PRINT_KEY, token, `${sheet.Code} ${month}`, true);
+
+        if (problem)
+        {
+            this.toast.error('Print Sheet', problem);
+        }
+    }
+
     total(field: keyof SalarySheetLine): number
     {
         return this.lines.reduce((sum, l) => sum + (Number(l[field]) || 0), 0);
@@ -608,66 +783,6 @@ implements OnInit
             this.service.unpostSheet(this.sheetId, this.panelText),
             () => `${this.sheet?.Code} unposted : its Journal Voucher is cancelled.`,
             'The salary sheet could not be unposted.');
-    }
-
-    // Everyone who is not paid yet
-    confirmPayAll():
-        void
-    {
-        if (!this.sheet || !this.isPosted)
-        {
-            return;
-        }
-
-        if (!this.panelDate || this.panelDate > this.today)
-        {
-            this.toast.error('Mark Paid', 'Pick the paid date (today or before).');
-            return;
-        }
-
-        this.run(
-            'Saving',
-            'Marking the salaries paid...',
-            this.service.paySheet(this.sheetId, [], true, this.panelDate, this.panelText),
-            (changed: number) => `${changed} employee(s) marked paid on ${this.dayText(this.panelDate)}.`,
-            'The salaries could not be marked paid.');
-    }
-
-    // One employee : paid today, or not paid again
-    togglePaid(line: SalarySheetLine):
-        void
-    {
-        if (!this.sheet || !this.isPosted || this.isSaving)
-        {
-            return;
-        }
-
-        if (!line.IsPaid)
-        {
-            this.run(
-                'Saving',
-                `Marking ${line.EmployeeName} paid...`,
-                this.service.paySheet(this.sheetId, [line.SalarySheetLineId], true, this.today, ''),
-                () => `${line.EmployeeCode} ${line.EmployeeName} marked paid (Tk ${this.money(line.NetPay)}).`,
-                'The salary could not be marked paid.',
-                true);
-            return;
-        }
-
-        this.confirmDialog.open(
-            'Mark Not Paid',
-            `Mark ${line.EmployeeCode} ${line.EmployeeName} as not paid again?`,
-            () =>
-                this.run(
-                    'Saving',
-                    `Marking ${line.EmployeeName} not paid...`,
-                    this.service.paySheet(this.sheetId, [line.SalarySheetLineId], false, '', ''),
-                    () => `${line.EmployeeCode} ${line.EmployeeName} marked not paid.`,
-                    'The salary could not be changed.',
-                    true),
-            'Mark Not Paid',
-            'Cancel',
-            'primary');
     }
 
     //===========================================================

@@ -246,6 +246,14 @@ ALTER TABLE public."HrPfPolicy"
     -- (not used : an early settlement pays the months used only)
     ADD COLUMN IF NOT EXISTS "LoanEarlyFullInterest" boolean               NOT NULL DEFAULT false;
 
+-- The yearly interest of the members is worked out on :
+--   Monthly : the balance at the end of every month of the
+--             financial year x rate / 12 (money earns interest
+--             for the months it was in the fund)
+--   Closing : the balance on the last day of the year x rate
+ALTER TABLE public."HrPfPolicy"
+    ADD COLUMN IF NOT EXISTS "InterestBasis" character varying(10) NOT NULL DEFAULT 'Monthly';
+
 ALTER TABLE public."HrPfLoans"
     ADD COLUMN IF NOT EXISTS "InterestRate"      numeric(7,3)          NOT NULL DEFAULT 0,
     -- '' (no interest) / Flat / Reducing

@@ -30,7 +30,7 @@ namespace AppCore.Api.Controllers.HumanResourceManangement.AttendanceManagement;
 //     leave-applications
 //       GET  ''                    list
 //       GET  defaults              next code, employees, leave types
-//       GET  balance?employeeId=&year=
+//       GET  balance?employeeId=&date=
 //       GET  days?employeeId=&from=&to=   working days of a range
 //       GET  history
 //       GET  {publicId}
@@ -257,8 +257,8 @@ public class LeaveApplicationsController
         Run(async () => Ok(await _repository.GetDefaultsAsync()), "The leave application lists could not be loaded.");
 
     [HttpGet("balance")]
-    public Task<IActionResult> GetBalance([FromQuery] long employeeId, [FromQuery] int year = 0) =>
-        Run(async () => Ok(await _repository.GetBalanceAsync(employeeId, year)), "The leave balance could not be loaded.");
+    public Task<IActionResult> GetBalance([FromQuery] long employeeId, [FromQuery] string? date = null) =>
+        Run(async () => Ok(await _repository.GetBalanceAsync(employeeId, date)), "The leave balance could not be loaded.");
 
     [HttpGet("days")]
     public Task<IActionResult> CountDays([FromQuery] long employeeId, [FromQuery] string? from, [FromQuery] string? to) =>

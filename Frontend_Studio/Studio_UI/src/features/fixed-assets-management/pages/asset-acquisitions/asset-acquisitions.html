@@ -1,0 +1,647 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Asset Acquisitions"
+            [subtitle]="subtitle"
+            icon="fas fa-cart-plus">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search code, supplier, reference..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Add Acquisition"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    (view)="view($event)"
+                    (edit)="edit($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <div class="pay-summary">
+                @for (item of summaryItems; track item.label)
+                {
+                    <span class="pay-summary-item">
+                        <span class="pay-summary-label">{{ item.label }}</span>
+                        <b class="pay-summary-value">{{ item.value }}</b>
+                    </span>
+                }
+                <span class="pay-summary-note">
+                    A Draft can be changed; posting writes the Journal Voucher and makes the asset cards
+                </span>
+            </div>
+        }
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Asset Acquisition History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else if (mode === 'view')
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="subtitle"
+            icon="fas fa-cart-plus">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Edit"
+                    command1Icon="fas fa-pen"
+                    command1Permission="update"
+                    (command1Click)="editDoc()"
+                    [command1Visible]="isDraft"
+                    command2Text="Post"
+                    command2Icon="fas fa-file-circle-check"
+                    command2Permission="update"
+                    (command2Click)="onPostDoc()"
+                    [command2Visible]="isDraft"
+                    command3Text="Delete"
+                    command3Icon="fas fa-trash"
+                    command3Permission="update"
+                    (command3Click)="deleteDoc()"
+                    [command3Visible]="isDraft"
+                    command4Text="Unpost"
+                    command4Icon="fas fa-rotate-left"
+                    command4Permission="update"
+                    (command4Click)="askUnpost()"
+                    [command4Visible]="isPosted"
+                    command5Text="Print"
+                    command5Icon="fas fa-print"
+                    (command5Click)="print()"
+                    [command5Visible]="isPosted"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        @if (unposting && doc)
+        {
+            <div class="hp-panel">
+                <span class="hp-note">
+                    <b>Unpost {{ doc.Code }}</b> : its Journal Voucher {{ doc.JournalVoucherNo }} is cancelled, its asset cards are removed and it goes back to Draft.
+                </span>
+                <app-textbox
+                    class="hp-panel-box"
+                    placeholder="Reason (required)"
+                    [value]="unpostReason"
+                    [maxLength]="300"
+                    (valueChange)="onUnpostReason($event)">
+                </app-textbox>
+                <button
+                    type="button"
+                    class="hp-add hp-danger"
+                    [disabled]="isSaving"
+                    (click)="confirmUnpost()">Unpost</button>
+                <button
+                    type="button"
+                    class="hp-btn"
+                    (click)="keepPosted()">Cancel</button>
+            </div>
+        }
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split fav-view appcore-scrollbar">
+
+                @if (!doc)
+                {
+                    <div class="pfx-empty">
+                        {{ loadFailed ? 'The acquisition could not be loaded.' : 'Loading the acquisition...' }}
+                    </div>
+                }
+                @else
+                {
+                    <!-- ============ TOP : the acquisition at a glance ============ -->
+
+                    <div class="fav-hero">
+
+                        <div class="fav-who">
+
+                            <span class="fav-icon"><i class="fas fa-cart-plus"></i></span>
+
+                            <div class="fav-title">
+
+                                <div class="fav-line">
+                                    <span class="fav-no">{{ doc.Code }}</span>
+                                    <b class="fav-name">{{ doc.CreditLedgerName || 'No Payable To ledger' }}</b>
+                                    <span
+                                        class="fav-status"
+                                        [class.fav-status-ok]="isPosted">{{ doc.Status }}</span>
+                                </div>
+
+                                <div class="fav-chips">
+                                    <span><i class="fas fa-calendar-day"></i>{{ day(doc.AcquisitionDate) }}</span>
+                                    <span><i class="fas fa-store"></i>{{ doc.BranchName }}</span>
+                                    @if (doc.RefNo)
+                                    {
+                                        <span><i class="fas fa-file-invoice"></i>Invoice {{ doc.RefNo }}</span>
+                                    }
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="fav-tiles">
+
+                            <div class="fav-tile">
+                                <span>Items</span>
+                                <b>{{ docLines.length }}</b>
+                            </div>
+
+                            <div class="fav-tile">
+                                <span>Asset Cards</span>
+                                <b>{{ isPosted ? assetNos.length : '-' }}</b>
+                            </div>
+
+                            <div class="fav-tile">
+                                <span>Journal Voucher</span>
+                                <b>{{ doc.JournalVoucherNo || 'Not posted' }}</b>
+                            </div>
+
+                            <div class="fav-tile fav-tile-main">
+                                <span>Total</span>
+                                <b>Tk {{ money(doc.TotalAmount) }}</b>
+                            </div>
+
+                        </div>
+
+                        <div class="fav-foot">
+                            <span>
+                                <i class="fas fa-circle-info"></i>
+                                {{ isPosted ? 'The money is paid later on a Payment Voucher against the Payable To ledger.' : 'A Draft : nothing is in the accounts yet. Post it to write the Journal Voucher and make the asset cards.' }}
+                            </span>
+                            @if (doc.Remarks)
+                            {
+                                <span class="fav-remarks"><b>Remarks</b> {{ doc.Remarks }}</span>
+                            }
+                        </div>
+
+                    </div>
+
+                    <!-- ============ BELOW : what was bought ============ -->
+
+                    <section class="pf-card fav-body">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-list"></i>
+                            <span>Items</span>
+                            <span class="fav-count">{{ docLines.length }}</span>
+                        </header>
+
+                        <div class="fav-items">
+
+                            @for (line of docLines; track $index; let i = $index)
+                            {
+                                <div class="fav-item">
+
+                                    <span class="fav-badge">{{ i + 1 }}</span>
+
+                                    <div class="fav-what">
+                                        <b>{{ line.Name }}</b>
+                                        <span>{{ line.CategoryName }}{{ detailText(line) ? ' · ' + detailText(line) : '' }}</span>
+                                    </div>
+
+                                    <div class="fav-meta">
+                                        @if (line.LocationName)
+                                        {
+                                            <span><i class="fas fa-location-dot"></i>{{ line.LocationName }}</span>
+                                        }
+                                        @if (line.CustodianName)
+                                        {
+                                            <span><i class="fas fa-user"></i>{{ line.CustodianName }}</span>
+                                        }
+                                        @if (line.UseDate)
+                                        {
+                                            <span><i class="fas fa-calendar-check"></i>In use {{ day(line.UseDate) }}</span>
+                                        }
+                                    </div>
+
+                                    <span class="fav-mode">{{ line.CardMode === 'Group' ? 'One card' : 'A card each' }}</span>
+
+                                    <span class="fav-qty">{{ quantity(line.Quantity) }} <small>x</small> {{ money(line.UnitCost) }}</span>
+
+                                    <b class="fav-amount">{{ money(line.Amount) }}</b>
+
+                                </div>
+                            }
+
+                        </div>
+
+                        @if (isPosted && assetNos.length > 0)
+                        {
+                            <div class="fav-made">
+
+                                <b>Asset cards it made</b>
+
+                                <div class="faq-cards">
+                                    @for (no of assetNos; track no)
+                                    {
+                                        <span class="faq-chip">{{ no }}</span>
+                                    }
+                                </div>
+
+                            </div>
+                        }
+
+                    </section>
+                }
+
+            </div>
+
+        </app-page-canvas>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="subtitle"
+            icon="fas fa-cart-plus">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    [command1Text]="saveText"
+                    command1Icon="fas fa-floppy-disk"
+                    [command1Permission]="mode === 'edit' ? 'update' : 'add'"
+                    command1Title="Save it as a Draft"
+                    (command1Click)="onSave()"
+                    command2Text="Post"
+                    command2Icon="fas fa-file-circle-check"
+                    command2Permission="update"
+                    command2Title="Save, write the Journal Voucher and make the asset cards"
+                    (command2Click)="onPostForm()"
+                    [command2Visible]="mode === 'edit'"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split faq-split appcore-scrollbar">
+
+                <!-- ============ LEFT : the acquisition ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-cart-plus"></i>
+                        <span>Acquisition</span>
+                        <span
+                            class="pf-status"
+                            data-status="Draft">Draft</span>
+                    </header>
+
+                    <app-textbox
+                        label="Code"
+                        [value]="code"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-datepicker
+                        label="Date"
+                        [required]="true"
+                        [value]="$any(asDate(acquisitionDate))"
+                        (valueChange)="onDate($event)">
+                    </app-datepicker>
+
+                    <app-search-dropdown
+                        label="Branch"
+                        placeholder="Select branch"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="branchId"
+                        (valueChange)="onBranch($event)"
+                        [required]="true">
+                    </app-search-dropdown>
+
+                    <app-textbox
+                        label="Invoice No"
+                        placeholder="The invoice of the purchase"
+                        textCase="none"
+                        [value]="refNo"
+                        [maxLength]="50"
+                        (valueChange)="onText('refNo', $event)">
+                    </app-textbox>
+
+                    <app-search-dropdown
+                        label="Payable To"
+                        [placeholder]="ledgerItems.length === 0 ? 'No ledger under ' + (payableSubGroup || 'Liability For Capital Assets') : 'Select ledger'"
+                        [required]="true"
+                        [items]="ledgerItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="creditLedgerCode"
+                        (valueChange)="onLedger($event)">
+                    </app-search-dropdown>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        (valueChange)="onText('remarks', $event)">
+                    </app-textbox>
+
+                </section>
+
+                <!-- ============ RIGHT : the items ============ -->
+
+                <section class="pf-card faq-items">
+
+                    <!-- the head stays in place : what is being bought, at a glance -->
+
+                    <header class="pf-card-head faq-head">
+
+                        <i class="fas fa-boxes-stacked"></i>
+                        <span>Items</span>
+
+                        <span class="faq-pill">{{ lines.length }} item{{ lines.length === 1 ? '' : 's' }}</span>
+                        <span
+                            class="faq-pill"
+                            title="The asset cards posting will make">{{ cardCount }} asset card{{ cardCount === 1 ? '' : 's' }}</span>
+
+                        <span class="faq-total">
+                            <small>Total</small>
+                            <b>Tk {{ money(total) }}</b>
+                        </span>
+
+                        <button
+                            type="button"
+                            class="hp-add faq-add"
+                            (click)="addLine()">
+                            <i class="fas fa-plus"></i>
+                            Add Item
+                        </button>
+
+                    </header>
+
+                    @if (undeclaredCount > 0)
+                    {
+                        <div class="faq-warn">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>{{ undeclaredCount }} asset group(s) are not listed : declare their depreciation on Asset Setup &gt; Depreciation of Fixed Assets first.</span>
+                        </div>
+                    }
+
+                    @if (lines.length === 0)
+                    {
+                        <button
+                            type="button"
+                            class="faq-empty"
+                            (click)="addLine()">
+                            <i class="fas fa-cart-plus"></i>
+                            <b>Nothing added yet</b>
+                            <span>Add the first item you bought</span>
+                        </button>
+                    }
+                    @else
+                    {
+                        <!-- the names of the columns, once -->
+
+                        <div class="faq-row faq-cols">
+                            <span></span>
+                            <span>Asset Group</span>
+                            <span>Item Name</span>
+                            <span class="faq-right">Qty</span>
+                            <span class="faq-right">Unit Cost</span>
+                            <span class="faq-right">Amount</span>
+                            <span>Asset Card</span>
+                            <span></span>
+                            <span></span>
+                        </div>
+
+                        @for (line of lines; track line.key; let i = $index)
+                        {
+                            <div
+                                class="faq-item"
+                                [class.faq-item-open]="line.open">
+
+                                <div class="faq-row">
+
+                                    <span class="faq-no">{{ i + 1 }}</span>
+
+                                    <app-search-dropdown
+                                        placeholder="Select asset group"
+                                        [items]="categoryItems"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="line.categoryId || null"
+                                        (valueChange)="onLineCategory(line, $event)">
+                                    </app-search-dropdown>
+
+                                    <input
+                                        class="hp-input faq-text"
+                                        maxlength="150"
+                                        placeholder="What was bought"
+                                        [value]="line.name"
+                                        (input)="onLineInput(line, 'name', $event)">
+
+                                    <input
+                                        class="hp-input"
+                                        inputmode="decimal"
+                                        maxlength="10"
+                                        placeholder="0"
+                                        [value]="line.qty"
+                                        (input)="onLineInput(line, 'qty', $event)">
+
+                                    <input
+                                        class="hp-input"
+                                        inputmode="decimal"
+                                        maxlength="16"
+                                        placeholder="0.00"
+                                        [value]="line.cost"
+                                        (input)="onLineInput(line, 'cost', $event)">
+
+                                    <span class="faq-amount-pill">{{ money(amountOf(line)) }}</span>
+
+                                    <!-- one card an item, or one card for the lot -->
+
+                                    <span class="faq-seg">
+                                        <button
+                                            type="button"
+                                            [class.faq-seg-on]="line.cardMode !== 'Group'"
+                                            title="One asset card for every item"
+                                            (click)="onLineCard(line, 'Each')">Each</button>
+                                        <button
+                                            type="button"
+                                            [class.faq-seg-on]="line.cardMode === 'Group'"
+                                            [disabled]="!allowsGroup(line)"
+                                            [title]="allowsGroup(line) ? 'One asset card for the whole quantity' : 'This asset group does not allow one card for many items'"
+                                            (click)="onLineCard(line, 'Group')">Group</button>
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        class="faq-toggle"
+                                        [class.faq-toggle-on]="line.open"
+                                        [title]="line.open ? 'Hide the details' : 'Brand, model, serial no, location, custodian, put to use date'"
+                                        (click)="toggleLine(line)">
+                                        <i
+                                            class="fas"
+                                            [class.fa-chevron-up]="line.open"
+                                            [class.fa-sliders]="!line.open"></i>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="hp-x"
+                                        title="Remove this item"
+                                        (click)="removeLine(line)">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+
+                                </div>
+
+                                @if (line.open)
+                                {
+                                    <div class="faq-more">
+
+                                        <app-textbox
+                                            label="Brand"
+                                            textCase="none"
+                                            [value]="line.brand"
+                                            [maxLength]="100"
+                                            (valueChange)="onLineText(line, 'brand', $event)">
+                                        </app-textbox>
+
+                                        <app-textbox
+                                            label="Model"
+                                            textCase="none"
+                                            [value]="line.model"
+                                            [maxLength]="100"
+                                            (valueChange)="onLineText(line, 'model', $event)">
+                                        </app-textbox>
+
+                                        <app-textbox
+                                            label="Serial No"
+                                            textCase="none"
+                                            [value]="line.serial"
+                                            [maxLength]="100"
+                                            (valueChange)="onLineText(line, 'serial', $event)">
+                                        </app-textbox>
+
+                                        <app-search-dropdown
+                                            label="Location"
+                                            [placeholder]="branchId ? 'Select location' : 'Pick the branch first'"
+                                            [items]="locationItems"
+                                            labelField="label"
+                                            valueField="value"
+                                            [value]="line.locationId"
+                                            (valueChange)="onLineChoice(line, 'locationId', $event)">
+                                        </app-search-dropdown>
+
+                                        <app-search-dropdown
+                                            label="Custodian"
+                                            placeholder="Select employee"
+                                            [items]="custodianItems"
+                                            labelField="label"
+                                            valueField="value"
+                                            [value]="line.custodianId"
+                                            (valueChange)="onLineChoice(line, 'custodianId', $event)">
+                                        </app-search-dropdown>
+
+                                        <app-datepicker
+                                            label="Put to Use"
+                                            [value]="$any(asDate(line.useDate))"
+                                            (valueChange)="onLineUseDate(line, $event)">
+                                        </app-datepicker>
+
+                                    </div>
+                                }
+
+                            </div>
+                        }
+
+                        <button
+                            type="button"
+                            class="faq-another"
+                            (click)="addLine()">
+                            <i class="fas fa-plus"></i>
+                            Add another item
+                        </button>
+                    }
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

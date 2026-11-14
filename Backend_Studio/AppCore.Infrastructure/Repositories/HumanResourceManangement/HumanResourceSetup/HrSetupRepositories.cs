@@ -580,6 +580,7 @@ public class HrLeaveTypesRepository
             IsPaid = l.IsPaid,
             CarryForward = l.CarryForward,
             MaxCarryDays = l.MaxCarryDays,
+            IsEncashable = l.IsEncashable,
             AppliesTo = l.AppliesTo,
             Remarks = l.Remarks,
             IsActive = l.IsActive
@@ -623,6 +624,7 @@ public class HrLeaveTypesRepository
         entity.IsPaid = dto.IsPaid;
         entity.CarryForward = dto.CarryForward;
         entity.MaxCarryDays = dto.CarryForward ? Math.Round(dto.MaxCarryDays, 2) : 0;
+        entity.IsEncashable = dto.IsEncashable;
         entity.AppliesTo = OneOf(dto.AppliesTo, AppliesToList, "\"Applies To\" value");
         entity.Remarks = Limited(dto.Remarks, 500, "Remarks");
     }
@@ -671,6 +673,7 @@ public class HrSalaryHeadsRepository
             DefaultValue = h.DefaultValue,
             SystemKey = h.SystemKey,
             IsProrated = h.IsProrated,
+            PayableLedgerCode = h.PayableLedgerCode,
             DisplayOrder = h.DisplayOrder,
             Remarks = h.Remarks,
             IsActive = h.IsActive
@@ -721,6 +724,10 @@ public class HrSalaryHeadsRepository
         entity.CalcType = calcType;
         entity.DefaultValue = Math.Round(dto.DefaultValue, 2);
         entity.IsProrated = dto.IsProrated;
+
+        // the ledger of a deduction (an earning is part of the
+        // salary expense : it has none)
+        entity.PayableLedgerCode = headType == "Deduction" ? Limited(dto.PayableLedgerCode, 30, "Payable Ledger") : string.Empty;
 
         return Task.CompletedTask;
     }

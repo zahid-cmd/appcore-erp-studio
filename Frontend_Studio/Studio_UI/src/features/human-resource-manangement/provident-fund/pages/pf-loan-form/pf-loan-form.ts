@@ -44,13 +44,13 @@ import { CommandCenterComponent } from '../../../../../shared/components/utiliti
 import { TextboxComponent } from '../../../../../shared/components/controls/textbox/textbox';
 import { SearchDropdownComponent } from '../../../../../shared/components/controls/search-dropdown/search-dropdown';
 import { DatepickerComponent } from '../../../../../shared/components/controls/datepicker/datepicker';
+import { hrDateEvent, hrMonthEvent, hrMonthToDate, hrToDate } from '../../../services/hr-date';
 import { ToastComponent } from '../../../../../shared/components/utilities/toast/toast';
 import { ConfirmDialogComponent } from '../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 import { ProgressDialogComponent } from '../../../../../shared/components/utilities/progress-dialog/progress-dialog';
 import { ToastService } from '../../../../../shared/components/utilities/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
 import { HrProgressService } from '../../../services/hr-progress.service';
-import { hrDateEvent, hrToDate } from '../../../services/hr-date';
 
 import
 {
@@ -158,6 +158,12 @@ implements OnInit
     readonly asDate = hrToDate;
 
     readonly dateEvent = hrDateEvent;
+
+    // The shared date picker in month mode works with a Date; the
+    // page keeps yyyy-MM text
+    readonly asMonth = hrMonthToDate;
+
+    readonly monthEvent = hrMonthEvent;
     // No footer strip under the form (the canvas keeps its height)
     readonly canvasConfig:
         PageCanvasConfig =
@@ -198,7 +204,7 @@ implements OnInit
 
     get pageTitle(): string
     {
-        return this.isViewMode ? `View PF Loan ${this.entity.Code}` : 'PF Loan';
+        return this.isViewMode ? `View PF Loan` : 'PF Loan';
     }
 
     get member(): PfLookup | undefined

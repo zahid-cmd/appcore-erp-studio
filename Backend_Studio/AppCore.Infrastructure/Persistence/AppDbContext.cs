@@ -2219,6 +2219,55 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Human Resource : payments (MANUAL : hand-written page,
+    // HumanResource_Payments_Engine.sql; NO Code Sync)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrPayments>
+    HrPaymentRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrPaymentLines>
+    HrPaymentLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource : Leave Encashments, Festival Bonus (MANUAL :
+    // hand-written pages, HumanResource_Bonus_Encashment_Engine.sql;
+    // NO Code Sync)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrLeaveEncashments>
+    HrLeaveEncashmentRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrLeaveEncashmentLines>
+    HrLeaveEncashmentLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrBonusSheets>
+    HrBonusSheetRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.PayrollManagement.HrBonusSheetLines>
+    HrBonusSheetLineRows
+    {
+    get;
+    set;
+    } = null!;
+
     // Human Resource phase 4 : employee movements and their salary
     // lines (MANUAL : HumanResource_Phase4_Engine.sql, hand-written
     // page)
@@ -2304,6 +2353,120 @@ public class AppDbContext
 
     public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrOvertimeStructures>
     HrOvertimeStructureRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource : bonus structures (MANUAL :
+    // HumanResource_BonusStructures_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrBonusStructures>
+    HrBonusStructureRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrBonusStructureSlabs>
+    HrBonusStructureSlabRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Fixed Assets Management (MANUAL : FixedAssets_Engine.sql,
+    // hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaCategories>
+    FaCategoryRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaLocations>
+    FaLocationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaConfiguration>
+    FaConfigurationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaAssets>
+    FaAssetRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaAcquisitions>
+    FaAcquisitionRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaAcquisitionLines>
+    FaAcquisitionLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaDepreciationRuns>
+    FaDepreciationRunRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaDepreciationLines>
+    FaDepreciationLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaDisposals>
+    FaDisposalRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaVerifications>
+    FaVerificationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.FixedAssetsManagement.FaVerificationLines>
+    FaVerificationLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Human Resource : leave encashment policies (MANUAL :
+    // HumanResource_EncashmentPolicies_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrLeaveEncashPolicies>
+    HrLeaveEncashPolicyRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup.HrLeaveEncashPolicyTypes>
+    HrLeaveEncashPolicyTypeRows
     {
     get;
     set;

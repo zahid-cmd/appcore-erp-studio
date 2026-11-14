@@ -51,6 +51,12 @@ export interface HrSetupField
     upper?: boolean;
     // select
     options?: HrSetupOption[];
+    // select : the options come from this API of the page
+    // ('ledgers' : <page api>/ledgers, rows LedgerCode / LedgerName);
+    // the first option is "none"
+    optionsFrom?: string;
+    // ... and what "none" says
+    noneLabel?: string;
     // switch : the small line under the label
     hint?: string;
     // The field takes the whole row of the form
@@ -467,6 +473,12 @@ export const HR_SETUP_PAGES:
             },
             { key:'DefaultValue', label:'Default Value', type:'number', initial:0, placeholder:'0', lockedWhen:row => !!row['SystemKey'] },
             { key:'DisplayOrder', label:'Display Order', type:'number', initial:20, whole:true, placeholder:'0' },
+            {
+                key:'PayableLedgerCode', label:'Payable Ledger (salary sheet posting)', type:'select', initial:'',
+                optionsFrom:'ledgers', noneLabel:'Payroll - Other Deductions Payable (Posting Setup)',
+                span2:true,
+                showWhen:row => row['HeadType'] === 'Deduction' && !row['SystemKey']
+            },
             { key:'IsProrated', label:'Falls with unpaid days', type:'switch', initial:true, hint:'The amount is cut for absence and unpaid leave.', span2:true, lockedWhen:row => !!row['SystemKey'] },
             { key:'Remarks', label:'Remarks', type:'text', initial:'', maxLength:500, placeholder:'Optional', wide:true }
         ],

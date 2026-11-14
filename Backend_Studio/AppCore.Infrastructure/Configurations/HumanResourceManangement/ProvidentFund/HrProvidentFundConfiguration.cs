@@ -42,6 +42,7 @@ public class HrProvidentFundConfiguration
         builder.Property(x => x.EligibilityMonths).IsRequired();
         builder.Property(x => x.InterestEnabled).IsRequired();
         builder.Property(x => x.InterestRate).IsRequired().HasPrecision(7, 3);
+        builder.Property(x => x.InterestBasis).IsRequired().HasMaxLength(10);
         builder.Property(x => x.LoanEnabled).IsRequired();
         builder.Property(x => x.LoanMaxPercent).IsRequired().HasPrecision(7, 3);
         builder.Property(x => x.LoanMaxInstallments).IsRequired();
@@ -53,6 +54,7 @@ public class HrProvidentFundConfiguration
         builder.Property(x => x.VestingFrom).IsRequired().HasMaxLength(12);
         builder.Property(x => x.ForfeitOnMisconduct).IsRequired();
         builder.Property(x => x.FullOnDeathRetirement).IsRequired();
+        builder.Property(x => x.ForfeitToCompany).IsRequired();
         builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
         builder.Property(x => x.CreatedBy).IsRequired();
         builder.Property(x => x.CreatedDate).IsRequired();
@@ -93,6 +95,7 @@ public class HrProvidentFundConfiguration
         builder.Property(x => x.CompanyAmount).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.SourceType).IsRequired().HasMaxLength(15);
         builder.Property(x => x.Remarks).IsRequired().HasMaxLength(300);
+        builder.Property(x => x.JournalVoucherNo).IsRequired().HasMaxLength(30);
         builder.Property(x => x.CreatedBy).IsRequired();
         builder.Property(x => x.CreatedDate).IsRequired();
     }
@@ -147,8 +150,10 @@ public class HrProvidentFundConfiguration
         builder.Property(x => x.CompanyForfeited).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.LoanOutstanding).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.NetPayable).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.ForfeitedToCompany).IsRequired();
         builder.Property(x => x.RuleNote).IsRequired().HasMaxLength(300);
         builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
+        builder.Property(x => x.JournalVoucherNo).IsRequired().HasMaxLength(30);
         builder.Property(x => x.IsDeleted).IsRequired();
         builder.Property(x => x.CreatedBy).IsRequired();
         builder.Property(x => x.CreatedDate).IsRequired();

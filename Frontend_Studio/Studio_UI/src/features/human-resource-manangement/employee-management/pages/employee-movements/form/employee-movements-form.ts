@@ -200,7 +200,7 @@ implements OnInit
     get pageTitle(): string
     {
         return this.isViewMode
-            ? `Employee Movement ${this.entity.Code}`
+            ? `Employee Movement`
             : 'Employee Movement';
     }
 

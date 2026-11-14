@@ -26,7 +26,7 @@
 
         <div
             canvasBody
-            class="pf-body appcore-scrollbar">
+            class="pf-body pfx-even appcore-scrollbar">
 
             <section class="pf-card">
 
@@ -127,6 +127,11 @@
                     </div>
 
                     <dl class="pf-facts">
+                        @if (entity.JournalVoucherNo)
+                        {
+                            <dt>Journal Voucher</dt>
+                            <dd>{{ entity.JournalVoucherNo }}</dd>
+                        }
                         <dt>Years counted</dt>
                         <dd>{{ number(entity.ServiceYears) }}</dd>
                         <dt>Own part</dt>
@@ -180,8 +185,8 @@
                     <ul class="pf-help">
                         <li>The member always gets the own part. The company part is decided by the policy from the reason and the years : nothing is typed.</li>
                         <li>Pick "Membership Cancelled" when the employee stays in the company but leaves the fund.</li>
-                        <li>Saving makes the member Settled : no more fund deduction is taken from the salary. Pay the net amount with a Payment Voucher.</li>
-                        <li>A settlement is not edited. Deleting it on the list makes the member Active again and takes the payment and the forfeiture back.</li>
+                        <li>Saving makes the member Settled : no more fund deduction is taken from the salary. Pay the net amount on Provident Fund > PF Payments : in full or in part.</li>
+                        <li>A settlement is not edited. Deleting it on the list makes the member Active again and takes the forfeiture back; a settlement that is paid must have its payment cancelled first.</li>
                     </ul>
 
                 </section>

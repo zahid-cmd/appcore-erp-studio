@@ -248,8 +248,8 @@ implements OnInit
         return this.mode === 'add'
             ? 'Overtime Structure'
             : this.mode === 'edit'
-                ? `Update Overtime Structure ${this.entity.Code}`
-                : `View Overtime Structure ${this.entity.Code}`;
+                ? `Update Overtime Structure`
+                : `View Overtime Structure`;
     }
 
     get saveButtonText(): string

@@ -1,0 +1,42 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Depreciation Runs : the look of the festival bonus page */
+
+/* the two filters of the list, side by side */
+
+.dr-filters
+{
+    flex-wrap: nowrap;
+}
+
+.pfx-tools.dr-filters > app-search-dropdown
+{
+    flex: 0 0 240px;
+    width: 240px;
+}
+
+.pfx-tools.dr-filters > app-search-dropdown.dr-year
+{
+    flex: 0 0 150px;
+    width: 150px;
+}
+
+.dr-nowrap
+{
+    white-space: nowrap;
+}
+
+.dr-line-note
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+/* the run : the total row stays at the bottom of the canvas */
+
+.dr-sheet tfoot td
+{
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+}

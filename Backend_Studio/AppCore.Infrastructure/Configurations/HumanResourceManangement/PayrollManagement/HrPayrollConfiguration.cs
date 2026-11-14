@@ -26,8 +26,101 @@ public class HrPayrollConfiguration
       IEntityTypeConfiguration<HrSalarySheets>,
       IEntityTypeConfiguration<HrSalarySheetLines>,
       IEntityTypeConfiguration<HrSalarySheetLineHeads>,
-      IEntityTypeConfiguration<HrAdvanceRecoveries>
+      IEntityTypeConfiguration<HrAdvanceRecoveries>,
+      IEntityTypeConfiguration<HrPayments>,
+      IEntityTypeConfiguration<HrPaymentLines>,
+      IEntityTypeConfiguration<HrLeaveEncashments>,
+      IEntityTypeConfiguration<HrBonusSheets>,
+      IEntityTypeConfiguration<HrBonusSheetLines>
 {
+    // Leave Encashments, Festival Bonus
+    // (HumanResource_Bonus_Encashment_Engine.sql)
+    public void Configure(EntityTypeBuilder<HrLeaveEncashments> builder)
+    {
+        builder.ToTable("HrLeaveEncashments");
+        builder.HasKey(x => x.LeaveEncashmentId);
+        builder.Property(x => x.LeaveEncashmentId).ValueGeneratedOnAdd();
+        builder.HasIndex(x => x.PublicId).IsUnique().HasDatabaseName("UX_HrLeaveEncashments_PublicId");
+        builder.HasIndex(x => x.Code).IsUnique().HasDatabaseName("UX_HrLeaveEncashments_Code");
+        builder.Property(x => x.Code).IsRequired().HasMaxLength(20);
+        builder.Property(x => x.Days).IsRequired().HasPrecision(6, 2);
+        builder.Property(x => x.RateBase).IsRequired().HasMaxLength(10);
+        builder.Property(x => x.PolicyName).IsRequired().HasMaxLength(100);
+        builder.Property(x => x.Status).IsRequired().HasMaxLength(10);
+        builder.Property(x => x.RejectReason).IsRequired().HasMaxLength(300);
+        builder.Property(x => x.DayRate).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.Amount).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
+        builder.Property(x => x.JournalVoucherNo).IsRequired().HasMaxLength(30);
+        builder.Property(x => x.IsDeleted).IsRequired();
+    }
+
+    public void Configure(EntityTypeBuilder<HrBonusSheets> builder)
+    {
+        builder.ToTable("HrBonusSheets");
+        builder.HasKey(x => x.BonusSheetId);
+        builder.Property(x => x.BonusSheetId).ValueGeneratedOnAdd();
+        builder.HasIndex(x => x.PublicId).IsUnique().HasDatabaseName("UX_HrBonusSheets_PublicId");
+        builder.HasIndex(x => x.Code).IsUnique().HasDatabaseName("UX_HrBonusSheets_Code");
+        builder.Property(x => x.Code).IsRequired().HasMaxLength(20);
+        builder.Property(x => x.Title).IsRequired().HasMaxLength(100);
+        builder.Property(x => x.StructureName).IsRequired().HasMaxLength(100);
+        builder.Property(x => x.RateBase).IsRequired().HasMaxLength(10);
+        builder.Property(x => x.ServiceFrom).IsRequired().HasMaxLength(15);
+        builder.Property(x => x.BonusPercent).IsRequired().HasPrecision(7, 3);
+        builder.Property(x => x.Status).IsRequired().HasMaxLength(10);
+        builder.Property(x => x.TotalAmount).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
+        builder.Property(x => x.JournalVoucherNo).IsRequired().HasMaxLength(30);
+        builder.Property(x => x.IsDeleted).IsRequired();
+    }
+
+    public void Configure(EntityTypeBuilder<HrBonusSheetLines> builder)
+    {
+        builder.ToTable("HrBonusSheetLines");
+        builder.HasKey(x => x.BonusSheetLineId);
+        builder.Property(x => x.BonusSheetLineId).ValueGeneratedOnAdd();
+        builder.HasIndex(x => x.BonusSheetId).HasDatabaseName("IX_HrBonusSheetLines_Sheet");
+        builder.Property(x => x.EmployeeCode).IsRequired().HasMaxLength(20);
+        builder.Property(x => x.EmployeeName).IsRequired().HasMaxLength(150);
+        builder.Property(x => x.DesignationName).IsRequired().HasMaxLength(150);
+        builder.Property(x => x.BasicSalary).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.GrossSalary).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.BonusPercent).IsRequired().HasPrecision(7, 3);
+        builder.Property(x => x.StructureName).IsRequired().HasMaxLength(100);
+        builder.Property(x => x.Amount).IsRequired().HasPrecision(18, 2);
+    }
+
+    // Payments (HumanResource_Payments_Engine.sql)
+    public void Configure(EntityTypeBuilder<HrPayments> builder)
+    {
+        builder.ToTable("HrPayments");
+        builder.HasKey(x => x.PaymentId);
+        builder.Property(x => x.PaymentId).ValueGeneratedOnAdd();
+        builder.HasIndex(x => x.PublicId).IsUnique().HasDatabaseName("UX_HrPayments_PublicId");
+        builder.HasIndex(x => x.Code).IsUnique().HasDatabaseName("UX_HrPayments_Code");
+        builder.HasIndex(x => new { x.PaymentType, x.SourceId }).HasDatabaseName("IX_HrPayments_Source");
+        builder.Property(x => x.Code).IsRequired().HasMaxLength(30);
+        builder.Property(x => x.PaymentType).IsRequired().HasMaxLength(15);
+        builder.Property(x => x.SourceCode).IsRequired().HasMaxLength(20);
+        builder.Property(x => x.TotalAmount).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.PaymentModes).IsRequired().HasMaxLength(60);
+        builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
+        builder.Property(x => x.PaymentVoucherNo).IsRequired().HasMaxLength(30);
+        builder.Property(x => x.IsCancelled).IsRequired();
+        builder.Property(x => x.CancelReason).IsRequired().HasMaxLength(300);
+    }
+
+    public void Configure(EntityTypeBuilder<HrPaymentLines> builder)
+    {
+        builder.ToTable("HrPaymentLines");
+        builder.HasKey(x => x.PaymentLineId);
+        builder.Property(x => x.PaymentLineId).ValueGeneratedOnAdd();
+        builder.HasIndex(x => x.PaymentId).HasDatabaseName("IX_HrPaymentLines_Payment");
+        builder.HasIndex(x => x.SalarySheetLineId).HasDatabaseName("IX_HrPaymentLines_Line");
+        builder.Property(x => x.Amount).IsRequired().HasPrecision(18, 2);
+    }
+
     public void Configure(EntityTypeBuilder<HrSalaryAdvances> builder)
     {
         builder.ToTable("HrSalaryAdvances");

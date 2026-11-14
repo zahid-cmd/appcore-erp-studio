@@ -1,0 +1,448 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Asset Verification"
+            subtitle="The physical count of a branch against the register"
+            icon="fas fa-clipboard-check">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search code, branch, location..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="New Count"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <span
+                pageToolbarLeft
+                class="hp-note">Open a count to mark its assets Found or Missing; a count changes nothing on the asset cards</span>
+
+            <div
+                pageToolbarRight
+                class="fav-tools">
+
+                <app-search-dropdown
+                    placeholder="All Branches"
+                    [items]="branchFilterItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="branchFilter"
+                    (valueChange)="onBranchFilter($event)">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    placeholder="All Statuses"
+                    [items]="statusItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="statusFilter"
+                    (valueChange)="onStatusFilter($event)">
+                </app-search-dropdown>
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [actions]="listActions"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    (view)="open($event)"
+                    (edit)="open($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Asset Verification History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else if (mode === 'add')
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="pageSubtitle"
+            icon="fas fa-clipboard-check">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Start Count"
+                    command1Icon="fas fa-play"
+                    command1Permission="add"
+                    (command1Click)="onStart()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split fav-split appcore-scrollbar">
+
+                <!-- ============ LEFT : what is counted ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>Count</span>
+                    </header>
+
+                    <app-datepicker
+                        label="Date"
+                        [required]="true"
+                        [value]="$any(asDate(countDate))"
+                        (valueChange)="onCountDate($event)">
+                    </app-datepicker>
+
+                    <app-search-dropdown
+                        label="Branch"
+                        placeholder="Select branch"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="branchId"
+                        (valueChange)="onBranch($event)"
+                        [required]="true">
+                    </app-search-dropdown>
+
+                    <app-search-dropdown
+                        label="Location"
+                        placeholder="All locations"
+                        [items]="locationItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="locationId"
+                        (valueChange)="onLocation($event)">
+                    </app-search-dropdown>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                </section>
+
+                <!-- ============ RIGHT : what happens ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>How it works</span>
+                    </header>
+
+                    <ul class="hp-list">
+                        <li>Start Count makes the count sheet : every asset of the branch (or of the location picked) that the company still owns.</li>
+                        <li>Walk around with the sheet and mark each asset Found or Missing. A note can be written for any asset.</li>
+                        <li>Things you find that are not in the register can be written on the sheet too.</li>
+                        <li>Save as often as you like : the count stays a Draft until it is closed.</li>
+                        <li>Close Count locks the count. It can be closed only when no asset is left Not counted.</li>
+                        <li>A count changes nothing on the asset cards. A missing asset is taken off the register on Asset Disposals.</li>
+                    </ul>
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="pageSubtitle"
+            icon="fas fa-clipboard-check">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search asset no, asset, custodian..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Save"
+                    command1Icon="fas fa-floppy-disk"
+                    command1Permission="update"
+                    (command1Click)="onSave()"
+                    [command1Visible]="isDraft"
+                    command2Text="Close Count"
+                    command2Icon="fas fa-lock"
+                    command2Permission="update"
+                    command2Title="Lock the count : nothing can be changed afterwards"
+                    (command2Click)="onCloseCount()"
+                    [command2Visible]="isDraft"
+                    command3Text="Delete"
+                    command3Icon="fas fa-trash"
+                    command3Permission="update"
+                    (command3Click)="onDeleteSheet()"
+                    [command3Visible]="isDraft"
+                    command4Text="Print"
+                    command4Icon="fas fa-print"
+                    (command4Click)="print()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="sheetTabs"
+                [selectedTab]="sheetTab"
+                (selectedTabChange)="onSheetTab($event)">
+            </app-control-tabs>
+
+            <div
+                pageToolbarRight
+                class="fav-counts">
+
+                @if (sheet)
+                {
+                    <span class="hp-strong">{{ sheet.Code }}</span>
+                    <span
+                        class="hp-state"
+                        [class.hp-ok]="!isDraft">{{ sheet.Status }}</span>
+                    @if (hasChanges)
+                    {
+                        <span class="hp-state fav-unsaved">Not saved</span>
+                    }
+                    <span class="fav-count">Assets <b>{{ assetCount }}</b></span>
+                    <span class="fav-count fav-c-found">Found <b>{{ foundCount }}</b></span>
+                    <span class="fav-count fav-c-missing">Missing <b>{{ missingCount }}</b></span>
+                    <span class="fav-count">Not counted <b>{{ pendingCount }}</b></span>
+                }
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div
+                canvasBody
+                class="fav-sheet">
+
+                @if (isDraft)
+                {
+                    <div class="hp-bar fav-bar">
+                        <button
+                            type="button"
+                            class="hp-btn fav-btn"
+                            title="Mark every asset the tab and the search show as Found, on all pages"
+                            (click)="markShown('Found')">
+                            <i class="fas fa-check"></i>
+                            Mark all shown as Found
+                        </button>
+                        <button
+                            type="button"
+                            class="hp-btn fav-btn"
+                            title="Set every asset the tab and the search show back to Not counted, on all pages"
+                            (click)="markShown('Pending')">
+                            <i class="fas fa-eraser"></i>
+                            Clear all shown
+                        </button>
+                        <span class="hp-note">
+                            {{ matchedCount }} asset(s) shown by the tab and the search, on all pages. Mark each one Found or Missing, then Save.
+                        </span>
+                    </div>
+                }
+
+                <div class="fav-scroll appcore-scrollbar">
+
+                    @if (lines.length === 0)
+                    {
+                        <div class="pfx-empty">
+                            {{ loading ? 'Loading the count sheet...' : loadFailed ? 'The count sheet could not be loaded.' : 'No asset matches.' }}
+                        </div>
+                    }
+                    @else
+                    {
+                        <table class="pfx-table fav-table">
+
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th>Asset No</th>
+                                    <th>Asset</th>
+                                    <th>Asset Group</th>
+                                    <th>Location</th>
+                                    <th>Custodian</th>
+                                    <th class="fav-result">Result</th>
+                                    <th class="fav-note-col">Note</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (line of lines; track line.FaAssetId; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="pfx-no">{{ serialStart + i + 1 }}</td>
+                                        <td class="fav-code">{{ line.AssetNo }}</td>
+                                        <td>{{ line.Name }}</td>
+                                        <td>{{ line.CategoryName }}</td>
+                                        <td>{{ line.LocationName }}</td>
+                                        <td>{{ line.CustodianName }}</td>
+                                        <td class="fav-result">
+                                            @if (isDraft)
+                                            {
+                                                <span class="fav-picks">
+                                                    <button
+                                                        type="button"
+                                                        class="fav-pick fav-found"
+                                                        [class.on]="line.Result === 'Found'"
+                                                        (click)="setResult(line, 'Found')">Found</button>
+                                                    <button
+                                                        type="button"
+                                                        class="fav-pick fav-missing"
+                                                        [class.on]="line.Result === 'Missing'"
+                                                        (click)="setResult(line, 'Missing')">Missing</button>
+                                                    <button
+                                                        type="button"
+                                                        class="fav-pick fav-none"
+                                                        [class.on]="line.Result !== 'Found' && line.Result !== 'Missing'"
+                                                        (click)="setResult(line, 'Pending')">Not counted</button>
+                                                </span>
+                                            }
+                                            @else
+                                            {
+                                                <span
+                                                    class="fav-chip"
+                                                    [class.fav-found]="line.Result === 'Found'"
+                                                    [class.fav-missing]="line.Result === 'Missing'">{{ resultText(line.Result) }}</span>
+                                            }
+                                        </td>
+                                        <td class="fav-note-col">
+                                            @if (isDraft)
+                                            {
+                                                <input
+                                                    class="fav-input"
+                                                    maxlength="200"
+                                                    placeholder="Note"
+                                                    [value]="line.Note"
+                                                    (input)="onNote(line, $event)">
+                                            }
+                                            @else
+                                            {
+                                                {{ line.Note }}
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+                    }
+
+                </div>
+
+                @if (sheet)
+                {
+                    <div class="fav-foot">
+
+                        <label class="fav-field">
+                            <span class="fav-label">Things found that are not in the register</span>
+                            <textarea
+                                class="fav-area appcore-scrollbar"
+                                rows="2"
+                                maxlength="1000"
+                                [placeholder]="isDraft ? 'e.g. 2 office chairs in the store room, no tag' : ''"
+                                [value]="extraItems"
+                                [disabled]="!isDraft"
+                                (input)="onExtraItems($event)"></textarea>
+                        </label>
+
+                        <label class="fav-field">
+                            <span class="fav-label">Remarks</span>
+                            <textarea
+                                class="fav-area appcore-scrollbar"
+                                rows="2"
+                                maxlength="500"
+                                [placeholder]="isDraft ? 'Optional' : ''"
+                                [value]="sheetRemarks"
+                                [disabled]="!isDraft"
+                                (input)="onSheetRemarks($any($event.target).value)"></textarea>
+                        </label>
+
+                    </div>
+                }
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

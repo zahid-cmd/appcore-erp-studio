@@ -240,8 +240,9 @@ export class AutoJournalRegistersList
     node:
         string = '';
 
-    // Collapsed modules / menus (by code)
-    private readonly collapsed =
+    // Opened modules / menus (by code). Empty = the tree loads
+    // with every module collapsed (2026-11-14)
+    private readonly expanded =
         new Set<string>();
 
     //===========================================================
@@ -370,7 +371,7 @@ export class AutoJournalRegistersList
     }
 
     // Refresh : the default view (this month, all branches,
-    // all journals, tree expanded) loaded again
+    // all journals, tree collapsed) loaded again
     refresh():
         void
     {
@@ -389,7 +390,7 @@ export class AutoJournalRegistersList
 
         this.searchText = '';
 
-        this.collapsed.clear();
+        this.expanded.clear();
 
         this.reload();
     }
@@ -514,7 +515,7 @@ export class AutoJournalRegistersList
     ):
         boolean
     {
-        return !this.collapsed.has(code);
+        return this.expanded.has(code);
     }
 
     toggle
@@ -530,14 +531,14 @@ export class AutoJournalRegistersList
 
         if
         (
-            this.collapsed.has(code)
+            this.expanded.has(code)
         )
         {
-            this.collapsed.delete(code);
+            this.expanded.delete(code);
         }
         else
         {
-            this.collapsed.add(code);
+            this.expanded.add(code);
         }
     }
 
@@ -554,19 +555,19 @@ export class AutoJournalRegistersList
         (
             this.node === code
             ||
-            this.collapsed.has(code)
+            !this.expanded.has(code)
         )
         {
             if
             (
-                this.collapsed.has(code)
+                this.expanded.has(code)
             )
             {
-                this.collapsed.delete(code);
+                this.expanded.delete(code);
             }
             else
             {
-                this.collapsed.add(code);
+                this.expanded.add(code);
             }
         }
 

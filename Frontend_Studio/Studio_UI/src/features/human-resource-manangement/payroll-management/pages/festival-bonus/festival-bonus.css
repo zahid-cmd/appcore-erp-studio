@@ -1,0 +1,48 @@
+@import '../hr-payments/hr-payments.css';
+
+/* Festival Bonus : the look of the payment page */
+
+.hp-list
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding-left: 18px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* the reason of an unpost, under the toolbar */
+
+.hp-panel
+{
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    padding: 10px 16px;
+    border: 1px solid #f3c6c9;
+    border-radius: 14px;
+    background: #fff8f8;
+}
+
+.hp-panel > .hp-note
+{
+    flex: 1 1 280px;
+}
+
+.hp-panel-box
+{
+    flex: 1 1 260px;
+}
+
+.hp-sub
+{
+    color: #1e3a8a;
+    font-size: 12px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}

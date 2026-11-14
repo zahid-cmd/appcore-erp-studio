@@ -30,9 +30,13 @@ namespace AppCore.Infrastructure.Repositories.HumanResourceManangement.PayrollMa
 //   balance is nil (the last installment is the balance).
 //   Recovered = what salary sheets have taken (deleted sheets do
 //   not count). Closed stops the recovery and leaves the balance.
-//   This page keeps the record only : the money is paid out by a
-//   Payment Voucher (debit the Staff Advance ledger); its number
-//   can be noted here.
+//   This page keeps the record only : the money is paid out on
+//   Payroll Management > Payroll Payments (type Advance; it posts
+//   the Payment Voucher, debit the Staff Advance ledger).
+//   ONLY WHAT IS PAID OUT IS RECOVERED (owner, 2026-11-14) : a
+//   salary sheet takes from an advance only what was paid out on
+//   or before the last day of the sheet's month, less what other
+//   sheets took. An advance not paid out yet is never deducted.
 //   Once a salary sheet has taken from it, the employee cannot
 //   change, the amount cannot go below what was recovered and the
 //   advance cannot be deleted.
@@ -134,6 +138,23 @@ public class SalaryAdvancesRepository
         return rows.ToDictionary(x => x.AdvanceId, x => x.Amount);
     }
 
+    // What Payroll Payments (not cancelled) have paid out of each
+    // advance, up to a date (null = any date)
+    public static async Task<Dictionary<long, decimal>> PaidOutAsync(AppDbContext context, List<long>? advanceIds = null, DateOnly? upTo = null)
+    {
+        var rows =
+            await context.Set<HrPayments>().AsNoTracking()
+                .Where(x => x.PaymentType == HrPaymentsRepository.Advance
+                         && !x.IsCancelled
+                         && (advanceIds == null || advanceIds.Contains(x.SourceId))
+                         && (upTo == null || x.PaymentDate <= upTo))
+                .GroupBy(x => x.SourceId)
+                .Select(g => new { AdvanceId = g.Key, Amount = g.Sum(x => x.TotalAmount) })
+                .ToListAsync();
+
+        return rows.ToDictionary(x => x.AdvanceId, x => x.Amount);
+    }
+
     private async Task<decimal> RecoveredAsync(long advanceId)
     {
         Dictionary<long, decimal> all = await RecoveredAsync(_context, new List<long> { advanceId });
@@ -165,6 +186,9 @@ public class SalaryAdvancesRepository
         Dictionary<long, decimal> recovered =
             await RecoveredAsync(_context, rows.Select(x => x.A.AdvanceId).ToList());
 
+        Dictionary<long, decimal> paidOut =
+            await PaidOutAsync(_context, rows.Select(x => x.A.AdvanceId).ToList());
+
         return rows
             .Select(x =>
             {
@@ -191,7 +215,13 @@ public class SalaryAdvancesRepository
                     IsClosed = x.A.IsClosed,
                     Recovered = taken,
                     Balance = balance,
-                    Status = balance <= 0 ? "Recovered" : x.A.IsClosed ? "Closed" : "Running"
+                    // Not paid out yet : no salary sheet deducts it
+                    Status =
+                        balance <= 0 ? "Recovered"
+                        : x.A.IsClosed ? "Closed"
+                        : !paidOut.ContainsKey(x.A.AdvanceId) ? "Not Paid Out"
+                        : paidOut[x.A.AdvanceId] < x.A.Amount ? "Partly Paid Out"
+                        : "Running"
                 };
             })
             .ToList();
@@ -386,6 +416,11 @@ public class SalaryAdvancesRepository
         if (used)
         {
             throw new InvalidOperationException($"{entity.Code} is on a salary sheet : it cannot be deleted. Close it to stop the recovery.");
+        }
+
+        if (await HrPaymentsRepository.AnyAsync(_context, new[] { HrPaymentsRepository.Advance }, entity.AdvanceId))
+        {
+            throw new InvalidOperationException($"{entity.Code} is paid out on Payroll Payments : cancel the payment first.");
         }
 
         entity.IsDeleted = true;

@@ -201,7 +201,7 @@ CREATE INDEX IF NOT EXISTS "IX_HrAdvanceRecoveries_Sheet"   ON public."HrAdvance
 
 
 -- ------------------------------------------------------------
--- 2. Posting Setup : the four payroll ledgers
+-- 2. Posting Setup : the payroll ledgers
 -- ------------------------------------------------------------
 
 INSERT INTO public."PostingSetups"
@@ -218,10 +218,10 @@ VALUES
      'Salary Sheets', '', '', false, 201),
     ('PAYROLL-STAFF-ADVANCE', 'Payroll - Staff Advance', 'Payroll',
      'Credited with the advances / loans recovered from salary (asset); debited when an advance is paid out by Payment Voucher.',
-     'Salary Sheets, Salary Advances', '', '', false, 202),
-    ('PAYROLL-DEDUCTIONS-PAYABLE', 'Payroll - Deductions Payable', 'Payroll',
-     'Credited with the other deductions kept back from salary : provident fund, tax ... (liability).',
-     'Salary Sheets', '', '', false, 203)
+     'Salary Sheets, Salary Advances', '', '', false, 202)
+    -- (the other deductions : "Payroll - Other Deductions Payable",
+    --  HumanResource_DeductionLedgers_Engine.sql; a deduction head
+    --  has its own ledger on Salary Heads)
 ON CONFLICT ("PurposeCode") DO UPDATE
 SET "PurposeName" = EXCLUDED."PurposeName",
     "Description" = EXCLUDED."Description",

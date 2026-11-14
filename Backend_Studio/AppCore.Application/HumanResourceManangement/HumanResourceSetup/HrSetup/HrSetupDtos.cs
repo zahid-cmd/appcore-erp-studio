@@ -73,6 +73,9 @@ public class HrLeaveTypeDto : HrSetupDto
 
     public decimal MaxCarryDays { get; set; }
 
+    // The days not taken can be paid as money (Leave Encashments)
+    public bool IsEncashable { get; set; }
+
     // All / Male / Female
     public string AppliesTo { get; set; } = "All";
 }
@@ -94,6 +97,10 @@ public class HrSalaryHeadDto : HrSetupDto
     public string SystemKey { get; set; } = string.Empty;
 
     public bool IsProrated { get; set; } = true;
+
+    // A deduction head : the ledger it is credited to when a
+    // salary sheet is posted ('' : Payroll - Deductions Payable)
+    public string PayableLedgerCode { get; set; } = string.Empty;
 
     public int DisplayOrder { get; set; }
 }
@@ -119,4 +126,12 @@ public class WeeklyHolidayDto
 
     // Read only : employees with their own weekly holiday
     public int OwnCount { get; set; }
+}
+
+// A ledger that can be picked for a deduction head
+public class HrLedgerOptionDto
+{
+    public string LedgerCode { get; set; } = string.Empty;
+
+    public string LedgerName { get; set; } = string.Empty;
 }

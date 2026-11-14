@@ -40,6 +40,8 @@ from '@angular/core/rxjs-interop';
 
 import { PageHeaderComponent } from '../../../../../shared/components/layout/page-header/page-header';
 import { PageCanvasComponent, PageCanvasConfig } from '../../../../../shared/components/layout/page-canvas/page-canvas';
+import { PageToolbarComponent } from '../../../../../shared/components/layout/page-toolbar/page-toolbar';
+import { ControlTab, ControlTabsComponent } from '../../../../../shared/components/controls/control-tabs/control-tabs';
 import { CommandCenterComponent } from '../../../../../shared/components/utilities/command-center/command-center';
 import { ListTableComponent, ListTableColumn } from '../../../../../shared/components/layout/list-table/list-table';
 import { TextboxComponent } from '../../../../../shared/components/controls/textbox/textbox';
@@ -79,7 +81,7 @@ type WholeField =
     'EligibilityMonths' | 'LoanMaxInstallments';
 
 type SwitchField =
-    'CompanyContributes' | 'InterestEnabled' | 'LoanEnabled' | 'LoanInterestEnabled' | 'ForfeitOnMisconduct' | 'FullOnDeathRetirement';
+    'CompanyContributes' | 'InterestEnabled' | 'LoanEnabled' | 'LoanInterestEnabled' | 'ForfeitOnMisconduct' | 'FullOnDeathRetirement' | 'ForfeitToCompany';
 
 
 //===============================================================
@@ -107,6 +109,8 @@ type SwitchField =
         CommonModule,
         PageHeaderComponent,
         PageCanvasComponent,
+        PageToolbarComponent,
+        ControlTabsComponent,
         CommandCenterComponent,
         ListTableComponent,
         TextboxComponent,
@@ -155,6 +159,12 @@ implements OnInit
         { label:'From the joining date', value:'Joining' },
         { label:'From the confirmation date', value:'Confirmation' },
         { label:'Some months after joining', value:'Months' }
+    ];
+
+    readonly interestBasisItems =
+    [
+        { label:'Monthly balances', value:'Monthly' },
+        { label:'Closing balance of the year', value:'Closing' }
     ];
 
     readonly loanMethodItems =
@@ -234,7 +244,7 @@ implements OnInit
         {
             Contribution:pfContributionText(p),
             Eligible:pfEligibleText(p),
-            Interest:p.InterestEnabled ? `${pfNumber(p.InterestRate)} % a year` : 'No',
+            Interest:p.InterestEnabled ? `${pfNumber(p.InterestRate)} % a year, on the ${p.InterestBasis === 'Closing' ? 'closing balance' : 'monthly balances'}` : 'No',
             Loans:p.LoanEnabled ? `Up to ${pfNumber(p.LoanMaxPercent)} % of own balance, ${p.LoanMaxInstallments} instalments; ${pfLoanInterestText(p)}` : 'No',
             Vesting:p.VestingYears > 0 ? `${pfNumber(p.VestingYears)} year(s)` : 'Always paid',
             Members:p.ActiveMembers
@@ -289,10 +299,102 @@ implements OnInit
             });
     }
 
+    //===========================================================
+    // Tabs (2026-11-14)
+    //===========================================================
+
+    readonly tabs:
+        ControlTab[] =
+    [
+        { id:'contribution', label:'Contribution' },
+        { id:'membership', label:'Membership' },
+        { id:'interest', label:'Interest & Loans' },
+        { id:'forfeiture', label:'Forfeiture' },
+        { id:'notes', label:'Remarks' }
+    ];
+
+    selectedTab =
+        'contribution';
+
+    get tabIndex(): number
+    {
+        return Math.max(0, this.tabs.findIndex(x => x.id === this.selectedTab));
+    }
+
+    onTabChange(value: string):
+        void
+    {
+        this.selectedTab = this.tabs.some(x => x.id === value) ? value : 'contribution';
+        this.cdr.detectChanges();
+    }
+
+    stepTab(step: number):
+        void
+    {
+        const next =
+            this.tabs[this.tabIndex + step];
+
+        if (next)
+        {
+            this.onTabChange(next.id);
+        }
+    }
+
+    private label(items: { label: string; value: string }[], value: string): string
+    {
+        return items.find(x => x.value === value)?.label ?? (value || '-');
+    }
+
+    // The right card : one line per tab, as typed now
+    get glance(): { tab: string; label: string; text: string }[]
+    {
+        const p =
+            this.entity;
+
+        const base =
+            this.label(this.baseItems, p.ContributionBase);
+
+        const contribution =
+            `Employee ${p.EmployeePercent || 0} %`
+            + (p.CompanyContributes ? ` + company ${p.CompanyPercent || 0} %` : ' (no company part)')
+            + ` of the ${base.toLowerCase()}`;
+
+        const membership =
+            p.EligibilityRule === 'Months'
+                ? `${p.EligibilityMonths || 0} month(s) after joining`
+                : this.label(this.eligibilityItems, p.EligibilityRule);
+
+        const interest =
+            (p.InterestEnabled
+                ? `Interest ${p.InterestRate || 0} % a year on ${this.label(this.interestBasisItems, p.InterestBasis || 'Monthly').toLowerCase()}`
+                : 'No yearly interest')
+            + ' · '
+            + (p.LoanEnabled
+                ? `loans up to ${p.LoanMaxPercent || 0} % of the own balance, ${p.LoanMaxInstallments || 0} instalments`
+                  + (p.LoanInterestEnabled ? `, ${p.LoanInterestRate || 0} % ${(p.LoanInterestMethod || 'Flat').toLowerCase()}` : ', no interest')
+                : 'no loans');
+
+        const forfeiture =
+            (Number(p.VestingYears) > 0
+                ? `Company part after ${p.VestingYears} year(s) from ${this.label(this.vestingFromItems, p.VestingFrom).toLowerCase()}`
+                : 'Company part always paid')
+            + (p.ForfeitOnMisconduct ? ' · misconduct forfeits it' : '')
+            + (p.FullOnDeathRetirement ? ' · death / retirement pays it all' : '');
+
+        return [
+            { tab:'contribution', label:'Contribution', text:contribution },
+            { tab:'membership', label:'Membership', text:membership },
+            { tab:'interest', label:'Interest & Loans', text:interest },
+            { tab:'forfeiture', label:'Forfeiture', text:forfeiture },
+            { tab:'notes', label:'Remarks', text:p.Remarks || '-' }
+        ];
+    }
+
     edit():
         void
     {
         this.entity = { ...this.saved };
+        this.selectedTab = 'contribution';
         this.editing = true;
         this.cdr.detectChanges();
     }
@@ -312,7 +414,7 @@ implements OnInit
         this.cdr.detectChanges();
     }
 
-    onSelect(field: 'ContributionBase' | 'EligibilityRule' | 'VestingFrom' | 'LoanInterestMethod', value: any):
+    onSelect(field: 'ContributionBase' | 'EligibilityRule' | 'VestingFrom' | 'LoanInterestMethod' | 'InterestBasis', value: any):
         void
     {
         this.entity[field] = String(value ?? '');

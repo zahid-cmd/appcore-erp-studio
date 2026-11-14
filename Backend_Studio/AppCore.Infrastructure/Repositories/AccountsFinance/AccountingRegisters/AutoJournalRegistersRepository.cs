@@ -356,13 +356,24 @@ public class AutoJournalRegistersRepository
         scope.Pages =
             await LoadPagesAsync(scope.Sources);
 
-        // Manual vouchers stay off the register
+        // Manual vouchers stay off the register : a type with no
+        // automatic source at all is left out here. A type that is
+        // both (JV : typed by hand, and written by Salary Sheets or
+        // the Provident Fund) is loaded; its vouchers that no page's
+        // table holds are the manual ones, taken out below.
         List<string> manual =
             scope.Sources
-                .Where(x => !x.IsAutoJournal)
-                .Select(x => x.VoucherType)
-                .Distinct()
+                .GroupBy(x => x.VoucherType, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.All(x => !x.IsAutoJournal))
+                .Select(g => g.Key)
                 .ToList();
+
+        HashSet<string> mixed =
+            scope.Sources
+                .GroupBy(x => x.VoucherType, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Any(x => !x.IsAutoJournal) && g.Any(x => x.IsAutoJournal))
+                .Select(g => g.Key)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         long branch =
             scope.BranchId;
@@ -410,6 +421,15 @@ public class AutoJournalRegistersRepository
                 .ToList();
 
         await AssignPagesAsync(scope);
+
+        // (the manual vouchers of a type that is also automatic)
+        if (mixed.Count > 0)
+        {
+            scope.Heads =
+                scope.Heads
+                    .Where(x => x.Page.Length > 0 || !mixed.Contains(x.VoucherType))
+                    .ToList();
+        }
 
         return scope;
     }

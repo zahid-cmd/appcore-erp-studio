@@ -572,37 +572,37 @@ implements OnInit, OnDestroy
         {
             header:'Account Class',
             field:'AccountClassName',
-            width:'12%',
+            width:'11%',
             align:'left'
         },
         {
             header:'Group Name',
             field:'AccountGroupName',
-            width:'15%',
+            width:'12%',
             align:'left'
         },
         {
             header:'Sub Group Name',
             field:'AccountSubGroupName',
-            width:'15%',
+            width:'14%',
             align:'left'
         },
         {
             header:'Ledger Code',
             field:'LedgerCode',
-            width:'15%',
+            width:'14%',
             align:'left'
         },
         {
             header:'Ledger Name',
             field:'LedgerName',
-            width:'18%',
+            width:'25%',
             align:'left'
         },
         {
             header:'Mode',
             field:'Mode',
-            width:'7%',
+            width:'6%',
             align:'center'
         },
         {
@@ -641,19 +641,19 @@ implements OnInit, OnDestroy
         {
             header:'Account Class',
             field:'AccountClassName',
-            width:'12%',
+            width:'11%',
             align:'left'
         },
         {
             header:'Group Name',
             field:'AccountGroupName',
-            width:'16%',
+            width:'13%',
             align:'left'
         },
         {
             header:'Sub Group Name',
             field:'AccountSubGroupName',
-            width:'16%',
+            width:'15%',
             align:'left'
         },
         {
@@ -665,13 +665,13 @@ implements OnInit, OnDestroy
         {
             header:'Ledger Name',
             field:'LedgerName',
-            width:'23%',
+            width:'29%',
             align:'left'
         },
         {
             header:'Mode',
             field:'Mode',
-            width:'7%',
+            width:'6%',
             align:'center'
         },
         {

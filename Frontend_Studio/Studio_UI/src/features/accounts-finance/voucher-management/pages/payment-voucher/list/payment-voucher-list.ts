@@ -525,6 +525,14 @@ implements OnInit, OnDestroy
             align:'right'
         },
         {
+            // (a voucher of another page : PPY-0001 · SAL-0001)
+            header:'Reference',
+            field:'ReferenceNo',
+            sortable:false,
+            width:'190px',
+            align:'left'
+        },
+        {
             header:'Payment Modes',
             field:'PaymentModes',
             sortable:false,
@@ -1223,6 +1231,26 @@ implements OnInit, OnDestroy
     ):
         void
     {
+        // A voucher of another page (Payroll Payments, PF Payments)
+        // is changed from that page : here it opens in View
+        if
+        (
+            item.SourceType
+        )
+        {
+            this.toast.info
+            (
+                'Edit Not Allowed',
+                `${item.VoucherNo} belongs to ${item.SourceType} ${item.ReferenceNo}. Change it from that page; it opens in View.`
+            );
+
+            this.view(
+                item
+            );
+
+            return;
+        }
+
         // Only drafts can be changed; others open in View
         if
         (

@@ -30,14 +30,19 @@
                 command2Permission="update"
                 (command2Click)="onRecalculate()"
                 [command2Visible]="isDraft"
-                command3Text="Payslips"
+                command3Text="Print Sheet"
                 command3Icon="fas fa-print"
-                command3Title="Prints the payslip of every employee on the sheet"
-                (command3Click)="printSlips(lines)"
+                command3Title="Prints the whole salary sheet : every employee on one statement"
+                (command3Click)="printSheet()"
                 [command3Visible]="lines.length > 0"
-                command4Text="Refresh"
-                command4Icon="fas fa-rotate-right"
-                (command4Click)="refresh()"
+                command4Text="Payslips"
+                command4Icon="fas fa-receipt"
+                command4Title="Prints the payslip of every employee on the sheet"
+                (command4Click)="printSlips(lines)"
+                [command4Visible]="lines.length > 0"
+                command5Text="Refresh"
+                command5Icon="fas fa-rotate-right"
+                (command5Click)="refresh()"
                 rightCommandIcon="fas fa-arrow-left"
                 (rightCommandClick)="onBackToList()">
             </app-command-center>
@@ -57,6 +62,8 @@
 
             @if (sheet)
             {
+                <span class="ss-code">{{ sheet.Code }}</span>
+
                 <span
                     class="ss-status"
                     [attr.data-status]="sheet.Status">{{ sheet.Status }}</span>
@@ -79,7 +86,7 @@
                 {
                     <span class="ss-info">
                         Posted on {{ dayText(sheet.PostedDate) }} · Journal Voucher <b>{{ sheet.JournalVoucherNo || '-' }}</b>
-                        · {{ paidCount }} of {{ lines.length }} paid
+                        · paid Tk {{ money(paidTotal) }} of {{ money(total('NetPay')) }}
                     </span>
                 }
 
@@ -94,6 +101,16 @@
                         class="ss-chip ss-chip-warn"
                         title="Set their salary on Employee Profiles, then recalculate">
                         {{ sheet.NoSalaryCount }} employee(s) left off : no salary structure
+                    </span>
+                }
+
+                @if (unpaidAdvances.length > 0)
+                {
+                    <span
+                        class="ss-chip ss-chip-warn"
+                        [title]="unpaidTitle">
+                        <i class="fas fa-hand-holding-dollar ss-chip-icon"></i>
+                        {{ unpaidAdvances.length }} advance(s) not paid out : Tk {{ money(unpaidTotal) }} not recovered
                     </span>
                 }
             }
@@ -152,11 +169,10 @@
                 <button
                     type="button"
                     class="ss-btn ss-primary"
-                    [class.on]="panel === 'pay'"
-                    [disabled]="isSaving || unpaidCount === 0"
-                    (click)="openPanel('pay')">
-                    <i class="fas fa-money-bill-wave"></i>
-                    Mark All Paid
+                    title="Payroll Management > Payroll Payments : pays the salary, in full or in part"
+                    (click)="goToPayments()">
+                    <i class="fas fa-money-bill-transfer"></i>
+                    Payroll Payments
                 </button>
             }
 
@@ -192,34 +208,6 @@
         </div>
     }
 
-    @if (panel === 'pay')
-    {
-        <div class="ss-panel">
-            <span class="ss-panel-text">
-                <b>Mark {{ unpaidCount }} employee(s) paid</b>
-                Pay the money out with a Payment Voucher (debit Salary Payable); this marks the sheet.
-            </span>
-            <app-datepicker class="hr-date-inline"
-                [value]="$any(asDate(panelDate))"
-                [maxDate]="asDate(today)"
-                (valueChange)="onPanelDate(dateEvent($event))">
-            </app-datepicker>
-            <input
-                class="ss-panel-input ss-grow"
-                maxlength="100"
-                placeholder="Note (optional) : e.g. the Payment Voucher No"
-                (input)="onPanelText($event)">
-            <button
-                type="button"
-                class="ss-btn ss-primary"
-                [disabled]="isSaving"
-                (click)="confirmPayAll()">Mark Paid</button>
-            <button
-                type="button"
-                class="ss-btn"
-                (click)="closePanel()">Cancel</button>
-        </div>
-    }
 
     <!-- =====================================================
          PAGE CANVAS : the lines
@@ -247,7 +235,6 @@
                                 class="ss-num"
                                 title="The share of the salary for the unpaid days">Absence</th>
                             <th class="ss-num">Late</th>
-                            <th class="ss-num">Overtime</th>
                             <th class="ss-num ss-c-typed">Other +</th>
                             <th class="ss-num ss-strong">Earned</th>
                             <th
@@ -297,10 +284,6 @@
                                 <td class="ss-num">{{ money(line.GrossSalary) }}</td>
                                 <td class="ss-num ss-bad">{{ blank(line.AbsenceDeduction) }}</td>
                                 <td class="ss-num ss-bad">{{ blank(line.LateDeduction) }}</td>
-                                <td
-                                    class="ss-num"
-                                    [title]="(line.OvertimeHours ? line.OvertimeHours + ' h' : '') + (line.OvertimeDays ? '  ' + line.OvertimeDays + ' extra day(s)' : '')">{{ blank(line.OvertimeAmount) }}</td>
-
                                 <td class="ss-num ss-c-typed">
                                     @if (isDraft)
                                     {
@@ -326,7 +309,15 @@
                                     [title]="line.PfEmployee ? 'Provident fund ' + money(line.PfEmployee) + (line.PfCompany ? '  (company adds ' + money(line.PfCompany) + ')' : '') : ''">{{ blank(line.StructureDeduction + line.PfEmployee) }}</td>
                                 <td
                                     class="ss-num ss-bad"
-                                    [title]="line.PfLoan ? 'Provident fund loan ' + money(line.PfLoan) : ''">{{ blank(line.AdvanceDeduction + line.PfLoan) }}</td>
+                                    [title]="line.PfLoan ? 'Provident fund loan ' + money(line.PfLoan) : ''">
+                                    @if (unpaidFor(line); as unpaid)
+                                    {
+                                        <i
+                                            class="fas fa-circle-exclamation ss-unpaid-mark"
+                                            [title]="unpaid + '\n(not paid out by the month end : not recovered)'"></i>
+                                    }
+                                    {{ blank(line.AdvanceDeduction + line.PfLoan) }}
+                                </td>
 
                                 <td class="ss-num ss-c-typed">
                                     @if (isDraft)
@@ -352,16 +343,14 @@
                                 @if (isPosted)
                                 {
                                     <td class="ss-c-paid">
-                                        <button
-                                            type="button"
-                                            class="ss-paid"
+                                        <span
+                                            class="ss-paid ss-paid-info"
                                             [class.on]="line.IsPaid"
-                                            [disabled]="isSaving"
-                                            [title]="line.IsPaid ? 'Paid on ' + dayText(line.PaidDate) + (line.PaidNote ? ' : ' + line.PaidNote : '') + ' (click to mark not paid)' : 'Mark paid today'"
-                                            (click)="togglePaid(line)">
-                                            <i [class]="line.IsPaid ? 'fas fa-circle-check' : 'far fa-circle'"></i>
-                                            {{ line.IsPaid ? dayText(line.PaidDate) : 'Not paid' }}
-                                        </button>
+                                            [class.part]="!line.IsPaid && line.PaidAmount > 0"
+                                            [title]="'Paid Tk ' + money(line.PaidAmount) + ' of ' + money(line.NetPay) + ' on Payroll Payments' + (line.IsPaid ? ', last on ' + dayText(line.PaidDate) : '')">
+                                            <i [class]="line.IsPaid ? 'fas fa-circle-check' : line.PaidAmount > 0 ? 'fas fa-circle-half-stroke' : 'far fa-circle'"></i>
+                                            {{ paidText(line) }}
+                                        </span>
                                     </td>
                                 }
 
@@ -404,7 +393,6 @@
                             <td class="ss-num">{{ money(total('GrossSalary')) }}</td>
                             <td class="ss-num">{{ blank(total('AbsenceDeduction')) }}</td>
                             <td class="ss-num">{{ blank(total('LateDeduction')) }}</td>
-                            <td class="ss-num">{{ blank(total('OvertimeAmount')) }}</td>
                             <td class="ss-num">{{ blank(total('OtherEarning')) }}</td>
                             <td class="ss-num">{{ money(total('EarnedSalary')) }}</td>
                             <td class="ss-num">{{ blank(total('StructureDeduction') + total('PfEmployee')) }}</td>
@@ -413,7 +401,7 @@
                             <td class="ss-num ss-net">{{ money(total('NetPay')) }}</td>
                             @if (isPosted)
                             {
-                                <td class="ss-c-paid">{{ paidCount }} / {{ lines.length }}</td>
+                                <td class="ss-c-paid">{{ money(paidTotal) }}</td>
                             }
                             <td class="ss-c-remarks"></td>
                             <td class="ss-c-slip"></td>
@@ -458,7 +446,7 @@
             }
 
             <span class="ss-summary-note">
-                Earned = Gross - Absence - Late + Overtime + Other
+                Earned = Gross - Absence - Late + Other. Overtime is on its own Overtime Sheet.
             </span>
 
         </div>

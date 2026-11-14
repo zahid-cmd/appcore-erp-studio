@@ -89,6 +89,15 @@ export interface PaymentVoucher
     CancelReason:
         string;
 
+    // A voucher written by another page (Payroll Payments, PF
+    // Payments) : the page and its number; '' : keyed here. Such
+    // a voucher is read only on this page.
+    SourceType:
+        string;
+
+    ReferenceNo:
+        string;
+
     // yyyy-MM-dd
     CancelDate:
         string;

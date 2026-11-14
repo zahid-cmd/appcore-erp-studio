@@ -31,12 +31,15 @@ from '../../../../environments/environment';
 import
 {
     GenerateSalarySheet,
+    OvertimeSheet,
+    OvertimeSheetListItem,
     SalaryAdvance,
     SalaryAdvanceDefaults,
     SalarySheet,
     SalarySheetDefaults,
     SalarySheetLine,
-    SalarySheetListItem
+    SalarySheetListItem,
+    UnpaidAdvance
 }
 from '../models/payroll.model';
 
@@ -93,6 +96,29 @@ function normalizeAdvance
     };
 }
 
+function normalizeOvertimeItem
+(
+    x: any
+):
+    OvertimeSheetListItem
+{
+    return {
+        PublicId:text(x, 'PublicId'),
+        Code:text(x, 'Code'),
+        SalarySheetCode:text(x, 'SalarySheetCode'),
+        Year:num(x, 'Year'),
+        Month:num(x, 'Month'),
+        BranchId:num(x, 'BranchId'),
+        BranchName:text(x, 'BranchName'),
+        EmployeeCount:num(x, 'EmployeeCount'),
+        OvertimeHours:num(x, 'OvertimeHours'),
+        OvertimeDays:num(x, 'OvertimeDays'),
+        Amount:num(x, 'Amount'),
+        PostedDate:text(x, 'PostedDate'),
+        JournalVoucherNo:text(x, 'JournalVoucherNo')
+    };
+}
+
 function normalizeSheetItem
 (
     x: any
@@ -143,6 +169,7 @@ function normalizeLine
         AbsenceDeduction:num(l, 'AbsenceDeduction'),
         LateDeduction:num(l, 'LateDeduction'),
         OvertimeAmount:num(l, 'OvertimeAmount'),
+        PaidAmount:num(l, 'PaidAmount'),
         OtherEarning:num(l, 'OtherEarning'),
         OtherDeduction:num(l, 'OtherDeduction'),
         EarnedSalary:num(l, 'EarnedSalary'),
@@ -177,7 +204,28 @@ function normalizeSheet
         ApprovedDate:text(x, 'ApprovedDate'),
         PostedDate:text(x, 'PostedDate'),
         NoSalaryCount:num(x, 'NoSalaryCount'),
+        UnpaidAdvances:list(x, 'UnpaidAdvances').map(normalizeUnpaidAdvance),
         Lines:list(x, 'Lines').map(normalizeLine)
+    };
+}
+
+function normalizeUnpaidAdvance
+(
+    x: any
+):
+    UnpaidAdvance
+{
+    return {
+        AdvanceId:num(x, 'AdvanceId'),
+        Code:text(x, 'Code'),
+        EmployeeId:num(x, 'EmployeeId'),
+        EmployeeCode:text(x, 'EmployeeCode'),
+        EmployeeName:text(x, 'EmployeeName'),
+        AdvanceDate:text(x, 'AdvanceDate'),
+        Amount:num(x, 'Amount'),
+        PaidOut:num(x, 'PaidOut'),
+        PaidLater:num(x, 'PaidLater'),
+        NotPaidOut:num(x, 'NotPaidOut')
     };
 }
 
@@ -248,14 +296,14 @@ export class PayrollService
         Observable<SalaryAdvance>
     {
         return this.http
-            .post<any>(this.advanceUrl, a)
+            .post<any>(this.advanceUrl, { ...a, PublicId:a.PublicId || '00000000-0000-0000-0000-000000000000' })
             .pipe(map(normalizeAdvance));
     }
 
     updateAdvance(publicId: string, a: SalaryAdvance):
         Observable<void>
     {
-        return this.http.put<void>(`${this.advanceUrl}/${publicId}`, a);
+        return this.http.put<void>(`${this.advanceUrl}/${publicId}`, { ...a, PublicId:a.PublicId || publicId });
     }
 
     deleteAdvance(publicId: string):
@@ -281,6 +329,44 @@ export class PayrollService
     //===========================================================
     // Salary Sheets
     //===========================================================
+
+    //===========================================================
+    // Overtime Sheets (the overtime of the posted salary sheets)
+    //===========================================================
+
+    getOvertimeSheets():
+        Observable<OvertimeSheetListItem[]>
+    {
+        return this.http
+            .get<any[]>(`${this.baseUrl}/overtime-sheets`)
+            .pipe(map(rows => (Array.isArray(rows) ? rows : []).map(normalizeOvertimeItem)));
+    }
+
+    getOvertimeSheet(publicId: string):
+        Observable<OvertimeSheet>
+    {
+        return this.http
+            .get<any>(`${this.baseUrl}/overtime-sheets/${publicId}`)
+            .pipe(map(x =>
+            {
+                const lines: any[] = x?.Lines ?? x?.lines ?? [];
+
+                return {
+                    ...normalizeOvertimeItem(x ?? {}),
+                    Lines:(Array.isArray(lines) ? lines : []).map(l => ({
+                        EmployeeCode:text(l, 'EmployeeCode'),
+                        EmployeeName:text(l, 'EmployeeName'),
+                        DesignationName:text(l, 'DesignationName'),
+                        DepartmentName:text(l, 'DepartmentName'),
+                        BasicSalary:num(l, 'BasicSalary'),
+                        GrossSalary:num(l, 'GrossSalary'),
+                        OvertimeHours:num(l, 'OvertimeHours'),
+                        OvertimeDays:num(l, 'OvertimeDays'),
+                        Amount:num(l, 'Amount')
+                    }))
+                };
+            }));
+    }
 
     getSheets():
         Observable<SalarySheetListItem[]>
@@ -311,6 +397,16 @@ export class PayrollService
                     LateDaysPerCut:num(x, 'LateDaysPerCut'),
                     Branches:list(x, 'Branches').map(b => ({ Id:num(b, 'Id'), Name:text(b, 'Name') }))
                 })));
+    }
+
+    // Advances of a branch due in the month but not paid out by its
+    // end (the sheet will not recover them)
+    getUnpaidAdvances(branchId: number, year: number, month: number):
+        Observable<UnpaidAdvance[]>
+    {
+        return this.http
+            .get<any[]>(`${this.sheetUrl}/unpaid-advances`, { params:{ branchId, year, month } })
+            .pipe(map(rows => (Array.isArray(rows) ? rows : []).map(normalizeUnpaidAdvance)));
     }
 
     generateSheet(request: GenerateSalarySheet):

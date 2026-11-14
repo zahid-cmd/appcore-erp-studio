@@ -112,18 +112,19 @@
                         [required]="true">
                     </app-textbox>
 
-                    <label class="pf-native">
-                        <span class="pf-label">Recover From (salary month) <b>*</b></span>
-                        <input
-                            type="month"
-                            [value]="startValue"
-                            [disabled]="isViewMode"
-                            (change)="onStart($event)">
-                    </label>
+                    <app-datepicker
+                        label="Recover From (salary month)"
+                        [required]="true"
+                        [monthMode]="true"
+                        placeholder="Select Month"
+                        [value]="$any(asMonth(startValue))"
+                        [disabled]="isViewMode"
+                        (valueChange)="onStart(monthEvent($event))">
+                    </app-datepicker>
 
                     <app-textbox
                         label="Payment Voucher No"
-                        placeholder="Optional : the voucher that paid it out"
+                        placeholder="Only for one paid outside Payroll Payments"
                         [value]="entity.VoucherNo"
                         [maxLength]="30"
                         textCase="none"
@@ -221,7 +222,7 @@
 
                     <ul class="pf-help">
                         <li>The installment is taken when the salary sheet of a month is made, starting with the month chosen here.</li>
-                        <li>This page keeps the record. Pay the money out with a Payment Voucher (debit the Staff Advance ledger) and note its number here.</li>
+                        <li>This page keeps the record. Pay the money out on Payroll Payments (Paid For : Salary Advance) : a Payment Voucher is written against the Staff Advance ledger.</li>
                         <li>Once a salary sheet has taken an installment, the advance cannot be deleted; close it to stop the recovery.</li>
                     </ul>
 

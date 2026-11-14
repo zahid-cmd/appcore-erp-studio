@@ -1,0 +1,743 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <!-- =====================================================
+             THE PAYMENTS
+        ====================================================== -->
+
+        <app-page-header
+            [title]="page.title"
+            [subtitle]="page.subtitle"
+            [icon]="page.icon">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search code, reference, voucher..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Add Payment"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+            <div
+                pageToolbarRight
+                class="hp-tools">
+
+                <app-search-dropdown
+                    placeholder="All Types"
+                    [items]="typeFilterItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="typeFilter"
+                    (valueChange)="onTypeFilter($event)">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    placeholder="All Status"
+                    [items]="statusItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="statusFilter"
+                    (valueChange)="onStatusFilter($event)">
+                </app-search-dropdown>
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="actions"
+                    [rowActions]="rowActions"
+                    (rowAction)="onRowAction($event)"
+                    (view)="open($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <div class="pay-summary">
+                @for (item of summaryItems; track item.label)
+                {
+                    <span class="pay-summary-item">
+                        <span class="pay-summary-label">{{ item.label }}</span>
+                        <b class="pay-summary-value">{{ item.value }}</b>
+                    </span>
+                }
+                <span class="pay-summary-note">
+                    Every payment writes a Payment Voucher, posted at once. A payment is not edited : open it and cancel it to take it back
+                </span>
+            </div>
+        }
+    }
+    @else if (mode === 'add')
+    {
+        <!-- =====================================================
+             PAY
+        ====================================================== -->
+
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="page.subtitle"
+            [icon]="page.icon">
+
+            <div pageHeaderRight>
+                @if (step === 1)
+                {
+                    <app-command-center
+                        command1Text="Next"
+                        command1Icon="fas fa-arrow-right"
+                        command1Title="Go on to the payment : how the money goes out"
+                        (command1Click)="next()"
+                        command2Text="Clear"
+                        command2Icon="fas fa-broom"
+                        (command2Click)="onClear()"
+                        rightCommandIcon="fas fa-arrow-left"
+                        rightCommandTitle="Back to the list"
+                        (rightCommandClick)="goToList()">
+                    </app-command-center>
+                }
+                @else
+                {
+                    <app-command-center
+                        command1Text="Pay"
+                        command1Icon="fas fa-floppy-disk"
+                        command1Permission="add"
+                        (command1Click)="onSave()"
+                        command2Text="Back"
+                        command2Icon="fas fa-arrow-left"
+                        command2Title="Back to the selection : who gets how much"
+                        (command2Click)="back()"
+                        rightCommandIcon="fas fa-list"
+                        rightCommandTitle="Back to the list"
+                        (rightCommandClick)="goToList()">
+                    </app-command-center>
+                }
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <div
+                pageToolbarLeft
+                class="hp-steps">
+                <span
+                    class="hp-step"
+                    [class.on]="step === 1"
+                    [class.done]="step === 2">
+                    <b>1</b> Select : what is paid, to whom
+                </span>
+                <i class="fas fa-chevron-right"></i>
+                <span
+                    class="hp-step"
+                    [class.on]="step === 2">
+                    <b>2</b> Payment : how the money goes out
+                </span>
+            </div>
+
+            <span
+                pageToolbarRight
+                class="hp-note">To pay <b>Tk {{ money(payTotal) }}</b> to {{ payCount }} employee(s)</span>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            @if (step === 1)
+            {
+            <!-- ============ STEP 1 : left the master data, right the
+                 employees of the source ============ -->
+
+            <div
+                canvasBody
+                class="hp-split appcore-scrollbar">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>What Is Paid</span>
+                    </header>
+
+                    <app-datepicker
+                        label="Payment Date"
+                        [required]="true"
+                        [value]="$any(asDate(paymentDate))"
+                        (valueChange)="onDate($event)">
+                    </app-datepicker>
+
+                    <app-dropdown
+                        label="Paid For"
+                        [items]="page.types"
+                        [value]="paymentType"
+                        (valueChange)="onType($event)"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <app-search-dropdown
+                        [label]="sourceLabel"
+                        [placeholder]="sources.length === 0 ? (loading ? 'Loading...' : 'Nothing is due') : 'Select'"
+                        [items]="sourceItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="sourceId"
+                        (valueChange)="onSource($event)"
+                        [required]="true">
+                    </app-search-dropdown>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                    @if (source)
+                    {
+                        <dl class="pf-facts">
+                            <dt>Branch</dt>
+                            <dd>{{ source.BranchName }}</dd>
+                            <dt>Payable</dt>
+                            <dd>Tk {{ money(source.Payable) }}</dd>
+                            <dt>Paid so far</dt>
+                            <dd>Tk {{ money(source.Paid) }}</dd>
+                            <dt>Due</dt>
+                            <dd>Tk {{ money(source.Due) }}</dd>
+                            <dt>To pay now</dt>
+                            <dd class="hp-strong">Tk {{ money(payTotal) }}</dd>
+                        </dl>
+                    }
+
+                </section>
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-users"></i>
+                        <span>{{ source ? source.Code + ' : who gets how much' : 'Employees' }}</span>
+                    </header>
+
+                    @if (dues.length === 0)
+                    {
+                        <div class="pfx-empty">
+                            {{ loading ? 'Loading...' : sourceId ? 'Nothing is due on this one.' : 'Pick the ' + sourceLabel.toLowerCase() + ' on the left : its employees come here with what is still due.' }}
+                        </div>
+                    }
+                    @else
+                    {
+                        <div class="hp-bar">
+                            <span class="hp-note">Type what each one gets now : no more than the due. Leave it empty to pay later.</span>
+                            <button
+                                type="button"
+                                class="hp-link"
+                                (click)="payAllDue()">Pay all that is due</button>
+                            <button
+                                type="button"
+                                class="hp-link"
+                                (click)="payNone()">Clear the amounts</button>
+                        </div>
+
+                        <table class="pfx-table hp-table">
+
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th>Employee</th>
+                                    <th>Designation</th>
+                                    <th class="pfx-num">Payable</th>
+                                    <th class="pfx-num">Paid</th>
+                                    <th class="pfx-num">Due</th>
+                                    <th class="pfx-num hp-pay">Pay Now</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (line of dues; track line.EmployeeId + '-' + line.SalarySheetLineId; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="pfx-no">{{ i + 1 }}</td>
+                                        <td>{{ line.EmployeeCode }} &nbsp; {{ line.EmployeeName }}</td>
+                                        <td>{{ line.DesignationName }}</td>
+                                        <td class="pfx-num">{{ money(line.Payable) }}</td>
+                                        <td class="pfx-num">{{ line.Paid ? money(line.Paid) : '' }}</td>
+                                        <td class="pfx-num">{{ money(line.Due) }}</td>
+                                        <td class="pfx-num hp-pay">
+                                            <input
+                                                class="hp-input"
+                                                inputmode="decimal"
+                                                maxlength="15"
+                                                placeholder="0"
+                                                [value]="line.AmountText"
+                                                (change)="onAmount(line, $event)">
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5">Total ({{ payCount }} of {{ dues.length }})</td>
+                                    <td class="pfx-num">{{ money(dueTotal) }}</td>
+                                    <td class="pfx-num hp-pay">{{ money(payTotal) }}</td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    }
+
+                </section>
+
+            </div>
+            }
+            @else
+            {
+            <!-- ============ STEP 2 : left what is paid, right the
+                 money ============ -->
+
+            <div
+                canvasBody
+                class="hp-split appcore-scrollbar">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-receipt"></i>
+                        <span>The Payment</span>
+                    </header>
+
+                    <dl class="pf-facts">
+                        <dt>Paid for</dt>
+                        <dd>{{ paymentTypeText }}</dd>
+                        <dt>{{ sourceLabel }}</dt>
+                        <dd>{{ source?.Code }}</dd>
+                        <dt>Branch</dt>
+                        <dd>{{ source?.BranchName }}</dd>
+                        <dt>Payment date</dt>
+                        <dd>{{ day(paymentDate) }}</dd>
+                        <dt>Employees</dt>
+                        <dd>{{ payCount }}</dd>
+                        <dt>To pay</dt>
+                        <dd class="hp-strong">Tk {{ money(payTotal) }}</dd>
+                        <dt>Entered</dt>
+                        <dd>Tk {{ money(deskTotal) }}</dd>
+                        <dt>Left</dt>
+                        <dd [class.hp-bad]="deskRemaining > 0">Tk {{ money(deskRemaining) }}</dd>
+                    </dl>
+
+                    <span class="hp-note">
+                        Pay writes one Payment Voucher, posted at once. To change who gets how much, go Back.
+                    </span>
+
+                </section>
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Payment Mode</span>
+                    </header>
+
+                    <div class="hp-mode">
+
+                        <app-dropdown
+                            label="Mode"
+                            [items]="modeItems"
+                            [value]="deskMode"
+                            (valueChange)="onDeskMode($event)">
+                        </app-dropdown>
+
+                        <app-search-dropdown
+                            label="Paid From"
+                            placeholder="Select account"
+                            [items]="ledgerItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="deskLedgerCode"
+                            (valueChange)="onDeskLedger($event)">
+                        </app-search-dropdown>
+
+                        <app-textbox
+                            label="Amount (Tk)"
+                            placeholder="0.00"
+                            [value]="deskAmountText"
+                            inputMode="decimal"
+                            [maxLength]="15"
+                            (valueChange)="onDeskAmount($event)">
+                        </app-textbox>
+
+                        <button
+                            type="button"
+                            class="hp-add"
+                            [disabled]="deskRemaining <= 0"
+                            (click)="addDeskRow()">
+                            <i class="fas fa-plus"></i>
+                            Add
+                        </button>
+
+                    </div>
+
+                    @if (deskRows.length === 0)
+                    {
+                        <div class="pfx-empty">Add how the money goes out : cash, bank, cheque or MFS. Several modes can share one payment.</div>
+                    }
+                    @else
+                    {
+                        <table class="pfx-table">
+
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th>Mode</th>
+                                    <th>Paid From</th>
+                                    <th class="pfx-num">Amount</th>
+                                    <th>Details</th>
+                                    <th class="pfx-no"></th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (row of deskRows; track $index; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="pfx-no">{{ i + 1 }}</td>
+                                        <td>{{ row.Mode }}</td>
+                                        <td>{{ row.LedgerName }}</td>
+                                        <td class="pfx-num">{{ money(row.Amount) }}</td>
+                                        <td>
+                                            <span
+                                                class="hp-state"
+                                                [class.hp-ok]="rowState(row) === 'Ready' || rowState(row) === 'Verified'">{{ rowState(row) }}</span>
+                                            @if (needsDesk(row))
+                                            {
+                                                <button
+                                                    type="button"
+                                                    class="hp-link hp-gap"
+                                                    (click)="openDesk()">Open the Payment Desk</button>
+                                            }
+                                        </td>
+                                        <td class="pfx-no">
+                                            <button
+                                                type="button"
+                                                class="hp-x"
+                                                title="Remove this mode"
+                                                (click)="removeDeskRow(i)">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3">Total</td>
+                                    <td class="pfx-num">{{ money(deskTotal) }}</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    }
+
+                </section>
+
+            </div>
+            }
+
+        </app-page-canvas>
+
+        <!-- =====================================================
+             PAYMENT DESK (pop-up) : the details of the cheque and
+             MFS rows
+               Okay  : keeps the details
+               Close : leaves without what was changed here
+        ====================================================== -->
+
+        @if (deskOpen)
+        {
+            <div class="hp-modal-backdrop">
+
+                <div
+                    class="hp-modal"
+                    role="dialog"
+                    aria-modal="true">
+
+                    <header class="hp-modal-head">
+                        <span class="hp-modal-icon"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="hp-modal-title">
+                            <b>Payment Desk</b>
+                            <small>The details of the cheque and MFS rows : verify each one</small>
+                        </span>
+                        <span
+                            class="hp-state"
+                            [class.hp-ok]="deskAllReady">{{ deskVerified }} of {{ deskDetailCount }} verified</span>
+                        <button
+                            type="button"
+                            class="hp-x"
+                            title="Close"
+                            (click)="closeDesk()">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+                    </header>
+
+                    <div class="hp-modal-body appcore-scrollbar">
+
+                        <app-payment-desk
+                            kind="payment"
+                            [readonly]="isSaving"
+                            [lines]="deskInput"
+                            (linesChange)="onDeskChange($event)"
+                            (validChange)="onDeskValidChange($event)">
+                        </app-payment-desk>
+
+                    </div>
+
+                    <footer class="hp-modal-foot">
+                        <span class="hp-note">{{ deskAllReady ? 'Every row is verified.' : 'Fill the details of each row and tick Verify Row.' }}</span>
+                        <button
+                            type="button"
+                            class="hp-btn"
+                            (click)="closeDesk()">Close</button>
+                        <button
+                            type="button"
+                            class="hp-add"
+                            (click)="okDesk()">Okay</button>
+                    </footer>
+
+                </div>
+
+            </div>
+        }
+    }
+    @else
+    {
+        <!-- =====================================================
+             ONE PAYMENT
+        ====================================================== -->
+
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="page.subtitle"
+            [icon]="page.icon">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Print"
+                    command1Icon="fas fa-print"
+                    command1Title="The Payment Voucher of the payment, in the voucher format"
+                    (command1Click)="printVoucher(payment)"
+                    command2Text="Payment Sheet"
+                    command2Icon="fas fa-users"
+                    command2Title="Who got how much, with a signature column"
+                    (command2Click)="printOpen()"
+                    command3Text="Bank Advice"
+                    command3Icon="fas fa-building-columns"
+                    command3Title="The account of each employee and the amount, for the bank"
+                    (command3Click)="bankAdvice()"
+                    command4Text="Cancel Payment"
+                    command4Icon="fas fa-ban"
+                    command4Permission="update"
+                    (command4Click)="askCancel()"
+                    [command4Visible]="!!payment && !payment.IsCancelled"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="pf-body pfx-even hp-body appcore-scrollbar">
+
+                @if (!payment)
+                {
+                    <div class="pfx-empty">{{ loading ? 'Loading the payment...' : 'The payment could not be loaded.' }}</div>
+                }
+                @else
+                {
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-users"></i>
+                            <span>Paid To</span>
+                        </header>
+
+                        <table class="pfx-table">
+
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th>Employee</th>
+                                    <th>Designation</th>
+                                    <th>Bank Account</th>
+                                    <th class="pfx-num">Amount</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (line of payment.Lines; track line.EmployeeId + '-' + line.SalarySheetLineId; let i = $index)
+                                {
+                                    <tr>
+                                        <td class="pfx-no">{{ i + 1 }}</td>
+                                        <td>{{ line.EmployeeCode }} &nbsp; {{ line.EmployeeName }}</td>
+                                        <td>{{ line.DesignationName }}</td>
+                                        <td>{{ line.BankAccountNo ? line.BankName + '  ' + line.BankAccountNo : '' }}</td>
+                                        <td class="pfx-num">{{ money(line.Amount) }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4">Total ({{ payment.Lines.length }})</td>
+                                    <td class="pfx-num">{{ money(payment.TotalAmount) }}</td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+
+                    </section>
+
+                    <div class="pf-column">
+
+                        <section class="pf-card">
+
+                            <header class="pf-card-head">
+                                <i class="fas fa-receipt"></i>
+                                <span>The Payment</span>
+                            </header>
+
+                            <dl class="pf-facts">
+                                <dt>Payment</dt>
+                                <dd>{{ payment.Code }}</dd>
+                                <dt>Status</dt>
+                                <dd [class.hp-bad]="payment.IsCancelled">{{ payment.IsCancelled ? 'Cancelled' : 'Paid' }}</dd>
+                                <dt>Date</dt>
+                                <dd>{{ day(payment.PaymentDate) }}</dd>
+                                <dt>Paid for</dt>
+                                <dd>{{ payment.PaymentTypeText }}</dd>
+                                <dt>Reference</dt>
+                                <dd>{{ payment.SourceCode }}</dd>
+                                <dt>Branch</dt>
+                                <dd>{{ payment.BranchName }}</dd>
+                                <dt>Paid by</dt>
+                                <dd>{{ payment.PaymentModes }}</dd>
+                                <dt>Payment Voucher</dt>
+                                <dd>{{ payment.PaymentVoucherNo }}</dd>
+                                <dt>Amount</dt>
+                                <dd>Tk {{ money(payment.TotalAmount) }}</dd>
+                                @if (payment.Remarks)
+                                {
+                                    <dt>Remarks</dt>
+                                    <dd>{{ payment.Remarks }}</dd>
+                                }
+                                @if (payment.IsCancelled)
+                                {
+                                    <dt>Cancelled because</dt>
+                                    <dd>{{ payment.CancelReason }}</dd>
+                                }
+                            </dl>
+
+                            <span class="hp-note">
+                                A payment is not edited. Cancelling it cancels its Payment Voucher too, and the amount is due again.
+                            </span>
+
+                        </section>
+
+                        @if (cancelling)
+                        {
+                            <section class="pf-card hp-cancel">
+
+                                <header class="pf-card-head">
+                                    <i class="fas fa-ban"></i>
+                                    <span>Cancel {{ payment.Code }}</span>
+                                </header>
+
+                                <app-textbox
+                                    label="Reason"
+                                    placeholder="Why the payment is cancelled"
+                                    [value]="cancelReason"
+                                    [maxLength]="300"
+                                    (valueChange)="onCancelReason($event)"
+                                    [required]="true">
+                                </app-textbox>
+
+                                <div class="hp-bar">
+                                    <button
+                                        type="button"
+                                        class="hp-add hp-danger"
+                                        [disabled]="isSaving"
+                                        (click)="confirmCancel()">Cancel the payment</button>
+                                    <button
+                                        type="button"
+                                        class="hp-link"
+                                        (click)="keepPayment()">Keep it</button>
+                                </div>
+
+                            </section>
+                        }
+
+                    </div>
+                }
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

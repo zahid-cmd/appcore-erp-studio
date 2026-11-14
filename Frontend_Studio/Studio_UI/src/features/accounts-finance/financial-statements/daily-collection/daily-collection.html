@@ -1,0 +1,564 @@
+<div class="app-list-page lr-page tb-page fa-page" [attr.data-render]="renderTick()">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Daily Collection Statement"
+        subtitle="What came in each day, and how"
+        icon="fas fa-cash-register">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search document, customer, account, collector…"
+                (valueChange)="onSearch($event)">
+
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                command1Title="Back to the default filter : today, all allotted branches, nothing loaded"
+                (command1Click)="refresh()"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                command2Activity="Print"
+                command2Title="Print or save as Excel (from the print viewer)"
+                (command2Click)="print()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         BODY : filter (full height) | canvas
+    ====================================================== -->
+
+    <div class="lr-body">
+
+        <!-- ---------------- FILTER ---------------- -->
+
+        <aside class="lr-filter">
+
+            <div class="lr-filter-head">
+                <span>Daily Collection Filter</span>
+            </div>
+
+            <div class="lr-filter-body appcore-scrollbar">
+
+                <div class="lr-field">
+                    <label>From</label>
+                    <app-datepicker
+                        class="lr-date"
+                        [value]="fromDate"
+                        (valueChange)="onFromChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="lr-field">
+                    <label>To</label>
+                    <app-datepicker
+                        class="lr-date"
+                        [value]="toDate"
+                        [minDate]="fromDate"
+                        (valueChange)="onToChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="lr-field">
+                    <label>Branch</label>
+                    <app-search-dropdown
+                        class="lr-dd"
+                        placeholder="All Allotted Branches"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(branchId)"
+                        (valueChange)="onBranchChange($event)">
+                    </app-search-dropdown>
+                    <span class="lr-hint">Only the branches you are allotted to. "All" adds them together.</span>
+                </div>
+
+                <div class="lr-field">
+                    <label>Collected by <em class="fa-live">no reload</em></label>
+                    <app-search-dropdown
+                        class="lr-dd"
+                        placeholder="Everybody"
+                        [items]="userItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(collectedBy)"
+                        (valueChange)="onCollectorChange($event)">
+                    </app-search-dropdown>
+                    <span class="lr-hint">The user who saved the voucher. The list fills after Submit.</span>
+                </div>
+
+                <div class="lr-field">
+                    <label>Business line <em class="fa-live">no reload</em></label>
+                    <app-search-dropdown
+                        class="lr-dd"
+                        placeholder="All business lines"
+                        [items]="lineItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(line)"
+                        (valueChange)="onLineChange($event)">
+                    </app-search-dropdown>
+                </div>
+
+                @if (branchesError)
+                {
+                    <div class="lr-note lr-error">{{ branchesError }}</div>
+                }
+
+                <!-- Display switches (bottom of the filter) -->
+                <div class="tb-opts">
+                    <b>Display</b>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showCancelled"
+                            (change)="onCancelledChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show cancelled vouchers <em>(on Submit)</em></span>
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="lr-filter-foot">
+
+                <!-- How the figures work (full text on hover) -->
+                <span class="fa-foot-note" title="Every voucher that brought money into a Cash, Bank, MFS, POS or EMI ledger (POS / EMI on the sale day). Money paid back to a customer (sales return, refund) shows as a negative refund. Transfers between cash and bank are not collections. The document is the voucher's source (a sales invoice's receipt shows the invoice).">
+                    <i class="fas fa-circle-info"></i>
+                    <span>Money into cash, bank, MFS, POS, EMI; refunds negative; transfers left out.</span>
+                </span>
+
+                <button
+                    type="button"
+                    class="lr-btn lr-btn-primary"
+                    [disabled]="branchesLoading || loading || !!branchesError"
+                    (click)="submit()">
+                    Submit
+                </button>
+
+            </div>
+
+        </aside>
+
+        <!-- ---------------- CANVAS ---------------- -->
+
+        <section class="lr-canvas">
+
+            <!-- Switch bar : one line over the canvas -->
+            <div class="lr-switchbar">
+
+                <span class="lr-switchbar-title"><i class="fas fa-sliders"></i> View</span>
+
+                <span class="lr-seg" role="group" aria-label="View">
+                    <button
+                        type="button"
+                        [class.on]="view === 'day'"
+                        title="One row per day; a day opens its receipts"
+                        (click)="setView('day')">
+                        <i class="fas fa-calendar-day"></i> By day
+                    </button>
+                    <button
+                        type="button"
+                        [class.on]="view === 'all'"
+                        title="Every receipt and refund"
+                        (click)="setView('all')">
+                        <i class="fas fa-list"></i> Every receipt
+                    </button>
+                </span>
+
+                <!-- Breakdown : opens the totals pop-up -->
+                <button
+                    type="button"
+                    class="fa-bar-btn"
+                    [disabled]="!report || loading"
+                    title="Totals by mode, business line, document and collector"
+                    (click)="openBreakdown(0)">
+                    <i class="fas fa-chart-pie"></i> Breakdown
+                    <i class="fas fa-arrow-up-right-from-square fa-bar-btn-go"></i>
+                </button>
+
+            </div>
+
+            @if (!loaded)
+            {
+                <div class="lr-empty">
+                    <i class="fas fa-cash-register lr-empty-ico"></i>
+                    <b>Choose the period and branch, then press Submit</b>
+                    <span>Each day's collection by Cash, Bank, MFS, POS and EMI, the refunds and the net, with every receipt behind it.</span>
+                </div>
+            }
+            @else if (loading)
+            {
+                <div class="tb-loading">
+                    <app-orbit-loader
+                        title="Loading Daily Collection"
+                        message="Reading every receipt of the period…">
+                    </app-orbit-loader>
+                </div>
+            }
+            @else if (loadError)
+            {
+                <div class="lr-empty lr-error"><i class="fas fa-triangle-exclamation"></i> {{ loadError }}</div>
+            }
+            @else if (report && grand)
+            {
+                <div class="lr-view">
+
+                    <div class="lr-card lr-head">
+
+                        <div class="lr-head-info">
+                            <div class="lr-head-title">
+                                <b>Daily Collection</b>
+                                <span class="lr-pill">{{ view === 'day' ? 'By day' : 'Every receipt' }}</span>
+                                @if (collectedBy >= 0)
+                                {
+                                    <span class="lr-pill">Collector filtered</span>
+                                }
+                                @if (line)
+                                {
+                                    <span class="lr-pill">{{ lineName(line) }}</span>
+                                }
+                                @if (report.ShowCancelled)
+                                {
+                                    <span class="lr-pill lr-pill-warn">Cancelled shown</span>
+                                }
+                            </div>
+                            <div class="lr-head-sub">
+                                <span class="lr-clip">{{ grand.count }} receipt{{ grand.count === 1 ? '' : 's' }} · {{ days.length }} day{{ days.length === 1 ? '' : 's' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="lr-figs">
+                            <div>
+                                <span>Collected</span>
+                                <b>{{ total(grand.collections) }}</b>
+                            </div>
+                            <div>
+                                <span>Refunds</span>
+                                <b>{{ total(grand.refunds) }}</b>
+                            </div>
+                            <div class="tb-check is-ok">
+                                <span>Net collection</span>
+                                <b>{{ total(grand.net) }}</b>
+                            </div>
+                        </div>
+
+                        <div class="lr-head-period">
+                            <b>{{ date(report.From) }}{{ report.From === report.To ? '' : ' – ' + date(report.To) }}</b>
+                            <span>{{ report.BranchName }}</span>
+                        </div>
+
+                    </div>
+
+                    @if (report.Message)
+                    {
+                        <div class="lr-note"><i class="fas fa-circle-info"></i> {{ report.Message }}</div>
+                    }
+
+                    <div class="fa-main">
+
+                        <div class="lr-card tb-tcard fa-tcard">
+
+                            <div class="tb-scroll appcore-scrollbar">
+
+                                @if (view === 'day')
+                                {
+                                    <table class="lr-table dc-table">
+
+                                        <colgroup>
+                                            <col class="c-day">
+                                            @for (mode of modes; track mode.key)
+                                            {
+                                                <col>
+                                            }
+                                            <col>
+                                            <col>
+                                            <col>
+                                        </colgroup>
+
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <span>Day</span>
+                                                    <span class="tb-tools">
+                                                        <button type="button" class="lr-link" (click)="openAllDays()">Open all</button>
+                                                        <button type="button" class="lr-link" (click)="closeAllDays()">Close all</button>
+                                                    </span>
+                                                </th>
+                                                @for (mode of modes; track mode.key)
+                                                {
+                                                    <th class="r">{{ mode.label }}</th>
+                                                }
+                                                <th class="r">Collected</th>
+                                                <th class="r">Refunds</th>
+                                                <th class="r dc-net">Net</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @for (day of days; track day.date)
+                                            {
+                                                <tr class="dc-day lr-click" [class.is-open]="isOpen(day)" (click)="toggleDay(day)" [title]="isOpen(day) ? 'Hide the receipts' : 'Show the receipts'">
+                                                    <td>
+                                                        <span class="tb-name">
+                                                            <i class="fas tb-caret" [class.fa-caret-right]="!isOpen(day)" [class.fa-caret-down]="isOpen(day)"></i>
+                                                            <span>{{ dayName(day.date) }}</span>
+                                                            <span class="tb-count">{{ day.count }}</span>
+                                                        </span>
+                                                    </td>
+                                                    <td class="r">{{ money(day.cash) }}</td>
+                                                    <td class="r">{{ money(day.bank) }}</td>
+                                                    <td class="r">{{ money(day.mfs) }}</td>
+                                                    <td class="r">{{ money(day.pos) }}</td>
+                                                    <td class="r">{{ money(day.emi) }}</td>
+                                                    <td class="r">{{ money(day.collections) }}</td>
+                                                    <td class="r dc-neg">{{ money(day.refunds) }}</td>
+                                                    <td class="r dc-net">{{ total(day.net) }}</td>
+                                                </tr>
+                                                @if (isOpen(day))
+                                                {
+                                                    <tr class="dc-detail-row">
+                                                        <td colspan="9">
+                                                            <table class="dc-detail">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Time</th>
+                                                                        <th>Document</th>
+                                                                        <th>Customer / from</th>
+                                                                        <th>Mode · account</th>
+                                                                        <th>Line</th>
+                                                                        <th>Collected by</th>
+                                                                        <th class="r">Amount</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @for (row of day.rows; track row.VoucherNo)
+                                                                    {
+                                                                        <tr [class.is-refund]="row.IsRefund">
+                                                                            <td class="lr-mono">{{ row.Time }}</td>
+                                                                            <td>
+                                                                                <b class="lr-mono">{{ row.DocumentNo }}</b>
+                                                                                <span class="dc-sub">{{ row.DocumentType }}{{ row.DocumentNo !== row.VoucherNo ? ' · ' + row.VoucherNo : '' }}</span>
+                                                                            </td>
+                                                                            <td class="dc-wrap">{{ row.Customer || '—' }}</td>
+                                                                            <td class="dc-wrap">
+                                                                                {{ modeOf(row) }}
+                                                                                <span class="dc-sub">{{ row.Accounts }}</span>
+                                                                            </td>
+                                                                            <td>{{ lineName(row.Line) }}</td>
+                                                                            <td>{{ row.CollectedBy }}</td>
+                                                                            <td class="r lr-bal" [class.dc-neg]="row.IsRefund">{{ total(row.Total) }}</td>
+                                                                        </tr>
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                            @if (days.length === 0)
+                                            {
+                                                <tr class="lr-none">
+                                                    <td colspan="9">{{ searchText || collectedBy >= 0 || line ? 'No receipt matches the filter.' : 'No money came in during this period.' }}</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+
+                                        <tfoot>
+                                            <tr class="dc-total">
+                                                <td>Total · {{ days.length }} day{{ days.length === 1 ? '' : 's' }}</td>
+                                                <td class="r">{{ total(grand.cash) }}</td>
+                                                <td class="r">{{ total(grand.bank) }}</td>
+                                                <td class="r">{{ total(grand.mfs) }}</td>
+                                                <td class="r">{{ total(grand.pos) }}</td>
+                                                <td class="r">{{ total(grand.emi) }}</td>
+                                                <td class="r">{{ total(grand.collections) }}</td>
+                                                <td class="r">{{ total(grand.refunds) }}</td>
+                                                <td class="r dc-net">{{ total(grand.net) }}</td>
+                                            </tr>
+                                        </tfoot>
+
+                                    </table>
+                                }
+                                @else
+                                {
+                                    <table class="lr-table dc-table dc-all">
+
+                                        <colgroup>
+                                            <col class="c-date">
+                                            <col class="c-doc">
+                                            <col>
+                                            <col>
+                                            <col class="c-line">
+                                            <col class="c-user">
+                                            <col class="c-amt2">
+                                        </colgroup>
+
+                                        <thead>
+                                            <tr>
+                                                <th>Date · time</th>
+                                                <th>Document</th>
+                                                <th>Customer / from</th>
+                                                <th>Mode · account</th>
+                                                <th>Line</th>
+                                                <th>Collected by</th>
+                                                <th class="r dc-net">Amount</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @for (row of rows; track row.VoucherNo)
+                                            {
+                                                <tr [class.is-refund]="row.IsRefund">
+                                                    <td>{{ date(row.Date) }} <span class="dc-sub lr-mono">{{ row.Time }}</span></td>
+                                                    <td>
+                                                        <b class="lr-mono">{{ row.DocumentNo }}</b>
+                                                        <span class="dc-sub">{{ row.DocumentType }}{{ row.DocumentNo !== row.VoucherNo ? ' · ' + row.VoucherNo : '' }}</span>
+                                                    </td>
+                                                    <td class="dc-wrap">{{ row.Customer || '—' }}</td>
+                                                    <td class="dc-wrap">
+                                                        {{ modeOf(row) }}
+                                                        <span class="dc-sub">{{ row.Accounts }}</span>
+                                                    </td>
+                                                    <td>{{ lineName(row.Line) }}</td>
+                                                    <td>{{ row.CollectedBy }}</td>
+                                                    <td class="r lr-bal dc-net" [class.dc-neg]="row.IsRefund">{{ total(row.Total) }}</td>
+                                                </tr>
+                                            }
+                                            @if (rows.length === 0)
+                                            {
+                                                <tr class="lr-none">
+                                                    <td colspan="7">{{ searchText || collectedBy >= 0 || line ? 'No receipt matches the filter.' : 'No money came in during this period.' }}</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+
+                                        <tfoot>
+                                            <tr class="dc-total">
+                                                <td colspan="6">Total · {{ rows.length }} receipt{{ rows.length === 1 ? '' : 's' }}</td>
+                                                <td class="r dc-net">{{ total(grand.net) }}</td>
+                                            </tr>
+                                        </tfoot>
+
+                                    </table>
+                                }
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+    <!-- =====================================================
+         POP-UP : totals by mode / line / document / collector
+    ====================================================== -->
+
+    @if (breakdownOpen && report && grand)
+    {
+        <div class="fa-modal-back" (click)="closeBreakdown()">
+
+            <div
+                class="fa-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Collection breakdown"
+                (click)="$event.stopPropagation()">
+
+                <div class="fa-modal-head">
+                    <i class="fas fa-chart-pie fa-modal-ico"></i>
+                    <div class="fa-modal-title">
+                        <b>Collection breakdown <em>(net of refunds)</em></b>
+                        <span>{{ date(report.From) }}{{ report.From === report.To ? '' : ' – ' + date(report.To) }} · {{ report.BranchName }}</span>
+                    </div>
+                    <button type="button" class="fa-modal-x" title="Close (Esc)" (click)="closeBreakdown()">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="fa-modal-tabs" role="tablist">
+                    @for (block of panelBlocks; track block.title; let i = $index)
+                    {
+                        <button
+                            type="button"
+                            role="tab"
+                            [class.on]="breakdownTab === i"
+                            [attr.aria-selected]="breakdownTab === i"
+                            (click)="setBreakdownTab(i)">
+                            {{ block.title }}
+                            <span class="tb-count">{{ block.items.length }}</span>
+                        </button>
+                    }
+                </div>
+
+                <div class="fa-modal-body appcore-scrollbar">
+
+                    @if (panelBlocks[breakdownTab]; as block)
+                    {
+                        <div class="fa-share-list">
+                            @for (item of block.items; track item.key)
+                            {
+                                <div class="fa-share" [class.is-neg]="item.amount < 0">
+                                    <div class="fa-share-top">
+                                        <span class="lr-clip">{{ item.name }} <em>{{ item.count }} receipt{{ item.count === 1 ? '' : 's' }}</em></span>
+                                        <b>{{ total(item.amount) }}</b>
+                                    </div>
+                                    <div class="fa-bl-bar"><i [style.width.%]="shareOf(block.items, item.amount)"></i></div>
+                                    <span class="fa-share-pct">{{ sharePct(item.amount) }}</span>
+                                </div>
+                            }
+                            @empty
+                            {
+                                <div class="lr-empty fa-modal-empty">Nothing collected in this period.</div>
+                            }
+                        </div>
+                    }
+
+                </div>
+
+                <div class="fa-modal-foot">
+                    <div class="fa-modal-nav">
+                        <button type="button" class="lr-btn" [disabled]="breakdownTab === 0" (click)="setBreakdownTab(breakdownTab - 1)">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <button type="button" class="lr-btn" [disabled]="breakdownTab >= panelBlocks.length - 1" (click)="setBreakdownTab(breakdownTab + 1)">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="fa-modal-sum">
+                        <span>Net collection</span>
+                        <b>{{ total(grand.net) }}</b>
+                    </div>
+                    <button type="button" class="lr-btn lr-btn-primary" (click)="closeBreakdown()">Close</button>
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <app-toast></app-toast>
+
+</div>

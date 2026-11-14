@@ -5,8 +5,10 @@
 
 .pf-body.pfp-body
 {
-    grid-auto-rows: minmax(min-content, 1fr);
-    align-content: stretch;
+    /* both cards as tall as the taller one, no taller */
+    grid-auto-rows: min-content;
+    align-content: start;
+    align-items: stretch;
 }
 
 /* the forfeiture rules under the list */
@@ -31,4 +33,134 @@
 {
     color: #1e3a8a;
     font-size: 12px;
+}
+
+
+/* Tabs (2026-11-14) : the part being edited on the left, the
+   whole policy on the right */
+
+.pf-body.pfp-body
+{
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+}
+
+.pfp-lead
+{
+    margin: -4px 0 4px;
+}
+
+.pfp-steps
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pfp-step-text
+{
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pfp-step
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pfp-step:hover:not(:disabled)
+{
+    border-color: #9fc2f7;
+    background: #f3f7ff;
+}
+
+.pfp-step:disabled
+{
+    opacity: .45;
+    cursor: default;
+}
+
+.pfp-step-next:not(:disabled)
+{
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.pfp-step-next:hover:not(:disabled)
+{
+    background: #1e40af;
+}
+
+/* the whole policy at a glance */
+
+.pfp-glance
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+}
+
+.pfp-glance-row
+{
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid #e3e9f3;
+    border-radius: 11px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color .2s ease, background .2s ease;
+}
+
+.pfp-glance-row:hover
+{
+    border-color: #9fc2f7;
+    background: #f7faff;
+}
+
+.pfp-glance-row.on
+{
+    border-color: #1e3a8a;
+    background: #f3f7ff;
+}
+
+.pfp-glance-row dt
+{
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+.pfp-glance-row dd
+{
+    margin: 0;
+    color: #1e293b;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+@media (max-width: 1100px)
+{
+    .pf-body.pfp-body
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }

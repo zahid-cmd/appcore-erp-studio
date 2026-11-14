@@ -77,10 +77,101 @@
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
+                detailKey="PublicId"
+                [detailValue]="openId"
+                [detailContext]="detail"
+                (rowClick)="toggle($event)"
                 (view)="open($event)"
                 (edit)="open($event)"
                 (delete)="delete($event)"
                 (sortChange)="onSort($event)">
+
+                <!-- the employees of the sheet, under its row -->
+                <ng-template
+                    #rowDetail
+                    let-row
+                    let-data="data">
+
+                    <div class="ssl-detail">
+
+                        @if (data.loading)
+                        {
+                            <div class="ssl-note">Loading the employees of {{ row.Code }}...</div>
+                        }
+                        @else if (data.failed)
+                        {
+                            <div class="ssl-note">The employees of {{ row.Code }} could not be loaded.</div>
+                        }
+                        @else if (data.lines.length === 0)
+                        {
+                            <div class="ssl-note">{{ row.Code }} has no employee.</div>
+                        }
+                        @else
+                        {
+                            <table class="ssl-table">
+
+                                <thead>
+                                    <tr>
+                                        <th class="ssl-no">#</th>
+                                        <th>Employee</th>
+                                        <th>Days</th>
+                                        <th class="ssl-num">Gross</th>
+                                        <th class="ssl-num">Absence</th>
+                                        <th class="ssl-num">Late</th>
+                                        <th class="ssl-num">Other +</th>
+                                        <th class="ssl-num">Earned</th>
+                                        <th class="ssl-num">PF / Tax</th>
+                                        <th class="ssl-num">Advance</th>
+                                        <th class="ssl-num">Other -</th>
+                                        <th class="ssl-num">Net Pay</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @for (line of data.lines; track line.SalarySheetLineId; let i = $index)
+                                    {
+                                        <tr>
+                                            <td class="ssl-no">{{ i + 1 }}</td>
+                                            <td>
+                                                <b>{{ line.EmployeeName }}</b>
+                                                <small>{{ line.EmployeeCode }} · {{ line.DesignationName }}</small>
+                                            </td>
+                                            <td>{{ days(line) }}</td>
+                                            <td class="ssl-num">{{ money(line.GrossSalary) }}</td>
+                                            <td class="ssl-num ssl-minus">{{ blank(line.AbsenceDeduction) }}</td>
+                                            <td class="ssl-num ssl-minus">{{ blank(line.LateDeduction) }}</td>
+                                            <td class="ssl-num">{{ blank(line.OtherEarning) }}</td>
+                                            <td class="ssl-num ssl-strong">{{ money(line.EarnedSalary) }}</td>
+                                            <td class="ssl-num ssl-minus">{{ blank(kept(line)) }}</td>
+                                            <td class="ssl-num ssl-minus">{{ blank(line.AdvanceDeduction) }}</td>
+                                            <td class="ssl-num ssl-minus">{{ blank(line.OtherDeduction) }}</td>
+                                            <td class="ssl-num ssl-net">{{ money(line.NetPay) }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3">Total ({{ data.lines.length }})</td>
+                                        <td class="ssl-num">{{ sum(gross) }}</td>
+                                        <td class="ssl-num">{{ sum(absence) }}</td>
+                                        <td class="ssl-num">{{ sum(late) }}</td>
+                                        <td class="ssl-num">{{ sum(otherPlus) }}</td>
+                                        <td class="ssl-num">{{ sum(earned) }}</td>
+                                        <td class="ssl-num">{{ sum(keptOf) }}</td>
+                                        <td class="ssl-num">{{ sum(advance) }}</td>
+                                        <td class="ssl-num">{{ sum(otherMinus) }}</td>
+                                        <td class="ssl-num">{{ sum(net) }}</td>
+                                    </tr>
+                                </tfoot>
+
+                            </table>
+                        }
+
+                    </div>
+
+                </ng-template>
+
             </app-list-table>
         </div>
 
@@ -115,7 +206,7 @@
             }
 
             <span class="pay-summary-note">
-                Open a sheet to approve, post, pay and print payslips
+                Click a row to see its employees; open a sheet to approve, post, pay and print payslips
             </span>
 
         </div>

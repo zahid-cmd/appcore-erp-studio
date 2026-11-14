@@ -31,6 +31,7 @@ from '../../../../environments/environment';
 import
 {
     PfDefaults,
+    PfInterestHome,
     PfInterestRun,
     PfInterestYear,
     PfLoan,
@@ -210,28 +211,50 @@ export class ProvidentFundService
 
     // ---------- Interest ----------
 
-    getInterestRuns():
-        Observable<PfInterestRun[]>
+    // The financial years and the interest credited already
+    getInterestHome():
+        Observable<PfInterestHome>
     {
-        return this.list<PfInterestRun>(`${this.api}/interest`);
+        return this.http
+            .get<any>(`${this.api}/interest`)
+            .pipe(map(x =>
+            {
+                const home = pascal(x ?? {});
+
+                return {
+                    Years:(home.Years ?? []).map((y: any) => pascal(y)),
+                    Runs:(home.Runs ?? []).map((r: any) => pascal(r))
+                } as PfInterestHome;
+            }));
     }
 
-    previewInterest(year: number):
+    previewInterest(financialYearId: number):
         Observable<PfInterestYear>
     {
-        return this.one<PfInterestYear>(`${this.api}/interest/${year}`);
+        return this.http
+            .get<any>(`${this.api}/interest/${financialYearId}`)
+            .pipe(map(x =>
+            {
+                const data = pascal(x ?? {});
+
+                return {
+                    ...data,
+                    Year:pascal(data.Year ?? {}),
+                    Rows:(data.Rows ?? []).map((r: any) => pascal(r))
+                } as PfInterestYear;
+            }));
     }
 
-    postInterest(year: number):
+    postInterest(financialYearId: number):
         Observable<PfInterestRun>
     {
-        return this.http.post<any>(`${this.api}/interest/${year}`, {}).pipe(map(x => pascal(x) as PfInterestRun));
+        return this.http.post<any>(`${this.api}/interest/${financialYearId}`, {}).pipe(map(x => pascal(x) as PfInterestRun));
     }
 
-    deleteInterest(year: number):
+    deleteInterest(id: number):
         Observable<void>
     {
-        return this.http.delete<void>(`${this.api}/interest/${year}`);
+        return this.http.delete<void>(`${this.api}/interest/${id}`);
     }
 
     // ---------- Reports ----------
@@ -244,11 +267,11 @@ export class ProvidentFundService
 
     // Loan interest received and company parts forfeited
     getIncome():
-        Observable<{ LoanInterest: number; Forfeited: number }>
+        Observable<{ LoanInterest: number; Forfeited: number; ForfeitedToCompany: number }>
     {
         return this.http
             .get<any>(`${this.api}/reports/income`)
-            .pipe(map(x => ({ LoanInterest:0, Forfeited:0, ...pascal(x ?? {}) })));
+            .pipe(map(x => ({ LoanInterest:0, Forfeited:0, ForfeitedToCompany:0, ...pascal(x ?? {}) })));
     }
 
     getStatement(memberId: number):

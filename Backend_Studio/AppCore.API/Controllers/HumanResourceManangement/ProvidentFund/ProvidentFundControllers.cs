@@ -327,27 +327,29 @@ public class PfInterestController
 
     protected override string PageName => "PF Interest";
 
+    // The financial years and the interest credited already
     [HttpGet]
-    public Task<IActionResult> GetRuns() =>
-        Run(async () => Ok(await _repository.GetInterestRunsAsync()), "The interest of the fund could not be loaded.");
+    public Task<IActionResult> GetHome() =>
+        Run(async () => Ok(await _repository.GetInterestHomeAsync()), "The interest of the fund could not be loaded.");
 
-    [HttpGet("{year:int}")]
-    public Task<IActionResult> Preview(int year) =>
-        Run(async () => Ok(await _repository.PreviewInterestAsync(year)), "The interest could not be worked out.");
+    // The interest of a financial year as it would be credited
+    [HttpGet("{financialYearId:long}")]
+    public Task<IActionResult> Preview(long financialYearId) =>
+        Run(async () => Ok(await _repository.PreviewInterestAsync(financialYearId)), "The interest could not be worked out.");
 
-    [HttpPost("{year:int}")]
-    public Task<IActionResult> Post(int year)
+    [HttpPost("{financialYearId:long}")]
+    public Task<IActionResult> Post(long financialYearId)
     {
         long userId = UserId;
 
         return Guarded(
             new[] { "Add", "Update" },
-            async () => Ok(await _repository.PostInterestAsync(year, userId)),
+            async () => Ok(await _repository.PostInterestAsync(financialYearId, userId)),
             "The interest could not be credited.");
     }
 
-    [HttpDelete("{year:int}")]
-    public Task<IActionResult> Delete(int year)
+    [HttpDelete("{id:long}")]
+    public Task<IActionResult> Delete(long id)
     {
         long userId = UserId;
 
@@ -355,7 +357,7 @@ public class PfInterestController
             new[] { "Delete" },
             async () =>
             {
-                await _repository.DeleteInterestAsync(year, userId);
+                await _repository.DeleteInterestAsync(id, userId);
 
                 return NoContent();
             },

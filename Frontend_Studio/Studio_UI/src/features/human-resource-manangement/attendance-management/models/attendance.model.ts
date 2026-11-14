@@ -208,6 +208,8 @@ export interface LeaveApplicationDefaults
 
 export interface LeaveBalance
 {
+    // The leave year the balance is of (a financial year)
+    YearName: string;
     LeaveTypeId: number;
     Name: string;
     ShortName: string;

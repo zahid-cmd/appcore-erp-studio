@@ -53,13 +53,14 @@
                         [readonly]="true">
                     </app-textbox>
 
-                    <label class="pf-native">
-                        <span class="pf-label">Salary Month <b>*</b></span>
-                        <input
-                            type="month"
-                            [value]="monthValue"
-                            (change)="onMonth($event)">
-                    </label>
+                    <app-datepicker
+                        label="Salary Month"
+                        [required]="true"
+                        [monthMode]="true"
+                        placeholder="Select Month"
+                        [value]="$any(asMonth(monthValue))"
+                        (valueChange)="onMonth(monthEvent($event))">
+                    </app-datepicker>
 
                     <div class="pf-wide">
                         <app-search-dropdown
@@ -89,6 +90,32 @@
                         textCase="none"
                         (valueChange)="onRemarks($event)">
                     </app-textbox>
+
+                    @if (unpaidAdvances.length > 0)
+                    {
+                        <div
+                            class="pf-wide pf-hint sg-unpaid"
+                            [title]="unpaidTitle">
+                            <i class="fas fa-hand-holding-dollar"></i>
+                            <div>
+                                <b>
+                                    {{ unpaidAdvances.length }} advance(s) not paid out by the end of {{ monthText }} :
+                                    Tk {{ money(unpaidTotal) }} will not be recovered on this sheet.
+                                </b>
+                                <ul>
+                                    @for (advance of unpaidAdvances.slice(0, unpaidShown); track advance.AdvanceId)
+                                    {
+                                        <li>{{ unpaidText(advance) }}</li>
+                                    }
+                                    @if (unpaidAdvances.length > unpaidShown)
+                                    {
+                                        <li>... and {{ unpaidAdvances.length - unpaidShown }} more (hover to see all)</li>
+                                    }
+                                </ul>
+                                <span>Pay them on Payroll Payments (dated in {{ monthText }}) to recover them now, or leave them for a later month.</span>
+                            </div>
+                        </div>
+                    }
 
                     @if (isFutureMonth)
                     {
@@ -127,8 +154,8 @@
                     <li>Every employee of the branch with a salary structure gets a line (set the salary on Employee Profiles).</li>
                     <li>Unpaid days are absent days, unpaid leave, days not marked, half of each half day and the days before joining. Their share of the salary is cut.</li>
                     <li>Late : with 3 here, every 3 late days cut one day of Basic. 0 means late days are not cut.</li>
-                    <li>Overtime hours are paid at the employee's overtime rate.</li>
-                    <li>The structure's deductions (provident fund, tax ...) and the salary advance installments are taken off.</li>
+                    <li>Overtime is not part of the salary sheet : it is worked out with it and shown on the Overtime Sheet of the month once the sheet is posted.</li>
+                    <li>The structure's deductions (provident fund, tax ...) and the salary advance installments are taken off : only advances paid out on Payroll Payments by the month end are recovered.</li>
                     <li>On the Draft sheet you can add another earning or deduction for anyone, then approve and post it.</li>
                 </ul>
 

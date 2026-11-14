@@ -1,0 +1,670 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Fixed Asset Register"
+            [subtitle]="subtitle"
+            icon="fas fa-building-columns">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search asset no, asset, custodian..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Refresh"
+                    command1Icon="fas fa-rotate-right"
+                    (command1Click)="loadList()"
+                    command2Text="Print"
+                    command2Icon="fas fa-print"
+                    command2Title="Print the cards of the list"
+                    (command2Click)="printList()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+            <div
+                pageToolbarRight
+                class="far-filters">
+
+                <app-search-dropdown
+                    placeholder="All Branches"
+                    [items]="branchFilterItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="branchFilter"
+                    (valueChange)="onBranchFilter($event)">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    placeholder="All Asset Groups"
+                    [items]="categoryFilterItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="categoryFilter"
+                    (valueChange)="onCategoryFilter($event)">
+                </app-search-dropdown>
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [actions]="listActions"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    (view)="view($event)"
+                    (edit)="edit($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <div class="pay-summary">
+                @for (item of summaryItems; track item.label)
+                {
+                    <span class="pay-summary-item">
+                        <span class="pay-summary-label">{{ item.label }}</span>
+                        <b class="pay-summary-value">{{ item.value }}</b>
+                    </span>
+                }
+                <span class="pay-summary-note">
+                    A card is made by an Asset Acquisition or on Opening Assets
+                </span>
+            </div>
+        }
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Fixed Asset Register History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else if (mode === 'view')
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="subtitle"
+            icon="fas fa-building-columns">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Edit"
+                    command1Icon="fas fa-pen"
+                    command1Permission="update"
+                    (command1Click)="editCard()"
+                    [command1Visible]="canEdit"
+                    command2Text="Print"
+                    command2Icon="fas fa-print"
+                    command2Title="Print the card with its history"
+                    (command2Click)="printCard()"
+                    [command2Visible]="!!card"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split far-view appcore-scrollbar">
+
+                @if (!card)
+                {
+                    <div class="pfx-empty far-wide">
+                        {{ loadFailed ? 'The asset card could not be loaded.' : 'Loading the asset card...' }}
+                    </div>
+                }
+                @else
+                {
+                    <!-- ============ TOP : the asset at a glance ============ -->
+
+                    <div class="far-hero far-wide">
+
+                        <div class="far-who">
+
+                            <span class="far-icon"><i class="fas fa-building-columns"></i></span>
+
+                            <div class="far-title">
+
+                                <div class="far-line">
+                                    <span class="far-no">{{ card.AssetNo }}</span>
+                                    <b class="far-name">{{ card.Name }}</b>
+                                    <span
+                                        class="far-status"
+                                        [class.far-status-ok]="card.Status === 'In Use'"
+                                        [class.far-status-wait]="card.Status === 'Idle' || card.Status === 'Under Repair'">{{ card.Status }}{{ card.DisposedDate ? ' · ' + day(card.DisposedDate) : '' }}</span>
+                                </div>
+
+                                <div class="far-chips">
+                                    <span><i class="fas fa-layer-group"></i>{{ card.CategoryName }}</span>
+                                    <span><i class="fas fa-store"></i>{{ card.BranchName }}</span>
+                                    @if (card.LocationName)
+                                    {
+                                        <span><i class="fas fa-location-dot"></i>{{ card.LocationName }}</span>
+                                    }
+                                    @if (card.CustodianName)
+                                    {
+                                        <span><i class="fas fa-user"></i>{{ card.CustodianName }}</span>
+                                    }
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="far-tiles">
+
+                            <div class="far-tile">
+                                <span>Total Cost</span>
+                                <b>{{ money(card.TotalCost) }}</b>
+                            </div>
+
+                            <div class="far-tile">
+                                <span>Depreciation</span>
+                                <b>{{ money(card.AccumulatedDepreciation) }}</b>
+                            </div>
+
+                            <div class="far-tile far-tile-main">
+                                <span>Book Value</span>
+                                <b>Tk {{ money(card.BookValue) }}</b>
+                            </div>
+
+                            <div class="far-tile">
+                                <span>Next Month</span>
+                                <b>{{ chargeText }}</b>
+                            </div>
+
+                        </div>
+
+                        <!-- how far it is depreciated -->
+
+                        <div class="far-progress">
+                            <div class="far-bar"><i [style.width.%]="depreciatedPercent"></i></div>
+                            <span><b>{{ depreciatedPercent }} %</b> depreciated</span>
+                            <span>{{ ruleText }}</span>
+                            <span>Up to <b>{{ card.LastRunText || 'not yet' }}</b></span>
+                        </div>
+
+                    </div>
+
+                    <!-- ============ LEFT : the details ============ -->
+
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-circle-info"></i>
+                            <span>Details</span>
+                        </header>
+
+                        <div class="far-grid">
+
+                            <div>
+                                <span>Brand / Model / Serial</span>
+                                <b>{{ makeText }}</b>
+                            </div>
+
+                            <div>
+                                <span>Quantity</span>
+                                <b>{{ quantityText }}</b>
+                            </div>
+
+                            <div>
+                                <span>Purchase Date</span>
+                                <b>{{ day(card.PurchaseDate) || '-' }}</b>
+                            </div>
+
+                            <div>
+                                <span>Put to Use</span>
+                                <b>{{ day(card.UseDate) || '-' }}</b>
+                            </div>
+
+                            <div>
+                                <span>Cost</span>
+                                <b>{{ money(card.Cost) }}</b>
+                            </div>
+
+                            <div>
+                                <span>Residual Value</span>
+                                <b>{{ money(card.ResidualValue) }}</b>
+                            </div>
+
+                            <div>
+                                <span>Depreciation Rule</span>
+                                <b>{{ ruleText }}</b>
+                            </div>
+
+                            <div>
+                                <span>Source</span>
+                                <b>{{ sourceText }}</b>
+                            </div>
+
+                            <div>
+                                <span>Purchase Reference</span>
+                                <b>{{ card.PurchaseRef || '-' }}</b>
+                            </div>
+
+                            @if (card.SupplierName)
+                            {
+                                <div class="far-full">
+                                    <span>Supplier</span>
+                                    <b>{{ card.SupplierName }}</b>
+                                </div>
+                            }
+
+                            @if (card.Description)
+                            {
+                                <div class="far-full">
+                                    <span>Description</span>
+                                    <b>{{ card.Description }}</b>
+                                </div>
+                            }
+
+                            @if (card.Remarks)
+                            {
+                                <div class="far-full">
+                                    <span>Remarks</span>
+                                    <b>{{ card.Remarks }}</b>
+                                </div>
+                            }
+
+                        </div>
+
+                    </section>
+
+                    <!-- ============ RIGHT : everything that happened to it ============ -->
+
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-clock-rotate-left"></i>
+                            <span>History</span>
+                            <span class="far-count">{{ history.length }}</span>
+                        </header>
+
+                        @if (history.length === 0)
+                        {
+                            <div class="pfx-empty">Nothing has happened to this card yet.</div>
+                        }
+                        @else
+                        {
+                            <ol class="far-timeline">
+                                @for (item of history; track $index)
+                                {
+                                    <li [attr.data-kind]="item.Kind">
+                                        <span class="far-dot"><i [class]="'fas ' + kindIcon(item.Kind)"></i></span>
+                                        <div class="far-event">
+                                            <div class="far-event-top">
+                                                <b>{{ item.Kind }}</b>
+                                                @if (item.Code)
+                                                {
+                                                    <span class="far-code">{{ item.Code }}</span>
+                                                }
+                                                <span class="far-date">{{ day(item.Date) }}</span>
+                                            </div>
+                                            <div class="far-event-text">{{ item.Text }}</div>
+                                        </div>
+                                        <span class="far-amount">{{ item.Amount ? money(item.Amount) : '' }}</span>
+                                    </li>
+                                }
+                            </ol>
+                        }
+
+                    </section>
+                }
+
+            </div>
+
+        </app-page-canvas>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="subtitle"
+            icon="fas fa-building-columns">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Update"
+                    command1Icon="fas fa-floppy-disk"
+                    command1Permission="update"
+                    (command1Click)="onSave()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split far-form appcore-scrollbar">
+
+                <!-- ============ LEFT : the asset ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-building-columns"></i>
+                        <span>Asset</span>
+                    </header>
+
+                    <app-textbox
+                        label="Asset No"
+                        [value]="card?.AssetNo ?? ''"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Name"
+                        [value]="name"
+                        [maxLength]="150"
+                        (valueChange)="onText('name', $event)"
+                        [required]="true">
+                    </app-textbox>
+
+                    <app-search-dropdown
+                        label="Location"
+                        placeholder="Select location"
+                        [items]="locationItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="locationId"
+                        (valueChange)="onChoice('locationId', $event)">
+                    </app-search-dropdown>
+
+                    <app-search-dropdown
+                        label="Custodian"
+                        placeholder="Select employee"
+                        [items]="custodianItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="custodianId"
+                        (valueChange)="onChoice('custodianId', $event)">
+                    </app-search-dropdown>
+
+                    <app-dropdown
+                        label="Status"
+                        [items]="statusItems"
+                        [value]="status"
+                        (valueChange)="onStatus($event)">
+                    </app-dropdown>
+
+                    <app-textbox
+                        label="Brand"
+                        textCase="none"
+                        [value]="brand"
+                        [maxLength]="100"
+                        (valueChange)="onText('brand', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Model"
+                        textCase="none"
+                        [value]="model"
+                        [maxLength]="100"
+                        (valueChange)="onText('model', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Serial No"
+                        textCase="none"
+                        [value]="serial"
+                        [maxLength]="100"
+                        (valueChange)="onText('serial', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Supplier"
+                        [value]="supplier"
+                        [maxLength]="150"
+                        (valueChange)="onText('supplier', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Purchase Reference"
+                        textCase="none"
+                        [value]="purchaseRef"
+                        [maxLength]="50"
+                        (valueChange)="onText('purchaseRef', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Description"
+                        placeholder="Optional"
+                        textCase="none"
+                        [value]="description"
+                        [maxLength]="500"
+                        (valueChange)="onText('description', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        textCase="none"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        (valueChange)="onText('remarks', $event)">
+                    </app-textbox>
+
+                </section>
+
+                <!-- ============ RIGHT : the value and the rule ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-coins"></i>
+                        <span>Value and Depreciation</span>
+                    </header>
+
+                    @if (card && moneyLocked)
+                    {
+                        <span class="hp-note hp-bad">{{ lockedNote }}</span>
+                    }
+
+                    <app-search-dropdown
+                        label="Asset Group"
+                        placeholder="Select asset group"
+                        [items]="categoryItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="categoryId"
+                        [disabled]="moneyLocked"
+                        (valueChange)="onCategory($event)">
+                    </app-search-dropdown>
+
+                    <app-search-dropdown
+                        label="Branch"
+                        placeholder="Select branch"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="branchId"
+                        [disabled]="moneyLocked"
+                        (valueChange)="onBranch($event)">
+                    </app-search-dropdown>
+
+                    <app-datepicker
+                        label="Purchase Date"
+                        [disabled]="moneyLocked"
+                        [value]="$any(asDate(purchaseDate))"
+                        (valueChange)="onDate('purchaseDate', $event)">
+                    </app-datepicker>
+
+                    <app-datepicker
+                        label="Put to Use"
+                        [disabled]="moneyLocked"
+                        [value]="$any(asDate(useDate))"
+                        (valueChange)="onDate('useDate', $event)">
+                    </app-datepicker>
+
+                    <app-textbox
+                        label="Quantity"
+                        inputMode="decimal"
+                        [value]="qty"
+                        [maxLength]="10"
+                        [disabled]="moneyLocked"
+                        (valueChange)="onText('qty', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Cost (Tk)"
+                        inputMode="decimal"
+                        [value]="cost"
+                        [maxLength]="16"
+                        [disabled]="moneyLocked"
+                        (valueChange)="onText('cost', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Residual Value (Tk)"
+                        inputMode="decimal"
+                        [value]="residual"
+                        [maxLength]="16"
+                        [disabled]="moneyLocked || noDepreciation"
+                        (valueChange)="onText('residual', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Depreciation to Date (Tk)"
+                        inputMode="decimal"
+                        [value]="opening"
+                        [maxLength]="16"
+                        [disabled]="moneyLocked"
+                        (valueChange)="onText('opening', $event)">
+                    </app-textbox>
+
+                    <div class="pf-grid">
+
+                        <app-dropdown
+                            label="Depreciated Up To (Month)"
+                            placeholder="Month"
+                            [items]="monthItems"
+                            [value]="upToMonth"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onChoice('upToMonth', $event)">
+                        </app-dropdown>
+
+                        <app-dropdown
+                            label="Year"
+                            placeholder="Year"
+                            [items]="yearItems"
+                            [value]="upToYear"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onChoice('upToYear', $event)">
+                        </app-dropdown>
+
+                    </div>
+
+                    <span class="hp-note">The depreciation to date and its month are for a card of Opening Assets : what was charged before the module.</span>
+
+                    <b class="hp-sub">Depreciation Rule</b>
+
+                    @if (card && ruleLocked)
+                    {
+                        <span class="hp-note hp-bad">{{ lockedNote }}</span>
+                    }
+
+                    <app-dropdown
+                        label="Method"
+                        [items]="methodItems"
+                        [value]="method"
+                        [disabled]="ruleLocked || groupIsNone"
+                        (valueChange)="onMethod($event)">
+                    </app-dropdown>
+
+                    <app-textbox
+                        label="Rate % a Year"
+                        inputMode="decimal"
+                        [value]="rate"
+                        [maxLength]="8"
+                        [disabled]="ruleLocked || noDepreciation"
+                        (valueChange)="onText('rate', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Life (Years)"
+                        inputMode="numeric"
+                        placeholder="0 = use the rate"
+                        [value]="life"
+                        [maxLength]="3"
+                        [disabled]="ruleLocked || noDepreciation"
+                        (valueChange)="onText('life', $event)">
+                    </app-textbox>
+
+                    @if (card && !ruleLocked && noDepreciation)
+                    {
+                        <span class="hp-note">{{ groupIsNone ? 'This asset group is never depreciated : the card has no depreciation.' : 'No depreciation : the card is never depreciated.' }}</span>
+                    }
+
+                    @if (card)
+                    {
+                        <dl class="pf-facts">
+                            <dt>Accumulated Depreciation</dt>
+                            <dd>Tk {{ money(card.AccumulatedDepreciation) }}</dd>
+                            <dt class="pf-strong">Book Value</dt>
+                            <dd class="pf-strong">Tk {{ money(card.BookValue) }}</dd>
+                        </dl>
+                    }
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

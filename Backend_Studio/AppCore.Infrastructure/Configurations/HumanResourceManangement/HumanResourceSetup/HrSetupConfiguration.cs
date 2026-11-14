@@ -97,6 +97,7 @@ public class HrSetupConfiguration
         builder.Property(x => x.IsPaid).IsRequired();
         builder.Property(x => x.CarryForward).IsRequired();
         builder.Property(x => x.MaxCarryDays).IsRequired().HasPrecision(6, 2);
+        builder.Property(x => x.IsEncashable).IsRequired();
         builder.Property(x => x.AppliesTo).IsRequired().HasMaxLength(10);
         builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);
         builder.Property(x => x.IsActive).IsRequired();
@@ -118,6 +119,7 @@ public class HrSetupConfiguration
         builder.Property(x => x.HeadType).IsRequired().HasMaxLength(10);
         builder.Property(x => x.CalcType).IsRequired().HasMaxLength(10);
         builder.Property(x => x.DefaultValue).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.PayableLedgerCode).IsRequired().HasMaxLength(30);
         builder.Property(x => x.SystemKey).IsRequired().HasMaxLength(20);
         builder.Property(x => x.IsProrated).IsRequired();
         builder.Property(x => x.DisplayOrder).IsRequired();

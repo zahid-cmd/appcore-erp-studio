@@ -444,14 +444,16 @@ export class AttendanceService
                 })));
     }
 
-    getLeaveBalance(employeeId: number, year: number):
+    // The balance of the leave year (a financial year) the date is in
+    getLeaveBalance(employeeId: number, date: string):
         Observable<LeaveBalance[]>
     {
         return this.http
-            .get<any[]>(`${this.leaveUrl}/balance`, { params:{ employeeId:String(employeeId), year:String(year) } })
+            .get<any[]>(`${this.leaveUrl}/balance`, { params:{ employeeId:String(employeeId), date } })
             .pipe(
                 map(rows =>
                     (Array.isArray(rows) ? rows : []).map(b => ({
+                        YearName:text(b, 'YearName'),
                         LeaveTypeId:num(b, 'LeaveTypeId'),
                         Name:text(b, 'Name'),
                         ShortName:text(b, 'ShortName'),

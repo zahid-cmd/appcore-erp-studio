@@ -105,6 +105,14 @@ public class PaymentVoucherConfiguration
                .IsRequired()
                .HasMaxLength(500);
 
+        builder.Property(x => x.SourceType)
+               .IsRequired()
+               .HasMaxLength(30);
+
+        builder.Property(x => x.ReferenceNo)
+               .IsRequired()
+               .HasMaxLength(60);
+
         builder.Property(x => x.IsDeleted)
                .IsRequired();
 

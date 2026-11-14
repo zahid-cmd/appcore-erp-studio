@@ -144,7 +144,7 @@ implements OnInit
         LeaveBalance[] = [];
 
     balanceYear =
-        0;
+        '';
 
     // Weekly off days / holidays inside the range
     offDays =
@@ -178,8 +178,8 @@ implements OnInit
         return this.mode === 'add'
             ? 'Leave Application'
             : this.mode === 'edit'
-                ? `Update Leave Application ${this.entity.Code}`
-                : `Leave Application ${this.entity.Code}`;
+                ? `Update Leave Application`
+                : `Leave Application`;
     }
 
     get saveButtonText(): string
@@ -350,29 +350,30 @@ implements OnInit
         this.cdr.detectChanges();
     }
 
-    // The employee's balance in the year of the From Date
+    // The employee's balance in the leave year (the financial
+    // year) of the From Date
     private loadBalance():
         void
     {
-        const year =
-            Number((this.entity.FromDate || attIsoDay(new Date())).slice(0, 4));
+        const date =
+            this.entity.FromDate || attIsoDay(new Date());
 
         if (!this.entity.EmployeeId)
         {
             this.balance = [];
-            this.balanceYear = year;
+            this.balanceYear = '';
             this.cdr.detectChanges();
             return;
         }
 
         this.service
-            .getLeaveBalance(this.entity.EmployeeId, year)
+            .getLeaveBalance(this.entity.EmployeeId, date)
             .subscribe(
             {
                 next:rows =>
                 {
                     this.balance = rows;
-                    this.balanceYear = year;
+                    this.balanceYear = rows[0]?.YearName ?? '';
                     this.cdr.detectChanges();
                 },
                 error:() =>

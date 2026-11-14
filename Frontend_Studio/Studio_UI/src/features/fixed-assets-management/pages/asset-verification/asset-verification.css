@@ -1,0 +1,253 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Asset Verification : the filters of the list, the two cards of a
+   new count, the count sheet */
+
+.fav-tools
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fav-tools > app-search-dropdown
+{
+    flex: 0 0 210px;
+    width: 210px;
+}
+
+.fav-split
+{
+    grid-template-columns: minmax(320px, 1fr) minmax(0, 1.4fr);
+}
+
+/* the counters, on the toolbar */
+
+.fav-counts
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    color: #475569;
+    font-size: 13px;
+}
+
+.fav-count b
+{
+    margin-left: 4px;
+    color: #1e293b;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+}
+
+.fav-count.fav-c-found b
+{
+    color: #047857;
+}
+
+.fav-count.fav-c-missing b
+{
+    color: #b4232c;
+}
+
+.hp-state.fav-unsaved
+{
+    background: #fef2f2;
+    color: #b4232c;
+}
+
+/* the sheet : the bar, the table (it scrolls), the two boxes */
+
+.fav-sheet
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    min-height: 0;
+    padding: 4px 6px 8px;
+    box-sizing: border-box;
+}
+
+.fav-bar
+{
+    flex: 0 0 auto;
+}
+
+.fav-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 14px;
+}
+
+.fav-scroll
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    border: 1px solid #e3e9f3;
+    border-radius: 12px;
+}
+
+.fav-table .fav-code
+{
+    color: #1e3a8a;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.fav-table .fav-result
+{
+    width: 250px;
+    white-space: nowrap;
+}
+
+.fav-table .fav-note-col
+{
+    width: 22%;
+    min-width: 180px;
+}
+
+/* Found / Missing / Not counted */
+
+.fav-picks
+{
+    display: inline-flex;
+    gap: 4px;
+}
+
+.fav-pick
+{
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid #d9e5f2;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #64748b;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fav-pick:hover
+{
+    border-color: #9fc2f7;
+}
+
+.fav-pick.fav-found.on
+{
+    border-color: #047857;
+    background: #047857;
+    color: #ffffff;
+}
+
+.fav-pick.fav-missing.on
+{
+    border-color: #b4232c;
+    background: #b4232c;
+    color: #ffffff;
+}
+
+.fav-pick.fav-none.on
+{
+    border-color: #94a3b8;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.fav-chip
+{
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #334155;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.fav-chip.fav-found
+{
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.fav-chip.fav-missing
+{
+    background: #fef2f2;
+    color: #b4232c;
+}
+
+.fav-input
+{
+    width: 100%;
+    height: 28px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+}
+
+.fav-input:focus,
+.fav-area:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+/* under the table */
+
+.fav-foot
+{
+    display: grid;
+    flex: 0 0 auto;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 12px;
+}
+
+.fav-field
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.fav-label
+{
+    color: #334155;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.fav-area
+{
+    width: 100%;
+    height: 52px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    border: 1px solid #d9e5f2;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+    resize: none;
+    outline: none;
+}
+
+.fav-area:disabled
+{
+    background: #f8fafc;
+    color: #475569;
+}

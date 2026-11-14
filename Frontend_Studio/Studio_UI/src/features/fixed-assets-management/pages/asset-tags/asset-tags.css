@@ -1,0 +1,43 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Asset Tags : the filters on the toolbar, the tick boxes */
+
+.fat-tools
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fat-tools > app-search-dropdown
+{
+    flex: 0 0 190px;
+    width: 190px;
+}
+
+.fat-table .fat-tick
+{
+    width: 44px;
+    text-align: center;
+}
+
+.fat-tick > input
+{
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.fat-table .fat-code
+{
+    color: #1e3a8a;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.fat-table tr.fat-on > td
+{
+    background: #f4f8ff;
+}

@@ -312,8 +312,8 @@ implements OnInit
         return this.mode === 'add'
             ? 'Employee Profile'
             : this.mode === 'edit'
-                ? `Update Employee Profile ${this.entity.Code}`
-                : `View Employee Profile ${this.entity.Code}`;
+                ? `Update Employee Profile`
+                : `View Employee Profile`;
     }
 
     get saveButtonText(): string
@@ -658,6 +658,10 @@ implements OnInit
             this.overtimeItems.push({ label:`${this.entity.OvertimeStructureName || 'Overtime structure'}  (inactive)`, value:this.entity.OvertimeStructureId });
         }
 
+        this.bonusItems = this.defaultOr(d.BonusStructures, this.entity.BonusStructureId, 'Bonus structure');
+
+        this.encashItems = this.defaultOr(d.LeaveEncashPolicies, this.entity.LeaveEncashPolicyId, 'Leave encashment policy');
+
         this.structureItems =
         [
             { label:'No salary structure', value:0 },
@@ -723,6 +727,53 @@ implements OnInit
     {
         this.entity.IsActive = value === true || value === 'true';
         this.changed();
+    }
+
+    //===========================================================
+    // Bonus structure and leave encashment policy (Human Resource
+    // Setup) : the Default one, unless the profile names its own
+    //===========================================================
+
+    bonusItems:
+        { label: string; value: number }[] = [];
+
+    encashItems:
+        { label: string; value: number }[] = [];
+
+    // "The Default" first (value 0), then every active one
+    private defaultOr(rows: { Id: number; Name: string; Note: string }[], id: number, what: string):
+        { label: string; value: number }[]
+    {
+        const usual =
+            rows.find(x => x.Note === 'Default');
+
+        const items =
+        [
+            { label:usual ? `The Default  :  ${usual.Name}` : 'The Default  (none is marked yet)', value:0 },
+            ...rows.map(x => ({ label:x.Name, value:x.Id }))
+        ];
+
+        // the employee's own, made inactive since, stays an item
+        if (id > 0 && !items.some(x => x.value === id))
+        {
+            items.push({ label:`${what}  (inactive : the Default applies)`, value:id });
+        }
+
+        return items;
+    }
+
+    onBonusStructure(value: any):
+        void
+    {
+        this.entity.BonusStructureId = Number(value) || 0;
+        this.cdr.detectChanges();
+    }
+
+    onEncashPolicy(value: any):
+        void
+    {
+        this.entity.LeaveEncashPolicyId = Number(value) || 0;
+        this.cdr.detectChanges();
     }
 
     //===========================================================

@@ -351,6 +351,12 @@ export class PaymentVoucherService
             CancelReason:
                 this.text(item, 'CancelReason'),
 
+            SourceType:
+                this.text(item, 'SourceType'),
+
+            ReferenceNo:
+                this.text(item, 'ReferenceNo'),
+
             CancelDate:
                 this.text(item, 'CancelDate').substring(0, 10),
 

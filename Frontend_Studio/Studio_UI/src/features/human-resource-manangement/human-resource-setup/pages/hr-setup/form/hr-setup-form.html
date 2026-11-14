@@ -119,7 +119,7 @@
                                 {
                                     <app-dropdown
                                         [label]="field.label"
-                                        [items]="field.options ?? []"
+                                        [items]="optionsOf(field)"
                                         [value]="entity[field.key]"
                                         (valueChange)="onSelect(field, $event)"
                                         [disabled]="isLocked(field)"

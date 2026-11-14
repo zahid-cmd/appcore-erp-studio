@@ -33,7 +33,7 @@ from 'rxjs';
 
 import { PageHeaderComponent } from '../../../../../../shared/components/layout/page-header/page-header';
 import { DatepickerComponent } from '../../../../../../shared/components/controls/datepicker/datepicker';
-import { hrDateEvent, hrToDate } from '../../../../services/hr-date';
+import { hrDateEvent, hrMonthEvent, hrMonthToDate, hrToDate } from '../../../../services/hr-date';
 import { PageCanvasComponent } from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { TextboxComponent } from '../../../../../../shared/components/controls/textbox/textbox';
@@ -105,6 +105,12 @@ implements OnInit
 
     readonly dateEvent = hrDateEvent;
 
+    // The shared date picker in month mode works with a Date; the
+    // page keeps yyyy-MM text
+    readonly asMonth = hrMonthToDate;
+
+    readonly monthEvent = hrMonthEvent;
+
     private readonly service = inject(PayrollService);
 
     private readonly router = inject(Router);
@@ -170,8 +176,8 @@ implements OnInit
         return this.mode === 'add'
             ? 'Salary Advance'
             : this.mode === 'edit'
-                ? `Update Salary Advance ${this.entity.Code}`
-                : `View Salary Advance ${this.entity.Code}`;
+                ? `Update Salary Advance`
+                : `View Salary Advance`;
     }
 
     get saveButtonText(): string

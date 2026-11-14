@@ -213,3 +213,75 @@
     width: 110px;
     text-align: center;
 }
+
+/* the shared date picker in month mode, on a toolbar */
+
+.pfx-tools > app-datepicker.pfx-month
+{
+    flex: 0 0 170px;
+    width: 170px;
+}
+
+/* Provident Fund Policy : Contribution (two boxes wide) and Who can
+   join (one box wide) side by side, on the columns of .pfx-grid-3 */
+
+.pfp-pair
+{
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 12px 14px;
+    align-items: start;
+}
+
+.pfp-col
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.pfp-col > .pfx-part
+{
+    padding-top: 0;
+    border-top: 0;
+}
+
+.pfp-grid-2
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
+    align-items: end;
+}
+
+.pfp-grid-1
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px 14px;
+}
+
+@media (max-width: 900px)
+{
+    .pfp-pair,
+    .pfp-grid-2
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* A form : the left card and the right column as tall as the taller
+   one, no taller; the last card of the column takes what is left */
+
+.pf-body.pfx-even
+{
+    grid-auto-rows: min-content;
+    align-content: start;
+    align-items: stretch;
+}
+
+.pf-body.pfx-even > .pf-column > .pf-card:last-child
+{
+    flex: 1 1 auto;
+}

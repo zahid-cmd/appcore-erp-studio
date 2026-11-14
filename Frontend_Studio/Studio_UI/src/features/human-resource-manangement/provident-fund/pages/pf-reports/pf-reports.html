@@ -45,11 +45,13 @@
 
             @if (report === 'register')
             {
-                <input
-                    type="month"
-                    class="pfx-input"
-                    [value]="month"
-                    (change)="onMonth($event)">
+                <app-datepicker
+                    class="pfx-month"
+                    [monthMode]="true"
+                    placeholder="Select Month"
+                    [value]="$any(asMonth(month))"
+                    (valueChange)="onMonth(monthEvent($event))">
+                </app-datepicker>
             }
 
         </div>

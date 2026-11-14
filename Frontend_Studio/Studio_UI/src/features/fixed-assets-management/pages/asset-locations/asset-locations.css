@@ -1,0 +1,36 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Asset Locations : two sections (left the location, right what a
+   location is for) */
+
+.fal-split
+{
+    grid-template-columns: minmax(320px, 1fr) minmax(0, 1fr);
+}
+
+/* The branch and the status filters, side by side */
+
+.fal-filters
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fal-switch
+{
+    margin: 0;
+}
+
+.fal-rule
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: #f7faff;
+    color: #0f2a44;
+    font-size: 13px;
+}

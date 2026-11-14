@@ -80,6 +80,26 @@ public interface IPaymentVoucherRepository
 
 
     //===========================================================
+    // Payment of another page (Payroll Payments, PF Payments) :
+    // saves, approves and posts at once; runs in the caller's
+    // transaction when there is one. The voucher carries the page
+    // (sourceType) and its number (referenceNo), and is changed
+    // from that page only : CancelBySourceAsync.
+    //===========================================================
+
+    Task<PaymentVoucherSavedDto> CreatePostedAsync(
+        CreatePaymentVoucherDto dto,
+        string sourceType,
+        string referenceNo,
+        long userId);
+
+    Task CancelBySourceAsync(
+        long id,
+        CancelPaymentVoucherDto dto,
+        long userId);
+
+
+    //===========================================================
     // Exists
     //===========================================================
 

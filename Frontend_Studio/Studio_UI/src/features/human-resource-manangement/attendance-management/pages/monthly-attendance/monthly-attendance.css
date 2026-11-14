@@ -430,3 +430,11 @@
     color: #64748b;
     font-size: 13px;
 }
+
+/* The shared date picker (month mode) used without a label, in a row */
+
+.hr-date-inline
+{
+    flex: 0 0 170px;
+    width: 170px;
+}

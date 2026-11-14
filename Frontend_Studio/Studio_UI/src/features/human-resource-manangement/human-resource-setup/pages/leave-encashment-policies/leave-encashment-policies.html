@@ -1,0 +1,364 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Leave Encashment Policies"
+            subtitle="The rules of leave encashment : which leave, on what salary, who, and how many days"
+            icon="fas fa-calendar-check">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search code, policy, leave type..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    command3Text="Restore"
+                    command3Icon="fas fa-trash-arrow-up"
+                    command3Permission="restore"
+                    (command3Click)="restore()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <span
+                pageToolbarLeft
+                class="hp-note">The Default applies to every employee; another policy applies to the employees whose Employee Profile names it</span>
+
+            <app-search-dropdown
+                pageToolbarRight
+                placeholder="All"
+                [items]="statusItems"
+                labelField="label"
+                valueField="value"
+                [value]="statusFilter"
+                (valueChange)="onStatusFilter($event)">
+            </app-search-dropdown>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    (view)="view($event)"
+                    (edit)="edit($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Leave Encashment Policy History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="The rules of leave encashment : which leave, on what salary, who, and how many days"
+            icon="fas fa-calendar-check">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    [command1Text]="saveText"
+                    command1Icon="fas fa-floppy-disk"
+                    [command1Permission]="mode === 'edit' ? 'update' : 'add'"
+                    (command1Click)="onSave()"
+                    [command1Visible]="!isViewMode"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split bst-split lep-split appcore-scrollbar">
+
+                <!-- ============ LEFT : the policy ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Policy</span>
+                    </header>
+
+                    <div class="lep-two">
+
+                        <app-textbox
+                            label="Code"
+                            [value]="code"
+                            [disabled]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Policy Name"
+                            [value]="name"
+                            [disabled]="true">
+                        </app-textbox>
+
+                    </div>
+
+                    <div class="lep-two">
+
+                        <app-dropdown
+                            label="Day Rate On"
+                            [items]="rateItems"
+                            [value]="rateBase"
+                            (valueChange)="onRate($event)"
+                            [disabled]="isViewMode"
+                            [required]="true">
+                        </app-dropdown>
+
+                        <app-textbox
+                            label="Days of the Month"
+                            placeholder="30"
+                            [value]="monthDays"
+                            inputMode="numeric"
+                            [maxLength]="2"
+                            [disabled]="isViewMode"
+                            (valueChange)="onNumber('monthDays', $event)"
+                            [required]="true">
+                        </app-textbox>
+
+                    </div>
+
+                    <div class="lep-two">
+
+                        <app-textbox
+                            label="Days Kept in the Balance"
+                            placeholder="0"
+                            [value]="keepDays"
+                            inputMode="decimal"
+                            [maxLength]="6"
+                            [disabled]="isViewMode"
+                            (valueChange)="onNumber('keepDays', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Most Days a Year (0 = no limit)"
+                            placeholder="0"
+                            [value]="maxDaysPerYear"
+                            inputMode="decimal"
+                            [maxLength]="6"
+                            [disabled]="isViewMode"
+                            (valueChange)="onNumber('maxDaysPerYear', $event)">
+                        </app-textbox>
+
+                    </div>
+
+                    <div class="lep-two lep-two-last">
+
+                    <app-textbox
+                        label="Minimum Employment (months)"
+                        placeholder="0"
+                        [value]="minServiceMonths"
+                        inputMode="numeric"
+                        [maxLength]="3"
+                        [disabled]="isViewMode"
+                        (valueChange)="onNumber('minServiceMonths', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        [disabled]="isViewMode"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                    </div>
+
+                </section>
+
+                <!-- ============ RIGHT : the leave types ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-sliders"></i>
+                        <span>Who and When</span>
+                    </header>
+
+                    <div class="lep-options">
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="confirmedOnly"
+                                [disabled]="isViewMode"
+                                (change)="onSwitch('confirmedOnly', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Confirmed employees only</b>
+                                <small>An employee who is not confirmed cannot encash leave</small>
+                            </span>
+                        </label>
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="afterYearEnd"
+                                [disabled]="isViewMode"
+                                (change)="onSwitch('afterYearEnd', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Only after the leave year ends</b>
+                                <small>Off : the running leave year can be encashed too</small>
+                            </span>
+                        </label>
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="isDefault"
+                                [disabled]="isViewMode || !isActive"
+                                (change)="onSwitch('isDefault', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Default policy</b>
+                                <small>Applies to every employee whose Employee Profile names no other policy</small>
+                            </span>
+                        </label>
+
+                        <label class="pf-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="isActive"
+                                [disabled]="isViewMode"
+                                (change)="onSwitch('isActive', $event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Active</b>
+                                <small>The employees of an Inactive policy follow the Default</small>
+                            </span>
+                        </label>
+
+                    </div>
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-list-check"></i>
+                        <span>Leave Types That Can Be Encashed</span>
+                    </header>
+
+                    @if (leaveTypes.length === 0)
+                    {
+                        <div class="pfx-empty">
+                            {{ loading ? 'Loading...' : 'There is no leave type that can be encashed : add a paid leave on Human Resource Setup > Leave Types.' }}
+                        </div>
+                    }
+                    @else
+                    {
+                        <table class="pfx-table hp-table">
+
+                            <thead>
+                                <tr>
+                                    <th class="pfx-no">#</th>
+                                    <th class="pfx-no">Encash</th>
+                                    <th>Leave Type</th>
+                                    <th class="pfx-num">Days a Year</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (row of leaveTypes; track row.Id; let i = $index)
+                                {
+                                    <tr [class.hp-picked]="isTicked(row.Id)">
+                                        <td class="pfx-no">{{ i + 1 }}</td>
+                                        <td class="pfx-no">
+                                            <input
+                                                type="checkbox"
+                                                class="lep-check"
+                                                [checked]="isTicked(row.Id)"
+                                                [disabled]="isViewMode"
+                                                (change)="onTick(row.Id, $event)">
+                                        </td>
+                                        <td>{{ row.Name }}</td>
+                                        <td class="pfx-num">{{ days(row.DaysPerYear) }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <tfoot>
+                                <tr class="lep-total">
+                                    <td class="pfx-no"></td>
+                                    <td class="pfx-no"></td>
+                                    <td>Total</td>
+                                    <td class="pfx-num">{{ days(totalDays) }}</td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    }
+
+                    <span class="hp-note">Leave without pay and maternity leave are never encashed : they are not listed.</span>
+
+                </section>
+
+                <!-- ============ BELOW : the policy in words, under both ============ -->
+
+                <div class="bst-rule lep-notes">
+                    <b>What this policy means</b>
+                    <ul class="hp-list">
+                        @for (line of ruleLines; track $index)
+                        {
+                            <li>{{ line }}</li>
+                        }
+                    </ul>
+                </div>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

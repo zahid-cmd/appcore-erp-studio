@@ -11,6 +11,7 @@ using AppCore.Domain.Entities.HumanResourceManangement.HumanResourceSetup;
 using AppCore.Domain.Entities.SecurityPermission.UserManagement;
 using AppCore.Domain.Entities.Settings.GeneralSettings;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Repositories.HumanResourceManangement.PayrollManagement;
 
 
 //===============================================================
@@ -281,15 +282,18 @@ public class LeaveApplicationsRepository
         };
     }
 
-    public async Task<List<LeaveBalanceDto>> GetBalanceAsync(long employeeId, int year)
-    {
-        if (year < 2000 || year > 2100)
-        {
-            year = HrCalendar.Today().Year;
-        }
+    public async Task<List<LeaveBalanceDto>> GetBalanceAsync(long employeeId, string? onDate) =>
+        await GetBalanceAsync(
+            employeeId,
+            (await HrLeaveYears.LoadAsync(_context)).Of(HrCalendar.ParseDay(onDate) ?? HrCalendar.Today()));
 
-        DateOnly first = new(year, 1, 1);
-        DateOnly last = new(year, 12, 31);
+    // The balance of a leave year (a financial year)
+    private async Task<List<LeaveBalanceDto>> GetBalanceAsync(long employeeId, LeaveYear leaveYear)
+    {
+        int year = leaveYear.Year;
+
+        DateOnly first = leaveYear.First;
+        DateOnly last = leaveYear.Last;
 
         string gender =
             await _context.Set<HrEmployees>().AsNoTracking()
@@ -318,15 +322,21 @@ public class LeaveApplicationsRepository
                 .Select(g => new { LeaveTypeId = g.Key, Days = g.Sum(x => x.Days) })
                 .ToListAsync();
 
+        // the days paid as money (Leave Encashments) : counted as used
+        Dictionary<long, decimal> encashed = await LeaveEncashmentsRepository.EncashedAsync(_context, employeeId, year);
+
         return types
             .Where(t => t.AppliesTo == "All" || gender.Length == 0 || t.AppliesTo == gender)
             .Select(t =>
             {
-                decimal usedDays = used.FirstOrDefault(x => x.LeaveTypeId == t.LeaveTypeId)?.Days ?? 0;
+                decimal usedDays =
+                    (used.FirstOrDefault(x => x.LeaveTypeId == t.LeaveTypeId)?.Days ?? 0)
+                    + (encashed.TryGetValue(t.LeaveTypeId, out decimal paidDays) ? paidDays : 0);
                 decimal pendingDays = pending.FirstOrDefault(x => x.LeaveTypeId == t.LeaveTypeId)?.Days ?? 0;
 
                 return new LeaveBalanceDto
                 {
+                    YearName = leaveYear.Name,
                     LeaveTypeId = t.LeaveTypeId,
                     Name = t.Name,
                     ShortName = t.ShortName,
@@ -408,9 +418,12 @@ public class LeaveApplicationsRepository
             throw new InvalidOperationException($"{employee.FullName} joined on {HrCalendar.Day(employee.JoiningDate)} : the leave starts before that.");
         }
 
-        if (from.Year != to.Year)
+        // the leave year is the financial year
+        LeaveYear leaveYear = (await HrLeaveYears.LoadAsync(_context)).Of(from);
+
+        if (to > leaveYear.Last)
         {
-            throw new InvalidOperationException("A leave application stays inside one year : make one for each year.");
+            throw new InvalidOperationException($"A leave application stays inside one leave year ({leaveYear.Name} ends on {HrCalendar.Day(leaveYear.Last)}) : make one for each year.");
         }
 
         string reason = Limited(dto.Reason, 500, "Reason");
@@ -448,16 +461,16 @@ public class LeaveApplicationsRepository
         if (type.DaysPerYear > 0)
         {
             LeaveBalanceDto? balance =
-                (await GetBalanceAsync(employee.EmployeeId, from.Year)).FirstOrDefault(x => x.LeaveTypeId == type.LeaveTypeId);
+                (await GetBalanceAsync(employee.EmployeeId, leaveYear)).FirstOrDefault(x => x.LeaveTypeId == type.LeaveTypeId);
 
             // this application's own pending days are in the balance
-            decimal mine = entity.Status == "Pending" && entity.LeaveTypeId == type.LeaveTypeId && entity.FromDate.Year == from.Year ? entity.Days : 0;
+            decimal mine = entity.Status == "Pending" && entity.LeaveTypeId == type.LeaveTypeId && entity.FromDate >= leaveYear.First && entity.FromDate <= leaveYear.Last ? entity.Days : 0;
 
             decimal remaining = (balance?.Remaining ?? type.DaysPerYear) + mine;
 
             if (days > remaining)
             {
-                throw new InvalidOperationException($"{employee.FullName} has {Math.Max(0, remaining):0.##} day(s) of {type.Name} left in {from.Year} : this application needs {days}.");
+                throw new InvalidOperationException($"{employee.FullName} has {Math.Max(0, remaining):0.##} day(s) of {type.Name} left in {leaveYear.Name} : this application needs {days}.");
             }
         }
 

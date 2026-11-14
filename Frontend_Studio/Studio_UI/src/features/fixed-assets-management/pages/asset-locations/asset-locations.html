@@ -1,0 +1,235 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Asset Locations"
+            subtitle="The places of a branch where assets are kept"
+            icon="fas fa-location-dot">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search code, location, branch..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    command3Text="Restore"
+                    command3Icon="fas fa-trash-arrow-up"
+                    command3Permission="restore"
+                    (command3Click)="restore()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+            <div
+                pageToolbarRight
+                class="fal-filters">
+
+                <app-search-dropdown
+                    placeholder="All branches"
+                    [items]="branchFilterItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="branchFilter"
+                    (valueChange)="onBranchFilter($event)">
+                </app-search-dropdown>
+
+                <app-search-dropdown
+                    placeholder="All"
+                    [items]="statusItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="statusFilter"
+                    (valueChange)="onStatusFilter($event)">
+                </app-search-dropdown>
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    (view)="view($event)"
+                    (edit)="edit($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Asset Location History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="The places of a branch where assets are kept"
+            icon="fas fa-location-dot">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    [command1Text]="saveText"
+                    command1Icon="fas fa-floppy-disk"
+                    [command1Permission]="mode === 'edit' ? 'update' : 'add'"
+                    (command1Click)="onSave()"
+                    [command1Visible]="!isViewMode"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split fal-split appcore-scrollbar">
+
+                <!-- ============ LEFT : the location ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-location-dot"></i>
+                        <span>Location</span>
+                    </header>
+
+                    <app-textbox
+                        label="Code"
+                        [value]="codeText"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Location Name"
+                        placeholder="e.g. Head Office - 3rd Floor"
+                        [value]="name"
+                        [maxLength]="150"
+                        [required]="true"
+                        [disabled]="isViewMode"
+                        (valueChange)="onName($event)">
+                    </app-textbox>
+
+                    <app-search-dropdown
+                        label="Branch"
+                        placeholder="Select branch"
+                        [items]="branches"
+                        labelField="Name"
+                        valueField="Id"
+                        [value]="branchId || null"
+                        [required]="true"
+                        [disabled]="branchLocked"
+                        (valueChange)="onBranch($event)">
+                    </app-search-dropdown>
+
+                    @if (mode === 'edit' && assetCount > 0)
+                    {
+                        <span class="hp-note">This location holds {{ assetCount }} asset(s), so its branch cannot be changed.</span>
+                    }
+
+                    <label class="pf-switch fal-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="isActive"
+                            [disabled]="isViewMode"
+                            (change)="onActive($event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>Active</b>
+                            <small>An Inactive location cannot be chosen for an asset</small>
+                        </span>
+                    </label>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        [disabled]="isViewMode"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                </section>
+
+                <!-- ============ RIGHT : what a location is for ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-circle-info"></i>
+                        <span>About Locations</span>
+                    </header>
+
+                    <div class="fal-rule">
+                        <b>What a location is for</b>
+                        <ul class="hp-list">
+                            <li>A location is a place inside a branch : a room, a floor, a store.</li>
+                            <li>An asset card can name the location where the asset is kept.</li>
+                            <li>An Asset Transfer moves an asset from one location to another.</li>
+                            <li>The physical count (Asset Verification) is done location by location.</li>
+                            <li>The branch of a location that holds assets cannot be changed.</li>
+                        </ul>
+                    </div>
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

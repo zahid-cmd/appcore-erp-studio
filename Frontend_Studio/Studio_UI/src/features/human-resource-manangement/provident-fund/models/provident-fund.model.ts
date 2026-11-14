@@ -22,6 +22,8 @@ export interface PfPolicy
     EligibilityMonths: number;
     InterestEnabled: boolean;
     InterestRate: number;
+    // The yearly interest is worked out on : Monthly / Closing
+    InterestBasis: string;
     LoanEnabled: boolean;
     // Percent of the member's own balance that can be on loan
     LoanMaxPercent: number;
@@ -36,6 +38,9 @@ export interface PfPolicy
     VestingFrom: string;
     ForfeitOnMisconduct: boolean;
     FullOnDeathRetirement: boolean;
+    // The company part forfeited goes back to the company (not
+    // kept by the fund)
+    ForfeitToCompany: boolean;
     Remarks: string;
     ActiveMembers: number;
 }
@@ -124,6 +129,10 @@ export interface PfSettlement
     CompanyForfeited: number;
     LoanOutstanding: number;
     NetPayable: number;
+    // The forfeited part went back to the company (not the fund)
+    ForfeitedToCompany: boolean;
+    // The Journal Voucher of the settlement ('' : none)
+    JournalVoucherNo: string;
     RuleNote: string;
     IsLatest: boolean;
 }
@@ -150,20 +159,43 @@ export interface PfInterestRow
     CompanyInterest: number;
 }
 
+// A financial year (Settings > General Settings > Financial Years)
+export interface PfFinancialYear
+{
+    FinancialYearId: number;
+    Name: string;
+    StartDate: string;
+    EndDate: string;
+    IsCurrent: boolean;
+    Ended: boolean;
+    IsPosted: boolean;
+}
+
 export interface PfInterestYear
 {
-    Year: number;
+    Year: PfFinancialYear;
     Rate: number;
-    IsPosted: boolean;
+    // Monthly / Closing (the policy)
+    Basis: string;
     Rows: PfInterestRow[];
 }
 
+// The interest credited for one year (Id : the financial year)
 export interface PfInterestRun
 {
-    Year: number;
+    Id: number;
+    Name: string;
+    // The Journal Voucher(s) of it, one a branch ('' : none)
+    JournalVoucherNo: string;
     Members: number;
     EmployeeInterest: number;
     CompanyInterest: number;
+}
+
+export interface PfInterestHome
+{
+    Years: PfFinancialYear[];
+    Runs: PfInterestRun[];
 }
 
 export interface PfStatementRow
@@ -199,6 +231,7 @@ export function emptyPfPolicy(): PfPolicy
         EligibilityMonths:0,
         InterestEnabled:false,
         InterestRate:0,
+        InterestBasis:'Monthly',
         LoanEnabled:true,
         LoanMaxPercent:80,
         LoanMaxInstallments:24,
@@ -209,6 +242,7 @@ export function emptyPfPolicy(): PfPolicy
         VestingFrom:'Joining',
         ForfeitOnMisconduct:true,
         FullOnDeathRetirement:true,
+        ForfeitToCompany:false,
         Remarks:'',
         ActiveMembers:0
     };
@@ -301,6 +335,11 @@ export function pfForfeitLines(p: PfPolicy): string[]
         p.FullOnDeathRetirement
             ? 'Death or retirement : the whole company part is paid, whatever the years.'
             : 'Death or retirement follows the years like any other reason.');
+
+    lines.push(
+        p.ForfeitToCompany
+            ? 'A company part that is forfeited goes back to the company (its income).'
+            : 'A company part that is forfeited stays in the fund (income of the fund).');
 
     return lines;
 }

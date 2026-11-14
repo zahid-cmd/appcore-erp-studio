@@ -5,6 +5,7 @@
 using Microsoft.AspNetCore.Mvc;
 using AppCore.Application.Common.ActivityHistory.Interfaces;
 using AppCore.Application.HumanResourceManangement.HumanResourceSetup;
+using AppCore.Application.Platform.Accounting;
 using AppCore.Application.Platform.EffectiveAccess.Interfaces;
 using AppCore.Api.Extensions;
 
@@ -260,13 +261,39 @@ public class HrLeaveTypesController
 public class HrSalaryHeadsController
     : HrSetupControllerBase<HrSalaryHeadDto>
 {
+    private readonly IVoucherLedgerRepository _ledgers;
+
     public HrSalaryHeadsController(
         IHrSetupRepository<HrSalaryHeadDto> repository,
         IActivityHistoryRepository activityHistoryRepository,
         IEffectiveAccessRepository effectiveAccess,
+        IVoucherLedgerRepository ledgers,
         ILogger<HrSalaryHeadsController> logger)
         : base(repository, activityHistoryRepository, effectiveAccess, logger)
     {
+        _ledgers = ledgers;
+    }
+
+    // The General Ledgers a deduction head can be credited to
+    // (Payable Ledger on the Salary Head form)
+    [HttpGet("ledgers")]
+    public async Task<IActionResult> GetLedgers()
+    {
+        try
+        {
+            var ledgers = await _ledgers.GetAllAsync(true);
+
+            return Ok(
+                ledgers
+                    .Where(x => x.LedgerType == "General Ledger" && x.LedgerCode.StartsWith("GLR-", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(x => x.LedgerName)
+                    .Select(x => new HrLedgerOptionDto { LedgerCode = x.LedgerCode, LedgerName = x.LedgerName })
+                    .ToList());
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"The ledgers could not be loaded. {ex.GetBaseException().Message}" });
+        }
     }
 
     protected override string PageRoute => "/human-resource-manangement/%/salary-heads";

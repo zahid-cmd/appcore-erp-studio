@@ -44,12 +44,11 @@ function slip(line: SalarySheetLine): HrPayslip
     const earnings =
     [
         ...line.Heads.filter(h => h.HeadType === 'Earning').map(h => row(h.HeadName, h.Amount)),
-        ...(line.OvertimeAmount ? [row(`Overtime (${[line.OvertimeHours ? line.OvertimeHours + ' h' : '', line.OvertimeDays ? line.OvertimeDays + ' extra day(s)' : ''].filter(Boolean).join(', ') || '-'})`, line.OvertimeAmount)] : []),
         ...(line.OtherEarning ? [row('Other Earning', line.OtherEarning)] : [])
     ];
 
     const totalEarnings =
-        line.GrossSalary + line.OvertimeAmount + line.OtherEarning;
+        line.GrossSalary + line.OtherEarning;
 
     // Deductions : what the month cut, then what was kept back
     const deductions =

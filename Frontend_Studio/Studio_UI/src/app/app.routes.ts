@@ -436,6 +436,31 @@ export const routes:
             // AUTO-END : MOD-005
 
 
+            // MANUAL : Fixed Assets Management (hand-written module, no
+            // sync; FixedAssets_Navigation.sql adds its menus and pages)
+
+            {
+                path:
+                    'fixed-assets-management',
+
+                data:
+                {
+                    breadcrumb:
+                        'Fixed Assets Management'
+                },
+
+                loadChildren:
+                    () =>
+                        import(
+                            '../features/fixed-assets-management/routes/fixed-assets-management.routes'
+                        )
+                        .then(
+                            m =>
+                                m.fixedAssetsManagementRoutes
+                        )
+            },
+
+
             // AUTO-BEGIN : MOD-006
 
             //=======================================================

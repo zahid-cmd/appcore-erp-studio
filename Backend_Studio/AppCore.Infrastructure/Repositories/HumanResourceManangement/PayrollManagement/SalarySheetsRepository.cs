@@ -51,11 +51,25 @@ namespace AppCore.Infrastructure.Repositories.HumanResourceManangement.PayrollMa
 //     Net Pay      = Earned - deductions
 //   Employees without a salary structure are left off.
 //
-//   Posting writes one Journal Voucher (Posting Setup, Payroll) :
-//     Dr  PAYROLL-SALARY-EXPENSE       total Earned
+//   Posting writes one Journal Voucher (Posting Setup, Payroll
+//   and Provident Fund) :
+//     Dr  PAYROLL-SALARY-EXPENSE       total Earned (the overtime
+//                                      is not part of it)
+//     Dr  PAYROLL-OVERTIME-EXPENSE     the overtime, with
+//     Cr  PAYROLL-OVERTIME-PAYABLE     (a group of their own; a row
+//                                      without a ledger falls back
+//                                      to the salary ledger)
+//     Dr  PF-COMPANY-CONTRIBUTION      company part of the fund
 //     Cr  PAYROLL-STAFF-ADVANCE        advances recovered
-//     Cr  PAYROLL-DEDUCTIONS-PAYABLE   structure + other deductions
-//     Cr  PAYROLL-SALARY-PAYABLE       total Net Pay
+//     Cr  <ledger of the head>         every deduction head with a
+//                                      Payable Ledger (Salary Heads)
+//     Cr  PAYROLL-OTHER-DEDUCTIONS     the typed other deductions,
+//                                      and a deduction head without
+//                                      a ledger of its own
+//     Cr  PF-MEMBERS-FUND              own part + company part
+//     Cr  PF-LOAN-RECEIVABLE           principal in the PF loan instalments
+//     Cr  PF-LOAN-INTEREST-INCOME      interest in the PF loan instalments
+//     Cr  PAYROLL-SALARY-PAYABLE       the rest of the Net Pay
 //   dated the last day of the month (today when that is still to
 //   come). Unposting cancels the voucher. Paying the salary out
 //   is a Payment Voucher (debit Salary Payable); here the lines
@@ -280,6 +294,128 @@ public class SalarySheetsRepository
             .ToList();
     }
 
+    //===========================================================
+    // Overtime Sheets : the overtime of a POSTED salary sheet.
+    // No table : the sheet is there when the salary sheet is
+    // posted and goes when it is unposted. OTS-0001 for SAL-0001.
+    //===========================================================
+
+    private static string OvertimeCode(string sheetCode) =>
+        sheetCode.StartsWith("SAL", StringComparison.OrdinalIgnoreCase) ? "OTS" + sheetCode.Substring(3) : "OTS-" + sheetCode;
+
+    private static void FillOvertime(OvertimeSheetListItemDto dto, HrSalarySheets s, string branchName, int employees, decimal hours, decimal days, decimal amount)
+    {
+        dto.PublicId = s.PublicId;
+        dto.Code = OvertimeCode(s.Code);
+        dto.SalarySheetCode = s.Code;
+        dto.Year = s.Year;
+        dto.Month = s.Month;
+        dto.BranchId = s.BranchId;
+        dto.BranchName = branchName;
+        dto.EmployeeCount = employees;
+        dto.OvertimeHours = hours;
+        dto.OvertimeDays = days;
+        dto.Amount = amount;
+        dto.PostedDate = s.PostedDate == null ? string.Empty : HrCalendar.Day(DateOnly.FromDateTime(s.PostedDate.Value.ToLocalTime()));
+        dto.JournalVoucherNo = s.JournalVoucherNo;
+    }
+
+    public async Task<List<OvertimeSheetListItemDto>> GetOvertimeSheetsAsync()
+    {
+        List<HrSalarySheets> sheets =
+            await Sheets.AsNoTracking()
+                .Where(x => !x.IsDeleted && x.Status == StatusPosted)
+                .OrderByDescending(x => x.Year).ThenByDescending(x => x.Month).ThenBy(x => x.Code)
+                .ToListAsync();
+
+        List<long> ids = sheets.Select(x => x.SalarySheetId).ToList();
+
+        var totals =
+            await Lines.AsNoTracking()
+                .Where(x => ids.Contains(x.SalarySheetId) && x.OvertimeAmount > 0)
+                .GroupBy(x => x.SalarySheetId)
+                .Select(g => new
+                {
+                    SalarySheetId = g.Key,
+                    Count = g.Count(),
+                    Hours = g.Sum(x => x.OvertimeHours),
+                    Days = g.Sum(x => x.OvertimeDays),
+                    Amount = g.Sum(x => x.OvertimeAmount)
+                })
+                .ToListAsync();
+
+        var branches =
+            await _context.Set<Branches>().AsNoTracking()
+                .Select(x => new { x.BranchId, x.BranchName })
+                .ToListAsync();
+
+        List<OvertimeSheetListItemDto> result = new();
+
+        foreach (HrSalarySheets s in sheets)
+        {
+            var total = totals.FirstOrDefault(x => x.SalarySheetId == s.SalarySheetId);
+
+            // (a salary sheet without overtime has no overtime sheet)
+            if (total == null)
+            {
+                continue;
+            }
+
+            OvertimeSheetListItemDto dto = new();
+
+            FillOvertime(
+                dto,
+                s,
+                branches.FirstOrDefault(b => b.BranchId == s.BranchId)?.BranchName ?? string.Empty,
+                total.Count,
+                total.Hours,
+                total.Days,
+                total.Amount);
+
+            result.Add(dto);
+        }
+
+        return result;
+    }
+
+    public async Task<OvertimeSheetDto> GetOvertimeSheetAsync(Guid publicId)
+    {
+        HrSalarySheets s =
+            await Sheets.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == publicId && !x.IsDeleted && x.Status == StatusPosted)
+            ?? throw new KeyNotFoundException("The overtime sheet was not found : its salary sheet is not posted (any more).");
+
+        List<OvertimeSheetLineDto> lines =
+            await Lines.AsNoTracking()
+                .Where(x => x.SalarySheetId == s.SalarySheetId && x.OvertimeAmount > 0)
+                .OrderBy(x => x.EmployeeCode)
+                .Select(x => new OvertimeSheetLineDto
+                {
+                    EmployeeCode = x.EmployeeCode,
+                    EmployeeName = x.EmployeeName,
+                    DesignationName = x.DesignationName,
+                    DepartmentName = x.DepartmentName,
+                    BasicSalary = x.BasicSalary,
+                    GrossSalary = x.GrossSalary,
+                    OvertimeHours = x.OvertimeHours,
+                    OvertimeDays = x.OvertimeDays,
+                    Amount = x.OvertimeAmount
+                })
+                .ToListAsync();
+
+        OvertimeSheetDto dto = new() { Lines = lines };
+
+        FillOvertime(
+            dto,
+            s,
+            await BranchNameAsync(s.BranchId),
+            lines.Count,
+            lines.Sum(x => x.OvertimeHours),
+            lines.Sum(x => x.OvertimeDays),
+            lines.Sum(x => x.Amount));
+
+        return dto;
+    }
+
     public async Task<SalarySheetDto> GetAsync(Guid publicId)
     {
         HrSalarySheets s =
@@ -293,6 +429,17 @@ public class SalarySheetsRepository
                 .ToListAsync();
 
         List<long> lineIds = lines.Select(x => x.SalarySheetLineId).ToList();
+
+        // what Payroll Payments have paid of each line's net pay
+        Dictionary<long, decimal> paidByLine =
+            (await (
+                from p in _context.Set<HrPayments>().AsNoTracking()
+                where p.PaymentType == HrPaymentsRepository.Salary && p.SourceId == s.SalarySheetId && !p.IsCancelled
+                join pl in _context.Set<HrPaymentLines>().AsNoTracking() on p.PaymentId equals pl.PaymentId
+                group pl by pl.SalarySheetLineId into g
+                select new { SalarySheetLineId = g.Key, Amount = g.Sum(x => x.Amount) })
+            .ToListAsync())
+            .ToDictionary(x => x.SalarySheetLineId, x => x.Amount);
 
         List<HrSalarySheetLineHeads> heads =
             await LineHeads.AsNoTracking()
@@ -314,6 +461,13 @@ public class SalarySheetsRepository
         };
 
         Fill(dto, s, await BranchNameAsync(s.BranchId), lines.Count(x => x.IsPaid));
+
+        // not posted yet : the advances it cannot recover (not paid out)
+        if (s.Status != StatusPosted)
+        {
+            dto.UnpaidAdvances =
+                await UnpaidAdvancesAsync(s.BranchId, s.Year, s.Month, lines.Select(x => x.EmployeeId).ToList());
+        }
 
         dto.Lines =
             lines
@@ -349,6 +503,7 @@ public class SalarySheetsRepository
                     NetPay = l.NetPay,
                     Remarks = l.Remarks,
                     IsPaid = l.IsPaid,
+                    PaidAmount = paidByLine.TryGetValue(l.SalarySheetLineId, out decimal paidAmount) ? paidAmount : 0,
                     PaidDate = HrCalendar.Day(l.PaidDate),
                     PaidNote = l.PaidNote,
                     Heads =
@@ -360,6 +515,109 @@ public class SalarySheetsRepository
                 .ToList();
 
         return dto;
+    }
+
+    public async Task<List<UnpaidAdvanceDto>> GetUnpaidAdvancesAsync(long branchId, int year, int month)
+    {
+        if (branchId <= 0 || year < 2000 || month < 1 || month > 12)
+        {
+            return new List<UnpaidAdvanceDto>();
+        }
+
+        return await UnpaidAdvancesAsync(branchId, year, month, null);
+    }
+
+    // Advances due in the month (start month on or before it, not
+    // closed, not fully recovered) that were not fully paid out on
+    // Payroll Payments by the month end. The sheet recovers only
+    // what was paid out (owner, 2026-11-14), so these are a notice,
+    // never a block. employeeIds = the sheet's employees; null =
+    // the active employees of the branch.
+    private async Task<List<UnpaidAdvanceDto>> UnpaidAdvancesAsync(long branchId, int year, int month, List<long>? employeeIds)
+    {
+        int sheetMonth = year * 12 + month;
+
+        DateOnly monthEnd =
+            new DateOnly(year, month, 1).AddMonths(1).AddDays(-1);
+
+        IQueryable<HrEmployees> employees =
+            _context.Set<HrEmployees>().AsNoTracking().Where(x => !x.IsDeleted);
+
+        employees =
+            employeeIds != null
+                ? employees.Where(x => employeeIds.Contains(x.EmployeeId))
+                : employees.Where(x => x.BranchId == branchId && x.IsActive);
+
+        var rows =
+            await (
+                from a in _context.Set<HrSalaryAdvances>().AsNoTracking()
+                join e in employees on a.EmployeeId equals e.EmployeeId
+                where !a.IsDeleted && !a.IsClosed && a.StartYear * 12 + a.StartMonth <= sheetMonth
+                orderby e.Code, a.AdvanceDate, a.AdvanceId
+                select new
+                {
+                    a.AdvanceId,
+                    a.Code,
+                    a.EmployeeId,
+                    EmployeeCode = e.Code,
+                    EmployeeName = e.FullName,
+                    a.AdvanceDate,
+                    a.Amount
+                })
+            .ToListAsync();
+
+        if (rows.Count == 0)
+        {
+            return new List<UnpaidAdvanceDto>();
+        }
+
+        List<long> ids = rows.Select(x => x.AdvanceId).ToList();
+
+        Dictionary<long, decimal> byMonthEnd =
+            await SalaryAdvancesRepository.PaidOutAsync(_context, ids, monthEnd);
+
+        Dictionary<long, decimal> allPaid =
+            await SalaryAdvancesRepository.PaidOutAsync(_context, ids);
+
+        Dictionary<long, decimal> recovered =
+            await SalaryAdvancesRepository.RecoveredAsync(_context, ids);
+
+        List<UnpaidAdvanceDto> list = new();
+
+        foreach (var row in rows)
+        {
+            decimal paid =
+                Math.Min(row.Amount, byMonthEnd.TryGetValue(row.AdvanceId, out decimal p) ? p : 0);
+
+            decimal notPaid = row.Amount - paid;
+
+            decimal taken =
+                recovered.TryGetValue(row.AdvanceId, out decimal r) ? r : 0;
+
+            if (notPaid <= 0 || taken >= row.Amount)
+            {
+                continue;
+            }
+
+            decimal total =
+                Math.Min(row.Amount, allPaid.TryGetValue(row.AdvanceId, out decimal t) ? t : 0);
+
+            list.Add(new UnpaidAdvanceDto
+            {
+                AdvanceId = row.AdvanceId,
+                Code = row.Code,
+                EmployeeId = row.EmployeeId,
+                EmployeeCode = row.EmployeeCode,
+                EmployeeName = row.EmployeeName,
+                AdvanceDate = HrCalendar.Day(row.AdvanceDate),
+                Amount = row.Amount,
+                PaidOut = paid,
+                PaidLater = Math.Max(0, total - paid),
+                NotPaidOut = notPaid
+            });
+        }
+
+        return list;
     }
 
     public async Task<SalarySheetDefaultsDto> GetDefaultsAsync()
@@ -493,6 +751,14 @@ public class SalarySheetsRepository
         Dictionary<long, decimal> recovered =
             await SalaryAdvancesRepository.RecoveredAsync(_context, advances.Select(x => x.AdvanceId).ToList());
 
+        // only what was paid out (Payroll Payments) by the last day
+        // of the sheet's month can be recovered (owner, 2026-11-14)
+        DateOnly advanceMonthEnd =
+            new DateOnly(sheet.Year, sheet.Month, 1).AddMonths(1).AddDays(-1);
+
+        Dictionary<long, decimal> paidOut =
+            await SalaryAdvancesRepository.PaidOutAsync(_context, advances.Select(x => x.AdvanceId).ToList(), advanceMonthEnd);
+
         // ---------- provident fund : the policy, the members of the
         //            month and their loans ----------
         HrPfPolicy pfPolicy = await ProvidentFundRepository.PolicyAsync(_context);
@@ -546,7 +812,11 @@ public class SalarySheetsRepository
             //  policy, never from the salary structure)
             mine = mine.Where(x => x.SystemKey != "PF").ToList();
 
-            decimal structureDeduction = mine.Where(x => x.HeadType == "Deduction").Sum(x => x.Amount);
+            // every amount the sheet works out is a whole taka (0.50
+            // and above goes up) : no paisa on the sheet or the payslip
+            static decimal Whole(decimal value) => Math.Round(value, 0, MidpointRounding.AwayFromZero);
+
+            decimal structureDeduction = Whole(mine.Where(x => x.HeadType == "Deduction").Sum(x => x.Amount));
 
             int beforeJoining = row.Kinds.Count(x => x == "-");
 
@@ -554,13 +824,13 @@ public class SalarySheetsRepository
                 Math.Min(monthDays, row.Absent + row.UnpaidLeave + row.NotMarked + row.HalfDay * 0.5m + beforeJoining);
 
             decimal absence =
-                monthDays == 0 ? 0 : Math.Min(gross, Math.Round(prorated * unpaidDays / monthDays, 2));
+                monthDays == 0 ? 0 : Math.Min(gross, Whole(prorated * unpaidDays / monthDays));
 
             decimal late = 0;
 
             if (sheet.LateDaysPerCut > 0 && monthDays > 0)
             {
-                late = Math.Min(gross - absence, (row.Late / sheet.LateDaysPerCut) * Math.Round(basic / monthDays, 2));
+                late = Math.Min(gross - absence, Whole((row.Late / sheet.LateDaysPerCut) * (basic / monthDays)));
             }
 
             // overtime : the employee's overtime structure (extra
@@ -590,15 +860,19 @@ public class SalarySheetsRepository
                 }
                 else
                 {
-                    overtime = Math.Round(row.OvertimeHours * employee.OvertimeRate, 2);
+                    overtime = row.OvertimeHours * employee.OvertimeRate;
                 }
+
+                overtime = Whole(overtime);
             }
 
             typed.TryGetValue(row.EmployeeId, out Typed? own);
 
-            decimal otherEarning = own?.OtherEarning ?? 0;
+            decimal otherEarning = Whole(own?.OtherEarning ?? 0);
 
-            decimal earned = gross - absence - late + overtime + otherEarning;
+            // (the overtime is not part of the salary : it is worked
+            //  out here for the Overtime Sheet, and paid on its own)
+            decimal earned = gross - absence - late + otherEarning;
 
             // deductions, each no more than what is left
             decimal left = earned;
@@ -607,7 +881,7 @@ public class SalarySheetsRepository
 
             left -= structureTaken;
 
-            decimal otherDeduction = Math.Min(own?.OtherDeduction ?? 0, left);
+            decimal otherDeduction = Math.Min(Whole(own?.OtherDeduction ?? 0), left);
 
             left -= otherDeduction;
 
@@ -622,13 +896,13 @@ public class SalarySheetsRepository
             {
                 decimal pfBase = pfPolicy.ContributionBase == "Gross" ? gross : basic;
 
-                pfEmployee = Math.Min(Math.Round(pfBase * pfPolicy.EmployeePercent / 100m, 2, MidpointRounding.AwayFromZero), left);
+                pfEmployee = Math.Min(Whole(pfBase * pfPolicy.EmployeePercent / 100m), left);
 
                 left -= pfEmployee;
 
                 if (pfEmployee > 0 && pfPolicy.CompanyContributes)
                 {
-                    pfCompany = Math.Round(pfBase * pfPolicy.CompanyPercent / 100m, 2, MidpointRounding.AwayFromZero);
+                    pfCompany = Whole(pfBase * pfPolicy.CompanyPercent / 100m);
                 }
             }
 
@@ -651,6 +925,10 @@ public class SalarySheetsRepository
                         loan,
                         ProvidentFundRepository.StateOf(loan, pfLoanRecovered),
                         left);
+
+                // (whole taka : never more than what is left of the pay)
+                take = Math.Min(Whole(take), left);
+                loanInterest = Math.Min(Whole(loanInterest), take);
 
                 if (take <= 0)
                 {
@@ -681,10 +959,15 @@ public class SalarySheetsRepository
                     continue;
                 }
 
-                decimal balance =
-                    advance.Amount - (recovered.TryGetValue(advance.AdvanceId, out decimal done) ? done : 0);
+                // what was paid out (never more than the advance) less
+                // what earlier sheets took; not paid out = nothing
+                decimal paid =
+                    Math.Min(advance.Amount, paidOut.TryGetValue(advance.AdvanceId, out decimal outAmount) ? outAmount : 0);
 
-                decimal take = Math.Min(Math.Min(advance.InstallmentAmount, balance), left);
+                decimal balance =
+                    paid - (recovered.TryGetValue(advance.AdvanceId, out decimal done) ? done : 0);
+
+                decimal take = Math.Min(Math.Min(Whole(advance.InstallmentAmount), balance), left);
 
                 if (take <= 0)
                 {
@@ -943,8 +1226,8 @@ public class SalarySheetsRepository
             typed[line.EmployeeId] =
                 new Typed
                 {
-                    OtherEarning = Math.Round(row.OtherEarning, 2),
-                    OtherDeduction = Math.Round(row.OtherDeduction, 2),
+                    OtherEarning = Math.Round(row.OtherEarning, 0, MidpointRounding.AwayFromZero),
+                    OtherDeduction = Math.Round(row.OtherDeduction, 0, MidpointRounding.AwayFromZero),
                     Remarks = Limited(row.Remarks, 200, $"{who} : Remarks")
                 };
         }
@@ -970,6 +1253,70 @@ public class SalarySheetsRepository
     // Approve / post / pay
     //===========================================================
 
+    // Every advance this sheet recovers must be paid out (Payroll
+    // Payments) by the last day of its month, at least as much as
+    // all the live sheets take from it : an advance paid later, or
+    // whose payment was cancelled, refuses approve / post until the
+    // sheet is recalculated (owner, 2026-11-14)
+    private async Task CheckAdvancesPaidOutAsync(HrSalarySheets sheet)
+    {
+        var mine =
+            await Recoveries.AsNoTracking()
+                .Where(x => x.SalarySheetId == sheet.SalarySheetId && x.Amount > 0)
+                .GroupBy(x => x.AdvanceId)
+                .Select(g => new { AdvanceId = g.Key, Amount = g.Sum(x => x.Amount) })
+                .ToListAsync();
+
+        if (mine.Count == 0)
+        {
+            return;
+        }
+
+        List<long> ids =
+            mine.Select(x => x.AdvanceId).ToList();
+
+        DateOnly monthEnd =
+            new DateOnly(sheet.Year, sheet.Month, 1).AddMonths(1).AddDays(-1);
+
+        Dictionary<long, decimal> paidOut =
+            await SalaryAdvancesRepository.PaidOutAsync(_context, ids, monthEnd);
+
+        // all live sheets (this one included)
+        Dictionary<long, decimal> recovered =
+            await SalaryAdvancesRepository.RecoveredAsync(_context, ids);
+
+        var advances =
+            await _context.Set<HrSalaryAdvances>().AsNoTracking()
+                .Where(x => ids.Contains(x.AdvanceId))
+                .Select(x => new { x.AdvanceId, x.Code, x.Amount })
+                .ToListAsync();
+
+        List<string> wrong = new();
+
+        foreach (var advance in advances)
+        {
+            decimal paid =
+                Math.Min(advance.Amount, paidOut.TryGetValue(advance.AdvanceId, out decimal amount) ? amount : 0);
+
+            decimal taken =
+                recovered.TryGetValue(advance.AdvanceId, out decimal done) ? done : 0;
+
+            if (taken > paid)
+            {
+                wrong.Add(
+                    paid <= 0
+                        ? $"{advance.Code} is not paid out by {HrCalendar.Day(monthEnd)}"
+                        : $"{advance.Code} : only {Money(paid)} paid out by {HrCalendar.Day(monthEnd)}, {Money(taken)} recovered");
+            }
+        }
+
+        if (wrong.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"{sheet.Code} recovers salary advances that are not paid out ({string.Join("; ", wrong)}). Pay them on Payroll Payments first, or recalculate the sheet.");
+        }
+    }
+
     public async Task ApproveAsync(Guid publicId, long userId)
     {
         HrSalarySheets sheet = await FindAsync(publicId);
@@ -980,6 +1327,8 @@ public class SalarySheetsRepository
         {
             throw new InvalidOperationException($"{sheet.Code} has no employees.");
         }
+
+        await CheckAdvancesPaidOutAsync(sheet);
 
         sheet.Status = StatusApproved;
         sheet.ApprovedBy = userId;
@@ -1015,6 +1364,8 @@ public class SalarySheetsRepository
 
         Require(sheet, StatusApproved, "posted");
 
+        await CheckAdvancesPaidOutAsync(sheet);
+
         var totals =
             await Lines.AsNoTracking()
                 .Where(x => x.SalarySheetId == sheet.SalarySheetId)
@@ -1023,7 +1374,12 @@ public class SalarySheetsRepository
                 {
                     Earned = g.Sum(x => x.EarnedSalary),
                     Advance = g.Sum(x => x.AdvanceDeduction),
-                    Kept = g.Sum(x => x.StructureDeduction + x.OtherDeduction + x.PfEmployee + x.PfLoan),
+                    Kept = g.Sum(x => x.StructureDeduction + x.OtherDeduction),
+                    Overtime = g.Sum(x => x.OvertimeAmount),
+                    Worked = g.Sum(x => x.GrossSalary - x.AbsenceDeduction - x.LateDeduction + x.OtherEarning),
+                    PfEmployee = g.Sum(x => x.PfEmployee),
+                    PfCompany = g.Sum(x => x.PfCompany),
+                    PfLoan = g.Sum(x => x.PfLoan),
                     Net = g.Sum(x => x.NetPay)
                 })
                 .FirstOrDefaultAsync();
@@ -1033,27 +1389,109 @@ public class SalarySheetsRepository
             throw new InvalidOperationException($"{sheet.Code} has nothing to post.");
         }
 
-        if (totals.Earned != totals.Advance + totals.Kept + totals.Net)
+        // a sheet worked out when the overtime was still part of
+        // the salary
+        if (totals.Earned != totals.Worked)
         {
-            throw new InvalidOperationException($"{sheet.Code} does not add up (earned {Money(totals.Earned)}; deductions and net {Money(totals.Advance + totals.Kept + totals.Net)}) : return it to Draft and recalculate.");
+            throw new InvalidOperationException($"{sheet.Code} was worked out when the overtime was part of the salary : return it to Draft and press Recalculate, then approve and post it again.");
         }
+
+        if (totals.Earned != totals.Advance + totals.Kept + totals.PfEmployee + totals.PfLoan + totals.Net)
+        {
+            throw new InvalidOperationException($"{sheet.Code} does not add up (earned {Money(totals.Earned)}; deductions and net {Money(totals.Advance + totals.Kept + totals.PfEmployee + totals.PfLoan + totals.Net)}) : return it to Draft and recalculate.");
+        }
+
+        // the interest in the provident fund loan instalments
+        decimal pfLoanInterest =
+            await _context.Set<HrPfLoanRecoveries>().AsNoTracking()
+                .Where(x => x.SalarySheetId == sheet.SalarySheetId)
+                .SumAsync(x => (decimal?)x.InterestAmount) ?? 0;
+
+        pfLoanInterest = Math.Min(Math.Max(0, pfLoanInterest), totals.PfLoan);
 
         string month = MonthText(sheet.Year, sheet.Month);
         string note = $"Salary {month} ({sheet.Code})";
 
-        List<JournalVoucherLineDto> lines =
-            new()
+        // The overtime is not part of the salary : it is posted on
+        // its own (Payroll - Overtime Expense / Overtime Payable;
+        // a row without a ledger falls back to the salary ledger).
+        string overtimeLedger = PostingLedgerCodes.TryGet(_context, "PAYROLL-OVERTIME-EXPENSE");
+
+        string overtimePayable = PostingLedgerCodes.TryGet(_context, "PAYROLL-OVERTIME-PAYABLE");
+
+        decimal overtimeApart = Math.Max(0, totals.Overtime);
+
+        // A Journal Voucher group is one debit with its credits (or
+        // one credit with its debits), so the voucher has up to
+        // three groups :
+        //   1  Dr Salary Expense          Cr everything kept back
+        //                                    and the net pay
+        //   2  Dr Overtime Expense        Cr Overtime Payable
+        //   3  Dr PF Company Contribution Cr PF Members Fund
+
+        List<JournalVoucherLineDto> lines = new();
+
+        lines.Add(
+            new JournalVoucherLineDto
             {
-                new()
+                Side = "Debit",
+                GroupNo = 1,
+                LedgerType = LedgerTypeGeneral,
+                LedgerCode = PostingLedgerCodes.Get(_context, "PAYROLL-SALARY-EXPENSE"),
+                Amount = totals.Earned,
+                ShortNotes = note
+            });
+
+        if (overtimeApart > 0)
+        {
+            lines.Add(
+                new JournalVoucherLineDto
                 {
                     Side = "Debit",
-                    GroupNo = 1,
+                    GroupNo = 2,
                     LedgerType = LedgerTypeGeneral,
-                    LedgerCode = PostingLedgerCodes.Get(_context, "PAYROLL-SALARY-EXPENSE"),
-                    Amount = totals.Earned,
-                    ShortNotes = note
-                }
-            };
+                    LedgerCode = overtimeLedger.Length > 0 ? overtimeLedger : PostingLedgerCodes.Get(_context, "PAYROLL-SALARY-EXPENSE"),
+                    Amount = overtimeApart,
+                    ShortNotes = $"{note} : overtime"
+                });
+
+            lines.Add(
+                new JournalVoucherLineDto
+                {
+                    Side = "Credit",
+                    GroupNo = 2,
+                    LedgerType = LedgerTypeGeneral,
+                    LedgerCode = overtimePayable.Length > 0 ? overtimePayable : PostingLedgerCodes.Get(_context, "PAYROLL-SALARY-PAYABLE"),
+                    Amount = overtimeApart,
+                    ShortNotes = $"{note} : overtime payable"
+                });
+        }
+
+        // the company part of the provident fund : an expense too
+        if (totals.PfCompany > 0)
+        {
+            lines.Add(
+                new JournalVoucherLineDto
+                {
+                    Side = "Debit",
+                    GroupNo = 3,
+                    LedgerType = LedgerTypeGeneral,
+                    LedgerCode = PostingLedgerCodes.Get(_context, "PF-COMPANY-CONTRIBUTION"),
+                    Amount = totals.PfCompany,
+                    ShortNotes = $"{note} : provident fund, company part"
+                });
+
+            lines.Add(
+                new JournalVoucherLineDto
+                {
+                    Side = "Credit",
+                    GroupNo = 3,
+                    LedgerType = LedgerTypeGeneral,
+                    LedgerCode = PostingLedgerCodes.Get(_context, "PF-MEMBERS-FUND"),
+                    Amount = totals.PfCompany,
+                    ShortNotes = $"{note} : provident fund, company part"
+                });
+        }
 
         void Credit(string purpose, decimal amount, string what)
         {
@@ -1075,7 +1513,103 @@ public class SalarySheetsRepository
         }
 
         Credit("PAYROLL-STAFF-ADVANCE", totals.Advance, "advances recovered");
-        Credit("PAYROLL-DEDUCTIONS-PAYABLE", totals.Kept, "deductions kept back");
+        // the deductions : every deduction head on its own ledger
+        // (Payable Ledger of the Salary Head); the typed other
+        // deductions and a head without a ledger of its own go to
+        // Payroll - Other Deductions Payable
+        var sheetLines =
+            await Lines.AsNoTracking()
+                .Where(x => x.SalarySheetId == sheet.SalarySheetId)
+                .Select(x => new { x.SalarySheetLineId, x.StructureDeduction, x.OtherDeduction })
+                .ToListAsync();
+
+        List<long> sheetLineIds = sheetLines.Select(x => x.SalarySheetLineId).ToList();
+
+        var deductionHeads =
+            await LineHeads.AsNoTracking()
+                .Where(x => sheetLineIds.Contains(x.SalarySheetLineId) && x.HeadType == "Deduction" && x.Amount > 0)
+                .OrderBy(x => x.DisplayOrder)
+                .Select(x => new { x.SalarySheetLineId, x.SalaryHeadId, x.HeadName, x.Amount })
+                .ToListAsync();
+
+        List<long> headIds = deductionHeads.Select(x => x.SalaryHeadId).Distinct().ToList();
+
+        Dictionary<long, string> headLedgers =
+            (await _context.Set<HrSalaryHeads>().AsNoTracking()
+                .Where(x => headIds.Contains(x.SalaryHeadId))
+                .Select(x => new { x.SalaryHeadId, x.PayableLedgerCode })
+                .ToListAsync())
+            .ToDictionary(x => x.SalaryHeadId, x => (x.PayableLedgerCode ?? string.Empty).Trim());
+
+        // ledger code -> (amount, the heads in it); '' : no ledger of its own
+        Dictionary<string, (decimal Amount, HashSet<string> Names)> byLedger = new();
+
+        void Keep(string ledger, decimal amount, string name)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            if (!byLedger.TryGetValue(ledger, out var slot))
+            {
+                slot = (0, new HashSet<string>());
+            }
+
+            slot.Names.Add(name);
+
+            byLedger[ledger] = (slot.Amount + amount, slot.Names);
+        }
+
+        foreach (var sheetLine in sheetLines)
+        {
+            // what the line really kept back, shared over its heads
+            // (the last head takes the rest : whole taka, no paisa lost)
+            var mine = deductionHeads.Where(x => x.SalarySheetLineId == sheetLine.SalarySheetLineId).ToList();
+
+            decimal whole = mine.Sum(x => x.Amount);
+
+            decimal left = sheetLine.StructureDeduction;
+
+            for (int i = 0; i < mine.Count && left > 0; i++)
+            {
+                decimal share =
+                    i == mine.Count - 1
+                        ? left
+                        : Math.Min(left, Math.Round(sheetLine.StructureDeduction * mine[i].Amount / whole, 0, MidpointRounding.AwayFromZero));
+
+                Keep(headLedgers.TryGetValue(mine[i].SalaryHeadId, out string? code) ? code : string.Empty, share, mine[i].HeadName);
+
+                left -= share;
+            }
+
+            // (a line without heads : nothing to tell apart)
+            Keep(string.Empty, left, "deductions");
+
+            Keep(string.Empty, sheetLine.OtherDeduction, "other deductions");
+        }
+
+        foreach (var entry in byLedger.Where(x => x.Key.Length > 0).OrderBy(x => x.Key))
+        {
+            lines.Add(
+                new JournalVoucherLineDto
+                {
+                    Side = "Credit",
+                    GroupNo = 1,
+                    LedgerType = LedgerTypeGeneral,
+                    LedgerCode = entry.Key,
+                    Amount = entry.Value.Amount,
+                    ShortNotes = $"{note} : {string.Join(", ", entry.Value.Names)}"
+                });
+        }
+
+        if (byLedger.TryGetValue(string.Empty, out var plain))
+        {
+            Credit("PAYROLL-OTHER-DEDUCTIONS", plain.Amount, string.Join(", ", plain.Names));
+        }
+        Credit("PF-MEMBERS-FUND", totals.PfEmployee, "provident fund, own part");
+        Credit("PF-LOAN-RECEIVABLE", totals.PfLoan - pfLoanInterest, "provident fund loan recovered");
+        Credit("PF-LOAN-INTEREST-INCOME", pfLoanInterest, "provident fund loan interest");
         Credit("PAYROLL-SALARY-PAYABLE", totals.Net, "net pay");
 
         // the last day of the month; today when that is still to come
@@ -1131,11 +1665,10 @@ public class SalarySheetsRepository
             throw new InvalidOperationException("Write why the salary sheet is unposted.");
         }
 
-        int paid = await Lines.AsNoTracking().CountAsync(x => x.SalarySheetId == sheet.SalarySheetId && x.IsPaid);
-
-        if (paid > 0)
+        // a sheet with a payment (salary or overtime) stays posted
+        if (await HrPaymentsRepository.AnyAsync(_context, new[] { HrPaymentsRepository.Salary, HrPaymentsRepository.Overtime }, sheet.SalarySheetId))
         {
-            throw new InvalidOperationException($"{paid} employee(s) of {sheet.Code} are marked Paid : mark them not paid first.");
+            throw new InvalidOperationException($"{sheet.Code} has payments on Payroll Payments : cancel them first.");
         }
 
         string voucherNo = sheet.JournalVoucherNo;
@@ -1170,6 +1703,12 @@ public class SalarySheetsRepository
 
     public async Task<int> PayAsync(Guid publicId, PaySalaryDto dto, long userId)
     {
+        // (the paid status is worked out from Payroll Payments now)
+        if (dto != null)
+        {
+            throw new InvalidOperationException("The salary is paid on Payroll Management > Payroll Payments : the paid status comes from there.");
+        }
+
         HrSalarySheets sheet = await FindAsync(publicId);
 
         Require(sheet, StatusPosted, "paid");

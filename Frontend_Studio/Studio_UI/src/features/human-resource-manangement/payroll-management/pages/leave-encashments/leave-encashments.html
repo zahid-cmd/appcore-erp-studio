@@ -1,0 +1,513 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Leave Encashments"
+            subtitle="Leave days paid as money : taken off the leave balance and posted to the accounts"
+            icon="fas fa-calendar-check">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search employee, code, leave type..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Add Encashment"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    command3Text="Print"
+                    command3Icon="fas fa-print"
+                    command3Title="Print the list as it is filtered now"
+                    (command3Click)="printList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+            <app-search-dropdown
+                pageToolbarRight
+                placeholder="All Years"
+                [items]="yearItems"
+                labelField="label"
+                valueField="value"
+                [value]="yearFilter"
+                (valueChange)="onYearFilter($event)">
+            </app-search-dropdown>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="actions"
+                    (view)="open($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <div class="pay-summary">
+                @for (item of summaryItems; track item.label)
+                {
+                    <span class="pay-summary-item">
+                        <span class="pay-summary-label">{{ item.label }}</span>
+                        <b class="pay-summary-value">{{ item.value }}</b>
+                    </span>
+                }
+                <span class="pay-summary-note">
+                    An approved encashment is paid on Payroll Payments (Paid For : Leave Encashment)
+                </span>
+            </div>
+        }
+    }
+    @else if (mode === 'add')
+    {
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="Leave days paid as money : taken off the leave balance and posted to the accounts"
+            icon="fas fa-calendar-check">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Save"
+                    command1Icon="fas fa-floppy-disk"
+                    command1Permission="add"
+                    (command1Click)="onSave()"
+                    command2Text="Clear"
+                    command2Icon="fas fa-broom"
+                    (command2Click)="onClear()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split appcore-scrollbar">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Encashment</span>
+                    </header>
+
+                    <div class="len-two">
+
+                        <app-textbox
+                            label="Code"
+                            [value]="nextCode"
+                            [disabled]="true">
+                        </app-textbox>
+
+                        <app-datepicker
+                            label="Date"
+                            [required]="true"
+                            [value]="$any(asDate(encashDate))"
+                            (valueChange)="onDate($event)">
+                        </app-datepicker>
+
+                    </div>
+
+                    <app-search-dropdown
+                        label="Employee"
+                        placeholder="Select employee"
+                        [items]="employeeItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="employeeId"
+                        (valueChange)="onEmployee($event)"
+                        [required]="true">
+                    </app-search-dropdown>
+
+                    <app-dropdown
+                        label="Leave Year (Financial Year)"
+                        [placeholder]="employeeId ? 'Select' : 'Pick the employee first'"
+                        [items]="yearChoices"
+                        [value]="leaveYear"
+                        (valueChange)="onYear($event)"
+                        [required]="true">
+                    </app-dropdown>
+
+                    <app-textbox
+                        label="Days to Encash (the whole balance)"
+                        [value]="eligibility ? days(dayCount) : ''"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Amount (Tk)"
+                        [value]="eligibility ? money(amount) : ''"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                </section>
+
+                <!-- ============ RIGHT : the leave balance (simple, no scroll : 2026-11-14) ============ -->
+
+                <section class="pf-card len-right">
+
+                    <header class="len-head">
+                        <div class="len-who">
+                            <b>{{ employee ? employee.Name : 'Leave Balance' }}</b>
+                            <small>{{ employee ? employee.Code + ' · leave of ' + yearName : 'Pick the employee on the left' }}</small>
+                        </div>
+                        @if (eligibility?.PolicyName)
+                        {
+                            <span class="len-chip">{{ policyText }}</span>
+                        }
+                    </header>
+
+                    @if (!eligibility)
+                    {
+                        <div class="len-empty">
+                            {{ loading ? 'Loading...' : 'Pick the employee and the leave year : the leave that can be encashed comes here.' }}
+                        </div>
+                    }
+                    @else
+                    {
+                        @if (eligibility.Problem)
+                        {
+                            <div class="len-problem">
+                                <i class="fas fa-circle-exclamation"></i>
+                                <span>{{ eligibility.Problem }}</span>
+                            </div>
+                        }
+
+                        <div class="len-sum">
+                            <div>
+                                <span>Days to encash</span>
+                                <b>{{ days(dayCount) }}</b>
+                            </div>
+                            <div>
+                                <span>Day rate ({{ eligibility.RateBase }} / {{ eligibility.MonthDays }})</span>
+                                <b>Tk {{ money(eligibility.DayRate) }}</b>
+                            </div>
+                            <div class="len-sum-main">
+                                <span>Amount</span>
+                                <b>Tk {{ money(amount) }}</b>
+                            </div>
+                        </div>
+
+                        @if (balances.length > 0)
+                        {
+                            <table class="len-table">
+
+                                <thead>
+                                    <tr>
+                                        <th>Leave Type</th>
+                                        <th class="len-num">Entitled</th>
+                                        <th class="len-num">Taken</th>
+                                        <th class="len-num">Applied</th>
+                                        <th class="len-num">Encashed</th>
+                                        <th class="len-num">Left</th>
+                                        <th class="len-num">To Encash</th>
+                                        <th class="len-num">Amount</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @for (row of balances; track row.LeaveTypeId)
+                                    {
+                                        <tr [class.len-off]="row.Encashable <= 0" [title]="row.Note || ''">
+                                            <td>{{ row.Name }}</td>
+                                            <td class="len-num">{{ days(row.Entitled) }}</td>
+                                            <td class="len-num">{{ days(row.Used) }}</td>
+                                            <td class="len-num">{{ days(row.Pending) }}</td>
+                                            <td class="len-num">{{ days(row.Encashed) }}</td>
+                                            <td class="len-num">{{ days(row.Remaining) }}</td>
+                                            <td class="len-num len-strong">{{ days(row.Encashable) }}</td>
+                                            <td class="len-num len-strong">{{ money(row.Amount) }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                                <tfoot>
+                                    <tr>
+                                        <td>Total</td>
+                                        <td class="len-num"></td>
+                                        <td class="len-num"></td>
+                                        <td class="len-num"></td>
+                                        <td class="len-num"></td>
+                                        <td class="len-num">{{ days(leftCount) }}</td>
+                                        <td class="len-num">{{ days(dayCount) }}</td>
+                                        <td class="len-num">{{ money(amount) }}</td>
+                                    </tr>
+                                </tfoot>
+
+                            </table>
+                        }
+                        @else if (eligibility.PolicyName)
+                        {
+                            <div class="len-empty">
+                                {{ eligibility.PolicyName }} has no leave type to encash : tick them on Human Resource Setup > Leave Encashment Policies.
+                            </div>
+                        }
+
+                        <div class="len-foot">
+                            @if (eligibility.Rules?.length)
+                            {
+                                <p><b>Policy</b> {{ (eligibility.Rules || []).join(' · ') }}</p>
+                            }
+                            <p>One encashment covers the whole balance of the leave year. Saving holds the days for approval; approving posts the Journal Voucher, and it is paid on Payroll Payments.</p>
+                        </div>
+                    }
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="Leave days paid as money : taken off the leave balance and posted to the accounts"
+            icon="fas fa-calendar-check">
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Approve"
+                    command1Icon="fas fa-circle-check"
+                    command1Title="Approve it : its Journal Voucher is posted"
+                    [command1Visible]="isPending"
+                    (command1Click)="approve()"
+                    command2Text="Reject"
+                    command2Icon="fas fa-ban"
+                    command2Title="Reject it : the days go back to the leave balance"
+                    [command2Visible]="isPending"
+                    (command2Click)="reject()"
+                    command3Text="Payroll Payments"
+                    command3Icon="fas fa-money-bill-transfer"
+                    command3Title="Pay it on Payroll Payments (Paid For : Leave Encashment)"
+                    [command3Visible]="isApproved"
+                    (command3Click)="goToPayments()"
+                    command4Text="Delete"
+                    command4Icon="fas fa-trash"
+                    command4Permission="update"
+                    (command4Click)="entity && delete(entity)"
+                    command5Text="Print"
+                    command5Icon="fas fa-print"
+                    command5Title="Print this encashment"
+                    (command5Click)="printOne()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        @if (rejecting && entity)
+        {
+            <div class="hp-panel">
+                <span class="hp-note">
+                    <b>Reject {{ entity.Code }}</b> : nothing is posted and the {{ days(entity.Days) }} day(s) go back to the leave balance.
+                </span>
+                <app-textbox
+                    class="hp-panel-box"
+                    placeholder="Reason (required)"
+                    [value]="rejectReason"
+                    [maxLength]="300"
+                    (valueChange)="onRejectReason($event)">
+                </app-textbox>
+                <button
+                    type="button"
+                    class="hp-add hp-danger"
+                    [disabled]="isSaving"
+                    (click)="confirmReject()">Reject</button>
+                <button
+                    type="button"
+                    class="hp-btn"
+                    (click)="keepPending()">Cancel</button>
+            </div>
+        }
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split appcore-scrollbar">
+
+                @if (!entity)
+                {
+                    <div class="pfx-empty">{{ loading ? 'Loading...' : 'The leave encashment could not be loaded.' }}</div>
+                }
+                @else
+                {
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Encashment</span>
+                        </header>
+
+                        <dl class="pf-facts">
+                            <dt>Code</dt>
+                            <dd>{{ entity.Code }}</dd>
+                            <dt>Date</dt>
+                            <dd>{{ day(entity.EncashDate) }}</dd>
+                            <dt>Employee</dt>
+                            <dd>{{ entity.EmployeeCode }} {{ entity.EmployeeName }}</dd>
+                            <dt>Branch</dt>
+                            <dd>{{ entity.BranchName }}</dd>
+                            <dt>Leave year</dt>
+                            <dd>{{ entity.LeaveYearName || entity.LeaveYear }}</dd>
+                            @if (entity.PolicyName)
+                            {
+                                <dt>Policy</dt>
+                                <dd>{{ entity.PolicyName }}</dd>
+                            }
+                            @if (entity.Remarks)
+                            {
+                                <dt>Remarks</dt>
+                                <dd>{{ entity.Remarks }}</dd>
+                            }
+                        </dl>
+
+                    </section>
+
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fas fa-coins"></i>
+                            <span>Amount</span>
+                        </header>
+
+                        @if (entity.Lines.length > 0)
+                        {
+                            <table class="pfx-table">
+
+                                <thead>
+                                    <tr>
+                                        <th class="pfx-no">#</th>
+                                        <th>Leave Type</th>
+                                        <th class="pfx-num">Entitled</th>
+                                        <th class="pfx-num">Used</th>
+                                        <th class="pfx-num">Days Encashed</th>
+                                        <th class="pfx-num">Amount</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @for (line of entity.Lines; track line.LeaveTypeId; let i = $index)
+                                    {
+                                        <tr>
+                                            <td class="pfx-no">{{ i + 1 }}</td>
+                                            <td>{{ line.LeaveTypeName }}</td>
+                                            <td class="pfx-num">{{ days(line.Entitled) }}</td>
+                                            <td class="pfx-num">{{ days(line.Used) }}</td>
+                                            <td class="pfx-num hp-strong">{{ days(line.Days) }}</td>
+                                            <td class="pfx-num">{{ money(line.Amount) }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                                <tfoot>
+                                    <tr class="len-total">
+                                        <td class="pfx-no"></td>
+                                        <td>Total</td>
+                                        <td class="pfx-num"></td>
+                                        <td class="pfx-num"></td>
+                                        <td class="pfx-num">{{ days(entity.Days) }}</td>
+                                        <td class="pfx-num">{{ money(entity.Amount) }}</td>
+                                    </tr>
+                                </tfoot>
+
+                            </table>
+                        }
+
+                        <dl class="pf-facts">
+                            <dt>Days encashed</dt>
+                            <dd>{{ days(entity.Days) }}</dd>
+                            <dt>Day rate ({{ entity.RateBase }} / {{ entity.MonthDays || 30 }})</dt>
+                            <dd>Tk {{ money(entity.DayRate) }}</dd>
+                            <dt>Amount</dt>
+                            <dd class="hp-strong">Tk {{ money(entity.Amount) }}</dd>
+                            <dt>Status</dt>
+                            <dd class="hp-strong">{{ entity.Status }}</dd>
+                            @if (entity.RejectReason)
+                            {
+                                <dt>Reason of rejection</dt>
+                                <dd>{{ entity.RejectReason }}</dd>
+                            }
+                            @if (isApproved)
+                            {
+                                <dt>Paid on Payroll Payments</dt>
+                                <dd>Tk {{ money(entity.PaidAmount) }} &nbsp;·&nbsp; {{ statusOf(entity) }}</dd>
+                            }
+                            <dt>Journal Voucher</dt>
+                            <dd>{{ entity.JournalVoucherNo || '-' }}</dd>
+                        </dl>
+
+                        <span class="hp-note">
+                            Pending : the days are held and nothing is posted. Approving posts the Journal Voucher; rejecting gives the days back. An encashment is not edited : deleting it cancels its Journal Voucher (when approved) and gives the days back; one that is paid must have its payment cancelled first.
+                        </span>
+
+                    </section>
+                }
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

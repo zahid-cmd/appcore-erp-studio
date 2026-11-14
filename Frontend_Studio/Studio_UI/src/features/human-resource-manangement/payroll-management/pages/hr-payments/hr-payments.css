@@ -1,0 +1,436 @@
+@import '../salary-advances/list/salary-advances-list.css';
+@import '../payroll-form.css';
+@import '../../../provident-fund/pages/pf-pages.css';
+
+/* Payments of Human Resource (Payroll Payments / PF Payments) : the
+   payroll list look, and the two-card form of the payroll pages */
+
+.hp-tools
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hp-note
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.hp-bar
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.hp-bar > .hp-note
+{
+    flex: 1 1 260px;
+}
+
+.hp-link
+{
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #1d4ed8;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.hp-link:hover
+{
+    text-decoration: underline;
+}
+
+/* the amount each employee gets */
+
+.hp-table .hp-pay
+{
+    width: 150px;
+    background: #f4f8ff;
+}
+
+.hp-input
+{
+    width: 100%;
+    height: 30px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    border: 1px solid #c9daf5;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f2a44;
+    font: inherit;
+    font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+}
+
+.hp-input:focus
+{
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+/* a payment mode row to add : mode, account, amount, Add */
+
+.hp-mode
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: end;
+}
+
+@media (max-width: 1300px)
+{
+    .hp-mode
+    {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+}
+
+.hp-add
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 10px;
+    background: #1e3a8a;
+    color: #ffffff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.hp-add:disabled
+{
+    opacity: .45;
+    cursor: default;
+}
+
+.hp-add.hp-danger
+{
+    background: #b4232c;
+}
+
+.hp-state
+{
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.hp-state.hp-ok
+{
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.hp-x
+{
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b4232c;
+    cursor: pointer;
+}
+
+.hp-bad
+{
+    color: #b4232c;
+}
+
+.hp-cancel
+{
+    border-color: #f3c6c9;
+}
+
+/* the form : one column, every card the whole width */
+
+.hp-stack
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 6px 12px;
+    box-sizing: border-box;
+}
+
+.hp-stack > .pf-card
+{
+    flex: 0 0 auto;
+}
+
+.hp-btn
+{
+    height: 38px;
+    padding: 0 18px;
+    border: 1px solid #d9e5f2;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* The Payment Desk pop-up */
+
+.hp-modal-backdrop
+{
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    background: rgba(15, 23, 42, .45);
+}
+
+.hp-modal
+{
+    display: flex;
+    flex-direction: column;
+    width: min(1280px, 100%);
+    max-height: calc(100vh - 48px);
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 30px 80px -20px rgba(15, 23, 42, .55);
+    overflow: hidden;
+}
+
+.hp-modal-head
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e3e9f3;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef4fd 100%);
+}
+
+.hp-modal-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.hp-modal-title
+{
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.hp-modal-title b
+{
+    color: #0f2a44;
+    font-size: 16px;
+}
+
+.hp-modal-title small
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.hp-modal-body
+{
+    flex: 1 1 auto;
+    min-height: 320px;
+    overflow: auto;
+    padding: 16px 18px;
+}
+
+.hp-modal-foot
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-top: 1px solid #e3e9f3;
+    background: #f8fbff;
+}
+
+.hp-modal-foot > .hp-note
+{
+    flex: 1 1 auto;
+}
+
+/* The two steps of a payment : left the master data, right the rows */
+
+.hp-split
+{
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(0, 2.4fr);
+    /* a fixed height : the two sections fill the canvas; the page
+       itself never scrolls */
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    padding: 4px 6px 12px;
+    box-sizing: border-box;
+}
+
+/* each section takes the whole height and scrolls inside itself :
+   its head (and the head of its table) stays in place */
+
+.hp-split > .pf-card
+{
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.hp-split > .pf-card > .pf-card-head
+{
+    position: sticky;
+    top: -14px;
+    z-index: 3;
+    margin: -14px -16px 0;
+    padding: 14px 16px 10px;
+    background: #ffffff;
+}
+
+.hp-split > .pf-card .pfx-table thead th
+{
+    position: sticky;
+    top: 30px;
+    z-index: 2;
+}
+
+.hp-split > .pf-card .pfx-table tfoot td
+{
+    position: sticky;
+    bottom: -18px;
+    z-index: 2;
+}
+
+@media (max-width: 1100px)
+{
+    .hp-split
+    {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+        overflow-y: auto;
+    }
+
+    .hp-split > .pf-card
+    {
+        height: auto;
+        overflow: visible;
+    }
+}
+
+.hp-steps
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.hp-step
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 6px;
+    border: 1px solid #e3e9f3;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.hp-step b
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 12px;
+}
+
+.hp-step.on
+{
+    border-color: #1e3a8a;
+    color: #1e3a8a;
+}
+
+.hp-step.on b
+{
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.hp-step.done b
+{
+    background: #047857;
+    color: #ffffff;
+}
+
+.hp-strong
+{
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+.hp-gap
+{
+    margin-left: 12px;
+}
+
+/* the fields of a section keep their own height, one right under
+   the other : what is left of the height stays empty at the bottom */
+
+.hp-split > .pf-card
+{
+    justify-content: flex-start;
+}
+
+.hp-split > .pf-card > *
+{
+    flex: 0 0 auto;
+}
