@@ -20,6 +20,10 @@
 //   saveFaReport(doc)   title, number, the facts, totals, columns
 //                       and rows
 //   openFaPrint(...)    opens the viewer in a new tab
+//
+// Asset Tags (2026-11-15) : /print-viewer/fa-tags/<token>?doc=tags
+//   saveFaTags(doc)     the labels : QR code (Asset No), number, name,
+//                       asset group, branch; 3 across, 7 down on A4
 //===============================================================
 
 import
@@ -50,6 +54,9 @@ from '../../../shared/print/print.models';
 
 export const FA_REPORT_PRINT_KEY =
     'fa-report';
+
+export const FA_TAGS_PRINT_KEY =
+    'fa-tags';
 
 
 //===============================================================
@@ -149,18 +156,57 @@ export function saveFaReport(doc: FaReportDoc): number
     }
 }
 
-function read(id: number | string): FaReportDoc | null
+function read<T = FaReportDoc>(id: number | string): T | null
 {
     try
     {
         const text =
             localStorage.getItem(STORAGE_PREFIX + Number(id));
 
-        return text ? JSON.parse(text) as FaReportDoc : null;
+        return text ? JSON.parse(text) as T : null;
     }
     catch
     {
         return null;
+    }
+}
+
+
+//===============================================================
+// Asset Tags : what the page saves
+//===============================================================
+
+export interface FaTag
+{
+    // FA-01-002-0001 : the QR code holds it (scanning finds the card)
+    assetNo: string;
+    name: string;
+    group: string;
+    branch: string;
+}
+
+export interface FaTagsDoc
+{
+    tags: FaTag[];
+}
+
+// 0 when the storage is blocked or full
+export function saveFaTags(doc: FaTagsDoc): number
+{
+    sweep();
+
+    const token =
+        Date.now();
+
+    try
+    {
+        localStorage.setItem(STORAGE_PREFIX + token, JSON.stringify(doc));
+
+        return token;
+    }
+    catch
+    {
+        return 0;
     }
 }
 
@@ -187,7 +233,7 @@ export function openFaPrint
         router.serializeUrl(
             router.createUrlTree(
                 ['/print-viewer', key, token],
-                { queryParams:{ doc:'report' } }));
+                { queryParams:{ doc:key === FA_TAGS_PRINT_KEY ? 'tags' : 'report' } }));
 
     // Not "noopener" : the new tab keeps this session's login
     return window.open(url, '_blank')
@@ -489,6 +535,121 @@ export const FA_REPORT_PRINT:
             excel:
                 (data: FaReportDoc | null, kit: PrintKit) =>
                     reportSheet(data ?? { title:'Fixed Assets', subtitle:'', columns:[], rows:[] }, kit)
+        }
+    ]
+};
+
+
+//===============================================================
+// Asset Tags : fixed A4 pages of labels (63 x 34 mm, 3 across,
+// 7 down), cut by the label sheet. The QR code is the engine's
+// (kit.qr) and holds the Asset No only.
+//===============================================================
+
+const TAGS_PER_PAGE =
+    21;
+
+const TAGS_CSS = `
+.fat-sheet { position: absolute; inset: 0; padding: 8mm 8.5mm; display: grid; grid-template-columns: repeat(3, 63mm); grid-auto-rows: 34mm;
+             gap: 2mm; align-content: start; justify-content: center; }
+.fat-tag { display: flex; align-items: center; gap: 2mm; width: 63mm; height: 34mm; padding: 2mm; border: 0.2mm solid #555555; border-radius: 1.5mm;
+           overflow: hidden; background: #ffffff; color: #000000; break-inside: avoid; page-break-inside: avoid; }
+.fat-qr { flex: 0 0 26mm; width: 26mm; height: 26mm; }
+.fat-qr svg { display: block; width: 26mm; height: 26mm; }
+.fat-text { flex: 1 1 auto; min-width: 0; line-height: 1.2; }
+.fat-no { font-size: 8.5pt; font-weight: 700; overflow-wrap: anywhere; }
+.fat-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; max-height: 2.4em; margin-top: 1mm; overflow: hidden;
+            font-size: 7pt; overflow-wrap: anywhere; }
+.fat-small { margin-top: 0.8mm; overflow: hidden; font-size: 6pt; color: #333333; white-space: nowrap; text-overflow: ellipsis; }
+`;
+
+function tagsHtml(doc: FaTagsDoc, kit: PrintKit): string
+{
+    const e =
+        (value: string | number | null | undefined): string => kit.escape(value);
+
+    const tags =
+        (doc.tags ?? []).filter(x => !!x.assetNo);
+
+    const pages: string[] = [];
+
+    for (let i = 0; i < tags.length; i += TAGS_PER_PAGE)
+    {
+        const labels =
+            tags.slice(i, i + TAGS_PER_PAGE)
+                .map(x =>
+                    '<div class="fat-tag">'
+                    + `<div class="fat-qr">${kit.qr(x.assetNo)}</div>`
+                    + '<div class="fat-text">'
+                    + `<div class="fat-no">${e(x.assetNo)}</div>`
+                    + `<div class="fat-name">${e(x.name)}</div>`
+                    + `<div class="fat-small">${e(x.group)}</div>`
+                    + `<div class="fat-small">${e(x.branch)}</div>`
+                    + '</div>'
+                    + '</div>')
+                .join('');
+
+        pages.push(`<section class="pv-page fat-page"><div class="fat-sheet">${labels}</div></section>`);
+    }
+
+    return pages.join('\n');
+}
+
+function tagsSheet(doc: FaTagsDoc, kit: PrintKit): ExcelSheet
+{
+    return {
+        name:'Asset Tags',
+        rows:
+        [
+            [{ v:kit.company?.CompanyName ?? '', s:'title' }],
+            [{ v:`Asset Tags (${(doc.tags ?? []).length})`, s:'bold' }],
+            [],
+            [{ v:'#', s:'bold' }, { v:'Asset No', s:'bold' }, { v:'Name', s:'bold' }, { v:'Asset Group', s:'bold' }, { v:'Branch', s:'bold' }],
+            ...(doc.tags ?? []).map((x, i) => [i + 1, x.assetNo, x.name, x.group, x.branch] as ExcelCell[])
+        ],
+        columns:[5, 20, 30, 24, 24]
+    };
+}
+
+export const FA_TAGS_PRINT:
+    PrintSourceDef<FaTagsDoc | null> =
+{
+    key:FA_TAGS_PRINT_KEY,
+
+    title:'Asset Tags',
+
+    canRotate:false,
+
+    async load(_injector: Injector, id: number | string): Promise<FaTagsDoc | null>
+    {
+        return read<FaTagsDoc>(id);
+    },
+
+    denyReason(data: FaTagsDoc | null): string
+    {
+        return data && (data.tags ?? []).length > 0
+            ? ''
+            : 'The tags are no longer waiting to be printed : open Asset Tags and press Print Tags again.';
+    },
+
+    fileName(data: FaTagsDoc | null): string
+    {
+        return `Asset Tags (${data?.tags?.length ?? 0})`;
+    },
+
+    documents:
+    [
+        {
+            key:'tags',
+            title:'Asset Tags',
+            icon:'fas fa-qrcode',
+            render:
+                (data: FaTagsDoc | null, kit: PrintKit) =>
+                    data ? tagsHtml(data, kit) : '',
+            css:TAGS_CSS,
+            excel:
+                (data: FaTagsDoc | null, kit: PrintKit) =>
+                    tagsSheet(data ?? { tags:[] }, kit)
         }
     ]
 };

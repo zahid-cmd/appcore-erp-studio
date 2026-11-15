@@ -64,6 +64,7 @@ from '../../print/fa-print';
 
 import
 {
+    FaAutoCharge,
     FaRun,
     FaRunBranch,
     FaRunLine,
@@ -85,11 +86,19 @@ type ListRow =
     {
         DateText: string;
         AmountText: string;
+        // Auto (month-end job) / Manual
+        ByText: string;
     };
 
 
 //===============================================================
-// Depreciation Runs (Fixed Assets Management > Depreciation)
+// Charge Depreciation (Fixed Assets Management > Depreciations;
+// was Depreciation Runs until 2026-11-15)
+//
+// With the Asset Configuration switch "Charge Depreciation on
+// Month End" ON, the API charges every branch itself at 00:05 on
+// the 1st : those runs show here marked Auto, and the toolbar says
+// what the last check did.
 //
 // A run is one month of one branch. The months go in order with
 // no gap : the server names the next month of every branch.
@@ -255,6 +264,7 @@ implements OnInit
         { header:'Depreciation', field:'AmountText', width:'150px', align:'right' },
         { header:'Journal', field:'JournalVoucherNo', width:'190px', align:'center' },
         { header:'Run Date', field:'DateText', width:'120px', align:'center' },
+        { header:'Charged', field:'ByText', width:'100px', align:'center' },
         { header:'Actions', field:'actions', type:'actions', width:'90px', align:'center' }
     ];
 
@@ -322,7 +332,7 @@ implements OnInit
         return this.previewing ? 'Working out the depreciation...'
             : this.previewMessage ? this.previewMessage
             : this.loadFailed ? 'The branches could not be loaded.'
-            : !this.branchId ? 'Pick a branch : the depreciation of its next month is worked out here. Nothing is saved until you press Post Run.'
+            : !this.branchId ? 'Pick a branch : the depreciation of its next month is worked out here. Nothing is saved until you press Post Charge.'
             : 'There is nothing to charge.';
     }
 
@@ -414,12 +424,65 @@ implements OnInit
     // List
     //===========================================================
 
+    //===========================================================
+    // Charge Depreciation on Month End (the toolbar line)
+    //===========================================================
+
+    autoCharge:
+        FaAutoCharge | null = null;
+
+    get autoText(): string
+    {
+        const auto = this.autoCharge;
+
+        if (!auto)
+        {
+            return 'One charge is one month of one branch. The months go in order, with no gap.';
+        }
+
+        if (!auto.On)
+        {
+            return 'Charged by hand : Charge Depreciation on Month End is OFF (Asset Setup > Asset Configuration).';
+        }
+
+        return `Charged automatically at ${auto.RunsAt}.`
+            + (auto.LastCheck ? ` Last check ${auto.LastCheck} : ${auto.LastMessage}` : ' Not checked yet.');
+    }
+
+    // The last check named a branch it could not charge
+    get autoFailed(): boolean
+    {
+        return !!this.autoCharge?.On && (this.autoCharge.LastMessage ?? '').includes('NOT charged');
+    }
+
+    private loadAutoCharge():
+        void
+    {
+        this.service
+            .getAutoCharge()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(
+            {
+                next:auto =>
+                {
+                    this.autoCharge = auto;
+                    this.cdr.detectChanges();
+                },
+                error:() =>
+                {
+                    // only a note : the plain one stays
+                }
+            });
+    }
+
     loadList():
         void
     {
         this.loading = true;
         this.loadFailed = false;
         this.cdr.detectChanges();
+
+        this.loadAutoCharge();
 
         this.service
             .getRuns()
@@ -432,7 +495,8 @@ implements OnInit
                         (rows ?? []).map(x => ({
                             ...x,
                             DateText:faDay(x.RunDate),
-                            AmountText:faMoney(x.TotalAmount)
+                            AmountText:faMoney(x.TotalAmount),
+                            ByText:x.IsAuto ? 'Auto' : 'Manual'
                         }));
 
                     this.branchFilterItems =
@@ -455,7 +519,7 @@ implements OnInit
                     this.loading = false;
                     this.apply();
                 },
-                error:error => this.failed(error, 'The depreciation runs could not be loaded.')
+                error:error => this.failed(error, 'The depreciation charges could not be loaded.')
             });
     }
 
@@ -471,7 +535,7 @@ implements OnInit
                 &&
                 (!this.yearFilter || Math.floor(x.Period / 100) === this.yearFilter)
                 &&
-                (!find || [x.Code, x.PeriodText, x.BranchName, x.JournalVoucherNo, x.DateText]
+                (!find || [x.Code, x.PeriodText, x.BranchName, x.JournalVoucherNo, x.DateText, x.ByText]
                     .some(v => (v ?? '').toLowerCase().includes(find))));
 
         this.totalRecords = matched.length;
@@ -489,7 +553,7 @@ implements OnInit
 
         this.summaryItems =
         [
-            { label:'Runs', value:matched.length.toLocaleString('en-US') },
+            { label:'Charges', value:matched.length.toLocaleString('en-US') },
             { label:'Total Depreciation', value:faMoney(matched.reduce((sum, x) => sum + (Number(x.TotalAmount) || 0), 0)) }
         ];
 
@@ -571,7 +635,7 @@ implements OnInit
         void
     {
         this.service
-            .getHistory('depreciation/depreciation-runs')
+            .getHistory('depreciation/charge-depreciation')
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(
             {
@@ -755,7 +819,7 @@ implements OnInit
 
         if (problem || !branch || !preview)
         {
-            this.toast.error('Depreciation Run', problem);
+            this.toast.error('Charge Depreciation', problem);
             return;
         }
 
@@ -764,14 +828,14 @@ implements OnInit
         const total = preview.TotalAmount || this.chargeTotal;
 
         this.confirmDialog.open(
-            'Post Depreciation Run',
+            'Post Depreciation Charge',
             `Post the depreciation of ${branch.NextPeriodText} for ${branch.BranchName} : ${count} asset(s), ${faMoney(total)}? It posts one Journal Voucher : Depreciation Expense against Accumulated Depreciation for each asset group.`,
             () =>
                 this.save(
-                    'Posting the depreciation run...',
+                    'Posting the depreciation charge...',
                     this.service.postRun(branch.BranchId, branch.NextPeriod, this.remarks.trim()),
                     (run: FaRun) => `${run?.Code ?? 'The run'} was posted. Journal Voucher ${run?.JournalVoucherNo || '-'}.`,
-                    'The depreciation run could not be posted.'),
+                    'The depreciation charge could not be posted.'),
             'Post',
             'Cancel',
             'primary');
@@ -799,7 +863,7 @@ implements OnInit
                     this.loading = false;
                     this.cdr.detectChanges();
                 },
-                error:error => this.failed(error, 'The depreciation run could not be loaded.')
+                error:error => this.failed(error, 'The depreciation charge could not be loaded.')
             });
     }
 
@@ -841,17 +905,17 @@ implements OnInit
 
         if (!reason)
         {
-            this.toast.error('Depreciation Run', 'Write why the run is undone.');
+            this.toast.error('Charge Depreciation', 'Write why the charge is undone.');
             return;
         }
 
         const run = this.run;
 
         this.save(
-            'Undoing the depreciation run...',
+            'Undoing the depreciation charge...',
             this.service.undoRun(run.PublicId, reason),
             () => `${run.Code} was undone : ${run.PeriodText} of ${run.BranchName} can be run again.`,
-            'The depreciation run could not be undone.');
+            'The depreciation charge could not be undone.');
     }
 
     // The run with its assets (Print Engine)
@@ -875,7 +939,7 @@ implements OnInit
         const token =
             saveFaReport(
             {
-                title:'Depreciation Run',
+                title:'Depreciation Charge',
                 subtitle:`${run.PeriodText} · ${run.BranchName}`,
                 meta:
                 [

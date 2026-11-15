@@ -99,7 +99,8 @@ const EXAMPLE_COST =
 
 
 //===============================================================
-// Depreciation of Fixed Assets (Fixed Assets > Asset Setup)
+// Depreciation Setup (Fixed Assets > Depreciations; was Depreciation
+// of Fixed Assets under Asset Setup until 2026-11-15)
 //
 // For every asset group : how its assets are depreciated (method,
 // rate or useful life, residual value) and the Depreciation
@@ -399,7 +400,10 @@ implements OnInit
                 ? `Residual value : ${faNumber(residual)} % of the cost (Tk ${faMoney(residualValue)} of Tk ${faMoney(cost)}) is never depreciated.`
                 : 'Residual value : none, the whole cost is depreciated.');
 
-        lines.push(`Each month : Depreciation Expense Dr / ${accum} Cr.`);
+        lines.push(
+            this.expenseLedger
+                ? `Each month : ${this.ledgerName(this.expenseLedger)} Dr / ${accum} Cr.`
+                : `Each month : the Posting Setup depreciation expense ledger (Fixed Assets - Depreciation Expense) Dr / ${accum} Cr.`);
 
         lines.push('An asset is charged for the full month it is put to use, and not in the month it is disposed.');
 
@@ -620,7 +624,7 @@ implements OnInit
         void
     {
         this.fa
-            .getHistory('asset-setup/depreciation-of-fixed-assets')
+            .getHistory('depreciation/depreciation-setup')
             .subscribe(
             {
                 next:items =>
@@ -665,6 +669,15 @@ implements OnInit
         this.cdr.detectChanges();
     }
 
+    // The name of a picked ledger (its code when not in the list)
+    private ledgerName(code: string): string
+    {
+        const label =
+            this.ledgerItems.find(x => x.value === code)?.label ?? code;
+
+        return label.startsWith(code) ? label.slice(code.length).trim() || code : label;
+    }
+
     // The same rules as the server
     private validate(): string
     {
@@ -704,11 +717,6 @@ implements OnInit
         if (Number.isNaN(residual) || residual < 0 || residual >= 100)
         {
             return 'The residual value must be 0 to under 100 %.';
-        }
-
-        if (!this.expenseLedger)
-        {
-            return 'Choose the Depreciation Expense ledger.';
         }
 
         return '';

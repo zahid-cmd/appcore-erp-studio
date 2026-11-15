@@ -340,10 +340,11 @@ export class SalesReturnForm
             || fallback;
     }
 
-    // The page's route is its API path (sales-operations/<menu>/<page>)
+    // The page's own address (config route; not the API path since
+    // the 2026-11-15 operations restructure)
     private get pageRoute(): string
     {
-        return '/' + this.page.apiPath;
+        return '/' + (this.page.route || this.page.apiPath);
     }
 
     private get listRoute(): any[]

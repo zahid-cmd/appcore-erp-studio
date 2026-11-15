@@ -16,6 +16,11 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
+using CheckLeafRegister =
+    AppCore.Infrastructure.Repositories.Settings.AccountSettings.CheckLeafRegister;
+
+using CheckLeafUse =
+    AppCore.Infrastructure.Repositories.Settings.AccountSettings.CheckLeafUse;
 using AppCore.Infrastructure.Persistence.Paging;
 using AppCore.Application.Common.Paging;
 
@@ -1213,6 +1218,9 @@ public class FundTransferRepository : IFundTransferRepository
                     entity.FundTransferId,
                     input);
 
+                // Check Books : the cheque rows hold their leaves
+                await SyncCheckLeavesAsync(entity, input.Lines, userId);
+
                 AddHistory(entity, "Create", "Created", userId, entity.CreatedDate);
 
                 await _context.SaveChangesAsync();
@@ -1224,6 +1232,48 @@ public class FundTransferRepository : IFundTransferRepository
             PublicId = entity.PublicId,
             VoucherNo = entity.VoucherNo
         };
+    }
+
+
+    //===========================================================
+    // Check Books (2026-11-15) : every Cheque row (From side, Bank)
+    // holds its leaf (Issued : voucher no, payee = the To accounts,
+    // amount, cheque date). Accounts without a check book keep free
+    // cheque numbers.
+    //===========================================================
+
+    private async Task SyncCheckLeavesAsync
+    (
+        FundTransfer entity,
+        IEnumerable<FundTransferLines> lines,
+        long userId
+    )
+    {
+        List<FundTransferLines> all =
+            lines.ToList();
+
+        string payee =
+            string.Join(", ", all.Where(x => x.Side == ToSide).Select(x => x.LedgerName).Distinct());
+
+        List<CheckLeafUse> uses =
+            all
+                .Where(x => x.Side == FromSide && x.AccountType == "Bank" && x.Method == ChequeMethod && !string.IsNullOrWhiteSpace(x.CheckNo))
+                .Select(x => new CheckLeafUse(
+                    x.AccountId,
+                    x.CheckNo,
+                    string.IsNullOrWhiteSpace(payee) ? "Fund Transfer" : payee,
+                    x.Amount,
+                    x.CheckDate,
+                    $"From {x.LineNo} (Cheque)"))
+                .ToList();
+
+        await CheckLeafRegister.SyncAsync(
+            _context,
+            CheckLeafRegister.FundTransfer,
+            entity.FundTransferId,
+            entity.VoucherNo,
+            uses,
+            userId);
     }
 
 
@@ -1282,6 +1332,9 @@ public class FundTransferRepository : IFundTransferRepository
                     entity.FundTransferId,
                     input);
 
+                // Check Books : the cheque rows hold their leaves
+                await SyncCheckLeavesAsync(entity, input.Lines, userId);
+
                 AddHistory(entity, "Update", "Updated", userId, entity.ModifiedDate.Value);
 
                 await _context.SaveChangesAsync();
@@ -1310,6 +1363,9 @@ public class FundTransferRepository : IFundTransferRepository
 
                 DateTime now =
                     DateTime.UtcNow;
+
+                // Check Books : the leaves are free again
+                await CheckLeafRegister.ReleaseAsync(_context, CheckLeafRegister.FundTransfer, entity.FundTransferId, userId);
 
                 entity.IsDeleted = true;
 
@@ -1358,6 +1414,19 @@ public class FundTransferRepository : IFundTransferRepository
         entity.ModifiedBy = userId;
 
         entity.ModifiedDate = now;
+
+        // Check Books : the draft takes its leaves again (fails when
+        // a leaf was issued elsewhere meanwhile)
+        if (entity.Status == VoucherStatuses.Draft)
+        {
+            List<FundTransferLines> lines =
+                await _context
+                    .Set<FundTransferLines>()
+                    .Where(x => x.FundTransferId == entity.FundTransferId)
+                    .ToListAsync();
+
+            await SyncCheckLeavesAsync(entity, lines, userId);
+        }
 
         AddHistory(entity, "Restore", "Restored", userId, now);
 
@@ -1846,6 +1915,10 @@ public class FundTransferRepository : IFundTransferRepository
                         reason,
                         userId);
                 }
+
+                // Check Books : the cheques were written : Void, never
+                // used again
+                await CheckLeafRegister.VoidAsync(_context, CheckLeafRegister.FundTransfer, entity.FundTransferId, $"{entity.VoucherNo} cancelled : {reason}", userId);
 
                 DateTime now =
                     DateTime.UtcNow;

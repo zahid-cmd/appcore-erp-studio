@@ -24,6 +24,10 @@
                     command2Text="Refresh"
                     command2Icon="fas fa-rotate-right"
                     (command2Click)="loadList()"
+                    command3Text="Restore"
+                    command3Icon="fas fa-trash-arrow-up"
+                    command3Permission="restore"
+                    (command3Click)="restore()"
                     rightCommandIcon="fas fa-clock-rotate-left"
                     rightCommandTitle="Activity history"
                     (rightCommandClick)="openHistory()">
@@ -137,41 +141,47 @@
                         <span>Count</span>
                     </header>
 
-                    <app-datepicker
-                        label="Date"
-                        [required]="true"
-                        [value]="$any(asDate(countDate))"
-                        (valueChange)="onCountDate($event)">
-                    </app-datepicker>
+                    <div class="favf-grid">
 
-                    <app-search-dropdown
-                        label="Branch"
-                        placeholder="Select branch"
-                        [items]="branchItems"
-                        labelField="label"
-                        valueField="value"
-                        [value]="branchId"
-                        (valueChange)="onBranch($event)"
-                        [required]="true">
-                    </app-search-dropdown>
+                        <app-datepicker
+                            label="Date"
+                            [required]="true"
+                            [value]="$any(asDate(countDate))"
+                            (valueChange)="onCountDate($event)">
+                        </app-datepicker>
 
-                    <app-search-dropdown
-                        label="Location"
-                        placeholder="All locations"
-                        [items]="locationItems"
-                        labelField="label"
-                        valueField="value"
-                        [value]="locationId"
-                        (valueChange)="onLocation($event)">
-                    </app-search-dropdown>
+                        <app-search-dropdown
+                            label="Branch"
+                            placeholder="Select branch"
+                            [items]="branchItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="branchId"
+                            (valueChange)="onBranch($event)"
+                            [required]="true">
+                        </app-search-dropdown>
 
-                    <app-textbox
-                        label="Remarks"
-                        placeholder="Optional"
-                        [value]="remarks"
-                        [maxLength]="500"
-                        (valueChange)="onRemarks($event)">
-                    </app-textbox>
+                        <app-search-dropdown
+                            label="Location"
+                            placeholder="All locations"
+                            [items]="locationItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="locationId"
+                            (valueChange)="onLocation($event)">
+                        </app-search-dropdown>
+
+                        <app-textbox
+                            label="Remarks"
+                            placeholder="Optional"
+                            [value]="remarks"
+                            [maxLength]="500"
+                            (valueChange)="onRemarks($event)">
+                        </app-textbox>
+
+                    </div>
+
+                    <span class="hp-note">Start Count opens the count sheet of every asset the branch still owns (or only the location picked). Nothing is saved until you press Save on the sheet.</span>
 
                 </section>
 
@@ -184,14 +194,32 @@
                         <span>How it works</span>
                     </header>
 
-                    <ul class="hp-list">
-                        <li>Start Count makes the count sheet : every asset of the branch (or of the location picked) that the company still owns.</li>
-                        <li>Walk around with the sheet and mark each asset Found or Missing. A note can be written for any asset.</li>
-                        <li>Things you find that are not in the register can be written on the sheet too.</li>
-                        <li>Save as often as you like : the count stays a Draft until it is closed.</li>
-                        <li>Close Count locks the count. It can be closed only when no asset is left Not counted.</li>
-                        <li>A count changes nothing on the asset cards. A missing asset is taken off the register on Asset Disposals.</li>
-                    </ul>
+                    <ol class="favf-steps">
+                        <li>
+                            <span class="favf-dot"><i class="fas fa-play"></i></span>
+                            <div><b>Start Count</b><small>The count sheet opens : every asset of the branch (or of the location picked) that the company still owns. It is saved only when you press Save.</small></div>
+                        </li>
+                        <li>
+                            <span class="favf-dot"><i class="fas fa-check-double"></i></span>
+                            <div><b>Mark each asset</b><small>Walk around with the sheet : Found or Missing, with a note when needed.</small></div>
+                        </li>
+                        <li>
+                            <span class="favf-dot"><i class="fas fa-plus"></i></span>
+                            <div><b>Write the extras</b><small>Things found that are not in the register go on the sheet too.</small></div>
+                        </li>
+                        <li>
+                            <span class="favf-dot"><i class="fas fa-floppy-disk"></i></span>
+                            <div><b>Save as you go</b><small>The count stays a Draft until it is closed. A Draft can be deleted and restored.</small></div>
+                        </li>
+                        <li>
+                            <span class="favf-dot"><i class="fas fa-lock"></i></span>
+                            <div><b>Close Count</b><small>Locks the count. It closes only when no asset is left Not counted.</small></div>
+                        </li>
+                        <li>
+                            <span class="favf-dot favf-dot-last"><i class="fas fa-trash-can-arrow-up"></i></span>
+                            <div><b>After the count</b><small>Nothing changes on the asset cards. A missing asset is taken off the register on Asset Disposals.</small></div>
+                        </li>
+                    </ol>
 
                 </section>
 
@@ -218,18 +246,18 @@
                 <app-command-center
                     command1Text="Save"
                     command1Icon="fas fa-floppy-disk"
-                    command1Permission="update"
+                    [command1Permission]="isNew ? 'add' : 'update'"
                     (command1Click)="onSave()"
                     [command1Visible]="isDraft"
                     command2Text="Close Count"
                     command2Icon="fas fa-lock"
-                    command2Permission="update"
+                    [command2Permission]="isNew ? 'add' : 'update'"
                     command2Title="Lock the count : nothing can be changed afterwards"
                     (command2Click)="onCloseCount()"
                     [command2Visible]="isDraft"
-                    command3Text="Delete"
+                    [command3Text]="isNew ? 'Discard' : 'Delete'"
                     command3Icon="fas fa-trash"
-                    command3Permission="update"
+                    [command3Permission]="isNew ? 'add' : 'update'"
                     (command3Click)="onDeleteSheet()"
                     [command3Visible]="isDraft"
                     command4Text="Print"
@@ -258,10 +286,13 @@
 
                 @if (sheet)
                 {
-                    <span class="hp-strong">{{ sheet.Code }}</span>
-                    <span
-                        class="hp-state"
-                        [class.hp-ok]="!isDraft">{{ sheet.Status }}</span>
+                    <span class="hp-strong">{{ sheet.Code || 'New count' }}</span>
+                    @if (!isNew)
+                    {
+                        <span
+                            class="hp-state"
+                            [class.hp-ok]="!isDraft">{{ sheet.Status }}</span>
+                    }
                     @if (hasChanges)
                     {
                         <span class="hp-state fav-unsaved">Not saved</span>

@@ -24,6 +24,12 @@ import
 }
 from '@angular/core/rxjs-interop';
 
+import
+{
+    Router
+}
+from '@angular/router';
+
 import { PageHeaderComponent } from '../../../../shared/components/layout/page-header/page-header';
 import { PageToolbarComponent } from '../../../../shared/components/layout/page-toolbar/page-toolbar';
 import { PageCanvasComponent, PageCanvasConfig } from '../../../../shared/components/layout/page-canvas/page-canvas';
@@ -49,9 +55,11 @@ from '../../shared/fa.service';
 
 import
 {
-    qrSvg
+    FA_TAGS_PRINT_KEY,
+    openFaPrint,
+    saveFaTags
 }
-from './qr';
+from '../../print/fa-print';
 
 
 interface Choice<T>
@@ -59,37 +67,6 @@ interface Choice<T>
     label: string;
     value: T;
 }
-
-// The labels of one A4 page : 3 across, 7 down
-const LABELS_PER_PAGE =
-    21;
-
-function escapeHtml(value: string | null | undefined): string
-{
-    return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-const TAG_CSS = `
-@page { size: A4; margin: 8mm; }
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; background: #ffffff; color: #000000; font-family: Arial, Helvetica, sans-serif; }
-.sheet { display: grid; grid-template-columns: repeat(3, 63mm); grid-auto-rows: 34mm; gap: 2mm; width: 193mm; margin: 0 auto; page-break-after: always; break-after: page; }
-.sheet:last-child { page-break-after: auto; break-after: auto; }
-.tag { display: flex; align-items: center; gap: 2mm; width: 63mm; height: 34mm; padding: 2mm; border: 0.2mm solid #555555; border-radius: 1.5mm; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
-.tag-qr { flex: 0 0 26mm; width: 26mm; height: 26mm; }
-.tag-qr svg { display: block; width: 26mm; height: 26mm; }
-.tag-text { flex: 1 1 auto; min-width: 0; line-height: 1.2; }
-.tag-no { font-size: 8.5pt; font-weight: 700; overflow-wrap: anywhere; }
-.tag-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; max-height: 2.4em; margin-top: 1mm; overflow: hidden; font-size: 7pt; overflow-wrap: anywhere; }
-.tag-small { margin-top: 0.8mm; overflow: hidden; font-size: 6pt; color: #333333; white-space: nowrap; text-overflow: ellipsis; }
-@media screen { body { padding: 8mm 0; } }
-`;
-
 
 //===============================================================
 // Asset Tags (Fixed Assets > Asset Reports)
@@ -131,6 +108,8 @@ implements OnInit
     private readonly cdr = inject(ChangeDetectorRef);
 
     private readonly destroyRef = inject(DestroyRef);
+
+    private readonly router = inject(Router);
 
     loading =
         false;
@@ -492,20 +471,9 @@ implements OnInit
     // Print
     //===========================================================
 
-    private tagHtml(asset: FaAsset): string
-    {
-        return '<div class="tag">'
-            + `<div class="tag-qr">${qrSvg(asset.AssetNo, 100)}</div>`
-            + '<div class="tag-text">'
-            + `<div class="tag-no">${escapeHtml(asset.AssetNo)}</div>`
-            + `<div class="tag-name">${escapeHtml(asset.Name)}</div>`
-            + `<div class="tag-small">${escapeHtml(asset.CategoryName)}</div>`
-            + `<div class="tag-small">${escapeHtml(asset.BranchName)}</div>`
-            + '</div>'
-            + '</div>';
-    }
-
-    // The ticked cards; with none ticked, every card shown
+    // The ticked cards; with none ticked, every card shown. Printed
+    // through the Print Engine (Print Viewer, new tab : Print, PDF,
+    // Excel), A4, 3 across and 7 down.
     printTags():
         void
     {
@@ -519,51 +487,24 @@ implements OnInit
             return;
         }
 
-        const sheets: string[] = [];
-
-        for (let i = 0; i < assets.length; i += LABELS_PER_PAGE)
-        {
-            sheets.push(`<div class="sheet">${assets.slice(i, i + LABELS_PER_PAGE).map(x => this.tagHtml(x)).join('')}</div>`);
-        }
-
-        const html =
-            '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
-            + `<title>Asset Tags (${assets.length})</title>`
-            + `<style>${TAG_CSS}</style>`
-            + `</head><body>${sheets.join('')}</body></html>`;
-
-        const tab =
-            window.open('', '_blank');
-
-        if (!tab)
-        {
-            this.toast.error('Print Tags', 'The browser blocked the print window. Allow pop-ups for this site, then press Print Tags again.');
-            return;
-        }
-
-        tab.document.open();
-        tab.document.write(html);
-        tab.document.close();
-
-        // once, when the labels are on the page
-        let printed = false;
-
-        const print =
-            (): void =>
+        const token =
+            saveFaTags(
             {
-                if (printed || tab.closed)
-                {
-                    return;
-                }
+                tags:
+                    assets.map(x => ({
+                        assetNo:x.AssetNo,
+                        name:x.Name ?? '',
+                        group:x.CategoryName ?? '',
+                        branch:x.BranchName ?? ''
+                    }))
+            });
 
-                printed = true;
+        const problem =
+            openFaPrint(this.router, FA_TAGS_PRINT_KEY, token, 'Asset Tags');
 
-                tab.focus();
-                tab.print();
-            };
-
-        tab.onload = print;
-
-        setTimeout(print, 600);
+        if (problem)
+        {
+            this.toast.error('Print Tags', problem);
+        }
     }
 }

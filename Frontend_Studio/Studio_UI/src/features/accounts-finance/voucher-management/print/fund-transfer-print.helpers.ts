@@ -6,6 +6,13 @@
 // text per From row, and the Dr / Cr lines of the voucher.
 //===============================================================
 
+
+import
+{
+    CheckPrintItem
+}
+from '../../../settings/account-settings/models/check-print.model';
+
 import
 {
     FundTransfer
@@ -49,6 +56,10 @@ export interface FtPrintData
 
     // Names of the charge expense ledgers
     ledgers: VoucherLedger[];
+
+    // Its From Bank cheques with their bank account's cheque
+    // layout (document "Cheque", Check Books 2026-11-15)
+    cheques?: CheckPrintItem[];
 }
 
 // Dr / Cr line of the voucher
@@ -336,4 +347,4 @@ export function voucherLines
     }
 
     return result;
-}
+}

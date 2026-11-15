@@ -90,6 +90,21 @@ import
 }
 from './payment-slip/payment-slip.adapter';
 
+import
+{
+    CHEQUE_PRINT_CSS,
+    CHEQUE_TOGGLES,
+    chequePagesHtml,
+    withChequeLayouts
+}
+from '../../../settings/account-settings/print/check-print.template';
+
+import
+{
+    basicPartyName
+}
+from '../../../settings/account-settings/models/check-print.model';
+
 // Shared designs (every voucher)
 import
 {
@@ -169,9 +184,47 @@ export const PAYMENT_VOUCHER_PRINT:
                 )
             ]);
 
+        // Check rows : the cheques to print on their leaves (the
+        // payee : the row's name on the check, else the party)
+        const debits =
+            voucher.Debits ?? [];
+
+        // The party's basic name only (no brand / category / phone)
+        const party =
+            basicPartyName(
+                debits.length > 0
+                    ? debits[0].LedgerName
+                    : voucher.PartyName);
+
+        let cheques =
+            [] as Awaited<ReturnType<typeof withChequeLayouts>>;
+
+        try
+        {
+            cheques =
+                await withChequeLayouts(
+                    injector,
+                    (voucher.Credits ?? [])
+                        .filter(line => line.Mode === 'Check')
+                        .map(line => ({
+                            BankAccountId:line.AccountId,
+                            BankAccountName:line.LedgerName,
+                            CheckNo:line.CheckNo,
+                            CheckDate:line.CheckDate || voucher.VoucherDate,
+                            PayeeName:(line.PayeeName ?? '').trim() || party,
+                            Amount:line.Amount,
+                            Note:voucher.VoucherNo
+                        })));
+        }
+        catch
+        {
+            cheques = [];
+        }
+
         return {
             voucher,
-            ledgers
+            ledgers,
+            cheques
         };
     },
 
@@ -259,6 +312,25 @@ export const PAYMENT_VOUCHER_PRINT:
             excel:
                 (data, kit) =>
                     slipDocumentSheet(paymentSlipSheet(data, kit), kit)
+        },
+        {
+            // On the real leaf (layout : Check Books > Cheque
+            // Layout); printed on its own, not with All Documents
+            key:'cheque',
+            title:'Cheque',
+            icon:'fas fa-money-check-dollar',
+            separate:true,
+            toggles:CHEQUE_TOGGLES,
+            available:
+                data =>
+                    (data.cheques?.length ?? 0) > 0
+                    &&
+                    data.voucher.Status !== 'Cancelled',
+            render:
+                (data, kit) =>
+                    chequePagesHtml(data.cheques ?? [], kit),
+            css:
+                CHEQUE_PRINT_CSS
         }
     ]
-};
+};

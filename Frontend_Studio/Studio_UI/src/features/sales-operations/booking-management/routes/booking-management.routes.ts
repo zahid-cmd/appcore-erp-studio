@@ -8,21 +8,27 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moved
+}
+from '../../../../shared/utils/moved-route';
+
 
 //===============================================================
 // Booking Management Routes (hand-written, NO Code Sync)
 //
 // One page per product type, the same component (route data
 // bookingType) :
-//   Bookings - MB  bookings-mb
-//   Bookings - SP  bookings-sp
-//   Bookings - AC  bookings-ac
+//   Bookings - MB  bookings-mb   Sales Operations
+//   Bookings - SP  bookings-sp   Service Operations (2026-11-15)
+//   Bookings - AC  bookings-ac   Accessories Operations (2026-11-15)
 // Each has the tabs Bookings / Collections / Cancellations &
 // Refunds (Bookings_Engine.sql). The old "bookings" link opens
 // Bookings - MB.
 //===============================================================
 
-const bookingsPage =
+export const bookingsPage =
 (
     path:
         string,
@@ -93,7 +99,37 @@ Routes =
 
     bookingsPage('bookings-mb', 'MB', 'Bookings - MB'),
 
-    bookingsPage('bookings-sp', 'SP', 'Bookings - SP'),
+    // Moved 2026-11-15 : each operation has its own Booking
+    // Management menu (the old addresses open the new ones)
+    moved('bookings-sp', '/service-operations/booking-management/bookings-sp'),
+
+    moved('bookings-ac', '/accessories-operations/booking-management/bookings-ac')
+];
+
+
+// Service Operations > Booking Management : Bookings - SP
+export const serviceBookingRoutes:
+Routes =
+[
+    {
+        path:'',
+        redirectTo:'bookings-sp',
+        pathMatch:'full'
+    },
+
+    bookingsPage('bookings-sp', 'SP', 'Bookings - SP')
+];
+
+
+// Accessories Operations > Booking Management : Bookings - AC
+export const accessoriesBookingRoutes:
+Routes =
+[
+    {
+        path:'',
+        redirectTo:'bookings-ac',
+        pathMatch:'full'
+    },
 
     bookingsPage('bookings-ac', 'AC', 'Bookings - AC')
 ];

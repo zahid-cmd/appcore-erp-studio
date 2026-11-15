@@ -8,6 +8,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moved
+}
+from '../../../../shared/utils/moved-route';
+
 
 //===============================================================
 // Business Promotions routes (hand-written : NEVER run Code Sync
@@ -50,46 +56,12 @@ Routes =
     },
 
     //===========================================================
-    // Promotional Offers - Service Center
+    // Moved 2026-11-15 : the old addresses open the new ones.
+    //   Service Center offers -> Service Operations
+    //   Accessory Shop offers -> Accessories Operations
     //===========================================================
 
-    {
-        path:'promotional-offers-service-center',
+    moved('promotional-offers-service-center', '/service-operations/business-promotions/promotional-offers-service-center'),
 
-        data:
-        {
-            breadcrumb:'Promotional Offers - Service Center'
-        },
-
-        loadChildren:() =>
-            import(
-                './promotional-offers-service-center.routes'
-            )
-            .then(
-                m =>
-                    m.PromotionalOffersServiceCenterRoutes
-            )
-    },
-
-    //===========================================================
-    // Promotional Offers - Accessory Shop
-    //===========================================================
-
-    {
-        path:'promotional-offers-accessory-shop',
-
-        data:
-        {
-            breadcrumb:'Promotional Offers - Accessory Shop'
-        },
-
-        loadChildren:() =>
-            import(
-                './promotional-offers-accessory-shop.routes'
-            )
-            .then(
-                m =>
-                    m.PromotionalOffersAccessoryShopRoutes
-            )
-    }
+    moved('promotional-offers-accessory-shop', '/accessories-operations/business-promotions/promotional-offers-accessory-shop')
 ];

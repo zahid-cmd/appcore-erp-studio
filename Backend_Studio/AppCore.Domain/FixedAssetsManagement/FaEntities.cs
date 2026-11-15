@@ -132,6 +132,16 @@ public class FaConfiguration
     // A run may be made for a month that has not ended
     public bool AllowRunningMonth { get; set; }
 
+    // Charge Depreciation on Month End : the background job charges
+    // every branch for the month just ended (00:05 on the 1st,
+    // Bangladesh time; missed months are caught up)
+    public bool AutoChargeMonthEnd { get; set; }
+
+    // The last check of the job and what it did ('' : never)
+    public DateTime? AutoLastCheck { get; set; }
+
+    public string AutoLastMessage { get; set; } = string.Empty;
+
     public string AssetNoPrefix { get; set; } = "FA";
 
     public int AssetNoDigits { get; set; } = 5;
@@ -352,6 +362,9 @@ public class FaDepreciationRuns
     public string JournalVoucherNo { get; set; } = string.Empty;
 
     public string Remarks { get; set; } = string.Empty;
+
+    // Charged by the month-end job (not by a user)
+    public bool IsAuto { get; set; }
 
     // An undone run
     public bool IsDeleted { get; set; }

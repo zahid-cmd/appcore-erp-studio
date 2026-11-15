@@ -4,6 +4,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moved
+}
+from '../../../../shared/utils/moved-route';
+
 //===========================================================
 // MNU-003-003 Routes
 //===========================================================
@@ -317,31 +323,12 @@ Routes =
                         )
                 },
 
-            // AUTO-BEGIN : SUB-003-003-012
+            //===========================================================
+            // Bike Accessory Schemes : moved 2026-11-15 to Sales
+            // Operations > Sales Setup (the old address opens it)
+            //===========================================================
 
-                //===========================================================
-                // Bike Accessory Schemes
-                //===========================================================
-
-                {
-                    path:'bike-accessory-schemes',
-
-                    data:
-                    {
-                        breadcrumb:'Bike Accessory Schemes'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './bike-accessory-schemes.routes'
-                        )
-                        .then(
-                            m =>
-                                m.BikeAccessorySchemesRoutes
-                        )
-                },
-
-                // AUTO-END : SUB-003-003-012
+            moved('bike-accessory-schemes', '/sales-operations/sales-setup/bike-accessory-schemes'),
 
             // AUTO-BEGIN : SUB-003-003-013
 

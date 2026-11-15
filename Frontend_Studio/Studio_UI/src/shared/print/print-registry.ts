@@ -217,6 +217,21 @@ export const PRINT_SOURCES:
             import('../../features/accounts-finance/accounting-registers/print/ledger-registers.print')
                 .then(module => module.LEDGER_REGISTERS_PRINT),
 
+    // Settings : Check Books (Check Leaf Register; the id is the
+    // book's PublicId)
+    'check-books':
+        () =>
+            import('../../features/settings/account-settings/print/check-books.print')
+                .then(module => module.CHECK_BOOKS_PRINT),
+
+    // Settings : Check Books : a cheque on its real leaf (id :
+    // <book PublicId>_<leaf id>, or test_<bank account id> for a
+    // test print of the layout)
+    'check-print':
+        () =>
+            import('../../features/settings/account-settings/print/check-print.print')
+                .then(module => module.CHECK_PRINT),
+
     // Accounts & Finance : Trial Balance (the id is the page's
     // token)
     'trial-balance':
@@ -375,5 +390,12 @@ export const PRINT_SOURCES:
     'fa-report':
         () =>
             import('../../features/fixed-assets-management/print/fa-print')
-                .then(module => module.FA_REPORT_PRINT)
+                .then(module => module.FA_REPORT_PRINT),
+
+    // Fixed Assets : the QR labels of Asset Tags (A4, 3 across, 7
+    // down); the id is the page's token
+    'fa-tags':
+        () =>
+            import('../../features/fixed-assets-management/print/fa-print')
+                .then(module => module.FA_TAGS_PRINT)
 };

@@ -89,7 +89,7 @@ const AMBER =
 // The user only names it : saving makes its two General Ledgers,
 // "PPE - <name>" under Property, Plant & Equipment and
 // "ACD - <name>" under Accumulated Depreciation. How the group is
-// depreciated is declared on Depreciation of Fixed Assets. The
+// depreciated is declared on Depreciation Setup. The
 // code is made by the server.
 //
 //   list / add / edit/:id / view/:id   (one component)
@@ -611,7 +611,7 @@ implements OnInit
         void this.router.navigate([this.mode === 'add' ? '../list' : '../../list'], { relativeTo:this.route });
     }
 
-    // Depreciation of Fixed Assets : the edit page of this group
+    // Depreciations > Depreciation Setup : the edit page of this group
     declareDepreciation():
         void
     {
@@ -620,7 +620,7 @@ implements OnInit
             return;
         }
 
-        void this.router.navigate(['/fixed-assets-management/asset-setup/depreciation-of-fixed-assets/edit', this.entityId]);
+        void this.router.navigate(['/fixed-assets-management/depreciation/depreciation-setup/edit', this.entityId]);
     }
 
     delete(row: ListRow):

@@ -7,7 +7,9 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.AccountsFinance.FinancialStatements;
+using AppCore.Domain.Entities.FixedAssetsManagement;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Platform.Accounting;
 
 using VoucherEntriesEntity =
     AppCore.Domain.Platform.Accounting.VoucherEntries;
@@ -37,8 +39,16 @@ namespace AppCore.Infrastructure.Repositories.AccountsFinance.FinancialStatement
 //     "No contra ledger" (never expected).
 //   Opening / closing : the Trial Balance of the same period, so
 //   Opening + Receipts - Payments = Closing.
-//   Activity of a contra ledger (group-name words, owner
-//   2026-11-14) :
+//   Activity of a contra ledger :
+//     investing, exactly (2026-11-15) : the Fixed Assets ledgers
+//                 (each asset group's cost, accumulated
+//                 depreciation, gain and loss ledgers; the
+//                 Posting Setup asset payable / receivable /
+//                 disposal gain / loss ledgers; every ledger of
+//                 the Asset Configuration "Payable To" sub group).
+//                 An asset bought,
+//                 paid, sold or its price received is investing.
+//   then by group-name words (owner 2026-11-14) :
 //     financing : equity / capital classes; loan, borrow, lease,
 //                 debenture groups
 //     investing : asset classes with fixed asset, property,
@@ -204,12 +214,88 @@ public class FinancialFlowsRepository
     }
 
 
+    // Posting Setup purposes of Fixed Assets that move money
+    private static readonly string[] FixedAssetPurposes =
+    {
+        "ASSET-PURCHASE-PAYABLE",
+        "ASSET-SALE-RECEIVABLE",
+        "ASSET-DISPOSAL-GAIN",
+        "ASSET-DISPOSAL-LOSS"
+    };
+
+
+    // The ledgers of Fixed Assets Management : investing, exactly.
+    // Also every ledger of the "Payable To" account sub group of
+    // Asset Configuration (Liability For Capital Assets), added to
+    // the set from the chart.
+    private async Task<HashSet<string>> FixedAssetLedgersAsync(IEnumerable<TrialBalanceRowDto> chart)
+    {
+        HashSet<string> codes =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        var groups =
+            await _context.Set<FaCategories>().AsNoTracking()
+                .Select(x => new { x.CostLedgerCode, x.AccumLedgerCode, x.GainLedgerCode, x.LossLedgerCode })
+                .ToListAsync();
+
+        foreach (var g in groups)
+        {
+            foreach (string code in new[] { g.CostLedgerCode, g.AccumLedgerCode, g.GainLedgerCode, g.LossLedgerCode })
+            {
+                if (Clean(code).Length > 0)
+                {
+                    codes.Add(Clean(code));
+                }
+            }
+        }
+
+        foreach (string purpose in FixedAssetPurposes)
+        {
+            string code =
+                Clean(PostingLedgerCodes.TryGet(_context, purpose));
+
+            if (code.Length > 0)
+            {
+                codes.Add(code);
+            }
+        }
+
+        string payableSubGroup =
+            Clean(
+                await _context.Set<FaConfiguration>().AsNoTracking()
+                    .OrderBy(x => x.FaConfigurationId)
+                    .Select(x => x.PayableSubGroupCode)
+                    .FirstOrDefaultAsync());
+
+        if (payableSubGroup.Length > 0)
+        {
+            foreach (TrialBalanceRowDto row in chart)
+            {
+                if (string.Equals(Clean(row.SubGroupCode), payableSubGroup, StringComparison.OrdinalIgnoreCase)
+                    && Clean(row.LedgerCode).Length > 0)
+                {
+                    codes.Add(Clean(row.LedgerCode));
+                }
+            }
+        }
+
+        return codes;
+    }
+
+
     // Activity of a contra ledger
     private static string ActivityOf
     (
-        TrialBalanceRowDto? row
+        string code,
+        TrialBalanceRowDto? row,
+        HashSet<string> fixedAssetLedgers
     )
     {
+        if (fixedAssetLedgers.Contains(Clean(code)))
+        {
+            return FinancialFlowActivities.Investing;
+        }
+
         if (row == null)
         {
             return FinancialFlowActivities.Operating;
@@ -304,6 +390,9 @@ public class FinancialFlowsRepository
                 .GroupBy(x => Clean(x.LedgerCode), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
+        HashSet<string> fixedAssetLedgers =
+            await FixedAssetLedgersAsync(chart.Values);
+
         //=======================================================
         // Lines of the period's vouchers that move money
         //=======================================================
@@ -386,7 +475,7 @@ public class FinancialFlowsRepository
                         SubGroupCode = row?.SubGroupCode ?? string.Empty,
                         SubGroupName = row?.SubGroupName ?? string.Empty,
                         IsActive = row?.IsActive ?? false,
-                        Activity = ActivityOf(row)
+                        Activity = ActivityOf(code, row, fixedAssetLedgers)
                     };
 
             flows[code] = flow;

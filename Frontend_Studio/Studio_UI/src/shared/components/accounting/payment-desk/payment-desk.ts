@@ -68,6 +68,18 @@ from '../accounting-lookup.service';
 
 import
 {
+    CheckBooksService
+}
+from '../../../../features/settings/account-settings/services/check-books.service';
+
+import
+{
+    AvailableCheckLeaves
+}
+from '../../../../features/settings/account-settings/models/check-books.model';
+
+import
+{
     CardOption,
     BankOption,
     CardChargeRate,
@@ -165,6 +177,176 @@ implements OnInit, OnDestroy
 
     private readonly host =
         inject(ElementRef<HTMLElement>);
+
+    private readonly checkBooks =
+        inject(CheckBooksService);
+
+
+    //===========================================================
+    // Check Books (2026-11-15) : a payment check of an account
+    // that has a check book takes its number from the unused
+    // leaves (the next one is filled in; another can be picked
+    // when the switch allows it). Accounts without a book keep
+    // the free Check No box.
+    //===========================================================
+
+    // Per bank account (AccountId of a Bank ledger = BankAccountId)
+    leafInfo:
+        Record<number, AvailableCheckLeaves> = {};
+
+    private leafLoading =
+        new Set<number>();
+
+    private loadCheckLeaves():
+        void
+    {
+        if (!this.isPayment)
+        {
+            return;
+        }
+
+        const ids =
+            [...new Set(this.rows.filter(r => r.Mode === 'Check' && r.AccountId > 0).map(r => r.AccountId))];
+
+        for (const id of ids)
+        {
+            if (this.leafInfo[id] || this.leafLoading.has(id))
+            {
+                continue;
+            }
+
+            this.leafLoading.add(id);
+
+            this.checkBooks
+                .getAvailableLeaves(id, 100)
+                .subscribe(
+                {
+                    next:info =>
+                    {
+                        this.leafLoading.delete(id);
+                        this.leafInfo = { ...this.leafInfo, [id]:info };
+                        this.fillNextLeaves();
+                        this.cdr.detectChanges();
+                    },
+                    error:() =>
+                    {
+                        // no leaf list : the free Check No box stays
+                        this.leafLoading.delete(id);
+                    }
+                });
+        }
+    }
+
+    usesCheckBook(row: VoucherDebitLine): boolean
+    {
+        return this.isPayment && row.Mode === 'Check' && !!this.leafInfo[row.AccountId]?.HasBooks;
+    }
+
+    // Check numbers taken by the other check rows of this voucher
+    private takenByOthers(row: VoucherDebitLine): Set<string>
+    {
+        return new Set(
+            this.rows
+                .filter(r => r !== row && r.Mode === 'Check' && r.AccountId === row.AccountId && r.CheckNo)
+                .map(r => r.CheckNo.toUpperCase()));
+    }
+
+    leafItems(row: VoucherDebitLine): { label: string; value: string }[]
+    {
+        const info =
+            this.leafInfo[row.AccountId];
+
+        if (!info)
+        {
+            return [];
+        }
+
+        const taken =
+            this.takenByOthers(row);
+
+        const items =
+            info.Leaves
+                .filter(l => !taken.has(l.CheckNo.toUpperCase()))
+                .map(l => ({ label:`${l.CheckNo}  (${l.BookCode})`, value:l.CheckNo }));
+
+        // a saved draft : its own leaf is Issued, not in the list
+        if (row.CheckNo && !items.some(i => i.value.toUpperCase() === row.CheckNo.toUpperCase()))
+        {
+            items.unshift({ label:`${row.CheckNo}  (this voucher)`, value:row.CheckNo });
+        }
+
+        return items;
+    }
+
+    leafHint(row: VoucherDebitLine): string
+    {
+        const info =
+            this.leafInfo[row.AccountId];
+
+        if (!info)
+        {
+            return '';
+        }
+
+        if (info.UnusedLeaves === 0)
+        {
+            return 'No unused leaf left : add the next check book (Settings > Account Settings > Check Books).';
+        }
+
+        const left =
+            `${info.UnusedLeaves} unused leaf(s) left`;
+
+        return info.LowLeaf
+            ? `${left} : below the warning level (${info.LowLeafThreshold}).`
+            : `${left}.${info.AllowChooseLeaf ? '' : ' The next leaf is used (choosing another is off).'}`;
+    }
+
+    // Empty check rows take the next free leaf of their account
+    private fillNextLeaves():
+        void
+    {
+        if (this.readonly || !this.isPayment)
+        {
+            return;
+        }
+
+        let changed =
+            false;
+
+        for (const row of this.rows)
+        {
+            if (row.Mode !== 'Check' || (row.CheckNo ?? '').trim() || !this.leafInfo[row.AccountId]?.HasBooks)
+            {
+                continue;
+            }
+
+            const next =
+                this.leafItems(row)[0];
+
+            if (next)
+            {
+                row.CheckNo = next.value;
+                row.Verified = false;
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            this.emitLines();
+            this.loadSelectedTexts();
+        }
+    }
+
+    onCheckLeaf(value: any):
+        void
+    {
+        this.update(
+            row =>
+                row.CheckNo =
+                    String(value ?? '').trim()
+        );
+    }
 
 
     //===========================================================
@@ -308,6 +490,9 @@ implements OnInit, OnDestroy
         this.loadSelectedTexts();
 
         this.emitValid();
+
+        // Check Books : the leaves of the check rows' accounts
+        this.loadCheckLeaves();
 
         this.cdr.markForCheck();
     }
@@ -634,6 +819,8 @@ implements OnInit, OnDestroy
             index;
 
         this.loadSelectedTexts();
+
+        this.loadCheckLeaves();
     }
 
     hasCharge

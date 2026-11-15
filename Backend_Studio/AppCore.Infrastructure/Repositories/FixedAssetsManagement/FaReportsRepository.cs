@@ -251,7 +251,8 @@ public class FaReportsRepository
         (await ReadAsync(Verifications.AsNoTracking().Where(x => x.PublicId == publicId && !x.IsDeleted), true)).FirstOrDefault()
         ?? throw new KeyNotFoundException("The asset verification was not found.");
 
-    public async Task<FaVerificationDto> CreateVerificationAsync(FaVerificationDto dto, long userId)
+    // The branch / location checked, and the assets in use there
+    private async Task<(DateOnly Date, long? LocationId, List<FaAssets> Assets)> CountAssetsAsync(FaVerificationDto dto)
     {
         DateOnly date =
             HrCalendar.ParseDay(dto.VerificationDate)
@@ -275,17 +276,69 @@ public class FaReportsRepository
             throw new InvalidOperationException("The location is not a location of the branch.");
         }
 
-        List<long> assetIds =
+        List<FaAssets> assets =
             await _context.Set<FaAssets>().AsNoTracking()
                 .Where(x => !x.IsDeleted && x.BranchId == dto.BranchId && Fa.Live.Contains(x.Status) && (locationId == null || x.FaLocationId == locationId))
                 .OrderBy(x => x.AssetNo)
-                .Select(x => x.FaAssetId)
                 .ToListAsync();
 
-        if (assetIds.Count == 0)
+        if (assets.Count == 0)
         {
             throw new InvalidOperationException("There is no asset to count for that branch / location.");
         }
+
+        return (date, locationId, assets);
+    }
+
+    // A new count sheet, NOT saved : the assets to count, every one
+    // Pending. Nothing is written until the count is saved.
+    public async Task<FaVerificationDto> PrepareVerificationAsync(FaVerificationDto dto)
+    {
+        var (date, locationId, assets) = await CountAssetsAsync(dto);
+
+        FaNames names = await Fa.NamesAsync(_context);
+
+        return new FaVerificationDto
+        {
+            PublicId = Guid.Empty,
+            Code = string.Empty,
+            VerificationDate = HrCalendar.Day(date),
+            BranchId = dto.BranchId,
+            BranchName = names.Branch(dto.BranchId),
+            FaLocationId = locationId ?? 0,
+            LocationName = locationId == null ? "All locations" : names.Location(locationId),
+            Status = Draft,
+            ExtraItems = string.Empty,
+            Remarks = dto.Remarks ?? string.Empty,
+            AssetCount = assets.Count,
+            PendingCount = assets.Count,
+            Lines =
+                assets
+                    .Select(a => new FaVerificationLineDto
+                    {
+                        FaAssetId = a.FaAssetId,
+                        AssetNo = a.AssetNo,
+                        Name = a.Name,
+                        CategoryName = names.Category(a.FaCategoryId),
+                        LocationName = names.Location(a.FaLocationId),
+                        CustodianName = names.Employee(a.CustodianEmployeeId),
+                        Result = "Pending",
+                        Note = string.Empty
+                    })
+                    .ToList()
+        };
+    }
+
+    // The first Save of a count : the count and its lines, with what
+    // was marked on the sheet before saving
+    public async Task<FaVerificationDto> CreateVerificationAsync(FaVerificationDto dto, long userId)
+    {
+        var (date, locationId, assets) = await CountAssetsAsync(dto);
+
+        Dictionary<long, FaVerificationLineDto> marked =
+            (dto.Lines ?? new List<FaVerificationLineDto>())
+                .GroupBy(x => x.FaAssetId)
+                .ToDictionary(x => x.Key, x => x.Last());
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -296,6 +349,7 @@ public class FaReportsRepository
             BranchId = dto.BranchId,
             FaLocationId = locationId,
             Status = Draft,
+            ExtraItems = Fa.Clean(dto.ExtraItems, 1000, "Things not in the register"),
             Remarks = Fa.Clean(dto.Remarks, 500, "Remarks"),
             IsDeleted = false,
             CreatedBy = userId,
@@ -306,12 +360,26 @@ public class FaReportsRepository
 
         await _context.SaveChangesAsync();
 
-        foreach (long assetId in assetIds)
+        List<FaVerificationLines> lines = new();
+
+        foreach (FaAssets asset in assets)
         {
-            VerificationLines.Add(new FaVerificationLines { FaVerificationId = entity.FaVerificationId, FaAssetId = assetId, Result = "Pending" });
+            marked.TryGetValue(asset.FaAssetId, out FaVerificationLineDto? row);
+
+            FaVerificationLines line = new()
+            {
+                FaVerificationId = entity.FaVerificationId,
+                FaAssetId = asset.FaAssetId,
+                Result = Results.FirstOrDefault(x => string.Equals(x, row?.Result, StringComparison.OrdinalIgnoreCase)) ?? "Pending",
+                Note = Fa.Clean(row?.Note, 200, "Note")
+            };
+
+            lines.Add(line);
+
+            VerificationLines.Add(line);
         }
 
-        Fa.AddHistory(_context, "FaVerifications", entity.FaVerificationId, "Create", "Asset Verification Started", $"{entity.Code} : {assetIds.Count} asset(s) to count.", userId);
+        Fa.AddHistory(_context, "FaVerifications", entity.FaVerificationId, "Create", "Asset Verification Saved", $"{entity.Code} : {lines.Count(x => x.Result == "Found")} found, {lines.Count(x => x.Result == "Missing")} missing, {lines.Count(x => x.Result == "Pending")} not counted yet.", userId);
 
         await _context.SaveChangesAsync();
 
@@ -394,5 +462,30 @@ public class FaReportsRepository
         Fa.AddHistory(_context, "FaVerifications", entity.FaVerificationId, "Delete", "Asset Verification Deleted", $"{entity.Code}", userId);
 
         await _context.SaveChangesAsync();
+    }
+
+    // Delete is soft (a Draft count only) : the most recently deleted
+    // one comes back as it was, with its lines
+    public async Task<string?> RestoreVerificationAsync(long userId)
+    {
+        FaVerifications? entity =
+            await Verifications.Where(x => x.IsDeleted).OrderByDescending(x => x.DeletedDate).FirstOrDefaultAsync();
+
+        if (entity == null)
+        {
+            return null;
+        }
+
+        entity.IsDeleted = false;
+        entity.DeletedBy = null;
+        entity.DeletedDate = null;
+        entity.ModifiedBy = userId;
+        entity.ModifiedDate = DateTime.UtcNow;
+
+        Fa.AddHistory(_context, "FaVerifications", entity.FaVerificationId, "Restore", "Asset Verification Restored", $"{entity.Code}", userId);
+
+        await _context.SaveChangesAsync();
+
+        return entity.Code;
     }
 }

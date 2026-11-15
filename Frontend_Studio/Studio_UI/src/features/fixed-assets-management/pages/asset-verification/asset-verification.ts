@@ -28,6 +28,7 @@ from '@angular/router';
 import
 {
     Observable,
+    map,
     switchMap,
     tap
 }
@@ -104,7 +105,7 @@ type Result =
     'Pending' | 'Found' | 'Missing';
 
 const HISTORY_PAGE =
-    'asset-reports/asset-verification';
+    'asset-register/asset-verification';
 
 const ALL_LOCATIONS =
     'All locations';
@@ -117,7 +118,8 @@ function resultText(result: string): string
 
 
 //===============================================================
-// Asset Verification (Fixed Assets > Asset Reports)
+// Asset Verification (Fixed Assets > Asset Control; under Asset
+// Reports until 2026-11-15)
 //
 // The physical count of a branch (or one location of it) against
 // the register.
@@ -360,6 +362,12 @@ implements OnInit
 
     hasChanges =
         false;
+
+    // A count sheet that is not saved yet (Start Count saves nothing)
+    get isNew(): boolean
+    {
+        return !!this.sheet && !this.sheet.PublicId;
+    }
 
     get isDraft(): boolean
     {
@@ -625,7 +633,7 @@ implements OnInit
     private toList():
         void
     {
-        void this.router.navigate([this.mode === 'sheet' ? '../../list' : '../list'], { relativeTo:this.route });
+        void this.router.navigate([this.mode === 'sheet' && !this.isNew ? '../../list' : '../list'], { relativeTo:this.route });
     }
 
     // Back : asks first while the count sheet has unsaved marks
@@ -667,6 +675,29 @@ implements OnInit
             'Delete',
             'Keep',
             'danger');
+    }
+
+    // Delete is soft : the most recently deleted count comes back
+    restore():
+        void
+    {
+        this.confirmDialog.open(
+            'Restore Count',
+            'Bring back the most recently deleted asset verification?',
+            () =>
+                this.service.restoreVerification().subscribe(
+                {
+                    next:x =>
+                    {
+                        this.toast.success('Restored', x?.Message || 'The asset verification was restored.');
+                        this.loadList();
+                    },
+                    error:error =>
+                        this.toast.error('Restore', error?.error?.message ?? 'Nothing was restored.')
+                }),
+            'Restore',
+            'Cancel',
+            'primary');
     }
 
     openHistory():
@@ -762,23 +793,40 @@ implements OnInit
             return;
         }
 
+        // The sheet only : nothing is saved until Save
         this.busy(
             'Starting',
             'Making the count sheet...',
-            this.service.createVerification(
+            this.service.prepareVerification(
             {
                 VerificationDate:this.countDate,
                 BranchId:this.branchId,
                 FaLocationId:this.locationId,
                 Remarks:this.remarks.trim()
             }),
-            sheet =>
+            (sheet: FaVerification) =>
             {
-                this.toast.success('Success', `${sheet.Code} : the count sheet is ready. Mark every asset Found or Missing.`);
+                this.sheet =
+                {
+                    ...sheet,
+                    PublicId:'',
+                    Lines:(sheet.Lines ?? []).map(x => ({ ...x, Note:x.Note ?? '' }))
+                };
 
-                void this.router.navigate(['../view', sheet.PublicId], { relativeTo:this.route });
+                this.extraItems = '';
+                this.sheetRemarks = this.remarks.trim();
+                this.hasChanges = true;
+                this.sheetTab = 'all';
+                this.searchText = '';
+                this.pageSize = 50;
+                this.currentPage = 1;
+                this.mode = 'sheet';
+
+                this.applySheet();
+
+                this.toast.info('Asset Verification', `${sheet.Lines.length} asset(s) to count. Mark each Found or Missing, then Save : nothing is saved until then.`);
             },
-            'The count could not be started.');
+            'The count sheet could not be made.');
     }
 
     //===========================================================
@@ -948,17 +996,41 @@ implements OnInit
     }
 
     // What was marked, as the server takes it
+    private marks(sheet: FaVerification): Partial<FaVerification>
+    {
+        return {
+            Lines:sheet.Lines.map(x => ({ FaAssetId:x.FaAssetId, Result:x.Result, Note:(x.Note ?? '').trim() })) as FaVerificationLine[],
+            ExtraItems:this.extraItems.trim(),
+            Remarks:this.sheetRemarks.trim()
+        };
+    }
+
     private saveCall(sheet: FaVerification): Observable<void>
     {
         return this.service
-            .saveVerification(
-                sheet.PublicId,
-                {
-                    Lines:sheet.Lines.map(x => ({ FaAssetId:x.FaAssetId, Result:x.Result, Note:(x.Note ?? '').trim() })) as FaVerificationLine[],
-                    ExtraItems:this.extraItems.trim(),
-                    Remarks:this.sheetRemarks.trim()
-                })
+            .saveVerification(sheet.PublicId, this.marks(sheet))
             .pipe(tap(() => this.hasChanges = false));
+    }
+
+    // The first Save of a new count : the count is written now
+    private createCall(sheet: FaVerification): Observable<FaVerification>
+    {
+        return this.service
+            .createVerification(
+            {
+                VerificationDate:sheet.VerificationDate,
+                BranchId:sheet.BranchId,
+                FaLocationId:sheet.FaLocationId,
+                ...this.marks(sheet)
+            })
+            .pipe(tap(() => this.hasChanges = false));
+    }
+
+    // A new count, saved : open it as a saved count
+    private openSaved(saved: FaVerification):
+        void
+    {
+        void this.router.navigate(['../view', saved.PublicId], { relativeTo:this.route });
     }
 
     onSave():
@@ -976,6 +1048,22 @@ implements OnInit
         }
 
         const sheet = this.sheet;
+
+        if (this.isNew)
+        {
+            this.busy(
+                'Saving',
+                'Saving the count...',
+                this.createCall(sheet),
+                (saved: FaVerification) =>
+                {
+                    this.toast.success('Success', `${saved.Code} was saved.`);
+                    this.openSaved(saved);
+                },
+                'The count could not be saved.');
+
+            return;
+        }
 
         this.busy(
             'Saving',
@@ -999,6 +1087,29 @@ implements OnInit
         }
 
         const sheet = this.sheet;
+
+        if (this.isNew)
+        {
+            this.confirmDialog.open(
+                'Close Count',
+                'Save and close this count? The count is locked : nothing on it can be changed afterwards. It changes nothing on the asset cards.',
+                () =>
+                    this.busy(
+                        'Closing',
+                        'Saving and closing the count...',
+                        this.createCall(sheet).pipe(switchMap((saved: FaVerification) => this.service.closeVerification(saved.PublicId).pipe(map(() => saved)))),
+                        (saved: FaVerification) =>
+                        {
+                            this.toast.success('Success', `${saved.Code} was saved and closed.`);
+                            this.openSaved(saved);
+                        },
+                        'The count could not be closed.'),
+                'Close Count',
+                'Cancel',
+                'primary');
+
+            return;
+        }
 
         this.confirmDialog.open(
             'Close Count',
@@ -1030,6 +1141,28 @@ implements OnInit
         }
 
         const sheet = this.sheet;
+
+        // Not saved : nothing to delete, the sheet is dropped
+        if (this.isNew)
+        {
+            this.confirmDialog.open(
+                'Discard Count',
+                'Discard this count sheet? It was never saved : what you marked is lost.',
+                () =>
+                {
+                    this.hasChanges = false;
+                    this.sheet = null;
+                    this.pageSize = 10;
+                    this.currentPage = 1;
+                    this.mode = 'add';
+                    this.cdr.detectChanges();
+                },
+                'Discard',
+                'Keep',
+                'danger');
+
+            return;
+        }
 
         this.confirmDialog.open(
             'Delete Count',

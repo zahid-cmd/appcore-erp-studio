@@ -61,6 +61,12 @@ import
 }
 from '../../controls/datepicker/datepicker';
 
+import
+{
+    FormModalComponent
+}
+from '../../utilities/form-modal/form-modal';
+
 //===============================================================
 // Accounting
 //===============================================================
@@ -70,6 +76,18 @@ import
     AccountingLookupService
 }
 from '../accounting-lookup.service';
+
+import
+{
+    CheckBooksService
+}
+from '../../../../features/settings/account-settings/services/check-books.service';
+
+import
+{
+    AvailableCheckLeaves
+}
+from '../../../../features/settings/account-settings/models/check-books.model';
 
 import
 {
@@ -210,7 +228,8 @@ export interface TransferChargeRow
         TextboxComponent,
         DropdownComponent,
         SearchDropdownComponent,
-        DatepickerComponent
+        DatepickerComponent,
+        FormModalComponent
     ],
 
     templateUrl:'./transfer-entry.html',
@@ -435,6 +454,591 @@ implements OnInit
     fromChargeText:
         string =
         '';
+
+
+    //===========================================================
+    // Check Books (2026-11-15) : a cheque from a bank account
+    // that has a check book takes its number from the unused
+    // leaves (the next one is filled in; another can be picked
+    // when the switch allows it). Accounts without a book keep
+    // the free Cheque No box.
+    //===========================================================
+
+    private readonly checkBooks =
+        inject(CheckBooksService);
+
+    leafInfo:
+        Record<number, AvailableCheckLeaves> = {};
+
+    private get fromAccountId(): number
+    {
+        if (this.from.type !== 'Bank' || !this.from.ledger)
+        {
+            return 0;
+        }
+
+        const ledger =
+            this.candidates(this.from).find(item => item.LedgerCode === this.from.ledger);
+
+        return ledger?.AccountId ?? 0;
+    }
+
+    // The bank account whose leaves are shown : the From card's,
+    // or the From row being edited in the popup
+    private get leafAccountId(): number
+    {
+        if (this.editLine)
+        {
+            return this.editLine.AccountType === 'Bank' ? this.editLine.AccountId : 0;
+        }
+
+        return this.fromAccountId;
+    }
+
+    get fromLeafInfo(): AvailableCheckLeaves | null
+    {
+        const id = this.leafAccountId;
+
+        return id ? this.leafInfo[id] ?? null : null;
+    }
+
+    get fromUsesCheckBook(): boolean
+    {
+        return this.fromMethod === 'Cheque' && !!this.fromLeafInfo?.HasBooks;
+    }
+
+    get fromLeafItems(): { label: string; value: string }[]
+    {
+        const info =
+            this.fromLeafInfo;
+
+        if (!info)
+        {
+            return [];
+        }
+
+        const id =
+            this.leafAccountId;
+
+        // cheques already on this transfer's From rows (not the
+        // row being edited)
+        const taken =
+            new Set(
+                (this.data?.Lines ?? [])
+                    .filter(l => l.Side === 'From' && l !== this.editLine && l.AccountId === id && l.CheckNo)
+                    .map(l => l.CheckNo.toUpperCase()));
+
+        const items =
+            info.Leaves
+                .filter(l => !taken.has(l.CheckNo.toUpperCase()))
+                .map(l => ({ label:`${l.CheckNo}  (${l.BookCode})`, value:l.CheckNo }));
+
+        if (this.fromCheckNo && !items.some(i => i.value.toUpperCase() === this.fromCheckNo.toUpperCase()))
+        {
+            items.unshift({ label:`${this.fromCheckNo}  (this voucher)`, value:this.fromCheckNo });
+        }
+
+        return items;
+    }
+
+    get fromLeafHint(): string
+    {
+        const info =
+            this.fromLeafInfo;
+
+        if (!info)
+        {
+            return '';
+        }
+
+        if (info.UnusedLeaves === 0)
+        {
+            return 'No unused leaf left : add the next check book (Settings > Account Settings > Check Books).';
+        }
+
+        const left =
+            `${info.UnusedLeaves} unused leaf(s) left`;
+
+        return info.LowLeaf
+            ? `${left} : below the warning level (${info.LowLeafThreshold}).`
+            : `${left}.${info.AllowChooseLeaf ? '' : ' The next leaf is used (choosing another is off).'}`;
+    }
+
+    // Cheque on a bank From : load its leaves, fill the next one
+    private refreshFromLeaves():
+        void
+    {
+        if (this.fromMethod !== 'Cheque')
+        {
+            return;
+        }
+
+        const id =
+            this.leafAccountId;
+
+        if (!id)
+        {
+            return;
+        }
+
+        const fill =
+            () =>
+            {
+                if (this.fromLeafInfo?.HasBooks && !this.fromCheckNo.trim())
+                {
+                    this.fromCheckNo = this.fromLeafItems[0]?.value ?? '';
+                }
+
+                this.cdr.detectChanges();
+            };
+
+        if (this.leafInfo[id])
+        {
+            fill();
+            return;
+        }
+
+        this.checkBooks
+            .getAvailableLeaves(id, 100)
+            .subscribe(
+            {
+                next:info =>
+                {
+                    this.leafInfo = { ...this.leafInfo, [id]:info };
+                    fill();
+                },
+                error:() =>
+                {
+                    // no leaf list : the free Cheque No box stays
+                }
+            });
+    }
+
+    onCheckLeaf(value: any):
+        void
+    {
+        this.fromCheckNo =
+            String(value ?? '').trim();
+
+        this.from.error =
+            '';
+    }
+
+
+    //===========================================================
+    // Details popup (2026-11-15)
+    //
+    // The From card keeps only what every transfer needs; the
+    // rest opens in a popup :
+    //   Cheque        : Add opens "Cheque Details" (Cheque No from
+    //                   the check book, Cheque Date, Charge, Short
+    //                   Notes); its Add Row adds the row
+    //   Bank Transfer : the "Charge / Notes" link opens the same
+    //   / MFS           popup without the cheque fields
+    //   A From row    : click it in Transaction Summary to change
+    //                   its cheque / reference / charge / notes
+    //                   (while no Transfer To row exists)
+    //===========================================================
+
+    popupOpen:
+        boolean =
+        false;
+
+    // The From row being edited ('' = adding a new row)
+    editLine:
+        TransferLine | null =
+        null;
+
+    editNotes:
+        string =
+        '';
+
+    // The From card's extras while a row is edited
+    private stash:
+        { method:string; reference:string; checkNo:string; checkDate:Date | null; chargeText:string } | null =
+        null;
+
+    // Bank + Cheque : Add goes through the popup
+    get fromNeedsPopup():
+        boolean
+    {
+        return this.from.type === 'Bank'
+            &&
+            this.fromMethod === 'Cheque';
+    }
+
+    // Cheque / Bank Transfer / MFS / Cash of the popup's row
+    get popupMethod():
+        string
+    {
+        const type =
+            this.editLine
+                ? this.editLine.AccountType
+                : this.from.type;
+
+        return type === 'Bank'
+            ? this.fromMethod
+            : type;
+    }
+
+    get popupTitle():
+        string
+    {
+        return this.popupMethod === 'Cheque'
+            ? 'Cheque Details'
+            : 'Charge & Notes';
+    }
+
+    get popupSubtitle():
+        string
+    {
+        if
+        (
+            this.editLine
+        )
+        {
+            return `${this.editLine.LedgerName} · ${this.money(this.editLine.Amount)}`;
+        }
+
+        const ledger =
+            this.candidates(this.from).find(item => item.LedgerCode === this.from.ledger);
+
+        const amount =
+            roundMoney(parseMoney(this.from.amountText));
+
+        return [ledger?.LedgerName ?? '', amount > 0 ? this.money(amount) : '']
+            .filter(part => !!part)
+            .join(' · ');
+    }
+
+    get popupNotes():
+        string
+    {
+        return this.editLine
+            ? this.editNotes
+            : this.from.notes;
+    }
+
+    get popupHasCharge():
+        boolean
+    {
+        const type =
+            this.editLine
+                ? this.editLine.AccountType
+                : this.from.type;
+
+        return type === 'Bank'
+            ||
+            type === 'MFS';
+    }
+
+    // Reference / Transaction ID sit on the From card when adding;
+    // in the popup only when a row is edited
+    get popupShowsReference():
+        boolean
+    {
+        return !!this.editLine
+            &&
+            (this.popupMethod === 'Bank Transfer' || this.popupMethod === 'MFS');
+    }
+
+    // The link under the From card : what is set so far
+    get extrasText():
+        string
+    {
+        const parts:
+            string[] =
+            [];
+
+        const charge =
+            roundMoney(parseMoney(this.fromChargeText));
+
+        if
+        (
+            charge > 0
+        )
+        {
+            parts.push(`Charge ${this.money(charge)}`);
+        }
+
+        if
+        (
+            this.from.notes.trim()
+        )
+        {
+            parts.push('Notes');
+        }
+
+        return parts.length
+            ? parts.join(' · ')
+            : 'Charge / Notes';
+    }
+
+    get extrasSet():
+        boolean
+    {
+        return roundMoney(parseMoney(this.fromChargeText)) > 0
+            ||
+            !!this.from.notes.trim();
+    }
+
+    canEditRow
+    (
+        line:
+            TransferLine
+    ):
+        boolean
+    {
+        return !this.readonly
+            &&
+            line.Side === 'From'
+            &&
+            this.toLines.length === 0;
+    }
+
+    private openPopup():
+        void
+    {
+        this.from.error =
+            '';
+
+        if
+        (
+            this.popupMethod === 'Cheque'
+            &&
+            !this.fromCheckDate
+        )
+        {
+            this.fromCheckDate =
+                this.voucherDateValue ?? new Date();
+        }
+
+        this.popupOpen =
+            true;
+
+        this.refreshFromLeaves();
+    }
+
+    // "Charge / Notes" link of the From card
+    openExtras():
+        void
+    {
+        if
+        (
+            !this.canAddFrom
+        )
+        {
+            return;
+        }
+
+        this.openPopup();
+    }
+
+    // A From row clicked in Transaction Summary
+    editRow
+    (
+        line:
+            TransferLine
+    ):
+        void
+    {
+        if
+        (
+            !this.canEditRow(line)
+        )
+        {
+            return;
+        }
+
+        this.stash =
+        {
+            method:this.fromMethod,
+            reference:this.fromReference,
+            checkNo:this.fromCheckNo,
+            checkDate:this.fromCheckDate,
+            chargeText:this.fromChargeText
+        };
+
+        this.editLine =
+            line;
+
+        if
+        (
+            line.AccountType === 'Bank'
+        )
+        {
+            this.fromMethod =
+                line.Method === 'Cheque'
+                    ? 'Cheque'
+                    : 'Bank Transfer';
+        }
+
+        this.fromReference =
+            line.Reference;
+
+        this.fromCheckNo =
+            line.CheckNo;
+
+        this.fromCheckDate =
+            line.CheckDate
+                ? fromIsoDate(line.CheckDate)
+                : null;
+
+        this.fromChargeText =
+            line.ChargeAmount > 0
+                ? String(line.ChargeAmount)
+                : '';
+
+        this.editNotes =
+            line.ShortNotes;
+
+        this.openPopup();
+    }
+
+    onPopupNotes
+    (
+        value:
+            string | number
+    ):
+        void
+    {
+        if
+        (
+            this.editLine
+        )
+        {
+            this.editNotes =
+                String(value ?? '');
+        }
+        else
+        {
+            this.from.notes =
+                String(value ?? '');
+        }
+
+        this.from.error =
+            '';
+    }
+
+    // Add Row / Update Row
+    onPopupSave():
+        void
+    {
+        if
+        (
+            this.editLine
+        )
+        {
+            this.saveEdit();
+        }
+        else
+        {
+            this.add('From');
+        }
+    }
+
+    // Cancel / X / Esc : nothing is added or changed
+    closePopup():
+        void
+    {
+        this.popupOpen =
+            false;
+
+        this.from.error =
+            '';
+
+        if
+        (
+            this.editLine
+        )
+        {
+            this.editLine =
+                null;
+
+            if
+            (
+                this.stash
+            )
+            {
+                this.fromMethod = this.stash.method;
+                this.fromReference = this.stash.reference;
+                this.fromCheckNo = this.stash.checkNo;
+                this.fromCheckDate = this.stash.checkDate;
+                this.fromChargeText = this.stash.chargeText;
+            }
+
+            this.stash =
+                null;
+
+            // the draft's leaf went to the edited row : take the next
+            if
+            (
+                this.fromCheckNo
+                &&
+                this.data.Lines.some(l => l.Side === 'From' && l.CheckNo.toUpperCase() === this.fromCheckNo.toUpperCase())
+            )
+            {
+                this.fromCheckNo =
+                    '';
+
+                this.refreshFromLeaves();
+            }
+        }
+    }
+
+    private saveEdit():
+        void
+    {
+        const line =
+            this.editLine;
+
+        if
+        (
+            !line
+        )
+        {
+            return;
+        }
+
+        const copy:
+            TransferLine =
+        {
+            ...line,
+            ShortNotes:this.editNotes.trim(),
+            Method:'',
+            Reference:'',
+            CheckNo:'',
+            CheckDate:'',
+            ChargeAmount:0
+        };
+
+        const issue =
+            this.applyFromExtras(copy);
+
+        if
+        (
+            issue
+        )
+        {
+            this.from.error =
+                issue;
+
+            return;
+        }
+
+        this.data.Lines =
+            this.data.Lines.map
+            (
+                item =>
+                    item === line ? copy : item
+            );
+
+        this.closePopup();
+
+        this.followBalance();
+
+        this.emitAll();
+    }
 
 
     //===========================================================
@@ -1123,6 +1727,13 @@ implements OnInit
         {
             this.followBalance();
         }
+        else
+        {
+            // another bank : its own leaves
+            this.fromCheckNo = '';
+
+            this.refreshFromLeaves();
+        }
     }
 
     onAmountText
@@ -1178,6 +1789,8 @@ implements OnInit
 
         this.from.error =
             '';
+
+        this.refreshFromLeaves();
     }
 
     onReference
@@ -1284,6 +1897,15 @@ implements OnInit
         void
     {
         this.resetDraft(this.from);
+
+        this.popupOpen =
+            false;
+
+        this.editLine =
+            null;
+
+        this.stash =
+            null;
 
         this.fromMethod =
             'Bank Transfer';
@@ -1398,6 +2020,22 @@ implements OnInit
             return;
         }
 
+        // Cheque : the details popup first; its Add Row comes back
+        // here
+        if
+        (
+            isFrom
+            &&
+            this.fromNeedsPopup
+            &&
+            !this.popupOpen
+        )
+        {
+            this.openPopup();
+
+            return;
+        }
+
         const line:
             TransferLine =
         {
@@ -1452,6 +2090,9 @@ implements OnInit
                 line,
                 ...this.data.Lines.slice(lastFrom + 1)
             ];
+
+            this.popupOpen =
+                false;
 
             this.resetFromDraft();
         }
@@ -1814,4 +2455,4 @@ implements OnInit
 
         this.cdr.markForCheck();
     }
-}
+}

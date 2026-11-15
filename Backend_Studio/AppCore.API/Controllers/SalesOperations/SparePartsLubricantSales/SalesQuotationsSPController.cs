@@ -50,5 +50,5 @@ public class SalesQuotationsSpController
         "SP";
 
     protected override string PageRoute =>
-        "/sales-operations/%/sales-quotations-sp";
+        "/%/sales-quotations-sp";
 }

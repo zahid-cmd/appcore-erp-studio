@@ -596,3 +596,20 @@
     width: 13px;
     height: 9px;
 }
+
+/* Separate documents (Cheque) : amber, easy to find */
+.pv-btn-separate
+{
+    border-color: #fcd34d;
+    background: rgba(252, 211, 77, 0.16);
+}
+
+.pv-btn-separate i
+{
+    color: #fcd34d;
+}
+
+.pv-btn-separate.pv-btn-separate-on i
+{
+    color: #ffffff;
+}

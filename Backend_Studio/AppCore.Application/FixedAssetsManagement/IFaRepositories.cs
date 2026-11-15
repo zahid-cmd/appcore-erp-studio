@@ -68,6 +68,10 @@ public interface IFaAssetsRepository
 
     Task UpdateAssetAsync(Guid publicId, SaveFaAssetDto dto, long userId);
 
+    // One location (and custodian) for many cards of one branch;
+    // the number of cards changed
+    Task<int> AssignLocationAsync(FaAssignLocationDto dto, long userId);
+
     // An opening card with nothing after it
     Task DeleteAssetAsync(Guid publicId, long userId);
 
@@ -107,6 +111,14 @@ public interface IFaDepreciationRepository
     Task UndoAsync(Guid publicId, FaReasonDto dto, long userId);
 
     Task<FaScheduleDto> GetScheduleAsync(Guid assetPublicId);
+
+    // Charge Depreciation on Month End : the switch and the last check
+    Task<FaAutoChargeDto> GetAutoChargeAsync();
+
+    // The month-end job (once per company) : when the switch is ON,
+    // charges every branch for each month that has ended and is not
+    // charged yet, in order. Answers what it did.
+    Task<string> RunMonthEndAsync(CancellationToken cancellationToken);
 }
 
 // Disposals (Asset Movements - transfers, improvements, maintenance -
@@ -129,8 +141,11 @@ public interface IFaReportsRepository
 
     Task<FaVerificationDto> GetVerificationAsync(Guid publicId);
 
-    // Makes the count sheet : every card of the branch / location
-    // that is not disposed
+    // A new count sheet, not saved (nothing is written) : every card
+    // of the branch / location that is not disposed
+    Task<FaVerificationDto> PrepareVerificationAsync(FaVerificationDto dto);
+
+    // The first Save : the count, its lines and what was marked
     Task<FaVerificationDto> CreateVerificationAsync(FaVerificationDto dto, long userId);
 
     // Draft : the results typed
@@ -139,4 +154,8 @@ public interface IFaReportsRepository
     Task CloseVerificationAsync(Guid publicId, long userId);
 
     Task DeleteVerificationAsync(Guid publicId, long userId);
+
+    // The most recently deleted count comes back (its code; null :
+    // none deleted)
+    Task<string?> RestoreVerificationAsync(long userId);
 }

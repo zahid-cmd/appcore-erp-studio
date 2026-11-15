@@ -47,5 +47,5 @@ public class SalesReturnsAcController
         "AC";
 
     protected override string PageRoute =>
-        "/sales-operations/%/sales-returns-ac";
+        "/%/sales-returns-ac";
 }

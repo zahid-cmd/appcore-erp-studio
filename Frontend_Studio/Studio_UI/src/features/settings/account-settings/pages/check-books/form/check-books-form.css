@@ -1,0 +1,665 @@
+/* =====================================================
+   Check Books Form
+   Left : the book. Right : the leaves (only the leaf table
+   scrolls; the page itself does not).
+===================================================== */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+.cb-body
+{
+    display: grid;
+    grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.6fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+    padding: 4px 6px 12px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1100px)
+{
+    .cb-body
+    {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+        height: auto;
+        overflow-y: auto;
+    }
+}
+
+.cb-card
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+    padding: 14px 16px 16px;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -16px rgba(30, 58, 138, 0.28);
+    box-sizing: border-box;
+}
+
+.cb-card > *
+{
+    flex: 0 0 auto;
+}
+
+.cb-card-head
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin: -2px 0 4px;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.cb-card-head > i
+{
+    color: #1e3a8a;
+}
+
+.cb-head-note
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.cb-grid-2
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+
+app-search-dropdown,
+app-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+}
+
+.cb-hint
+{
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.cb-hint i
+{
+    margin-top: 2px;
+    color: #1e3a8a;
+}
+
+.cb-hint-low
+{
+    border-color: #fcd9a8;
+    background: #fff8ec;
+    color: #92400e;
+}
+
+.cb-hint-low i
+{
+    color: #d97706;
+}
+
+.cb-fixed
+{
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.cb-fixed i
+{
+    margin-top: 2px;
+}
+
+/* Leaves */
+
+.cb-leaves
+{
+    overflow: hidden;
+}
+
+.cb-counts
+{
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: 6px;
+}
+
+.cb-pill
+{
+    padding: 2px 9px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cb-pill.cb-unused
+{
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #047857;
+}
+
+.cb-pill.cb-issued
+{
+    border-color: #c7d7f5;
+    background: #f3f7ff;
+    color: #1e3a8a;
+}
+
+.cb-pill.cb-bad
+{
+    border-color: #fecdd3;
+    background: #fff1f2;
+    color: #be123c;
+}
+
+.cb-seg
+{
+    display: inline-flex;
+    margin-left: auto;
+    padding: 2px;
+    border: 1px solid #d9e5f2;
+    border-radius: 9px;
+    background: #f8fafc;
+}
+
+.cb-seg button
+{
+    height: 26px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cb-seg button.on
+{
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.cb-mark
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid #fecdd3;
+    border-radius: 11px;
+    background: #fff8f8;
+    font-size: 13px;
+}
+
+.cb-mark-box
+{
+    flex: 1 1 240px;
+}
+
+.cb-btn
+{
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid #d9e5f2;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cb-btn-danger
+{
+    border-color: #be123c;
+    background: #be123c;
+    color: #ffffff;
+}
+
+.cb-btn:disabled
+{
+    opacity: 0.55;
+    cursor: default;
+}
+
+.cb-table-wrap
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    border: 1px solid #eef2f8;
+    border-radius: 10px;
+}
+
+.cb-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 13.5px;
+}
+
+.cb-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 8px;
+    border-bottom: 1px solid #e3e9f3;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.cb-table td
+{
+    padding: 7px 8px;
+    border-bottom: 1px solid #f1f4f9;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.cb-table .cb-c-no
+{
+    width: 46px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.cb-table .cb-c-num
+{
+    width: 110px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.cb-table .cb-c-tools
+{
+    width: 80px;
+    text-align: right;
+}
+
+.cb-check
+{
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.cb-ellipsis
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cb-row-used td
+{
+    background: #fcfdff;
+}
+
+.cb-status
+{
+    display: inline-block;
+    min-width: 72px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.cb-status[data-status="Unused"]
+{
+    background: #f0fdf4;
+    color: #047857;
+}
+
+.cb-status[data-status="Issued"]
+{
+    background: #eef3ff;
+    color: #1e3a8a;
+}
+
+.cb-status[data-status="Cancelled"],
+.cb-status[data-status="Lost"],
+.cb-status[data-status="Void"]
+{
+    background: #fff1f2;
+    color: #be123c;
+}
+
+.cb-tool
+{
+    width: 28px;
+    height: 28px;
+    margin-left: 4px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+}
+
+.cb-tool:hover:not(:disabled)
+{
+    border-color: #be123c;
+    color: #be123c;
+}
+
+.cb-tool:disabled
+{
+    opacity: 0.5;
+    cursor: default;
+}
+
+.cb-preview
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 6px;
+    padding: 10px;
+}
+
+.cb-preview span
+{
+    padding: 6px 8px;
+    border: 1px dashed #c7d7f5;
+    border-radius: 8px;
+    background: #f7faff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.cb-empty,
+.cb-empty-row
+{
+    margin: 0;
+    padding: 24px 16px;
+    color: #64748b;
+    font-size: 13.5px;
+    text-align: center;
+}
+
+.cb-note
+{
+    margin: 0;
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+
+/* The canvas body fills the canvas and never grows past it : the
+   leaf table is the only part that scrolls (AppCore scrollbar).
+   No canvas footer on this page. (2026-11-15) */
+
+:host ::ng-deep .page-canvas > .page-canvas-body.page-canvas-body
+{
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+:host ::ng-deep .page-canvas > .page-canvas-footer.page-canvas-footer
+{
+    display: none;
+}
+
+.cb-body > .cb-card
+{
+    height: 100%;
+    max-height: 100%;
+}
+
+.cb-leaves > .cb-table-wrap
+{
+    flex: 1 1 0;
+    min-height: 120px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.cb-leaves > .cb-note
+{
+    flex: 0 0 auto;
+}
+
+
+/* -----------------------------------------------------
+   Cheque Layout (2026-11-15)
+----------------------------------------------------- */
+
+.cb-head-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    margin-left: auto;
+    padding: 0 11px;
+    border: 1px solid #c7d6f5;
+    border-radius: 8px;
+    background: #f5f8ff;
+    color: #1e3a8a;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cb-head-btn:hover:not(:disabled)
+{
+    border-color: #1d4ed8;
+    background: #eef3ff;
+}
+
+.cb-head-btn:disabled
+{
+    opacity: 0.55;
+    cursor: default;
+}
+
+.cb-tool.cb-tool-print:hover:not(:disabled)
+{
+    border-color: #1d4ed8;
+    color: #1d4ed8;
+}
+
+.cl-wrap
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cl-preview-bar
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cl-preview-title
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.cl-preview-title i
+{
+    color: #1e3a8a;
+}
+
+.cl-preview-title small
+{
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.cl-seg,
+.cl-tabs
+{
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    background: #f8fafc;
+}
+
+.cl-seg button,
+.cl-tabs button
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #475569;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cl-seg button.on,
+.cl-tabs button.on
+{
+    background: #ffffff;
+    color: #1e3a8a;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.cl-stage
+{
+    display: flex;
+    justify-content: center;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: repeating-linear-gradient(45deg, #f1f5f9 0 8px, #f8fafc 8px 16px);
+    overflow: hidden;
+}
+
+.cl-paper-box
+{
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.cl-paper
+{
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: #fffdf5;
+    box-shadow: 0 6px 18px -10px rgba(15, 23, 42, 0.45);
+    transform-origin: left top;
+}
+
+.cl-tabs
+{
+    display: flex;
+}
+
+.cl-fields
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 14px;
+    min-height: 128px;
+    align-content: start;
+}
+
+.cl-note
+{
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.cl-note i
+{
+    margin-top: 3px;
+    color: #1e3a8a;
+}
+
+.cl-foot
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cl-unsaved
+{
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 600;
+}

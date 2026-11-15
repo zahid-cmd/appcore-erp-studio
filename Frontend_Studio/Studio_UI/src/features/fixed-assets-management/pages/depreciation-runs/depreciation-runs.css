@@ -1,6 +1,6 @@
 @import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
 
-/* Depreciation Runs : the look of the festival bonus page */
+/* Charge Depreciation : the look of the festival bonus page */
 
 /* the two filters of the list, side by side */
 
@@ -39,4 +39,39 @@
     position: sticky;
     bottom: 0;
     z-index: 2;
+}
+
+/* the month-end charge line of the list (one line, the whole text
+   in the tooltip) */
+
+.dr-auto
+{
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.dr-auto > i
+{
+    margin-right: 6px;
+}
+
+.dr-auto-on
+{
+    color: #166534;
+}
+
+.dr-auto-bad
+{
+    color: #b45309;
+}
+
+.dr-auto-chip
+{
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #166534;
 }

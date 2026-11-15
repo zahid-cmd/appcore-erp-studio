@@ -37,6 +37,18 @@ public class FaReasonDto
     public string Reason { get; set; } = string.Empty;
 }
 
+// Fixed Asset Register : one location (and custodian) for many
+// cards of one branch
+public class FaAssignLocationDto
+{
+    public List<Guid> PublicIds { get; set; } = new();
+
+    public long FaLocationId { get; set; }
+
+    // 0 : the custodian of each card stays as it is
+    public long CustodianEmployeeId { get; set; }
+}
+
 
 //---------------------------------------------------------------
 // Setup
@@ -129,9 +141,27 @@ public class FaConfigurationDto
 
     public bool AllowRunningMonth { get; set; }
 
+    // Charge Depreciation on Month End
+    public bool AutoChargeMonthEnd { get; set; }
+
     public string AssetNoPrefix { get; set; } = "FA";
 
     public int AssetNoDigits { get; set; } = 5;
+}
+
+// Charge Depreciation page : the month-end switch and what the job
+// did last
+public class FaAutoChargeDto
+{
+    public bool On { get; set; }
+
+    // e.g. "00:05 on the 1st of every month"
+    public string RunsAt { get; set; } = string.Empty;
+
+    // dd-MMM-yyyy hh:mm tt, Bangladesh time ('' : never)
+    public string LastCheck { get; set; } = string.Empty;
+
+    public string LastMessage { get; set; } = string.Empty;
 }
 
 // What every page of the module needs
@@ -489,6 +519,9 @@ public class FaRunDto
     public string JournalVoucherNo { get; set; } = string.Empty;
 
     public string Remarks { get; set; } = string.Empty;
+
+    // Charged by the month-end job
+    public bool IsAuto { get; set; }
 
     // The last run of its branch : it can be undone
     public bool IsLast { get; set; }

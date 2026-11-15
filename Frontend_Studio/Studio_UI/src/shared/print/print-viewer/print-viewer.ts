@@ -51,7 +51,8 @@ import
     ExcelSheet,
     PrintDocumentDef,
     PrintKit,
-    PrintSourceDef
+    PrintSourceDef,
+    PrintToggleDef
 }
 from '../print.models';
 
@@ -257,8 +258,14 @@ implements AfterViewInit, OnDestroy
     get activeDocuments():
         PrintDocumentDef[]
     {
+        // All Documents : the ones that share the A4 paper (a
+        // cheque prints on its own leaf); a source of separate
+        // documents only shows them all
+        const shared =
+            this.documents.filter(doc => !doc.separate);
+
         return this.choice === 'all'
-            ? this.documents
+            ? (shared.length ? shared : this.documents)
             : this.documents.filter
             (
                 doc =>
@@ -266,10 +273,168 @@ implements AfterViewInit, OnDestroy
             );
     }
 
+    // Documents printed on their own paper (a cheque) : a button
+    // of their own on the bar, so they are not hidden in the list
+    get separateDocuments():
+        PrintDocumentDef[]
+    {
+        return this.documents.filter(doc => !!doc.separate);
+    }
+
+    // Back from a separate document to the A4 documents
+    showAllDocuments():
+        void
+    {
+        this.choose('all');
+    }
+
     // Portrait / Landscape switch (sources with canRotate)
     landscape:
         boolean =
         false;
+
+    //-----------------------------------------------------------
+    // Page toggles (documents with toggles : A/C Payee,
+    // Counterfoil ...). Kept in the address as
+    // ?opt=key:1,key:0
+    //-----------------------------------------------------------
+
+    toggleState:
+        Record<string, boolean> =
+        {};
+
+    get activeToggles():
+        PrintToggleDef[]
+    {
+        const seen =
+            new Set<string>();
+
+        const list:
+            PrintToggleDef[] =
+            [];
+
+        for
+        (
+            const doc of this.activeDocuments
+        )
+        {
+            for
+            (
+                const toggle of doc.toggles ?? []
+            )
+            {
+                if
+                (
+                    !seen.has(toggle.key)
+                )
+                {
+                    seen.add(toggle.key);
+
+                    list.push(toggle);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    isToggleOn
+    (
+        toggle:
+            PrintToggleDef
+    ):
+        boolean
+    {
+        return this.toggleState[toggle.key] ?? toggle.on;
+    }
+
+    flipToggle
+    (
+        toggle:
+            PrintToggleDef
+    ):
+        void
+    {
+        if
+        (
+            this.loading
+            ||
+            !!this.busy
+        )
+        {
+            return;
+        }
+
+        this.toggleState =
+        {
+            ...this.toggleState,
+            [toggle.key]:!this.isToggleOn(toggle)
+        };
+
+        this.cdr.detectChanges();
+
+        const opt =
+            Object.entries(this.toggleState)
+                .map(([key, on]) => `${key}:${on ? 1 : 0}`)
+                .join(',');
+
+        const url =
+            this.router.serializeUrl(
+                this.router.createUrlTree(
+                    [],
+                    {
+                        relativeTo:this.route,
+                        queryParams:{ opt:opt || null },
+                        queryParamsHandling:'merge'
+                    }
+                )
+            );
+
+        window.history.replaceState(
+            window.history.state,
+            '',
+            url
+        );
+
+        setTimeout(
+            () =>
+                void this.render(),
+            0
+        );
+    }
+
+    private readToggles
+    (
+        text:
+            string | null
+    ):
+        void
+    {
+        const state:
+            Record<string, boolean> =
+            {};
+
+        for
+        (
+            const part of (text ?? '').split(',')
+        )
+        {
+            const [key, value] =
+                part.split(':');
+
+            if
+            (
+                key && (value === '1' || value === '0')
+            )
+            {
+                state[key.trim()] =
+                    value === '1';
+            }
+        }
+
+        this.toggleState =
+            state;
+    }
 
     get canRotate():
         boolean
@@ -420,6 +585,9 @@ implements AfterViewInit, OnDestroy
 
         this.landscape =
             snapshot.queryParamMap.get('orient') === 'landscape';
+
+        this.readToggles(
+            snapshot.queryParamMap.get('opt'));
 
         const loader =
             PRINT_SOURCES[key];
@@ -636,11 +804,23 @@ implements AfterViewInit, OnDestroy
         const landscape =
             this.canRotate && this.landscape;
 
+        // The page toggles of the shown documents
+        const toggles:
+            Record<string, boolean> =
+            {};
+
+        this.activeToggles.forEach
+        (
+            toggle =>
+                toggles[toggle.key] = this.isToggleOn(toggle)
+        );
+
         const kit:
             PrintKit =
             {
                 ...this.kit,
-                landscape
+                landscape,
+                toggles
             };
 
         const html =
@@ -1521,4 +1701,4 @@ html, body { background: transparent !important; }
                   min-width: 120px; padding: 10px 26px; border-radius: 40px; background: rgba(51, 65, 85, 0.88);
                   color: #fff; font: 700 64px/1 "Segoe UI", Arial, sans-serif; text-align: center; }
 .pv-page.pv-current { outline: 12px solid #3b82f6 !important; outline-offset: 10px; }
-`;
+`;

@@ -104,3 +104,56 @@
     margin-left: 6px;
     color: #0f2a44;
 }
+
+/* Depreciation to Date : put the worked out figure back */
+
+.fao-use
+{
+    margin-left: 8px;
+    padding: 1px 8px;
+    border: 1px solid #c7d7f5;
+    border-radius: 999px;
+    background: #f4f8ff;
+    color: #1d4ed8;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.fao-use:hover
+{
+    background: #e8f0ff;
+}
+
+/* Depreciation to Date : the pencil on its label */
+
+.fao-edit-wrap
+{
+    position: relative;
+    min-width: 0;
+}
+
+.fao-edit
+{
+    position: absolute;
+    top: 0;
+    right: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid #dbe6f7;
+    border-radius: 6px;
+    background: #f7faff;
+    color: #1d4ed8;
+    font-size: 10.5px;
+    cursor: pointer;
+}
+
+.fao-edit:hover,
+.fao-edit.on
+{
+    border-color: #93b4f0;
+    background: #e8f0ff;
+}

@@ -86,6 +86,19 @@ import
 }
 from './fund-transfer-advice/fund-transfer-advice.adapter';
 
+//===============================================================
+// Cheque (Check Books)
+//===============================================================
+
+import
+{
+    CHEQUE_PRINT_CSS,
+    CHEQUE_TOGGLES,
+    chequePagesHtml,
+    withChequeLayouts
+}
+from '../../../settings/account-settings/print/check-print.template';
+
 // Shared designs (every voucher)
 import
 {
@@ -165,9 +178,48 @@ export const FUND_TRANSFER_PRINT:
                 )
             ]);
 
+        // From Bank rows paid by cheque : the cheques to print on
+        // their leaves (the payee : the To accounts)
+        const lines =
+            voucher.Lines ?? [];
+
+        const payee =
+            Array.from(new Set(
+                lines
+                    .filter(line => line.Side === 'To')
+                    .map(line => line.LedgerName)
+                    .filter(name => !!name)))
+                .join(', ');
+
+        let cheques =
+            [] as Awaited<ReturnType<typeof withChequeLayouts>>;
+
+        try
+        {
+            cheques =
+                await withChequeLayouts(
+                    injector,
+                    lines
+                        .filter(line => line.Side === 'From' && line.AccountType === 'Bank' && line.Method === 'Cheque')
+                        .map(line => ({
+                            BankAccountId:line.AccountId,
+                            BankAccountName:line.LedgerName,
+                            CheckNo:line.CheckNo,
+                            CheckDate:line.CheckDate || voucher.VoucherDate,
+                            PayeeName:payee,
+                            Amount:line.Amount,
+                            Note:voucher.VoucherNo
+                        })));
+        }
+        catch
+        {
+            cheques = [];
+        }
+
         return {
             voucher,
-            ledgers
+            ledgers,
+            cheques
         };
     },
 
@@ -255,6 +307,32 @@ export const FUND_TRANSFER_PRINT:
             excel:
                 (data, kit) =>
                     slipDocumentSheet(fundTransferAdviceSheet(data, kit), kit)
+        },
+        {
+            // On the real leaf (layout : Check Books > Cheque
+            // Layout); printed on its own, not with All Documents
+            key:'cheque',
+
+            title:'Cheque',
+
+            icon:'fas fa-money-check-dollar',
+
+            separate:true,
+
+            toggles:CHEQUE_TOGGLES,
+
+            available:
+                data =>
+                    (data.cheques?.length ?? 0) > 0
+                    &&
+                    data.voucher.Status !== 'Cancelled',
+
+            render:
+                (data, kit) =>
+                    chequePagesHtml(data.cheques ?? [], kit),
+
+            css:
+                CHEQUE_PRINT_CSS
         }
     ]
-};
+};

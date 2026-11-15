@@ -2117,6 +2117,33 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Check Books : books and their leaves (MANUAL :
+    // CheckBooks_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.CheckBooks>
+    CheckBookRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.CheckBookLeaves>
+    CheckBookLeafRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Check Books : cheque print layouts, one per bank account
+    // (MANUAL : CheckPrintLayouts_Engine.sql)
+
+    public DbSet<AppCore.Domain.Entities.Settings.AccountSettings.CheckPrintLayouts>
+    CheckPrintLayoutRows
+    {
+    get;
+    set;
+    } = null!;
+
     // Human Resource phase 1 : Shifts, Holidays, Leave Types,
     // Salary Heads, Employees and their salary lines (MANUAL :
     // HumanResource_Phase1_Engine.sql, hand-written pages)

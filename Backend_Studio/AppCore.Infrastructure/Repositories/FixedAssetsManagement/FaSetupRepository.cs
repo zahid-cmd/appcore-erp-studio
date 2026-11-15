@@ -180,13 +180,16 @@ internal static class Fa
         return text.Length > 30 ? text.Substring(0, 30) : text;
     }
 
-    // The depreciation of an asset group is declared
-    // (Depreciation of Fixed Assets)
+    // Posting Setup purpose : the Depreciation Expense ledger of an
+    // asset group that names none of its own (2026-11-15)
+    public const string DepreciationExpensePurpose = "ASSET-DEPRECIATION-EXPENSE";
+
+    // The depreciation of an asset group is declared (Depreciation
+    // Setup). The expense ledger may be left to Posting Setup.
     public static bool Declared(FaCategories c) =>
         c.Method == NoDepreciation
-        || (c.ExpenseLedgerCode.Length > 0
-            && (c.Method == ReducingBalance ? c.RatePercent > 0
-                : c.Method == StraightLine && (c.LifeYears > 0 || c.RatePercent > 0)));
+        || (c.Method == ReducingBalance ? c.RatePercent > 0
+            : c.Method == StraightLine && (c.LifeYears > 0 || c.RatePercent > 0));
 
     public static string RuleText(string method, decimal ratePercent, int lifeYears) =>
         method == NoDepreciation ? "No depreciation"
@@ -198,7 +201,7 @@ internal static class Fa
     {
         if (!Declared(c))
         {
-            throw new InvalidOperationException($"Asset group {c.Code} {c.Name} : declare its depreciation on Asset Setup > Depreciation of Fixed Assets first.");
+            throw new InvalidOperationException($"Asset group {c.Code} {c.Name} : declare its depreciation on Depreciations > Depreciation Setup first.");
         }
     }
 
@@ -439,7 +442,10 @@ public class FaSetupRepository
                 AccumLedgerCode = c.AccumLedgerCode,
                 AccumLedgerName = NameOf(c.AccumLedgerCode),
                 ExpenseLedgerCode = c.ExpenseLedgerCode,
-                ExpenseLedgerName = NameOf(c.ExpenseLedgerCode),
+                ExpenseLedgerName =
+                    c.ExpenseLedgerCode.Length > 0 ? NameOf(c.ExpenseLedgerCode)
+                    : c.Method.Length > 0 && c.Method != Fa.NoDepreciation ? "Posting Setup ledger"
+                    : string.Empty,
                 IsDeclared = Fa.Declared(c),
                 RuleText = Fa.RuleText(c.Method, c.RatePercent, c.LifeYears),
                 GainLedgerCode = c.GainLedgerCode,
@@ -528,13 +534,30 @@ public class FaSetupRepository
 
         DbSet<GeneralLedgers> ledgers = _context.Set<GeneralLedgers>();
 
-        List<GeneralLedgers> inSubGroup = await ledgers.Where(x => x.AccountSubGroupId == sub.AccountSubGroupId).ToListAsync();
+        List<GeneralLedgers> inSubGroup = await ledgers.IgnoreQueryFilters().Where(x => x.AccountSubGroupId == sub.AccountSubGroupId).ToListAsync();
 
+        // a ledger of that name in the sub group, live or deleted (the
+        // name is unique in the sub group even for deleted ledgers :
+        // UX_GeneralLedgers_AccountSubGroupId_LedgerName). A deleted
+        // one - e.g. after FixedAssets_DeleteAll.sql - is brought back
+        // with its code.
         GeneralLedgers? existing =
-            inSubGroup.FirstOrDefault(x => !x.IsDeleted && string.Equals(x.LedgerName.Trim(), name, StringComparison.OrdinalIgnoreCase));
+            inSubGroup
+                .Where(x => string.Equals(x.LedgerName.Trim(), name, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(x => x.IsDeleted)
+                .FirstOrDefault();
 
         if (existing != null)
         {
+            if (existing.IsDeleted)
+            {
+                existing.IsDeleted = false;
+                existing.DeletedBy = null;
+                existing.DeletedDate = null;
+                existing.ModifiedBy = userId;
+                existing.ModifiedDate = DateTime.UtcNow;
+            }
+
             existing.IsActive = true;
 
             return existing.LedgerCode;
@@ -740,11 +763,6 @@ public class FaSetupRepository
             {
                 life = 0;
             }
-
-            if (codes[0].Length == 0)
-            {
-                throw new InvalidOperationException("Pick the Depreciation Expense ledger.");
-            }
         }
 
         var found = await _ledgers.GetByCodesAsync(codes.Where(x => x.Length > 0).Distinct().ToList());
@@ -803,7 +821,7 @@ public class FaSetupRepository
 
         string rule = Fa.RuleText(method, rate, life);
 
-        Fa.AddHistory(_context, "FaDepreciationRules", entity.FaCategoryId, "Update", "Depreciation Declared", $"{entity.Code} {entity.Name} : {rule}{(method == Fa.NoDepreciation ? string.Empty : $", residual {residual:0.###} %, expense ledger {entity.ExpenseLedgerCode}")}. {changed} asset card(s) not yet depreciated took the rule.", userId);
+        Fa.AddHistory(_context, "FaDepreciationRules", entity.FaCategoryId, "Update", "Depreciation Declared", $"{entity.Code} {entity.Name} : {rule}{(method == Fa.NoDepreciation ? string.Empty : $", residual {residual:0.###} %, expense ledger {(entity.ExpenseLedgerCode.Length > 0 ? entity.ExpenseLedgerCode : "Posting Setup")}")}. {changed} asset card(s) not yet depreciated took the rule.", userId);
 
         await _context.SaveChangesAsync();
 
@@ -1024,6 +1042,7 @@ public class FaSetupRepository
             RequireCustodian = row.RequireCustodian,
             AllowAssetRule = row.AllowAssetRule,
             AllowRunningMonth = row.AllowRunningMonth,
+            AutoChargeMonthEnd = row.AutoChargeMonthEnd,
             AssetNoPrefix = row.AssetNoPrefix,
             AssetNoDigits = row.AssetNoDigits
         };
@@ -1056,6 +1075,7 @@ public class FaSetupRepository
         row.RequireCustodian = dto.RequireCustodian;
         row.AllowAssetRule = dto.AllowAssetRule;
         row.AllowRunningMonth = dto.AllowRunningMonth;
+        row.AutoChargeMonthEnd = dto.AutoChargeMonthEnd;
         row.AssetNoPrefix = prefix;
         row.AssetNoDigits = dto.AssetNoDigits;
         row.ModifiedBy = userId;
@@ -1063,7 +1083,7 @@ public class FaSetupRepository
 
         await _context.SaveChangesAsync();
 
-        Fa.AddHistory(_context, "FaConfiguration", row.FaConfigurationId, "Update", "Asset Configuration Updated", $"Location needed : {(row.RequireLocation ? "yes" : "no")}; custodian needed : {(row.RequireCustodian ? "yes" : "no")}; own rule on a card : {(row.AllowAssetRule ? "yes" : "no")}; run a month before it ends : {(row.AllowRunningMonth ? "yes" : "no")}; Asset No {row.AssetNoPrefix}-..., {row.AssetNoDigits} digits.", userId);
+        Fa.AddHistory(_context, "FaConfiguration", row.FaConfigurationId, "Update", "Asset Configuration Updated", $"Location needed : {(row.RequireLocation ? "yes" : "no")}; custodian needed : {(row.RequireCustodian ? "yes" : "no")}; own rule on a card : {(row.AllowAssetRule ? "yes" : "no")}; run a month before it ends : {(row.AllowRunningMonth ? "yes" : "no")}; charge depreciation on month end : {(row.AutoChargeMonthEnd ? "yes" : "no")}; Asset No {row.AssetNoPrefix}-..., {row.AssetNoDigits} digits.", userId);
 
         await _context.SaveChangesAsync();
     }

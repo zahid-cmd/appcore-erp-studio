@@ -36,7 +36,7 @@ public class PdiTemplatesController
     : ControllerBase
 {
     private const string PageRoute =
-        "/settings/%/pdi-templates";
+        "/%/pdi-templates";
 
     private readonly IPdiTemplatesRepository _repository;
 

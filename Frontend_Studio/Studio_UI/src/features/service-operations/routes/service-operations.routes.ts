@@ -20,14 +20,126 @@ export const serviceOperationsRoutes:
 
 
     //===========================================================
-    // Default
+    // Default : the first menu
     //===========================================================
 
     {
         path:'',
 
-        redirectTo:'',
+        redirectTo:'service-setup',
 
         pathMatch:'full'
+    },
+
+    //===========================================================
+    // Service Setup (hand-written; the Service Settings pages
+    // moved here 2026-11-15)
+    //===========================================================
+
+    {
+        path:'service-setup',
+
+        data:
+        {
+            breadcrumb:'Service Setup'
+        },
+
+        loadChildren:() =>
+            import(
+                './service-setup.routes'
+            )
+            .then(
+                m =>
+                    m.serviceSetupRoutes
+            )
+    },
+
+    //===========================================================
+    // Booking Management : Bookings - SP (moved from Sales
+    // Operations 2026-11-15; the files stay there)
+    //===========================================================
+
+    {
+        path:'booking-management',
+
+        data:
+        {
+            breadcrumb:'Booking Management'
+        },
+
+        loadChildren:() =>
+            import(
+                '../../sales-operations/booking-management/routes/booking-management.routes'
+            )
+            .then(
+                m =>
+                    m.serviceBookingRoutes
+            )
+    },
+
+    //===========================================================
+    // Spare Parts & Lubricant Sales (moved from Sales Operations
+    // 2026-11-15; the files stay in features/sales-operations)
+    //===========================================================
+
+    {
+        path:'spare-parts-lubricant-sales',
+
+        data:
+        {
+            breadcrumb:'Spare Parts & Lubricant Sales'
+        },
+
+        loadChildren:() =>
+            import(
+                '../../sales-operations/spare-parts-lubricant-sales/routes/spare-parts-lubricant-sales.routes'
+            )
+            .then(
+                m =>
+                    m.mnu008003Routes
+            )
+    },
+
+    //===========================================================
+    // Business Promotions : Promotional Offers - Service Center
+    // (moved from Sales Operations 2026-11-15)
+    //===========================================================
+
+    {
+        path:'business-promotions',
+
+        data:
+        {
+            breadcrumb:'Business Promotions'
+        },
+
+        children:
+        [
+            {
+                path:'',
+
+                redirectTo:'promotional-offers-service-center',
+
+                pathMatch:'full'
+            },
+
+            {
+                path:'promotional-offers-service-center',
+
+                data:
+                {
+                    breadcrumb:'Promotional Offers - Service Center'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../../sales-operations/business-promotions/routes/promotional-offers-service-center.routes'
+                    )
+                    .then(
+                        m =>
+                            m.PromotionalOffersServiceCenterRoutes
+                    )
+            }
+        ]
     }
 ];

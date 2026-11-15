@@ -610,6 +610,89 @@ public class FaAssetsRepository
         await transaction.CommitAsync();
     }
 
+    public async Task<int> AssignLocationAsync(FaAssignLocationDto dto, long userId)
+    {
+        List<Guid> ids = (dto?.PublicIds ?? new List<Guid>()).Distinct().ToList();
+
+        if (ids.Count == 0)
+        {
+            throw new InvalidOperationException("Tick the assets first.");
+        }
+
+        FaLocations location =
+            await _context.Set<FaLocations>().AsNoTracking()
+                .FirstOrDefaultAsync(x => x.FaLocationId == dto!.FaLocationId && !x.IsDeleted)
+            ?? throw new InvalidOperationException("Pick the location.");
+
+        FaNames names = await Fa.NamesAsync(_context);
+
+        long? custodianId = dto!.CustodianEmployeeId > 0 ? dto.CustodianEmployeeId : null;
+
+        if (custodianId != null && !names.Employees.ContainsKey(custodianId.Value))
+        {
+            throw new InvalidOperationException("The custodian was not found.");
+        }
+
+        List<FaAssets> assets =
+            await _context.Set<FaAssets>()
+                .Where(x => ids.Contains(x.PublicId) && !x.IsDeleted)
+                .ToListAsync();
+
+        if (assets.Count != ids.Count)
+        {
+            throw new InvalidOperationException("Some of the assets were not found : refresh and tick them again.");
+        }
+
+        FaAssets? gone = assets.FirstOrDefault(x => !Fa.Live.Contains(x.Status));
+
+        if (gone != null)
+        {
+            throw new InvalidOperationException($"{gone.AssetNo} is {gone.Status} : its location cannot be changed.");
+        }
+
+        FaAssets? other = assets.FirstOrDefault(x => x.BranchId != location.BranchId);
+
+        if (other != null)
+        {
+            throw new InvalidOperationException($"{other.AssetNo} is not in the branch of {location.Name} ({names.Branch(location.BranchId)}).");
+        }
+
+        string custodianText = custodianId == null ? string.Empty : $", custodian {names.Employee(custodianId)}";
+
+        int changed = 0;
+
+        foreach (FaAssets asset in assets)
+        {
+            bool moves = asset.FaLocationId != location.FaLocationId;
+            bool hands = custodianId != null && asset.CustodianEmployeeId != custodianId;
+
+            if (!moves && !hands)
+            {
+                continue;
+            }
+
+            string from = names.Location(asset.FaLocationId);
+
+            asset.FaLocationId = location.FaLocationId;
+
+            if (custodianId != null)
+            {
+                asset.CustodianEmployeeId = custodianId;
+            }
+
+            asset.ModifiedBy = userId;
+            asset.ModifiedDate = DateTime.UtcNow;
+
+            Fa.AddHistory(_context, "FaAssets", asset.FaAssetId, "Update", "Location Assigned", $"{asset.AssetNo} {asset.Name} : location {(from.Length > 0 ? from : "none")} -> {location.Name}{custodianText}.", userId);
+
+            changed++;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return changed;
+    }
+
     public async Task DeleteAssetAsync(Guid publicId, long userId)
     {
         FaAssets entity =

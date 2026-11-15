@@ -48,5 +48,5 @@ public class PromotionalOffersAccessoryShopController
         "Promotional Offers - Accessory Shop";
 
     protected override string PageRoute =>
-        "/sales-operations/%/promotional-offers-accessory-shop";
+        "/%/promotional-offers-accessory-shop";
 }

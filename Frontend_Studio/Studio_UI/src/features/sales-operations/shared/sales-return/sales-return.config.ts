@@ -46,6 +46,12 @@ export interface SalesReturnPageConfig
     apiPath:
         string;
 
+    // The page's own address (no leading slash). Since 2026-11-15
+    // it can differ from the API path : SP pages live in Service
+    // Operations, AC pages in Accessories Operations.
+    route:
+        string;
+
     // The invoice page of the type (no leading slash)
     invoiceRoute:
         string;
@@ -81,7 +87,8 @@ export const SR_SP_PAGE:
     docTitle:'Sales Return - SP',
     prefix:'SRSP',
     apiPath:'sales-operations/spare-parts-lubricant-sales/sales-returns-sp',
-    invoiceRoute:'sales-operations/spare-parts-lubricant-sales/sales-invoices-sp',
+    route:'service-operations/spare-parts-lubricant-sales/sales-returns-sp',
+    invoiceRoute:'service-operations/spare-parts-lubricant-sales/sales-invoices-sp',
     printKey:'sales-returns-sp',
     a4DocKey:'sales-return',
     invoicePrintKey:'sales-invoices-sp',
@@ -100,7 +107,8 @@ export const SR_AC_PAGE:
     docTitle:'Sales Return - AC',
     prefix:'SRAC',
     apiPath:'sales-operations/accessories-sales/sales-returns-ac',
-    invoiceRoute:'sales-operations/accessories-sales/sales-invoices-ac',
+    route:'accessories-operations/accessories-sales/sales-returns-ac',
+    invoiceRoute:'accessories-operations/accessories-sales/sales-invoices-ac',
     printKey:'sales-returns-ac',
     a4DocKey:'sales-return',
     invoicePrintKey:'sales-invoices-ac',
@@ -121,6 +129,7 @@ export const SR_MB_PAGE:
     docTitle:'Sales Return - MB',
     prefix:'SRMB',
     apiPath:'sales-operations/motor-bike-sales/sales-returns-mb',
+    route:'sales-operations/motor-bike-sales/sales-returns-mb',
     invoiceRoute:'sales-operations/motor-bike-sales/sales-invoices-mb',
     printKey:'sales-returns-mb',
     a4DocKey:'sales-return',

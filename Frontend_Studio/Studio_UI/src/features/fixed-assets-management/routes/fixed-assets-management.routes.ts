@@ -51,11 +51,9 @@ export const fixedAssetsManagementRoutes:
                 data:{ breadcrumb:'Asset Groups' },
                 children:page('Asset Group', () => import('../pages/asset-groups/asset-groups').then(m => m.AssetGroupsPage))
             },
-            {
-                path:'depreciation-of-fixed-assets',
-                data:{ breadcrumb:'Depreciation of Fixed Assets' },
-                children:page('Depreciation of Fixed Assets', () => import('../pages/depreciation-of-fixed-assets/depreciation-of-fixed-assets').then(m => m.DepreciationOfFixedAssetsPage))
-            },
+            // Depreciation of Fixed Assets moved to Depreciations >
+            // Depreciation Setup (2026-11-15) : an old link still opens it
+            { path:'depreciation-of-fixed-assets', redirectTo:'/fixed-assets-management/depreciation/depreciation-setup', pathMatch:'prefix' },
             {
                 path:'asset-locations',
                 data:{ breadcrumb:'Asset Locations' },
@@ -70,7 +68,9 @@ export const fixedAssetsManagementRoutes:
     },
 
     //===========================================================
-    // Asset Register
+    // Asset Control (was Asset Register; its route key stays
+    // asset-register, 2026-11-15) : buying, the cards, the opening
+    // assets and the physical count
     //===========================================================
 
     {
@@ -78,7 +78,7 @@ export const fixedAssetsManagementRoutes:
 
         data:
         {
-            breadcrumb:'Asset Register'
+            breadcrumb:'Asset Control'
         },
 
         children:
@@ -97,12 +97,18 @@ export const fixedAssetsManagementRoutes:
                 path:'opening-assets',
                 data:{ breadcrumb:'Opening Assets' },
                 children:page('Opening Assets', () => import('../pages/opening-assets/opening-assets').then(m => m.OpeningAssetsPage))
+            },
+            {
+                path:'asset-verification',
+                data:{ breadcrumb:'Asset Verification' },
+                children:page('Asset Verification', () => import('../pages/asset-verification/asset-verification').then(m => m.AssetVerificationPage))
             }
         ]
     },
 
     //===========================================================
-    // Depreciation
+    // Depreciations (2026-11-15 : Depreciation Setup moved here from
+    // Asset Setup; Depreciation Runs renamed Charge Depreciation)
     //===========================================================
 
     {
@@ -110,15 +116,22 @@ export const fixedAssetsManagementRoutes:
 
         data:
         {
-            breadcrumb:'Depreciation'
+            breadcrumb:'Depreciations'
         },
 
         children:
         [
             {
-                path:'depreciation-runs',
-                data:{ breadcrumb:'Depreciation Runs' },
-                children:page('Depreciation Runs', () => import('../pages/depreciation-runs/depreciation-runs').then(m => m.DepreciationRunsPage))
+                path:'depreciation-setup',
+                data:{ breadcrumb:'Depreciation Setup' },
+                children:page('Depreciation Setup', () => import('../pages/depreciation-of-fixed-assets/depreciation-of-fixed-assets').then(m => m.DepreciationOfFixedAssetsPage))
+            },
+            // the page was called Depreciation Runs : an old link still opens it
+            { path:'depreciation-runs', redirectTo:'charge-depreciation', pathMatch:'prefix' },
+            {
+                path:'charge-depreciation',
+                data:{ breadcrumb:'Charge Depreciation' },
+                children:page('Charge Depreciation', () => import('../pages/depreciation-runs/depreciation-runs').then(m => m.DepreciationRunsPage))
             },
             {
                 path:'depreciation-schedule',
@@ -174,11 +187,9 @@ export const fixedAssetsManagementRoutes:
                 data:{ breadcrumb:'Asset Tags' },
                 children:page('Asset Tags', () => import('../pages/asset-tags/asset-tags').then(m => m.AssetTagsPage))
             },
-            {
-                path:'asset-verification',
-                data:{ breadcrumb:'Asset Verification' },
-                children:page('Asset Verification', () => import('../pages/asset-verification/asset-verification').then(m => m.AssetVerificationPage))
-            }
+            // Asset Verification moved to Asset Control (2026-11-15) :
+            // an old link still opens it
+            { path:'asset-verification', redirectTo:'/fixed-assets-management/asset-register/asset-verification', pathMatch:'prefix' }
         ]
     }
 ];

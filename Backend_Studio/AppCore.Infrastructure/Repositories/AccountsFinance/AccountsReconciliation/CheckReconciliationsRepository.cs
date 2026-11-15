@@ -16,6 +16,11 @@ using AppCore.Domain.Entities.AccountsFinance.VoucherManagement;
 using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.Persistence;
+using CheckLeafRegister =
+    AppCore.Infrastructure.Repositories.Settings.AccountSettings.CheckLeafRegister;
+
+using CheckLeafUse =
+    AppCore.Infrastructure.Repositories.Settings.AccountSettings.CheckLeafUse;
 
 using PostingLedgerCodes =
     AppCore.Infrastructure.Platform.Accounting.PostingLedgerCodes;
@@ -2166,6 +2171,9 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
 
                 source.Sync(Voided, string.Empty, null);
 
+                // Check Books : the leaf is Void, never used again
+                await CheckLeafRegister.VoidAsync(_context, CheckLeafRegister.PaymentVoucher, source.VoucherId, $"Voided : {reason}", userId, state.CheckNo);
+
                 AddActivity(state.CheckReconciliationId, "Void", "Check Voided",
                     $"Check {state.CheckNo} to {state.PartyName} ({state.Amount:N2}) voided. Reason : {reason}",
                     userId, now);
@@ -2218,6 +2226,9 @@ public class CheckReconciliationsRepository : ICheckReconciliationsRepository
                     reason: Limit(dto?.Reason, 500));
 
                 source.Sync(Pending, string.Empty, null);
+
+                // Check Books : the leaf is Issued again
+                await CheckLeafRegister.UnvoidAsync(_context, CheckLeafRegister.PaymentVoucher, source.VoucherId, state.CheckNo, userId);
 
                 await _context.SaveChangesAsync();
 

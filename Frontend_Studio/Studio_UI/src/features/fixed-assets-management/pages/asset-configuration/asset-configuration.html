@@ -72,7 +72,7 @@
                         <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
                         <span class="pf-switch-text">
                             <b>An asset may have its own depreciation rule</b>
-                            <small>The method, rate and life of a card can differ from its asset group until its first depreciation run</small>
+                            <small>The method, rate and life of a card can differ from its asset group until its first depreciation charge</small>
                         </span>
                     </label>
 
@@ -83,8 +83,20 @@
                             (change)="onSwitch('allowRunningMonth', $event)">
                         <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
                         <span class="pf-switch-text">
-                            <b>Allow a depreciation run before the month ends</b>
-                            <small>A run can be made for the month that is still going on</small>
+                            <b>Allow a depreciation charge before the month ends</b>
+                            <small>The month that is still going on can be charged on Charge Depreciation</small>
+                        </span>
+                    </label>
+
+                    <label class="pf-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="autoChargeMonthEnd"
+                            (change)="onSwitch('autoChargeMonthEnd', $event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>Charge Depreciation on Month End</b>
+                            <small>At 00:05 on the 1st every branch is charged for the month just ended, posted by the system and shown on Charge Depreciation. Months missed while the server was off are charged when it starts.</small>
                         </span>
                     </label>
 
@@ -131,7 +143,7 @@
                     <b>How the module works</b>
                     <ul class="hp-list">
                         <li>Saving an asset group makes its own two ledgers : the asset ledger and the accumulated depreciation ledger. Nothing is picked.</li>
-                        <li>The depreciation of an asset group is declared on Depreciation of Fixed Assets, before assets are bought into it.</li>
+                        <li>The depreciation of an asset group is declared on Depreciations &gt; Depreciation Setup, before assets are bought into it.</li>
                         <li>Depreciation is charged for the full month an asset is put to use, and not in the month it is disposed.</li>
                         <li>Every posting is a Journal Voucher.</li>
                         <li>Money is paid or received on Payment / Receipt Vouchers against the payable / receivable ledger.</li>

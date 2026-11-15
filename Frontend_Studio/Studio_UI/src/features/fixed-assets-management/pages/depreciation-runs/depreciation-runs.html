@@ -3,7 +3,7 @@
     @if (mode === 'list')
     {
         <app-page-header
-            title="Depreciation Runs"
+            title="Charge Depreciation"
             subtitle="The monthly depreciation of each branch, posted to the accounts"
             icon="fas fa-chart-line">
 
@@ -17,7 +17,7 @@
 
             <div pageHeaderRight>
                 <app-command-center
-                    command1Text="New Run"
+                    command1Text="Charge Month"
                     command1Icon="fas fa-plus"
                     command1Permission="add"
                     (command1Click)="add()"
@@ -36,7 +36,16 @@
 
             <span
                 pageToolbarLeft
-                class="hp-note">One run is one month of one branch. The months go in order, with no gap.</span>
+                class="hp-note dr-auto"
+                [class.dr-auto-on]="autoCharge?.On"
+                [class.dr-auto-bad]="autoFailed"
+                [title]="autoText">
+                @if (autoCharge?.On)
+                {
+                    <i class="fas fa-clock-rotate-left"></i>
+                }
+                {{ autoText }}
+            </span>
 
             <div
                 pageToolbarRight
@@ -103,14 +112,14 @@
                     </span>
                 }
                 <span class="pay-summary-note">
-                    Open a run to see its assets; only the last run of a branch can be undone
+                    Open a charge to see its assets; only the last charge of a branch can be undone
                 </span>
             </div>
         }
 
         <app-history-drawer
             [opened]="historyOpened"
-            title="Depreciation Run History"
+            title="Charge Depreciation History"
             [items]="historyItems"
             (closed)="closeHistory()">
         </app-history-drawer>
@@ -118,13 +127,13 @@
     @else if (mode === 'add')
     {
         <app-page-header
-            title="Depreciation Run"
+            title="Charge Depreciation"
             subtitle="Charge the depreciation of the next month of a branch"
             icon="fas fa-chart-line">
 
             <div pageHeaderRight>
                 <app-command-center
-                    command1Text="Post Run"
+                    command1Text="Post Charge"
                     command1Icon="fas fa-file-circle-check"
                     command1Permission="add"
                     (command1Click)="onPost()"
@@ -150,7 +159,7 @@
 
                     <header class="pf-card-head">
                         <i class="fas fa-chart-line"></i>
-                        <span>Run</span>
+                        <span>Charge</span>
                     </header>
 
                     <app-search-dropdown
@@ -172,7 +181,7 @@
                     </app-textbox>
 
                     <app-textbox
-                        label="Last Run"
+                        label="Last Charged"
                         [value]="lastRunText"
                         [disabled]="true">
                     </app-textbox>
@@ -191,17 +200,7 @@
                         (valueChange)="onRemarks($event)">
                     </app-textbox>
 
-                    <div class="hp-bar">
-                        <button
-                            type="button"
-                            class="hp-add"
-                            [disabled]="!branchId || previewing"
-                            (click)="workOut()">
-                            <i class="fas fa-calculator"></i>
-                            Work Out
-                        </button>
-                        <span class="hp-note">The month is never typed : it is always the month after the last run of the branch.</span>
-                    </div>
+                    <span class="hp-note">Picking the branch works out its next month on the right. The month is never typed : it is always the month after the last charge of the branch. Refresh works it out again.</span>
 
                 </section>
 
@@ -281,7 +280,7 @@
     @else
     {
         <app-page-header
-            title="Depreciation Run"
+            title="Depreciation Charge"
             subtitle="The depreciation charged to the assets of a branch for one month"
             icon="fas fa-chart-line">
 
@@ -295,10 +294,10 @@
 
             <div pageHeaderRight>
                 <app-command-center
-                    command1Text="Undo Run"
+                    command1Text="Undo Charge"
                     command1Icon="fas fa-rotate-left"
                     command1Permission="update"
-                    command1Title="Undo this run (only the last run of a branch can be undone)"
+                    command1Title="Undo this charge (only the last charge of a branch can be undone)"
                     (command1Click)="askUndo()"
                     [command1Visible]="!!run && run.IsLast"
                     command2Text="Print"
@@ -322,11 +321,15 @@
                 {
                     <span class="hp-step on"><b><i class="fas fa-chart-line"></i></b> {{ run.Code }}</span>
                     <span class="hp-state hp-ok">{{ run.PeriodText }}</span>
+                    @if (run.IsAuto)
+                    {
+                        <span class="hp-state dr-auto-chip" title="Charged by the month-end job">Auto</span>
+                    }
                     <span class="hp-note">
                         {{ run.BranchName }} &nbsp;·&nbsp; Journal Voucher {{ run.JournalVoucherNo || '-' }}
                         @if (!run.IsLast)
                         {
-                            &nbsp;·&nbsp; a later month of the branch is posted, so this run cannot be undone
+                            &nbsp;·&nbsp; a later month of the branch is charged, so this one cannot be undone
                         }
                     </span>
                 }
@@ -335,7 +338,7 @@
 
             <span
                 pageToolbarRight
-                class="hp-note">{{ run ? 'Run date ' + day(run.RunDate) : '' }}</span>
+                class="hp-note">{{ run ? 'Charge date ' + day(run.RunDate) : '' }}</span>
 
         </app-page-toolbar>
 
@@ -356,7 +359,7 @@
                     type="button"
                     class="hp-add hp-danger"
                     [disabled]="isSaving"
-                    (click)="confirmUndo()">Undo Run</button>
+                    (click)="confirmUndo()">Undo Charge</button>
                 <button
                     type="button"
                     class="hp-btn"

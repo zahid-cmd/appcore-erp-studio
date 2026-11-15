@@ -670,6 +670,29 @@ export const routes:
 
             // AUTO-END : MOD-014
 
+            //===========================================================
+            // Accessories Operations (hand-written, 2026-11-15 : NEVER
+            // run Module / Menu / Submenu / Code Sync for it)
+            //===========================================================
+
+            {
+                path:'accessories-operations',
+
+                data:
+                {
+                    breadcrumb:'Accessories Operations'
+                },
+
+                loadChildren:() =>
+                    import(
+                        '../features/accessories-operations/routes/accessories-operations.routes'
+                    )
+                    .then(
+                        m =>
+                            m.accessoriesOperationsRoutes
+                    )
+            },
+
             // AUTO-BEGIN : MOD-011
 
             //===========================================================

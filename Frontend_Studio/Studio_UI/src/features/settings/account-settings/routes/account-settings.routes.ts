@@ -82,6 +82,29 @@ Routes =
 
                 // MANUAL-END : SUB-003-002-015
 
+            // MANUAL : Check Books (hand-written page, no sync;
+            // CheckBooks_Engine.sql adds the submenu)
+
+                {
+                    path:'check-books',
+
+                    data:
+                    {
+                        breadcrumb:'Check Books'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            './check-books.routes'
+                        )
+                        .then(
+                            m =>
+                                m.CheckBooksRoutes
+                        )
+                },
+
+            // MANUAL-END : Check Books
+
             // AUTO-BEGIN : SUB-003-002-002
 
                 //===========================================================

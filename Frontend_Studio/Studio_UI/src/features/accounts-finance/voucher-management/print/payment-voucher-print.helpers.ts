@@ -11,6 +11,13 @@
 //                     MFS, with the step 2 details)
 //===============================================================
 
+
+import
+{
+    CheckPrintItem
+}
+from '../../../settings/account-settings/models/check-print.model';
+
 import
 {
     PaymentVoucher
@@ -49,6 +56,10 @@ export interface PvPrintData
 
     // Names of the charge expense ledgers
     ledgers: VoucherLedger[];
+
+    // Its Check rows with their bank account's cheque layout
+    // (document "Cheque", Check Books 2026-11-15)
+    cheques?: CheckPrintItem[];
 }
 
 // Dr / Cr line of the voucher
@@ -417,4 +428,4 @@ export function voucherLines
     }
 
     return result;
-}
+}

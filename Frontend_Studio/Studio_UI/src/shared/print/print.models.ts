@@ -174,12 +174,27 @@ export interface PrintKit
     // canRotate); templates may lay out wider tables. Missing =
     // portrait.
     landscape?: boolean;
+
+    // On / off choices made on the print page (documents with
+    // toggles), by toggle key. Missing = the toggle's default.
+    toggles?: Record<string, boolean>;
 }
 
 
 //===============================================================
 // Documents / sources
 //===============================================================
+
+// An on / off choice shown on the print page while its document is
+// shown (e.g. the cheque's A/C Payee crossing, its counterfoil);
+// the template reads it as kit.toggles[key]
+export interface PrintToggleDef
+{
+    key: string;
+    label: string;
+    // Default when the address does not say
+    on: boolean;
+}
 
 export interface PrintDocumentDef<T = any>
 {
@@ -199,6 +214,13 @@ export interface PrintDocumentDef<T = any>
 
     // Extra CSS of this template (prefix its classes)
     css?: string;
+
+    // Printed on its own paper (a cheque on its leaf) : left out of
+    // "All Documents"; chosen from the document list
+    separate?: boolean;
+
+    // On / off choices of this document (print page buttons)
+    toggles?: PrintToggleDef[];
 
     excel?(data: T, kit: PrintKit): ExcelSheet;
 }
@@ -225,4 +247,4 @@ export interface PrintSourceDef<T = any>
     canRotate?: boolean;
 
     documents: PrintDocumentDef<T>[];
-}
+}

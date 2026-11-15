@@ -85,6 +85,30 @@ Routes =
 
                 // AUTO-END : SUB-009-001-001
 
+            //===========================================================
+            // Membership Services (moved 2026-11-15 from Settings >
+            // Service Settings; the files stay there. Hand-wired :
+            // NEVER Code Sync)
+            //===========================================================
+
+                {
+                    path:'membership-services',
+
+                    data:
+                    {
+                        breadcrumb:'Membership Services'
+                    },
+
+                    loadChildren:() =>
+                        import(
+                            '../../../settings/service-settings/routes/membership-services.routes'
+                        )
+                        .then(
+                            m =>
+                                m.MembershipServicesRoutes
+                        )
+                },
+
         ]
 
     }

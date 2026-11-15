@@ -132,6 +132,11 @@ builder.Services.AddHostedService<NightlyBackupService>();
 // current one ends when switch CFG-MOD-003-0111 is ON
 builder.Services.AddHostedService<FinancialYearAutoCreateJob>();
 
+// Fixed Assets : depreciation charged for every branch at 00:05 on
+// the 1st (the month just ended) when the Asset Configuration switch
+// "Charge Depreciation on Month End" is ON; catches up on start
+builder.Services.AddHostedService<FaMonthEndDepreciationJob>();
+
 // Uploaded pictures mirrored into the database (StoredFiles), so
 // every PC on the same database shows them (Platform\Uploads)
 builder.Services.AddSingleton<UploadsMirror>();

@@ -170,14 +170,12 @@
 
             </div>
 
-            <!-- Row 1 : Account Type | Sub-Group
-                 Row 2 : Account | Amount
-                 Row 3 : Bank : Method | Reference / Cheque No
-                         MFS  : Transaction ID | Charge
-                 Row 4 : Bank : Cheque Date | Charge  (or Charge)
-                 Last  : Short Notes (full width) -->
+            <!-- Row 1 : Account Type | Sub-Group | Account
+                 Row 2 : Amount | Method / Transaction ID / Short Notes (Cash) | Reference (Bank Transfer) or Add
+                 Cheque : Add opens the Cheque Details popup;
+                 Bank Transfer / MFS : Charge and Short Notes in the popup ("Charge / Notes") -->
 
-            <div class="vmd-grid vmd-grid-2">
+            <div class="vmd-grid te-grid-3">
 
                 <app-dropdown
 
@@ -270,58 +268,8 @@
                         [required]="true">
 
                     </app-dropdown>
-
-                    @if (fromMethod === 'Cheque')
-                    {
-                        <app-textbox
-
-                            label="Cheque No"
-
-                            placeholder="Cheque number"
-
-                            [value]="fromCheckNo"
-
-                            (valueChange)="onCheckNo($event)"
-
-                            [disabled]="!canAddFrom"
-
-                            [required]="true">
-
-                        </app-textbox>
-
-                        <app-datepicker
-
-                            label="Cheque Date"
-
-                            [value]="$any(fromCheckDate)"
-
-                            (valueChange)="onCheckDate($event)"
-
-                            [disabled]="!canAddFrom"
-
-                            [required]="true">
-
-                        </app-datepicker>
-                    }
-                    @else
-                    {
-                        <app-textbox
-
-                            label="Reference"
-
-                            placeholder="Optional (NPSB / RTGS ref)"
-
-                            [value]="fromReference"
-
-                            (valueChange)="onReference($event)"
-
-                            [disabled]="!canAddFrom">
-
-                        </app-textbox>
-                    }
                 }
-
-                @if (from.type === 'MFS')
+                @else if (from.type === 'MFS')
                 {
                     <app-textbox
 
@@ -339,43 +287,73 @@
 
                     </app-textbox>
                 }
-
-                @if (from.type === 'Bank' || from.type === 'MFS')
+                @else
                 {
                     <app-textbox
 
-                        label="Charge (company pays)"
+                        label="Short Notes"
 
-                        placeholder="0.00"
+                        placeholder="Optional"
 
-                        inputMode="decimal"
+                        [value]="from.notes"
 
-                        [value]="fromChargeText"
+                        (valueChange)="onNotes('From', $event)"
 
-                        (valueChange)="onChargeText($event)"
+                        (enterPressed)="add('From')"
 
                         [disabled]="!canAddFrom">
 
                     </app-textbox>
                 }
 
-                <app-textbox
+                @if (from.type === 'Bank' && fromMethod !== 'Cheque')
+                {
+                    <app-textbox
 
-                    label="Short Notes"
+                        label="Reference"
 
-                    placeholder="Optional"
+                        placeholder="Optional (NPSB / RTGS ref)"
 
-                    [value]="from.notes"
+                        [value]="fromReference"
 
-                    (valueChange)="onNotes('From', $event)"
+                        (valueChange)="onReference($event)"
 
-                    (enterPressed)="add('From')"
+                        [disabled]="!canAddFrom">
 
-                    [disabled]="!canAddFrom">
+                    </app-textbox>
+                }
 
-                </app-textbox>
+                <!-- Add; Bank Transfer / MFS : a slim full-width row with the
+                     Charge / Notes link on the left -->
 
-                <div class="vit-add-cell">
+                <div
+
+                    class="vit-add-cell te-add-cell"
+
+                    [class.te-add-row]="from.type === 'MFS' || (from.type === 'Bank' && fromMethod !== 'Cheque')">
+
+                    @if (from.type === 'MFS' || (from.type === 'Bank' && fromMethod !== 'Cheque'))
+                    {
+                        <button
+
+                            type="button"
+
+                            class="te-extras"
+
+                            [class.te-extras-set]="extrasSet"
+
+                            [disabled]="!canAddFrom || loading"
+
+                            title="Charge (company pays) and Short Notes"
+
+                            (click)="openExtras()">
+
+                            <i [class]="extrasSet ? 'fas fa-pen' : 'fas fa-plus'"></i>
+
+                            <span>{{ extrasText }}</span>
+
+                        </button>
+                    }
 
                     <button
 
@@ -385,9 +363,11 @@
 
                         [disabled]="!canAddFrom || loading"
 
+                        [title]="fromNeedsPopup ? 'Enter the cheque details' : 'Add the row'"
+
                         (click)="add('From')">
 
-                        <i class="fas fa-plus"></i>
+                        <i [class]="fromNeedsPopup ? 'fas fa-money-check' : 'fas fa-plus'"></i>
 
                         Add
 
@@ -453,7 +433,7 @@
 
             </div>
 
-            <div class="vmd-grid vmd-grid-2">
+            <div class="vmd-grid te-grid-3">
 
                 <app-dropdown
 
@@ -770,7 +750,13 @@
 
                         let-line>
 
-                        <tr>
+                        <tr
+
+                            [class.te-row-edit]="canEditRow(line)"
+
+                            [title]="canEditRow(line) ? 'Click to change the cheque / reference / charge / notes' : ''"
+
+                            (click)="editRow(line)">
 
                             <td class="vmd-sl">{{ serial(line) }}</td>
 
@@ -807,7 +793,7 @@
 
                                         [attr.aria-label]="'Remove ' + line.LedgerName"
 
-                                        (click)="remove(line)">
+                                        (click)="$event.stopPropagation(); remove(line)">
 
                                         <i class="fas fa-xmark"></i>
 
@@ -898,3 +884,165 @@
     </div>
 
 </div>
+
+
+<!-- =========================================================
+     DETAILS POPUP : Cheque Details (Bank + Cheque) or Charge &
+     Notes (Bank Transfer / MFS); also edits a From row
+========================================================== -->
+
+<app-form-modal
+
+    [opened]="popupOpen"
+
+    [title]="popupTitle"
+
+    [subtitle]="popupSubtitle"
+
+    [icon]="popupMethod === 'Cheque' ? 'fas fa-money-check' : 'fas fa-receipt'"
+
+    width="560px"
+
+    [saveText]="editLine ? 'Update Row' : 'Add Row'"
+
+    [saveIcon]="editLine ? 'fas fa-check' : 'fas fa-plus'"
+
+    [closeOnBackdrop]="false"
+
+    (save)="onPopupSave()"
+
+    (closed)="closePopup()">
+
+    <div class="te-pop-grid">
+
+        @if (popupMethod === 'Cheque')
+        {
+            @if (fromUsesCheckBook)
+            {
+                <div class="te-leaf">
+
+                    <app-search-dropdown
+
+                        label="Cheque No (check book)"
+
+                        placeholder="No unused leaf"
+
+                        [items]="fromLeafItems"
+
+                        [value]="fromCheckNo || null"
+
+                        (valueChange)="onCheckLeaf($event)"
+
+                        [disabled]="!fromLeafInfo?.AllowChooseLeaf"
+
+                        [required]="true">
+
+                    </app-search-dropdown>
+
+                    @if (fromLeafHint)
+                    {
+                    <small
+                        class="te-leaf-hint"
+                        [class.te-leaf-low]="fromLeafInfo?.LowLeaf || fromLeafInfo?.UnusedLeaves === 0">
+                        {{ fromLeafHint }}
+                    </small>
+                    }
+
+                </div>
+            }
+            @else
+            {
+                <app-textbox
+
+                    label="Cheque No"
+
+                    placeholder="Cheque number"
+
+                    [value]="fromCheckNo"
+
+                    (valueChange)="onCheckNo($event)"
+
+                    [required]="true">
+
+                </app-textbox>
+            }
+
+            <app-datepicker
+
+                label="Cheque Date"
+
+                [value]="$any(fromCheckDate)"
+
+                (valueChange)="onCheckDate($event)"
+
+                [required]="true">
+
+            </app-datepicker>
+        }
+
+        @if (popupShowsReference)
+        {
+            <app-textbox
+
+                class="te-pop-wide"
+
+                [label]="popupMethod === 'MFS' ? 'Transaction ID' : 'Reference'"
+
+                [placeholder]="popupMethod === 'MFS' ? 'MFS transaction id' : 'Optional (NPSB / RTGS ref)'"
+
+                [value]="fromReference"
+
+                (valueChange)="onReference($event)"
+
+                [required]="popupMethod === 'MFS'">
+
+            </app-textbox>
+        }
+
+        @if (popupHasCharge)
+        {
+            <app-textbox
+
+                label="Charge (company pays)"
+
+                placeholder="0.00"
+
+                inputMode="decimal"
+
+                [value]="fromChargeText"
+
+                (valueChange)="onChargeText($event)">
+
+            </app-textbox>
+        }
+
+        <app-textbox
+
+            [class.te-pop-wide]="!popupHasCharge"
+
+            label="Short Notes"
+
+            placeholder="Optional"
+
+            [value]="popupNotes"
+
+            (valueChange)="onPopupNotes($event)"
+
+            (enterPressed)="onPopupSave()">
+
+        </app-textbox>
+
+    </div>
+
+    @if (from.error)
+    {
+        <div class="te-pop-error">
+
+            <i class="fas fa-circle-exclamation"></i>
+
+            <span>{{ from.error }}</span>
+
+        </div>
+    }
+
+</app-form-modal>

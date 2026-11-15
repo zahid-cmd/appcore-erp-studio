@@ -47,5 +47,5 @@ public class SalesInvoicesAcController
 
 
     protected override string PageRoute =>
-        "/sales-operations/%/sales-invoices-ac";
+        "/%/sales-invoices-ac";
 }

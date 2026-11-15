@@ -47,5 +47,5 @@ public class SalesReturnsSpController
         "SP";
 
     protected override string PageRoute =>
-        "/sales-operations/%/sales-returns-sp";
+        "/%/sales-returns-sp";
 }

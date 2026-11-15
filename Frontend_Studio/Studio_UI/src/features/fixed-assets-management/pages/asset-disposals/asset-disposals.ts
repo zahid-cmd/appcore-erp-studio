@@ -72,7 +72,8 @@ import
     FaAsset,
     FaDisposal,
     faDay,
-    faMoney
+    faMoney,
+    faPeriodText
 }
 from '../../shared/fa.models';
 
@@ -117,6 +118,31 @@ function toAmount(text: string): number
 function periodOf(date: string): number
 {
     return Number(date.substring(0, 4)) * 100 + Number(date.substring(5, 7));
+}
+
+// 202612 -> 202701
+function nextPeriod(period: number): number
+{
+    return period % 100 >= 12 ? (Math.floor(period / 100) + 1) * 100 + 1 : period + 1;
+}
+
+// 202701 -> 202612
+function previousPeriod(period: number): number
+{
+    return period % 100 <= 1 ? (Math.floor(period / 100) - 1) * 100 + 12 : period - 1;
+}
+
+// What stops a disposal before it is saved, shown on the left card
+// (a warning, not an error : the user finishes a step first)
+interface DisposalBlock
+{
+    title: string;
+    // what is missing
+    missing: string;
+    // what to do, step by step
+    steps: string[];
+    // the page that fixes it ('' : none)
+    action: 'charge' | '';
 }
 
 // "Gain 1,200.00" / "Loss 300.00"
@@ -390,6 +416,49 @@ implements OnInit
     }
 
     // The Journal Voucher of the disposal, in words
+    // A saved disposal : its Journal Voucher in words (the same lines
+    // as the form showed)
+    get viewVoucherLines(): string[]
+    {
+        const e = this.entity;
+
+        if (!e)
+        {
+            return [];
+        }
+
+        const receivable = e.DebitLedgerName || 'Receivable';
+
+        const lines: string[] = [];
+
+        if (e.Accumulated > 0)
+        {
+            lines.push(`Accumulated Depreciation Dr / Asset Cost Cr : Tk ${faMoney(e.Accumulated)}`);
+        }
+
+        if (e.SalePrice > 0)
+        {
+            lines.push(`${receivable} Dr / Asset Cost Cr : Tk ${faMoney(Math.min(e.SalePrice, e.BookValue))}`);
+        }
+
+        if (e.GainLoss > 0)
+        {
+            lines.push(`${receivable} Dr / Gain on Disposal Cr : Tk ${faMoney(e.GainLoss)}`);
+        }
+        else if (e.GainLoss < 0)
+        {
+            lines.push(`Loss on Disposal Dr / Asset Cost Cr : Tk ${faMoney(-e.GainLoss)}`);
+        }
+
+        return lines;
+    }
+
+    // Sale / Scrap / Write Off / Lost : the colour of its chip
+    kindTone(kind: string): string
+    {
+        return kind === 'Sale' ? 'sale' : kind === 'Scrap' ? 'scrap' : 'lost';
+    }
+
     get voucherLines(): string[]
     {
         const a = this.asset;
@@ -797,6 +866,79 @@ implements OnInit
         this.remarks = String(value ?? '');
     }
 
+    //===========================================================
+    // Depreciation must be charged up to the month before the
+    // disposal, and not in its month (the same rules as the server)
+    //===========================================================
+
+    get block(): DisposalBlock | null
+    {
+        const a = this.asset;
+
+        if (!a || !this.disposalDate || !/^\d{4}-\d{2}/.test(this.disposalDate))
+        {
+            return null;
+        }
+
+        const month = periodOf(this.disposalDate);
+
+        if (a.LastRunPeriod > 0 && month <= a.LastRunPeriod)
+        {
+            return {
+                title:'The date is in a month already charged',
+                missing:`${a.AssetNo} is depreciated up to ${a.LastRunText}. An asset is not charged in the month it is disposed, so the disposal cannot be dated in ${faPeriodText(month)}.`,
+                steps:
+                [
+                    `Date the disposal in ${faPeriodText(nextPeriod(a.LastRunPeriod))} or later, or`,
+                    `if the asset really left in ${faPeriodText(month)}, undo the depreciation charges of ${a.BranchName} back to before that month on Depreciations > Charge Depreciation, then save again.`
+                ],
+                action:''
+            };
+        }
+
+        // nothing left to charge (fully depreciated, or no depreciation)
+        if (!(Number(a.MonthlyCharge) > 0))
+        {
+            return null;
+        }
+
+        const use = periodOf(a.UseDate || a.PurchaseDate || '');
+
+        const firstDue = a.LastRunPeriod >= use ? nextPeriod(a.LastRunPeriod) : use;
+
+        if (!use || firstDue >= month)
+        {
+            return null;
+        }
+
+        const lastDue = previousPeriod(month);
+
+        const months =
+            firstDue === lastDue ? faPeriodText(firstDue) : `${faPeriodText(firstDue)} to ${faPeriodText(lastDue)}`;
+
+        return {
+            title:'Charge the depreciation first',
+            missing:`${a.AssetNo} is depreciated up to ${a.LastRunText || 'no month yet'}, but ${months} ${firstDue === lastDue ? 'is' : 'are'} not charged. Every month before the disposal month must be charged, or its depreciation would be lost in the ${this.kind === 'Sale' ? 'gain or loss' : 'loss'}.`,
+            steps:
+            [
+                `Open Depreciations > Charge Depreciation and charge ${a.BranchName} for ${months}.`,
+                'Come back here and press Save again : the figures on the right then show the new depreciation and book value.'
+            ],
+            action:'charge'
+        };
+    }
+
+    // The block's button : the page that fixes it, in a new tab (this
+    // form is kept)
+    openCharge():
+        void
+    {
+        const url =
+            this.router.serializeUrl(this.router.createUrlTree(['/fixed-assets-management/depreciation/charge-depreciation/add']));
+
+        window.open(url, '_blank');
+    }
+
     private validate(): string
     {
         const a = this.asset;
@@ -811,10 +953,6 @@ implements OnInit
             return 'Pick the asset.';
         }
 
-        if (a.LastRunPeriod > 0 && periodOf(this.disposalDate) <= a.LastRunPeriod)
-        {
-            return `${a.AssetNo} is depreciated up to ${a.LastRunText} : the date must be after that month.`;
-        }
 
         if (this.hasBuyer)
         {
@@ -839,6 +977,17 @@ implements OnInit
     {
         if (this.isSaving)
         {
+            return;
+        }
+
+        // the depreciation is not charged up to the disposal : a
+        // warning, the full text is on the left card
+        const block =
+            this.block;
+
+        if (block)
+        {
+            this.toast.warning(block.title, 'Read what to do on the left, under the form.');
             return;
         }
 
@@ -882,7 +1031,18 @@ implements OnInit
                 {
                     this.progressDialog.fail();
                     this.isSaving = false;
-                    this.toast.error('Error', error?.error?.message ?? 'The asset disposal could not be saved.');
+                    const message: string = error?.error?.message ?? 'The asset disposal could not be saved.';
+
+                    // the server's depreciation rules : a warning, not an error
+                    if (/not charged for|is depreciated up to/i.test(message))
+                    {
+                        this.toast.warning('Charge the depreciation first', message);
+                    }
+                    else
+                    {
+                        this.toast.error('Error', message);
+                    }
+
                     this.cdr.detectChanges();
                 }
             });

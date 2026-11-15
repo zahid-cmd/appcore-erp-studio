@@ -149,77 +149,123 @@
                         <span>Disposal</span>
                     </header>
 
-                    <app-datepicker
-                        label="Date"
-                        [required]="true"
-                        [value]="$any(asDate(disposalDate))"
-                        (valueChange)="onDate($event)">
-                    </app-datepicker>
+                    <div class="fadf-grid">
 
-                    <app-search-dropdown
-                        label="Asset"
-                        placeholder="Select asset"
-                        [items]="assetItems"
-                        labelField="label"
-                        valueField="value"
-                        [value]="assetId"
-                        (valueChange)="onAsset($event)"
-                        [required]="true">
-                    </app-search-dropdown>
+                        <app-datepicker
+                            label="Date"
+                            [required]="true"
+                            [value]="$any(asDate(disposalDate))"
+                            (valueChange)="onDate($event)">
+                        </app-datepicker>
 
-                    <app-dropdown
-                        label="Kind"
-                        [items]="kindItems"
-                        [value]="kind"
-                        (valueChange)="onKind($event)"
-                        [required]="true">
-                    </app-dropdown>
+                        <app-dropdown
+                            label="Kind"
+                            [items]="kindItems"
+                            [value]="kind"
+                            (valueChange)="onKind($event)"
+                            [required]="true">
+                        </app-dropdown>
 
-                    @if (hasBuyer)
-                    {
-                        <app-textbox
-                            label="Buyer Name"
-                            placeholder="Optional"
-                            [value]="buyerName"
-                            [maxLength]="200"
-                            (valueChange)="onBuyer($event)">
-                        </app-textbox>
-
-                        <app-textbox
-                            label="Price (Tk)"
-                            [placeholder]="kind === 'Sale' ? '0.00' : 'Optional'"
-                            inputMode="decimal"
-                            [value]="priceText"
-                            [maxLength]="18"
-                            [required]="kind === 'Sale'"
-                            (valueChange)="onPrice($event)">
-                        </app-textbox>
-                    }
-
-                    @if (price > 0)
-                    {
                         <app-search-dropdown
-                            label="Receivable From"
-                            placeholder="Select ledger"
-                            [items]="ledgerItems"
+                            class="fadf-full"
+                            label="Asset"
+                            placeholder="Select asset"
+                            [items]="assetItems"
                             labelField="label"
                             valueField="value"
-                            [value]="debitLedgerCode"
-                            (valueChange)="onLedger($event)">
+                            [value]="assetId"
+                            (valueChange)="onAsset($event)"
+                            [required]="true">
                         </app-search-dropdown>
 
-                        <span class="hp-note">
-                            The price is owed by this ledger : the money comes in later on a Receipt Voucher against it.
-                        </span>
-                    }
+                        @if (hasBuyer)
+                        {
+                            <app-textbox
+                                label="Buyer Name"
+                                placeholder="Optional"
+                                [value]="buyerName"
+                                [maxLength]="200"
+                                (valueChange)="onBuyer($event)">
+                            </app-textbox>
 
-                    <app-textbox
-                        label="Remarks"
-                        placeholder="Optional"
-                        [value]="remarks"
-                        [maxLength]="500"
-                        (valueChange)="onRemarks($event)">
-                    </app-textbox>
+                            <app-textbox
+                                label="Price (Tk)"
+                                [placeholder]="kind === 'Sale' ? '0.00' : 'Optional'"
+                                inputMode="decimal"
+                                [value]="priceText"
+                                [maxLength]="18"
+                                [required]="kind === 'Sale'"
+                                (valueChange)="onPrice($event)">
+                            </app-textbox>
+                        }
+
+                        @if (price > 0)
+                        {
+                            <app-search-dropdown
+                                class="fadf-full"
+                                label="Receivable From"
+                                placeholder="Select ledger"
+                                [items]="ledgerItems"
+                                labelField="label"
+                                valueField="value"
+                                [value]="debitLedgerCode"
+                                (valueChange)="onLedger($event)">
+                            </app-search-dropdown>
+
+                            <span class="hp-note fadf-full">
+                                The price is owed by this ledger : the money comes in later on a Receipt Voucher against it.
+                            </span>
+                        }
+
+                        <app-textbox
+                            class="fadf-full"
+                            label="Remarks"
+                            placeholder="Optional"
+                            [value]="remarks"
+                            [maxLength]="500"
+                            (valueChange)="onRemarks($event)">
+                        </app-textbox>
+
+                    </div>
+
+                    <!-- what stops the save, and what to do (a warning) -->
+                    @if (block; as b)
+                    {
+                        <div class="fadf-warn">
+
+                            <div class="fadf-warn-head">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                <b>{{ b.title }}</b>
+                            </div>
+
+                            <div class="fadf-warn-part">
+                                <span>What is missing</span>
+                                <p>{{ b.missing }}</p>
+                            </div>
+
+                            <div class="fadf-warn-part">
+                                <span>What to do</span>
+                                <ol>
+                                    @for (step of b.steps; track $index)
+                                    {
+                                        <li>{{ step }}</li>
+                                    }
+                                </ol>
+                            </div>
+
+                            @if (b.action === 'charge')
+                            {
+                                <button
+                                    type="button"
+                                    class="fadf-warn-btn"
+                                    (click)="openCharge()">
+                                    <i class="fas fa-calendar-check"></i>
+                                    Open Charge Depreciation
+                                </button>
+                            }
+
+                        </div>
+                    }
 
                 </section>
 
@@ -235,7 +281,8 @@
                     @if (!asset)
                     {
                         <div class="fa-empty">
-                            {{ loading ? 'Loading...' : 'Pick the asset on the left : its book value and the gain or loss come here.' }}
+                            <i class="fas fa-hand-pointer"></i>
+                            {{ loading ? 'Loading the assets...' : 'Pick the asset on the left : its book value and the gain or loss come here.' }}
                         </div>
                     }
                     @else
@@ -245,21 +292,30 @@
                             <small>{{ asset.CategoryName }} · {{ asset.BranchName }} · {{ asset.Status }}</small>
                         </div>
 
-                        <dl class="pf-facts">
-                            <dt>Cost</dt>
-                            <dd>Tk {{ money(asset.TotalCost) }}</dd>
-                            <dt>Accumulated depreciation</dt>
-                            <dd>Tk {{ money(asset.AccumulatedDepreciation) }}</dd>
-                            <dt>Book value</dt>
-                            <dd>Tk {{ money(asset.BookValue) }}</dd>
-                            <dt>Price</dt>
-                            <dd>Tk {{ money(price) }}</dd>
-                            <dt class="pf-strong">{{ liveGainLoss >= 0 ? 'Gain' : 'Loss' }} (price less book value)</dt>
-                            <dd
-                                class="pf-strong"
-                                [class.fa-gain]="liveGainLoss >= 0"
-                                [class.fa-loss]="liveGainLoss < 0">{{ gainLoss(liveGainLoss) }}</dd>
-                        </dl>
+                        <div class="fadf-tiles">
+                            <div class="fadf-tile">
+                                <span>Cost</span>
+                                <b>Tk {{ money(asset.TotalCost) }}</b>
+                            </div>
+                            <div class="fadf-tile">
+                                <span>Accumulated Depreciation</span>
+                                <b>Tk {{ money(asset.AccumulatedDepreciation) }}</b>
+                            </div>
+                            <div class="fadf-tile">
+                                <span>Book Value</span>
+                                <b>Tk {{ money(asset.BookValue) }}</b>
+                            </div>
+                            <div class="fadf-tile">
+                                <span>Price</span>
+                                <b>Tk {{ money(price) }}</b>
+                            </div>
+                            <div
+                                class="fadf-tile fadf-tile-main"
+                                [class.fadf-loss]="liveGainLoss < 0">
+                                <span>{{ liveGainLoss >= 0 ? 'Gain' : 'Loss' }} (price less book value)</span>
+                                <b>{{ gainLoss(liveGainLoss) }}</b>
+                            </div>
+                        </div>
 
                         @if (voucherLines.length > 0)
                         {
@@ -279,6 +335,7 @@
                         <b>Before you save</b>
                         <ul class="hp-list">
                             <li>An asset is not depreciated in the month it is disposed, so the date must be after the last month it was depreciated{{ asset?.LastRunText ? ' (' + asset?.LastRunText + ')' : '' }}.</li>
+                            <li>Every month before the disposal month must be charged first on Depreciations &gt; Charge Depreciation : a month left uncharged stops the save.</li>
                             <li>A disposal is not edited. Deleting it cancels its Journal Voucher and puts the asset back in use.</li>
                         </ul>
                     </div>
@@ -322,52 +379,81 @@
 
             <div
                 canvasBody
-                class="hp-split fa-split appcore-scrollbar">
+                class="hp-split fa-split fadv-split appcore-scrollbar">
 
                 @if (!entity)
                 {
-                    <div class="pfx-empty">{{ loading ? 'Loading...' : 'The asset disposal could not be loaded.' }}</div>
+                    <div class="pfx-empty fadv-wide">{{ loading ? 'Loading the disposal...' : 'The asset disposal could not be loaded.' }}</div>
                 }
                 @else
                 {
+                    <!-- ============ TOP : what was disposed ============ -->
+
+                    <div class="fadv-hero fadv-wide">
+
+                        <span class="fadv-icon"><i class="fas fa-box-archive"></i></span>
+
+                        <div class="fadv-title">
+                            <div class="fadv-line">
+                                <span class="fadv-code">{{ entity.Code }}</span>
+                                <b>{{ entity.AssetNo }} &nbsp; {{ entity.AssetName }}</b>
+                                <span
+                                    class="fadv-kind"
+                                    [attr.data-tone]="kindTone(entity.Kind)">{{ entity.Kind }}</span>
+                            </div>
+                            <div class="fadv-chips">
+                                <span><i class="fas fa-calendar-day"></i>{{ day(entity.DisposalDate) }}</span>
+                                <span><i class="fas fa-layer-group"></i>{{ entity.CategoryName || '-' }}</span>
+                                <span><i class="fas fa-store"></i>{{ entity.BranchName || '-' }}</span>
+                                <span><i class="fas fa-file-invoice"></i>{{ entity.JournalVoucherNo || 'No voucher' }}</span>
+                            </div>
+                        </div>
+
+                        <div
+                            class="fadv-result"
+                            [class.fadv-loss]="entity.GainLoss < 0">
+                            <span>{{ entity.GainLoss >= 0 ? 'Gain' : 'Loss' }} on disposal</span>
+                            <b>Tk {{ money(entity.GainLoss < 0 ? -entity.GainLoss : entity.GainLoss) }}</b>
+                        </div>
+
+                    </div>
+
+                    <!-- ============ LEFT : the facts ============ -->
+
                     <section class="pf-card">
 
                         <header class="pf-card-head">
-                            <i class="fas fa-box-archive"></i>
+                            <i class="fas fa-circle-info"></i>
                             <span>Disposal</span>
                         </header>
 
-                        <dl class="pf-facts">
-                            <dt>Code</dt>
-                            <dd>{{ entity.Code }}</dd>
-                            <dt>Date</dt>
-                            <dd>{{ day(entity.DisposalDate) }}</dd>
-                            <dt>Asset</dt>
-                            <dd>{{ entity.AssetNo }} &nbsp; {{ entity.AssetName }}</dd>
-                            <dt>Asset Group</dt>
-                            <dd>{{ entity.CategoryName || '-' }}</dd>
-                            <dt>Branch</dt>
-                            <dd>{{ entity.BranchName || '-' }}</dd>
-                            <dt>Kind</dt>
-                            <dd>{{ entity.Kind }}</dd>
-                            @if (entity.BuyerName)
+                        <div class="fadv-facts">
+                            <div><span>Code</span><b>{{ entity.Code }}</b></div>
+                            <div><span>Date</span><b>{{ day(entity.DisposalDate) }}</b></div>
+                            <div><span>Kind</span><b>{{ entity.Kind }}</b></div>
+                            <div><span>Branch</span><b>{{ entity.BranchName || '-' }}</b></div>
+                            <div class="fadv-full"><span>Asset</span><b>{{ entity.AssetNo }} &nbsp; {{ entity.AssetName }}</b></div>
+                            <div><span>Asset Group</span><b>{{ entity.CategoryName || '-' }}</b></div>
+                            <div><span>Journal Voucher</span><b>{{ entity.JournalVoucherNo || '-' }}</b></div>
+                            @if (entity.BuyerName || entity.SalePrice > 0)
                             {
-                                <dt>Buyer</dt>
-                                <dd>{{ entity.BuyerName }}</dd>
+                                <div><span>Buyer</span><b>{{ entity.BuyerName || '-' }}</b></div>
+                                <div><span>Receivable From</span><b>{{ entity.SalePrice > 0 ? (entity.DebitLedgerName || '-') : '-' }}</b></div>
                             }
+                            <div class="fadv-full"><span>Remarks</span><b>{{ entity.Remarks || '-' }}</b></div>
+                        </div>
+
+                        <span class="hp-note">
+                            A disposal is not edited. Deleting it cancels its Journal Voucher and puts the asset back in use.
                             @if (entity.SalePrice > 0)
                             {
-                                <dt>Receivable from</dt>
-                                <dd>{{ entity.DebitLedgerName || '-' }}{{ entity.DebitLedgerType ? '  (' + entity.DebitLedgerType + ')' : '' }}</dd>
+                                The price is received on a Receipt Voucher against the Receivable From ledger.
                             }
-                            @if (entity.Remarks)
-                            {
-                                <dt>Remarks</dt>
-                                <dd>{{ entity.Remarks }}</dd>
-                            }
-                        </dl>
+                        </span>
 
                     </section>
+
+                    <!-- ============ RIGHT : the figures ============ -->
 
                     <section class="pf-card">
 
@@ -376,27 +462,43 @@
                             <span>What It Did</span>
                         </header>
 
-                        <dl class="pf-facts">
-                            <dt>Cost</dt>
-                            <dd>Tk {{ money(entity.Cost) }}</dd>
-                            <dt>Accumulated depreciation</dt>
-                            <dd>Tk {{ money(entity.Accumulated) }}</dd>
-                            <dt>Book value</dt>
-                            <dd>Tk {{ money(entity.BookValue) }}</dd>
-                            <dt>Price</dt>
-                            <dd>Tk {{ money(entity.SalePrice) }}</dd>
-                            <dt class="pf-strong">{{ entity.GainLoss >= 0 ? 'Gain' : 'Loss' }} (price less book value)</dt>
-                            <dd
-                                class="pf-strong"
-                                [class.fa-gain]="entity.GainLoss >= 0"
-                                [class.fa-loss]="entity.GainLoss < 0">{{ gainLoss(entity.GainLoss) }}</dd>
-                            <dt>Journal Voucher</dt>
-                            <dd>{{ entity.JournalVoucherNo || '-' }}</dd>
-                        </dl>
+                        <div class="fadf-tiles">
+                            <div class="fadf-tile">
+                                <span>Cost</span>
+                                <b>Tk {{ money(entity.Cost) }}</b>
+                            </div>
+                            <div class="fadf-tile">
+                                <span>Accumulated Depreciation</span>
+                                <b>Tk {{ money(entity.Accumulated) }}</b>
+                            </div>
+                            <div class="fadf-tile">
+                                <span>Book Value</span>
+                                <b>Tk {{ money(entity.BookValue) }}</b>
+                            </div>
+                            <div class="fadf-tile">
+                                <span>Price</span>
+                                <b>Tk {{ money(entity.SalePrice) }}</b>
+                            </div>
+                            <div
+                                class="fadf-tile fadf-tile-main"
+                                [class.fadf-loss]="entity.GainLoss < 0">
+                                <span>{{ entity.GainLoss >= 0 ? 'Gain' : 'Loss' }} (price less book value)</span>
+                                <b>{{ gainLoss(entity.GainLoss) }}</b>
+                            </div>
+                        </div>
 
-                        <span class="hp-note">
-                            A disposal is not edited. Deleting it cancels its Journal Voucher and puts the asset back in use. The price is received on a Receipt Voucher against the Receivable From ledger.
-                        </span>
+                        @if (viewVoucherLines.length > 0)
+                        {
+                            <div class="fa-note fa-note-on">
+                                <b>Journal Voucher {{ entity.JournalVoucherNo }}</b>
+                                <ul class="hp-list">
+                                    @for (line of viewVoucherLines; track $index)
+                                    {
+                                        <li>{{ line }}</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
 
                     </section>
                 }

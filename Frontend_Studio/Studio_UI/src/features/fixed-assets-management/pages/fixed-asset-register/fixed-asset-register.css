@@ -478,3 +478,292 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
+
+/* =====================================================================
+   Edit : the same layout as Opening Assets (2026-11-15) : two fields a
+   row on the left, three on the right, the rule under its own heading,
+   the figures as tiles at the bottom
+   ===================================================================== */
+
+.farf-grid
+{
+    display: grid;
+    gap: 10px 12px;
+    align-items: end;
+}
+
+.farf-grid > *
+{
+    min-width: 0;
+}
+
+.farf-two
+{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.farf-three
+{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.farf-full
+{
+    grid-column: 1 / -1;
+}
+
+.farf-hint
+{
+    align-self: center;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.farf-sub
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px dashed #dbe6fb;
+    color: #0f2a44;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.farf-sub i
+{
+    color: #2f55d4;
+}
+
+.farf-tiles
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.farf-tile
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 44px;
+    padding: 6px 14px;
+    border: 1px solid #dbe6f7;
+    border-radius: 12px;
+    background: #f7faff;
+}
+
+.farf-tile span
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.farf-tile b
+{
+    color: #0f2a44;
+    font-size: 15px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.farf-tile-main
+{
+    border-color: transparent;
+    background: linear-gradient(135deg, #16307a 0%, #2f55d4 100%);
+    box-shadow: 0 8px 18px rgba(30, 58, 138, .22);
+}
+
+.farf-tile-main span
+{
+    color: rgba(255, 255, 255, .8);
+}
+
+.farf-tile-main b
+{
+    color: #ffffff;
+}
+
+@media (max-width: 1200px)
+{
+    .farf-three
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* the left card in three columns : no scroll */
+
+.farf-span2
+{
+    grid-column: span 2;
+}
+
+@media (max-width: 1200px)
+{
+    .farf-left
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .farf-left > .farf-span2
+    {
+        grid-column: span 1;
+    }
+
+    .farf-left > .farf-full
+    {
+        grid-column: 1 / -1;
+    }
+}
+
+/* =====================================================================
+   Assign Location (2026-11-15) : a bar on top (location, custodian,
+   ticked), the cards under it with a tick each
+   ===================================================================== */
+
+.fara-body
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    min-height: 0;
+    padding: 12px;
+}
+
+.fara-bar
+{
+    display: grid;
+    grid-template-columns: minmax(200px, 260px) minmax(200px, 300px) auto 1fr;
+    gap: 12px;
+    align-items: end;
+}
+
+.fara-count
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 16px;
+    border: 1px solid #dbe6f7;
+    border-radius: 10px;
+    background: #f5f9ff;
+}
+
+.fara-count span
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.fara-count b
+{
+    color: #16307a;
+    font-size: 17px;
+}
+
+.fara-note
+{
+    align-self: center;
+}
+
+.fara-table
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    border: 1px solid #e3e9f3;
+    border-radius: 10px;
+}
+
+.fara-table table
+{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.fara-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 9px 10px;
+    border-bottom: 1px solid #e3e9f3;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.fara-table td
+{
+    padding: 7px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+}
+
+.fara-table tbody tr
+{
+    cursor: pointer;
+}
+
+.fara-table tbody tr:hover
+{
+    background: #f8fbff;
+}
+
+.fara-table tbody tr.fara-on
+{
+    background: #eef4ff;
+}
+
+.fara-tick
+{
+    width: 42px;
+    text-align: center !important;
+}
+
+.fara-tick input
+{
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.fara-no
+{
+    width: 150px;
+    color: #16307a !important;
+    font-weight: 600;
+}
+
+.fara-none
+{
+    color: #b45309;
+    font-style: italic;
+}
+
+.fara-empty
+{
+    padding: 28px !important;
+    color: #64748b !important;
+    text-align: center;
+}

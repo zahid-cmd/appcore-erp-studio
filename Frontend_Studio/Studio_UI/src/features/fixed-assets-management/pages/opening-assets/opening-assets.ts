@@ -117,6 +117,10 @@ const round2 =
 const periodOf =
     (date: string): number => /^\d{4}-\d{2}/.test(date ?? '') ? Number(date.substring(0, 4)) * 100 + Number(date.substring(5, 7)) : 0;
 
+// 202612 -> 202701
+const nextPeriod =
+    (period: number): number => period % 100 >= 12 ? (Math.floor(period / 100) + 1) * 100 + 1 : period + 1;
+
 // The value is in the list, even when it is no longer active
 function withChoice(items: Choice[], value: any, label: string): Choice[]
 {
@@ -386,6 +390,21 @@ implements OnInit
     private useDatePicked =
         false;
 
+    // Depreciation to Date was typed : it is no longer worked out
+    // (clearing the box works it out again)
+    private openingTyped =
+        false;
+
+    // Depreciation to Date is open to type (the pencil on its label);
+    // closed, it shows the worked out figure
+    openingEditing =
+        false;
+
+    // Depreciated Up To was picked : it is no longer set to the last
+    // month that ended
+    private upToPicked =
+        false;
+
     readonly methodItems = FA_METHODS_ALL;
 
     readonly monthItems:
@@ -482,6 +501,155 @@ implements OnInit
     get bookValue(): number
     {
         return round2(number2(this.cost) - number2(this.opening));
+    }
+
+    //===========================================================
+    // Depreciation to Date, worked out : every month from the put to
+    // use month to Depreciated Up To, charged the way Charge
+    // Depreciation does (full month of use; straight line on cost
+    // less residual over the life, or the rate on cost; reducing
+    // balance on the book value; never below the residual value)
+    //===========================================================
+
+    get workedOut(): number
+    {
+        const upTo = this.upToPeriod;
+
+        const start = periodOf(this.useDate || this.purchaseDate);
+
+        if (this.noDepreciation || !upTo || !start || upTo < start)
+        {
+            return 0;
+        }
+
+        const cost = number2(this.cost);
+
+        const residual = number2(this.residual);
+
+        const rate = number2(this.rate);
+
+        const life = number2(this.life);
+
+        let accumulated = 0;
+
+        let period = start;
+
+        for (let i = 0; i < 1200 && period <= upTo; i++)
+        {
+            const left = round2(cost - residual - accumulated);
+
+            if (left <= 0)
+            {
+                break;
+            }
+
+            const charge =
+                round2(
+                    this.method === 'ReducingBalance' ? (cost - accumulated) * rate / 100 / 12
+                    : life > 0 ? (cost - residual) / (life * 12)
+                    : cost * rate / 100 / 12);
+
+            if (charge <= 0)
+            {
+                break;
+            }
+
+            accumulated = round2(accumulated + Math.min(charge, left));
+
+            period = nextPeriod(period);
+        }
+
+        return accumulated;
+    }
+
+    // The months the worked out figure covers (0 : none)
+    get workedOutMonths(): number
+    {
+        const upTo = this.upToPeriod;
+
+        const start = periodOf(this.useDate || this.purchaseDate);
+
+        return this.noDepreciation || !upTo || !start || upTo < start
+            ? 0
+            : (Math.floor(upTo / 100) - Math.floor(start / 100)) * 12 + (upTo % 100) - (start % 100) + 1;
+    }
+
+    // The typed figure is not the worked out one
+    get openingDiffers(): boolean
+    {
+        return this.openingTyped && this.workedOutMonths > 0 && round2(number2(this.opening)) !== this.workedOut;
+    }
+
+    // A new opening asset : Depreciated Up To is the last month that
+    // ended (the month before the module charges), until it is picked
+    private defaultUpTo():
+        void
+    {
+        if (this.mode !== 'add' || this.upToPicked || this.noDepreciation)
+        {
+            return;
+        }
+
+        const today = (this.lookups?.Today ?? '').substring(0, 10) || hrToText(new Date());
+
+        const thisMonth = periodOf(today);
+
+        const lastMonth = thisMonth % 100 === 1 ? (Math.floor(thisMonth / 100) - 1) * 100 + 12 : thisMonth - 1;
+
+        const start = periodOf(this.useDate || this.purchaseDate);
+
+        if (start && thisMonth && start <= lastMonth)
+        {
+            this.upToYear = Math.floor(lastMonth / 100);
+            this.upToMonth = lastMonth % 100;
+            this.yearItems = withChoice(this.yearItems, this.upToYear, String(this.upToYear));
+        }
+        else
+        {
+            this.upToYear = 0;
+            this.upToMonth = 0;
+        }
+    }
+
+    // While nothing was typed : the box follows the figures
+    private autoOpening():
+        void
+    {
+        this.defaultUpTo();
+
+        if (this.openingTyped || this.moneyLocked || this.mode === 'view')
+        {
+            return;
+        }
+
+        const value = this.workedOut;
+
+        this.opening = value > 0 ? String(value) : '';
+    }
+
+    // Use the worked out figure (and follow the figures again)
+    useWorkedOut():
+        void
+    {
+        this.openingTyped = false;
+        this.openingEditing = false;
+        this.autoOpening();
+        this.cdr.detectChanges();
+    }
+
+    // The pencil : open the box to type; pressed again, the box is
+    // closed and worked out again
+    toggleOpeningEdit():
+        void
+    {
+        if (this.openingEditing)
+        {
+            this.useWorkedOut();
+            return;
+        }
+
+        this.openingEditing = true;
+        this.cdr.detectChanges();
     }
 
     // The charge of a month after the opening
@@ -852,6 +1020,9 @@ implements OnInit
                         this.upToMonth = upTo % 100;
                         this.residualTyped = true;
                         this.useDatePicked = true;
+                        // the saved figure stays until it is cleared
+                        this.openingTyped = true;
+                        this.upToPicked = true;
 
                         this.branchItems = withChoice(this.branchItems, card.BranchId, card.BranchName);
                         this.categoryItems = withChoice(this.categoryItems, card.FaCategoryId, card.CategoryName);
@@ -954,6 +1125,13 @@ implements OnInit
             this.fillResidual();
         }
 
+        if (field === 'opening')
+        {
+            this.openingTyped = this.opening.trim() !== '';
+        }
+
+        this.autoOpening();
+
         this.cdr.detectChanges();
     }
 
@@ -962,6 +1140,7 @@ implements OnInit
     {
         this.residual = String(value ?? '');
         this.residualTyped = this.residual.trim() !== '';
+        this.autoOpening();
         this.cdr.detectChanges();
     }
 
@@ -970,11 +1149,18 @@ implements OnInit
     {
         this[field] = Number(value) || 0;
 
+        if (field === 'upToMonth' || field === 'upToYear')
+        {
+            this.upToPicked = true;
+        }
+
         // a month without a year : this year
         if (field === 'upToMonth' && this.upToMonth && !this.upToYear)
         {
             this.upToYear = Number(this.yearItems[1]?.value) || 0;
         }
+
+        this.autoOpening();
 
         this.cdr.detectChanges();
     }
@@ -984,6 +1170,7 @@ implements OnInit
     {
         this.method = this.groupIsNone ? 'None' : (String(value ?? '') || 'StraightLine');
         this.applyNoDepreciation();
+        this.autoOpening();
         this.cdr.detectChanges();
     }
 
@@ -1015,7 +1202,7 @@ implements OnInit
         // Its depreciation is not declared : the pick is not kept
         if (picked && !picked.IsDeclared && picked.FaCategoryId !== before)
         {
-            this.toast.error('Asset Group', `Declare the depreciation of ${picked.Name} on Asset Setup > Depreciation of Fixed Assets first.`);
+            this.toast.error('Asset Group', `Declare the depreciation of ${picked.Name} on Depreciations > Depreciation Setup first.`);
 
             // the dropdown goes back to what it showed
             this.categoryId = picked.FaCategoryId;
@@ -1044,6 +1231,8 @@ implements OnInit
             this.fillResidual();
             this.applyNoDepreciation();
         }
+
+        this.autoOpening();
 
         this.cdr.detectChanges();
     }
@@ -1085,6 +1274,8 @@ implements OnInit
             this.useDate = this.purchaseDate;
         }
 
+        this.autoOpening();
+
         this.cdr.detectChanges();
     }
 
@@ -1098,6 +1289,8 @@ implements OnInit
         {
             this.useDate = this.purchaseDate;
         }
+
+        this.autoOpening();
 
         this.cdr.detectChanges();
     }

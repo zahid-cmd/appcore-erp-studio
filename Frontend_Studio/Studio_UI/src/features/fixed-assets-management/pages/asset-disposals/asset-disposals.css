@@ -5,7 +5,92 @@
 
 .fa-split
 {
-    grid-template-columns: minmax(340px, 1fr) minmax(0, 1.3fr);
+    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+}
+
+/* a new disposal : two fields a row (2026-11-15) */
+
+.fadf-grid
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    align-items: end;
+}
+
+.fadf-grid > *
+{
+    min-width: 0;
+}
+
+.fadf-full
+{
+    grid-column: 1 / -1;
+}
+
+/* the figures of the asset : tiles, the gain or loss strong */
+
+.fadf-tiles
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.fadf-tile
+{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 44px;
+    padding: 6px 14px;
+    border: 1px solid #dbe6f7;
+    border-radius: 12px;
+    background: #f7faff;
+}
+
+.fadf-tile span
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.fadf-tile b
+{
+    color: #0f2a44;
+    font-size: 15px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.fadf-tile-main
+{
+    grid-column: 1 / -1;
+    border-color: transparent;
+    background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+    box-shadow: 0 8px 18px rgba(5, 150, 105, .22);
+}
+
+.fadf-tile-main.fadf-loss
+{
+    background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+    box-shadow: 0 8px 18px rgba(220, 38, 38, .22);
+}
+
+.fadf-tile-main span
+{
+    color: rgba(255, 255, 255, .85);
+}
+
+.fadf-tile-main b
+{
+    color: #ffffff;
+    font-size: 16px;
 }
 
 .fa-who
@@ -29,6 +114,9 @@
 
 .fa-empty
 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 24px 0;
     color: #64748b;
     font-size: 13.5px;
@@ -74,4 +162,279 @@
     display: block;
     flex: 0 0 220px;
     width: 220px;
+}
+
+/* what stops the save : a warning on the left card (2026-11-15) */
+
+.fadf-warn
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+    padding: 12px 14px;
+    border: 1px solid #fcd34d;
+    border-left: 4px solid #f59e0b;
+    border-radius: 12px;
+    background: #fffbeb;
+    color: #78350f;
+}
+
+.fadf-warn-head
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+}
+
+.fadf-warn-head i
+{
+    color: #d97706;
+}
+
+.fadf-warn-part
+{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.fadf-warn-part > span
+{
+    color: #92400e;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.fadf-warn-part p,
+.fadf-warn-part ol
+{
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.fadf-warn-part ol
+{
+    padding-left: 18px;
+}
+
+.fadf-warn-btn
+{
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #92400e;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.fadf-warn-btn:hover
+{
+    background: #fef3c7;
+}
+
+/* =====================================================================
+   A saved disposal (view) : a strip on top, the facts left, the
+   figures right (2026-11-15)
+   ===================================================================== */
+
+.fadv-split
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto 1fr;
+    align-content: start;
+    gap: 14px;
+}
+
+.fadv-wide
+{
+    grid-column: 1 / -1;
+}
+
+.fadv-hero
+{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    border: 1px solid #dbe6f7;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f7faff 0%, #eef4ff 100%);
+}
+
+.fadv-icon
+{
+    display: inline-flex;
+    flex: 0 0 46px;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #16307a 0%, #2f55d4 100%);
+    color: #ffffff;
+    font-size: 19px;
+}
+
+.fadv-title
+{
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.fadv-line
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #0f2a44;
+    font-size: 16px;
+}
+
+.fadv-code
+{
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #16307a;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.fadv-kind
+{
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.fadv-kind[data-tone='sale']
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.fadv-kind[data-tone='scrap']
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.fadv-kind[data-tone='lost']
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.fadv-chips
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    color: #475569;
+    font-size: 12.5px;
+}
+
+.fadv-chips i
+{
+    margin-right: 6px;
+    color: #2f55d4;
+}
+
+.fadv-result
+{
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #065f46 0%, #059669 100%);
+    color: #ffffff;
+}
+
+.fadv-result.fadv-loss
+{
+    background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+}
+
+.fadv-result span
+{
+    color: rgba(255, 255, 255, .85);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.fadv-result b
+{
+    font-size: 18px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* the facts : a label over its value, two a row */
+
+.fadv-facts
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    border: 1px solid #e3e9f3;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.fadv-facts > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 9px 14px;
+    border-right: 1px solid #edf1f6;
+    border-bottom: 1px solid #edf1f6;
+    margin: 0 -1px -1px 0;
+}
+
+.fadv-facts span
+{
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.fadv-facts b
+{
+    color: #0f172a;
+    font-size: 13.5px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.fadv-full
+{
+    grid-column: 1 / -1;
 }

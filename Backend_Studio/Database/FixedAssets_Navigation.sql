@@ -11,24 +11,31 @@ ROLLBACK;
 --
 --   1  Asset Setup       asset-setup
 --        Asset Groups                  asset-groups
---        Depreciation of Fixed Assets  depreciation-of-fixed-assets
 --        Asset Locations               asset-locations
 --        Asset Configuration           asset-configuration
---   2  Asset Register    asset-register
+--   2  Asset Control     asset-register   (was Asset Register)
 --        Asset Acquisitions      asset-acquisitions
 --        Fixed Asset Register    fixed-asset-register
 --        Opening Assets          opening-assets
+--        Asset Verification      asset-verification  (moved from
+--                                Asset Reports 2026-11-15 :
+--                                FixedAssets_AssetControl_Menu.sql)
 --   (3  Asset Movements : removed 2026-11-15, not required - see
 --       FixedAssets_Remove_Movements.sql)
---   4  Depreciation      depreciation
---        Depreciation Runs       depreciation-runs
+--   4  Depreciations     depreciation
+--        Depreciation Setup      depreciation-setup
+--        Charge Depreciation     charge-depreciation
 --        Depreciation Schedule   depreciation-schedule
+--      (2026-11-15 : Depreciation Setup was Depreciation of Fixed
+--       Assets under Asset Setup, Charge Depreciation was
+--       Depreciation Runs. A database made before that is changed by
+--       FixedAssets_Depreciations_Menu.sql; this script never makes
+--       a page again under its new name while the old one is there.)
 --   5  Asset Disposal    asset-disposal
 --        Asset Disposals         asset-disposals
 --   6  Asset Reports     asset-reports
 --        Fixed Asset Schedule    fixed-asset-schedule
 --        Asset Tags              asset-tags
---        Asset Verification      asset-verification
 --
 -- Hand-written pages : NEVER run Module Sync / Menu Sync / Submenu
 -- Sync / Code Sync for this module (the routes are in the code
@@ -39,7 +46,8 @@ ROLLBACK;
 -- script stops when one of the names is taken elsewhere. Run the
 -- whole script (F5). ASCII only.
 --
--- AFTER : run FixedAssets_Engine.sql; then Security & Permission >
+-- AFTER : run FixedAssets_Engine.sql and
+-- FixedAssets_Depreciations_Menu.sql; then Security & Permission >
 -- Activity Assignment : tick the pages for the roles, and log in
 -- again.
 -- =====================================================================
@@ -70,8 +78,8 @@ BEGIN
     FOR m IN
         SELECT * FROM (VALUES
             (1, 'Asset Setup',     'fa-solid fa-sliders',            'asset-setup',     'Asset groups (with their ledgers), their depreciation, locations and the configuration.'),
-            (2, 'Asset Register',  'fa-solid fa-clipboard-list',     'asset-register',  'Buying assets, the asset cards and the opening assets.'),
-            (4, 'Depreciation',    'fa-solid fa-chart-line',         'depreciation',    'The monthly depreciation runs and the schedule of an asset.'),
+            (2, 'Asset Control',   'fa-solid fa-clipboard-list',     'asset-register',  'Buying assets, the asset cards, the opening assets and the physical count.'),
+            (4, 'Depreciations',   'fa-solid fa-chart-line',         'depreciation',    'The depreciation of the asset groups, the monthly charge and the schedule of an asset.'),
             (5, 'Asset Disposal',  'fa-solid fa-box-archive',        'asset-disposal',  'Sale, scrap, write-off and lost assets.'),
             (6, 'Asset Reports',   'fa-solid fa-file-invoice',       'asset-reports',   'Fixed Asset Schedule, asset tags and the physical count.')
         ) AS t (ord, name, icon, route_key, remarks)
@@ -127,20 +135,20 @@ BEGIN
     -- ---------- Submenus ----------
     FOR s IN
         SELECT * FROM (VALUES
-            (1, 'asset-setup',     1, 'Asset Groups',          'fa-solid fa-layer-group',          'asset-groups',          'A kind of asset. Making one makes its two ledgers : PPE - <name> and ACD - <name>.'),
-            (1, 'asset-setup',     2, 'Depreciation of Fixed Assets', 'fa-solid fa-percent',       'depreciation-of-fixed-assets', 'The depreciation of each asset group : method, rate or life, residual value and the expense ledger.'),
-            (1, 'asset-setup',     3, 'Asset Locations',       'fa-solid fa-location-dot',         'asset-locations',       'Where an asset is kept : showroom floor, workshop, office.'),
-            (1, 'asset-setup',     4, 'Asset Configuration',   'fa-solid fa-gear',                 'asset-configuration',   'The switches and rules of the module.'),
-            (2, 'asset-register',  1, 'Asset Acquisitions',    'fa-solid fa-cart-plus',            'asset-acquisitions',    'Buying assets : posts the voucher and makes the asset cards.'),
-            (2, 'asset-register',  2, 'Fixed Asset Register',  'fa-solid fa-id-card',              'fixed-asset-register',  'The asset cards : cost, depreciation, book value, where and with whom.'),
-            (2, 'asset-register',  3, 'Opening Assets',        'fa-solid fa-box-open',             'opening-assets',        'Assets owned before the module : the card and its depreciation to date, no voucher.'),
-            (4, 'depreciation',    1, 'Depreciation Runs',     'fa-solid fa-calendar-check',       'depreciation-runs',     'The depreciation of a month for a branch : preview, post, undo the last run.'),
-            (4, 'depreciation',    2, 'Depreciation Schedule', 'fa-solid fa-table-list',           'depreciation-schedule', 'An asset month by month to the end of its life.'),
-            (5, 'asset-disposal',  1, 'Asset Disposals',       'fa-solid fa-trash-can-arrow-up',   'asset-disposals',       'Sale, scrap, write-off or loss of an asset, with the gain or loss.'),
-            (6, 'asset-reports',   1, 'Fixed Asset Schedule',  'fa-solid fa-table-columns',        'fixed-asset-schedule',  'Cost, depreciation and book value by category for a period.'),
-            (6, 'asset-reports',   2, 'Asset Tags',            'fa-solid fa-qrcode',               'asset-tags',            'QR labels to stick on the assets.'),
-            (6, 'asset-reports',   3, 'Asset Verification',    'fa-solid fa-clipboard-check',      'asset-verification',    'The physical count of a location against the register.')
-        ) AS t (menu_ord, menu_key, ord, name, icon, route_key, remarks)
+            (1, 'asset-setup',     1, 'Asset Groups',          'fa-solid fa-layer-group',          'asset-groups',          '',                             'A kind of asset. Making one makes its two ledgers : PPE - <name> and ACD - <name>.'),
+            (1, 'asset-setup',     2, 'Asset Locations',       'fa-solid fa-location-dot',         'asset-locations',       '',                             'Where an asset is kept : showroom floor, workshop, office.'),
+            (1, 'asset-setup',     3, 'Asset Configuration',   'fa-solid fa-gear',                 'asset-configuration',   '',                             'The switches and rules of the module.'),
+            (2, 'asset-register',  1, 'Asset Acquisitions',    'fa-solid fa-cart-plus',            'asset-acquisitions',    '',                             'Buying assets : posts the voucher and makes the asset cards.'),
+            (2, 'asset-register',  2, 'Fixed Asset Register',  'fa-solid fa-id-card',              'fixed-asset-register',  '',                             'The asset cards : cost, depreciation, book value, where and with whom.'),
+            (2, 'asset-register',  3, 'Opening Assets',        'fa-solid fa-box-open',             'opening-assets',        '',                             'Assets owned before the module : the card and its depreciation to date, no voucher.'),
+            (4, 'depreciation',    1, 'Depreciation Setup',    'fa-solid fa-percent',              'depreciation-setup',    'depreciation-of-fixed-assets', 'The depreciation of each asset group : method, rate or life, residual value and the expense ledger.'),
+            (4, 'depreciation',    2, 'Charge Depreciation',   'fa-solid fa-calendar-check',       'charge-depreciation',   'depreciation-runs',            'The depreciation of a month for a branch : preview, post, undo the last one; charged automatically on month end when Asset Configuration says so.'),
+            (4, 'depreciation',    3, 'Depreciation Schedule', 'fa-solid fa-table-list',           'depreciation-schedule', '',                             'An asset month by month to the end of its life.'),
+            (5, 'asset-disposal',  1, 'Asset Disposals',       'fa-solid fa-trash-can-arrow-up',   'asset-disposals',       '',                             'Sale, scrap, write-off or loss of an asset, with the gain or loss.'),
+            (6, 'asset-reports',   1, 'Fixed Asset Schedule',  'fa-solid fa-table-columns',        'fixed-asset-schedule',  '',                             'Cost, depreciation and book value by category for a period.'),
+            (6, 'asset-reports',   2, 'Asset Tags',            'fa-solid fa-qrcode',               'asset-tags',            '',                             'QR labels to stick on the assets.'),
+            (2, 'asset-register',  4, 'Asset Verification',    'fa-solid fa-clipboard-check',      'asset-verification',    '',                             'The physical count of a location against the register.')
+        ) AS t (menu_ord, menu_key, ord, name, icon, route_key, old_key, remarks)
         ORDER BY menu_ord, ord
     LOOP
         SELECT "Id", "SequenceNo", "RouteKey" INTO v_menu
@@ -155,6 +163,29 @@ BEGIN
                    AND    lower(trim("RouteKey")) = s.route_key
                    AND    "IsDeleted" = false) THEN
             RAISE NOTICE 'Page exists, skipped : %', s.name;
+            CONTINUE;
+        END IF;
+
+        -- the page under another menu of the module (moved later by
+        -- a script of its own) : never made a second time
+        IF EXISTS (SELECT 1 FROM "NavigationSubmenus" x
+                   JOIN   "NavigationMenus" xm ON xm."Id" = x."NavigationMenuId"
+                   WHERE  xm."NavigationModuleId" = v_module."Id"
+                   AND    lower(trim(x."RouteKey")) = s.route_key
+                   AND    x."IsDeleted" = false) THEN
+            RAISE NOTICE 'Page % is under another menu : run its move script (FixedAssets_Depreciations_Menu.sql / FixedAssets_AssetControl_Menu.sql). Skipped.', s.name;
+            CONTINUE;
+        END IF;
+
+        -- the page under its old name / place (before 2026-11-15) :
+        -- FixedAssets_Depreciations_Menu.sql renames and moves it
+        IF s.old_key <> '' AND EXISTS (
+                   SELECT 1 FROM "NavigationSubmenus" x
+                   JOIN   "NavigationMenus" xm ON xm."Id" = x."NavigationMenuId"
+                   WHERE  xm."NavigationModuleId" = v_module."Id"
+                   AND    lower(trim(x."RouteKey")) = s.old_key
+                   AND    x."IsDeleted" = false) THEN
+            RAISE NOTICE 'Page % is there under its old route key % : run FixedAssets_Depreciations_Menu.sql. Skipped.', s.name, s.old_key;
             CONTINUE;
         END IF;
 
@@ -190,8 +221,8 @@ BEGIN
     UPDATE "NavigationSubmenus" n
     SET    "DisplayOrder" = o.ord
     FROM   "NavigationMenus" mn,
-           (VALUES ('asset-groups', 1), ('depreciation-of-fixed-assets', 2),
-                   ('asset-locations', 3), ('asset-configuration', 4)) AS o (route_key, ord)
+           (VALUES ('asset-groups', 1), ('asset-locations', 2),
+                   ('asset-configuration', 3)) AS o (route_key, ord)
     WHERE  mn."Id" = n."NavigationMenuId"
     AND    mn."NavigationModuleId" = v_module."Id"
     AND    lower(trim(mn."RouteKey")) = 'asset-setup'

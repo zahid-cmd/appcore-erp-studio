@@ -366,15 +366,30 @@
                             (valueChange)="onText('life', $event)">
                         </app-textbox>
 
-                        <app-textbox
-                            label="Depreciation to Date (Tk)"
-                            inputMode="decimal"
-                            placeholder="0.00"
-                            [value]="opening"
-                            [maxLength]="16"
-                            [disabled]="moneyLocked"
-                            (valueChange)="onText('opening', $event)">
-                        </app-textbox>
+                        <!-- worked out from the figures; the pencil opens it to type -->
+                        <div class="fao-edit-wrap">
+                            <app-textbox
+                                label="Depreciation to Date (Tk)"
+                                inputMode="decimal"
+                                placeholder="0.00"
+                                [value]="opening"
+                                [maxLength]="16"
+                                [disabled]="moneyLocked || !openingEditing"
+                                (valueChange)="onText('opening', $event)">
+                            </app-textbox>
+
+                            @if (!moneyLocked && mode !== 'view')
+                            {
+                                <button
+                                    type="button"
+                                    class="fao-edit"
+                                    [class.on]="openingEditing"
+                                    [title]="openingEditing ? 'Work it out again from the dates and the rule' : 'Edit : type the depreciation to date yourself'"
+                                    (click)="toggleOpeningEdit()">
+                                    <i [class]="openingEditing ? 'fas fa-rotate-left' : 'fas fa-pen'"></i>
+                                </button>
+                            }
+                        </div>
 
                         <app-dropdown
                             label="Depreciated Up To"
@@ -405,6 +420,24 @@
 
                     <div class="fao-foot">
                         <span>Monthly charge that will follow <b>{{ chargeText }}</b></span>
+                        @if (!noDepreciation && !upToPeriod && mode !== 'view')
+                        {
+                            <span>Pick Depreciated Up To to work out the depreciation to date</span>
+                        }
+                        @if (workedOutMonths > 0)
+                        {
+                            <span>
+                                Worked out for {{ workedOutMonths }} month(s) <b>Tk {{ money(workedOut) }}</b>
+                                @if (openingDiffers && !moneyLocked && mode !== 'view')
+                                {
+                                    <button
+                                        type="button"
+                                        class="fao-use"
+                                        title="Put the worked out figure in Depreciation to Date"
+                                        (click)="useWorkedOut()">Use it</button>
+                                }
+                            </span>
+                        }
                         <span>{{ continuesText }}</span>
                         @if (ruleNote)
                         {

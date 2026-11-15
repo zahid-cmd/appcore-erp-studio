@@ -655,3 +655,32 @@
         transform: scale(1);
     }
 }
+
+/* Check Books (2026-11-15) : the check number from the leaves */
+
+.pd-leaf
+{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:0;
+}
+
+.pd-leaf app-search-dropdown
+{
+    --dropdown-width:100%;
+    width:100%;
+}
+
+.pd-leaf-hint
+{
+    color:#64748b;
+    font-size:12px;
+    line-height:1.4;
+}
+
+.pd-leaf-hint.pd-leaf-low
+{
+    color:#b45309;
+    font-weight:600;
+}

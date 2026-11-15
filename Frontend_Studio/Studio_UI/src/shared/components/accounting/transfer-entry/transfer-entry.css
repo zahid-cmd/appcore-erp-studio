@@ -198,3 +198,155 @@
     font-size: 15px;
     letter-spacing: 0;
 }
+
+/* Check Books (2026-11-15) : the cheque number from the leaves */
+
+.te-leaf
+{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:0;
+}
+
+.te-leaf app-search-dropdown
+{
+    --dropdown-width:100%;
+    width:100%;
+}
+
+.te-leaf-hint
+{
+    color:#64748b;
+    font-size:12px;
+    line-height:1.4;
+}
+
+.te-leaf-hint.te-leaf-low
+{
+    color:#b45309;
+    font-weight:600;
+}
+
+
+/*---------------------------------------------------------------
+  Compact From / To cards + details popup (2026-11-15)
+    Row 1 : Account Type | Sub-Group | Account
+    Row 2 : Amount | Method / Txn ID / Notes | Reference or Add
+    Cheque details, charge and notes : the popup
+---------------------------------------------------------------*/
+
+.te-grid-3
+{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Bank Transfer / MFS : Charge / Notes link + Add on a slim row */
+.te-add-cell.te-add-row
+{
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.te-extras
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    height: 28px;
+    padding: 0 10px;
+    border: 1px dashed #93b4f5;
+    border-radius: 7px;
+    background: transparent;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.te-extras > i
+{
+    font-size: 11px;
+}
+
+.te-extras > span
+{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.te-extras.te-extras-set
+{
+    border-style: solid;
+    background: #eff6ff;
+}
+
+.te-extras:hover:not(:disabled)
+{
+    background: #eff6ff;
+}
+
+.te-extras:disabled
+{
+    border-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* A From row in Transaction Summary : click to edit */
+.te-row-edit
+{
+    cursor: pointer;
+}
+
+.te-row-edit:hover > td
+{
+    background: #f1f5ff;
+}
+
+/* The popup lives outside the page grid */
+app-form-modal
+{
+    display: contents;
+}
+
+.te-pop-grid
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+}
+
+.te-pop-wide
+{
+    grid-column: 1 / -1;
+}
+
+.te-pop-error
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    color: #b91c1c;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Narrow screens : two columns */
+@media (max-width: 1100px)
+{
+    .te-grid-3
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .te-add-cell
+    {
+        grid-column: 1 / -1;
+    }
+}

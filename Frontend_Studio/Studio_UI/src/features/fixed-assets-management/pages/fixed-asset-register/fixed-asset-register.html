@@ -17,13 +17,18 @@
 
             <div pageHeaderRight>
                 <app-command-center
-                    command1Text="Refresh"
-                    command1Icon="fas fa-rotate-right"
-                    (command1Click)="loadList()"
-                    command2Text="Print"
-                    command2Icon="fas fa-print"
-                    command2Title="Print the cards of the list"
-                    (command2Click)="printList()"
+                    command1Text="Assign Location"
+                    command1Icon="fas fa-location-dot"
+                    command1Permission="update"
+                    command1Title="Give many asset cards one location (and custodian)"
+                    (command1Click)="openAssign()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    command3Text="Print"
+                    command3Icon="fas fa-print"
+                    command3Title="Print the cards of the list"
+                    (command3Click)="printList()"
                     rightCommandIcon="fas fa-clock-rotate-left"
                     rightCommandTitle="Activity history"
                     (rightCommandClick)="openHistory()">
@@ -117,6 +122,176 @@
             [items]="historyItems"
             (closed)="closeHistory()">
         </app-history-drawer>
+    }
+    @else if (mode === 'assign')
+    {
+        <app-page-header
+            title="Assign Location"
+            subtitle="Tick the assets, pick the location (and the custodian), then Apply"
+            icon="fas fa-location-dot">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="assignSearch"
+                    placeholder="Search asset no, asset, custodian..."
+                    (valueChange)="onAssignSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="Apply"
+                    command1Icon="fas fa-check"
+                    command1Permission="update"
+                    command1Title="Give the ticked assets the location picked"
+                    (command1Click)="onApplyAssign()"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="closeAssign()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="assignTabs"
+                [selectedTab]="assignTab"
+                (selectedTabChange)="onAssignTab($event)">
+            </app-control-tabs>
+
+            <div
+                pageToolbarRight
+                class="far-filters">
+
+                <app-search-dropdown
+                    placeholder="Branch"
+                    [items]="assignBranchItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="assignBranch"
+                    (valueChange)="onAssignBranch($event)">
+                </app-search-dropdown>
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="fara-body">
+
+                <div class="fara-bar">
+
+                    <app-search-dropdown
+                        label="Location"
+                        placeholder="Select location"
+                        [items]="assignLocationItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="assignLocationId"
+                        (valueChange)="onAssignLocation($event)"
+                        [required]="true">
+                    </app-search-dropdown>
+
+                    <app-search-dropdown
+                        label="Custodian"
+                        placeholder="Keep as it is"
+                        [items]="assignCustodianItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="assignCustodianId"
+                        (valueChange)="onAssignCustodian($event)">
+                    </app-search-dropdown>
+
+                    <div class="fara-count">
+                        <span>Ticked</span>
+                        <b>{{ pickedCount }}</b>
+                    </div>
+
+                    <span class="hp-note fara-note">
+                        @if (assignLocationItems.length === 0)
+                        {
+                            This branch has no location yet : add one on Asset Setup &gt; Asset Locations.
+                        }
+                        @else
+                        {
+                            Only cards in use of one branch. Custodian "Keep as it is" leaves each card's custodian unchanged.
+                        }
+                    </span>
+
+                </div>
+
+                <div class="fara-table appcore-scrollbar">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="fara-tick">
+                                    <input
+                                        type="checkbox"
+                                        title="Tick every asset shown"
+                                        [checked]="allShownPicked"
+                                        [disabled]="assignRows.length === 0"
+                                        (change)="toggleAllShown()">
+                                </th>
+                                <th class="fara-no">Asset No</th>
+                                <th>Asset</th>
+                                <th>Asset Group</th>
+                                <th>Location</th>
+                                <th>Custodian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (row of assignRows; track row.PublicId)
+                            {
+                                <tr
+                                    [class.fara-on]="picked.has(row.PublicId)"
+                                    (click)="togglePick(row)">
+                                    <td class="fara-tick">
+                                        <input
+                                            type="checkbox"
+                                            [checked]="picked.has(row.PublicId)"
+                                            (click)="$event.stopPropagation()"
+                                            (change)="togglePick(row)">
+                                    </td>
+                                    <td class="fara-no">{{ row.AssetNo }}</td>
+                                    <td>{{ row.Name }}</td>
+                                    <td>{{ row.CategoryName }}</td>
+                                    <td>
+                                        @if (row.LocationName)
+                                        {
+                                            {{ row.LocationName }}
+                                        }
+                                        @else
+                                        {
+                                            <span class="fara-none">No location</span>
+                                        }
+                                    </td>
+                                    <td>{{ row.CustodianName || '-' }}</td>
+                                </tr>
+                            }
+                            @empty
+                            {
+                                <tr>
+                                    <td
+                                        colspan="6"
+                                        class="fara-empty">
+                                        {{ assignTab === 'none' ? 'Every asset in use of this branch has a location.' : 'No asset in use in this branch.' }}
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </app-page-canvas>
     }
     @else if (mode === 'view')
     {
@@ -264,7 +439,7 @@
 
                             <div>
                                 <span>Cost</span>
-                                <b>{{ money(card.Cost) }}</b>
+                                <b>{{ money(card.TotalCost) }}</b>
                             </div>
 
                             <div>
@@ -388,6 +563,16 @@
                 canvasBody
                 class="hp-split far-form appcore-scrollbar">
 
+                <!-- the form shows once the card is in (not empty first) -->
+                @if (loading || !card)
+                {
+                    <div class="pfx-empty far-wide">
+                        {{ loadFailed ? 'The asset card could not be loaded.' : 'Loading the asset card...' }}
+                    </div>
+                }
+                @else
+                {
+
                 <!-- ============ LEFT : the asset ============ -->
 
                 <section class="pf-card">
@@ -397,103 +582,133 @@
                         <span>Asset</span>
                     </header>
 
-                    <app-textbox
-                        label="Asset No"
-                        [value]="card?.AssetNo ?? ''"
-                        [disabled]="true">
-                    </app-textbox>
+                    <div class="farf-grid farf-three farf-left">
 
-                    <app-textbox
-                        label="Name"
-                        [value]="name"
-                        [maxLength]="150"
-                        (valueChange)="onText('name', $event)"
-                        [required]="true">
-                    </app-textbox>
+                        <app-textbox
+                            label="Asset No"
+                            [value]="card?.AssetNo ?? ''"
+                            [disabled]="true">
+                        </app-textbox>
 
-                    <app-search-dropdown
-                        label="Location"
-                        placeholder="Select location"
-                        [items]="locationItems"
-                        labelField="label"
-                        valueField="value"
-                        [value]="locationId"
-                        (valueChange)="onChoice('locationId', $event)">
-                    </app-search-dropdown>
+                        <app-search-dropdown
+                            label="Asset Group"
+                            placeholder="Select asset group"
+                            [items]="categoryItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="categoryId"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onCategory($event)">
+                        </app-search-dropdown>
 
-                    <app-search-dropdown
-                        label="Custodian"
-                        placeholder="Select employee"
-                        [items]="custodianItems"
-                        labelField="label"
-                        valueField="value"
-                        [value]="custodianId"
-                        (valueChange)="onChoice('custodianId', $event)">
-                    </app-search-dropdown>
+                        <app-search-dropdown
+                            label="Branch"
+                            placeholder="Select branch"
+                            [items]="branchItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="branchId"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onBranch($event)">
+                        </app-search-dropdown>
 
-                    <app-dropdown
-                        label="Status"
-                        [items]="statusItems"
-                        [value]="status"
-                        (valueChange)="onStatus($event)">
-                    </app-dropdown>
+                        <app-textbox
+                            class="farf-span2"
+                            label="Name"
+                            [value]="name"
+                            [maxLength]="150"
+                            (valueChange)="onText('name', $event)"
+                            [required]="true">
+                        </app-textbox>
 
-                    <app-textbox
-                        label="Brand"
-                        textCase="none"
-                        [value]="brand"
-                        [maxLength]="100"
-                        (valueChange)="onText('brand', $event)">
-                    </app-textbox>
+                        <app-dropdown
+                            label="Status"
+                            [items]="statusItems"
+                            [value]="status"
+                            (valueChange)="onStatus($event)">
+                        </app-dropdown>
 
-                    <app-textbox
-                        label="Model"
-                        textCase="none"
-                        [value]="model"
-                        [maxLength]="100"
-                        (valueChange)="onText('model', $event)">
-                    </app-textbox>
+                        <app-search-dropdown
+                            label="Location"
+                            placeholder="Select location"
+                            [items]="locationItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="locationId"
+                            (valueChange)="onChoice('locationId', $event)">
+                        </app-search-dropdown>
 
-                    <app-textbox
-                        label="Serial No"
-                        textCase="none"
-                        [value]="serial"
-                        [maxLength]="100"
-                        (valueChange)="onText('serial', $event)">
-                    </app-textbox>
+                        <app-search-dropdown
+                            label="Custodian"
+                            placeholder="Select employee"
+                            [items]="custodianItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="custodianId"
+                            (valueChange)="onChoice('custodianId', $event)">
+                        </app-search-dropdown>
 
-                    <app-textbox
-                        label="Supplier"
-                        [value]="supplier"
-                        [maxLength]="150"
-                        (valueChange)="onText('supplier', $event)">
-                    </app-textbox>
+                        <app-textbox
+                            label="Supplier"
+                            [value]="supplier"
+                            [maxLength]="150"
+                            (valueChange)="onText('supplier', $event)">
+                        </app-textbox>
 
-                    <app-textbox
-                        label="Purchase Reference"
-                        textCase="none"
-                        [value]="purchaseRef"
-                        [maxLength]="50"
-                        (valueChange)="onText('purchaseRef', $event)">
-                    </app-textbox>
+                        <app-textbox
+                            label="Brand"
+                            textCase="none"
+                            [value]="brand"
+                            [maxLength]="100"
+                            (valueChange)="onText('brand', $event)">
+                        </app-textbox>
 
-                    <app-textbox
-                        label="Description"
-                        placeholder="Optional"
-                        textCase="none"
-                        [value]="description"
-                        [maxLength]="500"
-                        (valueChange)="onText('description', $event)">
-                    </app-textbox>
+                        <app-textbox
+                            label="Model"
+                            textCase="none"
+                            [value]="model"
+                            [maxLength]="100"
+                            (valueChange)="onText('model', $event)">
+                        </app-textbox>
 
-                    <app-textbox
-                        label="Remarks"
-                        placeholder="Optional"
-                        textCase="none"
-                        [value]="remarks"
-                        [maxLength]="500"
-                        (valueChange)="onText('remarks', $event)">
-                    </app-textbox>
+                        <app-textbox
+                            label="Serial No"
+                            textCase="none"
+                            [value]="serial"
+                            [maxLength]="100"
+                            (valueChange)="onText('serial', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Purchase Reference"
+                            placeholder="Invoice or voucher no"
+                            textCase="none"
+                            [value]="purchaseRef"
+                            [maxLength]="50"
+                            (valueChange)="onText('purchaseRef', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            class="farf-span2"
+                            label="Remarks"
+                            placeholder="Optional"
+                            textCase="none"
+                            [value]="remarks"
+                            [maxLength]="500"
+                            (valueChange)="onText('remarks', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            class="farf-full"
+                            label="Description"
+                            placeholder="Optional"
+                            textCase="none"
+                            [value]="description"
+                            [maxLength]="500"
+                            (valueChange)="onText('description', $event)">
+                        </app-textbox>
+
+                    </div>
 
                 </section>
 
@@ -511,82 +726,60 @@
                         <span class="hp-note hp-bad">{{ lockedNote }}</span>
                     }
 
-                    <app-search-dropdown
-                        label="Asset Group"
-                        placeholder="Select asset group"
-                        [items]="categoryItems"
-                        labelField="label"
-                        valueField="value"
-                        [value]="categoryId"
-                        [disabled]="moneyLocked"
-                        (valueChange)="onCategory($event)">
-                    </app-search-dropdown>
+                    <div class="farf-grid farf-three">
 
-                    <app-search-dropdown
-                        label="Branch"
-                        placeholder="Select branch"
-                        [items]="branchItems"
-                        labelField="label"
-                        valueField="value"
-                        [value]="branchId"
-                        [disabled]="moneyLocked"
-                        (valueChange)="onBranch($event)">
-                    </app-search-dropdown>
+                        <app-datepicker
+                            label="Purchase Date"
+                            [disabled]="moneyLocked"
+                            [value]="$any(asDate(purchaseDate))"
+                            (valueChange)="onDate('purchaseDate', $event)">
+                        </app-datepicker>
 
-                    <app-datepicker
-                        label="Purchase Date"
-                        [disabled]="moneyLocked"
-                        [value]="$any(asDate(purchaseDate))"
-                        (valueChange)="onDate('purchaseDate', $event)">
-                    </app-datepicker>
+                        <app-datepicker
+                            label="Put to Use"
+                            [disabled]="moneyLocked"
+                            [value]="$any(asDate(useDate))"
+                            (valueChange)="onDate('useDate', $event)">
+                        </app-datepicker>
 
-                    <app-datepicker
-                        label="Put to Use"
-                        [disabled]="moneyLocked"
-                        [value]="$any(asDate(useDate))"
-                        (valueChange)="onDate('useDate', $event)">
-                    </app-datepicker>
+                        <app-textbox
+                            label="Quantity"
+                            inputMode="decimal"
+                            [value]="qty"
+                            [maxLength]="10"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onText('qty', $event)">
+                        </app-textbox>
 
-                    <app-textbox
-                        label="Quantity"
-                        inputMode="decimal"
-                        [value]="qty"
-                        [maxLength]="10"
-                        [disabled]="moneyLocked"
-                        (valueChange)="onText('qty', $event)">
-                    </app-textbox>
+                        <app-textbox
+                            label="Cost (Tk)"
+                            inputMode="decimal"
+                            [value]="cost"
+                            [maxLength]="16"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onText('cost', $event)">
+                        </app-textbox>
 
-                    <app-textbox
-                        label="Cost (Tk)"
-                        inputMode="decimal"
-                        [value]="cost"
-                        [maxLength]="16"
-                        [disabled]="moneyLocked"
-                        (valueChange)="onText('cost', $event)">
-                    </app-textbox>
+                        <app-textbox
+                            label="Residual Value (Tk)"
+                            inputMode="decimal"
+                            [value]="residual"
+                            [maxLength]="16"
+                            [disabled]="moneyLocked || noDepreciation"
+                            (valueChange)="onText('residual', $event)">
+                        </app-textbox>
 
-                    <app-textbox
-                        label="Residual Value (Tk)"
-                        inputMode="decimal"
-                        [value]="residual"
-                        [maxLength]="16"
-                        [disabled]="moneyLocked || noDepreciation"
-                        (valueChange)="onText('residual', $event)">
-                    </app-textbox>
-
-                    <app-textbox
-                        label="Depreciation to Date (Tk)"
-                        inputMode="decimal"
-                        [value]="opening"
-                        [maxLength]="16"
-                        [disabled]="moneyLocked"
-                        (valueChange)="onText('opening', $event)">
-                    </app-textbox>
-
-                    <div class="pf-grid">
+                        <app-textbox
+                            label="Depreciation to Date (Tk)"
+                            inputMode="decimal"
+                            [value]="opening"
+                            [maxLength]="16"
+                            [disabled]="moneyLocked"
+                            (valueChange)="onText('opening', $event)">
+                        </app-textbox>
 
                         <app-dropdown
-                            label="Depreciated Up To (Month)"
+                            label="Depreciated Up To"
                             placeholder="Month"
                             [items]="monthItems"
                             [value]="upToMonth"
@@ -595,7 +788,7 @@
                         </app-dropdown>
 
                         <app-dropdown
-                            label="Year"
+                            label="Up To Year"
                             placeholder="Year"
                             [items]="yearItems"
                             [value]="upToYear"
@@ -603,43 +796,50 @@
                             (valueChange)="onChoice('upToYear', $event)">
                         </app-dropdown>
 
+                        <span class="farf-hint">For a card of Opening Assets : what was charged before the module.</span>
+
                     </div>
 
-                    <span class="hp-note">The depreciation to date and its month are for a card of Opening Assets : what was charged before the module.</span>
-
-                    <b class="hp-sub">Depreciation Rule</b>
+                    <header class="farf-sub">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Depreciation Rule</span>
+                    </header>
 
                     @if (card && ruleLocked)
                     {
                         <span class="hp-note hp-bad">{{ lockedNote }}</span>
                     }
 
-                    <app-dropdown
-                        label="Method"
-                        [items]="methodItems"
-                        [value]="method"
-                        [disabled]="ruleLocked || groupIsNone"
-                        (valueChange)="onMethod($event)">
-                    </app-dropdown>
+                    <div class="farf-grid farf-three">
 
-                    <app-textbox
-                        label="Rate % a Year"
-                        inputMode="decimal"
-                        [value]="rate"
-                        [maxLength]="8"
-                        [disabled]="ruleLocked || noDepreciation"
-                        (valueChange)="onText('rate', $event)">
-                    </app-textbox>
+                        <app-dropdown
+                            label="Method"
+                            [items]="methodItems"
+                            [value]="method"
+                            [disabled]="ruleLocked || groupIsNone"
+                            (valueChange)="onMethod($event)">
+                        </app-dropdown>
 
-                    <app-textbox
-                        label="Life (Years)"
-                        inputMode="numeric"
-                        placeholder="0 = use the rate"
-                        [value]="life"
-                        [maxLength]="3"
-                        [disabled]="ruleLocked || noDepreciation"
-                        (valueChange)="onText('life', $event)">
-                    </app-textbox>
+                        <app-textbox
+                            label="Rate % a Year"
+                            inputMode="decimal"
+                            [value]="rate"
+                            [maxLength]="8"
+                            [disabled]="ruleLocked || noDepreciation"
+                            (valueChange)="onText('rate', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Life (Years)"
+                            inputMode="numeric"
+                            placeholder="0 = use the rate"
+                            [value]="life"
+                            [maxLength]="3"
+                            [disabled]="ruleLocked || noDepreciation"
+                            (valueChange)="onText('life', $event)">
+                        </app-textbox>
+
+                    </div>
 
                     @if (card && !ruleLocked && noDepreciation)
                     {
@@ -648,15 +848,25 @@
 
                     @if (card)
                     {
-                        <dl class="pf-facts">
-                            <dt>Accumulated Depreciation</dt>
-                            <dd>Tk {{ money(card.AccumulatedDepreciation) }}</dd>
-                            <dt class="pf-strong">Book Value</dt>
-                            <dd class="pf-strong">Tk {{ money(card.BookValue) }}</dd>
-                        </dl>
+                        <div class="farf-tiles">
+                            <div class="farf-tile">
+                                <span>Cost</span>
+                                <b>Tk {{ money(card.TotalCost) }}</b>
+                            </div>
+                            <div class="farf-tile">
+                                <span>Accumulated Depreciation</span>
+                                <b>Tk {{ money(card.AccumulatedDepreciation) }}</b>
+                            </div>
+                            <div class="farf-tile farf-tile-main">
+                                <span>Book Value</span>
+                                <b>Tk {{ money(card.BookValue) }}</b>
+                            </div>
+                        </div>
                     }
 
                 </section>
+
+                }
 
             </div>
 

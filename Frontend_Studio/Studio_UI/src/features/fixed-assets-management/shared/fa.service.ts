@@ -33,7 +33,9 @@ import
 {
     FaAcquisition,
     FaAsset,
+    FaAssignLocation,
     FaCategory,
+    FaAutoCharge,
     FaConfiguration,
     FaDisposal,
     FaLocation,
@@ -183,12 +185,12 @@ export class FaService
     // Depreciation of Fixed Assets : every asset group with its rule
     getDepreciationRules(): Observable<FaCategory[]>
     {
-        return this.get<FaCategory[]>('asset-setup/depreciation-of-fixed-assets');
+        return this.get<FaCategory[]>('depreciation/depreciation-setup');
     }
 
     getDepreciationRule(publicId: string): Observable<FaCategory>
     {
-        return this.get<FaCategory>(`asset-setup/depreciation-of-fixed-assets/${publicId}`);
+        return this.get<FaCategory>(`depreciation/depreciation-setup/${publicId}`);
     }
 
     // Body : Method (None / StraightLine / ReducingBalance),
@@ -196,7 +198,7 @@ export class FaService
     // GainLedgerCode, LossLedgerCode
     saveDepreciationRule(publicId: string, body: Partial<FaCategory>): Observable<FaCategory>
     {
-        return this.put<FaCategory>(`asset-setup/depreciation-of-fixed-assets/${publicId}`, body);
+        return this.put<FaCategory>(`depreciation/depreciation-setup/${publicId}`, body);
     }
 
     getLocations(): Observable<FaLocation[]>
@@ -293,6 +295,12 @@ export class FaService
         return this.put<void>(`asset-register/fixed-asset-register/${publicId}`, body);
     }
 
+    // The ticked cards get one location (and custodian)
+    assignLocation(body: FaAssignLocation): Observable<{ Changed: number }>
+    {
+        return this.put<{ Changed: number }>('asset-register/fixed-asset-register/assign-location', body);
+    }
+
     // The cards made on Opening Assets
     getOpeningAssets(): Observable<FaAsset[]>
     {
@@ -332,18 +340,24 @@ export class FaService
     // The branches with assets : the last run and the next month
     getRunBranches(): Observable<FaRunBranch[]>
     {
-        return this.get<FaRunBranch[]>('depreciation/depreciation-runs/branches');
+        return this.get<FaRunBranch[]>('depreciation/charge-depreciation/branches');
+    }
+
+    // Charge Depreciation on Month End : the switch and the last check
+    getAutoCharge(): Observable<FaAutoCharge>
+    {
+        return this.get<FaAutoCharge>('depreciation/charge-depreciation/auto');
     }
 
     // Without the lines
     getRuns(): Observable<FaRun[]>
     {
-        return this.get<FaRun[]>('depreciation/depreciation-runs');
+        return this.get<FaRun[]>('depreciation/charge-depreciation');
     }
 
     getRun(publicId: string): Observable<FaRun>
     {
-        return this.get<FaRun>(`depreciation/depreciation-runs/${publicId}`);
+        return this.get<FaRun>(`depreciation/charge-depreciation/${publicId}`);
     }
 
     // What a run of the month would charge (nothing is saved).
@@ -351,19 +365,19 @@ export class FaService
     previewRun(branchId: number, period: number): Observable<FaRun>
     {
         return this.get<FaRun>(
-            'depreciation/depreciation-runs/preview',
+            'depreciation/charge-depreciation/preview',
             new HttpParams().set('branchId', String(branchId)).set('period', String(period)));
     }
 
     postRun(branchId: number, period: number, remarks: string): Observable<FaRun>
     {
-        return this.post<FaRun>('depreciation/depreciation-runs', { BranchId:branchId, Period:period, Remarks:remarks });
+        return this.post<FaRun>('depreciation/charge-depreciation', { BranchId:branchId, Period:period, Remarks:remarks });
     }
 
     // The last run of the branch only
     undoRun(publicId: string, reason: string): Observable<void>
     {
-        return this.put<void>(`depreciation/depreciation-runs/${publicId}/undo`, { Reason:reason });
+        return this.put<void>(`depreciation/charge-depreciation/${publicId}/undo`, { Reason:reason });
     }
 
     // The cards to pick from on Depreciation Schedule
@@ -430,35 +444,48 @@ export class FaService
     // Without the lines
     getVerifications(): Observable<FaVerification[]>
     {
-        return this.get<FaVerification[]>('asset-reports/asset-verification');
+        return this.get<FaVerification[]>('asset-register/asset-verification');
     }
 
     getVerification(publicId: string): Observable<FaVerification>
     {
-        return this.get<FaVerification>(`asset-reports/asset-verification/${publicId}`);
+        return this.get<FaVerification>(`asset-register/asset-verification/${publicId}`);
     }
 
     // Body : VerificationDate, BranchId, FaLocationId (0 : all),
-    // Remarks. Makes the count sheet.
+    // Remarks. The count sheet to mark : NOTHING is saved.
+    prepareVerification(body: Partial<FaVerification>): Observable<FaVerification>
+    {
+        return this.post<FaVerification>('asset-register/asset-verification/prepare', body);
+    }
+
+    // The first Save : VerificationDate, BranchId, FaLocationId,
+    // Remarks, ExtraItems, Lines (FaAssetId, Result, Note)
     createVerification(body: Partial<FaVerification>): Observable<FaVerification>
     {
-        return this.post<FaVerification>('asset-reports/asset-verification', body);
+        return this.post<FaVerification>('asset-register/asset-verification', body);
     }
 
     // Draft : Lines (FaAssetId, Result, Note), ExtraItems, Remarks
     saveVerification(publicId: string, body: Partial<FaVerification>): Observable<void>
     {
-        return this.put<void>(`asset-reports/asset-verification/${publicId}`, body);
+        return this.put<void>(`asset-register/asset-verification/${publicId}`, body);
     }
 
     // Refused while a line is Pending
     closeVerification(publicId: string): Observable<void>
     {
-        return this.put<void>(`asset-reports/asset-verification/${publicId}/close`, {});
+        return this.put<void>(`asset-register/asset-verification/${publicId}/close`, {});
     }
 
     deleteVerification(publicId: string): Observable<void>
     {
-        return this.remove(`asset-reports/asset-verification/${publicId}`);
+        return this.remove(`asset-register/asset-verification/${publicId}`);
+    }
+
+    // The most recently deleted count. { Message } : "FAV-0003 restored."
+    restoreVerification(): Observable<{ Code: string; Message: string }>
+    {
+        return this.put<{ Code: string; Message: string }>('asset-register/asset-verification/restore', {});
     }
 }

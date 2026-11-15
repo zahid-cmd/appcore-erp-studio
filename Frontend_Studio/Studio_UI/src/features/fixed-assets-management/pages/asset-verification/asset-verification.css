@@ -18,7 +18,85 @@
 
 .fav-split
 {
-    grid-template-columns: minmax(320px, 1fr) minmax(0, 1.4fr);
+    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+}
+
+/* a new count : two fields a row (2026-11-15) */
+
+.favf-grid
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    align-items: end;
+}
+
+.favf-grid > *
+{
+    min-width: 0;
+}
+
+/* how it works : the steps, one under the other */
+
+.favf-steps
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.favf-steps li
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.favf-steps li > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.favf-steps b
+{
+    color: #0f2a44;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.favf-steps small
+{
+    color: #64748b;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.favf-dot
+{
+    display: inline-flex;
+    flex: 0 0 30px;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #dbe6f7;
+    border-radius: 9px;
+    background: #f4f8ff;
+    color: #2f55d4;
+    font-size: 12px;
+}
+
+.favf-dot-last
+{
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #b45309;
 }
 
 /* the counters, on the toolbar */

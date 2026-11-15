@@ -176,6 +176,40 @@ public class FaMovementsRepository
             throw new InvalidOperationException($"{asset.AssetNo} is depreciated up to {Fa.PeriodText(asset.LastRunPeriod)} : an asset is not charged in the month it is disposed. Date the disposal after that month, or undo the depreciation run.");
         }
 
+        // every month before the disposal is charged first (owner,
+        // 2026-11-15) : a month skipped would never be charged, and
+        // its depreciation would end up in the gain or loss
+        if (Fa.Charge(asset) > 0)
+        {
+            int disposalMonth = Fa.Period(date);
+
+            int useMonth = Fa.Period(asset.UseDate);
+
+            int firstDue =
+                asset.LastRunPeriod >= useMonth ? Fa.NextPeriod(asset.LastRunPeriod) : useMonth;
+
+            if (firstDue < disposalMonth)
+            {
+                int lastDue =
+                    Fa.Period(Fa.PeriodStart(disposalMonth).AddMonths(-1));
+
+                string months =
+                    firstDue == lastDue
+                        ? Fa.PeriodText(firstDue)
+                        : $"{Fa.PeriodText(firstDue)} to {Fa.PeriodText(lastDue)}";
+
+                string branch =
+                    await _context.Set<Branches>().AsNoTracking()
+                        .Where(x => x.BranchId == asset.BranchId)
+                        .Select(x => x.BranchName)
+                        .FirstOrDefaultAsync()
+                    ?? "its branch";
+
+                throw new InvalidOperationException(
+                    $"{asset.AssetNo} is not charged for {months} yet. Charge the depreciation of {branch} on Depreciations > Charge Depreciation first, then save the disposal again.");
+            }
+        }
+
         decimal price = kind == "Sale" || kind == "Scrap" ? Fa.Round(dto.SalePrice) : 0;
 
         if (price < 0)

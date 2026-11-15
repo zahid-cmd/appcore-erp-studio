@@ -3,7 +3,7 @@
     @if (mode === 'list')
     {
         <app-page-header
-            title="Depreciation of Fixed Assets"
+            title="Depreciation Setup"
             subtitle="How the assets of each asset group are depreciated, and the ledger the charge goes to"
             icon="fas fa-chart-line">
 
@@ -73,7 +73,7 @@
 
         <app-history-drawer
             [opened]="historyOpened"
-            title="Depreciation of Fixed Assets History"
+            title="Depreciation Setup History"
             [items]="historyItems"
             (closed)="closeHistory()">
         </app-history-drawer>
@@ -190,12 +190,11 @@
 
                         <app-search-dropdown
                             label="Depreciation Expense Ledger"
-                            placeholder="Select ledger"
-                            [items]="ledgerItems"
+                            placeholder="Posting Setup ledger"
+                            [items]="optionalLedgerItems"
                             labelField="label"
                             valueField="value"
                             [value]="expenseLedger"
-                            [required]="true"
                             [disabled]="isViewMode"
                             (valueChange)="onLedger('expenseLedger', $event)">
                         </app-search-dropdown>

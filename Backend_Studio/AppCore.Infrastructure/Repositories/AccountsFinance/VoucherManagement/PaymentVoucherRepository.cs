@@ -18,6 +18,11 @@ using AppCore.Domain.Platform.Accounting;
 
 using AppCore.Infrastructure.CodeMaster;
 using AppCore.Infrastructure.Persistence;
+using CheckLeafRegister =
+    AppCore.Infrastructure.Repositories.Settings.AccountSettings.CheckLeafRegister;
+
+using CheckLeafUse =
+    AppCore.Infrastructure.Repositories.Settings.AccountSettings.CheckLeafUse;
 using AppCore.Infrastructure.Persistence.Paging;
 using AppCore.Application.Common.Paging;
 
@@ -1592,6 +1597,42 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
 
 
     //===========================================================
+    // Check Books (2026-11-15) : every Check row holds its leaf
+    // (Issued : voucher no, payee, amount, check date). AccountId
+    // of a Bank ledger = BankAccountId. Accounts without a check
+    // book keep free check numbers.
+    //===========================================================
+
+    private async Task SyncCheckLeavesAsync
+    (
+        PaymentVoucher entity,
+        IEnumerable<PaymentVoucherPayments> payments,
+        long userId
+    )
+    {
+        List<CheckLeafUse> uses =
+            payments
+                .Where(x => x.Mode == CheckMode)
+                .Select(x => new CheckLeafUse(
+                    x.AccountId,
+                    x.CheckNo,
+                    string.IsNullOrWhiteSpace(x.PayeeName) ? entity.PartyName : x.PayeeName,
+                    x.Amount,
+                    x.CheckDate,
+                    $"Credit {x.LineNo} (Check)"))
+                .ToList();
+
+        await CheckLeafRegister.SyncAsync(
+            _context,
+            CheckLeafRegister.PaymentVoucher,
+            entity.PaymentVoucherId,
+            entity.VoucherNo,
+            uses,
+            userId);
+    }
+
+
+    //===========================================================
     // Create (Draft)
     //===========================================================
 
@@ -1640,6 +1681,9 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
                 await ReplaceDetailsAsync(
                     entity.PaymentVoucherId,
                     input);
+
+                // Check Books : the check rows hold their leaves
+                await SyncCheckLeavesAsync(entity, input.Payments, userId);
 
                 AddHistory(entity, "Create", "Created", userId, entity.CreatedDate);
 
@@ -1712,6 +1756,9 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
                 await ReplaceDetailsAsync(
                     entity.PaymentVoucherId,
                     input);
+
+                // Check Books : the check rows hold their leaves
+                await SyncCheckLeavesAsync(entity, input.Payments, userId);
 
                 AddHistory(entity, "Create", "Created", userId, now, $"{entity.SourceType} {entity.ReferenceNo}.");
 
@@ -1815,6 +1862,9 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
                     entity.PaymentVoucherId,
                     input);
 
+                // Check Books : the check rows hold their leaves
+                await SyncCheckLeavesAsync(entity, input.Payments, userId);
+
                 AddHistory(entity, "Update", "Updated", userId, entity.ModifiedDate.Value);
 
                 await _context.SaveChangesAsync();
@@ -1845,6 +1895,9 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
 
                 DateTime now =
                     DateTime.UtcNow;
+
+                // Check Books : the leaves are free again
+                await CheckLeafRegister.ReleaseAsync(_context, CheckLeafRegister.PaymentVoucher, entity.PaymentVoucherId, userId);
 
                 entity.IsDeleted = true;
 
@@ -1893,6 +1946,19 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
         entity.ModifiedBy = userId;
 
         entity.ModifiedDate = now;
+
+        // Check Books : the draft takes its leaves again (fails when
+        // a leaf was issued elsewhere meanwhile)
+        if (entity.Status == VoucherStatuses.Draft)
+        {
+            List<PaymentVoucherPayments> payments =
+                await _context
+                    .Set<PaymentVoucherPayments>()
+                    .Where(x => x.PaymentVoucherId == entity.PaymentVoucherId)
+                    .ToListAsync();
+
+            await SyncCheckLeavesAsync(entity, payments, userId);
+        }
 
         AddHistory(entity, "Restore", "Restored", userId, now);
 
@@ -2487,6 +2553,10 @@ public class PaymentVoucherRepository : IPaymentVoucherRepository
                 {
                     check.CheckStatus = "Cancelled";
                 }
+
+                // Check Books : the checks were written : Void, never
+                // used again
+                await CheckLeafRegister.VoidAsync(_context, CheckLeafRegister.PaymentVoucher, entity.PaymentVoucherId, $"{entity.VoucherNo} cancelled : {reason}", userId);
 
                 DateTime now =
                     DateTime.UtcNow;

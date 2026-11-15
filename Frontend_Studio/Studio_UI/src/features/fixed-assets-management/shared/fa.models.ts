@@ -73,6 +73,18 @@ export interface FaLocation
     AssetCount: number;
 }
 
+// Charge Depreciation page : the month-end switch and what the job
+// did last
+export interface FaAutoCharge
+{
+    On: boolean;
+    // e.g. 00:05 on the 1st of every month
+    RunsAt: string;
+    // dd-MMM-yyyy hh:mm tt ('' : never)
+    LastCheck: string;
+    LastMessage: string;
+}
+
 export interface FaConfiguration
 {
     RequireLocation: boolean;
@@ -81,6 +93,8 @@ export interface FaConfiguration
     AllowAssetRule: boolean;
     // A run may be made for a month that has not ended
     AllowRunningMonth: boolean;
+    // Charge Depreciation on Month End (the background job)
+    AutoChargeMonthEnd: boolean;
     AssetNoPrefix: string;
     AssetNoDigits: number;
 }
@@ -185,6 +199,15 @@ export interface FaAsset
     CanEditRule: boolean;
     // One card only
     History: FaAssetEvent[];
+}
+
+// One location (and custodian) for many cards of one branch
+export interface FaAssignLocation
+{
+    PublicIds: string[];
+    FaLocationId: number;
+    // 0 : each card keeps its custodian
+    CustodianEmployeeId: number;
 }
 
 // An opening asset (create) or the changes of a card (update)
@@ -300,6 +323,8 @@ export interface FaRun
     TotalAmount: number;
     JournalVoucherNo: string;
     Remarks: string;
+    // Charged by the month-end job
+    IsAuto: boolean;
     // The last run of its branch : it can be undone
     IsLast: boolean;
     // One run / a preview only

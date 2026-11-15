@@ -83,6 +83,64 @@
                 </div>
             }
 
+            <!-- Separate documents (Cheque) : their own button; on
+                 it, a button back to the A4 documents -->
+
+            @for (doc of separateDocuments; track doc.key)
+            {
+                @if (choice === doc.key)
+                {
+                    <button
+                        type="button"
+                        class="pv-btn pv-btn-separate pv-btn-separate-on"
+                        title="Back to the voucher documents"
+                        [disabled]="loading || !!busy"
+                        (click)="showAllDocuments()">
+                        <i class="fas fa-arrow-left"></i>
+                        Voucher
+                    </button>
+                }
+                @else
+                {
+                    <button
+                        type="button"
+                        class="pv-btn pv-btn-separate"
+                        [title]="'Print the ' + doc.title.toLowerCase() + ' on its own paper'"
+                        [disabled]="loading || !!busy"
+                        (click)="choose(doc.key)">
+                        <i [class]="doc.icon"></i>
+                        {{ doc.title }}
+                    </button>
+                }
+            }
+
+            <!-- Page toggles of the shown documents (cheque : A/C
+                 Payee, Counterfoil) -->
+
+            @if (activeToggles.length)
+            {
+                <div
+                    class="pv-orient"
+                    role="group"
+                    aria-label="Print options">
+
+                    @for (toggle of activeToggles; track toggle.key)
+                    {
+                        <button
+                            type="button"
+                            [title]="toggle.label + (isToggleOn(toggle) ? ' : on' : ' : off')"
+                            [class.pv-orient-on]="isToggleOn(toggle)"
+                            [attr.aria-pressed]="isToggleOn(toggle)"
+                            [disabled]="loading || !!busy"
+                            (click)="flipToggle(toggle)">
+                            <i [class]="isToggleOn(toggle) ? 'fas fa-square-check' : 'far fa-square'"></i>
+                            {{ toggle.label }}
+                        </button>
+                    }
+
+                </div>
+            }
+
             @if (documents.length > 1)
             {
                 <app-search-dropdown

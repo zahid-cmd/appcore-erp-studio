@@ -82,10 +82,28 @@ export const WORK_LINE_LABEL: Record<WorkLine, string> =
 
 // The business line of a page, from its address ('' = none).
 // Only the operational modules; settings pages keep the login
-// branch.
+// branch. Since 2026-11-15 the three operations follow their
+// wing : Service Operations = the service center (Spare Parts
+// line, its setup pages excepted), Accessories Operations = the
+// accessory shop.
 export function workLineOf(path: string): WorkLine | null
 {
     const p = (path || '').split('?')[0].split('#')[0].toLowerCase();
+
+    if (/^\/service-operations\//.test(p))
+    {
+        return /^\/service-operations\/service-setup(\/|$)/.test(p) ? null : 'Spare Parts';
+    }
+
+    if (/^\/accessories-operations\//.test(p))
+    {
+        return 'Accessories';
+    }
+
+    if (/^\/sales-operations\/sales-setup(\/|$)/.test(p))
+    {
+        return null;
+    }
 
     if (!/^\/(sales-operations|procurement|inventory-management)\//.test(p))
     {

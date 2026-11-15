@@ -28,7 +28,8 @@ namespace AppCore.Api.Controllers.FixedAssetsManagement;
 //   asset-setup/asset-locations               CRUD, restore, history
 //   asset-setup/asset-configuration           GET, PUT, history
 //   asset-register/asset-acquisitions         CRUD, post, unpost
-//   asset-register/fixed-asset-register       list, card, PUT card
+//   asset-register/fixed-asset-register       list, card, PUT card,
+//                                             PUT assign-location
 //   asset-register/opening-assets             CRUD
 //   depreciation/depreciation-runs            branches, list, one,
 //                                             preview, POST, undo
@@ -36,7 +37,8 @@ namespace AppCore.Api.Controllers.FixedAssetsManagement;
 //   asset-disposal/asset-disposals            list, POST, DELETE
 //   asset-reports/fixed-asset-schedule        GET
 //   asset-reports/asset-tags                  the cards
-//   asset-reports/asset-verification          CRUD, close
+//   asset-register/asset-verification         CRUD, close, restore
+//                                             (Asset Control menu)
 //
 // Errors : { message } with 400 / 403 / 404 / 409 / 500
 //===============================================================
@@ -179,7 +181,7 @@ public class AssetCategoriesController
 }
 
 [ApiController]
-[Route("api/fixed-assets-management/asset-setup/depreciation-of-fixed-assets")]
+[Route("api/fixed-assets-management/depreciation/depreciation-setup")]
 public class DepreciationOfFixedAssetsController
     : FaControllerBase
 {
@@ -191,9 +193,11 @@ public class DepreciationOfFixedAssetsController
         _repository = repository;
     }
 
-    protected override string PageRoute => "/fixed-assets-management/%/depreciation-of-fixed-assets";
+    // Depreciation Setup (Depreciations menu; was Depreciation of
+    // Fixed Assets under Asset Setup until 2026-11-15)
+    protected override string PageRoute => "/fixed-assets-management/%/depreciation-setup";
 
-    protected override string PageName => "Depreciation of Fixed Assets";
+    protected override string PageName => "Depreciation Setup";
 
     // Every asset group with its rule
     [HttpGet]
@@ -386,6 +390,11 @@ public class FixedAssetRegisterController
     [HttpPut("{publicId:guid}")]
     public Task<IActionResult> Update(Guid publicId, [FromBody] SaveFaAssetDto? dto) =>
         Change("Update", userId => _repository.UpdateAssetAsync(publicId, dto ?? new SaveFaAssetDto(), userId), "The asset card could not be updated.");
+
+    // One location (and custodian) for the ticked cards : { Changed }
+    [HttpPut("assign-location")]
+    public Task<IActionResult> AssignLocation([FromBody] FaAssignLocationDto? dto) =>
+        Save("Update", async userId => new { Changed = await _repository.AssignLocationAsync(dto ?? new FaAssignLocationDto(), userId) }, "The location could not be assigned.");
 }
 
 [ApiController]
@@ -440,7 +449,7 @@ public class OpeningAssetsController
 //===============================================================
 
 [ApiController]
-[Route("api/fixed-assets-management/depreciation/depreciation-runs")]
+[Route("api/fixed-assets-management/depreciation/charge-depreciation")]
 public class DepreciationRunsController
     : FaControllerBase
 {
@@ -452,9 +461,10 @@ public class DepreciationRunsController
         _repository = repository;
     }
 
-    protected override string PageRoute => "/fixed-assets-management/%/depreciation-runs";
+    // Charge Depreciation (was Depreciation Runs until 2026-11-15)
+    protected override string PageRoute => "/fixed-assets-management/%/charge-depreciation";
 
-    protected override string PageName => "Depreciation Runs";
+    protected override string PageName => "Charge Depreciation";
 
     [HttpGet]
     public Task<IActionResult> GetAll() =>
@@ -463,6 +473,11 @@ public class DepreciationRunsController
     [HttpGet("branches")]
     public Task<IActionResult> GetBranches() =>
         Run(async () => Ok(await _repository.GetBranchesAsync()), "The branches could not be loaded.");
+
+    // Charge Depreciation on Month End : the switch and the last check
+    [HttpGet("auto")]
+    public Task<IActionResult> GetAuto() =>
+        Run(async () => Ok(await _repository.GetAutoChargeAsync()), "The month-end charge could not be loaded.");
 
     [HttpGet("history")]
     public Task<IActionResult> GetHistory() => History("FaDepreciationRuns");
@@ -602,7 +617,7 @@ public class AssetTagsController
 }
 
 [ApiController]
-[Route("api/fixed-assets-management/asset-reports/asset-verification")]
+[Route("api/fixed-assets-management/asset-register/asset-verification")]
 public class AssetVerificationController
     : FaControllerBase
 {
@@ -629,6 +644,11 @@ public class AssetVerificationController
     public Task<IActionResult> Get(Guid publicId) =>
         Run(async () => Ok(await _repository.GetVerificationAsync(publicId)), "The asset verification could not be loaded.");
 
+    // A new count sheet to mark : nothing is saved
+    [HttpPost("prepare")]
+    public Task<IActionResult> Prepare([FromBody] FaVerificationDto? dto) =>
+        Save("Add", _ => _repository.PrepareVerificationAsync(dto ?? new FaVerificationDto()), "The count sheet could not be made.");
+
     [HttpPost]
     public Task<IActionResult> Create([FromBody] FaVerificationDto? dto) =>
         Save("Add", userId => _repository.CreateVerificationAsync(dto ?? new FaVerificationDto(), userId), "The asset verification could not be started.");
@@ -644,4 +664,24 @@ public class AssetVerificationController
     [HttpDelete("{publicId:guid}")]
     public Task<IActionResult> Delete(Guid publicId) =>
         Change("Delete", userId => _repository.DeleteVerificationAsync(publicId, userId), "The asset verification could not be deleted.");
+
+    // The most recently deleted count (delete is soft)
+    [HttpPut("restore")]
+    public Task<IActionResult> Restore()
+    {
+        long userId = UserId;
+
+        return Guarded(
+            new[] { "Restore" },
+            async () =>
+            {
+                string? code = await _repository.RestoreVerificationAsync(userId);
+
+                return code == null
+                    ? Fail(StatusCodes.Status404NotFound, "There is no deleted asset verification to restore.")
+                    : Ok(new { Code = code, message = $"{code} restored." });
+            },
+            "The asset verification could not be restored.",
+            Conflict409);
+    }
 }

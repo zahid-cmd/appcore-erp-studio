@@ -89,7 +89,7 @@ public class BookingsController
 
     // The page of the type (permissions)
     private static string PageRoute(string code) =>
-        $"/sales-operations/%/bookings-{code.ToLowerInvariant()}";
+        $"/%/bookings-{code.ToLowerInvariant()}";
 
 
     private ObjectResult Fail(int statusCode, string message) =>

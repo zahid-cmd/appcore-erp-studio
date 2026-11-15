@@ -1,7 +1,8 @@
 ROLLBACK;
 
 -- =====================================================================
--- FixedAssets_AutoJournal_Sources.sql   (2026-11-14)
+-- FixedAssets_AutoJournal_Sources.sql   (2026-11-14; Opening Assets
+-- and the Charge Depreciation route added 2026-11-15)
 -- ---------------------------------------------------------------------
 -- Fixed Assets on Accounts & Finance > Accounting Registers >
 -- Auto Journal Registers.
@@ -9,7 +10,10 @@ ROLLBACK;
 -- The journals of Fixed Assets are Journal Vouchers (JV) written by
 -- the pages :
 --     Asset Acquisitions    assets bought (posting)
---     Depreciation Runs     the depreciation of a month
+--     Opening Assets        the assets owned before the module (cost,
+--                           depreciation to date, opening ledger)
+--     Charge Depreciation   the depreciation of a month (was
+--                           Depreciation Runs)
 --     Asset Disposals       sale / scrap / write-off / lost
 --
 -- A JV belongs to a page when that page's table holds its number, so
@@ -31,6 +35,14 @@ CREATE OR REPLACE VIEW public."FaAcquisitionVouchers" AS
 SELECT DISTINCT "JournalVoucherNo" AS "VoucherNo"
 FROM   public."FaAcquisitions"
 WHERE  "JournalVoucherNo" <> '';
+
+-- an opening asset card holds the number of its live voucher (a
+-- cancelled one is replaced when the card is changed)
+CREATE OR REPLACE VIEW public."FaOpeningAssetVouchers" AS
+SELECT DISTINCT "JournalVoucherNo" AS "VoucherNo"
+FROM   public."FaAssets"
+WHERE  "Source" = 'Opening'
+AND    "JournalVoucherNo" <> '';
 
 CREATE OR REPLACE VIEW public."FaDepreciationRunVouchers" AS
 SELECT DISTINCT "JournalVoucherNo" AS "VoucherNo"
@@ -59,8 +71,9 @@ SELECT
 FROM
 (
     VALUES
-        (71, 'JV', 'FaAcquisitionVouchers',     '/asset-acquisitions', 'Fixed Assets : assets bought'),
-        (73, 'JV', 'FaDepreciationRunVouchers', '/depreciation-runs',  'Fixed Assets : depreciation of a month'),
+        (71, 'JV', 'FaAcquisitionVouchers',     '/asset-acquisitions',  'Fixed Assets : assets bought'),
+        (72, 'JV', 'FaOpeningAssetVouchers',    '/opening-assets',      'Fixed Assets : assets owned before the module'),
+        (73, 'JV', 'FaDepreciationRunVouchers', '/charge-depreciation', 'Fixed Assets : depreciation of a month'),
         (75, 'JV', 'FaDisposalVouchers',        '/asset-disposals',    'Fixed Assets : asset disposed')
 ) AS v (ord, voucher_type, source_table, route_end, remarks)
 LEFT JOIN LATERAL

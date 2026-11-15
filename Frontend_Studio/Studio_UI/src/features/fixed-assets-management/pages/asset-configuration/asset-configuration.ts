@@ -45,7 +45,7 @@ from '../../shared/fa.models';
 
 
 type SwitchField =
-    'requireLocation' | 'requireCustodian' | 'allowAssetRule' | 'allowRunningMonth';
+    'requireLocation' | 'requireCustodian' | 'allowAssetRule' | 'allowRunningMonth' | 'autoChargeMonthEnd';
 
 
 //===============================================================
@@ -131,6 +131,11 @@ implements OnInit
     allowRunningMonth =
         false;
 
+    // Charge Depreciation on Month End : the API charges every
+    // branch at 00:05 on the 1st (Bangladesh time)
+    autoChargeMonthEnd =
+        false;
+
     prefix =
         'FA';
 
@@ -177,6 +182,7 @@ implements OnInit
                     this.requireCustodian = !!c?.RequireCustodian;
                     this.allowAssetRule = !!c?.AllowAssetRule;
                     this.allowRunningMonth = !!c?.AllowRunningMonth;
+                    this.autoChargeMonthEnd = !!c?.AutoChargeMonthEnd;
                     this.prefix = String(c?.AssetNoPrefix ?? '');
                     this.digits = Math.min(8, Math.max(3, digits));
                     this.loading = false;
@@ -270,6 +276,7 @@ implements OnInit
             RequireCustodian:this.requireCustodian,
             AllowAssetRule:this.allowAssetRule,
             AllowRunningMonth:this.allowRunningMonth,
+            AutoChargeMonthEnd:this.autoChargeMonthEnd,
             AssetNoPrefix:prefix,
             AssetNoDigits:this.digits
         };

@@ -234,6 +234,42 @@
 
                     @if (row.Mode === 'Check')
                     {
+                        @if (usesCheckBook(row))
+                        {
+                        <!-- Check Books : the number comes from the leaves -->
+                        <div class="pd-leaf">
+
+                            <app-search-dropdown
+
+                                label="Check No (check book)"
+
+                                placeholder="No unused leaf"
+
+                                [items]="leafItems(row)"
+
+                                [value]="row.CheckNo || null"
+
+                                (valueChange)="onCheckLeaf($event)"
+
+                                [disabled]="readonly || !leafInfo[row.AccountId].AllowChooseLeaf"
+
+                                [required]="true">
+
+                            </app-search-dropdown>
+
+                            @if (!readonly && leafHint(row))
+                            {
+                            <small
+                                class="pd-leaf-hint"
+                                [class.pd-leaf-low]="leafInfo[row.AccountId].LowLeaf || leafInfo[row.AccountId].UnusedLeaves === 0">
+                                {{ leafHint(row) }}
+                            </small>
+                            }
+
+                        </div>
+                        }
+                        @else
+                        {
                         <app-textbox
 
                             label="Check No"
@@ -249,6 +285,7 @@
                             [required]="true">
 
                         </app-textbox>
+                        }
 
                         <app-datepicker
 

@@ -1,0 +1,477 @@
+<div class="app-form-page">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        icon="fas fa-money-check"
+        [title]="pageTitle"
+        subtitle="A check book of one of our bank accounts : its leaves and where each one went">
+
+        <app-command-center
+            pageHeaderRight
+            [command1Text]="saveButtonText"
+            command1Icon="fas fa-floppy-disk"
+            (command1Click)="onSave()"
+            [command1Visible]="!isViewMode"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="onClear()"
+            [command2Visible]="!isViewMode"
+            command3Text="Print"
+            command3Icon="fas fa-print"
+            command3Title="Print the leaf register of this book"
+            [command3Visible]="mode !== 'add' && entity.Leaves.length > 0"
+            (command3Click)="printRegister()"
+            rightCommandIcon="fas fa-arrow-left"
+            (rightCommandClick)="onBackToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         PAGE CANVAS
+    ====================================================== -->
+
+    <app-page-canvas>
+
+        <div
+            canvasBody
+            class="cb-body">
+
+            <!-- =================================================
+                 LEFT : the book
+            ================================================== -->
+
+            <section class="cb-card">
+
+                <header class="cb-card-head">
+                    <i class="fas fa-money-check"></i>
+                    <span>Check Book</span>
+
+                    <!-- Where each field sits on this account's real
+                         leaf (cheque printing) -->
+                    <button
+                        type="button"
+                        class="cb-head-btn"
+                        title="Where each field prints on this bank account's cheque leaf"
+                        [disabled]="!entity.BankAccountId || layoutBusy"
+                        (click)="openLayout()">
+                        <i class="fas fa-ruler-combined"></i>
+                        Cheque Layout
+                    </button>
+                </header>
+
+                <div class="cb-grid-2">
+
+                    <app-textbox
+                        label="Code"
+                        [value]="entity.Code"
+                        placeholder="Auto generated"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-dropdown
+                        label="Status"
+                        [items]="statusItems"
+                        [value]="entity.IsActive"
+                        (valueChange)="onStatus($event)"
+                        [disabled]="isViewMode"
+                        [required]="true">
+                    </app-dropdown>
+
+                </div>
+
+                <app-search-dropdown
+                    label="Bank Account"
+                    [required]="true"
+                    placeholder="Select the bank account (Payment = Yes)"
+                    [items]="accountItems"
+                    [value]="entity.BankAccountId || null"
+                    [disabled]="rangeLocked"
+                    (valueChange)="onAccount($event)">
+                </app-search-dropdown>
+
+                @if (selectedAccount && !isViewMode)
+                {
+                    <div
+                        class="cb-hint"
+                        [class.cb-hint-low]="selectedAccount.LowLeaf">
+                        <i [class]="selectedAccount.LowLeaf ? 'fas fa-triangle-exclamation' : 'fas fa-circle-info'"></i>
+                        <span>
+                            {{ selectedAccount.UnusedLeaves }} unused leaf(s) left on this account's active books.
+                            @if (selectedAccount.LowLeaf)
+                            {
+                                Below the warning level ({{ lowLeafThreshold }}).
+                            }
+                        </span>
+                    </div>
+                }
+
+                <div class="cb-grid-2">
+
+                    <app-textbox
+                        label="Book No (bank's)"
+                        placeholder="Optional"
+                        [value]="entity.BookNo"
+                        [maxLength]="50"
+                        textCase="none"
+                        [disabled]="isViewMode"
+                        (valueChange)="onText('BookNo', $event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Prefix"
+                        placeholder="Optional, e.g. CA"
+                        [value]="entity.Prefix"
+                        [maxLength]="10"
+                        [disabled]="rangeLocked"
+                        (valueChange)="onPrefix($event)">
+                    </app-textbox>
+
+                </div>
+
+                <div class="cb-grid-2">
+
+                    <app-textbox
+                        label="First Check No"
+                        placeholder="e.g. 0012301"
+                        [value]="entity.StartNo"
+                        inputMode="numeric"
+                        [maxLength]="15"
+                        [disabled]="rangeLocked"
+                        [required]="true"
+                        (valueChange)="onStartNo($event)">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Leaves"
+                        placeholder="1 - 200"
+                        [value]="entity.LeafCount ? '' + entity.LeafCount : ''"
+                        inputMode="numeric"
+                        [maxLength]="3"
+                        [disabled]="rangeLocked"
+                        [required]="true"
+                        (valueChange)="onLeafCount($event)">
+                    </app-textbox>
+
+                </div>
+
+                <div class="cb-grid-2">
+
+                    <app-textbox
+                        label="Last Check No"
+                        [value]="lastCheckNo"
+                        placeholder="Worked out"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    <app-datepicker
+                        label="Received On"
+                        [required]="true"
+                        [value]="$any(asDate(entity.ReceivedDate))"
+                        [disabled]="isViewMode"
+                        (valueChange)="onDate($event)">
+                    </app-datepicker>
+
+                </div>
+
+                <app-textbox
+                    label="Remarks"
+                    placeholder="Optional"
+                    [value]="entity.Remarks"
+                    [maxLength]="500"
+                    textCase="none"
+                    [disabled]="isViewMode"
+                    (valueChange)="onText('Remarks', $event)">
+                </app-textbox>
+
+                @if (entity.RangeLocked && !isViewMode)
+                {
+                    <p class="cb-fixed">
+                        <i class="fas fa-lock"></i>
+                        A leaf is used : the bank account, prefix and numbers are fixed. Book No, date, remarks and status can change.
+                    </p>
+                }
+
+            </section>
+
+            <!-- =================================================
+                 RIGHT : the leaves
+            ================================================== -->
+
+            <section class="cb-card cb-leaves">
+
+                <header class="cb-card-head">
+                    <i class="fas fa-list-ol"></i>
+                    <span>Leaves</span>
+
+                    @if (!showsPreview)
+                    {
+                        <span class="cb-counts">
+                            <span class="cb-pill cb-unused">Unused {{ count('Unused') }}</span>
+                            <span class="cb-pill cb-issued">Issued {{ count('Issued') }}</span>
+                            @if (count('Cancelled') > 0) { <span class="cb-pill cb-bad">Cancelled {{ count('Cancelled') }}</span> }
+                            @if (count('Lost') > 0) { <span class="cb-pill cb-bad">Lost {{ count('Lost') }}</span> }
+                            @if (count('Void') > 0) { <span class="cb-pill cb-bad">Void {{ count('Void') }}</span> }
+                        </span>
+
+                        <span class="cb-seg">
+                            <button type="button" [class.on]="leafFilter === 'all'" (click)="setFilter('all')">All</button>
+                            <button type="button" [class.on]="leafFilter === 'unused'" (click)="setFilter('unused')">Unused</button>
+                            <button type="button" [class.on]="leafFilter === 'used'" (click)="setFilter('used')">Used</button>
+                        </span>
+                    }
+                    @else
+                    {
+                        <span class="cb-head-note">{{ previewLeaves.length }} leaf(s) will be made</span>
+                    }
+                </header>
+
+                @if (marking)
+                {
+                    <div class="cb-mark">
+                        <span class="cb-mark-text">
+                            Mark check <b>{{ marking.leaf.CheckNo }}</b> as <b>{{ marking.status }}</b> :
+                        </span>
+                        <app-textbox
+                            class="cb-mark-box"
+                            placeholder="Reason (required), e.g. spoiled while writing"
+                            [value]="marking.reason"
+                            [maxLength]="300"
+                            textCase="none"
+                            (valueChange)="onMarkReason($event)">
+                        </app-textbox>
+                        <button
+                            type="button"
+                            class="cb-btn cb-btn-danger"
+                            [disabled]="leafBusy"
+                            (click)="confirmMark()">Mark {{ marking.status }}</button>
+                        <button
+                            type="button"
+                            class="cb-btn cb-btn-plain"
+                            (click)="cancelMark()">Close</button>
+                    </div>
+                }
+
+                <div class="cb-table-wrap appcore-scrollbar">
+
+                    @if (showsPreview)
+                    {
+                        @if (previewLeaves.length === 0)
+                        {
+                            <p class="cb-empty">Pick the bank account and enter the first check number and the leaves : the check numbers of the book show here.</p>
+                        }
+                        @else
+                        {
+                            <div class="cb-preview">
+                                @for (no of previewLeaves; track $index)
+                                {
+                                    <span>{{ no }}</span>
+                                }
+                            </div>
+                        }
+                    }
+                    @else if (loading)
+                    {
+                        <p class="cb-empty">Loading...</p>
+                    }
+                    @else
+                    {
+                        <table class="cb-table">
+
+                            <thead>
+                                <tr>
+                                    <th class="cb-c-no">#</th>
+                                    <th>Check No</th>
+                                    <th>Status</th>
+                                    <th>Voucher</th>
+                                    <th>Payee</th>
+                                    <th class="cb-c-num">Amount</th>
+                                    <th>Date</th>
+                                    <th>Reason</th>
+                                    <th class="cb-c-tools"></th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (leaf of leaves; track leaf.CheckBookLeafId; let i = $index)
+                                {
+                                    <tr [class.cb-row-used]="leaf.Status !== 'Unused'">
+                                        <td class="cb-c-no">{{ i + 1 }}</td>
+                                        <td class="cb-check">{{ leaf.CheckNo }}</td>
+                                        <td><span class="cb-status" [attr.data-status]="leaf.Status">{{ leaf.Status }}</span></td>
+                                        <td>{{ leaf.SourceNo || '-' }}</td>
+                                        <td class="cb-ellipsis" [title]="leaf.PayeeName">{{ leaf.PayeeName || '-' }}</td>
+                                        <td class="cb-c-num">{{ money(leaf.Amount) || '-' }}</td>
+                                        <td>{{ day(leaf.IssuedDate) || '-' }}</td>
+                                        <td class="cb-ellipsis" [title]="leaf.Reason">{{ leaf.Reason || '-' }}</td>
+                                        <td class="cb-c-tools">
+                                            @if (leaf.Status === 'Issued')
+                                            {
+                                                <button type="button" class="cb-tool cb-tool-print" title="Print this cheque on its leaf" (click)="printLeaf(leaf)"><i class="fas fa-print"></i></button>
+                                            }
+                                            @if (!isViewMode)
+                                            {
+                                                @if (leaf.Status === 'Unused')
+                                                {
+                                                    <button type="button" class="cb-tool" title="Mark cancelled (spoiled)" [disabled]="leafBusy" (click)="startMark(leaf, 'Cancelled')"><i class="fas fa-ban"></i></button>
+                                                    <button type="button" class="cb-tool" title="Mark lost" [disabled]="leafBusy" (click)="startMark(leaf, 'Lost')"><i class="fas fa-circle-question"></i></button>
+                                                }
+                                                @else if (leaf.Status === 'Cancelled' || leaf.Status === 'Lost')
+                                                {
+                                                    <button type="button" class="cb-tool" title="Back to unused" [disabled]="leafBusy" (click)="undoLeaf(leaf)"><i class="fas fa-rotate-left"></i></button>
+                                                }
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                                @empty
+                                {
+                                    <tr><td class="cb-empty-row" colspan="9">No leaves here.</td></tr>
+                                }
+                            </tbody>
+
+                        </table>
+                    }
+
+                </div>
+
+                <p class="cb-note">
+                    Issued and Void come from Payment Voucher, Fund Transfer and Check Reconciliation. An unused leaf that is spoiled or lost is marked here, with the reason.
+                </p>
+
+            </section>
+
+        </div>
+
+    </app-page-canvas>
+
+    <!-- =====================================================
+         CHEQUE LAYOUT : where each field prints on this bank
+         account's real leaf (mm); live preview, test print
+    ====================================================== -->
+
+    <app-form-modal
+        [opened]="layoutOpen"
+        title="Cheque Layout"
+        [subtitle]="layoutSubtitle"
+        icon="fas fa-ruler-combined"
+        width="960px"
+        saveText="Save Layout"
+        saveIcon="fas fa-floppy-disk"
+        [busy]="layoutBusy"
+        [closeOnBackdrop]="false"
+        (save)="saveLayout(false)"
+        (closed)="closeLayout()">
+
+        <div class="cl-wrap">
+
+            <!-- Live preview (sample values, guides) -->
+            <div class="cl-preview-bar">
+                <span class="cl-preview-title">
+                    <i class="fas fa-eye"></i>
+                    Preview
+                    <small>{{ previewPaper.width }} x {{ previewPaper.height }} mm</small>
+                </span>
+                <span class="cl-seg">
+                    <button type="button" [class.on]="previewCounterfoil" (click)="togglePreview('counterfoil')">
+                        <i [class]="previewCounterfoil ? 'fas fa-square-check' : 'far fa-square'"></i> Counterfoil
+                    </button>
+                    <button type="button" [class.on]="previewAcPayee" (click)="togglePreview('acpayee')">
+                        <i [class]="previewAcPayee ? 'fas fa-square-check' : 'far fa-square'"></i> A/C Payee
+                    </button>
+                </span>
+            </div>
+
+            <div class="cl-stage">
+                <div
+                    class="cl-paper-box"
+                    [style.width.px]="previewBoxWidth"
+                    [style.height.px]="previewBoxHeight">
+                    <div
+                        class="cl-paper"
+                        [style.width.mm]="previewPaper.width"
+                        [style.height.mm]="previewPaper.height"
+                        [style.transform]="'scale(' + previewScale + ')'"
+                        [innerHTML]="previewHtml">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sections -->
+            <div class="cl-tabs">
+                @for (section of layoutSections; track section.title; let i = $index)
+                {
+                    <button
+                        type="button"
+                        [class.on]="layoutSection === i"
+                        (click)="layoutSection = i">
+                        <i [class]="section.icon"></i>
+                        {{ section.title }}
+                    </button>
+                }
+            </div>
+
+            <div class="cl-fields">
+                @for (field of layoutSections[layoutSection].fields; track field.key)
+                {
+                    <app-textbox
+                        [label]="field.label + (field.key === 'font' || field.key === 'crossAngle' ? '' : ' (mm)')"
+                        inputMode="decimal"
+                        [maxLength]="7"
+                        [value]="layoutText(field.key)"
+                        (valueChange)="onLayoutField(field.key, $event)">
+                    </app-textbox>
+                }
+
+                @if (layoutSection === 3 || layoutSection === 4)
+                {
+                    <app-dropdown
+                        label="Words"
+                        [items]="takaItems"
+                        [value]="layout.stripTaka"
+                        (valueChange)="onStripTaka($event)">
+                    </app-dropdown>
+
+                    <app-textbox
+                        label="After the Figures"
+                        placeholder="e.g. /-"
+                        textCase="none"
+                        [maxLength]="10"
+                        [value]="layout.figSuffix"
+                        (valueChange)="onFigSuffix($event)">
+                    </app-textbox>
+                }
+            </div>
+
+            <p class="cl-note">
+                <i class="fas fa-circle-info"></i>
+                Positions are in mm from the top-left corner of the cheque (the counterfoil fields from the counterfoil's corner).
+                Print a test on plain paper, hold it over a leaf against the light and move the fields until they sit on the lines.
+                A/C Payee and Counterfoil are chosen on the print page.
+            </p>
+
+        </div>
+
+        <div modalFooterLeft class="cl-foot">
+            <button type="button" class="cb-btn cb-btn-plain" [disabled]="layoutBusy" (click)="resetLayout()">
+                <i class="fas fa-rotate-left"></i> Defaults
+            </button>
+            <button type="button" class="cb-btn cb-btn-plain" [disabled]="layoutBusy" (click)="saveLayout(true)">
+                <i class="fas fa-print"></i> Save & Test Print
+            </button>
+            @if (!layoutSaved)
+            {
+                <span class="cl-unsaved">Not saved yet : the defaults are shown.</span>
+            }
+        </div>
+
+    </app-form-modal>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

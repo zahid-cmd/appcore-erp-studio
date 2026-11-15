@@ -1797,6 +1797,15 @@ public static class DependencyInjection
             AppCore.Infrastructure.Repositories.Settings.GeneralSettings.TermsConditionsRepository
         >();
 
+        // Check Books (MANUAL : hand-written page,
+        // CheckBooks_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.Settings.AccountSettings.CheckBooks.ICheckBooksRepository,
+            AppCore.Infrastructure.Repositories.Settings.AccountSettings.CheckBooksRepository
+        >();
+
         // Membership Fees Collection (MANUAL : hand-written page,
         // MembershipFees_Engine.sql; NO Code Sync)
 

@@ -4,6 +4,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moved
+}
+from '../../../shared/utils/moved-route';
+
 
 export const salesOperationsRoutes:
     Routes =
@@ -26,61 +32,44 @@ export const salesOperationsRoutes:
     {
         path:'',
 
-        redirectTo:'',
+        redirectTo:'motor-bike-sales',
 
         pathMatch:'full'
     },
-    // AUTO-BEGIN : MNU-008-003
-
     //===========================================================
-    // Spare Parts & Lubricant Sales
+    // Sales Setup (hand-written, 2026-11-15) : Bike Accessory
+    // Schemes, PDI Templates
     //===========================================================
 
     {
-        path:'spare-parts-lubricant-sales',
+        path:'sales-setup',
 
         data:
         {
-            breadcrumb:'Spare Parts & Lubricant Sales'
+            breadcrumb:'Sales Setup'
         },
 
         loadChildren:() =>
             import(
-                '../spare-parts-lubricant-sales/routes/spare-parts-lubricant-sales.routes'
+                './sales-setup.routes'
             )
             .then(
                 m =>
-                    m.mnu008003Routes
+                    m.salesSetupRoutes
             )
     },
 
-    // AUTO-END : MNU-008-003
-
-    // AUTO-BEGIN : MNU-008-004
-
     //===========================================================
-    // Accessories Sales
+    // Moved 2026-11-15 : the old addresses open the new ones.
+    //   Spare Parts & Lubricant Sales -> Service Operations
+    //   Accessories Sales             -> Accessories Operations
+    // (NEVER run Menu Sync on Sales Operations : it would add
+    // these menus back.)
     //===========================================================
 
-    {
-        path:'accessories-sales',
+    moved('spare-parts-lubricant-sales', '/service-operations/spare-parts-lubricant-sales'),
 
-        data:
-        {
-            breadcrumb:'Accessories Sales'
-        },
-
-        loadChildren:() =>
-            import(
-                '../accessories-sales/routes/accessories-sales.routes'
-            )
-            .then(
-                m =>
-                    m.mnu008004Routes
-            )
-    },
-
-    // AUTO-END : MNU-008-004
+    moved('accessories-sales', '/accessories-operations/accessories-sales'),
 
     // AUTO-BEGIN : MNU-008-002
 

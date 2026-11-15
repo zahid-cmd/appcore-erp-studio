@@ -48,5 +48,5 @@ public class PromotionalOffersServiceCenterController
         "Promotional Offers - Service Center";
 
     protected override string PageRoute =>
-        "/sales-operations/%/promotional-offers-service-center";
+        "/%/promotional-offers-service-center";
 }

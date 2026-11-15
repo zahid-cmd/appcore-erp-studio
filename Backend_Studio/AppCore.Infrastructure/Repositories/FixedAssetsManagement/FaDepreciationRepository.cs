@@ -8,6 +8,7 @@ using AppCore.Application.FixedAssetsManagement;
 using AppCore.Domain.Entities.FixedAssetsManagement;
 using AppCore.Domain.Entities.Settings.GeneralSettings;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Platform.Accounting;
 using AppCore.Infrastructure.Repositories.HumanResourceManangement.AttendanceManagement;
 
 
@@ -42,6 +43,16 @@ namespace AppCore.Infrastructure.Repositories.FixedAssetsManagement;
 //
 // Only the last run of a branch can be undone : its voucher is
 // cancelled and the assets get their figures back.
+//
+// Charge Depreciation on Month End (Asset Configuration switch,
+// 2026-11-15) : the background job FaMonthEndDepreciationJob calls
+// RunMonthEndAsync at 00:05 on the 1st (Bangladesh time) and when
+// the API starts. Every branch is charged for each month that has
+// ended and is not charged yet, in order (missed months are caught
+// up). The runs are posted by the system user and marked IsAuto.
+// A branch that fails (no ledger, closed period ...) is skipped
+// and named in the last-check message; it is tried again at the
+// next check, or charged by hand.
 //===============================================================
 
 public class FaDepreciationRepository
@@ -203,6 +214,7 @@ public class FaDepreciationRepository
                 TotalAmount = r.TotalAmount,
                 JournalVoucherNo = r.JournalVoucherNo,
                 Remarks = r.Remarks,
+                IsAuto = r.IsAuto,
                 IsLast = r.Period == rows.Where(x => x.BranchId == r.BranchId).Max(x => x.Period)
             })
             .ToList();
@@ -325,7 +337,10 @@ public class FaDepreciationRepository
         };
     }
 
-    public async Task<FaRunDto> PostAsync(PostFaRunDto dto, long userId)
+    public Task<FaRunDto> PostAsync(PostFaRunDto dto, long userId) =>
+        PostRunAsync(dto, userId, false);
+
+    private async Task<FaRunDto> PostRunAsync(PostFaRunDto dto, long userId, bool auto)
     {
         var (rows, branchName) = await WorkOutAsync(dto.BranchId, dto.Period);
 
@@ -346,6 +361,10 @@ public class FaDepreciationRepository
 
         string month = Fa.PeriodText(dto.Period);
 
+        // an asset group with no expense ledger of its own uses the
+        // Posting Setup one (Fixed Assets - Depreciation Expense)
+        string? postingExpense = null;
+
         foreach (var byCategory in rows.GroupBy(x => x.Asset.FaCategoryId).OrderBy(g => categories[g.Key].Code))
         {
             FaCategories category = categories[byCategory.Key];
@@ -356,7 +375,12 @@ public class FaDepreciationRepository
 
             group++;
 
-            voucherLines.Add(Fa.Debit(group, category.ExpenseLedgerCode, amount, $"Depreciation {month} : {category.Name}"));
+            string expense =
+                category.ExpenseLedgerCode.Length > 0
+                    ? category.ExpenseLedgerCode
+                    : postingExpense ??= PostingLedgerCodes.Get(_context, Fa.DepreciationExpensePurpose);
+
+            voucherLines.Add(Fa.Debit(group, expense, amount, $"Depreciation {month} : {category.Name}"));
             voucherLines.Add(Fa.Credit(group, category.AccumLedgerCode, amount, $"Depreciation {month} : {category.Name}"));
         }
 
@@ -377,6 +401,7 @@ public class FaDepreciationRepository
             AssetCount = rows.Count,
             TotalAmount = total,
             Remarks = remarks,
+            IsAuto = auto,
             IsDeleted = false,
             CreatedBy = userId,
             CreatedDate = DateTime.UtcNow
@@ -392,7 +417,7 @@ public class FaDepreciationRepository
                 {
                     VoucherDate = HrCalendar.Day(runDate),
                     BranchId = dto.BranchId,
-                    Narration = $"Depreciation of {month} : {rows.Count} asset(s), Tk {Fa.Money(total)} | {run.Code}",
+                    Narration = $"Depreciation of {month} : {rows.Count} asset(s), Tk {Fa.Money(total)} | {run.Code}{(auto ? " (month end)" : string.Empty)}",
                     Lines = voucherLines
                 },
                 run.Code,
@@ -426,7 +451,7 @@ public class FaDepreciationRepository
             card.LastRunPeriod = dto.Period;
         }
 
-        Fa.AddHistory(_context, "FaDepreciationRuns", run.FaDepreciationRunId, "Post", "Depreciation Run Posted", $"{run.Code} : {branchName}, {month}, {rows.Count} asset(s), Tk {Fa.Money(total)}. Journal Voucher {run.JournalVoucherNo}.", userId);
+        Fa.AddHistory(_context, "FaDepreciationRuns", run.FaDepreciationRunId, "Post", auto ? "Depreciation Charged on Month End" : "Depreciation Charged", $"{run.Code} : {branchName}, {month}, {rows.Count} asset(s), Tk {Fa.Money(total)}. Journal Voucher {run.JournalVoucherNo}.{(auto ? " Charged automatically on month end." : string.Empty)}", userId);
 
         await _context.SaveChangesAsync();
 
@@ -493,11 +518,127 @@ public class FaDepreciationRepository
         run.DeletedBy = userId;
         run.DeletedDate = DateTime.UtcNow;
 
-        Fa.AddHistory(_context, "FaDepreciationRuns", run.FaDepreciationRunId, "Cancel", "Depreciation Run Undone", $"{run.Code} : {Fa.PeriodText(run.Period)}, Tk {Fa.Money(run.TotalAmount)}. Journal Voucher {run.JournalVoucherNo} cancelled. Reason : {reason}", userId);
+        Fa.AddHistory(_context, "FaDepreciationRuns", run.FaDepreciationRunId, "Cancel", "Depreciation Charge Undone", $"{run.Code} : {Fa.PeriodText(run.Period)}, Tk {Fa.Money(run.TotalAmount)}. Journal Voucher {run.JournalVoucherNo} cancelled. Reason : {reason}", userId);
 
         await _context.SaveChangesAsync();
 
         await transaction.CommitAsync();
+    }
+
+
+    //===========================================================
+    // Charge Depreciation on Month End
+    //===========================================================
+
+    // The user the month-end runs are posted by (the system user,
+    // as the MFS / POS auto settlements)
+    private const long SystemUserId = 1;
+
+    public const string MonthEndRunsAt = "00:05 on the 1st of every month";
+
+    private const string MonthEndRemarks = "Charged automatically on month end.";
+
+    // UTC -> Bangladesh time (UTC+6, no daylight saving)
+    private static string BusinessText(DateTime? utc) =>
+        utc == null
+            ? string.Empty
+            : DateTime.SpecifyKind(utc.Value, DateTimeKind.Utc).AddHours(6).ToString("dd-MMM-yyyy hh:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+
+    public async Task<FaAutoChargeDto> GetAutoChargeAsync()
+    {
+        FaConfiguration row =
+            await _context.Set<FaConfiguration>().AsNoTracking().OrderBy(x => x.FaConfigurationId).FirstOrDefaultAsync()
+            ?? new FaConfiguration();
+
+        return new FaAutoChargeDto
+        {
+            On = row.AutoChargeMonthEnd,
+            RunsAt = MonthEndRunsAt,
+            LastCheck = BusinessText(row.AutoLastCheck),
+            LastMessage = row.AutoLastMessage
+        };
+    }
+
+    public async Task<string> RunMonthEndAsync(CancellationToken cancellationToken)
+    {
+        FaConfiguration? config =
+            await _context.Set<FaConfiguration>().AsNoTracking().OrderBy(x => x.FaConfigurationId).FirstOrDefaultAsync(cancellationToken);
+
+        if (config == null || !config.AutoChargeMonthEnd)
+        {
+            return "Charge Depreciation on Month End is OFF : nothing done.";
+        }
+
+        // only the months that have ended
+        int thisMonth = Fa.Period(HrCalendar.Today());
+
+        List<string> charged = new();
+
+        List<string> failed = new();
+
+        foreach (FaRunBranchDto branch in await GetBranchesAsync())
+        {
+            // every month still due, oldest first (10 years at most)
+            for (int i = 0; i < 120; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                int next = NextPeriod(await LastPeriodAsync(branch.BranchId), await LiveAssetsAsync(branch.BranchId));
+
+                if (next == 0 || next >= thisMonth)
+                {
+                    break;
+                }
+
+                try
+                {
+                    FaRunDto run =
+                        await PostRunAsync(
+                            new PostFaRunDto { BranchId = branch.BranchId, Period = next, Remarks = MonthEndRemarks },
+                            SystemUserId,
+                            true);
+
+                    charged.Add($"{branch.BranchName} {run.PeriodText} ({run.Code}, Tk {Fa.Money(run.TotalAmount)})");
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    // the branch waits for the next check (or a run by hand)
+                    _context.ChangeTracker.Clear();
+
+                    failed.Add($"{branch.BranchName} {Fa.PeriodText(next)} : {(ex is InvalidOperationException ? ex.Message : ex.GetBaseException().Message)}");
+
+                    break;
+                }
+            }
+        }
+
+        string message =
+            charged.Count == 0 && failed.Count == 0
+                ? "Nothing to charge : every branch is charged up to the last month."
+                : string.Join(" ",
+                    new[]
+                    {
+                        charged.Count > 0 ? $"Charged : {string.Join("; ", charged)}." : string.Empty,
+                        failed.Count > 0 ? $"NOT charged : {string.Join("; ", failed)}. Fix it, then charge by hand or wait for the next check." : string.Empty
+                    }
+                    .Where(x => x.Length > 0));
+
+        FaConfiguration? row =
+            await _context.Set<FaConfiguration>().OrderBy(x => x.FaConfigurationId).FirstOrDefaultAsync(cancellationToken);
+
+        if (row != null)
+        {
+            row.AutoLastCheck = DateTime.UtcNow;
+            row.AutoLastMessage = message.Length > 1000 ? message[..997] + "..." : message;
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        return message;
     }
 
 

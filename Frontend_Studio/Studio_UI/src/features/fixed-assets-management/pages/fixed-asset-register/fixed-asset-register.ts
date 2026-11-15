@@ -73,6 +73,7 @@ import
     FA_METHODS_ALL,
     FaAsset,
     FaAssetEvent,
+    FaAssignLocation,
     FaCategory,
     FaLookups,
     SaveFaAsset,
@@ -194,7 +195,7 @@ implements OnInit
     private readonly destroyRef = inject(DestroyRef);
 
     mode:
-        'list' | 'edit' | 'view' = 'list';
+        'list' | 'edit' | 'view' | 'assign' = 'list';
 
     loading =
         false;
@@ -612,7 +613,7 @@ implements OnInit
     // List
     //===========================================================
 
-    loadList():
+    loadList(after?: () => void):
         void
     {
         this.loading = true;
@@ -652,9 +653,322 @@ implements OnInit
 
                     this.loading = false;
                     this.apply();
+                    after?.();
                 },
                 error:error => this.failed(error, 'The asset cards could not be loaded.')
             });
+    }
+
+    //===========================================================
+    // Assign Location : the ticked cards of one branch get one
+    // location (and, when picked, one custodian)
+    //===========================================================
+
+    private assignLookups:
+        FaLookups | null = null;
+
+    // The cards of the branch that the tab and the search show
+    assignRows:
+        FaAsset[] = [];
+
+    readonly assignTabs:
+        ControlTab[] =
+    [
+        { id:'none', label:'Without Location' },
+        { id:'all', label:'All Assets of the Branch' }
+    ];
+
+    assignTab =
+        'none';
+
+    assignSearch =
+        '';
+
+    assignBranch =
+        0;
+
+    assignBranchItems:
+        Choice[] = [];
+
+    assignLocationId =
+        0;
+
+    assignLocationItems:
+        Choice[] = [];
+
+    assignCustodianId =
+        0;
+
+    assignCustodianItems:
+        Choice[] = [];
+
+    // PublicId of the ticked cards
+    readonly picked =
+        new Set<string>();
+
+    get pickedCount(): number
+    {
+        return this.picked.size;
+    }
+
+    get allShownPicked(): boolean
+    {
+        return this.assignRows.length > 0 && this.assignRows.every(x => this.picked.has(x.PublicId));
+    }
+
+    openAssign():
+        void
+    {
+        this.service
+            .getLookups()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(
+            {
+                next:lookups =>
+                    {
+                        this.assignLookups = lookups;
+
+                        // the branches that have a card in use
+                        const live = new Set(this.all.filter(x => isLive(x.Status)).map(x => x.BranchId));
+
+                        this.assignBranchItems =
+                            (lookups.Branches ?? [])
+                                .filter(x => live.has(x.Id))
+                                .map(x => ({ label:x.Name, value:x.Id }));
+
+                        this.assignCustodianItems =
+                        [
+                            { label:'Keep as it is', value:0 },
+                            ...(lookups.Employees ?? []).map(x => ({ label:x.Name, value:x.Id }))
+                        ];
+
+                        if (this.assignBranchItems.length === 0)
+                        {
+                            this.toast.info('Assign Location', 'There is no asset in use to give a location to.');
+                            return;
+                        }
+
+                        this.assignSearch = '';
+                        this.assignCustodianId = 0;
+                        this.picked.clear();
+
+                        // the branch filtered on the list, else the branch
+                        // with the most cards in use without a location
+                        const missing = new Map<number, number>();
+
+                        for (const x of this.all)
+                        {
+                            if (isLive(x.Status) && !x.FaLocationId)
+                            {
+                                missing.set(x.BranchId, (missing.get(x.BranchId) ?? 0) + 1);
+                            }
+                        }
+
+                        const most =
+                            [...this.assignBranchItems]
+                                .sort((a, b) => (missing.get(b.value) ?? 0) - (missing.get(a.value) ?? 0))[0].value;
+
+                        const start =
+                            this.assignBranchItems.some(x => x.value === this.branchFilter)
+                                ? this.branchFilter
+                                : most;
+
+                        // that branch has none : show all its cards
+                        this.assignTab = (missing.get(start) ?? 0) > 0 ? 'none' : 'all';
+
+                        this.setAssignBranch(start);
+
+                        this.mode = 'assign';
+                        this.applyAssign();
+                    },
+                error:error =>
+                {
+                    this.toast.error('Error', error?.error?.message ?? 'The locations could not be loaded.');
+                }
+            });
+    }
+
+    private setAssignBranch(branchId: number):
+        void
+    {
+        this.assignBranch = branchId;
+        this.picked.clear();
+
+        this.assignLocationItems =
+            (this.assignLookups?.Locations ?? [])
+                .filter(x => x.BranchId === branchId)
+                .map(x => ({ label:x.Name, value:x.Id }));
+
+        if (!this.assignLocationItems.some(x => x.value === this.assignLocationId))
+        {
+            this.assignLocationId = 0;
+        }
+    }
+
+    private applyAssign():
+        void
+    {
+        const find =
+            this.assignSearch.trim().toLowerCase();
+
+        this.assignRows =
+            this.all.filter(x =>
+                isLive(x.Status)
+                &&
+                x.BranchId === this.assignBranch
+                &&
+                (this.assignTab === 'all' || !x.FaLocationId)
+                &&
+                (!find || [x.AssetNo, x.Name, x.CategoryName, x.LocationName, x.CustodianName, x.SerialNo]
+                    .some(v => (v ?? '').toLowerCase().includes(find))));
+
+        this.cdr.detectChanges();
+    }
+
+    onAssignBranch(value: any):
+        void
+    {
+        this.setAssignBranch(Number(value) || 0);
+
+        // no card of the branch is without a location : show them all
+        if (this.assignTab === 'none'
+            && !this.all.some(x => isLive(x.Status) && x.BranchId === this.assignBranch && !x.FaLocationId))
+        {
+            this.assignTab = 'all';
+        }
+
+        this.applyAssign();
+    }
+
+    onAssignTab(value: string):
+        void
+    {
+        this.assignTab = value || 'none';
+        this.applyAssign();
+    }
+
+    onAssignSearch(value: string):
+        void
+    {
+        this.assignSearch = value ?? '';
+        this.applyAssign();
+    }
+
+    onAssignLocation(value: any):
+        void
+    {
+        this.assignLocationId = Number(value) || 0;
+        this.cdr.detectChanges();
+    }
+
+    onAssignCustodian(value: any):
+        void
+    {
+        this.assignCustodianId = Number(value) || 0;
+        this.cdr.detectChanges();
+    }
+
+    togglePick(row: FaAsset):
+        void
+    {
+        if (this.picked.has(row.PublicId))
+        {
+            this.picked.delete(row.PublicId);
+        }
+        else
+        {
+            this.picked.add(row.PublicId);
+        }
+
+        this.cdr.detectChanges();
+    }
+
+    // Every card shown : all ticked -> none, else all
+    toggleAllShown():
+        void
+    {
+        const tick = !this.allShownPicked;
+
+        for (const row of this.assignRows)
+        {
+            if (tick)
+            {
+                this.picked.add(row.PublicId);
+            }
+            else
+            {
+                this.picked.delete(row.PublicId);
+            }
+        }
+
+        this.cdr.detectChanges();
+    }
+
+    onApplyAssign():
+        void
+    {
+        if (this.isSaving)
+        {
+            return;
+        }
+
+        const problem =
+            this.pickedCount === 0 ? 'Tick the assets first.'
+            : !this.assignLocationId ? 'Pick the location.'
+            : '';
+
+        if (problem)
+        {
+            this.toast.error('Validation', problem);
+            return;
+        }
+
+        const body: FaAssignLocation =
+        {
+            PublicIds:[...this.picked],
+            FaLocationId:this.assignLocationId,
+            CustodianEmployeeId:this.assignCustodianId
+        };
+
+        const location =
+            this.assignLocationItems.find(x => x.value === this.assignLocationId)?.label ?? 'the location';
+
+        this.isSaving = true;
+
+        this.progressDialog.show('Assigning', `Giving ${body.PublicIds.length} asset(s) the location ${location}...`, false);
+
+        this.service
+            .assignLocation(body)
+            .subscribe(
+            {
+                next:result =>
+                    this.progressDialog.finish(() =>
+                    {
+                        this.isSaving = false;
+                        this.picked.clear();
+
+                        this.toast.success('Success', `${result?.Changed ?? 0} asset card(s) now at ${location}.`);
+
+                        // back to the list, with the cards again
+                        this.mode = 'list';
+                        this.loadList();
+                    }),
+                error:error =>
+                {
+                    this.progressDialog.fail();
+                    this.isSaving = false;
+                    this.toast.error('Error', error?.error?.message ?? 'The location could not be assigned.');
+                    this.cdr.detectChanges();
+                }
+            });
+    }
+
+    closeAssign():
+        void
+    {
+        this.picked.clear();
+        this.mode = 'list';
+        this.apply();
     }
 
     private inTab(row: FaAsset): boolean
